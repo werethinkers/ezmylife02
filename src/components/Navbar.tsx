@@ -38,7 +38,7 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+    <nav className="border-b border-border/40 bg-background/95 backdrop-blur-xl sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -55,6 +55,34 @@ export const Navbar = () => {
               </span>
             </span>
           </Link>
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link 
+              to="/" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+            <Link 
+              to="/tools" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Tools
+            </Link>
+            <Link 
+              to="/about" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              About
+            </Link>
+            <Link 
+              to="/contact" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contact
+            </Link>
+          </div>
 
           <div className="flex items-center gap-4">
             {user ? (
@@ -92,7 +120,7 @@ export const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild variant="default">
+              <Button asChild variant="default" size="sm">
                 <Link to="/auth">Sign In</Link>
               </Button>
             )}
