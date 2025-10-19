@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ToolCard } from "@/components/ToolCard";
 import { tools } from "@/data/tools";
 import { Input } from "@/components/ui/input";
-import { Search, Zap } from "lucide-react";
+import { Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Navbar } from "@/components/Navbar";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,28 +22,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
+      
       {/* Hero Header */}
-      <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5" />
         <div className="relative container mx-auto px-4 py-8 md:py-12">
           <div className="flex flex-col items-center gap-6 text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Making life easier, one tool at a time</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-primary via-primary to-accent-foreground bg-clip-text text-transparent">
-                ez
-              </span>
-              <span className="text-foreground">my</span>
-              <span className="bg-gradient-to-r from-accent-foreground to-primary bg-clip-text text-transparent">
-                .life
-              </span>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Premium Digital Tools
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed">
-              Premium digital tools designed to simplify your workflow and boost productivity
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
+              Simplify your workflow and boost productivity with our curated collection
             </p>
           </div>
         </div>
