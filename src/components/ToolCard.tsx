@@ -30,34 +30,37 @@ export const ToolCard = ({ title, description, category, icon, link, videoLink }
   };
 
   return (
-    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-gradient-to-br from-card to-accent/10 border-border/50">
-      <div className="absolute top-3 right-3 flex gap-2">
-        <Badge variant={getBadgeVariant(category)} className="uppercase text-xs font-semibold">
+    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="absolute top-4 right-4 flex gap-2 z-10">
+        <Badge variant={getBadgeVariant(category)} className="uppercase text-xs font-semibold shadow-sm">
           {category}
         </Badge>
         {videoLink && (
-          <a href={videoLink} target="_blank" rel="noopener noreferrer" className="opacity-60 hover:opacity-100 transition-opacity">
+          <a href={videoLink} target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity">
             <Video className="h-4 w-4 text-muted-foreground" />
           </a>
         )}
       </div>
       
-      <CardHeader className="pb-4">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
+      <CardHeader className="pb-4 relative z-10">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 text-primary border border-primary/20 group-hover:scale-110 transition-transform duration-300">
           {icon}
         </div>
-        <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+        <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
           {title}
         </CardTitle>
-        <CardDescription className="text-muted-foreground leading-relaxed">
+        <CardDescription className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
           {description}
         </CardDescription>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="relative z-10">
         <Button 
           asChild 
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all"
+          variant="outline"
+          className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300"
         >
           <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
             Open Tool
