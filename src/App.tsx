@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
+import RefundPolicy from "./pages/RefundPolicy";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route
               path="/profile"
               element={

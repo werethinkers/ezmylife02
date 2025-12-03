@@ -220,6 +220,7 @@ const Home = () => {
               <Link to="/tools" className="hover:text-foreground transition-colors">Tools</Link>
               <Link to="/subscription" className="hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+              <Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2025 Ezmylife. All rights reserved.
