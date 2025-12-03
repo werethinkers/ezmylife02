@@ -67,28 +67,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_provider: string | null
           avatar_url: string | null
+          bio: string | null
+          company: string | null
           created_at: string
           display_name: string | null
           email: string | null
+          full_name: string | null
           id: string
+          job_title: string | null
+          location: string | null
+          phone_number: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          auth_provider?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
+          full_name?: string | null
           id: string
+          job_title?: string | null
+          location?: string | null
+          phone_number?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          auth_provider?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
+          job_title?: string | null
+          location?: string | null
+          phone_number?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
