@@ -1,150 +1,211 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
-import { Zap, Shield, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, Shield, Globe, Users, TrendingUp, Check } from "lucide-react";
+import logo from "@/assets/logo.png";
 
-const Index = () => {
+const Home = () => {
+  const stats = [
+    { value: "2000+", label: "AI Tools" },
+    { value: "70M+", label: "MSMEs in India" },
+    { value: "90%+", label: "Gross Margin" },
+    { value: "$110B", label: "Market by 2030" },
+  ];
+
+  const features = [
+    {
+      icon: Zap,
+      title: "Think it → Done",
+      description: "Instant answers to any business or personal challenge with 2000+ specialized AI tools.",
+    },
+    {
+      icon: Globe,
+      title: "One Platform, Everything",
+      description: "Replace 50+ expensive subscriptions with a single, unified AI ecosystem.",
+    },
+    {
+      icon: Shield,
+      title: "Enterprise Security",
+      description: "Your data is protected with bank-grade encryption and privacy standards.",
+    },
+    {
+      icon: TrendingUp,
+      title: "BYO API Support",
+      description: "Bring your own API keys for ultra-low costs and maximum flexibility.",
+    },
+  ];
+
+  const categories = [
+    "Business Automation",
+    "Content Creation",
+    "Finance & Accounting",
+    "Marketing & Sales",
+    "Education & Learning",
+    "Personal Productivity",
+    "Legal & Compliance",
+    "Design & Creative",
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border/40">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background" />
-        <div className="relative container mx-auto px-4 py-20 md:py-32">
-          <div className="mx-auto max-w-4xl text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Making life easier, one tool at a time</span>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/50 to-background" />
+        <div className="absolute inset-0 opacity-[0.015]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} />
+        
+        <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
+          <div className="mx-auto max-w-5xl text-center space-y-8 animate-fade-in">
+            <div className="flex justify-center mb-8">
+              <img src={logo} alt="ezmy.life" className="h-20 md:h-24 object-contain" />
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Simplify Your Digital Life with{" "}
-              <span className="bg-gradient-to-r from-primary via-primary to-accent-foreground bg-clip-text text-transparent">
-                ezmy.life
-              </span>
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
+              The World's First{" "}
+              <span className="text-gradient">AI App Store</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Access premium digital tools designed to boost productivity, streamline workflows, and make complex tasks effortless.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light">
+              Access 2000+ AI-powered tools that simplify life and business. 
+              One subscription replaces dozens of apps. Think it → Done.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button asChild size="lg" className="text-lg px-8 h-12 shadow-lg hover:shadow-xl transition-all">
-                <Link to="/tools">
-                  Explore Tools
-                  <ArrowRight className="ml-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+              <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
+                <Link to="/auth">
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 h-12">
-                <Link to="/about">Learn More</Link>
+              <Button asChild variant="outline" size="lg" className="text-base px-8 h-14">
+                <Link to="/tools">Explore Tools</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 border-y border-border/50 bg-card/50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center space-y-2">
+                <div className="font-display text-3xl md:text-4xl font-semibold">{stat.value}</div>
+                <div className="text-sm text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 md:py-28">
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Why Choose ezmy.life?</h2>
+            <p className="text-sm uppercase tracking-widest text-muted-foreground">Why Ezmylife</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
+              AI Flipkart + Zapier + Google AI Studio
+            </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Powerful features designed to transform how you work and create
+              For everyone. From students to enterprises.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Zap className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="group p-8 rounded-2xl border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300"
+              >
+                <div className="flex items-start gap-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 transition-colors">
+                    <feature.icon className="h-6 w-6 text-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-display text-xl font-semibold">{feature.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                  </div>
                 </div>
-                <CardTitle className="text-xl">Lightning Fast</CardTitle>
-                <CardDescription className="text-base">
-                  Instant access to powerful tools with zero setup required
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">Secure & Private</CardTitle>
-                <CardDescription className="text-base">
-                  Your data is protected with enterprise-grade security
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">AI-Powered</CardTitle>
-                <CardDescription className="text-base">
-                  Advanced AI features to supercharge your productivity
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-muted/30">
+      {/* Categories Section */}
+      <section className="py-24 bg-accent/30">
         <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold">
-                  Everything you need, nothing you don't
-                </h2>
-                <p className="text-lg text-muted-foreground">
-                  Access a comprehensive suite of professional tools designed for modern workflows.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">27+ Premium Tools</p>
-                      <p className="text-sm text-muted-foreground">
-                        From AI assistants to document editors, everything in one place
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">No Installation Required</p>
-                      <p className="text-sm text-muted-foreground">
-                        Access all tools directly from your browser
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Regular Updates</p>
-                      <p className="text-sm text-muted-foreground">
-                        New features and tools added continuously
-                      </p>
-                    </div>
-                  </li>
-                </ul>
+          <div className="text-center mb-16 space-y-4">
+            <p className="text-sm uppercase tracking-widest text-muted-foreground">Categories</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
+              Every Tool You Need
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
+            {categories.map((category) => (
+              <div
+                key={category}
+                className="px-5 py-3 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+              >
+                <span className="text-sm font-medium">{category}</span>
               </div>
-              <div className="relative">
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-background border border-border/50 flex items-center justify-center">
-                  <div className="text-center space-y-4 p-8">
-                    <div className="text-6xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                      27+
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 md:py-32">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16 space-y-4">
+              <p className="text-sm uppercase tracking-widest text-muted-foreground">Simple Pricing</p>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
+                One Plan, Everything Included
+              </h2>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent to-primary/5 rounded-3xl blur-3xl opacity-50" />
+              <div className="relative p-8 md:p-12 rounded-3xl border border-border bg-card">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <p className="text-sm uppercase tracking-widest text-muted-foreground">Premium Access</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-display text-5xl md:text-6xl font-semibold">₹2000</span>
+                        <span className="text-muted-foreground">/year</span>
+                      </div>
+                      <p className="text-muted-foreground">or $19.99/month globally</p>
                     </div>
-                    <p className="text-xl font-semibold">Premium Tools</p>
-                    <p className="text-muted-foreground">Ready to use</p>
+                    <Button asChild size="lg" className="w-full md:w-auto px-8 h-14">
+                      <Link to="/subscription">
+                        Subscribe Now
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      "Access to 2000+ AI tools",
+                      "Unlimited usage",
+                      "Priority support",
+                      "New tools added weekly",
+                      "BYO API support",
+                      "Personal dashboard",
+                    ].map((benefit) => (
+                      <div key={benefit} className="flex items-center gap-3">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-4 w-4 text-foreground" />
+                        </div>
+                        <span className="text-muted-foreground">{benefit}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -154,48 +215,41 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-28">
+      <section className="py-24 md:py-32 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h2 className="text-3xl md:text-5xl font-bold">
-              Ready to simplify your life?
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
+              Ready to Transform Your Workflow?
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of users who have already transformed their digital workflow
+            <p className="text-lg opacity-80 max-w-2xl mx-auto">
+              Join thousands of businesses and individuals who have simplified their digital life with Ezmylife.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button asChild size="lg" className="text-lg px-8 h-12 shadow-lg hover:shadow-xl transition-all">
-                <Link to="/auth">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 h-12">
-                <Link to="/tools">Browse Tools</Link>
-              </Button>
-            </div>
+            <Button asChild size="lg" variant="secondary" className="text-base px-8 h-14 shadow-lg">
+              <Link to="/auth">
+                Get Started Free
+                <Sparkles className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30 py-12">
+      <footer className="border-t border-border py-16">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">ezmy.life</span> — Simplifying complexity
-            </p>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link to="/about" className="hover:text-foreground transition-colors">
-                About
-              </Link>
-              <Link to="/tools" className="hover:text-foreground transition-colors">
-                Tools
-              </Link>
-              <Link to="/contact" className="hover:text-foreground transition-colors">
-                Contact
-              </Link>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="ezmy.life" className="h-10 object-contain" />
             </div>
+            <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
+              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+              <Link to="/tools" className="hover:text-foreground transition-colors">Tools</Link>
+              <Link to="/subscription" className="hover:text-foreground transition-colors">Pricing</Link>
+              <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © 2025 Ezmylife. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
@@ -203,4 +257,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Home;
