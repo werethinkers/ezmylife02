@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VALID_COUPON = "ezmylife2000";
+const VALID_COUPONS = ["ezmylife2000", "abhi2k"];
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -44,7 +44,7 @@ serve(async (req) => {
     logStep("Checking coupon", { code: normalizedCode });
 
     // Validate coupon code
-    if (normalizedCode !== VALID_COUPON) {
+    if (!VALID_COUPONS.includes(normalizedCode)) {
       logStep("Invalid coupon code");
       return new Response(JSON.stringify({ 
         success: false, 

@@ -47,6 +47,16 @@ serve(async (req) => {
       .single();
 
     if (premiumAccess) {
+      // Check if access has expired (for trial/time-limited access)
+      if (premiumAccess.expires_at && new Date(premiumAccess.expires_at) < new Date()) {
+        logStep("Premium access expired", { accessType: premiumAccess.access_type, expiredAt: premiumAccess.expires_at });
+        // Delete expired access
+        await supabaseClient.from("premium_access").delete().eq("user_id", user.id);
+        return new Response(JSON.stringify({ subscribed: false, expired: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
       logStep("Premium access found", { accessType: premiumAccess.access_type });
       return new Response(JSON.stringify({
         subscribed: true,
