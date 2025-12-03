@@ -1,4 +1,4 @@
-import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, FileEdit, Calculator, Folder, Globe, Video, Network, Box } from "lucide-react";
+import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, Calculator, Globe, Video, Network, Headphones, PlayCircle, Sparkles, ScanText, BookMarked, FileCode, Eye, FileSearch, Database, Heart, Lightbulb, Pencil } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface Tool {
@@ -6,17 +6,85 @@ export interface Tool {
   description: string;
   category: string;
   icon: ReactNode;
-  link: string;
+  toolId: string; // Internal ID to hide actual URL
   videoLink: string;
 }
 
+// Internal mapping - not exported to keep URLs hidden
+const toolUrls: Record<string, string> = {
+  "jain-audio-stream": "https://kundkund-audio-stream-v3-0-157395066757.us-west1.run.app/",
+  "jain-video-stream": "https://kundkund-video-stream-157395066757.us-west1.run.app/",
+  "jaingyan-ai": "https://jaingyan-ai-157395066757.us-west1.run.app/",
+  "advance-ai-bot": "https://kundkund-advance-bot-v2-0-157395066757.us-west1.run.app/",
+  "shastra-pdf-reader": "https://kundkund-shastra-reader-v20-0-157395066757.us-west1.run.app/",
+  "jain-encyclopedia": "https://jain-encyclopedia-v2-0-157395066757.us-west1.run.app/",
+  "jain-panchang": "https://jain-panchang-digamber-157395066757.us-west1.run.app/",
+  "shastra-multi-pdf-ai-bot": "https://shastra-multi-pdf-ai-bot-157395066757.us-west1.run.app/",
+  "quiz": "https://kundkund-quiz-2-0-800030665261.us-west1.run.app/",
+  "image-creator": "https://kundkund-image-creator-157395066757.us-west1.run.app/",
+  "storybook-creator": "https://kundkund-storybook-creator-157395066757.us-west1.run.app/",
+  "advance-text-extractor": "https://kundkund-text-extractor-v3-0-800030665261.us-west1.run.app/",
+  "create-3d-images": "https://create-3d-images-157395066757.us-west1.run.app/",
+  "sketchflow-ai": "https://sketchflow-ai-800030665261.us-west1.run.app/",
+  "speedy-notebook": "https://kundkund-speedy-notebook-157395066757.us-west1.run.app/",
+  "rich-editor": "https://kundkund-rich-editor-v5-0-800030665261.us-west1.run.app/",
+  "pdf-chart-image-extractor": "https://pdf-chart-image-bulk-cover-extractor-v2-0-157395066757.us-west1.run.app/",
+  "shastra-hover-dictionary": "https://kundkund-hover-dictionary-157395066757.us-west1.run.app/",
+  "html-editor": "https://ezmylife-html-editor-v2-0-157395066757.us-west1.run.app/",
+  "wrong-written-words": "https://wrong-written-words-157395066757.us-west1.run.app/",
+  "book-editor": "https://kundkund-book-editor-800030665261.us-west1.run.app/",
+  "book-editor-html": "https://kundkund-book-editor-with-html-800030665261.us-west1.run.app/",
+  "ocr": "https://kundkund-ocr-812410895718.us-west1.run.app/",
+  "dictionary-extractor-ai": "https://dictionary-extractor-ai-157395066757.us-west1.run.app/",
+  "pdf-profile-extractor": "https://pdf-profile-extractor-3-157395066757.us-west1.run.app/",
+  "pdf-metadata-ai-analyst": "https://pdf-metadata-ai-analyst-800030665261.us-west1.run.app/",
+  "soul-mirror": "https://soulmirror-johari-jainism-157395066757.us-west1.run.app/",
+  "cognimap": "https://cognimap-mental-models-157395066757.us-west1.run.app/",
+  "ai-data-analysis": "https://ai-data-analysis-dashboard-v3-0-157395066757.us-west1.run.app/",
+  "kundkund-ebook-bot": "https://kundkund-e-book-multi-source-based-ai-bot-157395066757.us-west1.run.app/",
+  "kundkund-mindmap": "https://kundkund-mindmap-157395066757.us-west1.run.app/",
+  "jain-ganit": "https://jain-ganit-bhugol-157395066757.us-west1.run.app/",
+  "jainbhugol-maps": "https://kundkund-jainbhugol-maps-2-0-157395066757.us-west1.run.app/",
+  "interactive-videos": "https://kundkund-interactive-video-quiz-157395066757.us-west1.run.app/",
+  "smart-diagram-ai": "https://create-smart-diagram-ai-v2-0-157395066757.us-west1.run.app/",
+  "auto-text-extractor": "https://auto-text-extractor-agent-157395066757.us-west1.run.app/",
+};
+
+export const getToolUrl = (toolId: string): string | null => {
+  return toolUrls[toolId] || null;
+};
+
 export const tools: Tool[] = [
+  {
+    title: "Jain Audio Stream",
+    description: "Listen to various Jain audios, pravachans, and bhajans for spiritual upliftment.",
+    category: "Popular",
+    icon: <Headphones className="h-8 w-8" />,
+    toolId: "jain-audio-stream",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Jain Video Stream",
+    description: "Watch pravachans, documentaries, and spiritual videos related to Jainism.",
+    category: "Popular",
+    icon: <PlayCircle className="h-8 w-8" />,
+    toolId: "jain-video-stream",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "JainGyan AI",
+    description: "An intelligent AI assistant providing insights and answers on Jain knowledge.",
+    category: "AI Agent",
+    icon: <Sparkles className="h-8 w-8" />,
+    toolId: "jaingyan-ai",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
   {
     title: "Advance AI Bot",
     description: "Ask questions from multiple specified sources to get instant answers about Jainism.",
     category: "Popular",
     icon: <Bot className="h-8 w-8" />,
-    link: "https://kundkund.com/advance_ai-bot.html",
+    toolId: "advance-ai-bot",
     videoLink: "https://www.loom.com/share/88b01502cfc94549961e5a65aaae8603?sid=f7e70c03-a887-4e0d-bafe-6fd85d27dd45"
   },
   {
@@ -24,7 +92,7 @@ export const tools: Tool[] = [
     description: "Read scriptures in digital format. This tool helps you easily read and study scriptures in PDF format.",
     category: "Popular",
     icon: <BookOpen className="h-8 w-8" />,
-    link: "https://kundkund-shastra-reader-v20-0-443425442943.us-west1.run.app/",
+    toolId: "shastra-pdf-reader",
     videoLink: "https://www.loom.com/share/88c39a36c6cc499a85d913e69347ea18?sid=a8906f09-33fb-4ba4-918c-2b9890fd4d66"
   },
   {
@@ -32,15 +100,15 @@ export const tools: Tool[] = [
     description: "A comprehensive encyclopedia of Jain terms, concepts, and history.",
     category: "Popular",
     icon: <Library className="h-8 w-8" />,
-    link: "https://jain-encyclopedia-v2-0-443425442943.us-west1.run.app/",
-    videoLink: "https://www.loom.com/share/f94c887d82ca415c8a5e47943d4ce237?sid=419fd2ff-d39a-4a89-8042-1e137f14ff5d"
+    toolId: "jain-encyclopedia",
+    videoLink: "https://www.loom.com/share/f94c887d82ca415c8a5e47943d4ce237?sid=419fd2ff-d39a-4a88-8042-1e137f14ff5d"
   },
   {
     title: "Jain Panchang",
     description: "Stay updated with upcoming Jain festivals, dates, and important spiritual days.",
     category: "Content",
     icon: <Calendar className="h-8 w-8" />,
-    link: "https://jain-panchang-digamber-443425442943.us-west1.run.app/",
+    toolId: "jain-panchang",
     videoLink: "https://www.loom.com/share/27c8f352c22f48df9f8efb0b15327506?sid=9b8b19a6-9810-4674-8c6f-b4dc0562073b"
   },
   {
@@ -48,7 +116,7 @@ export const tools: Tool[] = [
     description: "Ask questions from multiple scriptures at once with our advanced AI and get answers.",
     category: "Popular",
     icon: <Layers className="h-8 w-8" />,
-    link: "https://shastra-multi-pdf-ai-bot-443425442943.us-west1.run.app/",
+    toolId: "shastra-multi-pdf-ai-bot",
     videoLink: "https://www.loom.com/share/419a9d4378b8417491a95d0e1d4cdb0d?sid=74611eba-9223-4985-a782-231e36c0f8e2"
   },
   {
@@ -56,15 +124,15 @@ export const tools: Tool[] = [
     description: "Test your knowledge on Jainism topics by creating quizzes of your choice and reinforce your understanding.",
     category: "Content",
     icon: <ClipboardList className="h-8 w-8" />,
-    link: "https://kundkund-quiz-443425442943.us-west1.run.app/",
-    videoLink: "https://www.loom.com/share/20204bab9ceb46e68027cde57ed2bbfc?sid=74e848e0-087c-42fe-83f6-038ea97e780e"
+    toolId: "quiz",
+    videoLink: "https://www.loom.com/share/20204bab9ceb46e68027cde57ed2bbfc?sid=74e8480-087c-42fe-83f6-038ea97e780e"
   },
   {
     title: "Image Creator",
     description: "Create and share beautiful and inspiring images and quotes based on the teachings of Acharya Kundkund.",
     category: "Content",
     icon: <Image className="h-8 w-8" />,
-    link: "https://kundkund-image-creator-443425442943.us-west1.run.app/",
+    toolId: "image-creator",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -72,7 +140,7 @@ export const tools: Tool[] = [
     description: "Use AI to create new, inspiring stories and illustrations based on Jain principles and narratives.",
     category: "Content",
     icon: <BookText className="h-8 w-8" />,
-    link: "https://kundkund-storybook-creator-443425442943.us-west1.run.app/",
+    toolId: "storybook-creator",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -80,7 +148,23 @@ export const tools: Tool[] = [
     description: "Extract and organize important excerpts from scriptures.",
     category: "Content",
     icon: <FileText className="h-8 w-8" />,
-    link: "https://kundkund-text-extractor-v3-0-443425442943.us-west1.run.app/",
+    toolId: "advance-text-extractor",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Create 3D Images",
+    description: "Design and generate stunning 3D images and models for visual representations of concepts.",
+    category: "Content",
+    icon: <Image className="h-8 w-8" />,
+    toolId: "create-3d-images",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "SketchFlow AI",
+    description: "Transform your ideas into detailed flowcharts, diagrams, and visual plans with AI assistance.",
+    category: "Content",
+    icon: <Pencil className="h-8 w-8" />,
+    toolId: "sketchflow-ai",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -88,7 +172,7 @@ export const tools: Tool[] = [
     description: "Save time writing Gathas and Sutras.",
     category: "Research",
     icon: <Notebook className="h-8 w-8" />,
-    link: "https://kundkund.com/SpeedyNoteBook.html",
+    toolId: "speedy-notebook",
     videoLink: "https://www.loom.com/share/ef5ff4f1569b4d87962d83483e619e98?sid=1258a673-0f71-404c-ac29-11bf9b03ce99"
   },
   {
@@ -96,7 +180,7 @@ export const tools: Tool[] = [
     description: "This is a powerful tool for formatting Jain scripture text in digital form.",
     category: "Research",
     icon: <Edit className="h-8 w-8" />,
-    link: "https://kundkund-rich-editor-v4-0-443425442943.us-west1.run.app/",
+    toolId: "rich-editor",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -104,7 +188,7 @@ export const tools: Tool[] = [
     description: "A powerful tool to extract charts and images from PDFs.",
     category: "Research",
     icon: <FileImage className="h-8 w-8" />,
-    link: "https://pdf-chart-image-bulk-cover-extractor-v2-0-443425442943.us-west1.run.app/",
+    toolId: "pdf-chart-image-extractor",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -112,7 +196,7 @@ export const tools: Tool[] = [
     description: "See the meaning of difficult words from ancient scriptures by simply hovering over them.",
     category: "Research",
     icon: <Languages className="h-8 w-8" />,
-    link: "https://kundkund-hover-dictionary-v2-0-443425442943.us-west1.run.app/",
+    toolId: "shastra-hover-dictionary",
     videoLink: "https://www.loom.com/share/ef5ff4f1569b4d87962d83483e619e98?sid=1258a673-0f71-404c-ac29-11bf9b03ce99"
   },
   {
@@ -120,7 +204,7 @@ export const tools: Tool[] = [
     description: "Create and edit HTML content with a simple and powerful editor.",
     category: "Research",
     icon: <Code className="h-8 w-8" />,
-    link: "https://ezmylife-html-editor-v2-0-443425442943.us-west1.run.app/",
+    toolId: "html-editor",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -128,7 +212,71 @@ export const tools: Tool[] = [
     description: "It identifies incorrectly written words and finds their correct forms, improving writing accuracy.",
     category: "Research",
     icon: <Eraser className="h-8 w-8" />,
-    link: "https://wrong-written-words-443425442943.us-west1.run.app/",
+    toolId: "wrong-written-words",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Book Editor",
+    description: "Edit and format Jain scriptures and texts with a dedicated book editor.",
+    category: "Research",
+    icon: <BookMarked className="h-8 w-8" />,
+    toolId: "book-editor",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Book Editor with HTML",
+    description: "Edit and format Jain scriptures and texts, including HTML content, with an advanced book editor.",
+    category: "Research",
+    icon: <FileCode className="h-8 w-8" />,
+    toolId: "book-editor-html",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "OCR",
+    description: "Convert images or scanned documents into editable and searchable text with high accuracy.",
+    category: "Research",
+    icon: <ScanText className="h-8 w-8" />,
+    toolId: "ocr",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Dictionary Extractor AI",
+    description: "Extract and compile dictionaries from texts using AI.",
+    category: "Research",
+    icon: <Database className="h-8 w-8" />,
+    toolId: "dictionary-extractor-ai",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "PDF Profile Extractor",
+    description: "Extract profiles and structured data from PDF documents.",
+    category: "Research",
+    icon: <FileSearch className="h-8 w-8" />,
+    toolId: "pdf-profile-extractor",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "PDF Metadata AI Analyst",
+    description: "Extract, analyze, and visualize metadata from PDF documents using AI.",
+    category: "Research",
+    icon: <Eye className="h-8 w-8" />,
+    toolId: "pdf-metadata-ai-analyst",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Soul Mirror - Johari Window",
+    description: "Reflect on self-awareness and personal growth through the Johari Window model, applied to Jain principles.",
+    category: "Modern Science",
+    icon: <Heart className="h-8 w-8" />,
+    toolId: "soul-mirror",
+    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "Cognimap - Mental Models",
+    description: "Explore and apply various mental models for improved thinking and decision-making, integrating them with Jain wisdom.",
+    category: "Modern Science",
+    icon: <Lightbulb className="h-8 w-8" />,
+    toolId: "cognimap",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -136,7 +284,7 @@ export const tools: Tool[] = [
     description: "Visualize and analyze data with our interactive AI-powered dashboard.",
     category: "Lab",
     icon: <BarChart3 className="h-8 w-8" />,
-    link: "https://ai-data-analysis-dashboard-v3-0-443425442943.us-west1.run.app/",
+    toolId: "ai-data-analysis",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -144,7 +292,7 @@ export const tools: Tool[] = [
     description: "An advanced e-book reader with an integrated AI assistant.",
     category: "Lab",
     icon: <Brain className="h-8 w-8" />,
-    link: "https://kundkund-e-book-multi-source-based-ai-bot-443425442943.us-west1.run.app/",
+    toolId: "kundkund-ebook-bot",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -152,15 +300,7 @@ export const tools: Tool[] = [
     description: "Visually organize and explore Jain concepts with mind maps.",
     category: "Lab",
     icon: <Map className="h-8 w-8" />,
-    link: "https://kundkund-mindmap-443425442943.us-west1.run.app/",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
-  },
-  {
-    title: "KundKund PDF cum E-Book",
-    description: "An advanced PDF reader with an integrated AI assistant.",
-    category: "Lab",
-    icon: <FileEdit className="h-8 w-8" />,
-    link: "https://kundkund-pdf-cum-e-book-v2-0-443425442943.us-west1.run.app/",
+    toolId: "kundkund-mindmap",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -168,23 +308,7 @@ export const tools: Tool[] = [
     description: "Explore complex Jain mathematics and cosmology concepts.",
     category: "Lab",
     icon: <Calculator className="h-8 w-8" />,
-    link: "https://jain-ganit-bhugol-443425442943.us-west1.run.app/",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
-  },
-  {
-    title: "KundKund Editor with PDF & Ebook",
-    description: "A powerful editor for PDF and E-book formats.",
-    category: "Lab",
-    icon: <FileEdit className="h-8 w-8" />,
-    link: "https://kundkund-pdf-e-book-editor-v4-0-443425442943.us-west1.run.app/",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
-  },
-  {
-    title: "ScrapBook",
-    description: "Collect and organize spiritual notes, images, and ideas in a personal digital scrapbook.",
-    category: "Content",
-    icon: <Folder className="h-8 w-8" />,
-    link: "https://kundkund-scrapbook-443425442943.us-west1.run.app/",
+    toolId: "jain-ganit",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -192,7 +316,7 @@ export const tools: Tool[] = [
     description: "Explore the concepts of Jain geography and cosmology with interactive maps. (Beta Version)",
     category: "Lab",
     icon: <Globe className="h-8 w-8" />,
-    link: "https://kundkund-jainbhugol-maps-443425442943.us-west1.run.app/",
+    toolId: "jainbhugol-maps",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -200,7 +324,7 @@ export const tools: Tool[] = [
     description: "Engage with spiritual teachings through interactive videos with quizzes. (Beta Version)",
     category: "Lab",
     icon: <Video className="h-8 w-8" />,
-    link: "https://kundkund-interactive-video-quiz-443425442943.us-west1.run.app/",
+    toolId: "interactive-videos",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
@@ -208,15 +332,15 @@ export const tools: Tool[] = [
     description: "Generate complex diagrams, flowcharts, and visual aids from your notes and ideas using AI.",
     category: "Lab",
     icon: <Network className="h-8 w-8" />,
-    link: "https://create-smart-diagram-ai-v2-0-443425442943.us-west1.run.app/",
+    toolId: "smart-diagram-ai",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "Create 3D Images",
-    description: "Design and generate stunning 3D images and models for visual representations of concepts.",
-    category: "Content",
-    icon: <Box className="h-8 w-8" />,
-    link: "https://create-3d-images-443425442943.us-west1.run.app/",
+    title: "Auto Text Extractor Agent",
+    description: "Automatically extract and organize text from various sources using an intelligent AI agent.",
+    category: "AI Agent",
+    icon: <ScanText className="h-8 w-8" />,
+    toolId: "auto-text-extractor",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
-  }
+  },
 ];
