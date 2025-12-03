@@ -1,7 +1,13 @@
 project_id = "erlkmrbaogkqwsbxshpa"
 
-[functions.create-trial]
+[functions.create-razorpay-order]
 verify_jwt = false
 
-[functions.stripe-webhook]
+[functions.verify-razorpay-payment]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.redeem-coupon]
 verify_jwt = false
