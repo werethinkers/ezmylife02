@@ -22,6 +22,7 @@ const Subscription = () => {
   const [accessType, setAccessType] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
+  const [isStartingTrial, setIsStartingTrial] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -36,6 +37,12 @@ const Subscription = () => {
       toast({
         title: "Payment Successful!",
         description: "Welcome to Premium! You now have full access to all tools.",
+      });
+      checkSubscriptionStatus();
+    } else if (searchParams.get("trial_success") === "true") {
+      toast({
+        title: "Trial Activated!",
+        description: "You have 24-hour access to all tools. Enjoy!",
       });
       checkSubscriptionStatus();
     } else if (searchParams.get("canceled") === "true") {
@@ -102,6 +109,47 @@ const Subscription = () => {
     }
   };
 
+  const handleStartTrial = async () => {
+    try {
+      setIsStartingTrial(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("create-trial", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error) {
+      console.error("Error starting trial:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start trial. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStartingTrial(false);
+    }
+  };
+
   const handleRedeemCoupon = async () => {
     if (!couponCode.trim()) {
       toast({
@@ -156,16 +204,15 @@ const Subscription = () => {
   };
 
   const features = [
-    "Access to all 36+ Jain Digital Tools",
-    "Jain Audio & Video Streaming",
-    "AI-powered assistants (JainGyan AI, Advance AI Bot)",
-    "Shastra PDF Reader & Multi-PDF AI Bot",
-    "Jain Encyclopedia & Panchang",
-    "Quiz, Image Creator, StoryBook Creator",
-    "Research tools (Rich Editor, OCR, Dictionaries)",
-    "Modern Science tools & Lab experiments",
+    "Access to all 2000+ AI tools",
+    "Business automation & content creation",
+    "AI-powered assistants & chatbots",
+    "Document analysis & PDF tools",
+    "Marketing, sales & finance tools",
+    "Education & learning resources",
+    "Design & creative tools",
     "Priority support",
-    "New tools & updates"
+    "New tools added weekly"
   ];
 
   if (isCheckingStatus) {
@@ -216,9 +263,12 @@ const Subscription = () => {
             </CardHeader>
             
             <CardContent className="space-y-6">
-              <div className="text-center">
-                <span className="text-4xl font-bold">₹2,000</span>
-                <span className="text-muted-foreground">/year</span>
+              <div className="text-center space-y-2">
+                <div>
+                  <span className="text-4xl font-bold">₹2,000</span>
+                  <span className="text-muted-foreground">/year</span>
+                </div>
+                <p className="text-sm text-muted-foreground">or try for ₹50/day</p>
               </div>
 
               <ul className="space-y-3">
@@ -232,24 +282,38 @@ const Subscription = () => {
 
               {!isPremium && (
                 <>
-                  <Button 
-                    onClick={handleSubscribe} 
-                    disabled={isLoading}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Crown className="mr-2 h-4 w-4" />
-                        Subscribe Now
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleSubscribe} 
+                      disabled={isLoading}
+                      className="flex-1"
+                      size="lg"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Crown className="mr-2 h-4 w-4" />
+                          Subscribe ₹2,000/yr
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={handleStartTrial} 
+                      disabled={isStartingTrial}
+                      variant="outline"
+                      size="lg"
+                    >
+                      {isStartingTrial ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Try ₹50"
+                      )}
+                    </Button>
+                  </div>
 
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -291,6 +355,8 @@ const Subscription = () => {
                   <p className="text-sm text-primary font-medium">
                     {accessType === "coupon" 
                       ? "You have lifetime premium access via coupon code!"
+                      : accessType === "trial"
+                      ? "Your 24-hour trial is active. Enjoy all premium features!"
                       : "Your subscription is active. Enjoy all premium features!"
                     }
                   </p>
