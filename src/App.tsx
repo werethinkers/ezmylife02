@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Tools from "./pages/Tools";
+import ToolViewer from "./pages/ToolViewer";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
@@ -29,6 +30,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Tools />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tool/:toolId"
+              element={
+                <ProtectedRoute>
+                  <ToolViewer />
                 </ProtectedRoute>
               }
             />

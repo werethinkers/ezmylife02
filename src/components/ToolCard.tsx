@@ -1,19 +1,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Video, ExternalLink } from "lucide-react";
+import { Video, ArrowRight } from "lucide-react";
 import { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ToolCardProps {
   title: string;
   description: string;
   category: string;
   icon: ReactNode;
-  link: string;
+  toolId: string;
   videoLink: string;
 }
 
-export const ToolCard = ({ title, description, category, icon, link, videoLink }: ToolCardProps) => {
+export const ToolCard = ({ title, description, category, icon, toolId, videoLink }: ToolCardProps) => {
+  const navigate = useNavigate();
+  
   const getBadgeVariant = (category: string) => {
     switch (category.toLowerCase()) {
       case "popular":
@@ -24,9 +27,17 @@ export const ToolCard = ({ title, description, category, icon, link, videoLink }
         return "outline";
       case "lab":
         return "destructive";
+      case "ai agent":
+        return "default";
+      case "modern science":
+        return "secondary";
       default:
         return "outline";
     }
+  };
+
+  const handleOpenTool = () => {
+    navigate(`/tool/${toolId}`);
   };
 
   return (
@@ -38,7 +49,13 @@ export const ToolCard = ({ title, description, category, icon, link, videoLink }
           {category}
         </Badge>
         {videoLink && (
-          <a href={videoLink} target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity">
+          <a 
+            href={videoLink} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="opacity-50 hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Video className="h-4 w-4 text-muted-foreground" />
           </a>
         )}
@@ -58,14 +75,14 @@ export const ToolCard = ({ title, description, category, icon, link, videoLink }
       
       <CardContent className="relative z-10">
         <Button 
-          asChild 
+          onClick={handleOpenTool}
           variant="outline"
           className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300"
         >
-          <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+          <span className="flex items-center justify-center gap-2">
             Open Tool
-            <ExternalLink className="h-4 w-4" />
-          </a>
+            <ArrowRight className="h-4 w-4" />
+          </span>
         </Button>
       </CardContent>
     </Card>

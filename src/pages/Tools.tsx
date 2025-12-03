@@ -6,11 +6,11 @@ import { Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 
-const Index = () => {
+const Tools = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const categories = ["all", "popular", "content", "research", "lab"];
+  const categories = ["all", "popular", "ai agent", "content", "research", "modern science", "lab"];
 
   const filteredTools = tools.filter(tool => {
     const matchesSearch = tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -30,11 +30,11 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-8 md:py-12">
           <div className="flex flex-col items-center gap-6 text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Premium Digital Tools
+              Jain Digital Tools
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-              Simplify your workflow and boost productivity with our curated collection
+              A comprehensive collection of tools for spiritual advancement and self-study
             </p>
           </div>
         </div>
@@ -56,12 +56,12 @@ const Index = () => {
           </div>
 
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 h-11 bg-muted/50">
+            <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-2">
               {categories.map((category) => (
                 <TabsTrigger 
                   key={category} 
                   value={category}
-                  className="capitalize text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                  className="capitalize text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm px-4 py-2"
                 >
                   {category}
                 </TabsTrigger>
@@ -74,7 +74,7 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTools.map((tool, index) => (
             <div 
-              key={index} 
+              key={tool.toolId} 
               className="animate-in fade-in-50 duration-500" 
               style={{ animationDelay: `${index * 30}ms` }}
             >
@@ -117,4 +117,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Tools;
