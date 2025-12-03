@@ -39,6 +39,9 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Home
+            </Link>
             <Link to="/tools" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Tools
             </Link>
@@ -117,6 +120,13 @@ export const Navbar = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border py-4 space-y-2">
+            <Link
+              to="/"
+              className="block py-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
             <Link
               to="/tools"
               className="block py-2 text-muted-foreground hover:text-foreground transition-colors"
