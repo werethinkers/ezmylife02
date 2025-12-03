@@ -92,6 +92,10 @@ serve(async (req) => {
       // 24-hour trial
       expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
       accessType = "trial";
+    } else if (plan_type === "monthly") {
+      // Monthly subscription - 30 days
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      accessType = "subscription";
     } else {
       // Yearly subscription - 365 days
       expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();

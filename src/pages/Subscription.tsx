@@ -30,6 +30,7 @@ const Subscription = () => {
   const [couponCode, setCouponCode] = useState("");
   const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const [isStartingMonthly, setIsStartingMonthly] = useState(false);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -95,8 +96,8 @@ const Subscription = () => {
     }
   };
 
-  const initiateRazorpayPayment = async (planType: "yearly" | "trial") => {
-    const setLoadingState = planType === "trial" ? setIsStartingTrial : setIsLoading;
+  const initiateRazorpayPayment = async (planType: "yearly" | "monthly" | "trial") => {
+    const setLoadingState = planType === "trial" ? setIsStartingTrial : planType === "monthly" ? setIsStartingMonthly : setIsLoading;
     
     try {
       setLoadingState(true);
@@ -201,6 +202,7 @@ const Subscription = () => {
   };
 
   const handleSubscribe = () => initiateRazorpayPayment("yearly");
+  const handleMonthlySubscribe = () => initiateRazorpayPayment("monthly");
   const handleStartTrial = () => initiateRazorpayPayment("trial");
 
   const handleRedeemCoupon = async () => {
@@ -261,6 +263,14 @@ const Subscription = () => {
     "All 2000+ AI tools unlocked",
     "Perfect for trying before buying",
     "No automatic renewal",
+  ];
+
+  const monthlyFeatures = [
+    "Access to all 2000+ AI tools",
+    "30 days of full access",
+    "Flexible month-to-month",
+    "Cancel anytime",
+    "Priority support",
   ];
 
   const yearlyFeatures = [
@@ -365,7 +375,7 @@ const Subscription = () => {
           ) : (
             <>
               {/* Pricing Cards */}
-              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+              <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
                 {/* Trial Plan */}
                 <Card className="relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in" style={{ animationDelay: "100ms" }}>
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted to-muted-foreground/50" />
@@ -410,6 +420,56 @@ const Subscription = () => {
                         <>
                           <Zap className="mr-2 h-4 w-4" />
                           Start Day Pass
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Monthly Plan */}
+                <Card className="relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in" style={{ animationDelay: "150ms" }}>
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 to-accent/50" />
+                  <CardHeader className="text-center pb-4">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                      <Sparkles className="h-7 w-7 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">Monthly Premium</CardTitle>
+                    <CardDescription>Flexible month-to-month</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="text-center">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold">₹199</span>
+                        <span className="text-muted-foreground">/month</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">30 days full access</p>
+                    </div>
+
+                    <ul className="space-y-3">
+                      {monthlyFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button 
+                      onClick={handleMonthlySubscribe} 
+                      disabled={isStartingMonthly}
+                      variant="outline"
+                      className="w-full border-primary/50 hover:bg-primary/10"
+                      size="lg"
+                    >
+                      {isStartingMonthly ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Get Monthly Access
                         </>
                       )}
                     </Button>

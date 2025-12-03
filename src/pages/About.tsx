@@ -134,9 +134,9 @@ const About = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
               <div className="space-y-2">
                 <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  27+
+                  2000+
                 </div>
-                <p className="text-lg font-semibold">Premium Tools</p>
+                <p className="text-lg font-semibold">AI Tools</p>
                 <p className="text-sm text-muted-foreground">
                   Carefully curated for maximum productivity
                 </p>
