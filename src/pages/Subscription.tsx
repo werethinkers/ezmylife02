@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Crown, Loader2, Sparkles, Tag } from "lucide-react";
+import { Check, Crown, Loader2, Sparkles, Tag, Zap, Star, Shield, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -31,7 +32,6 @@ const Subscription = () => {
   const [isStartingTrial, setIsStartingTrial] = useState(false);
 
   useEffect(() => {
-    // Load Razorpay script
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -106,7 +106,6 @@ const Subscription = () => {
         return;
       }
 
-      // Create Razorpay order
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
         body: { plan_type: planType },
         headers: {
@@ -124,7 +123,6 @@ const Subscription = () => {
         return;
       }
 
-      // Open Razorpay checkout
       const options = {
         key: orderData.key_id,
         amount: orderData.amount,
@@ -134,7 +132,6 @@ const Subscription = () => {
         order_id: orderData.order_id,
         handler: async (response: any) => {
           try {
-            // Verify payment on backend
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
@@ -259,16 +256,22 @@ const Subscription = () => {
     }
   };
 
-  const features = [
+  const trialFeatures = [
+    "Full access for 24 hours",
+    "All 2000+ AI tools unlocked",
+    "Perfect for trying before buying",
+    "No automatic renewal",
+  ];
+
+  const yearlyFeatures = [
     "Access to all 2000+ AI tools",
     "Business automation & content creation",
     "AI-powered assistants & chatbots",
     "Document analysis & PDF tools",
     "Marketing, sales & finance tools",
-    "Education & learning resources",
     "Design & creative tools",
     "Priority support",
-    "New tools added weekly"
+    "New tools added weekly",
   ];
 
   if (isCheckingStatus) {
@@ -276,7 +279,10 @@ const Subscription = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-[80vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-muted-foreground animate-pulse">Loading your subscription...</p>
+          </div>
         </div>
       </div>
     );
@@ -286,63 +292,171 @@ const Subscription = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-12 md:py-16">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            {isPremium ? "You're a Premium Member!" : "Unlock Premium Access"}
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            {isPremium 
-              ? "Thank you for being a premium member. Enjoy full access to all tools."
-              : "Get unlimited access to all AI tools with our premium subscription."
-            }
-          </p>
-        </div>
-
-        <div className="max-w-lg mx-auto">
-          <Card className={`relative overflow-hidden ${isPremium ? 'border-primary border-2' : ''}`}>
-            {isPremium && (
-              <div className="absolute top-0 right-0">
-                <Badge className="rounded-none rounded-bl-lg bg-primary text-primary-foreground">
-                  <Crown className="h-3 w-3 mr-1" />
-                  {accessType === "coupon" ? "Lifetime Access" : "Active"}
-                </Badge>
-              </div>
-            )}
-            
-            <CardHeader className="text-center pb-2">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Premium Subscription</CardTitle>
-              <CardDescription>Full access to all AI tools</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              <div className="text-center space-y-2">
-                <div>
-                  <span className="text-4xl font-bold">₹2,000</span>
-                  <span className="text-muted-foreground">/year</span>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        
+        <main className="container relative mx-auto px-4 py-12 md:py-20">
+          <div className="text-center max-w-3xl mx-auto mb-16 animate-fade-in">
+            {isPremium ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
+                  <Crown className="h-4 w-4" />
+                  <span className="text-sm font-medium">Premium Member</span>
                 </div>
-                <p className="text-sm text-muted-foreground">or try for ₹50/day</p>
-              </div>
+                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text">
+                  Welcome Back, Premium User!
+                </h1>
+                <p className="text-xl text-muted-foreground">
+                  You have full access to all tools. Explore and create amazing things.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-sm font-medium">Unlock Premium</span>
+                </div>
+                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+                  Choose Your{" "}
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    Premium Plan
+                  </span>
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Get unlimited access to 2000+ AI tools. Automate your work, boost productivity, and simplify your life.
+                </p>
+              </>
+            )}
+          </div>
 
-              <ul className="space-y-3">
-                {features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+          {isPremium ? (
+            <div className="max-w-lg mx-auto animate-scale-in">
+              <Card className="border-primary border-2 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+                <div className="absolute top-0 right-0">
+                  <Badge className="rounded-none rounded-bl-xl px-4 py-1 bg-primary text-primary-foreground">
+                    <Crown className="h-3 w-3 mr-1" />
+                    {accessType === "coupon" ? "Lifetime" : accessType === "trial" ? "Trial" : "Active"}
+                  </Badge>
+                </div>
+                <CardContent className="relative pt-12 pb-8 text-center">
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent">
+                    <Crown className="h-10 w-10 text-primary-foreground" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">Premium Access Active</h2>
+                  <p className="text-muted-foreground mb-6">
+                    {accessType === "coupon" 
+                      ? "You have lifetime premium access via coupon code!"
+                      : accessType === "trial"
+                      ? "Your 24-hour trial is active. Make the most of it!"
+                      : "Your subscription is active. Enjoy all premium features!"
+                    }
+                  </p>
+                  <Button onClick={() => navigate("/tools")} size="lg" className="w-full">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Explore All Tools
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {/* Pricing Cards */}
+              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+                {/* Trial Plan */}
+                <Card className="relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in" style={{ animationDelay: "100ms" }}>
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted to-muted-foreground/50" />
+                  <CardHeader className="text-center pb-4">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Clock className="h-7 w-7 text-muted-foreground" />
+                    </div>
+                    <CardTitle className="text-xl">Day Pass</CardTitle>
+                    <CardDescription>Perfect for trying out</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="text-center">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold">₹50</span>
+                        <span className="text-muted-foreground">/day</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">24-hour full access</p>
+                    </div>
 
-              {!isPremium && (
-                <>
-                  <div className="flex gap-2">
+                    <ul className="space-y-3">
+                      {trialFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-muted-foreground">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button 
+                      onClick={handleStartTrial} 
+                      disabled={isStartingTrial}
+                      variant="outline"
+                      className="w-full"
+                      size="lg"
+                    >
+                      {isStartingTrial ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="mr-2 h-4 w-4" />
+                          Start Day Pass
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Yearly Plan - Recommended */}
+                <Card className="relative overflow-hidden border-primary/50 shadow-xl shadow-primary/10 scale-[1.02] animate-fade-in" style={{ animationDelay: "200ms" }}>
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />
+                  <div className="absolute -top-px -right-px">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent blur-sm" />
+                      <Badge className="relative rounded-none rounded-bl-xl px-4 py-1.5 bg-gradient-to-r from-primary to-accent text-primary-foreground border-0">
+                        <Star className="h-3 w-3 mr-1 fill-current" />
+                        Best Value
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardHeader className="text-center pb-4 pt-8">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent">
+                      <Crown className="h-7 w-7 text-primary-foreground" />
+                    </div>
+                    <CardTitle className="text-xl">Annual Premium</CardTitle>
+                    <CardDescription>Unlimited access for a year</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="text-center">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold">₹1,999</span>
+                        <span className="text-muted-foreground">/year</span>
+                      </div>
+                      <p className="text-sm text-primary mt-1 font-medium">Save ₹16,251 vs daily</p>
+                    </div>
+
+                    <ul className="space-y-3">
+                      {yearlyFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
                     <Button 
                       onClick={handleSubscribe} 
                       disabled={isLoading}
-                      className="flex-1"
+                      className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
                       size="lg"
                     >
                       {isLoading ? (
@@ -353,75 +467,74 @@ const Subscription = () => {
                       ) : (
                         <>
                           <Crown className="mr-2 h-4 w-4" />
-                          Subscribe ₹2,000/yr
+                          Get Premium Access
                         </>
                       )}
                     </Button>
-                    <Button 
-                      onClick={handleStartTrial} 
-                      disabled={isStartingTrial}
-                      variant="outline"
-                      size="lg"
-                    >
-                      {isStartingTrial ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Try ₹50"
-                      )}
-                    </Button>
-                  </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
+              {/* Coupon Section */}
+              <div className="max-w-md mx-auto animate-fade-in" style={{ animationDelay: "300ms" }}>
+                <Card className="border-dashed">
+                  <CardContent className="pt-6">
+                    <div className="text-center mb-4">
+                      <Tag className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Have a coupon code?</p>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or use coupon</span>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          placeholder="Enter coupon code"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          className="pr-4"
+                          onKeyDown={(e) => e.key === "Enter" && handleRedeemCoupon()}
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleRedeemCoupon}
+                        disabled={isRedeemingCoupon}
+                        variant="secondary"
+                      >
+                        {isRedeemingCoupon ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </Button>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Enter coupon code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        className="pl-10"
-                        onKeyDown={(e) => e.key === "Enter" && handleRedeemCoupon()}
-                      />
-                    </div>
-                    <Button 
-                      onClick={handleRedeemCoupon}
-                      disabled={isRedeemingCoupon}
-                      variant="outline"
-                    >
-                      {isRedeemingCoupon ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Redeem"
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
-
-              {isPremium && (
-                <div className="text-center p-4 bg-primary/10 rounded-lg">
-                  <p className="text-sm text-primary font-medium">
-                    {accessType === "coupon" 
-                      ? "You have lifetime premium access via coupon code!"
-                      : accessType === "trial"
-                      ? "Your 24-hour trial is active. Enjoy all premium features!"
-                      : "Your subscription is active. Enjoy all premium features!"
-                    }
-                  </p>
+              {/* Trust Badges */}
+              <div className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-in" style={{ animationDelay: "400ms" }}>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Shield className="h-5 w-5" />
+                  <span className="text-sm">Secure Payments</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Zap className="h-5 w-5" />
+                  <span className="text-sm">Instant Access</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Star className="h-5 w-5" />
+                  <span className="text-sm">2000+ AI Tools</span>
+                </div>
+              </div>
+
+              {/* Refund Policy Link */}
+              <div className="text-center mt-8 animate-fade-in" style={{ animationDelay: "500ms" }}>
+                <Link to="/refund-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
+                  View Cancellation & Refund Policy
+                </Link>
+              </div>
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
