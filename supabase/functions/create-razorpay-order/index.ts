@@ -60,10 +60,24 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const planType = body.plan_type || "yearly"; // "trial" for ₹50, "yearly" for ₹1999
+    const planType = body.plan_type || "yearly"; // "trial" for ₹50, "monthly" for ₹199, "yearly" for ₹1999
     
-    const amount = planType === "trial" ? 5000 : 199900; // Amount in paise (₹50 or ₹1999)
-    const description = planType === "trial" ? "24-Hour Day Pass" : "Annual Premium Subscription";
+    let amount: number;
+    let description: string;
+    
+    switch (planType) {
+      case "trial":
+        amount = 5000; // ₹50 in paise
+        description = "24-Hour Day Pass";
+        break;
+      case "monthly":
+        amount = 19900; // ₹199 in paise
+        description = "Monthly Premium Subscription";
+        break;
+      default: // yearly
+        amount = 199900; // ₹1999 in paise
+        description = "Annual Premium Subscription";
+    }
     
     logStep("Creating order", { planType, amount });
 
