@@ -30,7 +30,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
+    if (user) navigate("/auth/callback", { replace: true });
   }, [user, navigate]);
 
   const [signUpData, setSignUpData] = useState({ email: "", password: "", fullName: "", phone: "" });
@@ -76,12 +76,12 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/` } });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
     if (error) toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
   };
 
   const handleAppleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "apple", options: { redirectTo: `${window.location.origin}/` } });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "apple", options: { redirectTo: `${window.location.origin}/auth/callback` } });
     if (error) toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
   };
 

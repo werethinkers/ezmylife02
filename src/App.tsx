@@ -12,6 +12,7 @@ import ToolViewer from "./pages/ToolViewer";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
@@ -55,6 +56,7 @@ const App = () => (
             />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route
               path="/profile"
