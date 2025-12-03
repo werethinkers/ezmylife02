@@ -34,7 +34,7 @@ export const Navbar = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src={logo} alt="ezmy.life" className="h-8 object-contain" />
+            <img src={logo} alt="ezmy.life" className="h-10 md:h-12 object-contain" />
           </Link>
 
           {/* Desktop Navigation */}
