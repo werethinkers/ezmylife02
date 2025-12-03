@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const isInitialLoad = useRef(true);
+  const previousEvent = useRef<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -37,17 +39,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        if (event === 'SIGNED_IN') {
+        // Skip toasts on initial load or during OAuth flow
+        if (isInitialLoad.current) {
+          isInitialLoad.current = false;
+          previousEvent.current = event;
+          return;
+        }
+
+        // Only show signed in toast for password login (not OAuth - that redirects to callback)
+        if (event === 'SIGNED_IN' && previousEvent.current !== 'INITIAL_SESSION') {
           toast({
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
-        } else if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT' && previousEvent.current === 'SIGNED_IN') {
+          // Only show signed out toast for genuine sign-outs
           toast({
             title: "Signed out",
             description: "You've been signed out successfully.",
           });
         }
+        
+        previousEvent.current = event;
       }
     );
 
