@@ -1,17 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, Sparkles, Zap, Shield, Globe, Users, TrendingUp, Check } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, Shield, Globe, Check } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Home = () => {
-  const stats = [
-    { value: "2000+", label: "AI Tools" },
-    { value: "70M+", label: "MSMEs in India" },
-    { value: "90%+", label: "Gross Margin" },
-    { value: "$110B", label: "Market by 2030" },
-  ];
-
   const features = [
     {
       icon: Zap,
@@ -25,13 +18,8 @@ const Home = () => {
     },
     {
       icon: Shield,
-      title: "Enterprise Security",
+      title: "Secure & Private",
       description: "Your data is protected with bank-grade encryption and privacy standards.",
-    },
-    {
-      icon: TrendingUp,
-      title: "BYO API Support",
-      description: "Bring your own API keys for ultra-low costs and maximum flexibility.",
     },
   ];
 
@@ -60,7 +48,7 @@ const Home = () => {
         <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="mx-auto max-w-5xl text-center space-y-8 animate-fade-in">
             <div className="flex justify-center mb-8">
-              <img src={logo} alt="ezmy.life" className="h-20 md:h-24 object-contain" />
+              <img src={logo} alt="ezmy.life" className="h-28 md:h-36 lg:h-44 object-contain" />
             </div>
             
             <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
@@ -88,30 +76,16 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 border-y border-border/50 bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center space-y-2">
-                <div className="font-display text-3xl md:text-4xl font-semibold">{stat.value}</div>
-                <div className="text-sm text-muted-foreground uppercase tracking-wider">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
             <p className="text-sm uppercase tracking-widest text-muted-foreground">Why Ezmylife</p>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-              AI Flipkart + Zapier + Google AI Studio
+              Everything You Need in One Place
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              For everyone. From students to enterprises.
+              2000+ AI tools to simplify your life and work
             </p>
           </div>
 
