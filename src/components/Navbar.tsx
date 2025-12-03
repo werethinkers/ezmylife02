@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Zap, LogOut, User as UserIcon } from "lucide-react";
+import { Zap, LogOut, User as UserIcon, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -110,6 +110,12 @@ export const Navbar = () => {
                     <Link to="/profile" className="cursor-pointer">
                       <UserIcon className="mr-2 h-4 w-4" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/subscription" className="cursor-pointer">
+                      <Crown className="mr-2 h-4 w-4" />
+                      Subscription
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

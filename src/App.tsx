@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PremiumRoute } from "@/components/PremiumRoute";
 import Home from "./pages/Home";
 import Tools from "./pages/Tools";
 import ToolViewer from "./pages/ToolViewer";
@@ -12,6 +13,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,20 +30,28 @@ const App = () => (
             <Route
               path="/tools"
               element={
-                <ProtectedRoute>
+                <PremiumRoute>
                   <Tools />
-                </ProtectedRoute>
+                </PremiumRoute>
               }
             />
             <Route
               path="/tool/:toolId"
               element={
-                <ProtectedRoute>
+                <PremiumRoute>
                   <ToolViewer />
-                </ProtectedRoute>
+                </PremiumRoute>
               }
             />
             <Route path="/about" element={<About />} />
+            <Route
+              path="/subscription"
+              element={
+                <ProtectedRoute>
+                  <Subscription />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
             <Route
