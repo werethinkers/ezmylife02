@@ -10,6 +10,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, Crown, Loader2, Sparkles, Tag } from "lucide-react";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const Subscription = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -23,6 +29,18 @@ const Subscription = () => {
   const [couponCode, setCouponCode] = useState("");
   const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+
+  useEffect(() => {
+    // Load Razorpay script
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -77,78 +95,116 @@ const Subscription = () => {
     }
   };
 
-  const handleSubscribe = async () => {
+  const initiateRazorpayPayment = async (planType: "yearly" | "trial") => {
+    const setLoadingState = planType === "trial" ? setIsStartingTrial : setIsLoading;
+    
     try {
-      setIsLoading(true);
+      setLoadingState(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      // Create Razorpay order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: { plan_type: planType },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (error) throw error;
-
-      if (data.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error) {
-      console.error("Error creating checkout:", error);
-      toast({
-        title: "Error",
-        description: "Failed to start checkout. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStartTrial = async () => {
-    try {
-      setIsStartingTrial(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke("create-trial", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.error) {
+      if (orderError) throw orderError;
+      if (orderData.error) {
         toast({
           title: "Error",
-          description: data.error,
+          description: orderData.error,
           variant: "destructive",
         });
         return;
       }
 
-      if (data.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error) {
-      console.error("Error starting trial:", error);
+      // Open Razorpay checkout
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Ezmylife",
+        description: orderData.description,
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment on backend
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_type: planType,
+              },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            if (verifyData.success) {
+              toast({
+                title: planType === "trial" ? "Trial Activated!" : "Payment Successful!",
+                description: planType === "trial" 
+                  ? "You have 24-hour access to all tools. Enjoy!"
+                  : "Welcome to Premium! You now have full access to all tools.",
+              });
+              checkSubscriptionStatus();
+            } else {
+              throw new Error(verifyData.error || "Payment verification failed");
+            }
+          } catch (error: any) {
+            console.error("Payment verification error:", error);
+            toast({
+              title: "Verification Failed",
+              description: "Payment was received but verification failed. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          email: orderData.user_email,
+        },
+        theme: {
+          color: "#000000",
+        },
+        modal: {
+          ondismiss: () => {
+            setLoadingState(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        toast({
+          title: "Payment Failed",
+          description: response.error.description || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      });
+      rzp.open();
+    } catch (error: any) {
+      console.error("Error initiating payment:", error);
       toast({
         title: "Error",
-        description: "Failed to start trial. Please try again.",
+        description: error.message || "Failed to start payment. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsStartingTrial(false);
+      setLoadingState(false);
     }
   };
+
+  const handleSubscribe = () => initiateRazorpayPayment("yearly");
+  const handleStartTrial = () => initiateRazorpayPayment("trial");
 
   const handleRedeemCoupon = async () => {
     if (!couponCode.trim()) {
@@ -238,7 +294,7 @@ const Subscription = () => {
           <p className="text-lg text-muted-foreground">
             {isPremium 
               ? "Thank you for being a premium member. Enjoy full access to all tools."
-              : "Get unlimited access to all Jain Digital Tools with our premium subscription."
+              : "Get unlimited access to all AI tools with our premium subscription."
             }
           </p>
         </div>
@@ -259,7 +315,7 @@ const Subscription = () => {
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">Premium Subscription</CardTitle>
-              <CardDescription>Full access to all tools</CardDescription>
+              <CardDescription>Full access to all AI tools</CardDescription>
             </CardHeader>
             
             <CardContent className="space-y-6">
