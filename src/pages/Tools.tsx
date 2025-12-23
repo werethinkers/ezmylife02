@@ -30,11 +30,11 @@ const Tools = () => {
         <div className="relative container mx-auto px-4 py-8 md:py-12">
           <div className="flex flex-col items-center gap-6 text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Jain Digital Tools
+              Digital Tools
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-              A comprehensive collection of tools for spiritual advancement and self-study
+              A comprehensive collection of tools for learning and productivity
             </p>
           </div>
         </div>

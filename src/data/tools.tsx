@@ -56,24 +56,24 @@ export const getToolUrl = (toolId: string): string | null => {
 
 export const tools: Tool[] = [
   {
-    title: "Jain Audio Stream",
-    description: "Listen to various Jain audios, pravachans, and bhajans for spiritual upliftment.",
+    title: "Audio Stream",
+    description: "Listen to various audios, lectures, and music for relaxation and learning.",
     category: "Popular",
     icon: <Headphones className="h-8 w-8" />,
     toolId: "jain-audio-stream",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "Jain Video Stream",
-    description: "Watch pravachans, documentaries, and spiritual videos related to Jainism.",
+    title: "Video Stream",
+    description: "Watch lectures, documentaries, and educational videos.",
     category: "Popular",
     icon: <PlayCircle className="h-8 w-8" />,
     toolId: "jain-video-stream",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "JainGyan AI",
-    description: "An intelligent AI assistant providing insights and answers on Jain knowledge.",
+    title: "Gyan AI",
+    description: "An intelligent AI assistant providing insights and answers on various topics.",
     category: "AI Agent",
     icon: <Sparkles className="h-8 w-8" />,
     toolId: "jaingyan-ai",
@@ -81,39 +81,39 @@ export const tools: Tool[] = [
   },
   {
     title: "Advance AI Bot",
-    description: "Ask questions from multiple specified sources to get instant answers about Jainism.",
+    description: "Ask questions from multiple specified sources to get instant answers.",
     category: "Popular",
     icon: <Bot className="h-8 w-8" />,
     toolId: "advance-ai-bot",
     videoLink: "https://www.loom.com/share/88b01502cfc94549961e5a65aaae8603?sid=f7e70c03-a887-4e0d-bafe-6fd85d27dd45"
   },
   {
-    title: "Shastra PDF Reader",
-    description: "Read scriptures in digital format. This tool helps you easily read and study scriptures in PDF format.",
+    title: "PDF Reader",
+    description: "Read documents in digital format. This tool helps you easily read and study texts in PDF format.",
     category: "Popular",
     icon: <BookOpen className="h-8 w-8" />,
     toolId: "shastra-pdf-reader",
     videoLink: "https://www.loom.com/share/88c39a36c6cc499a85d913e69347ea18?sid=a8906f09-33fb-4ba4-918c-2b9890fd4d66"
   },
   {
-    title: "Jain Encyclopedia",
-    description: "A comprehensive encyclopedia of Jain terms, concepts, and history.",
+    title: "Encyclopedia",
+    description: "A comprehensive encyclopedia of terms, concepts, and history.",
     category: "Popular",
     icon: <Library className="h-8 w-8" />,
     toolId: "jain-encyclopedia",
     videoLink: "https://www.loom.com/share/f94c887d82ca415c8a5e47943d4ce237?sid=419fd2ff-d39a-4a88-8042-1e137f14ff5d"
   },
   {
-    title: "Jain Panchang",
-    description: "Stay updated with upcoming Jain festivals, dates, and important spiritual days.",
+    title: "Panchang",
+    description: "Stay updated with upcoming festivals, dates, and important days.",
     category: "Content",
     icon: <Calendar className="h-8 w-8" />,
     toolId: "jain-panchang",
     videoLink: "https://www.loom.com/share/27c8f352c22f48df9f8efb0b15327506?sid=9b8b19a6-9810-4674-8c6f-b4dc0562073b"
   },
   {
-    title: "Shastra Multi-PDF AI Bot",
-    description: "Ask questions from multiple scriptures at once with our advanced AI and get answers.",
+    title: "Multi-PDF AI Bot",
+    description: "Ask questions from multiple documents at once with our advanced AI and get answers.",
     category: "Popular",
     icon: <Layers className="h-8 w-8" />,
     toolId: "shastra-multi-pdf-ai-bot",
@@ -121,7 +121,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Quiz",
-    description: "Test your knowledge on Jainism topics by creating quizzes of your choice and reinforce your understanding.",
+    description: "Test your knowledge on various topics by creating quizzes of your choice and reinforce your understanding.",
     category: "Content",
     icon: <ClipboardList className="h-8 w-8" />,
     toolId: "quiz",
@@ -129,7 +129,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Image Creator",
-    description: "Create and share beautiful and inspiring images and quotes based on the teachings of Acharya Kundkund.",
+    description: "Create and share beautiful and inspiring images and quotes.",
     category: "Content",
     icon: <Image className="h-8 w-8" />,
     toolId: "image-creator",
@@ -137,7 +137,7 @@ export const tools: Tool[] = [
   },
   {
     title: "StoryBook Creator",
-    description: "Use AI to create new, inspiring stories and illustrations based on Jain principles and narratives.",
+    description: "Use AI to create new, inspiring stories and illustrations based on principles and narratives.",
     category: "Content",
     icon: <BookText className="h-8 w-8" />,
     toolId: "storybook-creator",
@@ -145,7 +145,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Advance Text Extractor",
-    description: "Extract and organize important excerpts from scriptures.",
+    description: "Extract and organize important excerpts from documents.",
     category: "Content",
     icon: <FileText className="h-8 w-8" />,
     toolId: "advance-text-extractor",
@@ -169,7 +169,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Speedy Notebook",
-    description: "Save time writing Gathas and Sutras.",
+    description: "Save time writing notes and content.",
     category: "Research",
     icon: <Notebook className="h-8 w-8" />,
     toolId: "speedy-notebook",
@@ -177,7 +177,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Rich Editor",
-    description: "This is a powerful tool for formatting Jain scripture text in digital form.",
+    description: "This is a powerful tool for formatting text in digital form.",
     category: "Research",
     icon: <Edit className="h-8 w-8" />,
     toolId: "rich-editor",
@@ -192,8 +192,8 @@ export const tools: Tool[] = [
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "Shastra Hover Dictionary",
-    description: "See the meaning of difficult words from ancient scriptures by simply hovering over them.",
+    title: "Hover Dictionary",
+    description: "See the meaning of difficult words from documents by simply hovering over them.",
     category: "Research",
     icon: <Languages className="h-8 w-8" />,
     toolId: "shastra-hover-dictionary",
@@ -217,7 +217,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Book Editor",
-    description: "Edit and format Jain scriptures and texts with a dedicated book editor.",
+    description: "Edit and format books and texts with a dedicated book editor.",
     category: "Research",
     icon: <BookMarked className="h-8 w-8" />,
     toolId: "book-editor",
@@ -225,7 +225,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Book Editor with HTML",
-    description: "Edit and format Jain scriptures and texts, including HTML content, with an advanced book editor.",
+    description: "Edit and format books and texts, including HTML content, with an advanced book editor.",
     category: "Research",
     icon: <FileCode className="h-8 w-8" />,
     toolId: "book-editor-html",
@@ -265,7 +265,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Soul Mirror - Johari Window",
-    description: "Reflect on self-awareness and personal growth through the Johari Window model, applied to Jain principles.",
+    description: "Reflect on self-awareness and personal growth through the Johari Window model.",
     category: "Modern Science",
     icon: <Heart className="h-8 w-8" />,
     toolId: "soul-mirror",
@@ -273,7 +273,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Cognimap - Mental Models",
-    description: "Explore and apply various mental models for improved thinking and decision-making, integrating them with Jain wisdom.",
+    description: "Explore and apply various mental models for improved thinking and decision-making.",
     category: "Modern Science",
     icon: <Lightbulb className="h-8 w-8" />,
     toolId: "cognimap",
@@ -288,7 +288,7 @@ export const tools: Tool[] = [
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "KundKund E-book & Advance Bot",
+    title: "E-book & Advance Bot",
     description: "An advanced e-book reader with an integrated AI assistant.",
     category: "Lab",
     icon: <Brain className="h-8 w-8" />,
@@ -296,24 +296,24 @@ export const tools: Tool[] = [
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "KundKund MindMap",
-    description: "Visually organize and explore Jain concepts with mind maps.",
+    title: "MindMap",
+    description: "Visually organize and explore concepts with mind maps.",
     category: "Lab",
     icon: <Map className="h-8 w-8" />,
     toolId: "kundkund-mindmap",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "Jain Ganit",
-    description: "Explore complex Jain mathematics and cosmology concepts.",
+    title: "Ganit",
+    description: "Explore complex mathematics and cosmology concepts.",
     category: "Lab",
     icon: <Calculator className="h-8 w-8" />,
     toolId: "jain-ganit",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
   },
   {
-    title: "JainBhugol Maps (Beta)",
-    description: "Explore the concepts of Jain geography and cosmology with interactive maps. (Beta Version)",
+    title: "Bhugol Maps (Beta)",
+    description: "Explore the concepts of geography and cosmology with interactive maps. (Beta Version)",
     category: "Lab",
     icon: <Globe className="h-8 w-8" />,
     toolId: "jainbhugol-maps",
@@ -321,7 +321,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Interactive Videos (Beta)",
-    description: "Engage with spiritual teachings through interactive videos with quizzes. (Beta Version)",
+    description: "Engage with educational content through interactive videos with quizzes. (Beta Version)",
     category: "Lab",
     icon: <Video className="h-8 w-8" />,
     toolId: "interactive-videos",
