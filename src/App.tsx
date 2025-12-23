@@ -9,6 +9,7 @@ import { PremiumRoute } from "@/components/PremiumRoute";
 import Home from "./pages/Home";
 import Tools from "./pages/Tools";
 import ToolViewer from "./pages/ToolViewer";
+import ToolPreview from "./pages/ToolPreview";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
@@ -42,6 +43,14 @@ const App = () => (
               element={
                 <PremiumRoute>
                   <ToolViewer />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/tool-preview/:toolId"
+              element={
+                <PremiumRoute>
+                  <ToolPreview />
                 </PremiumRoute>
               }
             />
