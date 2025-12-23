@@ -1,8 +1,43 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, Sparkles, Zap, Shield, Globe, Check } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
 import logo from "@/assets/logo.png";
+
+const TOTAL_TOOLS_COUNT = 50000;
+
+const problemCards = [
+  {
+    id: "gst-compliance",
+    title: "I need help with GST & compliance",
+    icon: FileText,
+    toolKeywords: ["invoice", "tax", "gst", "compliance", "legal", "contract"],
+  },
+  {
+    id: "content-creation",
+    title: "I want to create better content",
+    icon: Palette,
+    toolKeywords: ["content", "image", "video", "storybook", "creative", "design"],
+  },
+  {
+    id: "pdf-documents",
+    title: "I need to analyze PDFs and documents",
+    icon: FileSearch,
+    toolKeywords: ["pdf", "document", "text", "extractor", "ocr", "reader"],
+  },
+  {
+    id: "automation",
+    title: "I want to automate business tasks",
+    icon: Settings,
+    toolKeywords: ["automation", "bot", "ai", "workflow", "expense", "tracker"],
+  },
+  {
+    id: "studying",
+    title: "I need help studying or learning",
+    icon: GraduationCap,
+    toolKeywords: ["quiz", "learning", "encyclopedia", "notebook", "mindmap"],
+  },
+];
 
 const Home = () => {
   const features = [
@@ -133,8 +168,58 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Tool Discovery Section - NEW */}
       <section className="py-24 md:py-32">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
+              <div className="space-y-4">
+                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
+                  Start with your problem
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-xl">
+                  Choose what you're trying to solve. We'll show you only the tools you need.
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <div className="px-5 py-3 rounded-full bg-accent border border-border">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Total Tools: <span className="text-foreground font-semibold">{TOTAL_TOOLS_COUNT.toLocaleString()}+</span> <span className="text-xs">(including upcoming)</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {problemCards.map((card) => (
+                <Link
+                  key={card.id}
+                  to={`/tools?problem=${card.id}`}
+                  className="group p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
+                      <card.icon className="h-6 w-6 text-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <h3 className="font-medium text-foreground group-hover:text-primary transition-colors leading-snug">
+                        {card.title}
+                      </h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>Explore solutions</span>
+                        <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 md:py-32 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16 space-y-4">
@@ -184,6 +269,27 @@ const Home = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section - NEW */}
+      <section className="py-24 md:py-32">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+              Stop searching for tools.<br />
+              <span className="text-primary">Start solving problems.</span>
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              One subscription. Thousands of focused tools.
+            </p>
+            <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
+              <Link to="/auth">
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
