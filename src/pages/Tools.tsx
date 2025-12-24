@@ -1,36 +1,42 @@
 import { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
 import { ToolCard } from "@/components/ToolCard";
 import { ExpandedToolCard } from "@/components/ExpandedToolCard";
-import { ProblemCard } from "@/components/ProblemCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { tools } from "@/data/tools";
 import { 
-  problemCategories, 
   getUniqueTools, 
-  filterToolsByProblem, 
   totalToolCount,
-  getToolCountByProblem 
+  sectors,
+  inputModes
 } from "@/data/expandedTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, ArrowRight, Sparkles } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles, Filter } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Tools = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  
-  const activeProblem = searchParams.get("problem");
+  const [selectedSector, setSelectedSector] = useState("All Sectors");
+  const [selectedInputMode, setSelectedInputMode] = useState("All Modes");
 
   const categories = ["all", "popular", "ai agent", "content", "research", "modern science", "lab"];
 
   // Get expanded tools
   const expandedTools = useMemo(() => getUniqueTools(), []);
   
+  // Check if any filters are active
+  const hasActiveFilters = selectedSector !== "All Sectors" || selectedInputMode !== "All Modes";
+
   // Filter live tools (from original tools.tsx)
   const filteredLiveTools = tools.filter(tool => {
     const matchesSearch = tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,11 +46,17 @@ const Tools = () => {
     return matchesSearch && matchesCategory;
   });
 
-  // Filter expanded tools based on problem or search
+  // Filter expanded tools based on sector and input mode
   const filteredExpandedTools = useMemo(() => {
-    let filtered = activeProblem 
-      ? filterToolsByProblem(activeProblem)
-      : expandedTools;
+    let filtered = expandedTools;
+    
+    if (selectedSector !== "All Sectors") {
+      filtered = filtered.filter(tool => tool.sector === selectedSector);
+    }
+    
+    if (selectedInputMode !== "All Modes") {
+      filtered = filtered.filter(tool => tool.inputMode === selectedInputMode);
+    }
     
     if (searchQuery) {
       filtered = filtered.filter(tool =>
@@ -54,24 +66,13 @@ const Tools = () => {
     }
     
     return filtered;
-  }, [activeProblem, searchQuery, expandedTools]);
+  }, [selectedSector, selectedInputMode, searchQuery, expandedTools]);
 
-  const handleProblemClick = (problemId: string) => {
-    if (activeProblem === problemId) {
-      searchParams.delete("problem");
-    } else {
-      searchParams.set("problem", problemId);
-    }
-    setSearchParams(searchParams);
-    setSelectedCategory("all");
+  const clearFilters = () => {
+    setSelectedSector("All Sectors");
+    setSelectedInputMode("All Modes");
+    setSearchQuery("");
   };
-
-  const clearProblemFilter = () => {
-    searchParams.delete("problem");
-    setSearchParams(searchParams);
-  };
-
-  const activeProblemData = problemCategories.find(p => p.id === activeProblem);
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,63 +105,106 @@ const Tools = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 md:py-16">
         
-        {/* Problem-First Section */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Start with your problem
-            </h2>
-            <p className="text-muted-foreground">
-              Choose what you're trying to solve. We'll show you only the tools you need.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-            {problemCategories.map((problem) => (
-              <ProblemCard
-                key={problem.id}
-                label={problem.label}
-                description={problem.description}
-                icon={problem.icon}
-                toolCount={getToolCountByProblem(problem.id)}
-                onClick={() => handleProblemClick(problem.id)}
-                isActive={activeProblem === problem.id}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Active Problem Filter Banner */}
-        {activeProblemData && (
-          <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <activeProblemData.icon className="h-5 w-5 text-primary" />
-              <span className="font-medium">
-                Showing tools for: <span className="text-primary">{activeProblemData.label}</span>
-              </span>
-              <Badge variant="secondary">{filteredExpandedTools.length} tools</Badge>
-            </div>
-            <Button variant="ghost" size="sm" onClick={clearProblemFilter}>
-              <X className="h-4 w-4 mr-1" />
-              Clear filter
-            </Button>
-          </div>
-        )}
-
-        {/* Search and Filter */}
-        <div className="mb-12 space-y-6 max-w-4xl mx-auto">
+        {/* Search and Filters Section */}
+        <section className="mb-12 space-y-6 max-w-5xl mx-auto">
+          {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search tools..."
+              placeholder="Search tools by name or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 text-base border-border/50 bg-card/50 backdrop-blur-sm focus-visible:ring-primary/20"
+              className="pl-12 h-14 text-base border-border/50 bg-card/50 backdrop-blur-sm focus-visible:ring-primary/20"
             />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
-          {!activeProblem && (
+          {/* Filter Row */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>Filter by:</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-4">
+              {/* Sector Filter */}
+              <Select value={selectedSector} onValueChange={setSelectedSector}>
+                <SelectTrigger className="w-[200px] bg-card/50">
+                  <SelectValue placeholder="Select Sector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sectors.map((sector) => (
+                    <SelectItem key={sector} value={sector}>
+                      {sector}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Input Mode Filter */}
+              <Select value={selectedInputMode} onValueChange={setSelectedInputMode}>
+                <SelectTrigger className="w-[180px] bg-card/50">
+                  <SelectValue placeholder="Select Mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inputModes.map((mode) => (
+                    <SelectItem key={mode} value={mode}>
+                      {mode}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button variant="outline" size="default" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Active Filters Banner */}
+          {hasActiveFilters && (
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="font-medium text-sm">Active filters:</span>
+                {selectedSector !== "All Sectors" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Sector: {selectedSector}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => setSelectedSector("All Sectors")} 
+                    />
+                  </Badge>
+                )}
+                {selectedInputMode !== "All Modes" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Mode: {selectedInputMode}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => setSelectedInputMode("All Modes")} 
+                    />
+                  </Badge>
+                )}
+                <Badge variant="outline">{filteredExpandedTools.length} tools found</Badge>
+              </div>
+            </div>
+          )}
+
+          {/* Category Tabs */}
+          {!hasActiveFilters && (
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
               <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-2">
                 {categories.map((category) => (
@@ -175,10 +219,10 @@ const Tools = () => {
               </TabsList>
             </Tabs>
           )}
-        </div>
+        </section>
 
-        {/* Tools Grid - Show expanded tools when problem filter active, otherwise show original tools */}
-        {activeProblem ? (
+        {/* Tools Grid - Show expanded tools when filters active, otherwise show original tools */}
+        {hasActiveFilters || searchQuery ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {filteredExpandedTools.map((tool, index) => (
               <div 
@@ -204,9 +248,14 @@ const Tools = () => {
           </div>
         )}
 
-        {(activeProblem ? filteredExpandedTools.length === 0 : filteredLiveTools.length === 0) && (
+        {((hasActiveFilters || searchQuery) ? filteredExpandedTools.length === 0 : filteredLiveTools.length === 0) && (
           <div className="text-center py-16">
             <p className="text-lg text-muted-foreground">No tools found matching your search.</p>
+            {hasActiveFilters && (
+              <Button variant="link" onClick={clearFilters} className="mt-2">
+                Clear all filters
+              </Button>
+            )}
           </div>
         )}
 
@@ -215,7 +264,7 @@ const Tools = () => {
           <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 border border-border/50">
             <span className="text-sm text-muted-foreground">
               <span className="font-bold text-foreground">
-                {activeProblem ? filteredExpandedTools.length : filteredLiveTools.length}
+                {(hasActiveFilters || searchQuery) ? filteredExpandedTools.length : filteredLiveTools.length}
               </span> of{" "}
               <span className="font-bold text-foreground">{totalToolCount.toLocaleString()}+</span> tools available
             </span>
