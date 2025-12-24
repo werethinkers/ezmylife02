@@ -135,7 +135,8 @@ const toolTemplates = [
 ];
 
 // Sectors from CSV
-const sectors = [
+export const sectors = [
+  "All Sectors",
   "Agriculture & Farming", "Automotive", "Banking & Finance", "Construction",
   "E-commerce", "Education", "Energy & Utilities", "Entertainment",
   "Fashion & Apparel", "Food & Beverage", "Healthcare", "Hospitality",
@@ -153,7 +154,7 @@ const personas = [
 ];
 
 // Input modes from CSV
-const inputModes = ["Text Input Mode", "Voice Note Mode"];
+export const inputModes = ["All Modes", "Text Input Mode", "Voice Note Mode"];
 
 // Generate the full 250K+ tools count (simulated for display)
 export const totalToolCount = 250000;
