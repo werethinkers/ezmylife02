@@ -24,23 +24,19 @@ import {
   AlertTriangle,
   ClipboardList,
   Scale,
-  Truck,
-  Heart,
-  GraduationCap,
-  Utensils,
-  Home,
-  Laptop,
-  Stethoscope,
-  Palette,
-  Music,
-  Camera,
-  Plane,
-  ShoppingBag,
-  Coins,
-  Target,
-  BarChart,
   Briefcase,
-  Building,
+  TrendingUp,
+  Target,
+  Percent,
+  FileSignature,
+  Clock,
+  FolderLock,
+  UserPlus,
+  Award,
+  Camera,
+  BarChart,
+  Eye,
+  Heart,
   type LucideIcon
 } from "lucide-react";
 import { ReactNode } from "react";
@@ -52,6 +48,7 @@ export interface ExpandedTool {
   sector: string;
   userPersona: string;
   department: string;
+  systemPrompt: string;
   isLive: boolean;
   icon: ReactNode;
 }
@@ -63,339 +60,110 @@ const departmentIcons: Record<string, LucideIcon> = {
   "Marketing & Sales": Megaphone,
   "Ops & Inventory": Package,
   "HR & Staff": Users,
+  "Growth & Sales": TrendingUp,
+  "Legal & Admin": FileSignature,
+  "HR & Team": UserPlus,
+  "Ops & Stock": Package,
 };
 
 // Icon mapping for tool names
 const toolIcons: Record<string, LucideIcon> = {
+  // Finance & Tax tools
   "Invoice Generator": Receipt,
+  "Smart Invoicer": Receipt,
   "Expense Tracker": Wallet,
+  "Expense Log": Wallet,
+  "Leakage Detector": Eye,
   "Profit Calculator": Calculator,
+  "Profit Meter": Calculator,
   "Tax Estimator": FileText,
+  "Tax Planner": FileText,
   "Bad Debt Recovery": CreditCard,
+  
+  // Legal & Compliance tools
   "Contract Drafter": FileCheck,
   "Compliance Checklist": ClipboardList,
+  "License Tracker": Clock,
   "Notice Reply Bot": MessageSquare,
   "Dispute Letter": AlertCircle,
+  "Dispute Letter Writer": AlertCircle,
   "Safety Protocol": Shield,
+  "Safety Audit": Shield,
+  "Document Locker": FolderLock,
+  
+  // Marketing & Sales tools
   "Cold Outreach": Megaphone,
+  "Campaign Manager": Megaphone,
   "Offer Generator": Gift,
   "Review Replier": Star,
   "Customer Follow-up": UserCheck,
   "Social Media Plan": Calendar,
+  "Loyalty Program": Heart,
+  "Lead Magnet": Target,
+  "Discount Strategist": Percent,
+  
+  // Ops & Inventory tools
   "Stock Audit": Package,
+  "Stock Watchdog": Package,
   "Wastage Log": Trash2,
+  "Wastage Tracker": Trash2,
   "Supplier Order": ShoppingCart,
+  "Vendor Rater": Star,
   "Maintenance Log": Wrench,
+  "Quality Check": ClipboardList,
   "Shift Handover": Repeat,
+  
+  // HR & Staff tools
   "Hiring Job Post": Briefcase,
+  "Hiring Bot": Briefcase,
   "Interview Guide": HelpCircle,
   "Salary Calculator": DollarSign,
+  "Payroll Engine": DollarSign,
   "Warning Letter": AlertTriangle,
   "Daily Task List": ClipboardList,
+  "Shift Planner": Calendar,
+  "Attendance Tracker": Camera,
+  "Performance Scorecard": Award,
 };
 
-// Raw tool data from Excel
-const rawToolsData: Array<{
-  sector: string;
-  userPersona: string;
-  department: string;
-  toolName: string;
-  description: string;
-}> = [
-  // Agriculture & Farming - Dairy Farmer
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create a tax-compliant bill instantly for Agriculture & Farming industry" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Finance & Tax", toolName: "Expense Tracker", description: "Log daily cash expenses to stop leakage for Dairy Farmer" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate true margin after all hidden costs" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Finance & Tax", toolName: "Tax Estimator", description: "Estimate GST/TDS liability for this month" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Finance & Tax", toolName: "Bad Debt Recovery", description: "Draft a strict message for unpaid dues" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Create a standard service agreement" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "List of licenses/permits needed to operate" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Legal & Compliance", toolName: "Notice Reply Bot", description: "Draft a formal reply to a government notice" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Legal & Compliance", toolName: "Dispute Letter", description: "Write a formal complaint letter for bad service" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Legal & Compliance", toolName: "Safety Protocol", description: "Generate a safety checklist for the workplace" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Write a message to pitch services to new clients" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create a festival discount strategy" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Marketing & Sales", toolName: "Review Replier", description: "Draft professional replies to Google/Amazon reviews" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Marketing & Sales", toolName: "Customer Follow-up", description: "Schedule polite reminders for leads" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Create a weekly content calendar" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Ops & Inventory", toolName: "Stock Audit", description: "Checklist to count physical inventory" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Ops & Inventory", toolName: "Wastage Log", description: "Track damaged/expired items to reduce loss" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Ops & Inventory", toolName: "Supplier Order", description: "Draft a purchase order for restocking" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Ops & Inventory", toolName: "Maintenance Log", description: "Track equipment repair dates" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "Ops & Inventory", toolName: "Shift Handover", description: "Note for the next shift manager" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "HR & Staff", toolName: "Hiring Job Post", description: "Write a job description to find good staff" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "HR & Staff", toolName: "Interview Guide", description: "List of questions to ask candidates" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "HR & Staff", toolName: "Salary Calculator", description: "Calculate payout after leave/advance deductions" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "HR & Staff", toolName: "Warning Letter", description: "Draft a formal warning for bad behavior" },
-  { sector: "Agriculture & Farming", userPersona: "Dairy Farmer", department: "HR & Staff", toolName: "Daily Task List", description: "Assign duties to staff members" },
-
-  // Agriculture & Farming - Crop Farmer
-  { sector: "Agriculture & Farming", userPersona: "Crop Farmer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create a tax-compliant bill for crop sales" },
-  { sector: "Agriculture & Farming", userPersona: "Crop Farmer", department: "Finance & Tax", toolName: "Expense Tracker", description: "Log daily farm expenses to optimize costs" },
-  { sector: "Agriculture & Farming", userPersona: "Crop Farmer", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate true margin for crop harvest" },
-  { sector: "Agriculture & Farming", userPersona: "Crop Farmer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Pitch to mandis and bulk buyers" },
-  { sector: "Agriculture & Farming", userPersona: "Crop Farmer", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track grain storage and quality" },
-
-  // Automotive & Transport - Auto Dealer
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create tax-compliant vehicle sale invoices" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track showroom and inventory expenses" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate margins on vehicle sales" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Finance & Tax", toolName: "Tax Estimator", description: "Estimate GST on automotive sales" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft vehicle purchase agreements" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "RTO and vehicle registration compliance" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach potential car buyers" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create festive vehicle discounts" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track vehicle inventory" },
-  { sector: "Automotive & Transport", userPersona: "Auto Dealer", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire sales executives" },
-
-  // Automotive & Transport - Spare Parts Shop
-  { sector: "Automotive & Transport", userPersona: "Spare Parts Shop", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create invoices for auto parts sales" },
-  { sector: "Automotive & Transport", userPersona: "Spare Parts Shop", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track spare parts inventory" },
-  { sector: "Automotive & Transport", userPersona: "Spare Parts Shop", department: "Ops & Inventory", toolName: "Supplier Order", description: "Order parts from manufacturers" },
-
-  // Automotive & Transport - Car Wash Owner
-  { sector: "Automotive & Transport", userPersona: "Car Wash Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create car wash service invoices" },
-  { sector: "Automotive & Transport", userPersona: "Car Wash Owner", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create wash package discounts" },
-  { sector: "Automotive & Transport", userPersona: "Car Wash Owner", department: "HR & Staff", toolName: "Daily Task List", description: "Assign cleaning duties to staff" },
-
-  // Beauty & Wellness - Salon Owner
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create invoices for salon services" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track product and utility expenses" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate profit per service" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Create client agreements" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Plan Instagram content calendar" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create seasonal beauty offers" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track beauty product inventory" },
-  { sector: "Beauty & Wellness", userPersona: "Salon Owner", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire beauticians and stylists" },
-
-  // Beauty & Wellness - Spa Manager
-  { sector: "Beauty & Wellness", userPersona: "Spa Manager", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create spa treatment invoices" },
-  { sector: "Beauty & Wellness", userPersona: "Spa Manager", department: "Marketing & Sales", toolName: "Customer Follow-up", description: "Follow up for repeat bookings" },
-  { sector: "Beauty & Wellness", userPersona: "Spa Manager", department: "Ops & Inventory", toolName: "Supplier Order", description: "Order massage oils and products" },
-
-  // Construction & Real Estate - Builder
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create construction milestone invoices" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track material and labor costs" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate project profitability" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft construction contracts" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "RERA and building permits" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach property investors" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track construction materials" },
-  { sector: "Construction & Real Estate", userPersona: "Builder", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire site supervisors" },
-
-  // Construction & Real Estate - Real Estate Agent
-  { sector: "Construction & Real Estate", userPersona: "Real Estate Agent", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create commission invoices" },
-  { sector: "Construction & Real Estate", userPersona: "Real Estate Agent", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft property agreements" },
-  { sector: "Construction & Real Estate", userPersona: "Real Estate Agent", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach property buyers" },
-  { sector: "Construction & Real Estate", userPersona: "Real Estate Agent", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Market properties on social media" },
-
-  // Education & Training - Coaching Center
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create fee receipts for students" },
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track teaching materials cost" },
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Create enrollment agreements" },
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach parents and students" },
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Promote classes on social media" },
-  { sector: "Education & Training", userPersona: "Coaching Center", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire qualified teachers" },
-
-  // Education & Training - Online Tutor
-  { sector: "Education & Training", userPersona: "Online Tutor", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create tutoring session invoices" },
-  { sector: "Education & Training", userPersona: "Online Tutor", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Find new students online" },
-  { sector: "Education & Training", userPersona: "Online Tutor", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Build education content calendar" },
-
-  // Food & Beverage - Restaurant Owner
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create food service invoices" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track food and utility costs" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate dish profitability" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "FSSAI and health permits" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Post food content on Instagram" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Marketing & Sales", toolName: "Review Replier", description: "Reply to Zomato/Swiggy reviews" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track kitchen inventory" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "Ops & Inventory", toolName: "Wastage Log", description: "Track food wastage" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire kitchen and service staff" },
-  { sector: "Food & Beverage", userPersona: "Restaurant Owner", department: "HR & Staff", toolName: "Shift Handover", description: "Kitchen shift handover notes" },
-
-  // Food & Beverage - Caterer
-  { sector: "Food & Beverage", userPersona: "Caterer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create catering event invoices" },
-  { sector: "Food & Beverage", userPersona: "Caterer", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate event profitability" },
-  { sector: "Food & Beverage", userPersona: "Caterer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach event planners" },
-  { sector: "Food & Beverage", userPersona: "Caterer", department: "Ops & Inventory", toolName: "Supplier Order", description: "Order bulk ingredients" },
-
-  // Healthcare & Pharma - Clinic Owner
-  { sector: "Healthcare & Pharma", userPersona: "Clinic Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create patient billing invoices" },
-  { sector: "Healthcare & Pharma", userPersona: "Clinic Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track medical supplies cost" },
-  { sector: "Healthcare & Pharma", userPersona: "Clinic Owner", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "Medical license requirements" },
-  { sector: "Healthcare & Pharma", userPersona: "Clinic Owner", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Patient consent forms" },
-  { sector: "Healthcare & Pharma", userPersona: "Clinic Owner", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire medical staff" },
-
-  // Healthcare & Pharma - Pharmacy
-  { sector: "Healthcare & Pharma", userPersona: "Pharmacy", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create medicine sale invoices" },
-  { sector: "Healthcare & Pharma", userPersona: "Pharmacy", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track medicine inventory" },
-  { sector: "Healthcare & Pharma", userPersona: "Pharmacy", department: "Ops & Inventory", toolName: "Wastage Log", description: "Track expired medicines" },
-
-  // Retail & E-commerce - Shop Owner
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create retail sale invoices" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track shop expenses" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate product margins" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Finance & Tax", toolName: "Tax Estimator", description: "Estimate GST liability" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create festive discounts" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Marketing & Sales", toolName: "Customer Follow-up", description: "Follow up with regular customers" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track shop inventory" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "Ops & Inventory", toolName: "Supplier Order", description: "Order from wholesalers" },
-  { sector: "Retail & E-commerce", userPersona: "Shop Owner", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire sales staff" },
-
-  // Retail & E-commerce - E-commerce Seller
-  { sector: "Retail & E-commerce", userPersona: "E-commerce Seller", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create online sale invoices" },
-  { sector: "Retail & E-commerce", userPersona: "E-commerce Seller", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate after marketplace fees" },
-  { sector: "Retail & E-commerce", userPersona: "E-commerce Seller", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Plan product promotion" },
-  { sector: "Retail & E-commerce", userPersona: "E-commerce Seller", department: "Marketing & Sales", toolName: "Review Replier", description: "Reply to product reviews" },
-
-  // IT & Software - Freelance Developer
-  { sector: "IT & Software", userPersona: "Freelance Developer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create project invoices" },
-  { sector: "IT & Software", userPersona: "Freelance Developer", department: "Finance & Tax", toolName: "Tax Estimator", description: "Estimate freelance taxes" },
-  { sector: "IT & Software", userPersona: "Freelance Developer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Create project contracts" },
-  { sector: "IT & Software", userPersona: "Freelance Developer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Pitch to potential clients" },
-  { sector: "IT & Software", userPersona: "Freelance Developer", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Build developer personal brand" },
-
-  // IT & Software - Software Agency
-  { sector: "IT & Software", userPersona: "Software Agency", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create software project invoices" },
-  { sector: "IT & Software", userPersona: "Software Agency", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate project profitability" },
-  { sector: "IT & Software", userPersona: "Software Agency", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft NDA and MSA" },
-  { sector: "IT & Software", userPersona: "Software Agency", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire developers" },
-  { sector: "IT & Software", userPersona: "Software Agency", department: "HR & Staff", toolName: "Interview Guide", description: "Technical interview questions" },
-
-  // Professional Services - CA/Accountant
-  { sector: "Professional Services", userPersona: "CA/Accountant", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create professional fee invoices" },
-  { sector: "Professional Services", userPersona: "CA/Accountant", department: "Finance & Tax", toolName: "Tax Estimator", description: "Estimate client taxes" },
-  { sector: "Professional Services", userPersona: "CA/Accountant", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "Tax filing deadlines" },
-  { sector: "Professional Services", userPersona: "CA/Accountant", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Acquire new clients" },
-
-  // Professional Services - Lawyer
-  { sector: "Professional Services", userPersona: "Lawyer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create legal fee invoices" },
-  { sector: "Professional Services", userPersona: "Lawyer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft legal agreements" },
-  { sector: "Professional Services", userPersona: "Lawyer", department: "Legal & Compliance", toolName: "Notice Reply Bot", description: "Draft legal notices" },
-  { sector: "Professional Services", userPersona: "Lawyer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach potential clients" },
-
-  // Hospitality & Tourism - Hotel Owner
-  { sector: "Hospitality & Tourism", userPersona: "Hotel Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create hotel booking invoices" },
-  { sector: "Hospitality & Tourism", userPersona: "Hotel Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track hotel operational costs" },
-  { sector: "Hospitality & Tourism", userPersona: "Hotel Owner", department: "Marketing & Sales", toolName: "Review Replier", description: "Reply to OTA reviews" },
-  { sector: "Hospitality & Tourism", userPersona: "Hotel Owner", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create seasonal offers" },
-  { sector: "Hospitality & Tourism", userPersona: "Hotel Owner", department: "HR & Staff", toolName: "Shift Handover", description: "Front desk handover" },
-
-  // Hospitality & Tourism - Travel Agent
-  { sector: "Hospitality & Tourism", userPersona: "Travel Agent", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create travel booking invoices" },
-  { sector: "Hospitality & Tourism", userPersona: "Travel Agent", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach travelers" },
-  { sector: "Hospitality & Tourism", userPersona: "Travel Agent", department: "Marketing & Sales", toolName: "Offer Generator", description: "Create tour packages" },
-
-  // Creative & Design - Graphic Designer
-  { sector: "Creative & Design", userPersona: "Graphic Designer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create design project invoices" },
-  { sector: "Creative & Design", userPersona: "Graphic Designer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft design contracts" },
-  { sector: "Creative & Design", userPersona: "Graphic Designer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Pitch to agencies" },
-  { sector: "Creative & Design", userPersona: "Graphic Designer", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Showcase portfolio" },
-
-  // Photography & Video - Photographer
-  { sector: "Photography & Video", userPersona: "Photographer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create photography invoices" },
-  { sector: "Photography & Video", userPersona: "Photographer", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft shoot agreements" },
-  { sector: "Photography & Video", userPersona: "Photographer", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Post work samples" },
-  { sector: "Photography & Video", userPersona: "Photographer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach event planners" },
-
-  // Marketing & Advertising - Digital Marketer
-  { sector: "Marketing & Advertising", userPersona: "Digital Marketer", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create campaign invoices" },
-  { sector: "Marketing & Advertising", userPersona: "Digital Marketer", department: "Finance & Tax", toolName: "Profit Calculator", description: "Calculate ROAS" },
-  { sector: "Marketing & Advertising", userPersona: "Digital Marketer", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Create content calendars" },
-  { sector: "Marketing & Advertising", userPersona: "Digital Marketer", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Pitch to brands" },
-
-  // Home Services - Plumber
-  { sector: "Home Services", userPersona: "Plumber", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create service invoices" },
-  { sector: "Home Services", userPersona: "Plumber", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach local customers" },
-  { sector: "Home Services", userPersona: "Plumber", department: "Marketing & Sales", toolName: "Review Replier", description: "Reply to service reviews" },
-
-  // Home Services - Electrician
-  { sector: "Home Services", userPersona: "Electrician", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create electrical work invoices" },
-  { sector: "Home Services", userPersona: "Electrician", department: "Legal & Compliance", toolName: "Safety Protocol", description: "Electrical safety checklist" },
-  { sector: "Home Services", userPersona: "Electrician", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Reach homeowners" },
-
-  // Manufacturing - Factory Owner
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create manufacturing invoices" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Finance & Tax", toolName: "Expense Tracker", description: "Track production costs" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Legal & Compliance", toolName: "Compliance Checklist", description: "Factory licenses and permits" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Legal & Compliance", toolName: "Safety Protocol", description: "Factory safety guidelines" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Ops & Inventory", toolName: "Stock Audit", description: "Track raw materials" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "Ops & Inventory", toolName: "Maintenance Log", description: "Track machine maintenance" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "HR & Staff", toolName: "Hiring Job Post", description: "Hire factory workers" },
-  { sector: "Manufacturing", userPersona: "Factory Owner", department: "HR & Staff", toolName: "Shift Handover", description: "Production shift notes" },
-
-  // Consulting - Business Consultant
-  { sector: "Consulting", userPersona: "Business Consultant", department: "Finance & Tax", toolName: "Invoice Generator", description: "Create consulting invoices" },
-  { sector: "Consulting", userPersona: "Business Consultant", department: "Legal & Compliance", toolName: "Contract Drafter", description: "Draft consulting agreements" },
-  { sector: "Consulting", userPersona: "Business Consultant", department: "Marketing & Sales", toolName: "Cold Outreach", description: "Pitch to businesses" },
-  { sector: "Consulting", userPersona: "Business Consultant", department: "Marketing & Sales", toolName: "Social Media Plan", description: "Build thought leadership" },
-];
-
-// Generate icons based on department or tool name
-const getIconForTool = (toolName: string, department: string): ReactNode => {
-  const IconComponent = toolIcons[toolName] || departmentIcons[department] || FileText;
-  return <IconComponent className="h-6 w-6" />;
-};
-
-// Generate expanded tools from raw data
-export const generateExpandedTools = (): ExpandedTool[] => {
-  return rawToolsData.map((tool, index) => ({
-    id: `tool-${index + 1}`,
-    name: `${tool.toolName} - ${tool.userPersona}`,
-    description: tool.description,
-    sector: tool.sector,
-    userPersona: tool.userPersona,
-    department: tool.department,
-    isLive: false, // All tools from CSV are coming soon
-    icon: getIconForTool(tool.toolName, tool.department),
-  }));
-};
-
-// Get unique tools
-export const getUniqueTools = (): ExpandedTool[] => {
-  return generateExpandedTools();
-};
-
-// Export expanded tools array
-export const expandedTools = generateExpandedTools();
-
-// Get unique sectors
+// All sectors from Excel
 export const sectors = [
   "All Sectors",
   "Agriculture & Farming",
   "Automotive & Transport",
+  "Banking & Finance",
   "Beauty & Wellness",
   "Construction & Real Estate",
-  "Consulting",
-  "Creative & Design",
   "Education & Training",
+  "Energy & Utilities",
+  "Entertainment & Media",
   "Food & Beverage",
-  "Healthcare & Pharma",
-  "Home Services",
+  "Gaming & E-sports",
+  "Healthcare & Medical",
   "Hospitality & Tourism",
   "IT & Software",
-  "Manufacturing",
-  "Marketing & Advertising",
-  "Photography & Video",
+  "Legal Services",
+  "Logistics Super-App",
+  "Manufacturing Super-App",
+  "Non-Profit & NGO",
   "Professional Services",
-  "Retail & E-commerce",
+  "Retail Super-App",
+  "Sports & Fitness",
+  "Telecommunications",
+  "Weddings & Matrimony",
 ];
 
-// Get unique departments
-export const departments = [
-  "All Departments",
-  "Finance & Tax",
-  "Legal & Compliance",
-  "Marketing & Sales",
-  "Ops & Inventory",
-  "HR & Staff",
-];
-
-// Get unique user personas
+// All user personas from Excel
 export const inputModes = [
   "All Personas",
+  "Business Owner",
+  "Accountant",
+  "Manager",
+  "Freelancer",
+  "Consultant",
+  "Specialist",
   "Dairy Farmer",
+  "Poultry Owner",
   "Crop Farmer",
   "Auto Dealer",
   "Spare Parts Shop",
@@ -408,42 +176,188 @@ export const inputModes = [
   "Online Tutor",
   "Restaurant Owner",
   "Caterer",
-  "Clinic Owner",
-  "Pharmacy",
-  "Shop Owner",
-  "E-commerce Seller",
-  "Freelance Developer",
-  "Software Agency",
-  "CA/Accountant",
-  "Lawyer",
-  "Hotel Owner",
-  "Travel Agent",
-  "Graphic Designer",
-  "Photographer",
-  "Digital Marketer",
-  "Plumber",
-  "Electrician",
-  "Factory Owner",
-  "Business Consultant",
+  "Sweet Shop",
+  "Textile Mill",
+  "Courier Franchise",
+  "Warehouse",
 ];
 
-// Total tool count
-export const totalToolCount = 50000;
+// All departments from Excel  
+export const departments = [
+  "All Departments",
+  "Finance & Tax",
+  "Legal & Compliance",
+  "Marketing & Sales",
+  "Ops & Inventory",
+  "HR & Staff",
+  "Growth & Sales",
+  "Legal & Admin",
+  "HR & Team",
+  "Ops & Stock",
+];
 
-// Filter tools by sector
-export const filterToolsBySector = (tools: ExpandedTool[], sector: string): ExpandedTool[] => {
+// Core tool definitions (shared across all personas/sectors)
+const coreTools = [
+  // Finance & Tax Department
+  { toolName: "Invoice Generator", department: "Finance & Tax", baseDescription: "Create a tax-compliant bill instantly with GST calculations" },
+  { toolName: "Expense Tracker", department: "Finance & Tax", baseDescription: "Log daily cash expenses to stop leakage and track spending" },
+  { toolName: "Profit Calculator", department: "Finance & Tax", baseDescription: "Calculate true margin after all hidden costs" },
+  { toolName: "Tax Estimator", department: "Finance & Tax", baseDescription: "Estimate GST/TDS liability for this month" },
+  { toolName: "Bad Debt Recovery", department: "Finance & Tax", baseDescription: "Draft a strict message for unpaid dues" },
+  
+  // Legal & Compliance Department
+  { toolName: "Contract Drafter", department: "Legal & Compliance", baseDescription: "Create a standard service agreement" },
+  { toolName: "Compliance Checklist", department: "Legal & Compliance", baseDescription: "List of licenses/permits needed to operate" },
+  { toolName: "Notice Reply Bot", department: "Legal & Compliance", baseDescription: "Draft a formal reply to a government notice" },
+  { toolName: "Dispute Letter", department: "Legal & Compliance", baseDescription: "Write a formal complaint letter for bad service" },
+  { toolName: "Safety Protocol", department: "Legal & Compliance", baseDescription: "Generate a safety checklist for the workplace" },
+  
+  // Marketing & Sales Department
+  { toolName: "Cold Outreach", department: "Marketing & Sales", baseDescription: "Write a message to pitch services to new clients" },
+  { toolName: "Offer Generator", department: "Marketing & Sales", baseDescription: "Create a festival discount strategy" },
+  { toolName: "Review Replier", department: "Marketing & Sales", baseDescription: "Draft professional replies to Google/Amazon reviews" },
+  { toolName: "Customer Follow-up", department: "Marketing & Sales", baseDescription: "Schedule polite reminders for leads" },
+  { toolName: "Social Media Plan", department: "Marketing & Sales", baseDescription: "Create a weekly content calendar" },
+  
+  // Ops & Inventory Department
+  { toolName: "Stock Audit", department: "Ops & Inventory", baseDescription: "Checklist to count physical inventory" },
+  { toolName: "Wastage Log", department: "Ops & Inventory", baseDescription: "Track damaged/expired items to reduce loss" },
+  { toolName: "Supplier Order", department: "Ops & Inventory", baseDescription: "Draft a purchase order for restocking" },
+  { toolName: "Maintenance Log", department: "Ops & Inventory", baseDescription: "Track equipment repair dates" },
+  { toolName: "Shift Handover", department: "Ops & Inventory", baseDescription: "Note for the next shift manager" },
+  
+  // HR & Staff Department
+  { toolName: "Hiring Job Post", department: "HR & Staff", baseDescription: "Write a job description to find good staff" },
+  { toolName: "Interview Guide", department: "HR & Staff", baseDescription: "List of questions to ask candidates" },
+  { toolName: "Salary Calculator", department: "HR & Staff", baseDescription: "Calculate payout after leave/advance deductions" },
+  { toolName: "Warning Letter", department: "HR & Staff", baseDescription: "Draft a formal warning for bad behavior" },
+  { toolName: "Daily Task List", department: "HR & Staff", baseDescription: "Assign duties to staff members" },
+];
+
+// Super-App specific tool definitions
+const superAppTools = [
+  // Finance & Tax
+  { toolName: "Smart Invoicer", department: "Finance & Tax", baseDescription: "Auto-generate tax compliant bills with GST calculations" },
+  { toolName: "Leakage Detector", department: "Finance & Tax", baseDescription: "Analyze expenses to find wastage and theft" },
+  { toolName: "Profit Meter", department: "Finance & Tax", baseDescription: "Calculate real-time daily profit margins" },
+  { toolName: "Tax Planner", department: "Finance & Tax", baseDescription: "Estimate GST liability and prepare return drafts" },
+  { toolName: "Expense Log", department: "Finance & Tax", baseDescription: "Digitize daily petty cash vouchers" },
+  
+  // HR & Team
+  { toolName: "Shift Planner", department: "HR & Team", baseDescription: "Auto-schedule staff shifts based on traffic" },
+  { toolName: "Payroll Engine", department: "HR & Team", baseDescription: "Calculate salaries, overtime, and deductions" },
+  { toolName: "Hiring Bot", department: "HR & Team", baseDescription: "Screen candidate resumes and schedule interviews" },
+  { toolName: "Attendance Tracker", department: "HR & Team", baseDescription: "Selfie-based attendance with location tagging" },
+  { toolName: "Performance Scorecard", department: "HR & Team", baseDescription: "Rate employee performance based on tasks" },
+  
+  // Ops & Stock
+  { toolName: "Stock Watchdog", department: "Ops & Stock", baseDescription: "Alerts when inventory hits re-order levels" },
+  { toolName: "Wastage Tracker", department: "Ops & Stock", baseDescription: "Log spoiled or damaged goods for audit" },
+  { toolName: "Vendor Rater", department: "Ops & Stock", baseDescription: "Score suppliers on quality and timeliness" },
+  { toolName: "Quality Check", department: "Ops & Stock", baseDescription: "Digital checklist for product quality inspection" },
+  
+  // Growth & Sales
+  { toolName: "Campaign Manager", department: "Growth & Sales", baseDescription: "Launch SMS/WhatsApp marketing campaigns" },
+  { toolName: "Loyalty Program", department: "Growth & Sales", baseDescription: "Manage customer reward points and tiers" },
+  { toolName: "Lead Magnet", department: "Growth & Sales", baseDescription: "Capture and qualify potential customer leads" },
+  { toolName: "Discount Strategist", department: "Growth & Sales", baseDescription: "Calculate optimal discount rates to maintain margin" },
+  
+  // Legal & Admin
+  { toolName: "License Tracker", department: "Legal & Admin", baseDescription: "Reminders for trade license and permit renewals" },
+  { toolName: "Dispute Letter Writer", department: "Legal & Admin", baseDescription: "Draft formal notices for payment recovery" },
+  { toolName: "Safety Audit", department: "Legal & Admin", baseDescription: "Workplace safety compliance checklist" },
+  { toolName: "Document Locker", department: "Legal & Admin", baseDescription: "Securely store and organize business docs" },
+];
+
+// Sector-Persona combinations
+const sectorPersonaCombinations = [
+  // Agriculture & Farming
+  { sector: "Agriculture & Farming", personas: ["Dairy Farmer", "Crop Farmer", "Poultry Owner", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Automotive & Transport", personas: ["Auto Dealer", "Spare Parts Shop", "Car Wash Owner", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Banking & Finance", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer", "Accountant"] },
+  { sector: "Beauty & Wellness", personas: ["Salon Owner", "Spa Manager", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Construction & Real Estate", personas: ["Builder", "Real Estate Agent", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Education & Training", personas: ["Coaching Center", "Online Tutor", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Food & Beverage", personas: ["Restaurant Owner", "Caterer", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Healthcare & Medical", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "IT & Software", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Gaming & E-sports", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Weddings & Matrimony", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Retail Super-App", personas: ["Sweet Shop - Business Owner", "Sweet Shop - Accountant"] },
+  { sector: "Manufacturing Super-App", personas: ["Textile Mill - Business Owner", "Textile Mill - Accountant"] },
+  { sector: "Logistics Super-App", personas: ["Courier Franchise - Business Owner", "Warehouse - Business Owner"] },
+];
+
+function getIconForTool(toolName: string, department: string): LucideIcon {
+  if (toolIcons[toolName]) {
+    return toolIcons[toolName];
+  }
+  if (departmentIcons[department]) {
+    return departmentIcons[department];
+  }
+  return FileText;
+}
+
+function generateSystemPrompt(sector: string, persona: string, toolName: string, description: string): string {
+  return `ACT AS: An Expert AI Consultant specialized in ${sector}.
+CURRENT USER: ${persona} (Indian Context).
+APP FEATURE: ${toolName}
+GOAL: ${description} specifically for a ${persona} in the ${sector} industry.
+LOGIC:
+1. Ask/Identify key details (Amounts, Dates, Names).
+2. Apply specific logic for ${sector} (e.g., GST rates, Industry Laws, Jargon).
+3. Generate the final output directly (Document, Table, or Message).
+4. Do not offer generic advice. Solve the specific problem.`;
+}
+
+// Generate all expanded tools
+function generateExpandedTools(): ExpandedTool[] {
+  const tools: ExpandedTool[] = [];
+  let idCounter = 1;
+
+  // Generate tools for regular sectors
+  for (const combo of sectorPersonaCombinations) {
+    const isSuperApp = combo.sector.includes("Super-App");
+    const toolSet = isSuperApp ? superAppTools : coreTools;
+    
+    for (const persona of combo.personas) {
+      for (const tool of toolSet) {
+        const IconComponent = getIconForTool(tool.toolName, tool.department);
+        const description = `${tool.baseDescription} for ${persona} in ${combo.sector}`;
+        
+        tools.push({
+          id: `tool-${idCounter++}`,
+          name: tool.toolName,
+          description: description,
+          sector: combo.sector,
+          userPersona: persona,
+          department: tool.department,
+          systemPrompt: generateSystemPrompt(combo.sector, persona, tool.toolName, tool.baseDescription),
+          isLive: true,
+          icon: <IconComponent className="h-6 w-6" />,
+        });
+      }
+    }
+  }
+
+  return tools;
+}
+
+export const expandedTools = generateExpandedTools();
+export const totalToolCount = expandedTools.length;
+
+// Filter functions
+export function filterToolsBySector(tools: ExpandedTool[], sector: string): ExpandedTool[] {
   if (sector === "All Sectors") return tools;
   return tools.filter(tool => tool.sector === sector);
-};
+}
 
-// Filter tools by department
-export const filterToolsByDepartment = (tools: ExpandedTool[], department: string): ExpandedTool[] => {
+export function filterToolsByDepartment(tools: ExpandedTool[], department: string): ExpandedTool[] {
   if (department === "All Departments") return tools;
   return tools.filter(tool => tool.department === department);
-};
+}
 
-// Filter tools by user persona
-export const filterToolsByPersona = (tools: ExpandedTool[], persona: string): ExpandedTool[] => {
+export function filterToolsByPersona(tools: ExpandedTool[], persona: string): ExpandedTool[] {
   if (persona === "All Personas") return tools;
-  return tools.filter(tool => tool.userPersona === persona);
-};
+  return tools.filter(tool => tool.userPersona === persona || tool.userPersona.includes(persona));
+}
