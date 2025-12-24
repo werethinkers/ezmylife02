@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { ExpandedToolCard } from "@/components/ExpandedToolCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { 
-  getUniqueTools, 
+  expandedTools, 
   totalToolCount,
   sectors,
   departments,
@@ -27,9 +27,6 @@ const Tools = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedPersona, setSelectedPersona] = useState("All Personas");
 
-  // Get all expanded tools
-  const allTools = useMemo(() => getUniqueTools(), []);
-  
   // Check if any filters are active
   const hasActiveFilters = selectedSector !== "All Sectors" || 
                            selectedDepartment !== "All Departments" || 
@@ -38,7 +35,7 @@ const Tools = () => {
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
-    let filtered = allTools;
+    let filtered = expandedTools;
     
     if (selectedSector !== "All Sectors") {
       filtered = filtered.filter(tool => tool.sector === selectedSector);
@@ -63,7 +60,7 @@ const Tools = () => {
     }
     
     return filtered;
-  }, [selectedSector, selectedDepartment, selectedPersona, searchQuery, allTools]);
+  }, [selectedSector, selectedDepartment, selectedPersona, searchQuery]);
 
   const clearFilters = () => {
     setSelectedSector("All Sectors");
@@ -77,15 +74,13 @@ const Tools = () => {
       <Navbar />
       
       {/* Hero Header */}
-      <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="relative border-b border-border/40 bg-background/80 backdrop-blur-xl pt-20">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5" />
         <div className="relative container mx-auto px-4 py-8 md:py-12">
           <div className="flex flex-col items-center gap-6 text-center max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                Digital Tools
-              </h1>
-            </div>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Digital Tools
+            </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
               A comprehensive collection of tools for learning and productivity
@@ -149,15 +144,29 @@ const Tools = () => {
                 </SelectContent>
               </Select>
 
-              {/* Input Mode Filter */}
-              <Select value={selectedInputMode} onValueChange={setSelectedInputMode}>
+              {/* Department Filter */}
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                 <SelectTrigger className="w-[180px] bg-card/50">
-                  <SelectValue placeholder="Select Mode" />
+                  <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {inputModes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
+                  {departments.map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* User Persona Filter */}
+              <Select value={selectedPersona} onValueChange={setSelectedPersona}>
+                <SelectTrigger className="w-[180px] bg-card/50">
+                  <SelectValue placeholder="Select User Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inputModes.map((persona) => (
+                    <SelectItem key={persona} value={persona}>
+                      {persona}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -187,66 +196,44 @@ const Tools = () => {
                     />
                   </Badge>
                 )}
-                {selectedInputMode !== "All Modes" && (
+                {selectedDepartment !== "All Departments" && (
                   <Badge variant="secondary" className="gap-1">
-                    Mode: {selectedInputMode}
+                    Department: {selectedDepartment}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setSelectedInputMode("All Modes")} 
+                      onClick={() => setSelectedDepartment("All Departments")} 
                     />
                   </Badge>
                 )}
-                <Badge variant="outline">{filteredExpandedTools.length} tools found</Badge>
+                {selectedPersona !== "All Personas" && (
+                  <Badge variant="secondary" className="gap-1">
+                    User: {selectedPersona}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => setSelectedPersona("All Personas")} 
+                    />
+                  </Badge>
+                )}
+                <Badge variant="outline">{filteredTools.length} tools found</Badge>
               </div>
             </div>
           )}
-
-          {/* Category Tabs */}
-          {!hasActiveFilters && (
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-              <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-2">
-                {categories.map((category) => (
-                  <TabsTrigger 
-                    key={category} 
-                    value={category}
-                    className="capitalize text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm px-4 py-2"
-                  >
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          )}
         </section>
 
-        {/* Tools Grid - Show expanded tools when filters active, otherwise show original tools */}
-        {hasActiveFilters || searchQuery ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {filteredExpandedTools.map((tool, index) => (
-              <div 
-                key={tool.id} 
-                className="animate-in fade-in-50 duration-500" 
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                <ExpandedToolCard {...tool} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {filteredLiveTools.map((tool, index) => (
-              <div 
-                key={tool.toolId} 
-                className="animate-in fade-in-50 duration-500" 
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                <ToolCard {...tool} />
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Tools Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+          {filteredTools.map((tool, index) => (
+            <div 
+              key={tool.id} 
+              className="animate-in fade-in-50 duration-500" 
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              <ExpandedToolCard {...tool} />
+            </div>
+          ))}
+        </div>
 
-        {((hasActiveFilters || searchQuery) ? filteredExpandedTools.length === 0 : filteredLiveTools.length === 0) && (
+        {filteredTools.length === 0 && (
           <div className="text-center py-16">
             <p className="text-lg text-muted-foreground">No tools found matching your search.</p>
             {hasActiveFilters && (
@@ -262,7 +249,7 @@ const Tools = () => {
           <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 border border-border/50">
             <span className="text-sm text-muted-foreground">
               <span className="font-bold text-foreground">
-                {(hasActiveFilters || searchQuery) ? filteredExpandedTools.length : filteredLiveTools.length}
+                {filteredTools.length}
               </span> of{" "}
               <span className="font-bold text-foreground">{totalToolCount.toLocaleString()}+</span> tools available
             </span>

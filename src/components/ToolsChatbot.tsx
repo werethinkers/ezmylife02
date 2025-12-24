@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
-import { problemCategories } from "@/data/expandedTools";
 
 interface Message {
   role: "user" | "assistant";
@@ -11,16 +10,16 @@ interface Message {
 }
 
 const toolTemplatesData = [
-  { name: "Invoice Generator", desc: "Create tax-compliant invoices", category: "gst-compliance" },
-  { name: "Tax Estimator", desc: "Estimate GST liability", category: "gst-compliance" },
-  { name: "Caption Writer", desc: "Create social media captions", category: "content-creation" },
-  { name: "PDF Summarizer", desc: "Summarize PDF documents", category: "pdf-documents" },
-  { name: "Task Automator", desc: "Automate repetitive tasks", category: "automation" },
-  { name: "Quiz Maker", desc: "Create interactive quizzes", category: "learning" },
-  { name: "Cold Pitch", desc: "Write sales messages", category: "content-creation" },
-  { name: "Expense Log", desc: "Track daily expenses", category: "gst-compliance" },
-  { name: "Follow-up Bot", desc: "Draft follow-up emails", category: "automation" },
-  { name: "Study Planner", desc: "Plan study schedules", category: "learning" },
+  { name: "Invoice Generator", desc: "Create tax-compliant invoices", category: "Finance & Tax" },
+  { name: "Tax Estimator", desc: "Estimate GST liability", category: "Finance & Tax" },
+  { name: "Contract Drafter", desc: "Create legal contracts", category: "Legal & Compliance" },
+  { name: "Cold Outreach", desc: "Write sales messages", category: "Marketing & Sales" },
+  { name: "Expense Tracker", desc: "Track daily expenses", category: "Finance & Tax" },
+  { name: "Stock Audit", desc: "Track inventory", category: "Ops & Inventory" },
+  { name: "Hiring Job Post", desc: "Write job descriptions", category: "HR & Staff" },
+  { name: "Social Media Plan", desc: "Create content calendars", category: "Marketing & Sales" },
+  { name: "Compliance Checklist", desc: "Track required permits", category: "Legal & Compliance" },
+  { name: "Profit Calculator", desc: "Calculate margins", category: "Finance & Tax" },
 ];
 
 export const ToolsChatbot = () => {
@@ -45,7 +44,7 @@ export const ToolsChatbot = () => {
     // Check for tool-specific questions
     for (const tool of toolTemplatesData) {
       if (lowerMessage.includes(tool.name.toLowerCase())) {
-        return `**${tool.name}** - ${tool.desc}\n\nThis tool helps you ${tool.desc.toLowerCase()}. It's part of our ${problemCategories.find(c => c.id === tool.category)?.label || "tools"} collection.\n\nWould you like me to suggest similar tools?`;
+        return `**${tool.name}** - ${tool.desc}\n\nThis tool helps you ${tool.desc.toLowerCase()}. It's part of our ${tool.category} collection.\n\nWould you like me to suggest similar tools?`;
       }
     }
     
