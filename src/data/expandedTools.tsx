@@ -357,6 +357,9 @@ export const getUniqueTools = (): ExpandedTool[] => {
   return generateExpandedTools();
 };
 
+// Export expanded tools array
+export const expandedTools = generateExpandedTools();
+
 // Get unique sectors
 export const sectors = [
   "All Sectors",
