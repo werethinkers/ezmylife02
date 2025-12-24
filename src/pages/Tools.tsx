@@ -1,18 +1,16 @@
 import { useState, useMemo } from "react";
-import { ToolCard } from "@/components/ToolCard";
 import { ExpandedToolCard } from "@/components/ExpandedToolCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
-import { tools } from "@/data/tools";
 import { 
   getUniqueTools, 
   totalToolCount,
   sectors,
+  departments,
   inputModes
 } from "@/data/expandedTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, ArrowRight, Sparkles, Filter } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,52 +23,52 @@ import {
 
 const Tools = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSector, setSelectedSector] = useState("All Sectors");
-  const [selectedInputMode, setSelectedInputMode] = useState("All Modes");
+  const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
+  const [selectedPersona, setSelectedPersona] = useState("All Personas");
 
-  const categories = ["all", "popular", "ai agent", "content", "research", "modern science", "lab"];
-
-  // Get expanded tools
-  const expandedTools = useMemo(() => getUniqueTools(), []);
+  // Get all expanded tools
+  const allTools = useMemo(() => getUniqueTools(), []);
   
   // Check if any filters are active
-  const hasActiveFilters = selectedSector !== "All Sectors" || selectedInputMode !== "All Modes";
+  const hasActiveFilters = selectedSector !== "All Sectors" || 
+                           selectedDepartment !== "All Departments" || 
+                           selectedPersona !== "All Personas" ||
+                           searchQuery.length > 0;
 
-  // Filter live tools (from original tools.tsx)
-  const filteredLiveTools = tools.filter(tool => {
-    const matchesSearch = tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || 
-                           tool.category.toLowerCase() === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  // Filter expanded tools based on sector and input mode
-  const filteredExpandedTools = useMemo(() => {
-    let filtered = expandedTools;
+  // Filter tools based on all filters
+  const filteredTools = useMemo(() => {
+    let filtered = allTools;
     
     if (selectedSector !== "All Sectors") {
       filtered = filtered.filter(tool => tool.sector === selectedSector);
     }
     
-    if (selectedInputMode !== "All Modes") {
-      filtered = filtered.filter(tool => tool.inputMode === selectedInputMode);
+    if (selectedDepartment !== "All Departments") {
+      filtered = filtered.filter(tool => tool.department === selectedDepartment);
+    }
+    
+    if (selectedPersona !== "All Personas") {
+      filtered = filtered.filter(tool => tool.userPersona === selectedPersona);
     }
     
     if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(tool =>
-        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase())
+        tool.name.toLowerCase().includes(query) ||
+        tool.description.toLowerCase().includes(query) ||
+        tool.sector.toLowerCase().includes(query) ||
+        tool.department.toLowerCase().includes(query)
       );
     }
     
     return filtered;
-  }, [selectedSector, selectedInputMode, searchQuery, expandedTools]);
+  }, [selectedSector, selectedDepartment, selectedPersona, searchQuery, allTools]);
 
   const clearFilters = () => {
     setSelectedSector("All Sectors");
-    setSelectedInputMode("All Modes");
+    setSelectedDepartment("All Departments");
+    setSelectedPersona("All Personas");
     setSearchQuery("");
   };
 
