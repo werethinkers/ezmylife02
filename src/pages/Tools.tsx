@@ -12,7 +12,7 @@ import {
 } from "@/data/expandedTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, ArrowRight, Sparkles, Filter, LayoutGrid, List, Zap } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles, Filter, LayoutGrid, List, Zap, Download } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -91,6 +91,32 @@ const Tools = () => {
     setSearchQuery("");
   };
 
+  // Export tools to CSV
+  const exportToCSV = () => {
+    const headers = ["ID", "Tool Name", "Description", "Sector", "User Persona", "Department"];
+    const csvContent = [
+      headers.join(","),
+      ...expandedTools.map(tool => [
+        tool.id,
+        `"${tool.name.replace(/"/g, '""')}"`,
+        `"${tool.description.replace(/"/g, '""')}"`,
+        `"${tool.sector.replace(/"/g, '""')}"`,
+        `"${tool.userPersona.replace(/"/g, '""')}"`,
+        `"${tool.department.replace(/"/g, '""')}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `ezmylife_tools_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDepartmentChange = (dept: string) => {
     setSelectedDepartment(dept);
     setSelectedSubcategory(null);
@@ -125,12 +151,21 @@ const Tools = () => {
         <div className="relative container mx-auto px-4 py-12 md:py-20">
           <div className="flex flex-col items-center gap-8 text-center max-w-4xl mx-auto">
             {/* Animated badge */}
-            <div className="animate-fade-in-down">
+            <div className="animate-fade-in-down flex items-center gap-3">
               <Badge variant="secondary" className="text-sm px-5 py-2.5 glass border-primary/20 glow-sm">
                 <Zap className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-gradient font-semibold">{totalToolCount.toLocaleString()}+</span>
                 <span className="ml-1 text-muted-foreground">Tools Available</span>
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+                className="glass border-primary/30 hover:border-primary/50 hover:bg-primary/10"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export All
+              </Button>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight animate-fade-in-up">
