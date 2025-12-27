@@ -55,15 +55,12 @@ export interface ExpandedTool {
 
 // Icon mapping for departments
 const departmentIcons: Record<string, LucideIcon> = {
-  "Finance & Tax": Calculator,
+  "Finance & Accounting": Calculator,
   "Legal & Compliance": Scale,
   "Marketing & Sales": Megaphone,
-  "Ops & Inventory": Package,
-  "HR & Staff": Users,
-  "Growth & Sales": TrendingUp,
-  "Legal & Admin": FileSignature,
-  "HR & Team": UserPlus,
-  "Ops & Stock": Package,
+  "Operations & Inventory": Package,
+  "HR & Staffing": Users,
+  "Customer Service": MessageSquare,
 };
 
 // Icon mapping for tool names
@@ -126,166 +123,181 @@ const toolIcons: Record<string, LucideIcon> = {
   "Performance Scorecard": Award,
 };
 
-// All sectors from Excel
+// Industry Categories (grouped logically)
+export const sectorCategories = {
+  "Services & Professional": [
+    "Banking & Finance",
+    "Legal Services",
+    "Professional Services",
+    "IT & Software",
+    "Education & Training",
+  ],
+  "Retail & Commerce": [
+    "Retail",
+    "Food & Beverage",
+    "Beauty & Wellness",
+    "Hospitality & Tourism",
+  ],
+  "Industrial & Production": [
+    "Manufacturing",
+    "Agriculture & Farming",
+    "Construction & Real Estate",
+    "Energy & Utilities",
+  ],
+  "Logistics & Transport": [
+    "Logistics",
+    "Automotive & Transport",
+    "Telecommunications",
+  ],
+  "Lifestyle & Entertainment": [
+    "Entertainment & Media",
+    "Gaming & E-sports",
+    "Sports & Fitness",
+    "Weddings & Events",
+    "Non-Profit & NGO",
+  ],
+  "Healthcare": [
+    "Healthcare & Medical",
+  ],
+};
+
+// Flat sectors list for filtering
 export const sectors = [
   "All Sectors",
-  "Agriculture & Farming",
-  "Automotive & Transport",
-  "Banking & Finance",
-  "Beauty & Wellness",
-  "Construction & Real Estate",
-  "Education & Training",
-  "Energy & Utilities",
-  "Entertainment & Media",
-  "Food & Beverage",
-  "Gaming & E-sports",
-  "Healthcare & Medical",
-  "Hospitality & Tourism",
-  "IT & Software",
-  "Legal Services",
-  "Logistics Super-App",
-  "Manufacturing Super-App",
-  "Non-Profit & NGO",
-  "Professional Services",
-  "Retail Super-App",
-  "Sports & Fitness",
-  "Telecommunications",
-  "Weddings & Matrimony",
+  ...Object.values(sectorCategories).flat(),
 ];
 
-// All user personas from Excel
+// User personas grouped by type
+export const personaCategories = {
+  "Business Roles": [
+    "Business Owner",
+    "Manager",
+    "Accountant",
+  ],
+  "Professional Services": [
+    "Consultant",
+    "Freelancer",
+    "Specialist",
+  ],
+  "Industry-Specific": [
+    "Restaurant Owner",
+    "Salon Owner",
+    "Builder",
+    "Real Estate Agent",
+    "Coaching Center",
+    "Online Tutor",
+    "Caterer",
+    "Auto Dealer",
+    "Dairy Farmer",
+    "Crop Farmer",
+  ],
+};
+
 export const inputModes = [
   "All Personas",
-  "Business Owner",
-  "Accountant",
-  "Manager",
-  "Freelancer",
-  "Consultant",
-  "Specialist",
-  "Dairy Farmer",
-  "Poultry Owner",
-  "Crop Farmer",
-  "Auto Dealer",
-  "Spare Parts Shop",
-  "Car Wash Owner",
-  "Salon Owner",
-  "Spa Manager",
-  "Builder",
-  "Real Estate Agent",
-  "Coaching Center",
-  "Online Tutor",
-  "Restaurant Owner",
-  "Caterer",
-  "Sweet Shop",
-  "Textile Mill",
-  "Courier Franchise",
-  "Warehouse",
+  ...Object.values(personaCategories).flat(),
 ];
 
-// All departments from Excel  
+// Consolidated departments (removed duplicates)
 export const departments = [
   "All Departments",
-  "Finance & Tax",
+  "Finance & Accounting",
   "Legal & Compliance",
   "Marketing & Sales",
-  "Ops & Inventory",
-  "HR & Staff",
-  "Growth & Sales",
-  "Legal & Admin",
-  "HR & Team",
-  "Ops & Stock",
+  "Operations & Inventory",
+  "HR & Staffing",
+  "Customer Service",
 ];
 
 // Core tool definitions (shared across all personas/sectors)
 const coreTools = [
-  // Finance & Tax Department
-  { toolName: "Invoice Generator", department: "Finance & Tax", baseDescription: "Create a tax-compliant bill instantly with GST calculations" },
-  { toolName: "Expense Tracker", department: "Finance & Tax", baseDescription: "Log daily cash expenses to stop leakage and track spending" },
-  { toolName: "Profit Calculator", department: "Finance & Tax", baseDescription: "Calculate true margin after all hidden costs" },
-  { toolName: "Tax Estimator", department: "Finance & Tax", baseDescription: "Estimate GST/TDS liability for this month" },
-  { toolName: "Bad Debt Recovery", department: "Finance & Tax", baseDescription: "Draft a strict message for unpaid dues" },
+  // Finance & Accounting
+  { toolName: "Invoice Generator", department: "Finance & Accounting", baseDescription: "Create a tax-compliant bill instantly with GST calculations" },
+  { toolName: "Expense Tracker", department: "Finance & Accounting", baseDescription: "Log daily cash expenses to stop leakage and track spending" },
+  { toolName: "Profit Calculator", department: "Finance & Accounting", baseDescription: "Calculate true margin after all hidden costs" },
+  { toolName: "Tax Estimator", department: "Finance & Accounting", baseDescription: "Estimate GST/TDS liability for this month" },
+  { toolName: "Bad Debt Recovery", department: "Finance & Accounting", baseDescription: "Draft a strict message for unpaid dues" },
   
-  // Legal & Compliance Department
+  // Legal & Compliance
   { toolName: "Contract Drafter", department: "Legal & Compliance", baseDescription: "Create a standard service agreement" },
   { toolName: "Compliance Checklist", department: "Legal & Compliance", baseDescription: "List of licenses/permits needed to operate" },
   { toolName: "Notice Reply Bot", department: "Legal & Compliance", baseDescription: "Draft a formal reply to a government notice" },
   { toolName: "Dispute Letter", department: "Legal & Compliance", baseDescription: "Write a formal complaint letter for bad service" },
   { toolName: "Safety Protocol", department: "Legal & Compliance", baseDescription: "Generate a safety checklist for the workplace" },
   
-  // Marketing & Sales Department
+  // Marketing & Sales
   { toolName: "Cold Outreach", department: "Marketing & Sales", baseDescription: "Write a message to pitch services to new clients" },
   { toolName: "Offer Generator", department: "Marketing & Sales", baseDescription: "Create a festival discount strategy" },
   { toolName: "Review Replier", department: "Marketing & Sales", baseDescription: "Draft professional replies to Google/Amazon reviews" },
   { toolName: "Customer Follow-up", department: "Marketing & Sales", baseDescription: "Schedule polite reminders for leads" },
   { toolName: "Social Media Plan", department: "Marketing & Sales", baseDescription: "Create a weekly content calendar" },
+  { toolName: "Campaign Manager", department: "Marketing & Sales", baseDescription: "Launch SMS/WhatsApp marketing campaigns" },
+  { toolName: "Loyalty Program", department: "Marketing & Sales", baseDescription: "Manage customer reward points and tiers" },
+  { toolName: "Lead Magnet", department: "Marketing & Sales", baseDescription: "Capture and qualify potential customer leads" },
+  { toolName: "Discount Strategist", department: "Marketing & Sales", baseDescription: "Calculate optimal discount rates to maintain margin" },
   
-  // Ops & Inventory Department
-  { toolName: "Stock Audit", department: "Ops & Inventory", baseDescription: "Checklist to count physical inventory" },
-  { toolName: "Wastage Log", department: "Ops & Inventory", baseDescription: "Track damaged/expired items to reduce loss" },
-  { toolName: "Supplier Order", department: "Ops & Inventory", baseDescription: "Draft a purchase order for restocking" },
-  { toolName: "Maintenance Log", department: "Ops & Inventory", baseDescription: "Track equipment repair dates" },
-  { toolName: "Shift Handover", department: "Ops & Inventory", baseDescription: "Note for the next shift manager" },
+  // Operations & Inventory
+  { toolName: "Stock Audit", department: "Operations & Inventory", baseDescription: "Checklist to count physical inventory" },
+  { toolName: "Wastage Log", department: "Operations & Inventory", baseDescription: "Track damaged/expired items to reduce loss" },
+  { toolName: "Supplier Order", department: "Operations & Inventory", baseDescription: "Draft a purchase order for restocking" },
+  { toolName: "Maintenance Log", department: "Operations & Inventory", baseDescription: "Track equipment repair dates" },
+  { toolName: "Shift Handover", department: "Operations & Inventory", baseDescription: "Note for the next shift manager" },
+  { toolName: "Stock Watchdog", department: "Operations & Inventory", baseDescription: "Alerts when inventory hits re-order levels" },
+  { toolName: "Vendor Rater", department: "Operations & Inventory", baseDescription: "Score suppliers on quality and timeliness" },
+  { toolName: "Quality Check", department: "Operations & Inventory", baseDescription: "Digital checklist for product quality inspection" },
   
-  // HR & Staff Department
-  { toolName: "Hiring Job Post", department: "HR & Staff", baseDescription: "Write a job description to find good staff" },
-  { toolName: "Interview Guide", department: "HR & Staff", baseDescription: "List of questions to ask candidates" },
-  { toolName: "Salary Calculator", department: "HR & Staff", baseDescription: "Calculate payout after leave/advance deductions" },
-  { toolName: "Warning Letter", department: "HR & Staff", baseDescription: "Draft a formal warning for bad behavior" },
-  { toolName: "Daily Task List", department: "HR & Staff", baseDescription: "Assign duties to staff members" },
+  // HR & Staffing
+  { toolName: "Hiring Job Post", department: "HR & Staffing", baseDescription: "Write a job description to find good staff" },
+  { toolName: "Interview Guide", department: "HR & Staffing", baseDescription: "List of questions to ask candidates" },
+  { toolName: "Salary Calculator", department: "HR & Staffing", baseDescription: "Calculate payout after leave/advance deductions" },
+  { toolName: "Warning Letter", department: "HR & Staffing", baseDescription: "Draft a formal warning for bad behavior" },
+  { toolName: "Daily Task List", department: "HR & Staffing", baseDescription: "Assign duties to staff members" },
+  { toolName: "Shift Planner", department: "HR & Staffing", baseDescription: "Auto-schedule staff shifts based on traffic" },
+  { toolName: "Payroll Engine", department: "HR & Staffing", baseDescription: "Calculate salaries, overtime, and deductions" },
+  { toolName: "Attendance Tracker", department: "HR & Staffing", baseDescription: "Selfie-based attendance with location tagging" },
+  { toolName: "Performance Scorecard", department: "HR & Staffing", baseDescription: "Rate employee performance based on tasks" },
+  
+  // Customer Service
+  { toolName: "Ticket Manager", department: "Customer Service", baseDescription: "Track and resolve customer complaints efficiently" },
+  { toolName: "FAQ Builder", department: "Customer Service", baseDescription: "Create answers for common customer questions" },
+  { toolName: "Feedback Collector", department: "Customer Service", baseDescription: "Gather and analyze customer feedback" },
 ];
 
-// Super-App specific tool definitions
-const superAppTools = [
-  // Finance & Tax
-  { toolName: "Smart Invoicer", department: "Finance & Tax", baseDescription: "Auto-generate tax compliant bills with GST calculations" },
-  { toolName: "Leakage Detector", department: "Finance & Tax", baseDescription: "Analyze expenses to find wastage and theft" },
-  { toolName: "Profit Meter", department: "Finance & Tax", baseDescription: "Calculate real-time daily profit margins" },
-  { toolName: "Tax Planner", department: "Finance & Tax", baseDescription: "Estimate GST liability and prepare return drafts" },
-  { toolName: "Expense Log", department: "Finance & Tax", baseDescription: "Digitize daily petty cash vouchers" },
-  
-  // HR & Team
-  { toolName: "Shift Planner", department: "HR & Team", baseDescription: "Auto-schedule staff shifts based on traffic" },
-  { toolName: "Payroll Engine", department: "HR & Team", baseDescription: "Calculate salaries, overtime, and deductions" },
-  { toolName: "Hiring Bot", department: "HR & Team", baseDescription: "Screen candidate resumes and schedule interviews" },
-  { toolName: "Attendance Tracker", department: "HR & Team", baseDescription: "Selfie-based attendance with location tagging" },
-  { toolName: "Performance Scorecard", department: "HR & Team", baseDescription: "Rate employee performance based on tasks" },
-  
-  // Ops & Stock
-  { toolName: "Stock Watchdog", department: "Ops & Stock", baseDescription: "Alerts when inventory hits re-order levels" },
-  { toolName: "Wastage Tracker", department: "Ops & Stock", baseDescription: "Log spoiled or damaged goods for audit" },
-  { toolName: "Vendor Rater", department: "Ops & Stock", baseDescription: "Score suppliers on quality and timeliness" },
-  { toolName: "Quality Check", department: "Ops & Stock", baseDescription: "Digital checklist for product quality inspection" },
-  
-  // Growth & Sales
-  { toolName: "Campaign Manager", department: "Growth & Sales", baseDescription: "Launch SMS/WhatsApp marketing campaigns" },
-  { toolName: "Loyalty Program", department: "Growth & Sales", baseDescription: "Manage customer reward points and tiers" },
-  { toolName: "Lead Magnet", department: "Growth & Sales", baseDescription: "Capture and qualify potential customer leads" },
-  { toolName: "Discount Strategist", department: "Growth & Sales", baseDescription: "Calculate optimal discount rates to maintain margin" },
-  
-  // Legal & Admin
-  { toolName: "License Tracker", department: "Legal & Admin", baseDescription: "Reminders for trade license and permit renewals" },
-  { toolName: "Dispute Letter Writer", department: "Legal & Admin", baseDescription: "Draft formal notices for payment recovery" },
-  { toolName: "Safety Audit", department: "Legal & Admin", baseDescription: "Workplace safety compliance checklist" },
-  { toolName: "Document Locker", department: "Legal & Admin", baseDescription: "Securely store and organize business docs" },
-];
-
-// Sector-Persona combinations
+// Sector-Persona combinations (updated to use clean sector names)
 const sectorPersonaCombinations = [
-  // Agriculture & Farming
-  { sector: "Agriculture & Farming", personas: ["Dairy Farmer", "Crop Farmer", "Poultry Owner", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Automotive & Transport", personas: ["Auto Dealer", "Spare Parts Shop", "Car Wash Owner", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  // Services & Professional
   { sector: "Banking & Finance", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer", "Accountant"] },
-  { sector: "Beauty & Wellness", personas: ["Salon Owner", "Spa Manager", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Construction & Real Estate", personas: ["Builder", "Real Estate Agent", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Education & Training", personas: ["Coaching Center", "Online Tutor", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Food & Beverage", personas: ["Restaurant Owner", "Caterer", "Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Healthcare & Medical", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Legal Services", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
+  { sector: "Professional Services", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
   { sector: "IT & Software", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Gaming & E-sports", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Weddings & Matrimony", personas: ["Business Owner", "Manager", "Consultant", "Specialist", "Freelancer"] },
-  { sector: "Retail Super-App", personas: ["Sweet Shop - Business Owner", "Sweet Shop - Accountant"] },
-  { sector: "Manufacturing Super-App", personas: ["Textile Mill - Business Owner", "Textile Mill - Accountant"] },
-  { sector: "Logistics Super-App", personas: ["Courier Franchise - Business Owner", "Warehouse - Business Owner"] },
+  { sector: "Education & Training", personas: ["Coaching Center", "Online Tutor", "Business Owner", "Manager", "Consultant"] },
+  
+  // Retail & Commerce
+  { sector: "Retail", personas: ["Business Owner", "Manager", "Accountant"] },
+  { sector: "Food & Beverage", personas: ["Restaurant Owner", "Caterer", "Business Owner", "Manager"] },
+  { sector: "Beauty & Wellness", personas: ["Salon Owner", "Business Owner", "Manager"] },
+  { sector: "Hospitality & Tourism", personas: ["Business Owner", "Manager", "Consultant"] },
+  
+  // Industrial & Production
+  { sector: "Manufacturing", personas: ["Business Owner", "Manager", "Accountant"] },
+  { sector: "Agriculture & Farming", personas: ["Dairy Farmer", "Crop Farmer", "Business Owner", "Manager"] },
+  { sector: "Construction & Real Estate", personas: ["Builder", "Real Estate Agent", "Business Owner", "Manager"] },
+  { sector: "Energy & Utilities", personas: ["Business Owner", "Manager", "Specialist"] },
+  
+  // Logistics & Transport
+  { sector: "Logistics", personas: ["Business Owner", "Manager", "Accountant"] },
+  { sector: "Automotive & Transport", personas: ["Auto Dealer", "Business Owner", "Manager"] },
+  { sector: "Telecommunications", personas: ["Business Owner", "Manager", "Specialist"] },
+  
+  // Lifestyle & Entertainment
+  { sector: "Entertainment & Media", personas: ["Business Owner", "Manager", "Freelancer"] },
+  { sector: "Gaming & E-sports", personas: ["Business Owner", "Manager", "Freelancer"] },
+  { sector: "Sports & Fitness", personas: ["Business Owner", "Manager", "Consultant"] },
+  { sector: "Weddings & Events", personas: ["Business Owner", "Manager", "Freelancer"] },
+  { sector: "Non-Profit & NGO", personas: ["Business Owner", "Manager", "Consultant"] },
+  
+  // Healthcare
+  { sector: "Healthcare & Medical", personas: ["Business Owner", "Manager", "Consultant", "Specialist"] },
 ];
 
 function getIconForTool(toolName: string, department: string): LucideIcon {
@@ -315,13 +327,10 @@ function generateExpandedTools(): ExpandedTool[] {
   const tools: ExpandedTool[] = [];
   let idCounter = 1;
 
-  // Generate tools for regular sectors
+  // Generate tools for all sector-persona combinations
   for (const combo of sectorPersonaCombinations) {
-    const isSuperApp = combo.sector.includes("Super-App");
-    const toolSet = isSuperApp ? superAppTools : coreTools;
-    
     for (const persona of combo.personas) {
-      for (const tool of toolSet) {
+      for (const tool of coreTools) {
         const IconComponent = getIconForTool(tool.toolName, tool.department);
         const description = `${tool.baseDescription} for ${persona} in ${combo.sector}`;
         
