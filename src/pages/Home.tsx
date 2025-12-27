@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
+import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
 
 const TOTAL_TOOLS_COUNT = 50000;
@@ -39,6 +40,19 @@ const problemCards = [
   },
 ];
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
 const Home = () => {
   const features = [
     {
@@ -70,51 +84,117 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
       <Navbar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-accent/50 to-background" />
+        
+        {/* Animated background elements */}
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -20, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, -20, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        
         <div className="absolute inset-0 opacity-[0.015]" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
         
         <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
-          <div className="mx-auto max-w-5xl text-center space-y-8 animate-fade-in">
-            <div className="flex justify-center mb-8">
-              <img src={logo} alt="ezmy.life" className="h-28 md:h-36 lg:h-44 object-contain" />
-            </div>
+          <motion.div
+            className="mx-auto max-w-5xl text-center space-y-8"
+            initial="initial"
+            animate="animate"
+            variants={staggerContainer}
+          >
+            <motion.div
+              variants={fadeInUp}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="flex justify-center mb-8"
+            >
+              <motion.img
+                src={logo}
+                alt="ezmy.life"
+                className="h-28 md:h-36 lg:h-44 object-contain"
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.div>
             
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
+            <motion.h1
+              variants={fadeInUp}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight"
+            >
               The World's First{" "}
-              <span className="text-gradient">AI App Store</span>
-            </h1>
+              <span className="text-gradient bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                AI App Store
+              </span>
+            </motion.h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light">
+            <motion.p
+              variants={fadeInUp}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light"
+            >
               Access 2000+ AI-powered tools that simplify life and business. 
               One subscription replaces dozens of apps. Think it → Done.
-            </p>
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-              <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
-                <Link to="/auth">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-base px-8 h-14">
-                <Link to="/tools">Explore Tools</Link>
-              </Button>
-            </div>
-          </div>
+            <motion.div
+              variants={fadeInUp}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
+                  <Link to="/auth">
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button asChild variant="outline" size="lg" className="text-base px-8 h-14">
+                  <Link to="/tools">Explore Tools</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16 space-y-4"
+          >
             <p className="text-sm uppercase tracking-widest text-muted-foreground">Why Ezmylife</p>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
               Everything You Need in One Place
@@ -122,24 +202,32 @@ const Home = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               2000+ AI tools to simplify your life and work
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {features.map((feature) => (
-              <div
+            {features.map((feature, index) => (
+              <motion.div
                 key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -5, scale: 1.02 }}
                 className="group p-8 rounded-2xl border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300"
               >
                 <div className="flex items-start gap-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 transition-colors">
+                  <motion.div
+                    className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 transition-colors"
+                    whileHover={{ rotate: 5 }}
+                  >
                     <feature.icon className="h-6 w-6 text-foreground" />
-                  </div>
+                  </motion.div>
                   <div className="space-y-2">
                     <h3 className="font-display text-xl font-semibold">{feature.title}</h3>
                     <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -148,31 +236,53 @@ const Home = () => {
       {/* Categories Section */}
       <section className="py-24 bg-accent/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16 space-y-4"
+          >
             <p className="text-sm uppercase tracking-widest text-muted-foreground">Categories</p>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
               Every Tool You Need
             </h2>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-            {categories.map((category) => (
-              <div
+          <motion.div
+            className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+          >
+            {categories.map((category, index) => (
+              <motion.div
                 key={category}
-                className="px-5 py-3 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                variants={fadeInUp}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                whileHover={{ scale: 1.1, y: -3 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-3 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
                 <span className="text-sm font-medium">{category}</span>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Tool Discovery Section - NEW */}
+      {/* Tool Discovery Section */}
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6"
+            >
               <div className="space-y-4">
                 <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
                   Start with your problem
@@ -181,37 +291,54 @@ const Home = () => {
                   Choose what you're trying to solve. We'll show you only the tools you need.
                 </p>
               </div>
-              <div className="flex-shrink-0">
+              <motion.div
+                className="flex-shrink-0"
+                whileHover={{ scale: 1.05 }}
+              >
                 <div className="px-5 py-3 rounded-full bg-accent border border-border">
                   <span className="text-sm font-medium text-muted-foreground">
                     Total Tools: <span className="text-foreground font-semibold">{TOTAL_TOOLS_COUNT.toLocaleString()}+</span> <span className="text-xs">(including upcoming)</span>
                   </span>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {problemCards.map((card) => (
-                <Link
+              {problemCards.map((card, index) => (
+                <motion.div
                   key={card.id}
-                  to={`/tools?problem=${card.id}`}
-                  className="group p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
-                      <card.icon className="h-6 w-6 text-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <h3 className="font-medium text-foreground group-hover:text-primary transition-colors leading-snug">
-                        {card.title}
-                      </h3>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>Explore solutions</span>
-                        <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                  <Link
+                    to={`/tools?problem=${card.id}`}
+                    className="group block p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                  >
+                    <motion.div
+                      className="flex items-start gap-4"
+                      whileHover={{ x: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <motion.div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors"
+                        whileHover={{ rotate: 10, scale: 1.1 }}
+                      >
+                        <card.icon className="h-6 w-6 text-foreground group-hover:text-primary transition-colors" />
+                      </motion.div>
+                      <div className="flex-1 space-y-1">
+                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors leading-snug">
+                          {card.title}
+                        </h3>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span>Explore solutions</span>
+                          <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </Link>
+                    </motion.div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -222,32 +349,56 @@ const Home = () => {
       <section className="py-24 md:py-32 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-16 space-y-4"
+            >
               <p className="text-sm uppercase tracking-widest text-muted-foreground">Simple Pricing</p>
               <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
                 One Plan, Everything Included
               </h2>
-            </div>
+            </motion.div>
 
-            <div className="relative">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent to-primary/5 rounded-3xl blur-3xl opacity-50" />
-              <div className="relative p-8 md:p-12 rounded-3xl border border-border bg-card">
+              <motion.div
+                className="relative p-8 md:p-12 rounded-3xl border border-border bg-card"
+                whileHover={{ scale: 1.01 }}
+                transition={{ duration: 0.3 }}
+              >
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <p className="text-sm uppercase tracking-widest text-muted-foreground">Premium Access</p>
-                      <div className="flex items-baseline gap-2">
+                      <motion.div
+                        className="flex items-baseline gap-2"
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                      >
                         <span className="font-display text-5xl md:text-6xl font-semibold">₹2000</span>
                         <span className="text-muted-foreground">/year</span>
-                      </div>
+                      </motion.div>
                       <p className="text-muted-foreground">or $19.99/month globally</p>
                     </div>
-                    <Button asChild size="lg" className="w-full md:w-auto px-8 h-14">
-                      <Link to="/subscription">
-                        Subscribe Now
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Link>
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button asChild size="lg" className="w-full md:w-auto px-8 h-14">
+                        <Link to="/subscription">
+                          Subscribe Now
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                      </Button>
+                    </motion.div>
                   </div>
                   <div className="space-y-4">
                     {[
@@ -257,26 +408,39 @@ const Home = () => {
                       "New tools added weekly",
                       "BYO API support",
                       "Personal dashboard",
-                    ].map((benefit) => (
-                      <div key={benefit} className="flex items-center gap-3">
+                    ].map((benefit, index) => (
+                      <motion.div
+                        key={benefit}
+                        className="flex items-center gap-3"
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                      >
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
                           <Check className="h-4 w-4 text-foreground" />
                         </div>
                         <span className="text-muted-foreground">{benefit}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section - NEW */}
+      {/* Final CTA Section */}
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto text-center space-y-8"
+          >
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
               Stop searching for tools.<br />
               <span className="text-primary">Start solving problems.</span>
@@ -284,54 +448,75 @@ const Home = () => {
             <p className="text-muted-foreground text-lg">
               One subscription. Thousands of focused tools.
             </p>
-            <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
-              <Link to="/auth">
-                Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
+                <Link to="/auth">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-24 md:py-32 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto text-center space-y-8"
+          >
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
               Ready to Transform Your Workflow?
             </h2>
             <p className="text-lg opacity-80 max-w-2xl mx-auto">
               Join thousands of businesses and individuals who have simplified their digital life with Ezmylife.
             </p>
-            <Button asChild size="lg" variant="secondary" className="text-base px-8 h-14 shadow-lg">
-              <Link to="/auth">
-                Get Started Free
-                <Sparkles className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button asChild size="lg" variant="secondary" className="text-base px-8 h-14 shadow-lg">
+                <Link to="/auth">
+                  Get Started Free
+                  <Sparkles className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-border py-16">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col md:flex-row items-center justify-between gap-8"
+          >
             <div className="flex items-center gap-3">
               <img src={logo} alt="ezmy.life" className="h-10 object-contain" />
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
-              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
-              <Link to="/tools" className="hover:text-foreground transition-colors">Tools</Link>
-              <Link to="/subscription" className="hover:text-foreground transition-colors">Pricing</Link>
-              <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
-              <Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link>
+              {["About", "Tools", "Pricing", "Contact", "Refund Policy"].map((item) => (
+                <Link
+                  key={item}
+                  to={`/${item.toLowerCase().replace(" ", "-")}`}
+                  className="hover:text-foreground transition-colors relative group"
+                >
+                  {item}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </Link>
+              ))}
             </div>
             <p className="text-sm text-muted-foreground">
               © 2025 Ezmylife. All rights reserved.
             </p>
-          </div>
+          </motion.div>
         </div>
       </footer>
     </div>
