@@ -5,8 +5,10 @@ import {
   expandedTools, 
   totalToolCount,
   sectors,
+  sectorCategories,
   departments,
-  inputModes
+  inputModes,
+  personaCategories
 } from "@/data/expandedTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -130,16 +132,24 @@ const Tools = () => {
             </div>
             
             <div className="flex flex-wrap gap-4">
-              {/* Sector Filter */}
+              {/* Sector Filter with Categories */}
               <Select value={selectedSector} onValueChange={setSelectedSector}>
-                <SelectTrigger className="w-[200px] bg-card/50">
-                  <SelectValue placeholder="Select Sector" />
+                <SelectTrigger className="w-[220px] bg-card/50">
+                  <SelectValue placeholder="Select Industry" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector} value={sector}>
-                      {sector}
-                    </SelectItem>
+                  <SelectItem value="All Sectors">All Industries</SelectItem>
+                  {Object.entries(sectorCategories).map(([category, sectorList]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {category}
+                      </div>
+                      {sectorList.map((sector) => (
+                        <SelectItem key={sector} value={sector} className="pl-4">
+                          {sector}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
@@ -158,16 +168,24 @@ const Tools = () => {
                 </SelectContent>
               </Select>
 
-              {/* User Persona Filter */}
+              {/* User Persona Filter with Categories */}
               <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-                <SelectTrigger className="w-[180px] bg-card/50">
-                  <SelectValue placeholder="Select User Type" />
+                <SelectTrigger className="w-[200px] bg-card/50">
+                  <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {inputModes.map((persona) => (
-                    <SelectItem key={persona} value={persona}>
-                      {persona}
-                    </SelectItem>
+                  <SelectItem value="All Personas">All Roles</SelectItem>
+                  {Object.entries(personaCategories).map(([category, personaList]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {category}
+                      </div>
+                      {personaList.map((persona) => (
+                        <SelectItem key={persona} value={persona} className="pl-4">
+                          {persona}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
