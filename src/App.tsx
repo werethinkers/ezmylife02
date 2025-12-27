@@ -7,8 +7,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PremiumRoute } from "@/components/PremiumRoute";
 import { AnimatePresence, motion } from "framer-motion";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
+
+// Force module refresh
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
