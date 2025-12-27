@@ -63,6 +63,50 @@ const departmentIcons: Record<string, LucideIcon> = {
   "Customer Service": MessageSquare,
 };
 
+// Department subcategories mapping
+export const departmentSubcategories: Record<string, { name: string; tools: string[] }[]> = {
+  "Finance & Accounting": [
+    { name: "Billing & Invoicing", tools: ["Invoice Generator", "Smart Invoicer"] },
+    { name: "Expense Tracking", tools: ["Expense Tracker", "Expense Log", "Leakage Detector"] },
+    { name: "Tax & Compliance", tools: ["Tax Estimator", "Tax Planner"] },
+    { name: "Profit Analysis", tools: ["Profit Calculator", "Profit Meter"] },
+    { name: "Debt Recovery", tools: ["Bad Debt Recovery"] },
+  ],
+  "Legal & Compliance": [
+    { name: "Contract Management", tools: ["Contract Drafter"] },
+    { name: "Regulatory Compliance", tools: ["Compliance Checklist", "License Tracker"] },
+    { name: "Dispute Resolution", tools: ["Notice Reply Bot", "Dispute Letter", "Dispute Letter Writer"] },
+    { name: "Safety & Audits", tools: ["Safety Protocol", "Safety Audit"] },
+    { name: "Documentation", tools: ["Document Locker"] },
+  ],
+  "Marketing & Sales": [
+    { name: "Outreach & Campaigns", tools: ["Cold Outreach", "Campaign Manager"] },
+    { name: "Customer Engagement", tools: ["Customer Follow-up", "Review Replier", "Loyalty Program"] },
+    { name: "Social Media", tools: ["Social Media Plan"] },
+    { name: "Lead Generation", tools: ["Lead Magnet"] },
+    { name: "Promotions & Offers", tools: ["Offer Generator", "Discount Strategist"] },
+  ],
+  "Operations & Inventory": [
+    { name: "Stock Management", tools: ["Stock Audit", "Stock Watchdog"] },
+    { name: "Supplier Relations", tools: ["Supplier Order", "Vendor Rater"] },
+    { name: "Quality Control", tools: ["Quality Check", "Wastage Log", "Wastage Tracker"] },
+    { name: "Maintenance", tools: ["Maintenance Log"] },
+    { name: "Shift Operations", tools: ["Shift Handover"] },
+  ],
+  "HR & Staffing": [
+    { name: "Recruitment", tools: ["Hiring Job Post", "Hiring Bot", "Interview Guide"] },
+    { name: "Payroll & Benefits", tools: ["Salary Calculator", "Payroll Engine"] },
+    { name: "Performance", tools: ["Performance Scorecard", "Daily Task List"] },
+    { name: "Scheduling", tools: ["Shift Planner", "Attendance Tracker"] },
+    { name: "Discipline & Compliance", tools: ["Warning Letter"] },
+  ],
+  "Customer Service": [
+    { name: "Ticket Management", tools: ["Ticket Manager"] },
+    { name: "FAQ & Knowledge Base", tools: ["FAQ Builder"] },
+    { name: "Feedback & Reviews", tools: ["Feedback Collector"] },
+  ],
+};
+
 // Icon mapping for tool names
 const toolIcons: Record<string, LucideIcon> = {
   // Finance & Tax tools

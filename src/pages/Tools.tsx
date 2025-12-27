@@ -1,18 +1,18 @@
 import { useState, useMemo } from "react";
 import { ExpandedToolCard } from "@/components/ExpandedToolCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
+import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { 
   expandedTools, 
   totalToolCount,
-  sectors,
   sectorCategories,
   departments,
-  inputModes,
-  personaCategories
+  personaCategories,
+  departmentSubcategories
 } from "@/data/expandedTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, ArrowRight, Sparkles, Filter } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles, Filter, ChevronDown, ChevronUp, LayoutGrid, List } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,17 +22,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Tools = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedPersona, setSelectedPersona] = useState("All Personas");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [showCategoryBrowser, setShowCategoryBrowser] = useState(true);
+  const [viewMode, setViewMode] = useState<"browse" | "list">("browse");
 
   // Check if any filters are active
   const hasActiveFilters = selectedSector !== "All Sectors" || 
                            selectedDepartment !== "All Departments" || 
                            selectedPersona !== "All Personas" ||
+                           selectedSubcategory !== null ||
                            searchQuery.length > 0;
 
   // Filter tools based on all filters
@@ -50,6 +55,15 @@ const Tools = () => {
     if (selectedPersona !== "All Personas") {
       filtered = filtered.filter(tool => tool.userPersona === selectedPersona);
     }
+
+    // Filter by subcategory (tool names within that subcategory)
+    if (selectedSubcategory && selectedDepartment !== "All Departments") {
+      const subcats = departmentSubcategories[selectedDepartment];
+      const subcat = subcats?.find(s => s.name === selectedSubcategory);
+      if (subcat) {
+        filtered = filtered.filter(tool => subcat.tools.includes(tool.name));
+      }
+    }
     
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -62,13 +76,36 @@ const Tools = () => {
     }
     
     return filtered;
-  }, [selectedSector, selectedDepartment, selectedPersona, searchQuery]);
+  }, [selectedSector, selectedDepartment, selectedPersona, selectedSubcategory, searchQuery]);
+
+  // Get subcategories for selected department
+  const currentSubcategories = selectedDepartment !== "All Departments" 
+    ? departmentSubcategories[selectedDepartment] || []
+    : [];
 
   const clearFilters = () => {
     setSelectedSector("All Sectors");
     setSelectedDepartment("All Departments");
     setSelectedPersona("All Personas");
+    setSelectedSubcategory(null);
     setSearchQuery("");
+  };
+
+  const handleDepartmentChange = (dept: string) => {
+    setSelectedDepartment(dept);
+    setSelectedSubcategory(null); // Reset subcategory when department changes
+    if (dept !== "All Departments") {
+      setViewMode("list");
+      setShowCategoryBrowser(false);
+    }
+  };
+
+  const handleSectorChange = (sector: string) => {
+    setSelectedSector(sector);
+    if (sector !== "All Sectors") {
+      setViewMode("list");
+      setShowCategoryBrowser(false);
+    }
   };
 
   return (
@@ -101,107 +138,153 @@ const Tools = () => {
       <main className="container mx-auto px-4 py-12 md:py-16">
         
         {/* Search and Filters Section */}
-        <section className="mb-12 space-y-6 max-w-5xl mx-auto">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search tools by name or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-base border-border/50 bg-card/50 backdrop-blur-sm focus-visible:ring-primary/20"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Filter Row */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span>Filter by:</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-4">
-              {/* Sector Filter with Categories */}
-              <Select value={selectedSector} onValueChange={setSelectedSector}>
-                <SelectTrigger className="w-[220px] bg-card/50">
-                  <SelectValue placeholder="Select Industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Sectors">All Industries</SelectItem>
-                  {Object.entries(sectorCategories).map(([category, sectorList]) => (
-                    <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-                        {category}
-                      </div>
-                      {sectorList.map((sector) => (
-                        <SelectItem key={sector} value={sector} className="pl-4">
-                          {sector}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Department Filter */}
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger className="w-[180px] bg-card/50">
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* User Persona Filter with Categories */}
-              <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-                <SelectTrigger className="w-[200px] bg-card/50">
-                  <SelectValue placeholder="Select Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Personas">All Roles</SelectItem>
-                  {Object.entries(personaCategories).map(([category, personaList]) => (
-                    <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-                        {category}
-                      </div>
-                      {personaList.map((persona) => (
-                        <SelectItem key={persona} value={persona} className="pl-4">
-                          {persona}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Clear Filters */}
-              {hasActiveFilters && (
-                <Button variant="outline" size="default" onClick={clearFilters}>
-                  <X className="h-4 w-4 mr-1" />
-                  Clear Filters
+        <section className="mb-12 space-y-6 max-w-6xl mx-auto">
+          {/* View Mode Toggle + Search */}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search tools by name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-14 text-base border-border/50 bg-card/50 backdrop-blur-sm focus-visible:ring-primary/20"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
+            
+            {/* View Toggle */}
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "browse" | "list")} className="w-auto">
+              <TabsList className="h-14 p-1 bg-card/50">
+                <TabsTrigger value="browse" className="gap-2 h-full px-4">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Browse</span>
+                </TabsTrigger>
+                <TabsTrigger value="list" className="gap-2 h-full px-4">
+                  <List className="h-4 w-4" />
+                  <span className="hidden sm:inline">All Tools</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
+          {/* Filter Row - Only show in list mode */}
+          {viewMode === "list" && (
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>Filter by:</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-4">
+                {/* Sector Filter with Categories */}
+                <Select value={selectedSector} onValueChange={handleSectorChange}>
+                  <SelectTrigger className="w-[220px] bg-card/50">
+                    <SelectValue placeholder="Select Industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Sectors">All Industries</SelectItem>
+                    {Object.entries(sectorCategories).map(([category, sectorList]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                          {category}
+                        </div>
+                        {sectorList.map((sector) => (
+                          <SelectItem key={sector} value={sector} className="pl-4">
+                            {sector}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Department Filter */}
+                <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
+                  <SelectTrigger className="w-[180px] bg-card/50">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* User Persona Filter with Categories */}
+                <Select value={selectedPersona} onValueChange={setSelectedPersona}>
+                  <SelectTrigger className="w-[200px] bg-card/50">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Personas">All Roles</SelectItem>
+                    {Object.entries(personaCategories).map(([category, personaList]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                          {category}
+                        </div>
+                        {personaList.map((persona) => (
+                          <SelectItem key={persona} value={persona} className="pl-4">
+                            {persona}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Clear Filters */}
+                {hasActiveFilters && (
+                  <Button variant="outline" size="default" onClick={clearFilters}>
+                    <X className="h-4 w-4 mr-1" />
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Subcategory Pills - Show when department is selected */}
+          {viewMode === "list" && currentSubcategories.length > 0 && (
+            <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-xl border border-border/50">
+              <span className="text-sm font-medium text-muted-foreground mr-2 self-center">
+                Subcategories:
+              </span>
+              <Badge
+                variant={selectedSubcategory === null ? "default" : "outline"}
+                className="cursor-pointer transition-colors"
+                onClick={() => setSelectedSubcategory(null)}
+              >
+                All
+              </Badge>
+              {currentSubcategories.map((sub) => (
+                <Badge
+                  key={sub.name}
+                  variant={selectedSubcategory === sub.name ? "default" : "outline"}
+                  className="cursor-pointer transition-colors"
+                  onClick={() => setSelectedSubcategory(selectedSubcategory === sub.name ? null : sub.name)}
+                >
+                  {sub.name}
+                  <span className="ml-1 text-xs opacity-70">({sub.tools.length})</span>
+                </Badge>
+              ))}
+            </div>
+          )}
+
           {/* Active Filters Banner */}
-          {hasActiveFilters && (
+          {hasActiveFilters && viewMode === "list" && (
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="font-medium text-sm">Active filters:</span>
@@ -219,7 +302,19 @@ const Tools = () => {
                     Department: {selectedDepartment}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setSelectedDepartment("All Departments")} 
+                      onClick={() => {
+                        setSelectedDepartment("All Departments");
+                        setSelectedSubcategory(null);
+                      }} 
+                    />
+                  </Badge>
+                )}
+                {selectedSubcategory && (
+                  <Badge variant="secondary" className="gap-1">
+                    Subcategory: {selectedSubcategory}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => setSelectedSubcategory(null)} 
                     />
                   </Badge>
                 )}
@@ -238,20 +333,34 @@ const Tools = () => {
           )}
         </section>
 
-        {/* Tools Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {filteredTools.map((tool, index) => (
-            <div 
-              key={tool.id} 
-              className="animate-in fade-in-50 duration-500" 
-              style={{ animationDelay: `${index * 30}ms` }}
-            >
-              <ExpandedToolCard {...tool} />
-            </div>
-          ))}
-        </div>
+        {/* Category Browser - Browse Mode */}
+        {viewMode === "browse" && (
+          <section className="mb-16 max-w-6xl mx-auto">
+            <CategoryBrowser
+              onSelectDepartment={handleDepartmentChange}
+              onSelectSector={handleSectorChange}
+              selectedDepartment={selectedDepartment}
+              selectedSector={selectedSector}
+            />
+          </section>
+        )}
 
-        {filteredTools.length === 0 && (
+        {/* Tools Grid - Show in list mode or when search is active */}
+        {(viewMode === "list" || searchQuery) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {filteredTools.map((tool, index) => (
+              <div 
+                key={tool.id} 
+                className="animate-in fade-in-50 duration-500" 
+                style={{ animationDelay: `${Math.min(index, 20) * 30}ms` }}
+              >
+                <ExpandedToolCard {...tool} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(viewMode === "list" || searchQuery) && filteredTools.length === 0 && (
           <div className="text-center py-16">
             <p className="text-lg text-muted-foreground">No tools found matching your search.</p>
             {hasActiveFilters && (
@@ -263,16 +372,19 @@ const Tools = () => {
         )}
 
         {/* Stats */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 border border-border/50">
-            <span className="text-sm text-muted-foreground">
-              <span className="font-bold text-foreground">
-                {filteredTools.length}
-              </span> of{" "}
-              <span className="font-bold text-foreground">{totalToolCount.toLocaleString()}+</span> tools available
-            </span>
+        {(viewMode === "list" || searchQuery) && (
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-muted/50 border border-border/50">
+              <span className="text-sm text-muted-foreground">
+                <span className="font-bold text-foreground">
+                  {filteredTools.length}
+                </span> of{" "}
+                <span className="font-bold text-foreground">{totalToolCount.toLocaleString()}+</span> tools available
+              </span>
+            </div>
           </div>
-        </div>
+        )}
+
 
         {/* Final CTA Section */}
         <section className="mt-24 py-16 border-t border-border/40">
