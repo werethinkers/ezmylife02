@@ -25,17 +25,10 @@ import {
   ClipboardList,
   Scale,
   Briefcase,
-  TrendingUp,
   Target,
   Percent,
-  FileSignature,
-  Clock,
-  FolderLock,
-  UserPlus,
   Award,
   Camera,
-  BarChart,
-  Eye,
   Heart,
   type LucideIcon
 } from "lucide-react";
@@ -63,21 +56,20 @@ const departmentIcons: Record<string, LucideIcon> = {
   "Customer Service": MessageSquare,
 };
 
-// Department subcategories mapping
+// Department subcategories mapping (only tools that exist in coreTools)
 export const departmentSubcategories: Record<string, { name: string; tools: string[] }[]> = {
   "Finance & Accounting": [
-    { name: "Billing & Invoicing", tools: ["Invoice Generator", "Smart Invoicer"] },
-    { name: "Expense Tracking", tools: ["Expense Tracker", "Expense Log", "Leakage Detector"] },
-    { name: "Tax & Compliance", tools: ["Tax Estimator", "Tax Planner"] },
-    { name: "Profit Analysis", tools: ["Profit Calculator", "Profit Meter"] },
+    { name: "Billing & Invoicing", tools: ["Invoice Generator"] },
+    { name: "Expense Tracking", tools: ["Expense Tracker"] },
+    { name: "Tax & Compliance", tools: ["Tax Estimator"] },
+    { name: "Profit Analysis", tools: ["Profit Calculator"] },
     { name: "Debt Recovery", tools: ["Bad Debt Recovery"] },
   ],
   "Legal & Compliance": [
     { name: "Contract Management", tools: ["Contract Drafter"] },
-    { name: "Regulatory Compliance", tools: ["Compliance Checklist", "License Tracker"] },
-    { name: "Dispute Resolution", tools: ["Notice Reply Bot", "Dispute Letter", "Dispute Letter Writer"] },
-    { name: "Safety & Audits", tools: ["Safety Protocol", "Safety Audit"] },
-    { name: "Documentation", tools: ["Document Locker"] },
+    { name: "Regulatory Compliance", tools: ["Compliance Checklist"] },
+    { name: "Dispute Resolution", tools: ["Notice Reply Bot", "Dispute Letter"] },
+    { name: "Safety & Audits", tools: ["Safety Protocol"] },
   ],
   "Marketing & Sales": [
     { name: "Outreach & Campaigns", tools: ["Cold Outreach", "Campaign Manager"] },
@@ -89,12 +81,12 @@ export const departmentSubcategories: Record<string, { name: string; tools: stri
   "Operations & Inventory": [
     { name: "Stock Management", tools: ["Stock Audit", "Stock Watchdog"] },
     { name: "Supplier Relations", tools: ["Supplier Order", "Vendor Rater"] },
-    { name: "Quality Control", tools: ["Quality Check", "Wastage Log", "Wastage Tracker"] },
+    { name: "Quality Control", tools: ["Quality Check", "Wastage Log"] },
     { name: "Maintenance", tools: ["Maintenance Log"] },
     { name: "Shift Operations", tools: ["Shift Handover"] },
   ],
   "HR & Staffing": [
-    { name: "Recruitment", tools: ["Hiring Job Post", "Hiring Bot", "Interview Guide"] },
+    { name: "Recruitment", tools: ["Hiring Job Post", "Interview Guide"] },
     { name: "Payroll & Benefits", tools: ["Salary Calculator", "Payroll Engine"] },
     { name: "Performance", tools: ["Performance Scorecard", "Daily Task List"] },
     { name: "Scheduling", tools: ["Shift Planner", "Attendance Tracker"] },
@@ -107,30 +99,21 @@ export const departmentSubcategories: Record<string, { name: string; tools: stri
   ],
 };
 
-// Icon mapping for tool names
+// Icon mapping for tool names (only tools that exist in coreTools)
 const toolIcons: Record<string, LucideIcon> = {
-  // Finance & Tax tools
+  // Finance & Accounting tools
   "Invoice Generator": Receipt,
-  "Smart Invoicer": Receipt,
   "Expense Tracker": Wallet,
-  "Expense Log": Wallet,
-  "Leakage Detector": Eye,
   "Profit Calculator": Calculator,
-  "Profit Meter": Calculator,
   "Tax Estimator": FileText,
-  "Tax Planner": FileText,
   "Bad Debt Recovery": CreditCard,
   
   // Legal & Compliance tools
   "Contract Drafter": FileCheck,
   "Compliance Checklist": ClipboardList,
-  "License Tracker": Clock,
   "Notice Reply Bot": MessageSquare,
   "Dispute Letter": AlertCircle,
-  "Dispute Letter Writer": AlertCircle,
   "Safety Protocol": Shield,
-  "Safety Audit": Shield,
-  "Document Locker": FolderLock,
   
   // Marketing & Sales tools
   "Cold Outreach": Megaphone,
@@ -143,20 +126,18 @@ const toolIcons: Record<string, LucideIcon> = {
   "Lead Magnet": Target,
   "Discount Strategist": Percent,
   
-  // Ops & Inventory tools
+  // Operations & Inventory tools
   "Stock Audit": Package,
   "Stock Watchdog": Package,
   "Wastage Log": Trash2,
-  "Wastage Tracker": Trash2,
   "Supplier Order": ShoppingCart,
   "Vendor Rater": Star,
   "Maintenance Log": Wrench,
   "Quality Check": ClipboardList,
   "Shift Handover": Repeat,
   
-  // HR & Staff tools
+  // HR & Staffing tools
   "Hiring Job Post": Briefcase,
-  "Hiring Bot": Briefcase,
   "Interview Guide": HelpCircle,
   "Salary Calculator": DollarSign,
   "Payroll Engine": DollarSign,
