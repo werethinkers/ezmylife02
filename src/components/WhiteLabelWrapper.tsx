@@ -1,123 +1,66 @@
 import { ReactNode } from "react";
 import logo from "@/assets/logo.png";
-import { Sparkles } from "lucide-react";
 
-// Tool-specific branding configuration
+// Tool-specific branding overlay configuration
 export interface ToolBrandingConfig {
-  hideTop?: number;      // Pixels to hide from top
-  hideBottom?: number;   // Pixels to hide from bottom
-  showTopBar?: boolean;  // Show ezmy.life branded top bar
-  topBarHeight?: number; // Height of top branding bar
+  // Overlay positions for covering external branding
+  overlays?: OverlayConfig[];
+  // Show minimal top bar with tool name
+  showTopBar?: boolean;
+  topBarHeight?: number;
 }
 
-// Per-tool configurations for precise cropping
+interface OverlayConfig {
+  position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  width?: string;
+  height?: string;
+  offsetX?: number;
+  offsetY?: number;
+  showLogo?: boolean;
+  showText?: string;
+  backgroundColor?: string;
+}
+
+// Per-tool configurations for precise overlay placement
 const specificToolConfigs: Record<string, ToolBrandingConfig> = {
-  // Pi7 Standard Tools (most common layout)
-  "passport-photo-maker": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "reduce-image-size-kb": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-image-pixel": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-image-cm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-image-mm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-image-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-image-3.5x4.5": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "increase-image-size-kb": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "generate-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Blur & Effects Tools
-  "blur-background": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "blur-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "blur-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "unblur-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "unblur-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "motion-blur": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "pixelate-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "pixelate-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "censor-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Color & Style Tools
-  "grayscale-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "black-white": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "picture-pixel-art": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "beautify-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "blemish-remover": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "retouch-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Background & Object Tools
-  "remove-background": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "remove-object-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Transform Tools
-  "rotate-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "flip-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "freehand-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "circle-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "square-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Merge & Split Tools
-  "merge-photo-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "join-images": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "split-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Text & Overlay Tools
-  "add-text-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "add-logo-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "add-name-dob-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "watermark-images": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Metadata Tools
-  "image-color-picker": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "edit-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "view-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "remove-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Quality Tools
-  "increase-image-quality": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "convert-dpi": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "check-dpi": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "super-resolution": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "upscale-image-ai": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 AI Enhanced (vision.pi7.org - different layout)
-  "ai-photo-enhancer": { hideTop: 100, hideBottom: 250, showTopBar: true, topBarHeight: 44 },
-  "ai-face-generator": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Official Document Sizes
-  "resize-a4": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "ssc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "pan-card-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "upsc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "psc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Passport & ID Sizes
-  "resize-sign-6x2": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-signature-50x20": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-35x45mm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-2x2-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-3x4-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-4x6-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "resize-600x600": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Social Media
-  "instagram-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "instagram-grid": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "whatsapp-dp": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "youtube-banner": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "zoom-out-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  
-  // Pi7 Bulk Resizer (different domain/layout)
-  "bulk-image-resizer": { hideTop: 80, hideBottom: 200, showTopBar: true, topBarHeight: 44 },
-  
-  // ToolFK - AI ID Photo Generator
-  "ai-id-photo-generator": { hideTop: 180, hideBottom: 400, showTopBar: true, topBarHeight: 44 },
+  // Pi7 Standard Tools - overlay the top-left logo area
+  "passport-photo-maker": { 
+    showTopBar: true, 
+    topBarHeight: 48,
+    overlays: [
+      { position: 'top-left', width: '200px', height: '60px', offsetX: 0, offsetY: 48, showLogo: true },
+      { position: 'bottom-center', width: '100%', height: '80px', offsetX: 0, offsetY: 0, showLogo: false, backgroundColor: 'background' }
+    ]
+  },
 };
 
-// Default configs for tool categories
+// Default overlay configs for tool categories
 const defaultConfigs: Record<string, ToolBrandingConfig> = {
-  "pi7-standard": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
-  "pi7-vision": { hideTop: 100, hideBottom: 250, showTopBar: true, topBarHeight: 44 },
-  "toolfk": { hideTop: 180, hideBottom: 400, showTopBar: true, topBarHeight: 44 },
-  "minimal": { hideTop: 0, hideBottom: 0, showTopBar: false, topBarHeight: 0 },
+  "pi7-standard": { 
+    showTopBar: true, 
+    topBarHeight: 48,
+    overlays: [
+      { position: 'top-left', width: '200px', height: '60px', offsetX: 0, offsetY: 48, showLogo: true },
+      { position: 'bottom-center', width: '100%', height: '80px', offsetX: 0, offsetY: 0, showLogo: false, backgroundColor: 'background' }
+    ]
+  },
+  "pi7-vision": { 
+    showTopBar: true, 
+    topBarHeight: 48,
+    overlays: [
+      { position: 'top-left', width: '180px', height: '50px', offsetX: 0, offsetY: 48, showLogo: true },
+      { position: 'bottom-center', width: '100%', height: '60px', offsetX: 0, offsetY: 0, showLogo: false, backgroundColor: 'background' }
+    ]
+  },
+  "toolfk": { 
+    showTopBar: true, 
+    topBarHeight: 48,
+    overlays: [
+      { position: 'top-left', width: '220px', height: '70px', offsetX: 0, offsetY: 48, showLogo: true },
+      { position: 'bottom-center', width: '100%', height: '100px', offsetX: 0, offsetY: 0, showLogo: false, backgroundColor: 'background' }
+    ]
+  },
+  "minimal": { showTopBar: false, topBarHeight: 0, overlays: [] },
 };
 
 // Get config for a specific tool
@@ -158,7 +101,7 @@ export const getToolConfig = (toolId: string): ToolBrandingConfig => {
 // Check if tool needs white-label wrapper
 export const needsWhiteLabel = (toolId: string): boolean => {
   const config = getToolConfig(toolId);
-  return (config.hideTop ?? 0) > 0 || config.showTopBar === true;
+  return config.showTopBar === true || (config.overlays && config.overlays.length > 0);
 };
 
 interface WhiteLabelWrapperProps {
@@ -167,6 +110,59 @@ interface WhiteLabelWrapperProps {
   children: ReactNode;
   isFullscreen?: boolean;
 }
+
+// Overlay component to cover external branding
+const BrandOverlay = ({ 
+  config, 
+  topBarHeight 
+}: { 
+  config: OverlayConfig; 
+  topBarHeight: number;
+}) => {
+  const getPositionStyles = (): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      position: 'absolute',
+      width: config.width || 'auto',
+      height: config.height || 'auto',
+      zIndex: 25,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: config.showLogo ? 'flex-start' : 'center',
+      padding: config.showLogo ? '0 12px' : '0',
+    };
+
+    switch (config.position) {
+      case 'top-left':
+        return { ...base, top: config.offsetY ?? topBarHeight, left: config.offsetX ?? 0 };
+      case 'top-center':
+        return { ...base, top: config.offsetY ?? topBarHeight, left: '50%', transform: 'translateX(-50%)' };
+      case 'top-right':
+        return { ...base, top: config.offsetY ?? topBarHeight, right: config.offsetX ?? 0 };
+      case 'bottom-left':
+        return { ...base, bottom: config.offsetY ?? 0, left: config.offsetX ?? 0 };
+      case 'bottom-center':
+        return { ...base, bottom: config.offsetY ?? 0, left: 0, right: 0, width: '100%' };
+      case 'bottom-right':
+        return { ...base, bottom: config.offsetY ?? 0, right: config.offsetX ?? 0 };
+      default:
+        return base;
+    }
+  };
+
+  return (
+    <div 
+      style={getPositionStyles()}
+      className={`${config.backgroundColor === 'background' ? 'bg-background' : 'bg-background/95 backdrop-blur-sm'}`}
+    >
+      {config.showLogo && (
+        <img src={logo} alt="ezmy.life" className="h-6 w-auto" />
+      )}
+      {config.showText && (
+        <span className="text-sm font-medium text-foreground">{config.showText}</span>
+      )}
+    </div>
+  );
+};
 
 export const WhiteLabelWrapper = ({ 
   toolId, 
@@ -181,50 +177,45 @@ export const WhiteLabelWrapper = ({
     return <>{children}</>;
   }
 
-  const topBarH = config.topBarHeight || 44;
-  const hideTop = config.hideTop || 0;
-  const hideBottom = config.hideBottom || 0;
+  const topBarH = config.topBarHeight || 48;
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
       {/* Top Branding Bar */}
       {config.showTopBar && (
         <div 
-          className="absolute top-0 left-0 right-0 z-30 bg-background border-b border-border/20 flex items-center justify-between px-4"
+          className="absolute top-0 left-0 right-0 z-30 bg-background border-b border-border/30 flex items-center justify-between px-4 shadow-sm"
           style={{ height: topBarH }}
         >
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="ezmy.life" className="h-5 w-auto" />
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="ezmy.life" className="h-6 w-auto" />
             {!isFullscreen && (
               <>
-                <span className="text-muted-foreground/30">|</span>
-                <span className="text-sm font-medium text-foreground truncate max-w-[180px]">
+                <span className="text-muted-foreground/40">|</span>
+                <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
                   {toolName}
                 </span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
-            <Sparkles className="h-3 w-3 text-primary/70" />
-            <span className="hidden sm:inline">ezmy.life</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="hidden sm:inline">Powered by</span>
+            <span className="font-medium text-primary">ezmy.life</span>
           </div>
         </div>
       )}
       
-      {/* Iframe container - clips to show only tool interface */}
+      {/* Branding overlays to cover external logos */}
+      {config.overlays?.map((overlay, index) => (
+        <BrandOverlay key={index} config={overlay} topBarHeight={topBarH} />
+      ))}
+      
+      {/* Iframe container - full content visible, overlays cover branding */}
       <div 
         className="absolute left-0 right-0 bottom-0 overflow-hidden"
         style={{ top: config.showTopBar ? topBarH : 0 }}
       >
-        <div 
-          className="relative w-full"
-          style={{
-            marginTop: -hideTop,
-            height: `calc(100% + ${hideTop + hideBottom}px)`,
-          }}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );
