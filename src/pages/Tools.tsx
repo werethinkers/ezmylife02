@@ -5,11 +5,11 @@ import { ToolCard } from "@/components/ToolCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { 
-  expandedTools, 
+  expandedTools,
+  sectorSpecificTools, 
   totalToolCount,
   sectorCategories,
   departments,
-  personaCategories,
   departmentSubcategories
 } from "@/data/expandedTools";
 import { tools as liveToolsList, getLiveToolsCount, getComingSoonToolsCount } from "@/data/tools";
@@ -32,7 +32,6 @@ const Tools = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
-  const [selectedPersona, setSelectedPersona] = useState("All Personas");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [showCategoryBrowser, setShowCategoryBrowser] = useState(true);
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("browse");
@@ -45,13 +44,13 @@ const Tools = () => {
   // Check if any filters are active
   const hasActiveFilters = selectedSector !== "All Sectors" || 
                            selectedDepartment !== "All Departments" || 
-                           selectedPersona !== "All Personas" ||
                            selectedSubcategory !== null ||
                            searchQuery.length > 0;
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
-    let filtered = expandedTools;
+    // Use sector-specific tools when a sector is selected, otherwise use base tools
+    let filtered = selectedSector !== "All Sectors" ? sectorSpecificTools : expandedTools;
     
     if (selectedSector !== "All Sectors") {
       filtered = filtered.filter(tool => tool.sector === selectedSector);
@@ -59,10 +58,6 @@ const Tools = () => {
     
     if (selectedDepartment !== "All Departments") {
       filtered = filtered.filter(tool => tool.department === selectedDepartment);
-    }
-    
-    if (selectedPersona !== "All Personas") {
-      filtered = filtered.filter(tool => tool.userPersona === selectedPersona);
     }
 
     // Filter by subcategory (tool names within that subcategory)
@@ -79,13 +74,12 @@ const Tools = () => {
       filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(query) ||
         tool.description.toLowerCase().includes(query) ||
-        tool.sector.toLowerCase().includes(query) ||
         tool.department.toLowerCase().includes(query)
       );
     }
     
     return filtered;
-  }, [selectedSector, selectedDepartment, selectedPersona, selectedSubcategory, searchQuery]);
+  }, [selectedSector, selectedDepartment, selectedSubcategory, searchQuery]);
 
   // Get subcategories for selected department
   const currentSubcategories = selectedDepartment !== "All Departments" 
@@ -95,22 +89,19 @@ const Tools = () => {
   const clearFilters = () => {
     setSelectedSector("All Sectors");
     setSelectedDepartment("All Departments");
-    setSelectedPersona("All Personas");
     setSelectedSubcategory(null);
     setSearchQuery("");
   };
 
   // Export tools to CSV
   const exportToCSV = () => {
-    const headers = ["ID", "Tool Name", "Description", "Sector", "User Persona", "Department"];
+    const headers = ["ID", "Tool Name", "Description", "Department"];
     const csvContent = [
       headers.join(","),
       ...expandedTools.map(tool => [
         tool.id,
         `"${tool.name.replace(/"/g, '""')}"`,
         `"${tool.description.replace(/"/g, '""')}"`,
-        `"${tool.sector.replace(/"/g, '""')}"`,
-        `"${tool.userPersona.replace(/"/g, '""')}"`,
         `"${tool.department.replace(/"/g, '""')}"`
       ].join(","))
     ].join("\n");
@@ -305,28 +296,6 @@ const Tools = () => {
                   </SelectContent>
                 </Select>
 
-                {/* User Persona Filter with Categories */}
-                <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-                  <SelectTrigger className="w-[200px] glass hover:border-primary/50 transition-colors">
-                    <SelectValue placeholder="Select Role" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-strong">
-                    <SelectItem value="All Personas">All Roles</SelectItem>
-                    {Object.entries(personaCategories).map(([category, personaList]) => (
-                      <div key={category}>
-                        <div className="px-2 py-2 text-xs font-bold text-primary bg-primary/5 sticky top-0">
-                          {category}
-                        </div>
-                        {personaList.map((persona) => (
-                          <SelectItem key={persona} value={persona} className="pl-4">
-                            {persona}
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
-
                 {/* Clear Filters */}
                 {hasActiveFilters && (
                   <Button 
@@ -410,15 +379,6 @@ const Tools = () => {
                     <X 
                       className="h-3 w-3 cursor-pointer hover:text-destructive" 
                       onClick={() => setSelectedSubcategory(null)} 
-                    />
-                  </Badge>
-                )}
-                {selectedPersona !== "All Personas" && (
-                  <Badge variant="secondary" className="gap-1.5 bg-primary/10 text-primary border-primary/20">
-                    {selectedPersona}
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                      onClick={() => setSelectedPersona("All Personas")} 
                     />
                   </Badge>
                 )}

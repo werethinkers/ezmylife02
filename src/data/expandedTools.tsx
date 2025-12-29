@@ -347,26 +347,52 @@ LOGIC:
 4. Do not offer generic advice. Solve the specific problem.`;
 }
 
-// Generate all expanded tools
+// Generate unique tools (one per tool name, no duplicates)
 function generateExpandedTools(): ExpandedTool[] {
   const tools: ExpandedTool[] = [];
   let idCounter = 1;
 
-  // Generate tools for all sector-persona combinations
+  // Create one tool per coreTools entry (no duplicates)
+  for (const tool of coreTools) {
+    const IconComponent = getIconForTool(tool.toolName, tool.department);
+    
+    tools.push({
+      id: `tool-${idCounter++}`,
+      name: tool.toolName,
+      description: tool.baseDescription,
+      sector: "All Industries",
+      userPersona: "All Users",
+      department: tool.department,
+      systemPrompt: generateSystemPrompt("General", "Business User", tool.toolName, tool.baseDescription),
+      isLive: true,
+      icon: <IconComponent className="h-6 w-6" />,
+    });
+  }
+
+  return tools;
+}
+
+// Generate sector-specific tool variants (for advanced filtering if needed)
+function generateSectorTools(): ExpandedTool[] {
+  const tools: ExpandedTool[] = [];
+  let idCounter = 100;
+
   for (const combo of sectorPersonaCombinations) {
-    for (const persona of combo.personas) {
-      for (const tool of coreTools) {
-        const IconComponent = getIconForTool(tool.toolName, tool.department);
-        const description = `${tool.baseDescription} for ${persona} in ${combo.sector}`;
-        
+    for (const tool of coreTools) {
+      const IconComponent = getIconForTool(tool.toolName, tool.department);
+      const description = `${tool.baseDescription} for ${combo.sector}`;
+      
+      // Check if we already have this tool for this sector
+      const existingTool = tools.find(t => t.name === tool.toolName && t.sector === combo.sector);
+      if (!existingTool) {
         tools.push({
-          id: `tool-${idCounter++}`,
+          id: `sector-tool-${idCounter++}`,
           name: tool.toolName,
           description: description,
           sector: combo.sector,
-          userPersona: persona,
+          userPersona: "All Users",
           department: tool.department,
-          systemPrompt: generateSystemPrompt(combo.sector, persona, tool.toolName, tool.baseDescription),
+          systemPrompt: generateSystemPrompt(combo.sector, "Business User", tool.toolName, tool.baseDescription),
           isLive: true,
           icon: <IconComponent className="h-6 w-6" />,
         });
@@ -378,7 +404,9 @@ function generateExpandedTools(): ExpandedTool[] {
 }
 
 export const expandedTools = generateExpandedTools();
-export const totalToolCount = expandedTools.length;
+export const sectorSpecificTools = generateSectorTools();
+export const allTools = [...expandedTools, ...sectorSpecificTools];
+export const totalToolCount = coreTools.length; // Unique tool count
 
 // Filter functions
 export function filterToolsBySector(tools: ExpandedTool[], sector: string): ExpandedTool[] {
