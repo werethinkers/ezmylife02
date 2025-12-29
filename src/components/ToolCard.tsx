@@ -50,7 +50,11 @@ export const ToolCard = ({ title, description, category, icon, toolId, videoLink
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="absolute top-4 right-4 flex gap-2 z-10">
-        {!isLive && (
+        {isLive ? (
+          <Badge variant="outline" className="text-xs font-semibold bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+            Live
+          </Badge>
+        ) : (
           <Badge variant="secondary" className="text-xs font-semibold bg-amber-500/20 text-amber-600 border-amber-500/30">
             Coming Soon
           </Badge>

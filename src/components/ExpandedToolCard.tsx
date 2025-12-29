@@ -40,7 +40,11 @@ export const ExpandedToolCard = ({
         <Badge variant="secondary" className="text-xs">
           {department}
         </Badge>
-        {!isLive && (
+        {isLive ? (
+          <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+            Live
+          </Badge>
+        ) : (
           <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
             <Clock className="h-3 w-3 mr-1" />
             Coming Soon

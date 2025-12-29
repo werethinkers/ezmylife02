@@ -13,6 +13,9 @@ export interface Tool {
 
 // Internal mapping - not exported to keep URLs hidden
 const toolUrls: Record<string, string> = {
+  // AI Invoice Generator (tool-1)
+  "ai-invoice-generator": "https://ezmy-life-ai-invoice-generator-211032720934.us-west1.run.app/",
+  
   // Existing ezmy.life tools
   "jain-audio-stream": "https://kundkund-audio-stream-v3-0-157395066757.us-west1.run.app/",
   "jain-video-stream": "https://kundkund-video-stream-157395066757.us-west1.run.app/",
