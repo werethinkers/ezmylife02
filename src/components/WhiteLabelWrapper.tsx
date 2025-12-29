@@ -6,101 +6,153 @@ import { Sparkles } from "lucide-react";
 export interface ToolBrandingConfig {
   hideTop?: number;      // Pixels to hide from top
   hideBottom?: number;   // Pixels to hide from bottom
-  hideLeft?: number;     // Pixels to hide from left (sidebars)
-  hideRight?: number;    // Pixels to hide from right (sidebars)
   showTopBar?: boolean;  // Show ezmy.life branded top bar
   topBarHeight?: number; // Height of top branding bar
 }
 
-// Default configurations for known external tools
-const toolConfigs: Record<string, ToolBrandingConfig> = {
-  // Pi7 Image Tools - hide header, footer, and sidebars
-  "pi7-default": {
-    hideTop: 120,
-    hideBottom: 80,
-    hideLeft: 0,
-    hideRight: 0,
-    showTopBar: true,
-    topBarHeight: 48,
-  },
-  // ToolFK tools
-  "toolfk-default": {
-    hideTop: 100,
-    hideBottom: 70,
-    hideLeft: 0,
-    hideRight: 0,
-    showTopBar: true,
-    topBarHeight: 48,
-  },
-  // Minimal - no overlay
-  "minimal": {
-    hideTop: 0,
-    hideBottom: 0,
-    hideLeft: 0,
-    hideRight: 0,
-    showTopBar: false,
-    topBarHeight: 0,
-  },
+// Per-tool configurations for precise cropping
+const specificToolConfigs: Record<string, ToolBrandingConfig> = {
+  // Pi7 Standard Tools (most common layout)
+  "passport-photo-maker": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "reduce-image-size-kb": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-image-pixel": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-image-cm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-image-mm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-image-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-image-3.5x4.5": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "increase-image-size-kb": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "generate-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Blur & Effects Tools
+  "blur-background": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "blur-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "blur-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "unblur-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "unblur-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "motion-blur": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "pixelate-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "pixelate-face": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "censor-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Color & Style Tools
+  "grayscale-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "black-white": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "picture-pixel-art": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "beautify-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "blemish-remover": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "retouch-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Background & Object Tools
+  "remove-background": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "remove-object-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Transform Tools
+  "rotate-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "flip-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "freehand-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "circle-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "square-crop": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Merge & Split Tools
+  "merge-photo-signature": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "join-images": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "split-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Text & Overlay Tools
+  "add-text-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "add-logo-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "add-name-dob-photo": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "watermark-images": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Metadata Tools
+  "image-color-picker": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "edit-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "view-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "remove-metadata": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Quality Tools
+  "increase-image-quality": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "convert-dpi": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "check-dpi": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "super-resolution": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "upscale-image-ai": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 AI Enhanced (vision.pi7.org - different layout)
+  "ai-photo-enhancer": { hideTop: 100, hideBottom: 250, showTopBar: true, topBarHeight: 44 },
+  "ai-face-generator": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Official Document Sizes
+  "resize-a4": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "ssc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "pan-card-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "upsc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "psc-photo-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Passport & ID Sizes
+  "resize-sign-6x2": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-signature-50x20": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-35x45mm": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-2x2-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-3x4-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-4x6-inch": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "resize-600x600": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Social Media
+  "instagram-resize": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "instagram-grid": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "whatsapp-dp": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "youtube-banner": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "zoom-out-image": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  
+  // Pi7 Bulk Resizer (different domain/layout)
+  "bulk-image-resizer": { hideTop: 80, hideBottom: 200, showTopBar: true, topBarHeight: 44 },
+  
+  // ToolFK - AI ID Photo Generator
+  "ai-id-photo-generator": { hideTop: 180, hideBottom: 400, showTopBar: true, topBarHeight: 44 },
+};
+
+// Default configs for tool categories
+const defaultConfigs: Record<string, ToolBrandingConfig> = {
+  "pi7-standard": { hideTop: 140, hideBottom: 300, showTopBar: true, topBarHeight: 44 },
+  "pi7-vision": { hideTop: 100, hideBottom: 250, showTopBar: true, topBarHeight: 44 },
+  "toolfk": { hideTop: 180, hideBottom: 400, showTopBar: true, topBarHeight: 44 },
+  "minimal": { hideTop: 0, hideBottom: 0, showTopBar: false, topBarHeight: 0 },
 };
 
 // Get config for a specific tool
 export const getToolConfig = (toolId: string): ToolBrandingConfig => {
-  // Check for Pi7 tools
-  if (toolId.includes("pi7") || 
-      toolId.includes("passport-photo") ||
-      toolId.includes("resize-image") ||
-      toolId.includes("reduce-image") ||
-      toolId.includes("increase-image") ||
-      toolId.includes("blur-") ||
-      toolId.includes("remove-background") ||
-      toolId.includes("remove-object") ||
-      toolId.includes("rotate-image") ||
-      toolId.includes("flip-image") ||
-      toolId.includes("watermark") ||
-      toolId.includes("crop") ||
-      toolId.includes("merge-photo") ||
-      toolId.includes("join-images") ||
-      toolId.includes("split-image") ||
-      toolId.includes("color-picker") ||
-      toolId.includes("metadata") ||
-      toolId.includes("beautify") ||
-      toolId.includes("unblur") ||
-      toolId.includes("pixelate") ||
-      toolId.includes("censor") ||
-      toolId.includes("motion-blur") ||
-      toolId.includes("grayscale") ||
-      toolId.includes("black-white") ||
-      toolId.includes("pixel-art") ||
-      toolId.includes("face-generator") ||
-      toolId.includes("blemish") ||
-      toolId.includes("retouch") ||
-      toolId.includes("add-text") ||
-      toolId.includes("add-logo") ||
-      toolId.includes("add-name") ||
-      toolId.includes("dpi") ||
-      toolId.includes("super-resolution") ||
-      toolId.includes("upscale") ||
-      toolId.includes("ssc-photo") ||
-      toolId.includes("pan-card") ||
-      toolId.includes("upsc-photo") ||
-      toolId.includes("psc-photo") ||
-      toolId.includes("instagram") ||
-      toolId.includes("whatsapp") ||
-      toolId.includes("youtube-banner") ||
-      toolId.includes("zoom-out") ||
-      toolId.includes("generate-signature") ||
-      toolId.includes("ai-photo-enhancer")
-  ) {
-    return toolConfigs["pi7-default"];
+  // Check for specific tool config first
+  if (specificToolConfigs[toolId]) {
+    return specificToolConfigs[toolId];
   }
   
-  // Check for ToolFK tools
+  // Fallback to category-based detection
+  if (toolId.includes("vision") || toolId.includes("restore") || toolId.includes("ai-photo-enhancer")) {
+    return defaultConfigs["pi7-vision"];
+  }
+  
   if (toolId.includes("toolfk") || toolId.includes("ai-id-photo")) {
-    return toolConfigs["toolfk-default"];
+    return defaultConfigs["toolfk"];
   }
   
-  // Default - no overlay
-  return toolConfigs["minimal"];
+  // Check if it's a Pi7 tool by common patterns
+  const pi7Patterns = [
+    "passport", "resize", "reduce", "increase", "blur", "remove", "rotate", "flip",
+    "watermark", "crop", "merge", "join", "split", "color-picker", "metadata",
+    "beautify", "unblur", "pixelate", "censor", "motion", "grayscale", "black-white",
+    "pixel-art", "face-generator", "blemish", "retouch", "add-text", "add-logo",
+    "add-name", "dpi", "super-resolution", "upscale", "ssc-photo", "pan-card",
+    "upsc-photo", "psc-photo", "instagram", "whatsapp", "youtube", "zoom-out",
+    "generate-signature"
+  ];
+  
+  if (pi7Patterns.some(pattern => toolId.includes(pattern))) {
+    return defaultConfigs["pi7-standard"];
+  }
+  
+  // Default - no overlay for internal ezmy.life tools
+  return defaultConfigs["minimal"];
 };
 
 // Check if tool needs white-label wrapper
@@ -129,18 +181,16 @@ export const WhiteLabelWrapper = ({
     return <>{children}</>;
   }
 
-  const topBarH = config.topBarHeight || 48;
+  const topBarH = config.topBarHeight || 44;
   const hideTop = config.hideTop || 0;
   const hideBottom = config.hideBottom || 0;
-  const hideLeft = config.hideLeft || 0;
-  const hideRight = config.hideRight || 0;
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
       {/* Top Branding Bar */}
       {config.showTopBar && (
         <div 
-          className="absolute top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/20 flex items-center justify-between px-4"
+          className="absolute top-0 left-0 right-0 z-30 bg-background border-b border-border/20 flex items-center justify-between px-4"
           style={{ height: topBarH }}
         >
           <div className="flex items-center gap-2">
@@ -148,7 +198,7 @@ export const WhiteLabelWrapper = ({
             {!isFullscreen && (
               <>
                 <span className="text-muted-foreground/30">|</span>
-                <span className="text-sm font-medium text-foreground truncate max-w-[160px]">
+                <span className="text-sm font-medium text-foreground truncate max-w-[180px]">
                   {toolName}
                 </span>
               </>
@@ -161,20 +211,15 @@ export const WhiteLabelWrapper = ({
         </div>
       )}
       
-      {/* Iframe container - clips and repositions to show only tool area */}
+      {/* Iframe container - clips to show only tool interface */}
       <div 
         className="absolute left-0 right-0 bottom-0 overflow-hidden"
-        style={{
-          top: config.showTopBar ? topBarH : 0,
-        }}
+        style={{ top: config.showTopBar ? topBarH : 0 }}
       >
         <div 
-          className="relative"
+          className="relative w-full"
           style={{
             marginTop: -hideTop,
-            marginLeft: -hideLeft,
-            marginRight: -hideRight,
-            width: `calc(100% + ${hideLeft + hideRight}px)`,
             height: `calc(100% + ${hideTop + hideBottom}px)`,
           }}
         >
