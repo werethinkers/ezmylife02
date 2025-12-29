@@ -4,42 +4,42 @@ import { Sparkles } from "lucide-react";
 
 // Tool-specific branding configuration
 export interface ToolBrandingConfig {
-  hideTop?: number;      // Pixels to hide from top (external tool's header)
-  hideBottom?: number;   // Pixels to hide from bottom (external tool's footer)
+  hideTop?: number;      // Pixels to hide from top
+  hideBottom?: number;   // Pixels to hide from bottom
+  hideLeft?: number;     // Pixels to hide from left (sidebars)
+  hideRight?: number;    // Pixels to hide from right (sidebars)
   showTopBar?: boolean;  // Show ezmy.life branded top bar
-  showBottomBar?: boolean; // Show ezmy.life branded bottom bar
   topBarHeight?: number; // Height of top branding bar
-  bottomBarHeight?: number; // Height of bottom branding bar
 }
 
 // Default configurations for known external tools
 const toolConfigs: Record<string, ToolBrandingConfig> = {
-  // Pi7 Image Tools - hide their header/footer and show our branding
+  // Pi7 Image Tools - hide header, footer, and sidebars
   "pi7-default": {
-    hideTop: 85,
-    hideBottom: 60,
+    hideTop: 120,
+    hideBottom: 80,
+    hideLeft: 0,
+    hideRight: 0,
     showTopBar: true,
-    showBottomBar: true,
-    topBarHeight: 50,
-    bottomBarHeight: 36,
+    topBarHeight: 48,
   },
   // ToolFK tools
   "toolfk-default": {
-    hideTop: 75,
-    hideBottom: 55,
+    hideTop: 100,
+    hideBottom: 70,
+    hideLeft: 0,
+    hideRight: 0,
     showTopBar: true,
-    showBottomBar: true,
-    topBarHeight: 50,
-    bottomBarHeight: 36,
+    topBarHeight: 48,
   },
-  // Minimal overlay for internal tools
+  // Minimal - no overlay
   "minimal": {
     hideTop: 0,
     hideBottom: 0,
+    hideLeft: 0,
+    hideRight: 0,
     showTopBar: false,
-    showBottomBar: false,
     topBarHeight: 0,
-    bottomBarHeight: 0,
   },
 };
 
@@ -99,16 +99,14 @@ export const getToolConfig = (toolId: string): ToolBrandingConfig => {
     return toolConfigs["toolfk-default"];
   }
   
-  // Default - no overlay for internal tools
+  // Default - no overlay
   return toolConfigs["minimal"];
 };
 
 // Check if tool needs white-label wrapper
 export const needsWhiteLabel = (toolId: string): boolean => {
   const config = getToolConfig(toolId);
-  return (config.hideTop ?? 0) > 0 || 
-         (config.hideBottom ?? 0) > 0 ||
-         config.showTopBar === true;
+  return (config.hideTop ?? 0) > 0 || config.showTopBar === true;
 };
 
 interface WhiteLabelWrapperProps {
@@ -131,68 +129,58 @@ export const WhiteLabelWrapper = ({
     return <>{children}</>;
   }
 
-  const topBarH = config.topBarHeight || 50;
-  const bottomBarH = config.bottomBarHeight || 36;
+  const topBarH = config.topBarHeight || 48;
   const hideTop = config.hideTop || 0;
   const hideBottom = config.hideBottom || 0;
+  const hideLeft = config.hideLeft || 0;
+  const hideRight = config.hideRight || 0;
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
-      {/* Top Branding Bar - covers external tool's header */}
+      {/* Top Branding Bar */}
       {config.showTopBar && (
         <div 
-          className="absolute top-0 left-0 right-0 z-30 bg-background border-b border-border/30 flex items-center justify-between px-4"
+          className="absolute top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/20 flex items-center justify-between px-4"
           style={{ height: topBarH }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <img src={logo} alt="ezmy.life" className="h-5 w-auto" />
             {!isFullscreen && (
               <>
-                <span className="text-muted-foreground/40">|</span>
-                <span className="text-sm font-medium text-foreground truncate max-w-[180px]">
+                <span className="text-muted-foreground/30">|</span>
+                <span className="text-sm font-medium text-foreground truncate max-w-[160px]">
                   {toolName}
                 </span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-primary" />
-            <span className="hidden sm:inline">Powered by ezmy.life</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+            <Sparkles className="h-3 w-3 text-primary/70" />
+            <span className="hidden sm:inline">ezmy.life</span>
           </div>
         </div>
       )}
       
-      {/* Iframe container - positioned to hide external branding */}
+      {/* Iframe container - clips and repositions to show only tool area */}
       <div 
-        className="absolute left-0 right-0 overflow-hidden"
+        className="absolute left-0 right-0 bottom-0 overflow-hidden"
         style={{
           top: config.showTopBar ? topBarH : 0,
-          bottom: config.showBottomBar ? bottomBarH : 0,
         }}
       >
-        {/* The iframe is shifted up to hide external header */}
         <div 
-          className="w-full"
+          className="relative"
           style={{
             marginTop: -hideTop,
+            marginLeft: -hideLeft,
+            marginRight: -hideRight,
+            width: `calc(100% + ${hideLeft + hideRight}px)`,
             height: `calc(100% + ${hideTop + hideBottom}px)`,
           }}
         >
           {children}
         </div>
       </div>
-      
-      {/* Bottom Branding Bar - covers external tool's footer */}
-      {config.showBottomBar && (
-        <div 
-          className="absolute bottom-0 left-0 right-0 z-30 bg-background border-t border-border/30 flex items-center justify-center px-4"
-          style={{ height: bottomBarH }}
-        >
-          <span className="text-xs text-muted-foreground">
-            © 2025 ezmy.life — Think it → Done
-          </span>
-        </div>
-      )}
     </div>
   );
 };
