@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ExpandedToolCard } from "@/components/ExpandedToolCard";
-import { ToolCard } from "@/components/ToolCard";
+import { useState, useMemo, useCallback } from "react";
+import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
+import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
+import { ToolsHeader } from "@/components/tools/ToolsHeader";
+import { ToolsFilters } from "@/components/tools/ToolsFilters";
+import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { 
@@ -13,34 +15,33 @@ import {
   departmentSubcategories
 } from "@/data/expandedTools";
 import { tools as liveToolsList, getLiveToolsCount } from "@/data/tools";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, X, Filter, LayoutGrid, List, CheckCircle2, ChevronDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { motion, AnimatePresence } from "framer-motion";
+import { ReactNode } from "react";
+
+interface PreviewTool {
+  id?: string;
+  toolId?: string;
+  name?: string;
+  title?: string;
+  description: string;
+  sector?: string;
+  department?: string;
+  category?: string;
+  isLive: boolean;
+  icon: ReactNode;
+}
 
 const Tools = () => {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("featured");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
 
-  // Get live tools from tools.tsx (Pi7, ToolFK, etc.)
+  // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
     return liveToolsList.filter(t => t.isLive);
   }, []);
@@ -83,241 +84,246 @@ const Tools = () => {
     return filtered;
   }, [selectedSector, selectedDepartment, selectedSubcategory, searchQuery]);
 
+  // Filter featured tools by search
+  const filteredFeaturedTools = useMemo(() => {
+    if (!searchQuery) return featuredLiveTools;
+    const query = searchQuery.toLowerCase();
+    return featuredLiveTools.filter(tool =>
+      tool.title.toLowerCase().includes(query) ||
+      tool.description.toLowerCase().includes(query) ||
+      tool.category.toLowerCase().includes(query)
+    );
+  }, [featuredLiveTools, searchQuery]);
+
   const currentSubcategories = selectedDepartment !== "All Departments" 
     ? departmentSubcategories[selectedDepartment] || []
     : [];
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedSector("All Sectors");
     setSelectedDepartment("All Departments");
     setSelectedSubcategory(null);
     setSearchQuery("");
-  };
+  }, []);
 
-  const handleDepartmentChange = (dept: string) => {
+  const handleDepartmentChange = useCallback((dept: string) => {
     setSelectedDepartment(dept);
     setSelectedSubcategory(null);
     if (dept !== "All Departments") {
       setViewMode("list");
     }
-  };
+  }, []);
 
-  const handleSectorChange = (sector: string) => {
+  const handleSectorChange = useCallback((sector: string) => {
     setSelectedSector(sector);
     if (sector !== "All Sectors") {
       setViewMode("list");
     }
-  };
+  }, []);
+
+  const handleQuickPreview = useCallback((tool: PreviewTool) => {
+    setPreviewTool(tool);
+    setPreviewOpen(true);
+  }, []);
+
+  const handleViewModeChange = useCallback((mode: "browse" | "list" | "featured") => {
+    setViewMode(mode);
+    // Reset filters when switching to featured mode
+    if (mode === "featured") {
+      setSelectedSector("All Sectors");
+      setSelectedDepartment("All Departments");
+      setSelectedSubcategory(null);
+    }
+  }, []);
+
+  const showTools = viewMode === "list" || (viewMode === "featured" && searchQuery);
+  const showFeatured = viewMode === "featured" && !searchQuery;
+  const showBrowse = viewMode === "browse" && !searchQuery;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Compact Header */}
-      <header className="border-b border-border/40 pt-16 pb-6 bg-gradient-to-b from-primary/3 to-transparent">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                Tools
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {getLiveToolsCount()} live tools • {totalToolCount} total
-              </p>
-            </div>
-            
-            {/* View Mode Buttons */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "featured" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("featured")}
-                className={viewMode === "featured" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Live
-              </Button>
-              <Button
-                variant={viewMode === "browse" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("browse")}
-              >
-                <LayoutGrid className="h-4 w-4 mr-1.5" />
-                Browse
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4 mr-1.5" />
-                All
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Enhanced Header */}
+      <ToolsHeader
+        liveCount={getLiveToolsCount()}
+        totalCount={totalToolCount}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+      />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-8">
         
-        {/* Search & Filters Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-          
-          {/* Filters - Only show in list mode */}
+        {/* Filters - Only show in list mode */}
+        <AnimatePresence>
           {viewMode === "list" && (
-            <div className="flex gap-2">
-              <Select value={selectedSector} onValueChange={handleSectorChange}>
-                <SelectTrigger className="w-[160px] h-10">
-                  <SelectValue placeholder="Industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Sectors">All Industries</SelectItem>
-                  {Object.entries(sectorCategories).map(([category, sectorList]) => (
-                    <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                        {category}
-                      </div>
-                      {sectorList.map((sector) => (
-                        <SelectItem key={sector} value={sector} className="pl-4">
-                          {sector}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
-                <SelectTrigger className="w-[160px] h-10">
-                  <SelectValue placeholder="Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 text-destructive">
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            <ToolsFilters
+              selectedSector={selectedSector}
+              selectedDepartment={selectedDepartment}
+              selectedSubcategory={selectedSubcategory}
+              onSectorChange={handleSectorChange}
+              onDepartmentChange={handleDepartmentChange}
+              onSubcategoryChange={setSelectedSubcategory}
+              onClearFilters={clearFilters}
+              hasActiveFilters={hasActiveFilters}
+              filteredCount={filteredTools.length}
+              sectorCategories={sectorCategories}
+              departments={departments}
+              subcategories={currentSubcategories}
+            />
           )}
-        </div>
-
-        {/* Subcategory Pills */}
-        {viewMode === "list" && currentSubcategories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Badge
-              variant={selectedSubcategory === null ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setSelectedSubcategory(null)}
-            >
-              All
-            </Badge>
-            {currentSubcategories.map((sub) => (
-              <Badge
-                key={sub.name}
-                variant={selectedSubcategory === sub.name ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSelectedSubcategory(selectedSubcategory === sub.name ? null : sub.name)}
-              >
-                {sub.name}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        {/* Active Filters */}
-        {hasActiveFilters && viewMode === "list" && (
-          <div className="flex items-center gap-2 mb-6 text-sm">
-            <span className="text-muted-foreground">Filters:</span>
-            {selectedSector !== "All Sectors" && (
-              <Badge variant="secondary" className="gap-1">
-                {selectedSector}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedSector("All Sectors")} />
-              </Badge>
-            )}
-            {selectedDepartment !== "All Departments" && (
-              <Badge variant="secondary" className="gap-1">
-                {selectedDepartment}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => { setSelectedDepartment("All Departments"); setSelectedSubcategory(null); }} />
-              </Badge>
-            )}
-            <span className="text-muted-foreground ml-2">
-              {filteredTools.length} results
-            </span>
-          </div>
-        )}
+        </AnimatePresence>
 
         {/* Category Browser - Browse Mode */}
-        {viewMode === "browse" && !searchQuery && (
-          <CategoryBrowser
-            onSelectDepartment={handleDepartmentChange}
-            onSelectSector={handleSectorChange}
-            selectedDepartment={selectedDepartment}
-            selectedSector={selectedSector}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {showBrowse && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <CategoryBrowser
+                onSelectDepartment={handleDepartmentChange}
+                onSelectSector={handleSectorChange}
+                selectedDepartment={selectedDepartment}
+                selectedSector={selectedSector}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Featured Live Tools */}
-        {viewMode === "featured" && !searchQuery && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {featuredLiveTools.map((tool) => (
-              <ToolCard key={tool.toolId} {...tool} />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {showFeatured && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {featuredLiveTools.map((tool, index) => (
+                  <EnhancedToolCard 
+                    key={tool.toolId} 
+                    toolId={tool.toolId}
+                    title={tool.title}
+                    description={tool.description}
+                    category={tool.category}
+                    isLive={tool.isLive}
+                    icon={tool.icon}
+                    index={index}
+                    onQuickPreview={() => handleQuickPreview({
+                      toolId: tool.toolId,
+                      title: tool.title,
+                      description: tool.description,
+                      category: tool.category,
+                      isLive: tool.isLive,
+                      icon: tool.icon
+                    })}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Search results in featured mode */}
+        <AnimatePresence mode="wait">
+          {viewMode === "featured" && searchQuery && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {filteredFeaturedTools.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredFeaturedTools.map((tool, index) => (
+                    <EnhancedToolCard 
+                      key={tool.toolId} 
+                      toolId={tool.toolId}
+                      title={tool.title}
+                      description={tool.description}
+                      category={tool.category}
+                      isLive={tool.isLive}
+                      icon={tool.icon}
+                      index={index}
+                      onQuickPreview={() => handleQuickPreview({
+                        toolId: tool.toolId,
+                        title: tool.title,
+                        description: tool.description,
+                        category: tool.category,
+                        isLive: tool.isLive,
+                        icon: tool.icon
+                      })}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ToolsEmptyState 
+                  onClearFilters={() => setSearchQuery("")}
+                  hasActiveFilters={true}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* All Tools Grid */}
-        {(viewMode === "list" || searchQuery) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTools.map((tool) => (
-              <ExpandedToolCard key={tool.id} {...tool} />
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {(viewMode === "list" || searchQuery) && filteredTools.length === 0 && (
-          <div className="text-center py-16">
-            <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium text-muted-foreground mb-2">No tools found</p>
-            <p className="text-sm text-muted-foreground mb-4">Try adjusting your search or filters</p>
-            {hasActiveFilters && (
-              <Button variant="outline" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {viewMode === "list" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {filteredTools.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredTools.map((tool, index) => (
+                    <EnhancedToolCard 
+                      key={tool.id} 
+                      id={tool.id}
+                      name={tool.name}
+                      description={tool.description}
+                      sector={tool.sector}
+                      department={tool.department}
+                      isLive={tool.isLive}
+                      icon={tool.icon}
+                      index={index}
+                      onQuickPreview={() => handleQuickPreview({
+                        id: tool.id,
+                        name: tool.name,
+                        description: tool.description,
+                        sector: tool.sector,
+                        department: tool.department,
+                        isLive: tool.isLive,
+                        icon: tool.icon
+                      })}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ToolsEmptyState 
+                  onClearFilters={clearFilters}
+                  hasActiveFilters={hasActiveFilters}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
+      {/* Quick Preview Modal */}
+      <ToolQuickPreview
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        tool={previewTool}
+      />
 
       {/* Chatbot */}
       <ToolsChatbot />
