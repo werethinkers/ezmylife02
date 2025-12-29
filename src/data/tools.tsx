@@ -1,4 +1,4 @@
-import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, Calculator, Globe, Video, Network, Headphones, PlayCircle, Sparkles, ScanText, BookMarked, FileCode, Eye, FileSearch, Database, Heart, Lightbulb, Pencil } from "lucide-react";
+import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, Calculator, Globe, Video, Network, Headphones, PlayCircle, Sparkles, ScanText, BookMarked, FileCode, Eye, FileSearch, Database, Heart, Lightbulb, Pencil, Camera, ImagePlus } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface Tool {
@@ -48,6 +48,8 @@ const toolUrls: Record<string, string> = {
   "interactive-videos": "https://kundkund-interactive-video-quiz-157395066757.us-west1.run.app/",
   "smart-diagram-ai": "https://create-smart-diagram-ai-v2-0-157395066757.us-west1.run.app/",
   "auto-text-extractor": "https://auto-text-extractor-agent-157395066757.us-west1.run.app/",
+  "ai-id-photo-generator": "https://www.toolfk.com/tools/online-idphotos.html",
+  "pi7-image-tools": "https://image.pi7.org",
 };
 
 export const getToolUrl = (toolId: string): string | null => {
@@ -342,5 +344,21 @@ export const tools: Tool[] = [
     icon: <ScanText className="h-8 w-8" />,
     toolId: "auto-text-extractor",
     videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4"
+  },
+  {
+    title: "AI ID Photo Generator",
+    description: "Generate professional AI ID photos for passport, visa, and ID cards. Supports custom backgrounds, DPI settings, and various international standards.",
+    category: "Popular",
+    icon: <Camera className="h-8 w-8" />,
+    toolId: "ai-id-photo-generator",
+    videoLink: ""
+  },
+  {
+    title: "Pi7 Image Tools",
+    description: "Comprehensive image editing suite with compression, resizing, format conversion, passport photo maker, signature generator, and AI photo enhancer.",
+    category: "Popular",
+    icon: <ImagePlus className="h-8 w-8" />,
+    toolId: "pi7-image-tools",
+    videoLink: ""
   },
 ];
