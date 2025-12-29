@@ -4,10 +4,8 @@ import { Sparkles } from "lucide-react";
 
 // Tool-specific branding configuration
 export interface ToolBrandingConfig {
-  hideTop?: number;      // Pixels to hide from top
-  hideBottom?: number;   // Pixels to hide from bottom
-  hideLeft?: number;     // Pixels to hide from left
-  hideRight?: number;    // Pixels to hide from right
+  hideTop?: number;      // Pixels to hide from top (external tool's header)
+  hideBottom?: number;   // Pixels to hide from bottom (external tool's footer)
   showTopBar?: boolean;  // Show ezmy.life branded top bar
   showBottomBar?: boolean; // Show ezmy.life branded bottom bar
   topBarHeight?: number; // Height of top branding bar
@@ -16,31 +14,31 @@ export interface ToolBrandingConfig {
 
 // Default configurations for known external tools
 const toolConfigs: Record<string, ToolBrandingConfig> = {
-  // Pi7 Image Tools - typically have header and footer
+  // Pi7 Image Tools - hide their header/footer and show our branding
   "pi7-default": {
-    hideTop: 80,
+    hideTop: 85,
     hideBottom: 60,
     showTopBar: true,
     showBottomBar: true,
-    topBarHeight: 56,
-    bottomBarHeight: 40,
+    topBarHeight: 50,
+    bottomBarHeight: 36,
   },
   // ToolFK tools
   "toolfk-default": {
-    hideTop: 70,
-    hideBottom: 50,
+    hideTop: 75,
+    hideBottom: 55,
     showTopBar: true,
     showBottomBar: true,
-    topBarHeight: 56,
-    bottomBarHeight: 40,
+    topBarHeight: 50,
+    bottomBarHeight: 36,
   },
-  // Minimal overlay
+  // Minimal overlay for internal tools
   "minimal": {
     hideTop: 0,
     hideBottom: 0,
-    showTopBar: true,
+    showTopBar: false,
     showBottomBar: false,
-    topBarHeight: 48,
+    topBarHeight: 0,
     bottomBarHeight: 0,
   },
 };
@@ -101,7 +99,7 @@ export const getToolConfig = (toolId: string): ToolBrandingConfig => {
     return toolConfigs["toolfk-default"];
   }
   
-  // Default - minimal overlay for ezmy.life tools
+  // Default - no overlay for internal tools
   return toolConfigs["minimal"];
 };
 
@@ -133,67 +131,66 @@ export const WhiteLabelWrapper = ({
     return <>{children}</>;
   }
 
+  const topBarH = config.topBarHeight || 50;
+  const bottomBarH = config.bottomBarHeight || 36;
+  const hideTop = config.hideTop || 0;
+  const hideBottom = config.hideBottom || 0;
+
   return (
-    <div className="relative w-full h-full overflow-hidden">
-      {/* Top Branding Bar */}
+    <div className="relative w-full h-full overflow-hidden bg-background">
+      {/* Top Branding Bar - covers external tool's header */}
       {config.showTopBar && (
         <div 
-          className="absolute top-0 left-0 right-0 z-20 bg-background border-b border-border/30"
-          style={{ height: config.topBarHeight || 56 }}
+          className="absolute top-0 left-0 right-0 z-30 bg-background border-b border-border/30 flex items-center justify-between px-4"
+          style={{ height: topBarH }}
         >
-          <div className="h-full flex items-center justify-between px-4">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="ezmy.life" className="h-6 w-auto" />
-              {!isFullscreen && (
-                <>
-                  <span className="text-muted-foreground/50">|</span>
-                  <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
-                    {toolName}
-                  </span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span className="hidden sm:inline">Powered by ezmy.life</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="ezmy.life" className="h-5 w-auto" />
+            {!isFullscreen && (
+              <>
+                <span className="text-muted-foreground/40">|</span>
+                <span className="text-sm font-medium text-foreground truncate max-w-[180px]">
+                  {toolName}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span className="hidden sm:inline">Powered by ezmy.life</span>
           </div>
         </div>
       )}
       
-      {/* Content area with clipping */}
+      {/* Iframe container - positioned to hide external branding */}
       <div 
-        className="w-full h-full overflow-hidden"
+        className="absolute left-0 right-0 overflow-hidden"
         style={{
-          paddingTop: config.showTopBar ? config.topBarHeight || 56 : 0,
-          paddingBottom: config.showBottomBar ? config.bottomBarHeight || 40 : 0,
+          top: config.showTopBar ? topBarH : 0,
+          bottom: config.showBottomBar ? bottomBarH : 0,
         }}
       >
+        {/* The iframe is shifted up to hide external header */}
         <div 
-          className="w-full h-full overflow-hidden"
+          className="w-full"
           style={{
-            marginTop: -(config.hideTop || 0),
-            marginBottom: -(config.hideBottom || 0),
-            marginLeft: -(config.hideLeft || 0),
-            marginRight: -(config.hideRight || 0),
-            height: `calc(100% + ${(config.hideTop || 0) + (config.hideBottom || 0)}px)`,
+            marginTop: -hideTop,
+            height: `calc(100% + ${hideTop + hideBottom}px)`,
           }}
         >
           {children}
         </div>
       </div>
       
-      {/* Bottom Branding Bar */}
+      {/* Bottom Branding Bar - covers external tool's footer */}
       {config.showBottomBar && (
         <div 
-          className="absolute bottom-0 left-0 right-0 z-20 bg-background border-t border-border/30"
-          style={{ height: config.bottomBarHeight || 40 }}
+          className="absolute bottom-0 left-0 right-0 z-30 bg-background border-t border-border/30 flex items-center justify-center px-4"
+          style={{ height: bottomBarH }}
         >
-          <div className="h-full flex items-center justify-center px-4">
-            <span className="text-xs text-muted-foreground">
-              © 2025 ezmy.life — Think it → Done
-            </span>
-          </div>
+          <span className="text-xs text-muted-foreground">
+            © 2025 ezmy.life — Think it → Done
+          </span>
         </div>
       )}
     </div>
