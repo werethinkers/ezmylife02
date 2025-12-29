@@ -25,6 +25,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Subscription = lazy(() => import("./pages/Subscription"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 
 const queryClient = new QueryClient();
 
@@ -103,6 +104,14 @@ const AnimatedRoutes = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route
+              path="/coming-soon"
+              element={
+                <ProtectedRoute>
+                  <ComingSoon />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={

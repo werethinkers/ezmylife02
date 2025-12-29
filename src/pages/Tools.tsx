@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { ExpandedToolCard } from "@/components/ExpandedToolCard";
+import { ToolCard } from "@/components/ToolCard";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { 
@@ -10,9 +12,10 @@ import {
   personaCategories,
   departmentSubcategories
 } from "@/data/expandedTools";
+import { tools as liveToolsList, getLiveToolsCount, getComingSoonToolsCount } from "@/data/tools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, ArrowRight, Sparkles, Filter, LayoutGrid, List, Zap, Download } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles, Filter, LayoutGrid, List, Zap, Download, Rocket, CheckCircle2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,13 +28,19 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Tools = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedPersona, setSelectedPersona] = useState("All Personas");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [showCategoryBrowser, setShowCategoryBrowser] = useState(true);
-  const [viewMode, setViewMode] = useState<"browse" | "list">("browse");
+  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("browse");
+
+  // Get live tools from tools.tsx (Pi7, ToolFK, etc.)
+  const featuredLiveTools = useMemo(() => {
+    return liveToolsList.filter(t => t.isLive);
+  }, []);
 
   // Check if any filters are active
   const hasActiveFilters = selectedSector !== "All Sectors" || 
@@ -150,13 +159,27 @@ const Tools = () => {
         
         <div className="relative container mx-auto px-4 py-12 md:py-20">
           <div className="flex flex-col items-center gap-8 text-center max-w-4xl mx-auto">
-            {/* Animated badge */}
-            <div className="animate-fade-in-down flex items-center gap-3">
+            {/* Animated badges */}
+            <div className="animate-fade-in-down flex flex-wrap items-center justify-center gap-3">
               <Badge variant="secondary" className="text-sm px-5 py-2.5 glass border-primary/20 glow-sm">
                 <Zap className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-gradient font-semibold">{totalToolCount.toLocaleString()}+</span>
                 <span className="ml-1 text-muted-foreground">Tools Available</span>
               </Badge>
+              <Badge variant="secondary" className="text-sm px-5 py-2.5 glass border-emerald-500/20">
+                <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                <span className="text-emerald-500 font-semibold">{getLiveToolsCount()}</span>
+                <span className="ml-1 text-muted-foreground">Live Now</span>
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/coming-soon")}
+                className="glass border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-600"
+              >
+                <Rocket className="h-4 w-4 mr-2" />
+                Coming Soon ({getComingSoonToolsCount()})
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -217,13 +240,17 @@ const Tools = () => {
             </div>
             
             {/* View Toggle */}
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "browse" | "list")} className="w-auto">
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "browse" | "list" | "featured")} className="w-auto">
               <TabsList className="h-14 p-1.5 glass">
-                <TabsTrigger value="browse" className="gap-2 h-full px-5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                <TabsTrigger value="browse" className="gap-2 h-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   <LayoutGrid className="h-4 w-4" />
                   <span className="hidden sm:inline font-medium">Browse</span>
                 </TabsTrigger>
-                <TabsTrigger value="list" className="gap-2 h-full px-5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                <TabsTrigger value="featured" className="gap-2 h-full px-4 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="hidden sm:inline font-medium">Live Tools</span>
+                </TabsTrigger>
+                <TabsTrigger value="list" className="gap-2 h-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   <List className="h-4 w-4" />
                   <span className="hidden sm:inline font-medium">All Tools</span>
                 </TabsTrigger>
@@ -412,6 +439,35 @@ const Tools = () => {
               selectedDepartment={selectedDepartment}
               selectedSector={selectedSector}
             />
+          </section>
+        )}
+
+        {/* Featured Live Tools - Show in featured mode */}
+        {viewMode === "featured" && !searchQuery && (
+          <section className="mb-16 max-w-7xl mx-auto animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Live Tools</h2>
+              <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                {featuredLiveTools.length} tools ready to use
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {featuredLiveTools.map((tool, index) => (
+                <div 
+                  key={tool.toolId} 
+                  className="animate-fade-in-up opacity-0" 
+                  style={{ 
+                    animationDelay: `${Math.min(index, 20) * 50}ms`,
+                    animationFillMode: 'forwards'
+                  }}
+                >
+                  <ToolCard {...tool} />
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
