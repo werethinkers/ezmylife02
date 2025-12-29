@@ -12,9 +12,10 @@ interface ToolCardProps {
   icon: ReactNode;
   toolId: string;
   videoLink: string;
+  isLive?: boolean;
 }
 
-export const ToolCard = ({ title, description, category, icon, toolId, videoLink }: ToolCardProps) => {
+export const ToolCard = ({ title, description, category, icon, toolId, videoLink, isLive = true }: ToolCardProps) => {
   const navigate = useNavigate();
   
   const getBadgeVariant = (category: string) => {
@@ -31,20 +32,29 @@ export const ToolCard = ({ title, description, category, icon, toolId, videoLink
         return "default";
       case "modern science":
         return "secondary";
+      case "image tools":
+        return "default";
       default:
         return "outline";
     }
   };
 
   const handleOpenTool = () => {
-    navigate(`/tool/${toolId}`);
+    if (isLive) {
+      navigate(`/tool/${toolId}`);
+    }
   };
 
   return (
-    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card border-border/50">
+    <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card border-border/50 ${!isLive ? 'opacity-75' : ''}`}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="absolute top-4 right-4 flex gap-2 z-10">
+        {!isLive && (
+          <Badge variant="secondary" className="text-xs font-semibold bg-amber-500/20 text-amber-600 border-amber-500/30">
+            Coming Soon
+          </Badge>
+        )}
         <Badge variant={getBadgeVariant(category)} className="uppercase text-xs font-semibold shadow-sm">
           {category}
         </Badge>
@@ -77,10 +87,11 @@ export const ToolCard = ({ title, description, category, icon, toolId, videoLink
         <Button 
           onClick={handleOpenTool}
           variant="outline"
-          className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300"
+          disabled={!isLive}
+          className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300 disabled:opacity-50"
         >
           <span className="flex items-center justify-center gap-2">
-            Open Tool
+            {isLive ? 'Open Tool' : 'Coming Soon'}
             <ArrowRight className="h-4 w-4" />
           </span>
         </Button>
