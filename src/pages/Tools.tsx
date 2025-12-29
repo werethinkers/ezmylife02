@@ -37,6 +37,7 @@ const Tools = () => {
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedToolType, setSelectedToolType] = useState("All Types");
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("featured");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
@@ -103,6 +104,7 @@ const Tools = () => {
     setSelectedSector("All Sectors");
     setSelectedDepartment("All Departments");
     setSelectedSubcategory(null);
+    setSelectedToolType("All Types");
     setSearchQuery("");
   }, []);
 
@@ -121,6 +123,13 @@ const Tools = () => {
     }
   }, []);
 
+  const handleToolTypeChange = useCallback((type: string) => {
+    setSelectedToolType(type);
+    if (type !== "All Types") {
+      setViewMode("list");
+    }
+  }, []);
+
   const handleQuickPreview = useCallback((tool: PreviewTool) => {
     setPreviewTool(tool);
     setPreviewOpen(true);
@@ -133,6 +142,7 @@ const Tools = () => {
       setSelectedSector("All Sectors");
       setSelectedDepartment("All Departments");
       setSelectedSubcategory(null);
+      setSelectedToolType("All Types");
     }
   }, []);
 
@@ -191,6 +201,8 @@ const Tools = () => {
                 onSelectSector={handleSectorChange}
                 selectedDepartment={selectedDepartment}
                 selectedSector={selectedSector}
+                onSelectToolType={handleToolTypeChange}
+                selectedToolType={selectedToolType}
               />
             </motion.div>
           )}
