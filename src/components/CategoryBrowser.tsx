@@ -32,6 +32,109 @@ import {
   Smartphone,
   Mail,
   Calendar,
+  Scissors,
+  Type,
+  QrCode,
+  Hash,
+  Ruler,
+  Eraser,
+  Wand2,
+  Scan,
+  FileImage,
+  FileVideo,
+  FileAudio,
+  Link,
+  Share2,
+  Download,
+  Upload,
+  RefreshCw,
+  Crop,
+  RotateCw,
+  Maximize,
+  Minimize,
+  Move,
+  Copy,
+  Clipboard,
+  Search,
+  Filter,
+  SortAsc,
+  Grid,
+  List,
+  Table,
+  PieChart,
+  TrendingUp,
+  DollarSign,
+  CreditCard,
+  Receipt,
+  Wallet,
+  Landmark,
+  GraduationCap,
+  BookOpen,
+  Lightbulb,
+  Target,
+  Award,
+  Trophy,
+  Medal,
+  Star,
+  ThumbsUp,
+  MessageCircle,
+  Phone,
+  AtSign,
+  Send,
+  Bell,
+  Clock,
+  Timer,
+  Hourglass,
+  Activity,
+  Gauge,
+  Workflow,
+  GitBranch,
+  Terminal,
+  Bug,
+  Wrench,
+  Hammer,
+  Paintbrush,
+  Brush,
+  Camera,
+  Film,
+  Music,
+  Headphones,
+  Radio,
+  Tv,
+  Monitor,
+  Laptop,
+  Tablet,
+  Watch,
+  Gamepad2,
+  Dumbbell,
+  Utensils,
+  Coffee,
+  Wine,
+  ShoppingCart,
+  ShoppingBag,
+  Gift,
+  Plane,
+  Car,
+  Train,
+  Ship,
+  Bike,
+  Home,
+  MapPin,
+  Map,
+  Compass,
+  Sun,
+  Moon,
+  Cloud,
+  Leaf,
+  Flower2,
+  TreeDeciduous,
+  Mountain,
+  Waves,
+  Droplet,
+  Flame,
+  Wind,
+  Snowflake,
+  Umbrella,
   type LucideIcon
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,60 +160,88 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
     gradient: "from-emerald-500 to-teal-600",
     glow: "group-hover:shadow-emerald-500/25",
     color: "text-emerald-500",
-    subcategories: ["Billing & Invoicing", "Expense Tracking", "Tax & Compliance", "Profit Analysis", "Debt Recovery", "Budgeting", "Financial Reports"]
+    subcategories: ["Billing & Invoicing", "Expense Tracking", "Tax & Compliance", "Profit Analysis", "Debt Recovery", "Budgeting", "Financial Reports", "Payroll", "Banking"]
   },
   "Legal & Compliance": { 
     icon: Scale, 
     gradient: "from-blue-500 to-indigo-600",
     glow: "group-hover:shadow-blue-500/25",
     color: "text-blue-500",
-    subcategories: ["Contract Management", "Regulatory Compliance", "Dispute Resolution", "Safety & Audits", "Documentation", "IP Protection", "GDPR Tools"]
+    subcategories: ["Contract Management", "Regulatory Compliance", "Dispute Resolution", "Safety & Audits", "Documentation", "IP Protection", "GDPR Tools", "Legal Templates", "E-Signatures"]
   },
   "Marketing & Sales": { 
     icon: Megaphone, 
     gradient: "from-pink-500 to-rose-600",
     glow: "group-hover:shadow-pink-500/25",
     color: "text-pink-500",
-    subcategories: ["Outreach & Campaigns", "Customer Engagement", "Social Media", "Lead Generation", "Promotions & Offers", "SEO Tools", "Email Marketing"]
+    subcategories: ["Outreach & Campaigns", "Customer Engagement", "Social Media", "Lead Generation", "Promotions & Offers", "SEO Tools", "Email Marketing", "Content Marketing", "Influencer Tools", "Affiliate Marketing"]
   },
   "Operations & Inventory": { 
     icon: Package, 
     gradient: "from-amber-500 to-orange-600",
     glow: "group-hover:shadow-amber-500/25",
     color: "text-amber-500",
-    subcategories: ["Stock Management", "Supplier Relations", "Quality Control", "Maintenance", "Shift Operations", "Logistics", "Warehouse"]
+    subcategories: ["Stock Management", "Supplier Relations", "Quality Control", "Maintenance", "Shift Operations", "Logistics", "Warehouse", "Order Fulfillment", "Asset Tracking"]
   },
   "HR & Staffing": { 
     icon: Users, 
     gradient: "from-violet-500 to-purple-600",
     glow: "group-hover:shadow-violet-500/25",
     color: "text-violet-500",
-    subcategories: ["Recruitment", "Payroll & Benefits", "Performance", "Scheduling", "Discipline & Compliance", "Training", "Onboarding"]
+    subcategories: ["Recruitment", "Payroll & Benefits", "Performance", "Scheduling", "Discipline & Compliance", "Training", "Onboarding", "Employee Engagement", "Remote Work", "Workforce Analytics"]
   },
   "Customer Service": { 
     icon: MessageSquare, 
     gradient: "from-cyan-500 to-sky-600",
     glow: "group-hover:shadow-cyan-500/25",
     color: "text-cyan-500",
-    subcategories: ["Ticket Management", "FAQ & Knowledge Base", "Feedback & Reviews", "Live Chat", "Chatbots"]
+    subcategories: ["Ticket Management", "FAQ & Knowledge Base", "Feedback & Reviews", "Live Chat", "Chatbots", "Call Center", "Help Desk", "Customer Success"]
   },
   "IT & Technology": { 
     icon: Code, 
     gradient: "from-gray-500 to-slate-600",
     glow: "group-hover:shadow-gray-500/25",
     color: "text-gray-500",
-    subcategories: ["Development", "Security", "Cloud Services", "DevOps", "API Management", "Data Analytics"]
+    subcategories: ["Development", "Security", "Cloud Services", "DevOps", "API Management", "Data Analytics", "System Admin", "Network Management", "IT Support"]
   },
   "Design & Creative": { 
     icon: Palette, 
     gradient: "from-fuchsia-500 to-purple-600",
     glow: "group-hover:shadow-fuchsia-500/25",
     color: "text-fuchsia-500",
-    subcategories: ["Graphic Design", "UI/UX", "Branding", "Video Production", "Animation", "3D Design"]
+    subcategories: ["Graphic Design", "UI/UX", "Branding", "Video Production", "Animation", "3D Design", "Illustration", "Photo Editing", "Motion Graphics"]
+  },
+  "Research & Development": { 
+    icon: Lightbulb, 
+    gradient: "from-yellow-500 to-amber-600",
+    glow: "group-hover:shadow-yellow-500/25",
+    color: "text-yellow-500",
+    subcategories: ["Market Research", "Product Development", "Innovation", "Testing & QA", "Prototyping", "Data Science", "Competitive Analysis"]
+  },
+  "Project Management": { 
+    icon: Target, 
+    gradient: "from-indigo-500 to-blue-600",
+    glow: "group-hover:shadow-indigo-500/25",
+    color: "text-indigo-500",
+    subcategories: ["Task Management", "Timeline Planning", "Resource Allocation", "Collaboration", "Reporting", "Agile Tools", "Kanban Boards", "Gantt Charts"]
+  },
+  "Education & Training": { 
+    icon: GraduationCap, 
+    gradient: "from-teal-500 to-green-600",
+    glow: "group-hover:shadow-teal-500/25",
+    color: "text-teal-500",
+    subcategories: ["E-Learning", "Course Creation", "Quiz & Assessment", "Certification", "LMS Tools", "Student Management", "Educational Content"]
+  },
+  "Executive & Strategy": { 
+    icon: Trophy, 
+    gradient: "from-rose-500 to-red-600",
+    glow: "group-hover:shadow-rose-500/25",
+    color: "text-rose-500",
+    subcategories: ["Business Planning", "Strategic Analysis", "Executive Dashboards", "OKR Tracking", "Investor Relations", "Board Management"]
   },
 };
 
-// Tool Types - NEW SECTION
+// Tool Types - Expanded with more categories
 const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; description: string; examples: string[] }> = {
   "Image Tools": {
     icon: Image,
@@ -118,7 +249,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-violet-500/25",
     color: "text-violet-500",
     description: "Edit, enhance, and transform images",
-    examples: ["Resizer", "Compressor", "Background Remover", "Cropper", "Watermark"]
+    examples: ["Resizer", "Compressor", "Background Remover", "Cropper", "Watermark", "Filters"]
   },
   "Document Tools": {
     icon: FileText,
@@ -126,7 +257,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-blue-500/25",
     color: "text-blue-500",
     description: "Create, convert, and manage documents",
-    examples: ["PDF Editor", "Invoice Generator", "Contract Maker", "Resume Builder"]
+    examples: ["PDF Editor", "Invoice Generator", "Contract Maker", "Resume Builder", "Word to PDF"]
   },
   "Video Tools": {
     icon: Video,
@@ -134,7 +265,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-red-500/25",
     color: "text-red-500",
     description: "Edit and enhance video content",
-    examples: ["Video Compressor", "Trimmer", "Converter", "Thumbnail Maker"]
+    examples: ["Video Compressor", "Trimmer", "Converter", "Thumbnail Maker", "Screen Recorder"]
   },
   "Audio Tools": {
     icon: Mic,
@@ -142,7 +273,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-green-500/25",
     color: "text-green-500",
     description: "Process and edit audio files",
-    examples: ["Audio Converter", "Voice Recorder", "Noise Remover", "Podcast Tools"]
+    examples: ["Audio Converter", "Voice Recorder", "Noise Remover", "Podcast Tools", "Music Editor"]
   },
   "AI & Automation": {
     icon: Bot,
@@ -150,7 +281,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-indigo-500/25",
     color: "text-indigo-500",
     description: "AI-powered tools for automation",
-    examples: ["AI Writer", "Chatbot", "Auto-responder", "Smart Assistant"]
+    examples: ["AI Writer", "Chatbot", "Auto-responder", "Smart Assistant", "AI Art Generator"]
   },
   "Analytics Tools": {
     icon: BarChart3,
@@ -158,7 +289,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-teal-500/25",
     color: "text-teal-500",
     description: "Track, analyze, and visualize data",
-    examples: ["Dashboard Builder", "Report Generator", "Data Visualizer", "KPI Tracker"]
+    examples: ["Dashboard Builder", "Report Generator", "Data Visualizer", "KPI Tracker", "Charts"]
   },
   "Developer Tools": {
     icon: Code,
@@ -166,7 +297,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-gray-500/25",
     color: "text-gray-400",
     description: "Tools for developers and tech teams",
-    examples: ["Code Formatter", "API Tester", "JSON Validator", "Regex Builder"]
+    examples: ["Code Formatter", "API Tester", "JSON Validator", "Regex Builder", "Diff Checker"]
   },
   "Communication": {
     icon: Mail,
@@ -174,7 +305,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-sky-500/25",
     color: "text-sky-500",
     description: "Email, messaging, and outreach tools",
-    examples: ["Email Templates", "Newsletter Builder", "SMS Tools", "WhatsApp Tools"]
+    examples: ["Email Templates", "Newsletter Builder", "SMS Tools", "WhatsApp Tools", "Mail Merge"]
   },
   "Security Tools": {
     icon: Shield,
@@ -182,7 +313,7 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-amber-500/25",
     color: "text-amber-500",
     description: "Protect and secure your digital assets",
-    examples: ["Password Generator", "Encryption Tools", "Privacy Tools", "Access Control"]
+    examples: ["Password Generator", "Encryption Tools", "Privacy Tools", "Access Control", "VPN"]
   },
   "Productivity": {
     icon: Zap,
@@ -190,7 +321,87 @@ const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     glow: "group-hover:shadow-yellow-500/25",
     color: "text-yellow-500",
     description: "Boost efficiency and save time",
-    examples: ["Task Manager", "Calendar Tools", "Time Tracker", "Note Taking"]
+    examples: ["Task Manager", "Calendar Tools", "Time Tracker", "Note Taking", "To-Do Lists"]
+  },
+  "Text Tools": {
+    icon: Type,
+    gradient: "from-rose-500 to-pink-600",
+    glow: "group-hover:shadow-rose-500/25",
+    color: "text-rose-500",
+    description: "Format, convert, and analyze text",
+    examples: ["Word Counter", "Case Converter", "Text Formatter", "Grammar Checker", "Translator"]
+  },
+  "QR & Barcode": {
+    icon: QrCode,
+    gradient: "from-slate-500 to-gray-600",
+    glow: "group-hover:shadow-slate-500/25",
+    color: "text-slate-500",
+    description: "Generate and scan QR codes & barcodes",
+    examples: ["QR Generator", "QR Scanner", "Barcode Maker", "Bulk QR Creator", "Dynamic QR"]
+  },
+  "Calculators": {
+    icon: Calculator,
+    gradient: "from-emerald-500 to-green-600",
+    glow: "group-hover:shadow-emerald-500/25",
+    color: "text-emerald-500",
+    description: "Calculate anything you need",
+    examples: ["Tax Calculator", "Loan Calculator", "BMI Calculator", "Currency Converter", "Tip Calculator"]
+  },
+  "Converters": {
+    icon: RefreshCw,
+    gradient: "from-cyan-500 to-teal-600",
+    glow: "group-hover:shadow-cyan-500/25",
+    color: "text-cyan-500",
+    description: "Convert between formats and units",
+    examples: ["File Converter", "Unit Converter", "Color Converter", "Date Converter", "Base Converter"]
+  },
+  "Social Media": {
+    icon: Share2,
+    gradient: "from-pink-500 to-fuchsia-600",
+    glow: "group-hover:shadow-pink-500/25",
+    color: "text-pink-500",
+    description: "Tools for social media management",
+    examples: ["Post Scheduler", "Hashtag Generator", "Profile Analyzer", "Caption Writer", "Bio Generator"]
+  },
+  "SEO Tools": {
+    icon: Search,
+    gradient: "from-orange-500 to-red-600",
+    glow: "group-hover:shadow-orange-500/25",
+    color: "text-orange-500",
+    description: "Optimize for search engines",
+    examples: ["Keyword Research", "Meta Tag Generator", "Sitemap Creator", "Backlink Checker", "SERP Analyzer"]
+  },
+  "File Management": {
+    icon: Database,
+    gradient: "from-purple-500 to-indigo-600",
+    glow: "group-hover:shadow-purple-500/25",
+    color: "text-purple-500",
+    description: "Organize and manage your files",
+    examples: ["File Merger", "File Splitter", "Zip Tools", "File Renamer", "Duplicate Finder"]
+  },
+  "Design Tools": {
+    icon: Paintbrush,
+    gradient: "from-fuchsia-500 to-pink-600",
+    glow: "group-hover:shadow-fuchsia-500/25",
+    color: "text-fuchsia-500",
+    description: "Create stunning visual designs",
+    examples: ["Logo Maker", "Banner Creator", "Icon Generator", "Color Palette", "Mockup Generator"]
+  },
+  "Writing Tools": {
+    icon: PenTool,
+    gradient: "from-lime-500 to-green-600",
+    glow: "group-hover:shadow-lime-500/25",
+    color: "text-lime-500",
+    description: "Write better content faster",
+    examples: ["Content Generator", "Blog Writer", "Copy Editor", "Headline Analyzer", "Outline Creator"]
+  },
+  "Data Tools": {
+    icon: Table,
+    gradient: "from-blue-600 to-indigo-700",
+    glow: "group-hover:shadow-blue-600/25",
+    color: "text-blue-600",
+    description: "Process and analyze data",
+    examples: ["CSV Editor", "Data Cleaner", "Excel Tools", "Data Extractor", "Pivot Tables"]
   },
 };
 
@@ -201,56 +412,84 @@ const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: s
     gradient: "from-indigo-500 to-blue-600",
     glow: "group-hover:shadow-indigo-500/25",
     color: "text-indigo-500",
-    sectors: ["Banking & Finance", "Legal Services", "Professional Services", "IT & Software", "Education & Training", "Consulting"]
+    sectors: ["Banking & Finance", "Legal Services", "Professional Services", "IT & Software", "Education & Training", "Consulting", "Accounting", "Insurance"]
   },
   "Retail & Commerce": {
-    icon: Building2,
+    icon: ShoppingCart,
     gradient: "from-orange-500 to-red-600",
     glow: "group-hover:shadow-orange-500/25",
     color: "text-orange-500",
-    sectors: ["Retail", "E-commerce", "Food & Beverage", "Beauty & Wellness", "Hospitality & Tourism", "Fashion"]
+    sectors: ["Retail", "E-commerce", "Food & Beverage", "Beauty & Wellness", "Hospitality & Tourism", "Fashion", "Grocery", "Luxury Goods"]
   },
   "Industrial & Production": {
     icon: Factory,
     gradient: "from-slate-500 to-zinc-600",
     glow: "group-hover:shadow-slate-500/25",
     color: "text-slate-500",
-    sectors: ["Manufacturing", "Agriculture & Farming", "Construction & Real Estate", "Energy & Utilities", "Mining", "Chemicals"]
+    sectors: ["Manufacturing", "Agriculture & Farming", "Construction & Real Estate", "Energy & Utilities", "Mining", "Chemicals", "Textiles", "Machinery"]
   },
   "Logistics & Transport": {
     icon: Truck,
     gradient: "from-teal-500 to-emerald-600",
     glow: "group-hover:shadow-teal-500/25",
     color: "text-teal-500",
-    sectors: ["Logistics", "Automotive & Transport", "Telecommunications", "Shipping", "Aviation"]
+    sectors: ["Logistics", "Automotive & Transport", "Telecommunications", "Shipping", "Aviation", "Railways", "Courier Services", "Fleet Management"]
   },
   "Lifestyle & Entertainment": {
     icon: Heart,
     gradient: "from-rose-500 to-pink-600",
     glow: "group-hover:shadow-rose-500/25",
     color: "text-rose-500",
-    sectors: ["Entertainment & Media", "Gaming & E-sports", "Sports & Fitness", "Weddings & Events", "Non-Profit & NGO", "Travel"]
+    sectors: ["Entertainment & Media", "Gaming & E-sports", "Sports & Fitness", "Weddings & Events", "Non-Profit & NGO", "Travel", "Art & Culture", "Hobbies"]
   },
   "Healthcare & Wellness": {
-    icon: Heart,
+    icon: Activity,
     gradient: "from-red-500 to-rose-600",
     glow: "group-hover:shadow-red-500/25",
     color: "text-red-500",
-    sectors: ["Healthcare & Medical", "Pharmaceuticals", "Mental Health", "Fitness & Nutrition", "Elder Care"]
+    sectors: ["Healthcare & Medical", "Pharmaceuticals", "Mental Health", "Fitness & Nutrition", "Elder Care", "Dental", "Veterinary", "Alternative Medicine"]
   },
   "Technology & Digital": {
     icon: Cpu,
     gradient: "from-cyan-500 to-blue-600",
     glow: "group-hover:shadow-cyan-500/25",
     color: "text-cyan-500",
-    sectors: ["SaaS", "Fintech", "EdTech", "HealthTech", "AI & ML", "Blockchain"]
+    sectors: ["SaaS", "Fintech", "EdTech", "HealthTech", "AI & ML", "Blockchain", "Cybersecurity", "IoT", "Cloud Services"]
   },
   "Creative & Media": {
-    icon: PenTool,
+    icon: Film,
     gradient: "from-pink-500 to-fuchsia-600",
     glow: "group-hover:shadow-pink-500/25",
     color: "text-pink-500",
-    sectors: ["Advertising", "Publishing", "Film & TV", "Music Industry", "Photography", "Design Agencies"]
+    sectors: ["Advertising", "Publishing", "Film & TV", "Music Industry", "Photography", "Design Agencies", "Streaming", "Content Creation"]
+  },
+  "Food & Hospitality": {
+    icon: Utensils,
+    gradient: "from-amber-500 to-orange-600",
+    glow: "group-hover:shadow-amber-500/25",
+    color: "text-amber-500",
+    sectors: ["Restaurants", "Hotels", "Cafes & Bakeries", "Catering", "Food Delivery", "Bars & Nightlife", "Quick Service", "Fine Dining"]
+  },
+  "Real Estate & Property": {
+    icon: Home,
+    gradient: "from-green-500 to-emerald-600",
+    glow: "group-hover:shadow-green-500/25",
+    color: "text-green-500",
+    sectors: ["Residential", "Commercial", "Property Management", "Real Estate Agents", "Architecture", "Interior Design", "Facility Management"]
+  },
+  "Education & Learning": {
+    icon: BookOpen,
+    gradient: "from-violet-500 to-purple-600",
+    glow: "group-hover:shadow-violet-500/25",
+    color: "text-violet-500",
+    sectors: ["K-12 Schools", "Higher Education", "Online Courses", "Coaching Centers", "Vocational Training", "Corporate Training", "Test Prep"]
+  },
+  "Government & Public": {
+    icon: Landmark,
+    gradient: "from-gray-600 to-slate-700",
+    glow: "group-hover:shadow-gray-600/25",
+    color: "text-gray-600",
+    sectors: ["Government", "Public Administration", "Defense", "Law Enforcement", "Public Health", "Social Services", "Civic Organizations"]
   },
 };
 
