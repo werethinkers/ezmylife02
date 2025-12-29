@@ -3,9 +3,10 @@ import { useEffect, useState, useCallback } from "react";
 import { tools, getToolUrl } from "@/data/tools";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhiteLabelWrapper, needsWhiteLabel } from "@/components/WhiteLabelWrapper";
+import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import logo from "@/assets/logo.png";
 
 const ToolViewer = () => {
@@ -18,13 +19,19 @@ const ToolViewer = () => {
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
   const showWhiteLabel = toolId ? needsWhiteLabel(toolId) : false;
+  const isNativeTool = toolId ? hasNativeImplementation(toolId) : false;
 
   useEffect(() => {
+    // Native tools don't need URL validation
+    if (isNativeTool) {
+      setIsLoading(false);
+      return;
+    }
     if (!tool || !toolUrl) {
       setError("Tool not found");
       setIsLoading(false);
     }
-  }, [tool, toolUrl]);
+  }, [tool, toolUrl, isNativeTool]);
 
   // Handle escape key to exit fullscreen
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -63,7 +70,8 @@ const ToolViewer = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  if (error || !tool || !toolUrl) {
+  // Error state - only for non-native tools that don't have a URL
+  if (error || !tool || (!isNativeTool && !toolUrl)) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -104,11 +112,13 @@ const ToolViewer = () => {
         </div>
         
         {/* Fullscreen content */}
-        <div className="pt-12 h-full">
-          {showWhiteLabel ? (
+        <div className="pt-12 h-full overflow-auto">
+          {isNativeTool ? (
+            <NativeToolRenderer toolId={toolId!} />
+          ) : showWhiteLabel ? (
             <WhiteLabelWrapper toolId={toolId!} toolName={tool.title} isFullscreen>
               <iframe
-                src={toolUrl}
+                src={toolUrl!}
                 className="w-full h-full border-0"
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
@@ -119,7 +129,7 @@ const ToolViewer = () => {
             </WhiteLabelWrapper>
           ) : (
             <iframe
-              src={toolUrl}
+              src={toolUrl!}
               className="w-full h-full border-0"
               onLoad={handleIframeLoad}
               onError={handleIframeError}
@@ -186,12 +196,14 @@ const ToolViewer = () => {
         </div>
       )}
 
-      {/* Iframe Container with White Label Wrapper */}
+      {/* Tool Content */}
       <div className={`flex-1 ${isLoading ? 'hidden' : ''}`} style={{ height: 'calc(100vh - 8rem)' }}>
-        {showWhiteLabel ? (
+        {isNativeTool ? (
+          <NativeToolRenderer toolId={toolId!} />
+        ) : showWhiteLabel ? (
           <WhiteLabelWrapper toolId={toolId!} toolName={tool.title}>
             <iframe
-              src={toolUrl}
+              src={toolUrl!}
               className="w-full h-full border-0"
               onLoad={handleIframeLoad}
               onError={handleIframeError}
@@ -202,7 +214,7 @@ const ToolViewer = () => {
           </WhiteLabelWrapper>
         ) : (
           <iframe
-            src={toolUrl}
+            src={toolUrl!}
             className="w-full h-full border-0"
             onLoad={handleIframeLoad}
             onError={handleIframeError}
