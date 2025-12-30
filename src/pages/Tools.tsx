@@ -38,7 +38,7 @@ const Tools = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedToolType, setSelectedToolType] = useState("All Types");
-  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("featured");
+  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("browse");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
 

@@ -24,6 +24,11 @@ import { SalaryCalculator } from "./SalaryCalculator";
 import { TaxEstimator } from "./TaxEstimator";
 import { JobPostGenerator } from "./JobPostGenerator";
 import { ProfitCalculator } from "./ProfitCalculator";
+import { QuizMaker } from "./QuizMaker";
+import { LessonPlanner } from "./LessonPlanner";
+import { GradeCalculator } from "./GradeCalculator";
+import { StudyPlanner } from "./StudyPlanner";
+import { FlashcardMaker } from "./FlashcardMaker";
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
@@ -150,6 +155,18 @@ const nativeTools: Record<string, React.ComponentType> = {
   "hiring-job-post": JobPostGenerator,
   "job-post-generator": JobPostGenerator,
   "tool-20": JobPostGenerator,
+
+  // ===== EDUCATION TOOLS =====
+  "quiz-maker": QuizMaker,
+  "quiz": QuizMaker,
+  "lesson-planner": LessonPlanner,
+  "lesson-plan": LessonPlanner,
+  "grade-calculator": GradeCalculator,
+  "cgpa-calculator": GradeCalculator,
+  "study-planner": StudyPlanner,
+  "study-schedule": StudyPlanner,
+  "flashcard-maker": FlashcardMaker,
+  "flashcards": FlashcardMaker,
 };
 
 interface NativeToolRendererProps {
