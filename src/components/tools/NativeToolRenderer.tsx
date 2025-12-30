@@ -17,6 +17,13 @@ import { DpiConverter } from "./DpiConverter";
 import { MetadataViewer } from "./MetadataViewer";
 import { ImageSplitter } from "./ImageSplitter";
 import { AddLogoToImage } from "./AddLogoToImage";
+import { InvoiceGenerator } from "./InvoiceGenerator";
+import { ExpenseTracker } from "./ExpenseTracker";
+import { ContractDrafter } from "./ContractDrafter";
+import { SalaryCalculator } from "./SalaryCalculator";
+import { TaxEstimator } from "./TaxEstimator";
+import { JobPostGenerator } from "./JobPostGenerator";
+import { ProfitCalculator } from "./ProfitCalculator";
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
@@ -119,6 +126,30 @@ const nativeTools: Record<string, React.ComponentType> = {
   "whatsapp-dp": ImageResizer,
   "youtube-banner": ImageResizer,
   "zoom-out-image": ImageResizer,
+
+  // ===== INDUSTRY / BUSINESS TOOLS =====
+  
+  // Finance & Accounting
+  "invoice-generator": InvoiceGenerator,
+  "ai-invoice-generator": InvoiceGenerator,
+  "tool-1": InvoiceGenerator,
+  "expense-tracker": ExpenseTracker,
+  "tool-2": ExpenseTracker,
+  "profit-calculator": ProfitCalculator,
+  "tool-3": ProfitCalculator,
+  "tax-estimator": TaxEstimator,
+  "tool-4": TaxEstimator,
+  
+  // Legal & Compliance
+  "contract-drafter": ContractDrafter,
+  "tool-6": ContractDrafter,
+  
+  // HR & Staffing
+  "salary-calculator": SalaryCalculator,
+  "tool-22": SalaryCalculator,
+  "hiring-job-post": JobPostGenerator,
+  "job-post-generator": JobPostGenerator,
+  "tool-20": JobPostGenerator,
 };
 
 interface NativeToolRendererProps {
