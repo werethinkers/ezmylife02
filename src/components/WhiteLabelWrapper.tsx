@@ -63,38 +63,9 @@ const defaultConfigs: Record<string, ToolBrandingConfig> = {
   "minimal": { showTopBar: false, topBarHeight: 0, overlays: [] },
 };
 
-// Get config for a specific tool
+// Get config for a specific tool - always return minimal (no overlays)
 export const getToolConfig = (toolId: string): ToolBrandingConfig => {
-  // Check for specific tool config first
-  if (specificToolConfigs[toolId]) {
-    return specificToolConfigs[toolId];
-  }
-  
-  // Fallback to category-based detection
-  if (toolId.includes("vision") || toolId.includes("restore") || toolId.includes("ai-photo-enhancer")) {
-    return defaultConfigs["pi7-vision"];
-  }
-  
-  if (toolId.includes("toolfk") || toolId.includes("ai-id-photo")) {
-    return defaultConfigs["toolfk"];
-  }
-  
-  // Check if it's a Pi7 tool by common patterns
-  const pi7Patterns = [
-    "passport", "resize", "reduce", "increase", "blur", "remove", "rotate", "flip",
-    "watermark", "crop", "merge", "join", "split", "color-picker", "metadata",
-    "beautify", "unblur", "pixelate", "censor", "motion", "grayscale", "black-white",
-    "pixel-art", "face-generator", "blemish", "retouch", "add-text", "add-logo",
-    "add-name", "dpi", "super-resolution", "upscale", "ssc-photo", "pan-card",
-    "upsc-photo", "psc-photo", "instagram", "whatsapp", "youtube", "zoom-out",
-    "generate-signature"
-  ];
-  
-  if (pi7Patterns.some(pattern => toolId.includes(pattern))) {
-    return defaultConfigs["pi7-standard"];
-  }
-  
-  // Default - no overlay for internal ezmy.life tools
+  // Always return minimal config - no white label overlays
   return defaultConfigs["minimal"];
 };
 
