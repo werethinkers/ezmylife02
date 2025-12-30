@@ -406,7 +406,7 @@ function generateSectorTools(): ExpandedTool[] {
 export const expandedTools = generateExpandedTools();
 export const sectorSpecificTools = generateSectorTools();
 export const allTools = [...expandedTools, ...sectorSpecificTools];
-export const totalToolCount = coreTools.length; // Unique tool count
+export const totalToolCount = expandedTools.length; // Actual unique tool count from generated tools
 
 // Filter functions
 export function filterToolsBySector(tools: ExpandedTool[], sector: string): ExpandedTool[] {
