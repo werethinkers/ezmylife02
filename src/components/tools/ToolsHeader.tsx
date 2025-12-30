@@ -8,7 +8,8 @@ import {
   List, 
   CheckCircle2, 
   Sparkles,
-  Zap
+  Zap,
+  UserCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -17,8 +18,8 @@ interface ToolsHeaderProps {
   totalCount: number;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  viewMode: "browse" | "list" | "featured";
-  onViewModeChange: (mode: "browse" | "list" | "featured") => void;
+  viewMode: "browse" | "list" | "featured" | "personalized";
+  onViewModeChange: (mode: "browse" | "list" | "featured" | "personalized") => void;
 }
 
 export const ToolsHeader = ({
@@ -118,6 +119,15 @@ export const ToolsHeader = ({
             className="flex items-center justify-center gap-2"
           >
             <div className="inline-flex items-center p-1 rounded-lg bg-secondary/50 backdrop-blur-sm border border-border/50">
+              <Button
+                variant={viewMode === "personalized" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => onViewModeChange("personalized")}
+                className={viewMode === "personalized" ? "bg-gradient-to-r from-primary to-primary/80 shadow-md" : "hover:bg-secondary"}
+              >
+                <UserCircle className="h-4 w-4 mr-1.5" />
+                For You
+              </Button>
               <Button
                 variant={viewMode === "featured" ? "default" : "ghost"}
                 size="sm"

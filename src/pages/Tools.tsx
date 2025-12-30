@@ -6,6 +6,7 @@ import { ToolsFilters } from "@/components/tools/ToolsFilters";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
+import { PersonalizedTools } from "@/components/tools/PersonalizedTools";
 import { 
   expandedTools,
   sectorSpecificTools, 
@@ -38,7 +39,7 @@ const Tools = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedToolType, setSelectedToolType] = useState("All Types");
-  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured">("browse");
+  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured" | "personalized">("browse");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
 
@@ -135,10 +136,10 @@ const Tools = () => {
     setPreviewOpen(true);
   }, []);
 
-  const handleViewModeChange = useCallback((mode: "browse" | "list" | "featured") => {
+  const handleViewModeChange = useCallback((mode: "browse" | "list" | "featured" | "personalized") => {
     setViewMode(mode);
-    // Reset filters when switching to featured mode
-    if (mode === "featured") {
+    // Reset filters when switching to featured or personalized mode
+    if (mode === "featured" || mode === "personalized") {
       setSelectedSector("All Sectors");
       setSelectedDepartment("All Departments");
       setSelectedSubcategory(null);
@@ -149,6 +150,7 @@ const Tools = () => {
   const showTools = viewMode === "list" || (viewMode === "featured" && searchQuery);
   const showFeatured = viewMode === "featured" && !searchQuery;
   const showBrowse = viewMode === "browse" && !searchQuery;
+  const showPersonalized = viewMode === "personalized";
 
   return (
     <div className="min-h-screen bg-background">
@@ -184,6 +186,20 @@ const Tools = () => {
               departments={departments}
               subcategories={currentSubcategories}
             />
+          )}
+        </AnimatePresence>
+
+        {/* Personalized Tools - AI Recommendations */}
+        <AnimatePresence mode="wait">
+          {showPersonalized && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PersonalizedTools />
+            </motion.div>
           )}
         </AnimatePresence>
 
