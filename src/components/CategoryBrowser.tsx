@@ -584,6 +584,7 @@ export const CategoryBrowser = ({
             return (
               <motion.div key={type} variants={itemVariants}>
                 <Card 
+                  onClick={() => handleToolTypeClick(type)}
                   className={cn(
                     "group cursor-pointer transition-all duration-300 overflow-hidden relative",
                     "bg-card/80 backdrop-blur-sm border-border/50",
@@ -594,16 +595,13 @@ export const CategoryBrowser = ({
                 >
                   {/* Gradient overlay */}
                   <div className={cn(
-                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500",
+                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none",
                     `bg-gradient-to-br ${data.gradient}`
                   )} />
                   
                   <CardContent className="p-0">
                     {/* Main clickable area */}
-                    <div 
-                      className="p-4 flex flex-col items-center gap-3 text-center"
-                      onClick={() => handleToolTypeClick(type)}
-                    >
+                    <div className="p-4 flex flex-col items-center gap-3 text-center">
                       <div className={cn(
                         "p-3 rounded-xl transition-all duration-300 shrink-0",
                         `bg-gradient-to-br ${data.gradient}`,
@@ -708,6 +706,7 @@ export const CategoryBrowser = ({
             return (
               <motion.div key={dept} variants={itemVariants}>
                 <Card 
+                  onClick={() => handleDepartmentClick(dept)}
                   className={cn(
                     "group cursor-pointer transition-all duration-300 overflow-hidden relative",
                     "bg-card/80 backdrop-blur-sm border-border/50",
@@ -718,16 +717,13 @@ export const CategoryBrowser = ({
                 >
                   {/* Gradient overlay */}
                   <div className={cn(
-                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500",
+                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none",
                     `bg-gradient-to-br ${data.gradient}`
                   )} />
                   
                   <CardContent className="p-0">
                     {/* Main clickable area */}
-                    <div 
-                      className="p-5 flex items-center gap-4"
-                      onClick={() => handleDepartmentClick(dept)}
-                    >
+                    <div className="p-5 flex items-center gap-4">
                       <div className={cn(
                         "p-3 rounded-xl transition-all duration-300 shrink-0",
                         `bg-gradient-to-br ${data.gradient}`,
@@ -840,6 +836,7 @@ export const CategoryBrowser = ({
             return (
               <motion.div key={industry} variants={itemVariants}>
                 <Card 
+                  onClick={() => handleIndustryClick(industry)}
                   className={cn(
                     "group cursor-pointer transition-all duration-300 overflow-hidden relative",
                     "bg-card/80 backdrop-blur-sm border-border/50",
@@ -850,16 +847,13 @@ export const CategoryBrowser = ({
                 >
                   {/* Gradient overlay */}
                   <div className={cn(
-                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500",
+                    "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none",
                     `bg-gradient-to-br ${data.gradient}`
                   )} />
                   
                   <CardContent className="p-0">
                     {/* Main clickable area */}
-                    <div 
-                      className="p-5 flex items-center gap-4"
-                      onClick={() => handleIndustryClick(industry)}
-                    >
+                    <div className="p-5 flex items-center gap-4">
                       <div className={cn(
                         "p-3 rounded-xl transition-all duration-300 shrink-0",
                         `bg-gradient-to-br ${data.gradient}`,
