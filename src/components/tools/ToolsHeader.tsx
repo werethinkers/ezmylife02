@@ -76,7 +76,7 @@ export const ToolsHeader = ({
               <span className="text-emerald-600/70">Live</span>
             </Badge>
             <Badge variant="secondary" className="px-4 py-1.5 gap-2">
-              <span className="font-semibold">{totalCount.toLocaleString()}+</span>
+              <span className="font-semibold">{totalCount.toLocaleString()}</span>
               <span className="text-muted-foreground">Total</span>
             </Badge>
           </motion.div>
