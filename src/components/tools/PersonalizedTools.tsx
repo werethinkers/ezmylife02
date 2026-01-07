@@ -15,9 +15,13 @@ import {
   GraduationCap,
   Building2,
   Wrench,
-  ChevronRight
+  ChevronRight,
+  Save,
+  History
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -41,6 +45,7 @@ const quickStartOptions = [
 ];
 
 export function PersonalizedTools() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +53,66 @@ export function PersonalizedTools() {
   const [userProfile, setUserProfile] = useState<Partial<UserProfile>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
+  const [savedRecommendations, setSavedRecommendations] = useState<any[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
+
+  // Load saved recommendations on mount
+  useEffect(() => {
+    if (user) {
+      loadSavedRecommendations();
+    }
+  }, [user]);
+
+  const loadSavedRecommendations = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('saved_recommendations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (!error && data) {
+      setSavedRecommendations(data);
+    }
+  };
+
+  const saveRecommendation = async () => {
+    if (!user) {
+      toast.error("Please sign in to save recommendations");
+      return;
+    }
+
+    const assistantMessages = messages.filter(m => m.role === "assistant");
+    const lastRecommendation = assistantMessages[assistantMessages.length - 1]?.content || "";
+    
+    const { error } = await supabase
+      .from('saved_recommendations')
+      .insert({
+        user_id: user.id,
+        tools: messages.map(m => ({ role: m.role, content: m.content })),
+        workflow: lastRecommendation,
+        user_context: userProfile.conversationHistory || ""
+      });
+
+    if (error) {
+      toast.error("Failed to save recommendations");
+      console.error(error);
+    } else {
+      toast.success("Recommendations saved!");
+      loadSavedRecommendations();
+    }
+  };
+
+  const loadSavedConversation = (saved: any) => {
+    const savedMessages = saved.tools as Message[];
+    if (savedMessages && Array.isArray(savedMessages)) {
+      setMessages(savedMessages);
+      setInterviewComplete(true);
+      setShowSaved(false);
+      toast.success("Loaded saved recommendations");
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -329,14 +394,38 @@ export function PersonalizedTools() {
           <div className="border-t border-border/50 p-4 bg-background/50">
             <div className="flex gap-2">
               {messages.length > 0 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={resetConversation}
+                    className="shrink-0"
+                    title="Start over"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  {user && interviewComplete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={saveRecommendation}
+                      className="shrink-0"
+                      title="Save recommendations"
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              )}
+              {messages.length === 0 && user && savedRecommendations.length > 0 && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={resetConversation}
+                  onClick={() => setShowSaved(!showSaved)}
                   className="shrink-0"
-                  title="Start over"
+                  title="View saved"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <History className="h-4 w-4" />
                 </Button>
               )}
               <Input
@@ -360,6 +449,24 @@ export function PersonalizedTools() {
                 )}
               </Button>
             </div>
+            {showSaved && savedRecommendations.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-muted-foreground">Saved recommendations:</p>
+                {savedRecommendations.map((saved) => (
+                  <Button
+                    key={saved.id}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-left h-auto py-2"
+                    onClick={() => loadSavedConversation(saved)}
+                  >
+                    <span className="truncate text-xs">
+                      {new Date(saved.created_at).toLocaleDateString()} - {saved.user_context?.slice(0, 50) || "Saved workflow"}...
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

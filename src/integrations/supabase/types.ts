@@ -116,6 +116,36 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_recommendations: {
+        Row: {
+          created_at: string
+          id: string
+          tools: Json
+          updated_at: string
+          user_context: string | null
+          user_id: string
+          workflow: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tools?: Json
+          updated_at?: string
+          user_context?: string | null
+          user_id: string
+          workflow?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tools?: Json
+          updated_at?: string
+          user_context?: string | null
+          user_id?: string
+          workflow?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
