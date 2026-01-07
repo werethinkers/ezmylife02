@@ -29,6 +29,9 @@ import { LessonPlanner } from "./LessonPlanner";
 import { GradeCalculator } from "./GradeCalculator";
 import { StudyPlanner } from "./StudyPlanner";
 import { FlashcardMaker } from "./FlashcardMaker";
+import { AssignmentTracker } from "./AssignmentTracker";
+import { BibliographyGenerator } from "./BibliographyGenerator";
+import { ExamScheduler } from "./ExamScheduler";
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
@@ -167,6 +170,12 @@ const nativeTools: Record<string, React.ComponentType> = {
   "study-schedule": StudyPlanner,
   "flashcard-maker": FlashcardMaker,
   "flashcards": FlashcardMaker,
+  "assignment-tracker": AssignmentTracker,
+  "assignments": AssignmentTracker,
+  "bibliography-generator": BibliographyGenerator,
+  "citation-generator": BibliographyGenerator,
+  "exam-scheduler": ExamScheduler,
+  "exam-planner": ExamScheduler,
 };
 
 interface NativeToolRendererProps {

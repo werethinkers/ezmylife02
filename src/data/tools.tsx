@@ -1121,4 +1121,107 @@ export const tools: Tool[] = [
     videoLink: "",
     isLive: true
   },
+
+  // ============ EDUCATION TOOLS - FOR STUDENTS ============
+  {
+    title: "Quiz Maker",
+    description: "Create interactive quizzes with multiple choice questions for self-assessment.",
+    category: "For Students",
+    icon: <ClipboardList className="h-8 w-8" />,
+    toolId: "quiz-maker",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Grade Calculator",
+    description: "Calculate your GPA, CGPA, and overall grades across subjects.",
+    category: "For Students",
+    icon: <Calculator className="h-8 w-8" />,
+    toolId: "grade-calculator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Study Planner",
+    description: "Create personalized study schedules and track your progress.",
+    category: "For Students",
+    icon: <Calendar className="h-8 w-8" />,
+    toolId: "study-planner",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Flashcard Maker",
+    description: "Create digital flashcards for memorization and spaced repetition learning.",
+    category: "For Students",
+    icon: <Layers className="h-8 w-8" />,
+    toolId: "flashcard-maker",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Assignment Tracker",
+    description: "Track assignments, deadlines, and priorities across all your subjects.",
+    category: "For Students",
+    icon: <ClipboardList className="h-8 w-8" />,
+    toolId: "assignment-tracker",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Bibliography Generator",
+    description: "Generate citations in APA, MLA, Chicago, and Harvard formats.",
+    category: "For Students",
+    icon: <BookText className="h-8 w-8" />,
+    toolId: "bibliography-generator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Exam Scheduler",
+    description: "Schedule exams and automatically generate study plans.",
+    category: "For Students",
+    icon: <Calendar className="h-8 w-8" />,
+    toolId: "exam-scheduler",
+    videoLink: "",
+    isLive: true
+  },
+
+  // ============ EDUCATION TOOLS - FOR TEACHERS ============
+  {
+    title: "Lesson Planner",
+    description: "Create comprehensive lesson plans with objectives, activities, and assessments.",
+    category: "For Teachers",
+    icon: <BookOpen className="h-8 w-8" />,
+    toolId: "lesson-planner",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Quiz Maker for Teachers",
+    description: "Create quizzes and assessments for your students.",
+    category: "For Teachers",
+    icon: <ClipboardList className="h-8 w-8" />,
+    toolId: "quiz-maker",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Grade Calculator for Teachers",
+    description: "Calculate and manage student grades efficiently.",
+    category: "For Teachers",
+    icon: <Calculator className="h-8 w-8" />,
+    toolId: "grade-calculator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Flashcard Creator",
+    description: "Create flashcard decks for your students to study.",
+    category: "For Teachers",
+    icon: <Layers className="h-8 w-8" />,
+    toolId: "flashcard-maker",
+    videoLink: "",
+    isLive: true
+  },
 ];
