@@ -32,6 +32,12 @@ import { FlashcardMaker } from "./FlashcardMaker";
 import { AssignmentTracker } from "./AssignmentTracker";
 import { BibliographyGenerator } from "./BibliographyGenerator";
 import { ExamScheduler } from "./ExamScheduler";
+import { SocialPostGenerator } from "./SocialPostGenerator";
+import { CaptionGenerator } from "./CaptionGenerator";
+import { HashtagGenerator } from "./HashtagGenerator";
+import { ContentIdeaGenerator } from "./ContentIdeaGenerator";
+import { VideoScriptWriter } from "./VideoScriptWriter";
+import { ContentWorkflow } from "./ContentWorkflow";
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
@@ -176,6 +182,14 @@ const nativeTools: Record<string, React.ComponentType> = {
   "citation-generator": BibliographyGenerator,
   "exam-scheduler": ExamScheduler,
   "exam-planner": ExamScheduler,
+
+  // ===== CONTENT CREATION TOOLS =====
+  "social-post-generator": SocialPostGenerator,
+  "caption-generator": CaptionGenerator,
+  "hashtag-generator": HashtagGenerator,
+  "content-idea-generator": ContentIdeaGenerator,
+  "video-script-writer": VideoScriptWriter,
+  "content-workflow": ContentWorkflow,
 };
 
 interface NativeToolRendererProps {

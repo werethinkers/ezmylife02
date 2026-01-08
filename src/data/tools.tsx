@@ -1,4 +1,4 @@
-import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, Calculator, Globe, Video, Network, Headphones, PlayCircle, Sparkles, ScanText, BookMarked, FileCode, Eye, FileSearch, Database, Heart, Lightbulb, Pencil, Camera, ImagePlus, Minimize2, Maximize2, FileSignature, Wand2, RotateCw, FlipHorizontal, Droplets, CircleDot, Square, Merge, SplitSquareHorizontal, Pipette, FileText as MetadataIcon, Sparkle, Focus, Grid3X3, UserCircle, Eraser as BlemishIcon, Type, ImageIcon, Gauge, Zap, Smartphone, Youtube, MessageCircle, Scissors, RectangleHorizontal, CreditCard, GraduationCap, Stamp, Ruler } from "lucide-react";
+import { Bot, BookOpen, Library, Calendar, Layers, ClipboardList, Image, BookText, FileText, Notebook, Edit, FileImage, Languages, Code, Eraser, BarChart3, Brain, Map, Calculator, Globe, Video, Network, Headphones, PlayCircle, Sparkles, ScanText, BookMarked, FileCode, Eye, FileSearch, Database, Heart, Lightbulb, Pencil, Camera, ImagePlus, Minimize2, Maximize2, FileSignature, Wand2, RotateCw, FlipHorizontal, Droplets, CircleDot, Square, Merge, SplitSquareHorizontal, Pipette, FileText as MetadataIcon, Sparkle, Focus, Grid3X3, UserCircle, Eraser as BlemishIcon, Type, ImageIcon, Gauge, Zap, Smartphone, Youtube, MessageCircle, Scissors, RectangleHorizontal, CreditCard, GraduationCap, Stamp, Ruler, Hash, Send, Instagram } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface Tool {
@@ -1221,6 +1221,62 @@ export const tools: Tool[] = [
     category: "For Teachers",
     icon: <Layers className="h-8 w-8" />,
     toolId: "flashcard-maker",
+    videoLink: "",
+    isLive: true
+  },
+
+  // ============ CONTENT CREATION TOOLS ============
+  {
+    title: "Social Post Generator",
+    description: "AI-powered tool to generate engaging social media posts for any platform.",
+    category: "Content Creation",
+    icon: <Instagram className="h-8 w-8" />,
+    toolId: "social-post-generator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Caption Generator",
+    description: "Generate multiple creative captions for your images and videos.",
+    category: "Content Creation",
+    icon: <MessageCircle className="h-8 w-8" />,
+    toolId: "caption-generator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Hashtag Generator",
+    description: "Generate relevant hashtags with popularity levels for maximum reach.",
+    category: "Content Creation",
+    icon: <Hash className="h-8 w-8" />,
+    toolId: "hashtag-generator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Content Idea Generator",
+    description: "Get AI-powered content ideas with hooks and best posting times.",
+    category: "Content Creation",
+    icon: <Lightbulb className="h-8 w-8" />,
+    toolId: "content-idea-generator",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Video Script Writer",
+    description: "Generate video scripts with sections, timing, and calls to action.",
+    category: "Content Creation",
+    icon: <Video className="h-8 w-8" />,
+    toolId: "video-script-writer",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Content Creation Workflow",
+    description: "Complete end-to-end workflow from idea to ready-to-publish content.",
+    category: "Content Creation",
+    icon: <Wand2 className="h-8 w-8" />,
+    toolId: "content-workflow",
     videoLink: "",
     isLive: true
   },
