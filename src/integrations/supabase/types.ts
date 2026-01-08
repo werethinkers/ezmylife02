@@ -146,6 +146,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_creations: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          prompt: string
+          result_url: string | null
+          status: string | null
+          title: string | null
+          tool_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prompt: string
+          result_url?: string | null
+          status?: string | null
+          title?: string | null
+          tool_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prompt?: string
+          result_url?: string | null
+          status?: string | null
+          title?: string | null
+          tool_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
