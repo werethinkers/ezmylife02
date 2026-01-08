@@ -1280,4 +1280,22 @@ export const tools: Tool[] = [
     videoLink: "",
     isLive: true
   },
+  {
+    title: "AI Thumbnail Maker",
+    description: "Generate eye-catching video thumbnails using AI. Perfect for YouTube, TikTok, and social media.",
+    category: "Content Creation",
+    icon: <ImagePlus className="h-8 w-8" />,
+    toolId: "thumbnail-maker",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "AI Video Maker",
+    description: "Create stunning videos from text prompts or images using AI. Generate professional video content.",
+    category: "Content Creation",
+    icon: <Video className="h-8 w-8" />,
+    toolId: "video-maker",
+    videoLink: "",
+    isLive: true
+  },
 ];

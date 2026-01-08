@@ -38,6 +38,8 @@ import { HashtagGenerator } from "./HashtagGenerator";
 import { ContentIdeaGenerator } from "./ContentIdeaGenerator";
 import { VideoScriptWriter } from "./VideoScriptWriter";
 import { ContentWorkflow } from "./ContentWorkflow";
+import ThumbnailMaker from "./ThumbnailMaker";
+import VideoMaker from "./VideoMaker";
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
@@ -190,6 +192,12 @@ const nativeTools: Record<string, React.ComponentType> = {
   "content-idea-generator": ContentIdeaGenerator,
   "video-script-writer": VideoScriptWriter,
   "content-workflow": ContentWorkflow,
+
+  // ===== AI CREATION TOOLS =====
+  "thumbnail-maker": ThumbnailMaker,
+  "ai-thumbnail-generator": ThumbnailMaker,
+  "video-maker": VideoMaker,
+  "ai-video-generator": VideoMaker,
 };
 
 interface NativeToolRendererProps {
