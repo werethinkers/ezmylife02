@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.personalized-tools]
 verify_jwt = false
+
+[functions.content-generator]
+verify_jwt = false
