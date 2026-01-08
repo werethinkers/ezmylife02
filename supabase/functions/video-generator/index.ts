@@ -29,28 +29,32 @@ serve(async (req) => {
       );
     }
 
-    // Enhanced prompt for better video generation
-    const enhancedPrompt = `Create a professional, cinematic video. ${prompt}. Make it visually stunning with smooth motion and professional lighting.`;
+    // Enhanced prompt for video frame generation
+    const enhancedPrompt = `Create a professional, cinematic video keyframe/still image. ${prompt}. 
+    Make it visually stunning with professional lighting and composition.
+    This should look like a high-quality frame from a ${duration || 5} second ${resolution || '1080p'} video.
+    Aspect ratio: ${aspectRatio || '16:9'}.`;
 
-    // Build request body based on whether we have a starting frame
-    const requestBody: Record<string, unknown> = {
-      model: 'veo-2.0-generate-001',
-      prompt: enhancedPrompt,
-      config: {
-        personGeneration: 'allow_adult',
-        aspectRatio: aspectRatio || '16:9',
-        numberOfVideos: 1,
-      },
+    // Build request body for image generation (as video preview/keyframe)
+    const requestBody = {
+      model: 'google/gemini-2.5-flash-image',
+      messages: [
+        {
+          role: 'user',
+          content: startingFrame 
+            ? [
+                { type: 'text', text: enhancedPrompt },
+                { type: 'image_url', image_url: { url: startingFrame } }
+              ]
+            : enhancedPrompt
+        }
+      ],
+      modalities: ['image', 'text']
     };
 
-    // If starting frame is provided, use image-to-video
-    if (startingFrame) {
-      requestBody.image = {
-        bytesBase64Encoded: startingFrame.replace(/^data:image\/\w+;base64,/, '')
-      };
-    }
+    console.log('Generating video frame with prompt:', enhancedPrompt.substring(0, 100));
 
-    const response = await fetch('https://ai.gateway.lovable.dev/google/v1beta/models/veo-2.0-generate-001:predictLongRunning', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,34 +67,39 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error('Video generation API error:', errorText);
       
-      // Return a message that video generation is initiated
       return new Response(
         JSON.stringify({ 
-          message: 'Video generation request submitted. This feature uses advanced AI and may take several minutes.',
-          status: 'pending'
+          error: 'Failed to generate video frame. Please try again.',
+          details: errorText
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const result = await response.json();
+    console.log('API response received');
+
+    // Extract image URL from response
+    const imageUrl = result.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (imageUrl) {
+      return new Response(
+        JSON.stringify({ 
+          videoUrl: imageUrl,
+          type: 'preview_frame',
+          message: 'Generated video preview frame. Full video generation coming soon!'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const result = await response.json();
-
-    // Check if we have a video URL in the response
-    if (result.videos && result.videos.length > 0) {
-      return new Response(
-        JSON.stringify({ videoUrl: result.videos[0].uri || result.videos[0].url }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Return operation info for long-running request
+    // If no image URL found, return error
     return new Response(
       JSON.stringify({ 
-        message: 'Video generation started. Check back later for the result.',
-        operationId: result.name || result.operationId,
-        status: 'processing'
+        error: 'No image was generated. Please try a different prompt.',
+        response: result
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

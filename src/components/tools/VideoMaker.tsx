@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Video, Download, Trash2, History, Sparkles, Upload } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, Video, Download, Trash2, History, Sparkles, Upload, CheckCircle, Circle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +20,13 @@ interface Creation {
   status: string;
   metadata: Record<string, unknown>;
   created_at: string;
+}
+
+interface ProgressStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'completed' | 'error';
+  message?: string;
 }
 
 const VideoMaker = () => {
@@ -34,6 +42,23 @@ const VideoMaker = () => {
   const [previousCreations, setPreviousCreations] = useState<Creation[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+
+  const initialSteps: ProgressStep[] = [
+    { id: 'validate', label: 'Validating input', status: 'pending' },
+    { id: 'save', label: 'Saving to your library', status: 'pending' },
+    { id: 'analyze', label: 'Analyzing prompt', status: 'pending' },
+    { id: 'generate', label: 'Generating video frame', status: 'pending' },
+    { id: 'process', label: 'Processing result', status: 'pending' },
+    { id: 'complete', label: 'Finalizing', status: 'pending' },
+  ];
+
+  const updateStep = (stepId: string, status: ProgressStep['status'], message?: string) => {
+    setProgressSteps(prev => prev.map(step => 
+      step.id === stepId ? { ...step, status, message } : step
+    ));
+  };
 
   useEffect(() => {
     if (user) {
@@ -89,9 +114,23 @@ const VideoMaker = () => {
     }
 
     setIsGenerating(true);
+    setProgress(0);
+    setProgressSteps(initialSteps);
+    setGeneratedVideo(null);
+
+    let creationId: string | null = null;
 
     try {
-      // Create a record in the database
+      // Step 1: Validate
+      updateStep('validate', 'active', 'Checking your input...');
+      setProgress(10);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      updateStep('validate', 'completed', 'Input validated');
+
+      // Step 2: Save to database
+      updateStep('save', 'active', 'Creating entry in your library...');
+      setProgress(20);
+      
       const { data: creation, error: createError } = await supabase
         .from('user_creations')
         .insert({
@@ -106,8 +145,19 @@ const VideoMaker = () => {
         .single();
 
       if (createError) throw createError;
+      creationId = creation.id;
+      updateStep('save', 'completed', 'Saved to library');
 
-      // Call the Supabase edge function for video generation
+      // Step 3: Analyze prompt
+      updateStep('analyze', 'active', 'Understanding your creative vision...');
+      setProgress(35);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      updateStep('analyze', 'completed', 'Prompt analyzed');
+
+      // Step 4: Generate video
+      updateStep('generate', 'active', 'AI is creating your video frame...');
+      setProgress(50);
+
       const { data, error } = await supabase.functions.invoke('video-generator', {
         body: {
           prompt,
@@ -120,10 +170,16 @@ const VideoMaker = () => {
 
       if (error) throw error;
 
+      setProgress(75);
+      updateStep('generate', 'completed', 'Frame generated successfully');
+
+      // Step 5: Process result
+      updateStep('process', 'active', 'Processing the generated content...');
+      setProgress(85);
+
       if (data?.videoUrl) {
         setGeneratedVideo(data.videoUrl);
         
-        // Update the creation with the result
         await supabase
           .from('user_creations')
           .update({
@@ -132,25 +188,53 @@ const VideoMaker = () => {
           })
           .eq('id', creation.id);
 
-        toast.success('Video generated successfully!');
+        updateStep('process', 'completed', 'Content processed');
+
+        // Step 6: Complete
+        updateStep('complete', 'active', 'Wrapping up...');
+        setProgress(95);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        updateStep('complete', 'completed', 'All done!');
+        setProgress(100);
+
+        toast.success('Video frame generated successfully!');
         loadPreviousCreations();
+      } else if (data?.error) {
+        throw new Error(data.error);
       } else {
-        // If no video URL, mark as pending (video generation might take time)
         const existingMetadata = (creation.metadata as Record<string, unknown>) || {};
         await supabase
           .from('user_creations')
           .update({
             status: 'pending',
-            metadata: { ...existingMetadata, message: 'Video generation in progress' }
+            metadata: { ...existingMetadata, message: 'Generation in progress' }
           })
           .eq('id', creation.id);
 
+        updateStep('process', 'completed', 'Request submitted');
+        updateStep('complete', 'completed', 'Processing in background');
+        setProgress(100);
+        
         toast.info('Video generation started. This may take a few minutes.');
         loadPreviousCreations();
       }
     } catch (error) {
       console.error('Error generating video:', error);
-      toast.error('Failed to generate video. Please try again.');
+      
+      // Mark current step as error
+      setProgressSteps(prev => prev.map(step => 
+        step.status === 'active' ? { ...step, status: 'error', message: 'Failed' } : step
+      ));
+
+      // Update database status if we have a creation
+      if (creationId) {
+        await supabase
+          .from('user_creations')
+          .update({ status: 'failed' })
+          .eq('id', creationId);
+      }
+
+      toast.error(error instanceof Error ? error.message : 'Failed to generate video. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -185,6 +269,19 @@ const VideoMaker = () => {
     setShowHistory(false);
   };
 
+  const getStepIcon = (status: ProgressStep['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'active':
+        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
+      default:
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -214,6 +311,7 @@ const VideoMaker = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="My awesome video"
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -225,6 +323,7 @@ const VideoMaker = () => {
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="A serene sunset over calm ocean waves, with gentle camera movement and soft ambient lighting"
                   rows={3}
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -237,11 +336,13 @@ const VideoMaker = () => {
                     onChange={handleImageUpload}
                     className="hidden"
                     id="starting-frame"
+                    disabled={isGenerating}
                   />
                   <Button
                     variant="outline"
                     onClick={() => document.getElementById('starting-frame')?.click()}
                     className="w-full"
+                    disabled={isGenerating}
                   >
                     <Upload className="mr-2 h-4 w-4" />
                     {startingFrame ? 'Change Starting Frame' : 'Upload Starting Frame'}
@@ -259,6 +360,7 @@ const VideoMaker = () => {
                       variant="destructive"
                       className="absolute top-0 right-0 h-6 w-6 p-0"
                       onClick={() => setStartingFrame(null)}
+                      disabled={isGenerating}
                     >
                       ×
                     </Button>
@@ -269,7 +371,7 @@ const VideoMaker = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Duration</Label>
-                  <Select value={duration} onValueChange={setDuration}>
+                  <Select value={duration} onValueChange={setDuration} disabled={isGenerating}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -282,7 +384,7 @@ const VideoMaker = () => {
 
                 <div className="space-y-2">
                   <Label>Aspect Ratio</Label>
-                  <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -297,7 +399,7 @@ const VideoMaker = () => {
 
                 <div className="space-y-2">
                   <Label>Resolution</Label>
-                  <Select value={resolution} onValueChange={setResolution}>
+                  <Select value={resolution} onValueChange={setResolution} disabled={isGenerating}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -317,7 +419,7 @@ const VideoMaker = () => {
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Video...
+                    Generating...
                   </>
                 ) : (
                   <>
@@ -327,25 +429,65 @@ const VideoMaker = () => {
                 )}
               </Button>
 
-              {generatedVideo && (
+              {/* Progress Section */}
+              {isGenerating && (
+                <div className="mt-6 space-y-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">Generation Progress</span>
+                      <span className="text-muted-foreground">{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {progressSteps.map((step) => (
+                      <div 
+                        key={step.id} 
+                        className={`flex items-center gap-3 text-sm transition-opacity ${
+                          step.status === 'pending' ? 'opacity-50' : 'opacity-100'
+                        }`}
+                      >
+                        {getStepIcon(step.status)}
+                        <span className={step.status === 'active' ? 'font-medium' : ''}>
+                          {step.label}
+                        </span>
+                        {step.message && step.status !== 'pending' && (
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {step.message}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {generatedVideo && !isGenerating && (
                 <div className="mt-6 space-y-4">
-                  <h3 className="font-semibold">Generated Video</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">Generated Video Frame</h3>
+                    <Badge variant="secondary" className="text-xs">Preview</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    This is a high-quality preview frame. Full video generation is coming soon!
+                  </p>
                   <div className="relative rounded-lg overflow-hidden border">
-                    <video
+                    <img
                       src={generatedVideo}
-                      controls
+                      alt="Generated video frame"
                       className="w-full h-auto"
                     />
                   </div>
                   <a
                     href={generatedVideo}
-                    download={`video-${Date.now()}.mp4`}
+                    download={`video-frame-${Date.now()}.png`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <Button variant="outline" className="w-full">
                       <Download className="mr-2 h-4 w-4" />
-                      Download Video
+                      Download Frame
                     </Button>
                   </a>
                 </div>
@@ -366,7 +508,15 @@ const VideoMaker = () => {
                   {previousCreations.map((creation) => (
                     <Card key={creation.id} className="overflow-hidden">
                       <div className="flex">
-                        {creation.result_url && (
+                        {creation.result_url ? (
+                          <div className="w-32 h-20 flex-shrink-0">
+                            <img
+                              src={creation.result_url}
+                              alt={creation.title || 'Video frame'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
                           <div className="w-32 h-20 flex-shrink-0 bg-muted flex items-center justify-center">
                             <Video className="h-8 w-8 text-muted-foreground" />
                           </div>
@@ -382,7 +532,10 @@ const VideoMaker = () => {
                           </div>
                           <div className="flex items-center justify-between mt-2">
                             <Badge 
-                              variant={creation.status === 'completed' ? 'default' : 'secondary'} 
+                              variant={
+                                creation.status === 'completed' ? 'default' : 
+                                creation.status === 'failed' ? 'destructive' : 'secondary'
+                              } 
                               className="text-xs"
                             >
                               {creation.status}

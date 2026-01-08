@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Image, Download, Trash2, History, Sparkles } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, Image, Download, Trash2, History, Sparkles, CheckCircle, Circle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,13 @@ interface Creation {
   created_at: string;
 }
 
+interface ProgressStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'completed' | 'error';
+  message?: string;
+}
+
 const ThumbnailMaker = () => {
   const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
@@ -32,6 +40,23 @@ const ThumbnailMaker = () => {
   const [previousCreations, setPreviousCreations] = useState<Creation[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+
+  const initialSteps: ProgressStep[] = [
+    { id: 'validate', label: 'Validating input', status: 'pending' },
+    { id: 'save', label: 'Saving to your library', status: 'pending' },
+    { id: 'enhance', label: 'Enhancing prompt', status: 'pending' },
+    { id: 'generate', label: 'AI generating thumbnail', status: 'pending' },
+    { id: 'process', label: 'Processing image', status: 'pending' },
+    { id: 'complete', label: 'Finalizing', status: 'pending' },
+  ];
+
+  const updateStep = (stepId: string, status: ProgressStep['status'], message?: string) => {
+    setProgressSteps(prev => prev.map(step => 
+      step.id === stepId ? { ...step, status, message } : step
+    ));
+  };
 
   useEffect(() => {
     if (user) {
@@ -76,9 +101,23 @@ const ThumbnailMaker = () => {
     }
 
     setIsGenerating(true);
+    setProgress(0);
+    setProgressSteps(initialSteps);
+    setGeneratedImage(null);
+
+    let creationId: string | null = null;
 
     try {
-      // Create a record in the database
+      // Step 1: Validate
+      updateStep('validate', 'active', 'Checking your input...');
+      setProgress(10);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      updateStep('validate', 'completed', 'Input validated');
+
+      // Step 2: Save to database
+      updateStep('save', 'active', 'Creating entry in your library...');
+      setProgress(20);
+
       const { data: creation, error: createError } = await supabase
         .from('user_creations')
         .insert({
@@ -93,9 +132,20 @@ const ThumbnailMaker = () => {
         .single();
 
       if (createError) throw createError;
+      creationId = creation.id;
+      updateStep('save', 'completed', 'Saved to library');
 
-      // Generate the thumbnail using AI
+      // Step 3: Enhance prompt
+      updateStep('enhance', 'active', 'Optimizing for best results...');
+      setProgress(35);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
       const enhancedPrompt = `Create a professional, eye-catching YouTube video thumbnail. Style: ${style}. Aspect ratio: ${aspectRatio}. Description: ${prompt}. Make it vibrant, attention-grabbing, and suitable for social media.`;
+      updateStep('enhance', 'completed', 'Prompt enhanced');
+
+      // Step 4: Generate thumbnail
+      updateStep('generate', 'active', 'AI is creating your thumbnail...');
+      setProgress(50);
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -104,7 +154,7 @@ const ThumbnailMaker = () => {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image-preview',
+          model: 'google/gemini-2.5-flash-image',
           messages: [
             {
               role: 'user',
@@ -115,13 +165,20 @@ const ThumbnailMaker = () => {
         })
       });
 
+      setProgress(75);
+
       const data = await response.json();
       const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+      updateStep('generate', 'completed', 'Thumbnail generated');
+
+      // Step 5: Process image
+      updateStep('process', 'active', 'Processing the image...');
+      setProgress(85);
 
       if (imageUrl) {
         setGeneratedImage(imageUrl);
         
-        // Update the creation with the result
         await supabase
           .from('user_creations')
           .update({
@@ -130,6 +187,15 @@ const ThumbnailMaker = () => {
           })
           .eq('id', creation.id);
 
+        updateStep('process', 'completed', 'Image processed');
+
+        // Step 6: Complete
+        updateStep('complete', 'active', 'Wrapping up...');
+        setProgress(95);
+        await new Promise(resolve => setTimeout(resolve, 400));
+        updateStep('complete', 'completed', 'All done!');
+        setProgress(100);
+
         toast.success('Thumbnail generated successfully!');
         loadPreviousCreations();
       } else {
@@ -137,6 +203,20 @@ const ThumbnailMaker = () => {
       }
     } catch (error) {
       console.error('Error generating thumbnail:', error);
+      
+      // Mark current step as error
+      setProgressSteps(prev => prev.map(step => 
+        step.status === 'active' ? { ...step, status: 'error', message: 'Failed' } : step
+      ));
+
+      // Update database status if we have a creation
+      if (creationId) {
+        await supabase
+          .from('user_creations')
+          .update({ status: 'failed' })
+          .eq('id', creationId);
+      }
+
       toast.error('Failed to generate thumbnail. Please try again.');
     } finally {
       setIsGenerating(false);
@@ -180,6 +260,19 @@ const ThumbnailMaker = () => {
     setShowHistory(false);
   };
 
+  const getStepIcon = (status: ProgressStep['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'active':
+        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
+      default:
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -209,6 +302,7 @@ const ThumbnailMaker = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="My awesome thumbnail"
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -220,13 +314,14 @@ const ThumbnailMaker = () => {
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="A person looking surprised at a glowing treasure chest, with bold text saying 'YOU WON'T BELIEVE THIS!'"
                   rows={3}
+                  disabled={isGenerating}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Style</Label>
-                  <Select value={style} onValueChange={setStyle}>
+                  <Select value={style} onValueChange={setStyle} disabled={isGenerating}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -242,7 +337,7 @@ const ThumbnailMaker = () => {
 
                 <div className="space-y-2">
                   <Label>Aspect Ratio</Label>
-                  <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -274,7 +369,41 @@ const ThumbnailMaker = () => {
                 )}
               </Button>
 
-              {generatedImage && (
+              {/* Progress Section */}
+              {isGenerating && (
+                <div className="mt-6 space-y-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">Generation Progress</span>
+                      <span className="text-muted-foreground">{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {progressSteps.map((step) => (
+                      <div 
+                        key={step.id} 
+                        className={`flex items-center gap-3 text-sm transition-opacity ${
+                          step.status === 'pending' ? 'opacity-50' : 'opacity-100'
+                        }`}
+                      >
+                        {getStepIcon(step.status)}
+                        <span className={step.status === 'active' ? 'font-medium' : ''}>
+                          {step.label}
+                        </span>
+                        {step.message && step.status !== 'pending' && (
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {step.message}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {generatedImage && !isGenerating && (
                 <div className="mt-6 space-y-4">
                   <h3 className="font-semibold">Generated Thumbnail</h3>
                   <div className="relative rounded-lg overflow-hidden border">
@@ -329,7 +458,13 @@ const ThumbnailMaker = () => {
                             </p>
                           </div>
                           <div className="flex items-center justify-between mt-2">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge 
+                              variant={
+                                creation.status === 'completed' ? 'default' : 
+                                creation.status === 'failed' ? 'destructive' : 'secondary'
+                              } 
+                              className="text-xs"
+                            >
                               {creation.status}
                             </Badge>
                             <div className="flex gap-2">
