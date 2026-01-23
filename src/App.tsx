@@ -32,22 +32,26 @@ const queryClient = new QueryClient();
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 12,
+    y: 8,
+    filter: "blur(4px)",
   },
   animate: {
     opacity: 1,
     y: 0,
+    filter: "blur(0px)",
     transition: {
-      duration: 0.35,
-      ease: [0.22, 1, 0.36, 1] as const,
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+      staggerChildren: 0.05,
     },
   },
   exit: {
     opacity: 0,
-    y: -8,
+    y: -4,
+    filter: "blur(2px)",
     transition: {
-      duration: 0.2,
-      ease: [0.22, 1, 0.36, 1] as const,
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
 };
@@ -56,13 +60,14 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
         initial="initial"
         animate="animate"
         exit="exit"
         variants={pageVariants}
+        className="will-change-transform"
       >
         <Suspense fallback={<LoadingScreen />}>
           <Routes location={location}>
