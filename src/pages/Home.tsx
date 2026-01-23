@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import logo from "@/assets/logo.png";
+import { useRef } from "react";
 
 const TOTAL_TOOLS_COUNT = 50000;
 
@@ -53,7 +54,121 @@ const staggerContainer = {
   },
 };
 
+// Parallax Background Component
+const ParallaxBackground = () => {
+  const { scrollY } = useScroll();
+  
+  // Smooth spring physics for parallax
+  const springConfig = { stiffness: 100, damping: 30, mass: 1 };
+  
+  // Different speeds for different layers (creates depth)
+  const y1 = useSpring(useTransform(scrollY, [0, 1000], [0, -150]), springConfig);
+  const y2 = useSpring(useTransform(scrollY, [0, 1000], [0, -250]), springConfig);
+  const y3 = useSpring(useTransform(scrollY, [0, 1000], [0, -100]), springConfig);
+  const y4 = useSpring(useTransform(scrollY, [0, 1000], [0, -200]), springConfig);
+  
+  // Opacity fade on scroll
+  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0]), springConfig);
+  
+  // Scale effect
+  const scale = useSpring(useTransform(scrollY, [0, 800], [1, 1.1]), springConfig);
+  
+  // Rotation for floating elements
+  const rotate1 = useSpring(useTransform(scrollY, [0, 1000], [0, 15]), { stiffness: 50, damping: 20 });
+  const rotate2 = useSpring(useTransform(scrollY, [0, 1000], [0, -10]), { stiffness: 50, damping: 20 });
+
+  return (
+    <motion.div 
+      className="absolute inset-0 overflow-hidden pointer-events-none"
+      style={{ opacity }}
+    >
+      {/* Main gradient background with scale */}
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-b from-accent/50 to-background"
+        style={{ scale }}
+      />
+      
+      {/* Layer 1 - Slowest (furthest back) */}
+      <motion.div
+        className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full"
+        style={{
+          y: y1,
+          rotate: rotate1,
+          background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
+          filter: "blur(60px)",
+        }}
+      />
+      
+      {/* Layer 2 - Medium speed */}
+      <motion.div
+        className="absolute top-40 right-0 w-[600px] h-[600px] rounded-full"
+        style={{
+          y: y2,
+          rotate: rotate2,
+          background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
+          filter: "blur(80px)",
+        }}
+      />
+      
+      {/* Layer 3 - Floating orb left */}
+      <motion.div
+        className="absolute top-60 left-[10%] w-72 h-72 rounded-full"
+        style={{
+          y: y3,
+          background: "radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 60%)",
+          filter: "blur(40px)",
+        }}
+        animate={{
+          x: [0, 20, 0],
+          scale: [1, 1.05, 1],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      
+      {/* Layer 4 - Floating orb right */}
+      <motion.div
+        className="absolute bottom-20 right-[15%] w-96 h-96 rounded-full"
+        style={{
+          y: y4,
+          background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 60%)",
+          filter: "blur(50px)",
+        }}
+        animate={{
+          x: [0, -15, 0],
+          scale: [1, 1.08, 1],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      
+      {/* Noise texture overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.015]" 
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} 
+      />
+    </motion.div>
+  );
+};
+
 const Home = () => {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
+  
+  // Parallax for hero content
+  const springConfig = { stiffness: 100, damping: 30, mass: 1 };
+  const heroY = useSpring(useTransform(scrollY, [0, 500], [0, 50]), springConfig);
+  const heroOpacity = useSpring(useTransform(scrollY, [0, 400], [1, 0]), springConfig);
+  const heroScale = useSpring(useTransform(scrollY, [0, 500], [1, 0.98]), springConfig);
+
   const features = [
     {
       icon: Zap,
@@ -87,64 +202,34 @@ const Home = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-accent/50 to-background" />
-        
-        {/* Animated background elements */}
-        <motion.div
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
-          animate={{
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
-          animate={{
-            x: [0, -20, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        
-        <div className="absolute inset-0 opacity-[0.015]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
+      {/* Hero Section with Parallax */}
+      <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
+        <ParallaxBackground />
         
         <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
           <motion.div
             className="mx-auto max-w-5xl text-center space-y-8"
-            initial="initial"
-            animate="animate"
-            variants={staggerContainer}
+            style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
           >
             <motion.div
-              variants={fadeInUp}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="flex justify-center mb-8"
             >
               <motion.img
                 src={logo}
                 alt="ezmy.life"
-                className="h-28 md:h-36 lg:h-44 object-contain"
+                className="h-28 md:h-36 lg:h-44 object-contain will-change-transform"
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 transition={{ duration: 0.3 }}
               />
             </motion.div>
             
             <motion.h1
-              variants={fadeInUp}
-              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight"
             >
               The World's First{" "}
@@ -154,8 +239,9 @@ const Home = () => {
             </motion.h1>
             
             <motion.p
-              variants={fadeInUp}
-              transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light"
             >
               Access 2000+ AI-powered tools that simplify life and business. 
@@ -163,11 +249,16 @@ const Home = () => {
             </motion.p>
 
             <motion.div
-              variants={fadeInUp}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div 
+                whileHover={{ scale: 1.05, y: -2 }} 
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
                   <Link to="/auth">
                     Get Started
@@ -175,7 +266,11 @@ const Home = () => {
                   </Link>
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div 
+                whileHover={{ scale: 1.05, y: -2 }} 
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Button asChild variant="outline" size="lg" className="text-base px-8 h-14">
                   <Link to="/tools">Explore Tools</Link>
                 </Button>
@@ -183,6 +278,27 @@ const Home = () => {
             </motion.div>
           </motion.div>
         </div>
+        
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.6 }}
+          style={{ opacity: heroOpacity }}
+        >
+          <motion.div
+            className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1.5"
+            animate={{ y: [0, 5, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <motion.div
+              className="w-1.5 h-3 rounded-full bg-muted-foreground/50"
+              animate={{ y: [0, 8, 0], opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Features Section */}
