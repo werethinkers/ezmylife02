@@ -89,16 +89,30 @@ const Tools = () => {
     return filtered;
   }, [selectedSector, selectedDepartment, selectedSubcategory, selectedToolType, searchQuery]);
 
-  // Filter featured tools by search
+  // Filter featured tools by search and tool type
   const filteredFeaturedTools = useMemo(() => {
-    if (!searchQuery) return featuredLiveTools;
-    const query = searchQuery.toLowerCase();
-    return featuredLiveTools.filter(tool =>
-      tool.title.toLowerCase().includes(query) ||
-      tool.description.toLowerCase().includes(query) ||
-      tool.category.toLowerCase().includes(query)
-    );
-  }, [featuredLiveTools, searchQuery]);
+    let filtered = featuredLiveTools;
+    
+    // Filter by tool type
+    if (selectedToolType !== "All Types") {
+      const toolNamesForType = getToolNamesForType(selectedToolType);
+      if (toolNamesForType.length > 0) {
+        filtered = filtered.filter(tool => toolNamesForType.includes(tool.title));
+      }
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(tool =>
+        tool.title.toLowerCase().includes(query) ||
+        tool.description.toLowerCase().includes(query) ||
+        tool.category.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [featuredLiveTools, searchQuery, selectedToolType]);
 
   const currentSubcategories = selectedDepartment !== "All Departments" 
     ? departmentSubcategories[selectedDepartment] || []
