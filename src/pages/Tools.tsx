@@ -48,11 +48,29 @@ const Tools = () => {
     return liveToolsList.filter(t => t.isLive);
   }, []);
 
-  // Check if any filters are active
-  const hasActiveFilters = selectedSector !== "All Sectors" || 
-                           selectedDepartment !== "All Departments" || 
-                           selectedSubcategory !== null ||
-                           searchQuery.length > 0;
+  // Tool type to tool name mapping based on CategoryBrowser toolTypeData
+  const toolTypeMapping: Record<string, string[]> = useMemo(() => ({
+    "Image Tools": ["Image Resizer", "Image Compressor", "Background Remover", "Image Cropper", "Image Watermark", "Image Blur", "Image Grayscale", "Image Pixelate", "Image Rotator", "Image Merger", "Image Splitter", "Image Color Picker", "Image Text Overlay", "Image Beautify", "Add Logo to Image", "Passport Photo Maker", "DPI Converter", "Metadata Viewer", "Thumbnail Maker"],
+    "Document Tools": ["Invoice Generator", "Contract Drafter", "Bibliography Generator"],
+    "Video Tools": ["Video Maker", "Thumbnail Maker", "Video Script Writer"],
+    "Audio Tools": [],
+    "AI & Automation": ["Content Idea Generator", "Caption Generator", "Social Post Generator", "Hashtag Generator", "Content Workflow"],
+    "Analytics Tools": ["Expense Tracker", "Profit Calculator", "Grade Calculator"],
+    "Developer Tools": [],
+    "Communication": ["Cold Outreach", "Campaign Manager", "Customer Follow-up"],
+    "Security Tools": [],
+    "Productivity": ["Assignment Tracker", "Study Planner", "Exam Scheduler", "Daily Task List", "Shift Planner"],
+    "Text Tools": [],
+    "QR & Barcode": [],
+    "Calculators": ["Tax Estimator", "Profit Calculator", "Salary Calculator", "Grade Calculator"],
+    "Converters": ["DPI Converter"],
+    "Social Media": ["Social Media Plan", "Social Post Generator", "Hashtag Generator", "Caption Generator"],
+    "SEO Tools": [],
+    "File Management": [],
+    "Design Tools": ["Thumbnail Maker", "Image Beautify", "Signature Generator"],
+    "Writing Tools": ["Content Idea Generator", "Video Script Writer", "Caption Generator", "Lesson Planner"],
+    "Data Tools": [],
+  }), []);
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
@@ -73,6 +91,14 @@ const Tools = () => {
         filtered = filtered.filter(tool => subcat.tools.includes(tool.name));
       }
     }
+
+    // Filter by tool type
+    if (selectedToolType !== "All Types") {
+      const toolNamesForType = toolTypeMapping[selectedToolType] || [];
+      if (toolNamesForType.length > 0) {
+        filtered = filtered.filter(tool => toolNamesForType.includes(tool.name));
+      }
+    }
     
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -84,7 +110,7 @@ const Tools = () => {
     }
     
     return filtered;
-  }, [selectedSector, selectedDepartment, selectedSubcategory, searchQuery]);
+  }, [selectedSector, selectedDepartment, selectedSubcategory, selectedToolType, searchQuery, toolTypeMapping]);
 
   // Filter featured tools by search
   const filteredFeaturedTools = useMemo(() => {
@@ -100,6 +126,13 @@ const Tools = () => {
   const currentSubcategories = selectedDepartment !== "All Departments" 
     ? departmentSubcategories[selectedDepartment] || []
     : [];
+
+  // Check if any filters are active (updated to include tool type)
+  const hasActiveFilters = selectedSector !== "All Sectors" || 
+                           selectedDepartment !== "All Departments" || 
+                           selectedSubcategory !== null ||
+                           selectedToolType !== "All Types" ||
+                           searchQuery.length > 0;
 
   const clearFilters = useCallback(() => {
     setSelectedSector("All Sectors");
@@ -176,9 +209,11 @@ const Tools = () => {
               selectedSector={selectedSector}
               selectedDepartment={selectedDepartment}
               selectedSubcategory={selectedSubcategory}
+              selectedToolType={selectedToolType}
               onSectorChange={handleSectorChange}
               onDepartmentChange={handleDepartmentChange}
               onSubcategoryChange={setSelectedSubcategory}
+              onToolTypeChange={handleToolTypeChange}
               onClearFilters={clearFilters}
               hasActiveFilters={hasActiveFilters}
               filteredCount={filteredTools.length}
