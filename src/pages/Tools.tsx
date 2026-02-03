@@ -17,6 +17,7 @@ import {
 } from "@/data/expandedTools";
 import { tools as liveToolsList, getLiveToolsCount } from "@/data/tools";
 import { getToolNamesForType } from "@/data/toolTypes";
+import { toolsDatabase, getToolsByType } from "@/data/toolsDatabase";
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
@@ -151,7 +152,17 @@ const Tools = () => {
   const handleToolTypeChange = useCallback((type: string) => {
     setSelectedToolType(type);
     if (type !== "All Types") {
-      setViewMode("list");
+      // Check if this tool type has featured tools (like Image Tools)
+      const toolsForType = getToolsByType(type);
+      const hasFeaturedTools = toolsForType.some(t => t.source === "featured");
+      const hasBusinessTools = toolsForType.some(t => t.source === "business");
+      
+      // If only featured tools exist for this type, switch to featured mode
+      if (hasFeaturedTools && !hasBusinessTools) {
+        setViewMode("featured");
+      } else {
+        setViewMode("list");
+      }
     }
   }, []);
 
@@ -162,18 +173,26 @@ const Tools = () => {
 
   const handleViewModeChange = useCallback((mode: "browse" | "list" | "featured" | "personalized") => {
     setViewMode(mode);
-    // Reset filters when switching to featured or personalized mode
-    if (mode === "featured" || mode === "personalized") {
+    // Reset filters when switching modes (but keep tool type if switching to featured for tool type filtering)
+    if (mode === "personalized" || mode === "browse") {
       setSelectedSector("All Sectors");
       setSelectedDepartment("All Departments");
       setSelectedSubcategory(null);
       setSelectedToolType("All Types");
     }
+    if (mode === "list") {
+      // Keep tool type but reset other filters
+      setSelectedSector("All Sectors");
+      setSelectedDepartment("All Departments");
+      setSelectedSubcategory(null);
+    }
   }, []);
 
-  const showTools = viewMode === "list" || (viewMode === "featured" && searchQuery);
-  const showFeatured = viewMode === "featured" && !searchQuery;
-  const showBrowse = viewMode === "browse" && !searchQuery;
+  // Determine what to show based on view mode and tool type
+  const hasToolTypeFilter = selectedToolType !== "All Types";
+  const showTools = viewMode === "list" && !hasToolTypeFilter;
+  const showFeatured = viewMode === "featured" || (hasToolTypeFilter && viewMode !== "list");
+  const showBrowse = viewMode === "browse" && !searchQuery && !hasToolTypeFilter;
   const showPersonalized = viewMode === "personalized";
 
   return (
@@ -259,28 +278,59 @@ const Tools = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {featuredLiveTools.map((tool, index) => (
-                  <EnhancedToolCard 
-                    key={tool.toolId} 
-                    toolId={tool.toolId}
-                    title={tool.title}
-                    description={tool.description}
-                    category={tool.category}
-                    isLive={tool.isLive}
-                    icon={tool.icon}
-                    index={index}
-                    onQuickPreview={() => handleQuickPreview({
-                      toolId: tool.toolId,
-                      title: tool.title,
-                      description: tool.description,
-                      category: tool.category,
-                      isLive: tool.isLive,
-                      icon: tool.icon
-                    })}
-                  />
-                ))}
-              </div>
+              {/* Show filter badge if tool type is selected */}
+              {hasToolTypeFilter && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {filteredFeaturedTools.length} tools for:
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    {selectedToolType}
+                    <button
+                      onClick={() => {
+                        setSelectedToolType("All Types");
+                        setViewMode("browse");
+                      }}
+                      className="ml-1 hover:text-primary/80"
+                    >
+                      ×
+                    </button>
+                  </span>
+                </div>
+              )}
+              
+              {filteredFeaturedTools.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredFeaturedTools.map((tool, index) => (
+                    <EnhancedToolCard 
+                      key={tool.toolId} 
+                      toolId={tool.toolId}
+                      title={tool.title}
+                      description={tool.description}
+                      category={tool.category}
+                      isLive={tool.isLive}
+                      icon={tool.icon}
+                      index={index}
+                      onQuickPreview={() => handleQuickPreview({
+                        toolId: tool.toolId,
+                        title: tool.title,
+                        description: tool.description,
+                        category: tool.category,
+                        isLive: tool.isLive,
+                        icon: tool.icon
+                      })}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ToolsEmptyState 
+                  onClearFilters={() => {
+                    setSelectedToolType("All Types");
+                    setViewMode("browse");
+                  }}
+                  hasActiveFilters={hasToolTypeFilter}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
