@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Filter, SlidersHorizontal } from "lucide-react";
+import { X, SlidersHorizontal } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { toolTypes, toolTypeData } from "@/data/toolTypes";
 
 interface ToolsFiltersProps {
   selectedSector: string;
@@ -27,31 +28,6 @@ interface ToolsFiltersProps {
   departments: string[];
   subcategories: { name: string; tools: string[] }[];
 }
-
-// Tool types list matching CategoryBrowser
-const toolTypes = [
-  "All Types",
-  "Image Tools",
-  "Document Tools", 
-  "Video Tools",
-  "Audio Tools",
-  "AI & Automation",
-  "Analytics Tools",
-  "Developer Tools",
-  "Communication",
-  "Security Tools",
-  "Productivity",
-  "Text Tools",
-  "QR & Barcode",
-  "Calculators",
-  "Converters",
-  "Social Media",
-  "SEO Tools",
-  "File Management",
-  "Design Tools",
-  "Writing Tools",
-  "Data Tools",
-];
 
 export const ToolsFilters = ({
   selectedSector,
@@ -132,11 +108,18 @@ export const ToolsFilters = ({
               <SelectValue placeholder="Tool Type" />
             </SelectTrigger>
             <SelectContent>
-              {toolTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
+              {toolTypes.map((type) => {
+                const config = type !== "All Types" ? toolTypeData[type] : null;
+                const Icon = config?.icon;
+                return (
+                  <SelectItem key={type} value={type} className="flex items-center gap-2">
+                    <span className="flex items-center gap-2">
+                      {Icon && <Icon className={cn("h-4 w-4", config?.color)} />}
+                      {type}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 
