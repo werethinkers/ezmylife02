@@ -9,9 +9,11 @@ import {
   CheckCircle2, 
   Sparkles,
   Zap,
-  UserCircle
+  UserCircle,
+  Download
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { ToolsExportButton } from "./ToolsExportButton";
 
 interface ToolsHeaderProps {
   liveCount: number;
@@ -156,6 +158,7 @@ export const ToolsHeader = ({
                 All Tools
               </Button>
             </div>
+            <ToolsExportButton className="ml-3" />
           </motion.div>
         </motion.div>
       </div>
