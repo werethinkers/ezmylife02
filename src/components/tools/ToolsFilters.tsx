@@ -15,9 +15,11 @@ interface ToolsFiltersProps {
   selectedSector: string;
   selectedDepartment: string;
   selectedSubcategory: string | null;
+  selectedToolType: string;
   onSectorChange: (sector: string) => void;
   onDepartmentChange: (department: string) => void;
   onSubcategoryChange: (subcategory: string | null) => void;
+  onToolTypeChange: (toolType: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
   filteredCount: number;
@@ -26,13 +28,40 @@ interface ToolsFiltersProps {
   subcategories: { name: string; tools: string[] }[];
 }
 
+// Tool types list matching CategoryBrowser
+const toolTypes = [
+  "All Types",
+  "Image Tools",
+  "Document Tools", 
+  "Video Tools",
+  "Audio Tools",
+  "AI & Automation",
+  "Analytics Tools",
+  "Developer Tools",
+  "Communication",
+  "Security Tools",
+  "Productivity",
+  "Text Tools",
+  "QR & Barcode",
+  "Calculators",
+  "Converters",
+  "Social Media",
+  "SEO Tools",
+  "File Management",
+  "Design Tools",
+  "Writing Tools",
+  "Data Tools",
+];
+
 export const ToolsFilters = ({
   selectedSector,
   selectedDepartment,
   selectedSubcategory,
+  selectedToolType,
   onSectorChange,
   onDepartmentChange,
   onSubcategoryChange,
+  onToolTypeChange,
   onClearFilters,
   hasActiveFilters,
   filteredCount,
@@ -90,6 +119,22 @@ export const ToolsFilters = ({
               {departments.map((dept) => (
                 <SelectItem key={dept} value={dept}>
                   {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedToolType} onValueChange={onToolTypeChange}>
+            <SelectTrigger className={cn(
+              "w-[180px] h-9 text-sm",
+              selectedToolType !== "All Types" && "border-primary/50 bg-primary/5"
+            )}>
+              <SelectValue placeholder="Tool Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {toolTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -168,6 +213,15 @@ export const ToolsFilters = ({
                 <X 
                   className="h-3 w-3 cursor-pointer hover:text-destructive" 
                   onClick={() => { onDepartmentChange("All Departments"); onSubcategoryChange(null); }} 
+                />
+              </Badge>
+            )}
+            {selectedToolType !== "All Types" && (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                {selectedToolType}
+                <X 
+                  className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => onToolTypeChange("All Types")} 
                 />
               </Badge>
             )}
