@@ -6,6 +6,7 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getToolTypeConfig } from "@/data/toolTypes";
 
 interface EnhancedToolCardProps {
   id?: string;
@@ -40,6 +41,10 @@ export const EnhancedToolCard = ({
   const displayName = name || title || "";
   const displayId = toolId || id || "";
   const displayCategory = department || category || "";
+  
+  // Get tool type info for the icon badge
+  const toolTypeConfig = getToolTypeConfig(displayName);
+  const ToolTypeIcon = toolTypeConfig?.icon;
 
   const handleClick = () => {
     if (isLive) {
@@ -113,8 +118,22 @@ export const EnhancedToolCard = ({
             {description}
           </p>
 
-          {/* Category and sector badges */}
+          {/* Category, sector badges, and tool type indicator */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
+            {/* Tool Type Icon Badge */}
+            {ToolTypeIcon && (
+              <div 
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs",
+                  "bg-gradient-to-r opacity-90",
+                  toolTypeConfig?.gradient,
+                  "text-white"
+                )}
+                title={`Tool Type: ${displayCategory}`}
+              >
+                <ToolTypeIcon className="h-3 w-3" />
+              </div>
+            )}
             {displayCategory && (
               <Badge variant="secondary" className="text-xs bg-secondary/50">
                 {displayCategory}
