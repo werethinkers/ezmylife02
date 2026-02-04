@@ -5,7 +5,6 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { WhiteLabelWrapper, needsWhiteLabel } from "@/components/WhiteLabelWrapper";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import logo from "@/assets/logo.png";
 
@@ -18,7 +17,6 @@ const ToolViewer = () => {
 
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
-  const showWhiteLabel = toolId ? needsWhiteLabel(toolId) : false;
   const isNativeTool = toolId ? hasNativeImplementation(toolId) : false;
 
   useEffect(() => {
@@ -115,18 +113,6 @@ const ToolViewer = () => {
         <div className="pt-12 h-full overflow-auto">
           {isNativeTool ? (
             <NativeToolRenderer toolId={toolId!} />
-          ) : showWhiteLabel ? (
-            <WhiteLabelWrapper toolId={toolId!} toolName={tool.title} isFullscreen>
-              <iframe
-                src={toolUrl!}
-                className="w-full h-full border-0"
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
-                title={tool.title}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
-                referrerPolicy="no-referrer"
-              />
-            </WhiteLabelWrapper>
           ) : (
             <iframe
               src={toolUrl!}
@@ -200,18 +186,6 @@ const ToolViewer = () => {
       <div className={`flex-1 ${isLoading ? 'hidden' : ''}`} style={{ height: 'calc(100vh - 8rem)' }}>
         {isNativeTool ? (
           <NativeToolRenderer toolId={toolId!} />
-        ) : showWhiteLabel ? (
-          <WhiteLabelWrapper toolId={toolId!} toolName={tool.title}>
-            <iframe
-              src={toolUrl!}
-              className="w-full h-full border-0"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              title={tool.title}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
-              referrerPolicy="no-referrer"
-            />
-          </WhiteLabelWrapper>
         ) : (
           <iframe
             src={toolUrl!}
