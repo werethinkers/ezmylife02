@@ -128,6 +128,19 @@ serve(async (req) => {
 
     logStep("Access granted successfully");
 
+    // Log payment activity
+    await supabaseClient.from("activity_logs").insert([{
+      user_id: user.id,
+      action_type: "payment",
+      action_details: {
+        plan_type: plan_type,
+        payment_id: razorpay_payment_id,
+        order_id: razorpay_order_id,
+        access_type: accessType,
+        expires_at: expiresAt,
+      },
+    }]);
+
     return new Response(JSON.stringify({
       success: true,
       access_type: accessType,
