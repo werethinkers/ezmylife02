@@ -128,7 +128,7 @@ const Subscription = () => {
         key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Ezmylife",
+        name: "Ezyourlife",
         description: orderData.description,
         order_id: orderData.order_id,
         handler: async (response: any) => {

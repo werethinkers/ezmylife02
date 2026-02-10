@@ -50,7 +50,7 @@ export const Navbar = () => {
           <Link to="/" className="flex items-center">
             <motion.img
               src={logo}
-              alt="ezmy.life"
+              alt="ezyourlife"
               className="h-10 md:h-12 object-contain"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}

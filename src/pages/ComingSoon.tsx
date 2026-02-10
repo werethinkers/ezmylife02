@@ -195,7 +195,7 @@ const ComingSoon = () => {
         <div className="container mx-auto px-4 py-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-bold text-gradient">ezmy.life</span> — Simplifying complexity
+              © 2025 <span className="font-bold text-gradient">ezyourlife</span> — Simplifying complexity
             </p>
           </div>
         </div>
