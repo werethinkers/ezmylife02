@@ -66,7 +66,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Account created!", description: "Welcome to Ezmylife." });
+        toast({ title: "Account created!", description: "Welcome to Ezyourlife." });
       }
     } catch (error) {
       if (error instanceof z.ZodError) toast({ title: "Validation error", description: error.errors[0].message, variant: "destructive" });
@@ -153,12 +153,12 @@ const Auth = () => {
           >
             <motion.img
               src={logo}
-              alt="Ezmylife"
+              alt="Ezyourlife"
               className="h-16 mx-auto"
               whileHover={{ scale: 1.05, rotate: 2 }}
               transition={{ duration: 0.3 }}
             />
-            <h1 className="font-display text-2xl font-semibold">Welcome to Ezmylife</h1>
+            <h1 className="font-display text-2xl font-semibold">Welcome to Ezyourlife</h1>
             <p className="text-muted-foreground">Sign in to access 2000+ AI tools</p>
           </motion.div>
 

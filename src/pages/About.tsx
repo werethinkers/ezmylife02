@@ -15,7 +15,7 @@ const About = () => {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
               About{" "}
               <span className="bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                ezmy.life
+                ezyourlife
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -34,13 +34,13 @@ const About = () => {
                 <h2 className="text-3xl md:text-4xl font-bold">Our Story</h2>
                 <div className="space-y-4 text-lg text-muted-foreground">
                   <p>
-                    ezmy.life was born from a simple observation: powerful digital tools should be accessible to everyone, not just tech experts.
+                    ezyourlife was born from a simple observation: powerful digital tools should be accessible to everyone, not just tech experts.
                   </p>
                   <p>
                     We noticed that people were spending hours searching for the right tools, dealing with complicated setups, and juggling multiple subscriptions. There had to be a better way.
                   </p>
                   <p>
-                    That's why we created ezmy.life—a single platform where you can access premium digital tools instantly, with no installation, no complexity, just results.
+                    That's why we created ezyourlife—a single platform where you can access premium digital tools instantly, with no installation, no complexity, just results.
                   </p>
                 </div>
               </div>
@@ -169,7 +169,7 @@ const About = () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">ezmy.life</span> — Simplifying complexity
+              © 2025 <span className="font-semibold text-foreground">ezyourlife</span> — Simplifying complexity
             </p>
           </div>
         </div>

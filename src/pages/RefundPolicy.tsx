@@ -95,7 +95,7 @@ const RefundPolicy = () => {
               <Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 Ezmylife. All rights reserved.
+              © 2025 Ezyourlife. All rights reserved.
             </p>
           </div>
         </div>

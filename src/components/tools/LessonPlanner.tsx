@@ -163,7 +163,7 @@ export const LessonPlanner = () => {
   ` : ''}
 
   <div class="footer">
-    Generated with EzmyLife Lesson Planner
+    Generated with Ezyourlife Lesson Planner
   </div>
 </body>
 </html>`;
