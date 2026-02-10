@@ -41,7 +41,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage">("logs");
 
   useEffect(() => {
     if (authLoading) return;
@@ -102,10 +102,36 @@ const AdminDashboard = () => {
     todayLogins: logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
   };
 
+  // Tool usage analytics
+  const toolUsageLogs = logs.filter(l => l.action_type === "tool_usage");
+  const toolCounts: Record<string, { count: number; name: string }> = {};
+  const userToolUsage: Record<string, Record<string, number>> = {};
+
+  toolUsageLogs.forEach(log => {
+    const details = log.action_details as Record<string, unknown> | null;
+    const toolId = (details?.tool_id as string) || "unknown";
+    const toolName = (details?.tool_name as string) || toolId;
+    const userLabel = getEmailForUser(log.user_id);
+
+    if (!toolCounts[toolId]) toolCounts[toolId] = { count: 0, name: toolName };
+    toolCounts[toolId].count++;
+
+    if (!userToolUsage[userLabel]) userToolUsage[userLabel] = {};
+    userToolUsage[userLabel][toolName] = (userToolUsage[userLabel][toolName] || 0) + 1;
+  });
+
+  const sortedTools = Object.entries(toolCounts).sort((a, b) => b[1].count - a[1].count);
+  const sortedUserUsage = Object.entries(userToolUsage).sort((a, b) => {
+    const totalA = Object.values(a[1]).reduce((s, v) => s + v, 0);
+    const totalB = Object.values(b[1]).reduce((s, v) => s + v, 0);
+    return totalB - totalA;
+  });
+
   const tabs = [
     { id: "logs" as const, label: "Activity Logs", icon: Activity },
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
+    { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
   ];
 
   return (
@@ -249,6 +275,78 @@ const AdminDashboard = () => {
               </Table>
             </CardContent>
           </Card>
+        )}
+
+        {/* Tool Usage */}
+        {activeTab === "tool-usage" && (
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Most Used Tools */}
+            <Card>
+              <CardHeader><CardTitle>Most Used Tools</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Tool</TableHead>
+                      <TableHead className="text-right">Uses</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedTools.map(([, tool], i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-sm font-medium">{i + 1}</TableCell>
+                        <TableCell className="text-sm">{tool.name}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {sortedTools.length === 0 && (
+                      <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Per-User Tool Usage */}
+            <Card>
+              <CardHeader><CardTitle>User Tool Usage</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Tools Used</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedUserUsage.map(([user, tools], i) => {
+                      const total = Object.values(tools).reduce((s, v) => s + v, 0);
+                      const topTools = Object.entries(tools).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                      return (
+                        <TableRow key={i}>
+                          <TableCell className="text-sm">{user}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {topTools.map(([name, count]) => `${name} (${count})`).join(", ")}
+                            {Object.keys(tools).length > 3 && ` +${Object.keys(tools).length - 3} more`}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="outline">{total}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {sortedUserUsage.length === 0 && (
+                      <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>
