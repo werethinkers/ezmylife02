@@ -51,7 +51,7 @@ export const Navbar = () => {
             <motion.img
               src={logo}
               alt="ezyourlife"
-              className="h-10 md:h-12 object-contain"
+              className="h-14 md:h-16 object-contain"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             />
