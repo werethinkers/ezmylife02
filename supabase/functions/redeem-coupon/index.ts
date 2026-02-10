@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VALID_COUPONS = ["ezmylife2000", "abhi2k"];
+const VALID_COUPONS = ["ezmylife2000", "abhi2k", "abhi100"];
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';

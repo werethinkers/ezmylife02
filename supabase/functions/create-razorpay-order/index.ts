@@ -60,7 +60,8 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const planType = body.plan_type || "yearly"; // "trial" for ₹50, "monthly" for ₹199, "yearly" for ₹1999
+    const planType = body.plan_type || "yearly";
+    const couponCode = body.coupon_code ? body.coupon_code.toLowerCase().trim() : null;
     
     let amount: number;
     let description: string;
@@ -77,6 +78,14 @@ serve(async (req) => {
       default: // yearly
         amount = 199900; // ₹1999 in paise
         description = "Annual Premium Subscription";
+    }
+
+    // Apply coupon discount
+    if (couponCode === "abhi99") {
+      const discount = Math.floor(amount * 0.99);
+      amount = amount - discount;
+      description = `${description} (99% OFF)`;
+      logStep("Coupon applied", { coupon: couponCode, discountedAmount: amount });
     }
     
     logStep("Creating order", { planType, amount });

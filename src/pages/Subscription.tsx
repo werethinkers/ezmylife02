@@ -28,6 +28,7 @@ const Subscription = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [accessType, setAccessType] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<string | null>(null);
   const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingMonthly, setIsStartingMonthly] = useState(false);
@@ -108,7 +109,7 @@ const Subscription = () => {
       }
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { plan_type: planType },
+        body: { plan_type: planType, coupon_code: appliedDiscount },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -215,6 +216,19 @@ const Subscription = () => {
       return;
     }
 
+    const code = couponCode.toLowerCase().trim();
+
+    // Check if it's a discount coupon (not free)
+    if (code === "abhi99") {
+      setAppliedDiscount(code);
+      toast({
+        title: "Coupon Applied! 🎉",
+        description: "99% discount will be applied to your next payment.",
+      });
+      return;
+    }
+
+    // Otherwise try redeeming as a free coupon
     try {
       setIsRedeemingCoupon(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -543,28 +557,34 @@ const Subscription = () => {
                       <Tag className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">Have a coupon code?</p>
                     </div>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Input
-                          placeholder="Enter coupon code"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          className="pr-4"
-                          onKeyDown={(e) => e.key === "Enter" && handleRedeemCoupon()}
-                        />
-                      </div>
-                      <Button 
-                        onClick={handleRedeemCoupon}
-                        disabled={isRedeemingCoupon}
-                        variant="secondary"
-                      >
-                        {isRedeemingCoupon ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Apply"
-                        )}
-                      </Button>
-                    </div>
+                     <div className="flex gap-2">
+                       <div className="relative flex-1">
+                         <Input
+                           placeholder="Enter coupon code"
+                           value={couponCode}
+                           onChange={(e) => setCouponCode(e.target.value)}
+                           className="pr-4"
+                           onKeyDown={(e) => e.key === "Enter" && handleRedeemCoupon()}
+                         />
+                       </div>
+                       <Button 
+                         onClick={handleRedeemCoupon}
+                         disabled={isRedeemingCoupon}
+                         variant="secondary"
+                       >
+                         {isRedeemingCoupon ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                         ) : (
+                           "Apply"
+                         )}
+                       </Button>
+                     </div>
+                     {appliedDiscount && (
+                       <div className="mt-3 flex items-center gap-2 text-sm text-primary">
+                         <Check className="h-4 w-4" />
+                         <span>Coupon <strong>{appliedDiscount}</strong> applied — 99% discount on payment!</span>
+                       </div>
+                     )}
                   </CardContent>
                 </Card>
               </div>
