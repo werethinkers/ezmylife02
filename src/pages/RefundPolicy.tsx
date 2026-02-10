@@ -85,7 +85,7 @@ const RefundPolicy = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="ezmy.life" className="h-10 object-contain" />
+              <img src={logo} alt="ezyourlife" className="h-10 object-contain" />
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
               <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
