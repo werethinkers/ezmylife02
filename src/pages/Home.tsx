@@ -615,7 +615,7 @@ const Home = () => {
             className="flex flex-col md:flex-row items-center justify-between gap-8"
           >
             <div className="flex items-center gap-3">
-              <img src={logo} alt="ezyourlife" className="h-10 object-contain" />
+              <img src={logo} alt="ezyourlife" className="h-20 object-contain" />
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
               {["About", "Tools", "Pricing", "Contact", "Refund Policy"].map((item) => (

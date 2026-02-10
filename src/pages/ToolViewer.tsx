@@ -93,7 +93,7 @@ const ToolViewer = () => {
         {/* Minimal fullscreen header */}
         <div className="absolute top-0 left-0 right-0 z-30 h-12 bg-background/95 backdrop-blur-sm border-b border-border/20 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="ezyourlife" className="h-5 w-auto" />
+            <img src={logo} alt="ezyourlife" className="h-8 w-auto" />
             <span className="text-sm font-medium text-foreground">{tool.title}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ const ToolViewer = () => {
             </Button>
             <div className="h-5 w-px bg-border/50" />
             <div className="flex items-center gap-2">
-              <img src={logo} alt="ezyourlife" className="h-5 w-auto hidden sm:block" />
+              <img src={logo} alt="ezyourlife" className="h-8 w-auto hidden sm:block" />
               <span className="hidden sm:block text-muted-foreground/50">/</span>
               <span className="font-medium text-foreground text-sm truncate max-w-[200px]">
                 {tool.title}
