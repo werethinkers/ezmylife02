@@ -220,7 +220,7 @@ const Home = () => {
               <motion.img
                 src={logo}
                 alt="ezyourlife"
-                className="h-28 md:h-36 lg:h-44 object-contain will-change-transform"
+                className="h-40 md:h-52 lg:h-64 object-contain will-change-transform"
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 transition={{ duration: 0.3 }}
               />
