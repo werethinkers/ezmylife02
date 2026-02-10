@@ -219,8 +219,8 @@ const Home = () => {
             >
               <motion.img
                 src={logo}
-                alt="ezyourlife"
-                className="h-24 md:h-32 lg:h-40 object-contain will-change-transform"
+                alt="EZYOURLIFE"
+                className="h-20 md:h-28 lg:h-36 object-contain will-change-transform"
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 transition={{ duration: 0.3 }}
               />
@@ -311,7 +311,7 @@ const Home = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16 space-y-4"
           >
-            <p className="text-sm uppercase tracking-widest text-muted-foreground">Why Ezyourlife</p>
+            <p className="text-sm uppercase tracking-widest text-muted-foreground">Why EZYOURLIFE</p>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
               Everything You Need in One Place
             </h2>
@@ -590,7 +590,7 @@ const Home = () => {
               Ready to Transform Your Workflow?
             </h2>
             <p className="text-lg opacity-80 max-w-2xl mx-auto">
-              Join thousands of businesses and individuals who have simplified their digital life with Ezyourlife.
+              Join thousands of businesses and individuals who have simplified their digital life with EZYOURLIFE.
             </p>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button asChild size="lg" variant="secondary" className="text-base px-8 h-14 shadow-lg">
@@ -615,7 +615,7 @@ const Home = () => {
             className="flex flex-col md:flex-row items-center justify-between gap-8"
           >
             <div className="flex items-center gap-3">
-              <img src={logo} alt="ezyourlife" className="h-20 object-contain" />
+              <img src={logo} alt="EZYOURLIFE" className="h-16 object-contain" />
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
               {["About", "Tools", "Pricing", "Contact", "Refund Policy"].map((item) => (
@@ -630,7 +630,7 @@ const Home = () => {
               ))}
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 Ezyourlife. All rights reserved.
+              © 2025 EZYOURLIFE. All rights reserved.
             </p>
           </motion.div>
         </div>

@@ -202,7 +202,7 @@ const Contact = () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">ezyourlife</span> — Simplifying complexity
+              © 2025 <span className="font-semibold text-foreground">EZYOURLIFE</span> — Simplifying complexity
             </p>
           </div>
         </div>
