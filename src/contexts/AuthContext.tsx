@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/lib/activityLogger";
 
 interface AuthContextType {
   user: User | null;
@@ -52,6 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
+          // Log login activity
+          const provider = session?.user?.app_metadata?.provider || "email";
+          logActivity("login", { method: provider, email: session?.user?.email });
         } else if (event === 'SIGNED_OUT' && previousEvent.current === 'SIGNED_IN') {
           // Only show signed out toast for genuine sign-outs
           toast({

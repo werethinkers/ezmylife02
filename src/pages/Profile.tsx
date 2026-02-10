@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/lib/activityLogger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,6 +80,9 @@ const Profile = () => {
     setSaving(true);
 
     try {
+      // Capture previous values for the log
+      const previousProfile = { ...profile };
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -94,6 +98,17 @@ const Profile = () => {
         .eq("id", user?.id);
 
       if (error) throw error;
+
+      // Log profile edit
+      const changedFields: Record<string, { from: string; to: string }> = {};
+      for (const key of Object.keys(profile) as (keyof ProfileData)[]) {
+        if (profile[key] !== previousProfile[key]) {
+          changedFields[key] = { from: previousProfile[key], to: profile[key] };
+        }
+      }
+      if (Object.keys(changedFields).length > 0) {
+        logActivity("profile_edit", { changed_fields: changedFields });
+      }
 
       toast({
         title: "Profile updated",

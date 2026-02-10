@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { tools, getToolUrl } from "@/data/tools";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
+import { logActivity } from "@/lib/activityLogger";
 import logo from "@/assets/logo.png";
 
 const ToolViewer = () => {
@@ -19,17 +20,29 @@ const ToolViewer = () => {
   const toolUrl = toolId ? getToolUrl(toolId) : null;
   const isNativeTool = toolId ? hasNativeImplementation(toolId) : false;
 
+  const hasLoggedRef = useRef(false);
+
   useEffect(() => {
     // Native tools don't need URL validation
     if (isNativeTool) {
       setIsLoading(false);
-      return;
-    }
-    if (!tool || !toolUrl) {
+    } else if (!tool || !toolUrl) {
       setError("Tool not found");
       setIsLoading(false);
     }
   }, [tool, toolUrl, isNativeTool]);
+
+  // Log tool usage once
+  useEffect(() => {
+    if (tool && !hasLoggedRef.current) {
+      hasLoggedRef.current = true;
+      logActivity("tool_usage", {
+        tool_id: toolId,
+        tool_name: tool.title,
+        tool_category: tool.category || "",
+      });
+    }
+  }, [tool, toolId]);
 
   // Handle escape key to exit fullscreen
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
