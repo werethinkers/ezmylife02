@@ -215,12 +215,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="flex justify-center mb-8"
+              className="flex justify-center mb-2"
             >
               <motion.img
                 src={logo}
                 alt="ezyourlife"
-                className="h-40 md:h-52 lg:h-64 object-contain will-change-transform"
+                className="h-52 md:h-64 lg:h-80 object-contain will-change-transform"
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 transition={{ duration: 0.3 }}
               />
