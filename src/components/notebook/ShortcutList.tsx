@@ -16,6 +16,7 @@ declare const window: CustomWindow;
 
 interface ShortcutListProps {
   shortcuts: Map<string, ShortcutItemData[]>;
+  onDeleteShortcut?: (key: string) => void;
 }
 
 interface EnrichedShortcutItem {
@@ -52,7 +53,7 @@ const SEARCH_RESULT_LIMIT = 100;
 const INITIAL_LIST_LIMIT = 100;
 const ALL_CATEGORIES = "All";
 
-const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: EnrichedShortcutItem) => void; isCopied: boolean; }> = React.memo(({ item, onCopy, isCopied }) => {
+const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: EnrichedShortcutItem) => void; isCopied: boolean; onDelete?: (key: string) => void; }> = React.memo(({ item, onCopy, isCopied, onDelete }) => {
     const categoryTag = item.category;
 
     return (
@@ -71,24 +72,38 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
                         {item.value}
                     </p>
                 </div>
-                <button
-                    onClick={() => onCopy(item)}
-                    className="flex-shrink-0 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-slate-800 transition-colors"
-                    aria-label={`Copy text for ${item.key}`}
-                    title={isCopied ? 'Copied!' : 'Copy expansion'}
-                >
-                    {isCopied ? (
-                        <CheckIcon className="w-5 h-5 text-green-500" />
-                    ) : (
-                        <CopyIcon className="w-5 h-5" />
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => onCopy(item)}
+                        className="flex-shrink-0 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        aria-label={`Copy text for ${item.key}`}
+                        title={isCopied ? 'Copied!' : 'Copy expansion'}
+                    >
+                        {isCopied ? (
+                            <CheckIcon className="w-5 h-5 text-green-500" />
+                        ) : (
+                            <CopyIcon className="w-5 h-5" />
+                        )}
+                    </button>
+                    {onDelete && (
+                        <button
+                            onClick={() => onDelete(item.key)}
+                            className="flex-shrink-0 p-2 rounded-full text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
+                            aria-label={`Delete shortcut ${item.key}`}
+                            title="Delete shortcut"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
                     )}
-                </button>
+                </div>
             </div>
         </li>
     );
 });
 
-export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts }) => {
+export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteShortcut }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -265,6 +280,7 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts }) => {
                     item={item}
                     onCopy={handleCopy}
                     isCopied={copiedKey === uniqueId}
+                    onDelete={onDeleteShortcut}
                 />
               );
             })}
