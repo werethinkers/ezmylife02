@@ -260,6 +260,59 @@ const formatOutput = (prompt: ReturnType<typeof buildPrompt>) => {
   return `${finalPrimary}${prompt.positive ? ', ' + prompt.positive : ''}`;
 };
 
+// ---- Favourite Item Component ----
+const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouritePrompt) => void; onRemove: (id: string) => void }> = ({ fav, onUse, onRemove }) => {
+  const [keyCopied, setKeyCopied] = useState(false);
+  const handleCopyKey = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText('/' + fav.shortcut);
+    setKeyCopied(true);
+    setTimeout(() => setKeyCopied(false), 1500);
+  };
+  return (
+    <div
+      className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
+      onClick={() => onUse(fav)}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest">
+            /{fav.shortcut}
+          </span>
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[7px] font-bold uppercase tracking-wider" title="Synced to browser extension">
+            <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            Synced
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleCopyKey}
+            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-blue-100 rounded-lg transition-all"
+            title={keyCopied ? 'Copied!' : 'Copy shortcut key'}
+          >
+            {keyCopied ? (
+              <Check size={10} className="text-green-500" />
+            ) : (
+              <Link size={10} className="text-blue-500" />
+            )}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(fav.id); }}
+            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-100 rounded-lg transition-all"
+            title="Remove favourite"
+          >
+            <Trash2 size={10} className="text-rose-500" />
+          </button>
+        </div>
+      </div>
+      <p className="text-[9px] font-bold text-slate-700 leading-relaxed line-clamp-3">{fav.prompt}</p>
+      <p className="text-[7px] text-slate-400 mt-2 font-bold uppercase tracking-widest">
+        {new Date(fav.createdAt).toLocaleDateString()}
+      </p>
+    </div>
+  );
+};
+
 // ---- Main Component ----
 const PromptMaster: React.FC = () => {
   const { user } = useAuth();
@@ -797,28 +850,7 @@ const PromptMaster: React.FC = () => {
                 </div>
               ) : (
                 favourites.map(fav => (
-                  <div
-                    key={fav.id}
-                    className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
-                    onClick={() => handleUseFavourite(fav)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                        /{fav.shortcut}
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleRemoveFavourite(fav.id); }}
-                        className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-100 rounded-lg transition-all"
-                        title="Remove favourite"
-                      >
-                        <Trash2 size={10} className="text-rose-500" />
-                      </button>
-                    </div>
-                    <p className="text-[9px] font-bold text-slate-700 leading-relaxed line-clamp-3">{fav.prompt}</p>
-                    <p className="text-[7px] text-slate-400 mt-2 font-bold uppercase tracking-widest">
-                      {new Date(fav.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                  <FavouriteItem key={fav.id} fav={fav} onUse={handleUseFavourite} onRemove={handleRemoveFavourite} />
                 ))
               )}
             </div>
