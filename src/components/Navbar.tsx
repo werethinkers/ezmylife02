@@ -38,6 +38,10 @@ export const Navbar = () => {
     { to: "/contact", label: "Contact" },
   ];
 
+  const premiumLinks = user
+    ? [{ to: "/get-extension", label: "Get Extension" }]
+    : [];
+
   return (
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
@@ -58,25 +62,41 @@ export const Navbar = () => {
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link, index) => (
-              <motion.div
-                key={link.to}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
-              >
-                <Link
-                  to={link.to}
-                  className="relative text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+           {/* Desktop Navigation */}
+           <div className="hidden md:flex items-center gap-8">
+             {navLinks.map((link, index) => (
+               <motion.div
+                 key={link.to}
+                 initial={{ opacity: 0, y: -10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+               >
+                 <Link
+                   to={link.to}
+                   className="relative text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                 >
+                   {link.label}
+                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                 </Link>
+               </motion.div>
+             ))}
+             {premiumLinks.map((link, index) => (
+               <motion.div
+                 key={link.to}
+                 initial={{ opacity: 0, y: -10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.1 + (navLinks.length + index) * 0.05, duration: 0.3 }}
+               >
+                 <Link
+                   to={link.to}
+                   className="relative text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
+                 >
+                   {link.label}
+                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                 </Link>
+               </motion.div>
+             ))}
+           </div>
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
@@ -182,38 +202,54 @@ export const Navbar = () => {
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="md:hidden border-t border-border overflow-hidden"
             >
-              <div className="py-4 space-y-1">
-                {navLinks.map((link, index) => (
-                  <motion.div
-                    key={link.to}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05, duration: 0.3 }}
-                  >
-                    <Link
-                      to={link.to}
-                      className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-                {!user && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: navLinks.length * 0.05, duration: 0.3 }}
-                  >
-                    <Link
-                      to="/auth"
-                      className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all sm:hidden"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                  </motion.div>
-                )}
+               <div className="py-4 space-y-1">
+                 {navLinks.map((link, index) => (
+                   <motion.div
+                     key={link.to}
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: index * 0.05, duration: 0.3 }}
+                   >
+                     <Link
+                       to={link.to}
+                       className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all"
+                       onClick={() => setMobileMenuOpen(false)}
+                     >
+                       {link.label}
+                     </Link>
+                   </motion.div>
+                 ))}
+                 {premiumLinks.map((link, index) => (
+                   <motion.div
+                     key={link.to}
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: (navLinks.length + index) * 0.05, duration: 0.3 }}
+                   >
+                     <Link
+                       to={link.to}
+                       className="block py-3 px-2 text-primary font-medium hover:text-primary/80 hover:bg-accent/50 rounded-lg transition-all"
+                       onClick={() => setMobileMenuOpen(false)}
+                     >
+                       {link.label}
+                     </Link>
+                   </motion.div>
+                 ))}
+                 {!user && (
+                   <motion.div
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: navLinks.length * 0.05, duration: 0.3 }}
+                   >
+                     <Link
+                       to="/auth"
+                       className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all sm:hidden"
+                       onClick={() => setMobileMenuOpen(false)}
+                     >
+                       Sign In
+                     </Link>
+                   </motion.div>
+                 )}
               </div>
             </motion.div>
           )}
