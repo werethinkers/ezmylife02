@@ -1,5 +1,6 @@
 // Content script: auto-expands shortcuts on any website
 let shortcuts = {};
+let isExpanding = false; // Prevent re-entrancy
 
 // Load shortcuts from storage on init
 chrome.storage.local.get(["shortcuts"], (data) => {
@@ -13,10 +14,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-// Track typed text in any input/textarea/contenteditable
-let buffer = "";
-
 document.addEventListener("input", (e) => {
+  if (isExpanding) return;
+
   const el = e.target;
   const isEditable =
     el.tagName === "INPUT" ||
@@ -24,28 +24,42 @@ document.addEventListener("input", (e) => {
     el.isContentEditable;
   if (!isEditable) return;
 
-  // For contenteditable (ChatGPT, Gemini, etc.)
   if (el.isContentEditable) {
     handleContentEditable(el);
     return;
   }
 
-  // For input/textarea
   handleInputField(el);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (isExpanding) return;
+  if (e.key !== " " && e.key !== "Enter" && e.key !== "Tab") return;
+
+  const el = e.target;
+  if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && !el.isContentEditable) return;
+
+  setTimeout(() => {
+    if (el.isContentEditable) {
+      handleContentEditable(el);
+    } else {
+      handleInputField(el);
+    }
+  }, 0);
 });
 
 function handleInputField(el) {
   const val = el.value;
+  if (!val) return;
   const cursorPos = el.selectionStart;
+  if (cursorPos === null || cursorPos === undefined) return;
   const textBeforeCursor = val.substring(0, cursorPos);
 
-  // Find the last word (including / prefix for promptmaster shortcuts)
   const match = textBeforeCursor.match(/(\S+)$/);
   if (!match) return;
 
   const lastWord = match[1];
 
-  // Check shortcuts (case-insensitive)
   const key = Object.keys(shortcuts).find(
     (k) => k.toLowerCase() === lastWord.toLowerCase()
   );
@@ -55,15 +69,35 @@ function handleInputField(el) {
     const wordStart = cursorPos - lastWord.length;
     const before = val.substring(0, wordStart);
     const after = val.substring(cursorPos);
+    const newValue = before + expansion + after;
 
-    el.value = before + expansion + after;
+    isExpanding = true;
 
-    // Set cursor after expansion
+    const nativeSetter =
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set ||
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+
+    if (nativeSetter) {
+      nativeSetter.call(el, newValue);
+    } else {
+      el.value = newValue;
+    }
+
     const newPos = wordStart + expansion.length;
     el.setSelectionRange(newPos, newPos);
 
-    // Trigger input event so frameworks detect the change
     el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+
+    const nativeInputEvent = new InputEvent("input", {
+      bubbles: true,
+      cancelable: true,
+      inputType: "insertText",
+      data: expansion,
+    });
+    el.dispatchEvent(nativeInputEvent);
+
+    setTimeout(() => { isExpanding = false; }, 50);
   }
 }
 
@@ -89,22 +123,22 @@ function handleContentEditable(el) {
   );
 
   if (key) {
+    isExpanding = true;
     const expansion = shortcuts[key];
     const wordStart = cursorOffset - lastWord.length;
 
-    // Replace the shortcut text with the expansion
     const before = text.substring(0, wordStart);
     const after = text.substring(cursorOffset);
     node.textContent = before + expansion + after;
 
-    // Restore cursor
     const newRange = document.createRange();
     newRange.setStart(node, wordStart + expansion.length);
     newRange.collapse(true);
     sel.removeAllRanges();
     sel.addRange(newRange);
 
-    // Trigger input event
     el.dispatchEvent(new Event("input", { bubbles: true }));
+
+    setTimeout(() => { isExpanding = false; }, 50);
   }
 }
