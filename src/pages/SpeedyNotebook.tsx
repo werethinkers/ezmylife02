@@ -558,6 +558,8 @@ const SpeedyNotebook: React.FC = () => {
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadDone = useRef(false);
+  const shortcutsRef = useRef(shortcuts);
+  shortcutsRef.current = shortcuts;
 
   // Load saved session
   useEffect(() => {
@@ -603,7 +605,7 @@ const SpeedyNotebook: React.FC = () => {
     saveTimerRef.current = setTimeout(async () => {
       setSaveStatus('saving');
       const editorContent = editorRef.current?.innerHTML || '';
-      const aiGenerated = shortcuts.get('AI Generated') || [];
+      const aiGenerated = shortcutsRef.current.get('AI Generated') || [];
       
       const { error } = await supabase
         .from('notebook_sessions')
@@ -616,7 +618,7 @@ const SpeedyNotebook: React.FC = () => {
       if (!error) setSaveStatus('saved');
       else console.error('Save error:', error);
     }, 1500);
-  }, [user, shortcuts]);
+  }, [user]);
 
   // Load dictionary only (no predefined shortcuts - users create their own)
   useEffect(() => {
