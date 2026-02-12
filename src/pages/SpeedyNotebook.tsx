@@ -572,23 +572,22 @@ const SpeedyNotebook: React.FC = () => {
         .maybeSingle();
       
       if (data && editorRef.current) {
-        editorRef.current.innerHTML = data.editor_content || '';
+        // Set initialLoadDone BEFORE setting innerHTML to prevent handleInput from saving empty shortcuts
         if (data.session_shortcuts && Array.isArray(data.session_shortcuts)) {
-          // Restore AI-generated shortcuts from session
           const sessionShortcuts = (data.session_shortcuts as unknown) as ShortcutItemData[];
           if (sessionShortcuts.length > 0) {
-            setShortcuts(prev => {
-              const newMap = new Map(prev);
-              newMap.set('AI Generated', sessionShortcuts);
-              return newMap;
-            });
-            setFlatShortcutsMap(prev => {
-              const newFlat = new Map(prev);
-              sessionShortcuts.forEach(item => newFlat.set(item.key.toLowerCase(), item.value));
-              return newFlat;
-            });
+            const newMap = new Map<string, ShortcutItemData[]>();
+            newMap.set('AI Generated', sessionShortcuts);
+            setShortcuts(newMap);
+            // Update ref IMMEDIATELY so any saveSession call has the latest data
+            shortcutsRef.current = newMap;
+            
+            const newFlat = new Map<string, string>();
+            sessionShortcuts.forEach(item => newFlat.set(item.key.toLowerCase(), item.value));
+            setFlatShortcutsMap(newFlat);
           }
         }
+        editorRef.current.innerHTML = data.editor_content || '';
       }
       initialLoadDone.current = true;
     };
@@ -688,14 +687,68 @@ const SpeedyNotebook: React.FC = () => {
   const handleAddGeneratedShortcuts = (newItems: ShortcutItemData[]) => {
       const newMap = new Map(shortcuts);
       const existing = newMap.get('AI Generated') || [];
-      newMap.set('AI Generated', [...existing, ...newItems]);
+      const updatedShortcuts = [...existing, ...newItems];
+      newMap.set('AI Generated', updatedShortcuts);
       setShortcuts(newMap);
+      // Update ref IMMEDIATELY so saveSession reads the correct data
+      shortcutsRef.current = newMap;
+      
       const newFlat = new Map(flatShortcutsMap);
       newItems.forEach(item => newFlat.set(item.key.toLowerCase(), item.value));
       setFlatShortcutsMap(newFlat);
-      // Save after adding shortcuts
-      setTimeout(saveSession, 500);
+      
+      // Direct save instead of relying on debounced saveSession
+      if (user) {
+        const editorContent = editorRef.current?.innerHTML || '';
+        supabase
+          .from('notebook_sessions')
+          .upsert({
+            user_id: user.id,
+            editor_content: editorContent,
+            session_shortcuts: JSON.parse(JSON.stringify(updatedShortcuts)),
+          }, { onConflict: 'user_id' })
+          .then(({ error }) => {
+            if (error) console.error('Save shortcuts error:', error);
+            else setSaveStatus('saved');
+          });
+      }
   };
+
+  const handleDeleteShortcut = useCallback((key: string) => {
+      const newMap = new Map(shortcuts);
+      const existing = newMap.get('AI Generated') || [];
+      const filtered = existing.filter(item => item.key !== key);
+      if (filtered.length > 0) {
+        newMap.set('AI Generated', filtered);
+      } else {
+        newMap.delete('AI Generated');
+      }
+      setShortcuts(newMap);
+      shortcutsRef.current = newMap;
+      
+      // Remove from flat map
+      setFlatShortcutsMap(prev => {
+        const newFlat = new Map(prev);
+        newFlat.delete(key.toLowerCase());
+        return newFlat;
+      });
+      
+      // Direct save
+      if (user) {
+        const editorContent = editorRef.current?.innerHTML || '';
+        supabase
+          .from('notebook_sessions')
+          .upsert({
+            user_id: user.id,
+            editor_content: editorContent,
+            session_shortcuts: JSON.parse(JSON.stringify(filtered)),
+          }, { onConflict: 'user_id' })
+          .then(({ error }) => {
+            if (error) console.error('Delete shortcut error:', error);
+            else setSaveStatus('saved');
+          });
+      }
+  }, [shortcuts, user]);
 
   const handleDownload = () => {
       if (!editorRef.current) return;
@@ -973,8 +1026,12 @@ const SpeedyNotebook: React.FC = () => {
              </div>
              
              <div className="hidden lg:flex w-80 border-l border-slate-200 dark:border-slate-800 flex-col bg-slate-50 dark:bg-slate-900">
-                 <ShortcutList shortcuts={shortcuts} />
-             </div>
+                  <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">My Saved Shortcuts</h2>
+                    <p className="text-xs text-slate-500 mt-1">{(shortcuts.get('AI Generated') || []).length} shortcut(s)</p>
+                  </div>
+                  <ShortcutList shortcuts={shortcuts} onDeleteShortcut={handleDeleteShortcut} />
+              </div>
         </main>
         
         <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
