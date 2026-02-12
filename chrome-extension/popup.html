@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+    .header { background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 16px; text-align: center; }
+    .header h1 { font-size: 16px; font-weight: 700; color: white; }
+    .header p { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+    .content { padding: 16px; }
+    .status { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+    .status.connected { background: #064e3b; color: #6ee7b7; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.green { background: #22c55e; }
+    .dot.red { background: #ef4444; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+    input { width: 100%; padding: 8px 10px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #e2e8f0; font-size: 13px; margin-bottom: 10px; outline: none; }
+    input:focus { border-color: #3b82f6; }
+    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-danger { background: #1e293b; color: #f87171; border: 1px solid #7f1d1d; margin-top: 8px; }
+    .btn-danger:hover { background: #7f1d1d; }
+    .shortcut-count { text-align: center; padding: 12px; background: #1e293b; border-radius: 8px; margin-top: 12px; }
+    .shortcut-count .num { font-size: 24px; font-weight: 700; color: #3b82f6; }
+    .shortcut-count .label { font-size: 11px; color: #94a3b8; }
+    .info { font-size: 11px; color: #64748b; text-align: center; margin-top: 12px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚡ EzMyLife Shortcuts</h1>
+    <p>Auto-expand shortcuts on any website</p>
+  </div>
+  <div class="content">
+    <div id="status" class="status disconnected">
+      <span class="dot red" id="statusDot"></span>
+      <span id="statusText">Not connected</span>
+    </div>
+
+    <div id="loginForm">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Your password">
+      <button class="btn-primary" id="loginBtn">Connect & Sync</button>
+    </div>
+
+    <div id="loggedInView" style="display:none;">
+      <div class="shortcut-count">
+        <div class="num" id="shortcutNum">0</div>
+        <div class="label">shortcuts synced</div>
+      </div>
+      <button class="btn-primary" id="syncBtn" style="margin-top:12px;">🔄 Sync Now</button>
+      <button class="btn-danger" id="logoutBtn">Disconnect</button>
+    </div>
+
+    <p class="info">Type your shortcut key anywhere and it auto-expands.<br>Shortcuts sync from Speedy Notebook & PromptMaster.</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
