@@ -294,6 +294,15 @@ export const tools: Tool[] = [
     isLive: true
   },
   {
+    title: "PromptMaster AI",
+    description: "Elite prompt engineering workspace with AI brainstorm, magic write, and multi-format output modes.",
+    category: "AI Agent",
+    icon: <Wand2 className="h-8 w-8" />,
+    toolId: "promptmaster-ai",
+    videoLink: "",
+    isLive: true
+  },
+  {
     title: "Rich Editor",
     description: "This is a powerful tool for formatting text in digital form.",
     category: "Research",

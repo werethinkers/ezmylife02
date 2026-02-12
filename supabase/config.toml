@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.video-generator]
 verify_jwt = false
+
+[functions.promptmaster-ai]
+verify_jwt = false

@@ -28,6 +28,7 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
+const PromptMaster = lazy(() => import("./pages/PromptMaster"));
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,14 @@ const AnimatedRoutes = () => {
               element={
                 <ProtectedRoute>
                   <SpeedyNotebook />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/promptmaster"
+              element={
+                <ProtectedRoute>
+                  <PromptMaster />
                 </ProtectedRoute>
               }
             />
