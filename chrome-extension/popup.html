@@ -4,29 +4,47 @@
   <meta charset="utf-8">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
-    .header { background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 16px; text-align: center; }
-    .header h1 { font-size: 16px; font-weight: 700; color: white; }
-    .header p { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px; }
-    .content { padding: 16px; }
-    .status { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+    body { width: 340px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+    .header { background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 14px 16px; text-align: center; }
+    .header h1 { font-size: 15px; font-weight: 700; color: white; }
+    .header p { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 3px; }
+    .content { padding: 12px; }
+    .status { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; }
     .status.connected { background: #064e3b; color: #6ee7b7; }
     .status.disconnected { background: #7f1d1d; color: #fca5a5; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
     .dot.green { background: #22c55e; }
     .dot.red { background: #ef4444; }
-    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
-    input { width: 100%; padding: 8px 10px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #e2e8f0; font-size: 13px; margin-bottom: 10px; outline: none; }
-    input:focus { border-color: #3b82f6; }
-    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 3px; }
+    input, select { width: 100%; padding: 7px 9px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #e2e8f0; font-size: 12px; margin-bottom: 8px; outline: none; }
+    input:focus, select:focus { border-color: #3b82f6; }
+    button { width: 100%; padding: 9px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-primary { background: #3b82f6; color: white; }
     .btn-primary:hover { background: #2563eb; }
-    .btn-danger { background: #1e293b; color: #f87171; border: 1px solid #7f1d1d; margin-top: 8px; }
+    .btn-success { background: #059669; color: white; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: #1e293b; color: #f87171; border: 1px solid #7f1d1d; margin-top: 6px; }
     .btn-danger:hover { background: #7f1d1d; }
-    .shortcut-count { text-align: center; padding: 12px; background: #1e293b; border-radius: 8px; margin-top: 12px; }
-    .shortcut-count .num { font-size: 24px; font-weight: 700; color: #3b82f6; }
-    .shortcut-count .label { font-size: 11px; color: #94a3b8; }
-    .info { font-size: 11px; color: #64748b; text-align: center; margin-top: 12px; line-height: 1.4; }
+    .shortcut-count { text-align: center; padding: 10px; background: #1e293b; border-radius: 8px; margin-top: 10px; }
+    .shortcut-count .num { font-size: 22px; font-weight: 700; color: #3b82f6; }
+    .shortcut-count .label { font-size: 10px; color: #94a3b8; }
+    .info { font-size: 10px; color: #64748b; text-align: center; margin-top: 10px; line-height: 1.4; }
+    .tabs { display: flex; gap: 2px; margin-bottom: 10px; background: #1e293b; border-radius: 8px; padding: 3px; }
+    .tab { flex: 1; padding: 7px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #94a3b8; }
+    .tab.active { background: #3b82f6; color: white; }
+    .tab:hover:not(.active) { color: #e2e8f0; }
+    .shortcut-list { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+    .shortcut-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #1e293b; border-radius: 6px; margin-bottom: 4px; border: 1px solid #334155; }
+    .shortcut-item .key { font-family: monospace; font-weight: 700; color: #38bdf8; font-size: 12px; }
+    .shortcut-item .val { font-size: 10px; color: #94a3b8; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .shortcut-item .actions { display: flex; gap: 4px; }
+    .shortcut-item .actions button { width: auto; padding: 4px 6px; font-size: 10px; border-radius: 4px; }
+    .delete-btn { background: transparent; color: #f87171; border: 1px solid #7f1d1d; }
+    .delete-btn:hover { background: #7f1d1d; }
+    .add-form { background: #1e293b; border-radius: 8px; padding: 10px; margin-top: 8px; border: 1px solid #334155; }
+    .add-form h3 { font-size: 11px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { display: flex; gap: 6px; }
+    .row input { flex: 1; }
   </style>
 </head>
 <body>
@@ -53,7 +71,30 @@
         <div class="num" id="shortcutNum">0</div>
         <div class="label">shortcuts synced</div>
       </div>
-      <button class="btn-primary" id="syncBtn" style="margin-top:12px;">🔄 Sync Now</button>
+
+      <div class="tabs" style="margin-top:10px;">
+        <div class="tab active" id="tabList" onclick="switchTab('list')">My Shortcuts</div>
+        <div class="tab" id="tabAdd" onclick="switchTab('add')">+ Add New</div>
+      </div>
+
+      <div id="listPanel">
+        <div class="shortcut-list" id="shortcutList"></div>
+      </div>
+
+      <div id="addPanel" style="display:none;">
+        <div class="add-form">
+          <h3>Create Shortcut</h3>
+          <label>Shortcut Key</label>
+          <input type="text" id="newKey" placeholder="e.g. /hello or myemail">
+          <label>Expansion Text</label>
+          <input type="text" id="newValue" placeholder="What it expands to...">
+          <label>Category (optional)</label>
+          <input type="text" id="newCategory" placeholder="e.g. Email, Work, Personal" value="Extension">
+          <button class="btn-success" id="addBtn">Add Shortcut</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="syncBtn" style="margin-top:10px;">🔄 Sync Now</button>
       <button class="btn-danger" id="logoutBtn">Disconnect</button>
     </div>
 

@@ -55,6 +55,14 @@ const ALL_CATEGORIES = "All";
 
 const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: EnrichedShortcutItem) => void; isCopied: boolean; onDelete?: (key: string) => void; }> = React.memo(({ item, onCopy, isCopied, onDelete }) => {
     const categoryTag = item.category;
+    const [keyCopied, setKeyCopied] = useState(false);
+
+    const handleCopyShortcutKey = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(item.key);
+        setKeyCopied(true);
+        setTimeout(() => setKeyCopied(false), 1500);
+    };
 
     return (
         <li className="p-3 bg-white dark:bg-slate-900/50 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700/50">
@@ -67,12 +75,28 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
                                 {categoryTag}
                             </span>
                         )}
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-wider" title="Synced to browser extension">
+                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            Synced
+                        </span>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-snug break-words whitespace-pre-wrap">
                         {item.value}
                     </p>
                 </div>
                 <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleCopyShortcutKey}
+                        className="flex-shrink-0 p-2 rounded-full text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+                        aria-label={`Copy shortcut key ${item.key}`}
+                        title={keyCopied ? 'Key copied!' : 'Copy shortcut key'}
+                    >
+                        {keyCopied ? (
+                            <CheckIcon className="w-4 h-4 text-green-500" />
+                        ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
+                        )}
+                    </button>
                     <button
                         onClick={() => onCopy(item)}
                         className="flex-shrink-0 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"

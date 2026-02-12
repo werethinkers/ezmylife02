@@ -37,14 +37,85 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch notebook shortcuts
+    // POST = add shortcut, DELETE = remove shortcut, GET = fetch all
+    if (req.method === "POST") {
+      const body = await req.json();
+      const { key, value, category } = body;
+      if (!key || !value) {
+        return new Response(JSON.stringify({ error: "key and value required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Add to notebook_sessions
+      const { data: existing } = await supabase
+        .from("notebook_sessions")
+        .select("session_shortcuts")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const currentShortcuts = Array.isArray(existing?.session_shortcuts)
+        ? (existing.session_shortcuts as Array<{ key: string; value: string; category: string }>)
+        : [];
+
+      // Remove duplicate if exists
+      const filtered = currentShortcuts.filter(
+        (s) => s.key?.toLowerCase() !== key.toLowerCase()
+      );
+      filtered.push({ key, value, category: category || "Extension" });
+
+      await supabase.from("notebook_sessions").upsert(
+        [{ user_id: user.id, session_shortcuts: filtered }],
+        { onConflict: "user_id" }
+      );
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "DELETE") {
+      const body = await req.json();
+      const { key } = body;
+      if (!key) {
+        return new Response(JSON.stringify({ error: "key required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: existing } = await supabase
+        .from("notebook_sessions")
+        .select("session_shortcuts")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const currentShortcuts = Array.isArray(existing?.session_shortcuts)
+        ? (existing.session_shortcuts as Array<{ key: string; value: string; category: string }>)
+        : [];
+
+      const filtered = currentShortcuts.filter(
+        (s) => s.key?.toLowerCase() !== key.toLowerCase()
+      );
+
+      await supabase.from("notebook_sessions").upsert(
+        [{ user_id: user.id, session_shortcuts: filtered }],
+        { onConflict: "user_id" }
+      );
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // GET - fetch all shortcuts
     const { data: notebookSession } = await supabase
       .from("notebook_sessions")
       .select("session_shortcuts")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Fetch promptmaster favourites
     const { data: promptSession } = await supabase
       .from("promptmaster_sessions")
       .select("session_data")
@@ -53,7 +124,6 @@ Deno.serve(async (req) => {
 
     const shortcuts: Record<string, string> = {};
 
-    // Parse notebook shortcuts
     if (notebookSession?.session_shortcuts) {
       const ns = notebookSession.session_shortcuts as Record<string, unknown>[];
       if (Array.isArray(ns)) {
@@ -66,13 +136,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Parse promptmaster favourites (shortcut -> prompt)
     if (promptSession?.session_data) {
       const sd = promptSession.session_data as Record<string, unknown>;
       const favs = sd.favourites as Array<{
         shortcut?: string;
         prompt?: string;
-        title?: string;
       }>;
       if (Array.isArray(favs)) {
         for (const f of favs) {
