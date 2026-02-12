@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      notebook_sessions: {
+        Row: {
+          created_at: string
+          editor_content: string | null
+          id: string
+          session_shortcuts: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          editor_content?: string | null
+          id?: string
+          session_shortcuts?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          editor_content?: string | null
+          id?: string
+          session_shortcuts?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       premium_access: {
         Row: {
           access_type: string

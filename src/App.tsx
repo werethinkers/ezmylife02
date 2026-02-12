@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,14 @@ const AnimatedRoutes = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notebook"
+              element={
+                <ProtectedRoute>
+                  <SpeedyNotebook />
                 </ProtectedRoute>
               }
             />
