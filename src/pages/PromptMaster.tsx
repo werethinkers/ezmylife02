@@ -10,7 +10,8 @@ import {
   UserCheck, Palette,
   HelpCircle, Type, Image, Video, Clapperboard, BookOpen,
   PlusCircle, Activity, Camera, Link, Check, Terminal, X, Trash2,
-  ChevronUp, ChevronDown, ShieldAlert, Wand2, Save, ArrowLeft, Loader2
+  ChevronUp, ChevronDown, ShieldAlert, Wand2, Save, ArrowLeft, Loader2,
+  Star, StarOff, List
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +48,14 @@ interface Variation {
   prompt: string;
 }
 
+interface FavouritePrompt {
+  id: string;
+  prompt: string;
+  shortcut: string;
+  title: string;
+  createdAt: string;
+}
+
 interface SessionData {
   context: string;
   negativeInput: string;
@@ -56,6 +65,7 @@ interface SessionData {
   branding: { logo: string; text: string };
   customTags: CustomTag[];
   suggestions: Variation[];
+  favourites?: FavouritePrompt[];
 }
 
 // ---- Constants ----
@@ -138,6 +148,41 @@ const OPTIONS: PromptOption[] = [
 
 const BASE_POSITIVE_TOKENS = ['ultra-detailed', 'masterpiece', '8k'];
 const BASE_NEGATIVE_TOKENS = ['lowres', 'blur', 'ugly'];
+
+// ---- Generate shortcut from prompt ----
+const generateShortcut = (prompt: string, existingShortcuts: string[]): string => {
+  // Extract meaningful words (skip common words)
+  const stopWords = new Set(['a', 'an', 'the', 'is', 'are', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'and', 'or', 'but', 'not', 'no', 'my', 'your', 'his', 'her', 'its', 'our', 'their']);
+  const words = prompt.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
+
+  const candidates: string[] = [];
+
+  // Strategy 1: First letters of first 4 words
+  if (words.length >= 2) {
+    candidates.push(words.slice(0, 4).map(w => w[0]).join('').toUpperCase());
+  }
+  // Strategy 2: First 2-4 letters of first word
+  if (words.length >= 1) {
+    candidates.push(words[0].slice(0, 4).toUpperCase());
+    candidates.push(words[0].slice(0, 3).toUpperCase());
+    candidates.push(words[0].slice(0, 2).toUpperCase());
+  }
+  // Strategy 3: First 2 letters of first two words
+  if (words.length >= 2) {
+    candidates.push((words[0].slice(0, 2) + words[1].slice(0, 2)).toUpperCase());
+  }
+
+  const existingSet = new Set(existingShortcuts.map(s => s.toUpperCase()));
+  for (const c of candidates) {
+    if (c.length >= 2 && c.length <= 4 && !existingSet.has(c)) return c;
+  }
+
+  // Fallback: random 4 chars from prompt initials + number
+  let fallback = (words.length > 0 ? words[0].slice(0, 2) : 'PM').toUpperCase();
+  let counter = 1;
+  while (existingSet.has(fallback + counter)) counter++;
+  return (fallback + counter).slice(0, 4);
+};
 
 // ---- Icon resolver ----
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -238,8 +283,11 @@ const PromptMaster: React.FC = () => {
   const [editableFinalPrompt, setEditableFinalPrompt] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [favourites, setFavourites] = useState<FavouritePrompt[]>([]);
+  const [showFavourites, setShowFavourites] = useState(false);
 
   const skillsRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Load session on mount
   useEffect(() => {
@@ -265,6 +313,7 @@ const PromptMaster: React.FC = () => {
         if (s.branding) setBranding(s.branding);
         if (s.customTags) setCustomTags(s.customTags);
         if (s.suggestions) setSuggestions(s.suggestions);
+        if (s.favourites) setFavourites(s.favourites);
       }
       setIsLoaded(true);
     };
@@ -401,7 +450,7 @@ const PromptMaster: React.FC = () => {
     }
     setIsSaving(true);
     const sessionData: SessionData = {
-      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions,
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites,
     };
     try {
       const { error } = await supabase.from('promptmaster_sessions').upsert([{
@@ -418,6 +467,78 @@ const PromptMaster: React.FC = () => {
     }
   };
 
+  const handleAddFavourite = async () => {
+    const promptText = showPromptPreview ? editableFinalPrompt : finalStringComputed;
+    if (!promptText.trim()) {
+      toast.error('Build a prompt first before favouriting');
+      return;
+    }
+    if (!user) {
+      toast.error('Please sign in to save favourites');
+      return;
+    }
+
+    // Check for duplicate
+    if (favourites.some(f => f.prompt === promptText)) {
+      toast.info('This prompt is already in your favourites');
+      return;
+    }
+
+    const existingShortcuts = favourites.map(f => f.shortcut);
+    const shortcut = generateShortcut(promptText, existingShortcuts);
+    const title = promptText.slice(0, 40) + (promptText.length > 40 ? '...' : '');
+
+    const newFav: FavouritePrompt = {
+      id: `fav-${Date.now()}`,
+      prompt: promptText,
+      shortcut,
+      title,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedFavs = [...favourites, newFav];
+    setFavourites(updatedFavs);
+
+    // Auto-save to DB
+    const sessionData: SessionData = {
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites: updatedFavs,
+    };
+    try {
+      await supabase.from('promptmaster_sessions').upsert([{
+        user_id: user.id,
+        session_data: JSON.parse(JSON.stringify(sessionData)),
+      }], { onConflict: 'user_id' });
+      toast.success(`Added to favourites! Shortcut: /${shortcut}`);
+    } catch {
+      toast.error('Failed to save favourite');
+    }
+  };
+
+  const handleRemoveFavourite = async (favId: string) => {
+    if (!user) return;
+    const updatedFavs = favourites.filter(f => f.id !== favId);
+    setFavourites(updatedFavs);
+
+    const sessionData: SessionData = {
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites: updatedFavs,
+    };
+    try {
+      await supabase.from('promptmaster_sessions').upsert([{
+        user_id: user.id,
+        session_data: JSON.parse(JSON.stringify(sessionData)),
+      }], { onConflict: 'user_id' });
+      toast.success('Removed from favourites');
+    } catch {
+      toast.error('Failed to remove favourite');
+    }
+  };
+
+  const handleUseFavourite = (fav: FavouritePrompt) => {
+    setContext(fav.prompt);
+    setShowFavourites(false);
+    toast.success(`Loaded favourite: /${fav.shortcut}`);
+  };
+
   const clearContext = () => {
     setContext('');
     setSuggestions([]);
@@ -431,6 +552,11 @@ const PromptMaster: React.FC = () => {
 
   const currentCategoryObj = useMemo(() => CATEGORIES.find(c => c.id === activeCategory), [activeCategory]);
   const activeOptions = useMemo(() => activeCategory === 'custom' ? customTags : OPTIONS.filter(o => o.category === activeCategory), [activeCategory, customTags]);
+
+  const isFavourited = useMemo(() => {
+    const currentPrompt = showPromptPreview ? editableFinalPrompt : finalStringComputed;
+    return favourites.some(f => f.prompt === currentPrompt);
+  }, [favourites, showPromptPreview, editableFinalPrompt, finalStringComputed]);
 
   if (!isLoaded && user) {
     return (
@@ -467,6 +593,12 @@ const PromptMaster: React.FC = () => {
           ))}
         </div>
         <div className="flex items-center gap-1 md:gap-2">
+          <button onClick={() => setShowFavourites(!showFavourites)} className={`p-2 rounded-xl transition-all relative ${showFavourites ? 'bg-amber-100 text-amber-600' : 'hover:bg-amber-50 text-slate-500'}`} title="Favourite Prompts">
+            <Star size={16} strokeWidth={2.5} />
+            {favourites.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center">{favourites.length}</span>
+            )}
+          </button>
           <button onClick={handleBrainstorm} disabled={isSuggesting} className="p-2 hover:bg-amber-100 rounded-xl text-black transition-all" title="Brainstorm Variations">
             <Sparkles size={16} strokeWidth={2.5} className={isSuggesting ? "animate-pulse" : ""} />
           </button>
@@ -571,6 +703,13 @@ const PromptMaster: React.FC = () => {
                     <button onClick={clearContext} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-slate-50 text-slate-400 border-slate-200 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-100 active:scale-90" title="Clear All Context">
                       <Trash2 size={14} strokeWidth={2.5} />
                     </button>
+                    <button
+                      onClick={handleAddFavourite}
+                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border active:scale-90 ${isFavourited ? 'bg-amber-500 text-white border-amber-400' : 'bg-slate-50 text-amber-500 border-slate-200 hover:bg-amber-50'}`}
+                      title={isFavourited ? 'Already favourited' : 'Add to Favourites'}
+                    >
+                      {isFavourited ? <Star size={14} strokeWidth={2.5} /> : <StarOff size={14} strokeWidth={2.5} />}
+                    </button>
                     <button onClick={() => setShowPromptPreview(true)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-slate-50 text-black border-slate-200 hover:bg-slate-100 active:scale-90" title="View Final Engineered Text">
                       <Eye size={14} strokeWidth={2.5} />
                     </button>
@@ -635,12 +774,65 @@ const PromptMaster: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* FAVOURITES PANEL */}
+        {showFavourites && (
+          <div className="w-72 md:w-80 bg-white border-l border-slate-200 flex flex-col z-40 shadow-[-4px_0_20px_rgba(0,0,0,0.05)] shrink-0">
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <Star size={14} className="text-amber-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Favourites</span>
+                <span className="text-[8px] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded-full">{favourites.length}</span>
+              </div>
+              <button onClick={() => setShowFavourites(false)} className="p-1.5 hover:bg-slate-200 rounded-lg transition-all">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ scrollbarWidth: 'thin' }}>
+              {favourites.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <StarOff size={32} className="text-slate-300 mb-3" />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No favourites yet</p>
+                  <p className="text-[8px] text-slate-400 mt-1">Build a prompt and tap the ★ button</p>
+                </div>
+              ) : (
+                favourites.map(fav => (
+                  <div
+                    key={fav.id}
+                    className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
+                    onClick={() => handleUseFavourite(fav)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                        /{fav.shortcut}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemoveFavourite(fav.id); }}
+                        className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-100 rounded-lg transition-all"
+                        title="Remove favourite"
+                      >
+                        <Trash2 size={10} className="text-rose-500" />
+                      </button>
+                    </div>
+                    <p className="text-[9px] font-bold text-slate-700 leading-relaxed line-clamp-3">{fav.prompt}</p>
+                    <p className="text-[7px] text-slate-400 mt-2 font-bold uppercase tracking-widest">
+                      {new Date(fav.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* PROMPT PREVIEW MODAL */}
       {showPromptPreview && (
-        <div className="fixed inset-0 z-[120] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-6">
-          <div className="bg-white w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-[120] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowPromptPreview(false); }}
+        >
+          <div ref={modalRef} className="bg-white w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 md:px-8 md:py-6 flex items-center justify-between border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-900 rounded-xl md:rounded-2xl flex items-center justify-center text-white"><Terminal size={18} /></div>
@@ -658,10 +850,21 @@ const PromptMaster: React.FC = () => {
                 <div className="absolute top-2 right-2 text-[8px] font-black text-slate-300 uppercase tracking-widest pointer-events-none">Editable String</div>
               </div>
             </div>
-            <div className="px-6 py-4 md:px-8 md:py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={handleCopy} className="px-6 py-3 md:px-8 md:py-4 bg-slate-950 text-white rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
-                <Zap size={14} /> Copy Final String
+            <div className="px-6 py-4 md:px-8 md:py-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-3">
+              <button onClick={() => setShowPromptPreview(false)} className="px-6 py-3 md:px-8 md:py-4 bg-slate-200 text-slate-700 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 hover:bg-slate-300 active:scale-95 transition-all">
+                Done
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddFavourite}
+                  className={`px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 active:scale-95 transition-all ${isFavourited ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'}`}
+                >
+                  <Star size={14} /> {isFavourited ? 'Favourited' : 'Favourite'}
+                </button>
+                <button onClick={handleCopy} className="px-6 py-3 md:px-8 md:py-4 bg-slate-950 text-white rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                  <Zap size={14} /> Copy Final String
+                </button>
+              </div>
             </div>
           </div>
         </div>
