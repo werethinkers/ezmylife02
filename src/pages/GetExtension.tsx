@@ -1,16 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Chrome, Globe, Smartphone, Monitor, Shield, Zap, ExternalLink, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Download, Chrome, Globe, Shield, Zap, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { downloadExtension } from '@/components/extension/ExtensionDownloader';
+import InstallationGuide from '@/components/extension/InstallationGuide';
 
 type BrowserInfo = {
   name: string;
   icon: React.ReactNode;
   supported: boolean;
-  storeLabel: string;
-  storeUrl: string;
   manualSteps: string[];
   extensionFolder: string;
   color: string;
@@ -32,105 +32,91 @@ const BROWSERS: Record<string, BrowserInfo> = {
     name: 'Google Chrome',
     icon: <Chrome className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Chrome Web Store',
-    storeUrl: '#',
     manualSteps: [
       'Open chrome://extensions/ in your browser',
       'Enable "Developer mode" (top-right toggle)',
       'Click "Load unpacked"',
-      'Select the chrome-extension folder from the downloaded ZIP',
+      'Select the extracted extension folder',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-blue-500 to-green-500',
   },
   brave: {
     name: 'Brave',
     icon: <Shield className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Chrome Web Store (Compatible)',
-    storeUrl: '#',
     manualSteps: [
       'Open brave://extensions/ in your browser',
       'Enable "Developer mode" (top-right toggle)',
       'Click "Load unpacked"',
-      'Select the chrome-extension folder from the downloaded ZIP',
+      'Select the extracted extension folder',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-orange-500 to-red-500',
   },
   edge: {
     name: 'Microsoft Edge',
     icon: <Globe className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Edge Add-ons / Chrome Web Store',
-    storeUrl: '#',
     manualSteps: [
       'Open edge://extensions/ in your browser',
       'Enable "Developer mode" (bottom-left toggle)',
       'Click "Load unpacked"',
-      'Select the chrome-extension folder from the downloaded ZIP',
+      'Select the extracted extension folder',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-blue-600 to-cyan-500',
   },
   opera: {
     name: 'Opera',
     icon: <Globe className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Chrome Web Store (Compatible)',
-    storeUrl: '#',
     manualSteps: [
       'Open opera://extensions/ in your browser',
       'Enable "Developer mode" (top-right toggle)',
       'Click "Load unpacked"',
-      'Select the chrome-extension folder from the downloaded ZIP',
+      'Select the extracted extension folder',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-red-500 to-pink-500',
   },
   firefox: {
     name: 'Mozilla Firefox',
     icon: <Globe className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Firefox Add-ons',
-    storeUrl: '#',
     manualSteps: [
       'Open about:debugging#/runtime/this-firefox in your browser',
       'Click "Load Temporary Add-on..."',
-      'Navigate to the firefox-extension folder and select manifest.json',
-      'Note: Temporary add-ons are removed on restart. Publish to Add-ons Store for permanent use.',
+      'Navigate to the extracted folder and select manifest.json',
+      'Note: Temporary add-ons are removed on restart',
     ],
-    extensionFolder: 'firefox-extension',
+    extensionFolder: 'firefox',
     color: 'from-orange-500 to-yellow-500',
   },
   safari: {
     name: 'Safari',
     icon: <Globe className="w-6 h-6" />,
     supported: false,
-    storeLabel: 'Mac App Store',
-    storeUrl: '#',
     manualSteps: [
       'Safari requires extensions to be built with Xcode',
       'Use "safari-web-extension-converter" tool on macOS',
       'Convert the chrome-extension folder to a Safari project',
       'Build and install via Xcode',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-blue-400 to-indigo-500',
   },
   unknown: {
     name: 'Your Browser',
     icon: <Globe className="w-6 h-6" />,
     supported: true,
-    storeLabel: 'Extension Store',
-    storeUrl: '#',
     manualSteps: [
       'Download the extension files below',
       'Open your browser\'s extension management page',
       'Enable Developer mode',
       'Load the unpacked extension',
     ],
-    extensionFolder: 'chrome-extension',
+    extensionFolder: 'chrome',
     color: 'from-slate-500 to-slate-700',
   },
 };
@@ -140,10 +126,24 @@ const GetExtension: React.FC = () => {
   const { user } = useAuth();
   const detectedBrowser = useMemo(() => detectBrowser(), []);
   const currentBrowser = BROWSERS[detectedBrowser] || BROWSERS.unknown;
+  const [downloading, setDownloading] = useState(false);
 
   const otherBrowsers = Object.entries(BROWSERS).filter(
     ([key]) => key !== detectedBrowser && key !== 'unknown'
   );
+
+  const handleDownload = async (browserKey: string) => {
+    const browser = BROWSERS[browserKey] || BROWSERS.unknown;
+    try {
+      await downloadExtension(
+        browserKey === 'firefox' ? 'firefox' : 'chrome',
+        setDownloading
+      );
+      toast.success(`Extension downloaded! Extract the ZIP and follow the install steps.`);
+    } catch {
+      toast.error('Download failed. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
@@ -209,29 +209,24 @@ const GetExtension: React.FC = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-slate-300">Installation Steps:</h4>
-              <ol className="space-y-2">
-                {currentBrowser.manualSteps.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-slate-400">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
+            <InstallationGuide
+              browserKey={detectedBrowser}
+              browser={currentBrowser}
+              isPrimary
+            />
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
-                onClick={() => {
-                  toast('Download the extension files from the project repository\'s chrome-extension or firefox-extension folder.');
-                }}
+                disabled={downloading}
+                onClick={() => handleDownload(detectedBrowser)}
               >
-                <Download className="w-4 h-4" />
-                Download for {currentBrowser.name}
+                {downloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {downloading ? 'Downloading...' : `Download for ${currentBrowser.name}`}
               </Button>
             </div>
           </div>
@@ -242,27 +237,13 @@ const GetExtension: React.FC = () => {
           <h3 className="text-lg font-semibold text-slate-300">Other Browsers</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {otherBrowsers.map(([key, browser]) => (
-              <div
+              <OtherBrowserCard
                 key={key}
-                className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/40 flex items-center gap-3 hover:bg-slate-800/60 transition-colors cursor-pointer"
-                onClick={() => {
-                  const el = document.getElementById(`steps-${key}`);
-                  if (el) el.classList.toggle('hidden');
-                }}
-              >
-                <div className="p-2 rounded-lg bg-slate-700/50">{browser.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm">{browser.name}</h4>
-                  <p className="text-xs text-slate-500">
-                    {browser.supported ? `Uses ${browser.extensionFolder}` : 'Requires extra setup'}
-                  </p>
-                </div>
-                {browser.supported ? (
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                ) : (
-                  <span className="text-xs text-yellow-500">Limited</span>
-                )}
-              </div>
+                browserKey={key}
+                browser={browser}
+                onDownload={handleDownload}
+                downloading={downloading}
+              />
             ))}
           </div>
         </div>
@@ -287,7 +268,68 @@ const GetExtension: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Video tutorial placeholder */}
+        <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/40 space-y-4">
+          <h3 className="text-lg font-semibold">📺 Video Tutorial</h3>
+          <div className="aspect-video rounded-xl bg-slate-900/80 border border-slate-700/40 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-3xl">
+                ▶
+              </div>
+              <p className="text-sm text-slate-400">Video tutorial coming soon</p>
+              <p className="text-xs text-slate-500">Follow the step-by-step guide above to get started</p>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+};
+
+const OtherBrowserCard: React.FC<{
+  browserKey: string;
+  browser: BrowserInfo;
+  onDownload: (key: string) => void;
+  downloading: boolean;
+}> = ({ browserKey, browser, onDownload, downloading }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-xl bg-slate-800/40 border border-slate-700/40 overflow-hidden">
+      <button
+        className="p-4 flex items-center gap-3 w-full hover:bg-slate-800/60 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="p-2 rounded-lg bg-slate-700/50">{browser.icon}</div>
+        <div className="flex-1 min-w-0 text-left">
+          <h4 className="font-medium text-sm">{browser.name}</h4>
+          <p className="text-xs text-slate-500">
+            {browser.supported ? 'Click to see install steps' : 'Requires extra setup'}
+          </p>
+        </div>
+        {browser.supported ? (
+          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+        ) : (
+          <span className="text-xs text-yellow-500">Limited</span>
+        )}
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t border-slate-700/40 pt-3">
+          <InstallationGuide browserKey={browserKey} browser={browser} />
+          {browser.supported && (
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+              disabled={downloading}
+              onClick={(e) => { e.stopPropagation(); onDownload(browserKey); }}
+            >
+              <Download className="w-3 h-3" />
+              Download
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
