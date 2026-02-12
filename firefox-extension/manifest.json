@@ -3,7 +3,7 @@
   "name": "EzMyLife Shortcuts",
   "version": "1.0.0",
   "description": "Auto-expand your Speedy Notebook & PromptMaster shortcuts on any website",
-  "permissions": ["storage", "<all_urls>"],
+  "permissions": ["storage", "alarms", "<all_urls>"],
   "browser_action": {
     "default_popup": "popup.html",
     "default_icon": {
