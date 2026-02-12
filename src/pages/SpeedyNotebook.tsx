@@ -8,7 +8,7 @@ import type {
   SpeechRecognitionErrorEvent,
   SpeechRecognitionEvent
 } from '@/components/notebook/types';
-import { fetchShortcuts, fetchDictionary } from '@/components/notebook/shortcutService';
+import { fetchDictionary } from '@/components/notebook/shortcutService';
 import { ShortcutList } from '@/components/notebook/ShortcutList';
 import { AutocompleteMenu, AutocompleteSuggestion } from '@/components/notebook/AutocompleteMenu';
 import { 
@@ -618,18 +618,14 @@ const SpeedyNotebook: React.FC = () => {
     }, 1500);
   }, [user, shortcuts]);
 
-  // Load shortcuts & dictionary
+  // Load dictionary only (no predefined shortcuts - users create their own)
   useEffect(() => {
     const load = async () => {
         setIsLoading(true);
         try {
-            const [s, d] = await Promise.all([fetchShortcuts(), fetchDictionary()]);
-            setShortcuts(s);
+            const d = await fetchDictionary();
             setDictionary(d);
-            const flat = new Map<string, string>();
-            s.forEach(items => { items.forEach(item => { flat.set(item.key.toLowerCase(), item.value); }); });
-            setFlatShortcutsMap(flat);
-        } catch (e) { console.error("Failed to load data", e); }
+        } catch (e) { console.error("Failed to load dictionary", e); }
         finally { setIsLoading(false); }
     };
     load();
