@@ -9,6 +9,11 @@ import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/
 import { logActivity } from "@/lib/activityLogger";
 import logo from "@/assets/logo.png";
 
+// Tools that have dedicated pages and should redirect instead of rendering in viewer
+const dedicatedPageTools: Record<string, string> = {
+  "speedy-notebook": "/notebook",
+};
+
 const ToolViewer = () => {
   const { toolId } = useParams<{ toolId: string }>();
   const navigate = useNavigate();
@@ -21,6 +26,13 @@ const ToolViewer = () => {
   const isNativeTool = toolId ? hasNativeImplementation(toolId) : false;
 
   const hasLoggedRef = useRef(false);
+
+  // Redirect tools that have dedicated pages
+  useEffect(() => {
+    if (toolId && dedicatedPageTools[toolId]) {
+      navigate(dedicatedPageTools[toolId], { replace: true });
+    }
+  }, [toolId, navigate]);
 
   useEffect(() => {
     // Native tools don't need URL validation
