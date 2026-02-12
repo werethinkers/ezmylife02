@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.promptmaster-ai]
 verify_jwt = false
+
+[functions.sync-shortcuts]
+verify_jwt = false
