@@ -12,6 +12,7 @@ import logo from "@/assets/logo.png";
 // Tools that have dedicated pages and should redirect instead of rendering in viewer
 const dedicatedPageTools: Record<string, string> = {
   "speedy-notebook": "/notebook",
+  "promptmaster-ai": "/promptmaster",
 };
 
 const ToolViewer = () => {

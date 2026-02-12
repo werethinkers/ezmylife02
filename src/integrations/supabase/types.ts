@@ -167,6 +167,30 @@ export type Database = {
         }
         Relationships: []
       }
+      promptmaster_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          session_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_recommendations: {
         Row: {
           created_at: string
