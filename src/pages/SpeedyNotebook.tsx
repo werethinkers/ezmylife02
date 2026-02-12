@@ -571,15 +571,14 @@ const SpeedyNotebook: React.FC = () => {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (data && editorRef.current) {
-        // Set initialLoadDone BEFORE setting innerHTML to prevent handleInput from saving empty shortcuts
+      if (data) {
+        // Restore shortcuts regardless of editor ref state
         if (data.session_shortcuts && Array.isArray(data.session_shortcuts)) {
           const sessionShortcuts = (data.session_shortcuts as unknown) as ShortcutItemData[];
           if (sessionShortcuts.length > 0) {
             const newMap = new Map<string, ShortcutItemData[]>();
             newMap.set('AI Generated', sessionShortcuts);
             setShortcuts(newMap);
-            // Update ref IMMEDIATELY so any saveSession call has the latest data
             shortcutsRef.current = newMap;
             
             const newFlat = new Map<string, string>();
@@ -587,7 +586,10 @@ const SpeedyNotebook: React.FC = () => {
             setFlatShortcutsMap(newFlat);
           }
         }
-        editorRef.current.innerHTML = data.editor_content || '';
+        // Set editor content when ref is available
+        if (editorRef.current) {
+          editorRef.current.innerHTML = data.editor_content || '';
+        }
       }
       initialLoadDone.current = true;
     };
