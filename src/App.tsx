@@ -29,6 +29,7 @@ const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
+const GetExtension = lazy(() => import("./pages/GetExtension"));
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,14 @@ const AnimatedRoutes = () => {
                 <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/get-extension"
+              element={
+                <PremiumRoute>
+                  <GetExtension />
+                </PremiumRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
