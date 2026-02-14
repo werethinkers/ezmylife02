@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase } from "lucide-react";
+import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase, Lock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 interface ProfileData {
@@ -29,21 +29,15 @@ const Profile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [profile, setProfile] = useState<ProfileData>({
-    display_name: "",
-    full_name: "",
-    phone_number: "",
-    bio: "",
-    company: "",
-    job_title: "",
-    location: "",
-    website: "",
+    display_name: "", full_name: "", phone_number: "", bio: "", company: "", job_title: "", location: "", website: "",
   });
 
   useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
+    if (user) loadProfile();
   }, [user]);
 
   const loadProfile = async () => {
@@ -53,19 +47,13 @@ const Profile = () => {
         .select("display_name, full_name, phone_number, bio, company, job_title, location, website")
         .eq("id", user?.id)
         .maybeSingle();
-
       if (error) throw error;
-
       if (data) {
         setProfile({
-          display_name: data.display_name || "",
-          full_name: data.full_name || "",
-          phone_number: data.phone_number || "",
-          bio: data.bio || "",
-          company: data.company || "",
-          job_title: data.job_title || "",
-          location: data.location || "",
-          website: data.website || "",
+          display_name: data.display_name || "", full_name: data.full_name || "",
+          phone_number: data.phone_number || "", bio: data.bio || "",
+          company: data.company || "", job_title: data.job_title || "",
+          location: data.location || "", website: data.website || "",
         });
       }
     } catch (error) {
@@ -78,60 +66,54 @@ const Profile = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
-      // Capture previous values for the log
       const previousProfile = { ...profile };
-
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          id: user?.id,
-          display_name: profile.display_name,
-          full_name: profile.full_name,
-          phone_number: profile.phone_number,
-          bio: profile.bio,
-          company: profile.company,
-          job_title: profile.job_title,
-          location: profile.location,
-          website: profile.website,
-        });
-
+      const { error } = await supabase.from("profiles").upsert({
+        id: user?.id, ...profile,
+      });
       if (error) throw error;
-
-      // Log profile edit
       const changedFields: Record<string, { from: string; to: string }> = {};
       for (const key of Object.keys(profile) as (keyof ProfileData)[]) {
         if (profile[key] !== previousProfile[key]) {
           changedFields[key] = { from: previousProfile[key], to: profile[key] };
         }
       }
-      if (Object.keys(changedFields).length > 0) {
-        logActivity("profile_edit", { changed_fields: changedFields });
-      }
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
+      if (Object.keys(changedFields).length > 0) logActivity("profile_edit", { changed_fields: changedFields });
+      toast({ title: "Profile updated", description: "Your profile has been updated successfully." });
+    } catch {
+      toast({ title: "Error", description: "Failed to update profile. Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Error", description: "Passwords do not match.", variant: "destructive" });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({ title: "Password updated", description: "Your password has been changed successfully." });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to change password.", variant: "destructive" });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const getInitials = () => {
-    if (profile.full_name) {
-      return profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-    }
-    if (profile.display_name) {
-      return profile.display_name.slice(0, 2).toUpperCase();
-    }
+    if (profile.full_name) return profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    if (profile.display_name) return profile.display_name.slice(0, 2).toUpperCase();
     return user?.email?.charAt(0).toUpperCase() || "U";
   };
 
@@ -162,14 +144,10 @@ const Profile = () => {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-6">
                   <Avatar className="h-24 w-24">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-medium">
-                      {getInitials()}
-                    </AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-medium">{getInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
-                    <h2 className="font-display text-xl font-semibold">
-                      {profile.full_name || profile.display_name || "Your Name"}
-                    </h2>
+                    <h2 className="font-display text-xl font-semibold">{profile.full_name || profile.display_name || "Your Name"}</h2>
                     <p className="text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
@@ -179,78 +157,32 @@ const Profile = () => {
             {/* Basic Info */}
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Basic Information
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" />Basic Information</CardTitle>
                 <CardDescription>Your personal details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      placeholder="John Doe"
-                      value={profile.full_name}
-                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Input id="fullName" placeholder="John Doe" value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} disabled={saving} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
-                    <Input
-                      id="displayName"
-                      placeholder="John"
-                      value={profile.display_name}
-                      onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Input id="displayName" placeholder="John" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} disabled={saving} />
                   </div>
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={user?.email || ""}
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Email cannot be changed
-                  </p>
+                  <Label htmlFor="email" className="flex items-center gap-2"><Mail className="h-4 w-4" />Email</Label>
+                  <Input id="email" type="email" value={user?.email || ""} disabled className="bg-muted" />
+                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={profile.phone_number}
-                    onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
-                    disabled={saving}
-                  />
+                  <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-4 w-4" />Phone Number</Label>
+                  <Input id="phone" type="tel" placeholder="+91 98765 43210" value={profile.phone_number} onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })} disabled={saving} />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    placeholder="Tell us a bit about yourself..."
-                    value={profile.bio}
-                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    disabled={saving}
-                    rows={3}
-                  />
+                  <Textarea id="bio" placeholder="Tell us a bit about yourself..." value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} disabled={saving} rows={3} />
                 </div>
               </CardContent>
             </Card>
@@ -258,85 +190,65 @@ const Profile = () => {
             {/* Professional Info */}
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Professional Information
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" />Professional Information</CardTitle>
                 <CardDescription>Your work details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      Company
-                    </Label>
-                    <Input
-                      id="company"
-                      placeholder="Your company"
-                      value={profile.company}
-                      onChange={(e) => setProfile({ ...profile, company: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Label htmlFor="company" className="flex items-center gap-2"><Building className="h-4 w-4" />Company</Label>
+                    <Input id="company" placeholder="Your company" value={profile.company} onChange={(e) => setProfile({ ...profile, company: e.target.value })} disabled={saving} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="jobTitle">Job Title</Label>
-                    <Input
-                      id="jobTitle"
-                      placeholder="Your role"
-                      value={profile.job_title}
-                      onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Input id="jobTitle" placeholder="Your role" value={profile.job_title} onChange={(e) => setProfile({ ...profile, job_title: e.target.value })} disabled={saving} />
                   </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Location
-                    </Label>
-                    <Input
-                      id="location"
-                      placeholder="City, Country"
-                      value={profile.location}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="h-4 w-4" />Location</Label>
+                    <Input id="location" placeholder="City, Country" value={profile.location} onChange={(e) => setProfile({ ...profile, location: e.target.value })} disabled={saving} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="website" className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      Website
-                    </Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      placeholder="https://yoursite.com"
-                      value={profile.website}
-                      onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                      disabled={saving}
-                    />
+                    <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-4 w-4" />Website</Label>
+                    <Input id="website" type="url" placeholder="https://yoursite.com" value={profile.website} onChange={(e) => setProfile({ ...profile, website: e.target.value })} disabled={saving} />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Submit */}
             <div className="flex justify-end">
               <Button type="submit" size="lg" disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
+                {saving ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : "Save Changes"}
               </Button>
             </div>
           </form>
+
+          {/* Password Section */}
+          <div className="mt-8">
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" />Change Password</CardTitle>
+                <CardDescription>Set or update your account password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required disabled={changingPassword} />
+                    <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input id="confirmPassword" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required disabled={changingPassword} />
+                  </div>
+                  <Button type="submit" disabled={changingPassword}>
+                    {changingPassword ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>) : "Update Password"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </>

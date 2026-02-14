@@ -6,7 +6,9 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, Activity, Crown, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, Users, Activity, Crown, BarChart3, Eye } from "lucide-react";
 import { format } from "date-fns";
 
 interface ActivityLog {
@@ -21,7 +23,14 @@ interface Profile {
   id: string;
   email: string | null;
   display_name: string | null;
+  full_name: string | null;
   auth_provider: string | null;
+  phone_number: string | null;
+  bio: string | null;
+  company: string | null;
+  job_title: string | null;
+  location: string | null;
+  website: string | null;
   created_at: string;
 }
 
@@ -42,11 +51,11 @@ const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
   const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage">("logs");
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
-
     const checkAdmin = async () => {
       const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       if (!data) { navigate("/"); return; }
@@ -64,7 +73,7 @@ const AdminDashboard = () => {
       supabase.from("premium_access").select("*").order("granted_at", { ascending: false }),
     ]);
     if (logsRes.data) setLogs(logsRes.data as ActivityLog[]);
-    if (profilesRes.data) setProfiles(profilesRes.data);
+    if (profilesRes.data) setProfiles(profilesRes.data as Profile[]);
     if (premiumRes.data) setPremiumUsers(premiumRes.data);
   };
 
@@ -102,7 +111,6 @@ const AdminDashboard = () => {
     todayLogins: logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
   };
 
-  // Tool usage analytics
   const toolUsageLogs = logs.filter(l => l.action_type === "tool_usage");
   const toolCounts: Record<string, { count: number; name: string }> = {};
   const userToolUsage: Record<string, Record<string, number>> = {};
@@ -112,10 +120,8 @@ const AdminDashboard = () => {
     const toolId = (details?.tool_id as string) || "unknown";
     const toolName = (details?.tool_name as string) || toolId;
     const userLabel = getEmailForUser(log.user_id);
-
     if (!toolCounts[toolId]) toolCounts[toolId] = { count: 0, name: toolName };
     toolCounts[toolId].count++;
-
     if (!userToolUsage[userLabel]) userToolUsage[userLabel] = {};
     userToolUsage[userLabel][toolName] = (userToolUsage[userLabel][toolName] || 0) + 1;
   });
@@ -140,7 +146,6 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Total Users", value: stats.totalUsers, icon: Users },
@@ -160,8 +165,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {tabs.map(t => (
             <button
               key={t.id}
@@ -176,7 +180,6 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Activity Logs */}
         {activeTab === "logs" && (
           <Card>
             <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
@@ -193,59 +196,99 @@ const AdminDashboard = () => {
                 <TableBody>
                   {logs.map(log => (
                     <TableRow key={log.id}>
-                      <TableCell className="text-xs whitespace-nowrap">
-                        {format(new Date(log.created_at), "MMM d, HH:mm")}
-                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(log.created_at), "MMM d, HH:mm")}</TableCell>
                       <TableCell className="text-sm">{getEmailForUser(log.user_id)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={actionTypeColor(log.action_type)}>
-                          {log.action_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate">
-                        {log.action_details ? JSON.stringify(log.action_details) : "—"}
-                      </TableCell>
+                      <TableCell><Badge variant="outline" className={actionTypeColor(log.action_type)}>{log.action_type}</Badge></TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate">{log.action_details ? JSON.stringify(log.action_details) : "—"}</TableCell>
                     </TableRow>
                   ))}
-                  {logs.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No activity logs yet</TableCell></TableRow>
-                  )}
+                  {logs.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No activity logs yet</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         )}
 
-        {/* Users */}
         {activeTab === "users" && (
-          <Card>
-            <CardHeader><CardTitle>All Users</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Display Name</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Joined</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {profiles.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="text-sm">{p.email || "—"}</TableCell>
-                      <TableCell className="text-sm">{p.display_name || "—"}</TableCell>
-                      <TableCell><Badge variant="outline">{p.auth_provider || "email"}</Badge></TableCell>
-                      <TableCell className="text-xs">{format(new Date(p.created_at), "MMM d, yyyy")}</TableCell>
+          <>
+            <Card>
+              <CardHeader><CardTitle>All Users ({profiles.length})</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Provider</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {profiles.map(p => (
+                      <TableRow key={p.id}>
+                        <TableCell className="text-sm font-medium">{p.full_name || p.display_name || "—"}</TableCell>
+                        <TableCell className="text-sm">{p.email || "—"}</TableCell>
+                        <TableCell className="text-sm">{p.company || "—"}</TableCell>
+                        <TableCell className="text-sm">{p.job_title || "—"}</TableCell>
+                        <TableCell className="text-sm">{p.location || "—"}</TableCell>
+                        <TableCell><Badge variant="outline">{p.auth_provider || "email"}</Badge></TableCell>
+                        <TableCell className="text-xs">{format(new Date(p.created_at), "MMM d, yyyy")}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedProfile(p)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* User Detail Dialog */}
+            <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>User Details</DialogTitle>
+                </DialogHeader>
+                {selectedProfile && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { label: "Full Name", value: selectedProfile.full_name },
+                        { label: "Display Name", value: selectedProfile.display_name },
+                        { label: "Email", value: selectedProfile.email },
+                        { label: "Phone", value: selectedProfile.phone_number },
+                        { label: "Company", value: selectedProfile.company },
+                        { label: "Job Title", value: selectedProfile.job_title },
+                        { label: "Location", value: selectedProfile.location },
+                        { label: "Website", value: selectedProfile.website },
+                        { label: "Auth Provider", value: selectedProfile.auth_provider },
+                        { label: "Joined", value: format(new Date(selectedProfile.created_at), "MMM d, yyyy HH:mm") },
+                      ].map(item => (
+                        <div key={item.label}>
+                          <p className="text-xs text-muted-foreground">{item.label}</p>
+                          <p className="text-sm font-medium">{item.value || "—"}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedProfile.bio && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Bio</p>
+                        <p className="text-sm">{selectedProfile.bio}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </>
         )}
 
-        {/* Premium */}
         {activeTab === "premium" && (
           <Card>
             <CardHeader><CardTitle>Premium Subscriptions</CardTitle></CardHeader>
@@ -268,60 +311,38 @@ const AdminDashboard = () => {
                       <TableCell className="text-xs">{p.expires_at ? format(new Date(p.expires_at), "MMM d, yyyy") : "Never"}</TableCell>
                     </TableRow>
                   ))}
-                  {premiumUsers.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No premium users</TableCell></TableRow>
-                  )}
+                  {premiumUsers.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No premium users</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         )}
 
-        {/* Tool Usage */}
         {activeTab === "tool-usage" && (
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Most Used Tools */}
             <Card>
               <CardHeader><CardTitle>Most Used Tools</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>#</TableHead>
-                      <TableHead>Tool</TableHead>
-                      <TableHead className="text-right">Uses</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow><TableHead>#</TableHead><TableHead>Tool</TableHead><TableHead className="text-right">Uses</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {sortedTools.map(([, tool], i) => (
                       <TableRow key={i}>
                         <TableCell className="text-sm font-medium">{i + 1}</TableCell>
                         <TableCell className="text-sm">{tool.name}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge>
-                        </TableCell>
+                        <TableCell className="text-right"><Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge></TableCell>
                       </TableRow>
                     ))}
-                    {sortedTools.length === 0 && (
-                      <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>
-                    )}
+                    {sortedTools.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
-
-            {/* Per-User Tool Usage */}
             <Card>
               <CardHeader><CardTitle>User Tool Usage</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Tools Used</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Tools Used</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {sortedUserUsage.map(([user, tools], i) => {
                       const total = Object.values(tools).reduce((s, v) => s + v, 0);
@@ -333,15 +354,11 @@ const AdminDashboard = () => {
                             {topTools.map(([name, count]) => `${name} (${count})`).join(", ")}
                             {Object.keys(tools).length > 3 && ` +${Object.keys(tools).length - 3} more`}
                           </TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant="outline">{total}</Badge>
-                          </TableCell>
+                          <TableCell className="text-right"><Badge variant="outline">{total}</Badge></TableCell>
                         </TableRow>
                       );
                     })}
-                    {sortedUserUsage.length === 0 && (
-                      <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>
-                    )}
+                    {sortedUserUsage.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
                   </TableBody>
                 </Table>
               </CardContent>
