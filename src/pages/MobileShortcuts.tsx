@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Smartphone, Copy, CheckCircle, Clipboard, BookmarkPlus, Zap, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Smartphone, Download, Rocket, RefreshCw, Copy, CheckCircle, Apple, SmartphoneNfc } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,10 +13,7 @@ const MobileShortcuts: React.FC = () => {
   const { user } = useAuth();
   const [shortcuts, setShortcuts] = useState<ShortcutMap>({});
   const [loading, setLoading] = useState(true);
-  const [inputText, setInputText] = useState('');
-  const [expandedText, setExpandedText] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'expander' | 'bookmarklet'>('expander');
+  const [activeTab, setActiveTab] = useState<'export' | 'nativeapp'>('export');
 
   const fetchShortcuts = useCallback(async () => {
     if (!user) return;
@@ -45,47 +41,7 @@ const MobileShortcuts: React.FC = () => {
     fetchShortcuts();
   }, [fetchShortcuts]);
 
-  const expandText = useCallback((text: string): string => {
-    if (!text) return '';
-    let result = text;
-    const keys = Object.keys(shortcuts);
-    for (const key of keys) {
-      const regex = new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      result = result.replace(regex, shortcuts[key]);
-    }
-    return result;
-  }, [shortcuts]);
-
-  useEffect(() => {
-    setExpandedText(expandText(inputText));
-  }, [inputText, expandText]);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(expandedText);
-      setCopied(true);
-      toast.success('Copied to clipboard!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Failed to copy');
-    }
-  };
-
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      setInputText(text);
-      toast.success('Pasted from clipboard');
-    } catch {
-      toast.error('Clipboard access denied. Paste manually.');
-    }
-  };
-
-  const buildBookmarklet = () => {
-    const s = JSON.stringify(shortcuts);
-    return `javascript:void((function(){var s=${s};var el=document.activeElement;if(!el){alert('Click on a text field first!');return;}if(el.tagName==='INPUT'||el.tagName==='TEXTAREA'){var v=el.value;Object.keys(s).forEach(function(k){v=v.split(k).join(s[k])});el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}))}else if(el.isContentEditable){var h=el.textContent;Object.keys(s).forEach(function(k){h=h.split(k).join(s[k])});el.textContent=h;el.dispatchEvent(new Event('input',{bubbles:true}))}})())`;
-  };
-  const bookmarkletCode = buildBookmarklet();
+  const shortcutCount = Object.keys(shortcuts).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
@@ -97,7 +53,7 @@ const MobileShortcuts: React.FC = () => {
           </button>
           <div className="flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-purple-400" />
-            <h1 className="text-lg font-bold">Mobile Shortcuts</h1>
+            <h1 className="text-lg font-bold">Shortcuts on Mobile</h1>
           </div>
         </div>
       </div>
@@ -107,42 +63,42 @@ const MobileShortcuts: React.FC = () => {
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm">
             <Smartphone className="w-4 h-4" />
-            Mobile Solution
+            Use Shortcuts Everywhere
           </div>
           <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Shortcuts on Mobile
+            Your Shortcuts, System-Wide
           </h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
-            Extensions don't work on mobile browsers. Use these alternatives to expand your shortcuts anywhere.
+            Use the shortcuts you created in Speedy Notebook &amp; PromptMaster across your entire phone — in any app, any browser.
           </p>
         </div>
 
         {/* Tab Switcher */}
         <div className="flex gap-2 p-1 rounded-xl bg-slate-800/60 border border-slate-700/40">
           <button
-            onClick={() => setActiveTab('expander')}
+            onClick={() => setActiveTab('export')}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'expander'
+              activeTab === 'export'
                 ? 'bg-purple-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <Clipboard className="w-4 h-4" />
-              Clipboard Expander
+              <Download className="w-4 h-4" />
+              Export to Phone
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('bookmarklet')}
+            onClick={() => setActiveTab('nativeapp')}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'bookmarklet'
+              activeTab === 'nativeapp'
                 ? 'bg-purple-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <BookmarkPlus className="w-4 h-4" />
-              Bookmarklet
+              <Rocket className="w-4 h-4" />
+              Native App
             </div>
           </button>
         </div>
@@ -150,7 +106,7 @@ const MobileShortcuts: React.FC = () => {
         {/* Shortcut count */}
         <div className="flex items-center justify-between px-1">
           <p className="text-xs text-slate-500">
-            {loading ? 'Loading shortcuts...' : `${Object.keys(shortcuts).length} shortcuts loaded`}
+            {loading ? 'Loading shortcuts...' : `${shortcutCount} shortcuts loaded`}
           </p>
           <button
             onClick={fetchShortcuts}
@@ -160,27 +116,18 @@ const MobileShortcuts: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === 'expander' && (
-          <ClipboardExpander
-            inputText={inputText}
-            setInputText={setInputText}
-            expandedText={expandedText}
-            copied={copied}
-            onCopy={handleCopy}
-            onPaste={handlePaste}
-            shortcuts={shortcuts}
-            loading={loading}
-          />
+        {activeTab === 'export' && (
+          <ExportToPhone shortcuts={shortcuts} loading={loading} />
         )}
 
-        {activeTab === 'bookmarklet' && (
-          <BookmarkletSection bookmarkletCode={bookmarkletCode} shortcuts={shortcuts} />
+        {activeTab === 'nativeapp' && (
+          <NativeAppSection />
         )}
 
         {/* Loaded Shortcuts Preview */}
-        {Object.keys(shortcuts).length > 0 && (
+        {shortcutCount > 0 && (
           <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/40 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-300">Your Shortcuts</h3>
+            <h3 className="text-sm font-semibold text-slate-300">Your Shortcuts ({shortcutCount})</h3>
             <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
               {Object.entries(shortcuts).map(([key, value]) => (
                 <div key={key} className="flex items-start gap-2 text-xs">
@@ -198,87 +145,48 @@ const MobileShortcuts: React.FC = () => {
   );
 };
 
-/* ─── Clipboard Expander ─── */
-const ClipboardExpander: React.FC<{
-  inputText: string;
-  setInputText: (v: string) => void;
-  expandedText: string;
-  copied: boolean;
-  onCopy: () => void;
-  onPaste: () => void;
+/* ─── Export to Phone ─── */
+const ExportToPhone: React.FC<{
   shortcuts: ShortcutMap;
   loading: boolean;
-}> = ({ inputText, setInputText, expandedText, copied, onCopy, onPaste, shortcuts, loading }) => (
-  <div className="space-y-4">
-    {/* How it works */}
-    <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-3">
-      <h3 className="text-sm font-semibold flex items-center gap-2">
-        <Zap className="w-4 h-4 text-yellow-400" /> How it works
-      </h3>
-      <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
-        <li>Type or paste text with your shortcut keys below</li>
-        <li>Shortcuts expand automatically in real-time</li>
-        <li>Copy the expanded text and paste it anywhere</li>
-      </ol>
-    </div>
+}> = ({ shortcuts, loading }) => {
+  const [platform, setPlatform] = useState<'ios' | 'android'>('ios');
+  const [copied, setCopied] = useState(false);
+  const entries = Object.entries(shortcuts);
 
-    {/* Input */}
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300">Type or paste your text</label>
-        <Button size="sm" variant="ghost" onClick={onPaste} className="text-xs text-purple-400 h-7 gap-1">
-          <Clipboard className="w-3 h-3" /> Paste
-        </Button>
-      </div>
-      <Textarea
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        placeholder={loading ? 'Loading shortcuts...' : 'Type your shortcut keys here...'}
-        className="min-h-[120px] bg-slate-900/60 border-slate-700/50 text-slate-100 placeholder:text-slate-600 resize-none"
-        disabled={loading}
-      />
-    </div>
+  const generateIOSInstructions = () => {
+    if (entries.length === 0) return '';
+    return entries
+      .map(([key, value]) => `Shortcut: ${key}\nPhrase: ${value}`)
+      .join('\n\n');
+  };
 
-    {/* Output */}
-    {expandedText && expandedText !== inputText && (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-green-400">✨ Expanded text</label>
-          <Button
-            size="sm"
-            onClick={onCopy}
-            className="h-7 gap-1 bg-green-600 hover:bg-green-700 text-white text-xs"
-          >
-            {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {copied ? 'Copied!' : 'Copy'}
-          </Button>
-        </div>
-        <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20 text-sm text-slate-200 whitespace-pre-wrap break-words min-h-[80px]">
-          {expandedText}
-        </div>
-      </div>
-    )}
+  const generateAndroidInstructions = () => {
+    if (entries.length === 0) return '';
+    return entries
+      .map(([key, value]) => `Shortcut: ${key}\nWord: ${value}`)
+      .join('\n\n');
+  };
 
-    {expandedText && expandedText === inputText && inputText.length > 0 && (
-      <p className="text-xs text-slate-500 text-center">No shortcuts detected in the text</p>
-    )}
-  </div>
-);
-
-/* ─── Bookmarklet ─── */
-const BookmarkletSection: React.FC<{
-  bookmarkletCode: string;
-  shortcuts: ShortcutMap;
-}> = ({ bookmarkletCode, shortcuts }) => {
-  const [bookmarkCopied, setBookmarkCopied] = useState(false);
-  const shortcutCount = Object.keys(shortcuts).length;
-
-  const handleCopyBookmarklet = async () => {
+  const handleCopyAll = async () => {
+    const text = platform === 'ios' ? generateIOSInstructions() : generateAndroidInstructions();
     try {
-      await navigator.clipboard.writeText(bookmarkletCode);
-      setBookmarkCopied(true);
-      toast.success('Bookmarklet code copied!');
-      setTimeout(() => setBookmarkCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('All shortcuts copied!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
+  const handleCopySingle = async (key: string, value: string) => {
+    const text = platform === 'ios'
+      ? `Phrase: ${value}\nShortcut: ${key}`
+      : `Word: ${value}\nShortcut: ${key}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`Copied "${key}" shortcut`);
     } catch {
       toast.error('Failed to copy');
     }
@@ -286,62 +194,260 @@ const BookmarkletSection: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <BookmarkPlus className="w-4 h-4 text-blue-400" /> What is a Bookmarklet?
+      {/* Explanation */}
+      <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/20 space-y-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-green-400">
+          <Download className="w-4 h-4" /> How This Works
         </h3>
-        <p className="text-xs text-slate-400">
-          A bookmarklet is a special bookmark that runs a script on the current page.
-          Tap it while on any website to expand all shortcuts in the focused text field.
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Your phone has a <strong className="text-slate-200">built-in text replacement</strong> feature. 
+          Once you add your shortcuts there, they'll <strong className="text-slate-200">auto-expand everywhere</strong> — 
+          in WhatsApp, Chrome, Notes, Gmail, any app. Just like the browser extension, but system-wide!
         </p>
       </div>
 
-      <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-4">
-        <h3 className="text-sm font-semibold">Setup Instructions</h3>
-        <ol className="text-xs text-slate-400 space-y-3 list-decimal list-inside">
-          <li>
-            <strong className="text-slate-300">Copy the bookmarklet code</strong> using the button below
-          </li>
-          <li>
-            <strong className="text-slate-300">Add a new bookmark</strong> in your mobile browser
-            <ul className="ml-5 mt-1 space-y-1 list-disc">
-              <li><strong>Chrome (Android):</strong> Bookmark any page → Edit → Replace URL with the copied code</li>
-              <li><strong>Safari (iOS):</strong> Bookmark any page → Edit Bookmarks → Replace URL with the copied code</li>
-            </ul>
-          </li>
-          <li>
-            <strong className="text-slate-300">Name it</strong> something like "Expand Shortcuts"
-          </li>
-          <li>
-            <strong className="text-slate-300">Use it:</strong> Click on a text field on any website → Open bookmarks → Tap your bookmarklet
-          </li>
-        </ol>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-300">
-          Bookmarklet Code ({shortcutCount} shortcuts embedded)
-        </label>
-        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/40 text-xs text-slate-500 font-mono break-all max-h-24 overflow-y-auto">
-          {bookmarkletCode.substring(0, 200)}...
-        </div>
-        <Button
-          onClick={handleCopyBookmarklet}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2"
-          disabled={shortcutCount === 0}
+      {/* Platform Picker */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setPlatform('ios')}
+          className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all border ${
+            platform === 'ios'
+              ? 'bg-slate-700/60 border-purple-500/40 text-white'
+              : 'bg-slate-800/30 border-slate-700/30 text-slate-400 hover:text-slate-200'
+          }`}
         >
-          {bookmarkCopied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {bookmarkCopied ? 'Copied!' : 'Copy Bookmarklet Code'}
-        </Button>
-        {shortcutCount === 0 && (
-          <p className="text-xs text-yellow-500 text-center">Add shortcuts in Speedy Notebook first</p>
-        )}
+          <div className="flex items-center justify-center gap-2">
+            <Apple className="w-4 h-4" />
+            iPhone / iPad
+          </div>
+        </button>
+        <button
+          onClick={() => setPlatform('android')}
+          className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all border ${
+            platform === 'android'
+              ? 'bg-slate-700/60 border-purple-500/40 text-white'
+              : 'bg-slate-800/30 border-slate-700/30 text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <SmartphoneNfc className="w-4 h-4" />
+            Android
+          </div>
+        </button>
       </div>
 
-      <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20">
-        <p className="text-xs text-yellow-400">
-          ⚠️ The bookmarklet has your current shortcuts baked in. If you add new shortcuts, come back here and update the bookmarklet.
+      {/* Step-by-step guide */}
+      {platform === 'ios' ? (
+        <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-4">
+          <h3 className="text-sm font-semibold text-slate-200">iOS Setup (one-time)</h3>
+          <ol className="text-xs text-slate-400 space-y-3 list-decimal list-inside leading-relaxed">
+            <li>
+              Open <strong className="text-slate-200">Settings → General → Keyboard → Text Replacement</strong>
+            </li>
+            <li>
+              Tap the <strong className="text-slate-200">+ button</strong> in the top right
+            </li>
+            <li>
+              In <strong className="text-slate-200">"Phrase"</strong>, paste the expanded text (e.g. "Thank you for your order!")
+            </li>
+            <li>
+              In <strong className="text-slate-200">"Shortcut"</strong>, enter your shortcut key (e.g. "tyfo")
+            </li>
+            <li>
+              Tap <strong className="text-slate-200">Save</strong>. Done! Now type "tyfo" anywhere and it auto-expands.
+            </li>
+          </ol>
+        </div>
+      ) : (
+        <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-4">
+          <h3 className="text-sm font-semibold text-slate-200">Android Setup (one-time)</h3>
+          <ol className="text-xs text-slate-400 space-y-3 list-decimal list-inside leading-relaxed">
+            <li>
+              Open <strong className="text-slate-200">Settings → System → Language & Input → Personal Dictionary</strong>
+              <br />
+              <span className="text-slate-500">(Path may vary by device: try Settings → search "Personal Dictionary")</span>
+            </li>
+            <li>
+              Select your language (or <strong className="text-slate-200">"For all languages"</strong>)
+            </li>
+            <li>
+              Tap the <strong className="text-slate-200">+ button</strong>
+            </li>
+            <li>
+              In the <strong className="text-slate-200">top field</strong>, type the expanded text
+            </li>
+            <li>
+              In <strong className="text-slate-200">"Shortcut"</strong>, type the shortcut key
+            </li>
+            <li>
+              Press <strong className="text-slate-200">Back</strong> to save. Now the shortcut auto-expands when you type it!
+            </li>
+          </ol>
+        </div>
+      )}
+
+      {/* Shortcuts to add — one by one */}
+      {entries.length > 0 ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-300">
+              Add These One by One
+            </h3>
+            <Button
+              size="sm"
+              onClick={handleCopyAll}
+              className="h-7 gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs"
+            >
+              {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied ? 'Copied All!' : 'Copy All'}
+            </Button>
+          </div>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {entries.map(([key, value]) => (
+              <ShortcutExportCard
+                key={key}
+                shortcutKey={key}
+                phrase={value}
+                platform={platform}
+                onCopy={() => handleCopySingle(key, value)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        !loading && (
+          <div className="text-center py-8">
+            <p className="text-sm text-slate-500">No shortcuts yet. Create some in Speedy Notebook or PromptMaster first!</p>
+          </div>
+        )
+      )}
+    </div>
+  );
+};
+
+/* ─── Single Shortcut Export Card ─── */
+const ShortcutExportCard: React.FC<{
+  shortcutKey: string;
+  phrase: string;
+  platform: 'ios' | 'android';
+  onCopy: () => void;
+}> = ({ shortcutKey, phrase, platform, onCopy }) => {
+  return (
+    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30 space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+              {platform === 'ios' ? 'Shortcut' : 'Shortcut'}
+            </span>
+            <code className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 font-mono text-xs font-bold">
+              {shortcutKey}
+            </code>
+          </div>
+          <div>
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+              {platform === 'ios' ? 'Phrase' : 'Word'}
+            </span>
+            <p className="text-xs text-slate-300 mt-0.5 line-clamp-2">{phrase}</p>
+          </div>
+        </div>
+        <button
+          onClick={onCopy}
+          className="shrink-0 p-2 rounded-lg hover:bg-slate-700/60 transition-colors text-slate-400 hover:text-purple-400"
+          title="Copy this shortcut"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Native App Section ─── */
+const NativeAppSection: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      {/* What it is */}
+      <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/5 to-indigo-500/5 border border-blue-500/20 space-y-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-400">
+          <Rocket className="w-4 h-4" /> The Ultimate Solution
+        </h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          A <strong className="text-slate-200">native mobile app</strong> can run in the background and 
+          <strong className="text-slate-200"> auto-expand shortcuts in any text field</strong> on your phone — 
+          just like the browser extension does on desktop. No manual copying needed.
         </p>
+      </div>
+
+      {/* How it works */}
+      <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-4">
+        <h3 className="text-sm font-semibold text-slate-200">How It Would Work</h3>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400 font-bold text-sm">1</div>
+            <div>
+              <p className="text-xs text-slate-300 font-medium">Install the app</p>
+              <p className="text-xs text-slate-500">Download from Play Store / App Store</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400 font-bold text-sm">2</div>
+            <div>
+              <p className="text-xs text-slate-300 font-medium">Log in &amp; sync</p>
+              <p className="text-xs text-slate-500">Your shortcuts from Speedy Notebook &amp; PromptMaster sync automatically</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400 font-bold text-sm">3</div>
+            <div>
+              <p className="text-xs text-slate-300 font-medium">Enable the keyboard / accessibility service</p>
+              <p className="text-xs text-slate-500">One-time setup to allow the app to detect and expand shortcuts</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400 font-bold text-sm">4</div>
+            <div>
+              <p className="text-xs text-slate-300 font-medium">Type anywhere — shortcuts auto-expand!</p>
+              <p className="text-xs text-slate-500">Works in WhatsApp, Chrome, Gmail, Instagram — every app</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 space-y-3">
+        <h3 className="text-sm font-semibold text-amber-400">🚧 Coming Soon</h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          We're building a native Android &amp; iOS app that will bring the full extension experience to your phone. 
+          This requires a custom keyboard (Android) or accessibility integration, and we're working on making it seamless.
+        </p>
+        <p className="text-xs text-slate-500">
+          In the meantime, use the <strong className="text-slate-300">"Export to Phone"</strong> tab to add your shortcuts 
+          to your phone's built-in text replacement — it works system-wide right now!
+        </p>
+      </div>
+
+      {/* Platform specifics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-2">
+          <div className="flex items-center gap-2">
+            <SmartphoneNfc className="w-4 h-4 text-green-400" />
+            <h4 className="text-xs font-semibold text-slate-300">Android</h4>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Using an Accessibility Service to monitor and replace text in any app's input fields.
+          </p>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 space-y-2">
+          <div className="flex items-center gap-2">
+            <Apple className="w-4 h-4 text-slate-300" />
+            <h4 className="text-xs font-semibold text-slate-300">iOS</h4>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Using a custom keyboard extension that syncs with your account and expands shortcuts as you type.
+          </p>
+        </div>
       </div>
     </div>
   );
