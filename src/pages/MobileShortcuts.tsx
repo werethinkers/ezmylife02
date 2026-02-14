@@ -28,6 +28,7 @@ const MobileShortcuts: React.FC = () => {
 
       const res = await supabase.functions.invoke('sync-shortcuts', {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        method: 'GET',
       });
 
       if (res.data?.shortcuts) {
