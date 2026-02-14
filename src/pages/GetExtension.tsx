@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Chrome, Globe, Shield, Zap, CheckCircle, Loader2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Download, Chrome, Globe, Shield, Zap, CheckCircle, Loader2, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -281,6 +281,28 @@ const GetExtension: React.FC = () => {
               <p className="text-xs text-slate-500">Follow the step-by-step guide above to get started</p>
             </div>
           </div>
+        </div>
+
+        {/* Mobile Section */}
+        <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <Smartphone className="w-6 h-6 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">On Mobile?</h3>
+              <p className="text-sm text-slate-400">Extensions don't work on mobile browsers</p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-400">
+            Use our Clipboard Expander or Bookmarklet to expand shortcuts on your phone — no extension needed.
+          </p>
+          <Link to="/mobile-shortcuts">
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white gap-2">
+              <Smartphone className="w-4 h-4" />
+              Open Mobile Shortcuts
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -30,6 +30,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
 const GetExtension = lazy(() => import("./pages/GetExtension"));
+const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
 
 const queryClient = new QueryClient();
 
@@ -158,6 +159,14 @@ const AnimatedRoutes = () => {
               element={
                 <PremiumRoute>
                   <GetExtension />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/mobile-shortcuts"
+              element={
+                <PremiumRoute>
+                  <MobileShortcuts />
                 </PremiumRoute>
               }
             />
