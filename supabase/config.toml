@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.sync-shortcuts]
 verify_jwt = false
+
+[functions.startup-analyser]
+verify_jwt = false

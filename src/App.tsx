@@ -31,6 +31,7 @@ const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
 const GetExtension = lazy(() => import("./pages/GetExtension"));
 const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
+const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 
 const queryClient = new QueryClient();
 
@@ -167,6 +168,14 @@ const AnimatedRoutes = () => {
               element={
                 <PremiumRoute>
                   <MobileShortcuts />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/startup-analyser"
+              element={
+                <PremiumRoute>
+                  <StartupAnalyser />
                 </PremiumRoute>
               }
             />
