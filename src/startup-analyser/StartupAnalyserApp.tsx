@@ -6,6 +6,7 @@ import {
   CurrencyDollarIcon, BookOpenIcon, PencilSquareIcon,
   LightBulbIcon, ScaleIcon,
 } from './components/icons';
+import { Key } from 'lucide-react';
 import type { AnalysisResult, Competitor, ResourceItem, StructuredData } from './types';
 import { CompetitorChart } from './components/CompetitorChart';
 import { prompts } from './constants';
@@ -516,6 +517,15 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 {isExtractingPdf && <p className="text-sm text-blue-600 mt-1 animate-pulse">Extracting text from PDF...</p>}
                 {pitchDeckText && !isExtractingPdf && <p className="text-sm text-green-600 mt-1">✓ PDF text extracted ({Math.round(pitchDeckText.length / 1000)}k chars)</p>}
               </div>
+              {!userApiKey && user && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                  <Key className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    Add your own <a href="/profile" className="font-semibold underline hover:text-amber-900">Gemini API key in Profile</a> to use your personal quota and avoid shared rate limits.
+                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="ml-1 underline hover:text-amber-900">Get one free →</a>
+                  </span>
+                </div>
+              )}
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex gap-3">
                 {user && savedSessions.length > 0 && (
