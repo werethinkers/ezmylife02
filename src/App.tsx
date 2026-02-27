@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 
-// Force module refresh
+// Build cache buster v2
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
