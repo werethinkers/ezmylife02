@@ -151,6 +151,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
   const [error, setError] = useState<string | null>(null);
   const [progressMessage, setProgressMessage] = useState<string>('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [userApiKey, setUserApiKey] = useState<string | null>(null);
 
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
@@ -177,9 +178,14 @@ export default function StartupAnalyserApp(): React.ReactNode {
     return [...new Set([...business, ...technical])].filter(k => k && k.length > 1).sort((a, b) => b.length - a.length);
   }, [analysisResult?.structuredData?.keywords]);
 
-  // Load saved sessions on mount
+  // Load saved sessions and user API key on mount
   useEffect(() => {
-    if (user) loadSavedSessions();
+    if (user) {
+      loadSavedSessions();
+      // Load user's Gemini API key from profile
+      supabase.from('profiles').select('gemini_api_key').eq('id', user.id).maybeSingle()
+        .then(({ data }) => { if (data?.gemini_api_key) setUserApiKey(data.gemini_api_key); });
+    }
   }, [user]);
 
   const loadSavedSessions = async () => {
@@ -335,7 +341,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setCurrentSessionId(null);
 
     try {
-      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText);
+      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey);
       setAnalysisResult(result);
       setChatHistory([]);
       setStep('results');
@@ -361,7 +367,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
     } finally {
       setProgressMessage('');
     }
-  }, [companyName, companyWebsite, pitchDeckText, user]);
+  }, [companyName, companyWebsite, pitchDeckText, user, userApiKey]);
 
   const handleStartOver = () => {
     setStep('input');
@@ -402,7 +408,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
             return newHistory;
           });
         },
-        () => setIsChatting(false)
+        () => setIsChatting(false),
+        userApiKey
       );
     } catch {
       setChatHistory(prev => {
