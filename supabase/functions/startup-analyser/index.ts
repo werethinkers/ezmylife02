@@ -17,18 +17,33 @@ function getGeminiKeys(): string[] {
 }
 
 // Try Lovable AI first, then fallback to direct Gemini API with key rotation
+class AIProviderError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
 async function callAIWithFallback(
   messages: { role: string; content: string }[],
   model: string,
   stream: boolean,
   userApiKey?: string | null
 ): Promise<Response> {
+  let saw402 = false;
+  let saw429 = false;
+  let saw400 = false;
+
   // 1. If user provided their own key, try it first
   if (userApiKey) {
     const geminiModel = model.replace("google/", "");
     const res = await callGeminiDirect(userApiKey, messages, geminiModel, stream);
     if (res.ok) return res;
-    console.warn("User API key failed, falling back...");
+    if (res.status === 402) saw402 = true;
+    if (res.status === 429) saw429 = true;
+    if (res.status === 400) saw400 = true;
+    console.warn(`User API key failed with ${res.status}, falling back...`);
   }
 
   // 2. Try Lovable AI gateway
@@ -44,9 +59,10 @@ async function callAIWithFallback(
         body: JSON.stringify({ model, messages, stream }),
       });
       if (response.ok) return response;
-      const status = response.status;
-      console.warn(`Lovable AI returned ${status}, trying Gemini fallback keys...`);
-      // For non-rate-limit errors, still try fallback
+      if (response.status === 402) saw402 = true;
+      if (response.status === 429) saw429 = true;
+      if (response.status === 400) saw400 = true;
+      console.warn(`Lovable AI returned ${response.status}, trying Gemini fallback keys...`);
     } catch (e) {
       console.warn("Lovable AI gateway error:", e);
     }
@@ -55,7 +71,7 @@ async function callAIWithFallback(
   // 3. Fallback to direct Gemini API keys
   const geminiKeys = getGeminiKeys();
   const geminiModel = model.replace("google/", "");
-  
+
   for (let i = 0; i < geminiKeys.length; i++) {
     try {
       const res = await callGeminiDirect(geminiKeys[i], messages, geminiModel, stream);
@@ -63,14 +79,26 @@ async function callAIWithFallback(
         console.log(`Gemini fallback key ${i + 1} succeeded`);
         return res;
       }
-      const status = res.status;
-      console.warn(`Gemini key ${i + 1} returned ${status}, trying next...`);
+      if (res.status === 402) saw402 = true;
+      if (res.status === 429) saw429 = true;
+      if (res.status === 400) saw400 = true;
+      console.warn(`Gemini key ${i + 1} returned ${res.status}, trying next...`);
     } catch (e) {
       console.warn(`Gemini key ${i + 1} error:`, e);
     }
   }
 
-  throw new Error("All AI keys exhausted. Please try again later.");
+  if (saw429) {
+    throw new AIProviderError(429, "Rate limit exceeded across all available AI keys. Please wait a minute and retry, or add your own Gemini key in Profile.");
+  }
+  if (saw402) {
+    throw new AIProviderError(402, "AI usage credits are exhausted for the available providers. Please add credits or use your own Gemini key in Profile.");
+  }
+  if (saw400) {
+    throw new AIProviderError(400, "AI request was rejected as invalid by all providers.");
+  }
+
+  throw new AIProviderError(500, "All AI providers failed unexpectedly. Please try again later.");
 }
 
 async function callGeminiDirect(
@@ -196,9 +224,10 @@ serve(async (req) => {
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("startup-analyser error:", e);
+    const status = e instanceof AIProviderError ? e.status : 500;
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
