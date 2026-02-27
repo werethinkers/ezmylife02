@@ -170,7 +170,7 @@ serve(async (req) => {
 
       const response = await callAIWithFallback(
         [{ role: "system", content: systemPrompt }, ...(chatMessages || [])],
-        "gemini-2.5-flash",
+        "google/gemini-2.5-flash",
         true,
         userApiKey
       );
@@ -188,7 +188,7 @@ serve(async (req) => {
         { role: "system", content: "You are a world-class venture capital analyst. Generate exhaustive, detailed investment analysis reports. Always respond with the exact structure requested." },
         { role: "user", content: analysisPrompt },
       ],
-      "gemini-2.5-pro",
+      "google/gemini-2.5-pro",
       true,
       userApiKey
     );
