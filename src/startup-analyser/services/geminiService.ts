@@ -8,9 +8,19 @@ const ANALYSER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/startup-
 export async function generateComprehensiveAnalysis(
   companyName: string,
   companyWebsite: string,
-  onProgress: (message: string) => void
+  onProgress: (message: string) => void,
+  pitchDeckText?: string | null
 ): Promise<AnalysisResult> {
   onProgress('10');
+
+  const body: Record<string, any> = {
+    companyName: companyName.trim(),
+    companyWebsite: companyWebsite.trim(),
+  };
+  if (pitchDeckText) {
+    // Limit to ~30k chars to avoid payload issues
+    body.pitchDeckText = pitchDeckText.substring(0, 30000);
+  }
 
   const resp = await fetch(ANALYSER_URL, {
     method: "POST",
@@ -18,7 +28,7 @@ export async function generateComprehensiveAnalysis(
       "Content-Type": "application/json",
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ companyName: companyName.trim(), companyWebsite: companyWebsite.trim() }),
+    body: JSON.stringify(body),
   });
 
   if (!resp.ok) {
@@ -60,7 +70,6 @@ export async function generateComprehensiveAnalysis(
       }
     }
 
-    // Update progress based on content accumulation
     const progress = Math.min(85, 25 + Math.floor(fullContent.length / 500));
     onProgress(String(progress));
   }
@@ -138,6 +147,27 @@ export async function streamChatMessage(
   onDone();
 }
 
+/**
+ * Extract text from a PDF file using pdf.js (loaded via CDN).
+ */
+export async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = (window as any).pdfjsLib;
+  if (!pdfjsLib) throw new Error("PDF.js not loaded");
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+
+  for (let i = 1; i <= Math.min(pdf.numPages, 50); i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+    pages.push(`--- Page ${i} ---\n${pageText}`);
+  }
+
+  return pages.join('\n\n');
+}
+
 // --- Response Parsing ---
 
 function parseAnalysisResponse(fullText: string): AnalysisResult {
@@ -167,7 +197,6 @@ function parseAnalysisResponse(fullText: string): AnalysisResult {
     try {
       structuredData = JSON.parse(jsonString);
     } catch {
-      // Attempt repair
       let repaired = jsonString
         .replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, '')
         .trim();
@@ -244,28 +273,23 @@ function sanitizeAnalysisData(data: any): StructuredData {
     return [{ value: "Information not publicly available", sourceType: "model_knowledge", sourceDetail: "N/A" }];
   };
 
-  // Competitors
   data.indian_competitors = Array.isArray(data.indian_competitors) ? data.indian_competitors.map(sanitizeCompetitor) : [];
   data.global_competitors = Array.isArray(data.global_competitors) ? data.global_competitors.map(sanitizeCompetitor) : [];
 
-  // Charts
   data.indian_competitor_chart_data = sanitizeChartData(data.indian_competitor_chart_data);
   data.global_competitor_chart_data = sanitizeChartData(data.global_competitor_chart_data);
   data.market_size_chart_data = sanitizeChartData(data.market_size_chart_data);
   data.market_subcategory_share_chart_data = sanitizeChartData(data.market_subcategory_share_chart_data);
   data.market_subcategory_growth_chart_data = sanitizeChartData(data.market_subcategory_growth_chart_data);
 
-  // Resources
   data.news_articles = Array.isArray(data.news_articles) ? data.news_articles : [];
   data.youtube_videos = Array.isArray(data.youtube_videos) ? data.youtube_videos : [];
   data.research_papers = Array.isArray(data.research_papers) ? data.research_papers : [];
 
-  // Keywords
   data.keywords = data.keywords || { business: [], technical: [] };
   data.keywords.business = Array.isArray(data.keywords.business) ? data.keywords.business : [];
   data.keywords.technical = Array.isArray(data.keywords.technical) ? data.keywords.technical : [];
 
-  // Sourced data fields
   const sourcedFields = [
     'market_analysis', 'problem_in_detail', 'solution_in_detail', 'products_analysis',
     'pictorial_technology_definition', 'usp_moat', 'ip_summary', 'competition_summary',
@@ -275,7 +299,6 @@ function sanitizeAnalysisData(data: any): StructuredData {
   ];
   sourcedFields.forEach(field => { data[field] = sanitizeSourcedDataArray(data[field]); });
 
-  // Financial Projections
   data.financial_projections = data.financial_projections || { headers: [], rows: [], source: { sourceType: 'model_knowledge', sourceDetail: 'N/A' } };
   data.financial_projections.headers = Array.isArray(data.financial_projections.headers) ? data.financial_projections.headers : [];
   data.financial_projections.rows = (Array.isArray(data.financial_projections.rows) ? data.financial_projections.rows : []).map((row: any) => {
@@ -290,11 +313,9 @@ function sanitizeAnalysisData(data: any): StructuredData {
     };
   }).filter(Boolean);
 
-  // Comparison Matrix
   data.comparisonMatrix = data.comparisonMatrix || { headers: [], rows: [] };
   data.fundingTrends = data.fundingTrends || '';
 
-  // Executive Summary
   data.executiveSummaryData = data.executiveSummaryData || {};
 
   data.executiveSummaryData.startup_overview = data.executiveSummaryData.startup_overview || {};
@@ -321,7 +342,6 @@ function sanitizeAnalysisData(data: any): StructuredData {
     return { details: sanitizeSourcedDataArray(sale.details) };
   }).filter(Boolean);
 
-  // Team
   data.executiveSummaryData.team = data.executiveSummaryData.team || { founders: [], team_gaps: [] };
   data.executiveSummaryData.team.founders = (Array.isArray(data.executiveSummaryData.team.founders) ? data.executiveSummaryData.team.founders : []).map((founder: any) => {
     if (!founder) return null;
@@ -340,7 +360,6 @@ function sanitizeAnalysisData(data: any): StructuredData {
     return founder;
   }).filter(Boolean);
 
-  // Legal
   data.executiveSummaryData.legal_analysis = data.executiveSummaryData.legal_analysis || { founder_legal_issues: [], company_legal_issues: [] };
   data.executiveSummaryData.legal_analysis.founder_legal_issues = sanitizeSourcedDataArray(data.executiveSummaryData.legal_analysis.founder_legal_issues);
   data.executiveSummaryData.legal_analysis.company_legal_issues = sanitizeSourcedDataArray(data.executiveSummaryData.legal_analysis.company_legal_issues);
