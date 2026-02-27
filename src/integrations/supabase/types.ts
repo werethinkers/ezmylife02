@@ -221,6 +221,42 @@ export type Database = {
         }
         Relationships: []
       }
+      startup_analyses: {
+        Row: {
+          analysis_data: Json
+          company_name: string
+          company_website: string | null
+          created_at: string
+          id: string
+          markdown_report: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_data?: Json
+          company_name: string
+          company_website?: string | null
+          created_at?: string
+          id?: string
+          markdown_report?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_data?: Json
+          company_name?: string
+          company_website?: string | null
+          created_at?: string
+          id?: string
+          markdown_report?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_creations: {
         Row: {
           created_at: string
