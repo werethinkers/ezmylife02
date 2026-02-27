@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { generateComprehensiveAnalysis, streamChatMessage } from './services/geminiService';
+import { generateComprehensiveAnalysis, streamChatMessage, extractPdfText } from './services/geminiService';
 import {
   BrainCircuitIcon, ClipboardDocumentListIcon, GlobeAltIcon, PaperAirplaneIcon,
   SparklesIcon, XIcon, TableCellsIcon, BuildingOfficeIcon, UsersIcon,
@@ -18,12 +18,17 @@ import { ICNote } from './components/ICNote';
 import { EditableContent, highlightText } from './components/EditableContent';
 import { FinancialProjectionsTable } from './components/FinancialProjectionsTable';
 import { MermaidDiagram } from './components/MermaidDiagram';
+import { FileUploader } from './components/FileUploader';
 import { Navbar } from '@/components/Navbar';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 declare global {
   interface Window {
     mermaid: any;
     showdown: any;
+    pdfjsLib: any;
   }
 }
 
@@ -33,6 +38,14 @@ type ResultTab = 'all' | 'executiveSummary' | 'report' | 'data' | 'resources' | 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+interface SavedSession {
+  id: string;
+  company_name: string;
+  company_website: string | null;
+  created_at: string;
+  status: string;
 }
 
 const updateNestedState = (prevState: any, path: (string | number)[], value: any) => {
@@ -131,13 +144,19 @@ const NewsSnippetCard = ({ article }: { article: ResourceItem }) => (
 );
 
 export default function StartupAnalyserApp(): React.ReactNode {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [step, setStep] = useState<AppStep>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progressMessage, setProgressMessage] = useState<string>('');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
+  const [pitchDeckFile, setPitchDeckFile] = useState<File | null>(null);
+  const [pitchDeckText, setPitchDeckText] = useState<string | null>(null);
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false);
 
   const [activeTab, setActiveTab] = useState<ResultTab>('all');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -147,11 +166,100 @@ export default function StartupAnalyserApp(): React.ReactNode {
   const [rawJsonError, setRawJsonError] = useState<string | null>(null);
   const [highlightEnabled, setHighlightEnabled] = useState(true);
 
+  // Sidebar state
+  const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
   const allKeywords = useMemo(() => {
     if (!analysisResult?.structuredData?.keywords) return [];
     const { business = [], technical = [] } = analysisResult.structuredData.keywords;
     return [...new Set([...business, ...technical])].filter(k => k && k.length > 1).sort((a, b) => b.length - a.length);
   }, [analysisResult?.structuredData?.keywords]);
+
+  // Load saved sessions on mount
+  useEffect(() => {
+    if (user) loadSavedSessions();
+  }, [user]);
+
+  const loadSavedSessions = async () => {
+    if (!user) return;
+    setLoadingSessions(true);
+    try {
+      const { data, error } = await supabase
+        .from('startup_analyses')
+        .select('id, company_name, company_website, created_at, status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (!error && data) setSavedSessions(data);
+    } catch { /* ignore */ }
+    setLoadingSessions(false);
+  };
+
+  const saveAnalysis = async (result: AnalysisResult) => {
+    if (!user) return;
+    try {
+      const payload = {
+        user_id: user.id,
+        company_name: companyName.trim(),
+        company_website: companyWebsite.trim() || null,
+        analysis_data: result.structuredData as any,
+        markdown_report: result.markdownReport,
+        status: 'completed',
+      };
+
+      if (currentSessionId) {
+        await supabase.from('startup_analyses').update(payload).eq('id', currentSessionId);
+      } else {
+        const { data } = await supabase.from('startup_analyses').insert(payload).select('id').single();
+        if (data) setCurrentSessionId(data.id);
+      }
+      loadSavedSessions();
+    } catch {
+      console.error('Failed to save analysis');
+    }
+  };
+
+  const loadSession = async (session: SavedSession) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('startup_analyses')
+        .select('*')
+        .eq('id', session.id)
+        .single();
+      if (error || !data) throw new Error('Failed to load session');
+
+      setCompanyName(data.company_name);
+      setCompanyWebsite(data.company_website || '');
+      setCurrentSessionId(data.id);
+      setAnalysisResult({
+        markdownReport: data.markdown_report || '',
+        structuredData: data.analysis_data as unknown as StructuredData,
+        sources: [],
+        pitchDeckSummary: null,
+      });
+      setChatHistory([]);
+      setStep('results');
+      setActiveTab('all');
+      setSidebarOpen(false);
+      toast({ title: "Session loaded", description: `Resumed analysis for ${data.company_name}` });
+    } catch {
+      toast({ title: "Error", description: "Failed to load session", variant: "destructive" });
+    }
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    await supabase.from('startup_analyses').delete().eq('id', sessionId);
+    if (currentSessionId === sessionId) {
+      setCurrentSessionId(null);
+      handleStartOver();
+    }
+    loadSavedSessions();
+    toast({ title: "Deleted", description: "Analysis removed" });
+  };
 
   useEffect(() => {
     if (analysisResult && window.mermaid) {
@@ -179,6 +287,26 @@ export default function StartupAnalyserApp(): React.ReactNode {
     chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
   }, [chatHistory]);
 
+  // Handle PDF file selection
+  const handlePdfSelect = async (file: File | null) => {
+    setPitchDeckFile(file);
+    if (!file) {
+      setPitchDeckText(null);
+      return;
+    }
+    setIsExtractingPdf(true);
+    try {
+      const text = await extractPdfText(file);
+      setPitchDeckText(text);
+      toast({ title: "PDF processed", description: `Extracted text from ${file.name} (${Math.round(text.length / 1000)}k chars)` });
+    } catch (err) {
+      toast({ title: "PDF extraction failed", description: "Could not read the PDF. Try a different file.", variant: "destructive" });
+      setPitchDeckFile(null);
+      setPitchDeckText(null);
+    }
+    setIsExtractingPdf(false);
+  };
+
   const handleDataChange = useCallback((path: (string | number)[], value: any) => {
     setAnalysisResult(prev => {
       if (!prev) return null;
@@ -204,13 +332,28 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setStep('analyzing');
     setError(null);
     setProgressMessage('10');
+    setCurrentSessionId(null);
 
     try {
-      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage);
+      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText);
       setAnalysisResult(result);
       setChatHistory([]);
       setStep('results');
       setActiveTab('all');
+      // Auto-save
+      if (user) {
+        const payload = {
+          user_id: user.id,
+          company_name: companyName.trim(),
+          company_website: companyWebsite.trim() || null,
+          analysis_data: result.structuredData as any,
+          markdown_report: result.markdownReport,
+          status: 'completed',
+        };
+        const { data } = await supabase.from('startup_analyses').insert(payload).select('id').single();
+        if (data) setCurrentSessionId(data.id);
+        loadSavedSessions();
+      }
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError(errorMessage.replace(/^Error:\s*/, ''));
@@ -218,7 +361,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
     } finally {
       setProgressMessage('');
     }
-  }, [companyName, companyWebsite]);
+  }, [companyName, companyWebsite, pitchDeckText, user]);
 
   const handleStartOver = () => {
     setStep('input');
@@ -230,6 +373,9 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setChatInput('');
     setCompanyName('');
     setCompanyWebsite('');
+    setCurrentSessionId(null);
+    setPitchDeckFile(null);
+    setPitchDeckText(null);
   };
 
   const handleSendMessage = async () => {
@@ -288,11 +434,59 @@ export default function StartupAnalyserApp(): React.ReactNode {
     </button>
   );
 
+  // --- SIDEBAR ---
+  const Sidebar = () => (
+    <>
+      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30" onClick={() => setSidebarOpen(false)} />}
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-40 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold text-gray-800">Past Analyses</h2>
+          <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-gray-100">
+            <XIcon className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        <div className="overflow-y-auto h-[calc(100%-60px)] p-3 space-y-2">
+          {loadingSessions ? (
+            <p className="text-sm text-gray-500 text-center py-4">Loading...</p>
+          ) : savedSessions.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No saved analyses yet.</p>
+          ) : (
+            savedSessions.map(s => (
+              <div
+                key={s.id}
+                onClick={() => loadSession(s)}
+                className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                  currentSessionId === s.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-800 truncate">{s.company_name}</p>
+                    {s.company_website && <p className="text-xs text-gray-500 truncate">{s.company_website}</p>}
+                    <p className="text-xs text-gray-400 mt-1">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <button
+                    onClick={(e) => deleteSession(s.id, e)}
+                    className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-opacity"
+                    title="Delete"
+                  >
+                    <XIcon className="w-4 h-4 text-red-500" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   // --- INPUT SCREEN ---
   if (step === 'input') {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
+        <Sidebar />
         <div className="flex flex-col items-center justify-center px-4 py-16">
           <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
             <div className="flex flex-col items-center text-center mb-8">
@@ -309,10 +503,24 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 <label htmlFor="company-website" className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
                 <input type="text" id="company-website" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} placeholder="e.g., stripe.com" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Deck (Optional)</label>
+                <FileUploader onFileSelect={handlePdfSelect} acceptedFileTypes=".pdf" />
+                {isExtractingPdf && <p className="text-sm text-blue-600 mt-1 animate-pulse">Extracting text from PDF...</p>}
+                {pitchDeckText && !isExtractingPdf && <p className="text-sm text-green-600 mt-1">✓ PDF text extracted ({Math.round(pitchDeckText.length / 1000)}k chars)</p>}
+              </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
-              <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite} className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none disabled:cursor-not-allowed">
-                <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span>
-              </button>
+              <div className="flex gap-3">
+                {user && savedSessions.length > 0 && (
+                  <button onClick={() => setSidebarOpen(true)} className="px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <ClipboardDocumentListIcon className="w-5 h-5" />
+                    <span>History ({savedSessions.length})</span>
+                  </button>
+                )}
+                <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite || isExtractingPdf} className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none disabled:cursor-not-allowed">
+                  <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -508,9 +716,15 @@ export default function StartupAnalyserApp(): React.ReactNode {
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar />
+      <Sidebar />
       <header className="bg-white shadow-sm sticky top-16 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center gap-3 mb-4 sm:mb-0">
+            {user && savedSessions.length > 0 && (
+              <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="View past analyses">
+                <ClipboardDocumentListIcon className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
             <BrainCircuitIcon className="w-8 h-8 text-blue-600" />
             <h1 className="text-xl font-bold text-gray-800 truncate">
               AI Analysis: <span className="font-normal">{structuredData.name}</span>
@@ -525,7 +739,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" />
               </label>
             </div>
-            <button onClick={handleStartOver} className="text-sm font-semibold text-blue-600 hover:text-blue-800">Start Over</button>
+            <button onClick={handleStartOver} className="text-sm font-semibold text-blue-600 hover:text-blue-800">New Analysis</button>
           </div>
         </div>
         <nav className="max-w-7xl mx-auto px-4 pb-4">

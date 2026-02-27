@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { companyName, companyWebsite, action, reportContext, chatMessages } = await req.json();
+    const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -47,7 +47,7 @@ serve(async (req) => {
     // Main analysis action
     if (!companyName) throw new Error("Company name is required");
 
-    const analysisPrompt = getAnalysisPrompt(companyName, companyWebsite || "");
+    const analysisPrompt = getAnalysisPrompt(companyName, companyWebsite || "", pitchDeckText || "");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -84,10 +84,14 @@ serve(async (req) => {
   }
 });
 
-function getAnalysisPrompt(companyName: string, companyWebsite: string): string {
+function getAnalysisPrompt(companyName: string, companyWebsite: string, pitchDeckText: string): string {
+  const pitchDeckSection = pitchDeckText
+    ? `\n\n**PITCH DECK CONTENT (extracted from PDF):**\nUse this as a PRIMARY source of information alongside your web search capabilities. Cross-reference claims made in the pitch deck with publicly available data.\n\n${pitchDeckText.substring(0, 25000)}\n`
+    : '';
+
   return `You are a world-class venture capital analyst. Your task is to generate an Investment Committee (IC) Note for the startup "${companyName}" (${companyWebsite || "website unknown"}).
 
-**PRIMARY SOURCE**: Rely on your knowledge and web search capabilities to conduct a thorough analysis based on publicly available information.
+**PRIMARY SOURCES**: Rely on your knowledge and web search capabilities to conduct a thorough analysis based on publicly available information.${pitchDeckSection}
 
 **CRITICAL DIRECTIVE: BE EXHAUSTIVE.** You must generate content for **every single heading** in the markdown report template below. Similarly, you must provide a value for **every single key** in the JSON data structure. If information is not available, you must explicitly state "Information not publicly available" for that section or key. **DO NOT OMIT ANY SECTIONS OR KEYS.**
 
@@ -191,7 +195,7 @@ After the markdown report, include a single JSON object enclosed in \`\`\`json .
 
 **CRITICAL INSTRUCTIONS FOR JSON:**
 1. **MANDATORY FIELDS**: Provide a value for every single key.
-2. **STRUCTURED IC NOTE FIELDS**: Many fields require a \`SourcedDataPoint[]\` array. Each bullet point from the markdown should become a separate \`value\` in a \`SourcedDataPoint\` object.
+2. **STRUCTURED IC NOTE FIELDS**: Many fields require a \`SourcedDataPoint[]\` array. Each bullet point from the markdown should become a separate \`value\` in a \`SourcedDataPoint\` object.${pitchDeckText ? '\n3. **PITCH DECK SOURCE**: When data comes from the pitch deck, use sourceType "pitch_deck" and sourceDetail should reference the relevant slide/page.' : ''}
 3. **PICTORIAL DEFINITION**: The \`pictorial_technology_definition\` field MUST contain the raw Mermaid.js diagram definition string.
 4. **KEYWORDS**: Identify up to 15 keywords total, split between 'business' and 'technical'.
 5. **COMPETITOR ANALYSIS**: You MUST find and analyze at least 5-7 competitors for both arrays.
