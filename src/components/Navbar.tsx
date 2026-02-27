@@ -32,6 +32,7 @@ export const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/tools", label: "Tools" },
+    { to: "/startup-analyser", label: "Startup Analyser" },
     { to: "/notebook", label: "Notebook" },
     { to: "/subscription", label: "Pricing" },
     { to: "/about", label: "About" },

@@ -21,6 +21,8 @@ import { toolsDatabase, getToolsByType } from "@/data/toolsDatabase";
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowUpDown } from "lucide-react";
 
 interface PreviewTool {
   id?: string;
@@ -44,6 +46,7 @@ const Tools = () => {
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured" | "personalized">("browse");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
+  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category">("default");
 
   // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
@@ -111,9 +114,18 @@ const Tools = () => {
         tool.category.toLowerCase().includes(query)
       );
     }
+
+    // Sort
+    if (sortBy === "a-z") {
+      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === "z-a") {
+      filtered = [...filtered].sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sortBy === "category") {
+      filtered = [...filtered].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
+    }
     
     return filtered;
-  }, [featuredLiveTools, searchQuery, selectedToolType]);
+  }, [featuredLiveTools, searchQuery, selectedToolType, sortBy]);
 
   const currentSubcategories = selectedDepartment !== "All Departments" 
     ? departmentSubcategories[selectedDepartment] || []
@@ -278,26 +290,42 @@ const Tools = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Show filter badge if tool type is selected */}
-              {hasToolTypeFilter && (
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-muted-foreground">
-                    Showing {filteredFeaturedTools.length} tools for:
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                    {selectedToolType}
-                    <button
-                      onClick={() => {
-                        setSelectedToolType("All Types");
-                        setViewMode("browse");
-                      }}
-                      className="ml-1 hover:text-primary/80"
-                    >
-                      ×
-                    </button>
-                  </span>
+              {/* Sort + filter badge row */}
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                {hasToolTypeFilter && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Showing {filteredFeaturedTools.length} tools for:
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                      {selectedToolType}
+                      <button
+                        onClick={() => {
+                          setSelectedToolType("All Types");
+                          setViewMode("browse");
+                        }}
+                        className="ml-1 hover:text-primary/80"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 ml-auto">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                    <SelectTrigger className="w-[150px] h-9 text-sm">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="a-z">Name (A → Z)</SelectItem>
+                      <SelectItem value="z-a">Name (Z → A)</SelectItem>
+                      <SelectItem value="category">Category</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+              </div>
               
               {filteredFeaturedTools.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
