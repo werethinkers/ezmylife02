@@ -14,7 +14,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Chat action - follow-up questions about an existing analysis
+    // Chat action
     if (action === "chat") {
       const systemPrompt = `You are an expert AI investment analyst assistant. The user has received an analysis report for a startup. Answer follow-up questions based on this context:\n\n${(reportContext || "").substring(0, 4000)}\n\nBe concise and helpful.`;
 
@@ -85,13 +85,16 @@ serve(async (req) => {
 });
 
 function getAnalysisPrompt(companyName: string, companyWebsite: string): string {
-  return `Generate a comprehensive Investment Committee (IC) Note for the startup "${companyName}" (${companyWebsite || "website unknown"}).
+  return `You are a world-class venture capital analyst. Your task is to generate an Investment Committee (IC) Note for the startup "${companyName}" (${companyWebsite || "website unknown"}).
 
-**CRITICAL DIRECTIVE: BE EXHAUSTIVE.** Generate content for every single heading below. If information is not available, explicitly state "Information not publicly available".
+**PRIMARY SOURCE**: Rely on your knowledge and web search capabilities to conduct a thorough analysis based on publicly available information.
+
+**CRITICAL DIRECTIVE: BE EXHAUSTIVE.** You must generate content for **every single heading** in the markdown report template below. Similarly, you must provide a value for **every single key** in the JSON data structure. If information is not available, you must explicitly state "Information not publicly available" for that section or key. **DO NOT OMIT ANY SECTIONS OR KEYS.**
 
 Structure your response into two distinct parts: a detailed markdown report and a structured JSON object.
 
 **PART 1: MARKDOWN REPORT (IC NOTE FORMAT)**
+Generate a comprehensive markdown report following this exact structure. Do not skip any sections.
 
 # IC NOTE: ${companyName}
 - **Website**: ${companyWebsite || "N/A"}
@@ -105,20 +108,40 @@ Structure your response into two distinct parts: a detailed markdown report and 
 - **History Of This Tech In India**:
 - **Market Size & TAM/SAM/SOM**:
 - **Market Overview Across all verticals**:
+- **Upstream And Downstream**:
 - **Market Challenges**:
+- **Innovations Leading The Change**:
 
-## Problem
-- **Problem In Detail**:
+## Problem In Detail
 
-## Solution
-- **Solution In Detail**:
+## Solution In Detail
 
-## Products & Technology
-- **Products Analysis**:
-- **USP / MOAT**:
-- **Intellectual Property**:
+## Products
 
-## Competition
+## Pictorial Technology Definition
+*CRITICAL: Generate a simple, valid Mermaid.js 'graph TD' diagram that visually explains the company's technology, architecture, or business process.
+**IMPORTANT RULES:**
+1. **NO SEMICOLONS:** Each statement MUST be on a new line. DO NOT use semicolons (;) to separate statements.
+2. **SIMPLE SYNTAX:** Do not use complex features like 'style' or 'classDef' directives.
+3. **QUOTES:** All text for node labels and edge labels MUST be enclosed in double quotes.
+4. **ENCLOSURE:** The entire diagram definition MUST be enclosed in a \`\`\`mermaid ... \`\`\` code block.
+
+**EXAMPLE:**
+\`\`\`mermaid
+graph TD
+    A["Step 1: User Input"] --> B["Step 2: Processing"]
+    B --> C{"Decision Point"}
+    C -- "Path A" --> D["Outcome 1"]
+    C -- "Path B" --> E["Outcome 2"]
+\`\`\`*
+
+## USP/MOAT
+
+## IP (Intellectual Property)
+
+## Competition Landscape
+*CRITICAL: You MUST find at least 5-7 Indian competitors and 5-7 Global competitors.*
+
 ### Indian Competitors
 | Company | Website | HQ | Funding | Valuation | Core Product | Tech Advantage | Our Advantage |
 |---|---|---|---|---|---|---|---|
@@ -127,27 +150,33 @@ Structure your response into two distinct parts: a detailed markdown report and 
 | Company | Website | HQ | Funding | Valuation | Core Product | Tech Advantage | Our Advantage |
 |---|---|---|---|---|---|---|---|
 
+### Competitors across all verticals
+
 ## Traction
 
 ## Business Model
 
 ## Team
-### Founders
+*For each founder, provide their name, title, a brief bio, and a markdown-formatted link to their LinkedIn profile. CRITICAL: Use web search to find any other directorships, ownership, or board positions held by the founders.*
 
-## Fundraising History
+## Fundraises
+
+## Investment Required
+
+## Use Of Investments
 
 ## Financial Plan
-### Investment Required
-### Use of Investments
-### Financial Projections
 
 ## Expert Opinion
 
 ## Exit Plan
+- **Examples Of Secondary Sale**:
+- **Examples Of Acquisition**:
+- **Examples Of IPO**:
 
-## Investment Risk
+## Investment Risk (Including Regulatory & Compliance Risks)
 
-## Investment Rationale
+## Investment Rationale (Including Potential Incentives)
 
 ## Conclusion
 
@@ -160,110 +189,162 @@ Structure your response into two distinct parts: a detailed markdown report and 
 **PART 2: JSON DATA**
 After the markdown report, include a single JSON object enclosed in \`\`\`json ... \`\`\`.
 
-The JSON must follow this exact structure:
+**CRITICAL INSTRUCTIONS FOR JSON:**
+1. **MANDATORY FIELDS**: Provide a value for every single key.
+2. **STRUCTURED IC NOTE FIELDS**: Many fields require a \`SourcedDataPoint[]\` array. Each bullet point from the markdown should become a separate \`value\` in a \`SourcedDataPoint\` object.
+3. **PICTORIAL DEFINITION**: The \`pictorial_technology_definition\` field MUST contain the raw Mermaid.js diagram definition string.
+4. **KEYWORDS**: Identify up to 15 keywords total, split between 'business' and 'technical'.
+5. **COMPETITOR ANALYSIS**: You MUST find and analyze at least 5-7 competitors for both arrays.
+6. **DYNAMIC CHARTS**: Chart data must be generated dynamically from actual competitor data.
+7. **CHART COLORS**: Generate unique hex colors for each bar.
+8. **MONETARY VALUES**: All monetary values in USD as numbers.
+9. **ULTRA-DETAILED EXECUTIVE SUMMARY**: For 'executiveSummaryData', be exceptionally detailed. Each bullet point MUST start with "- **Summary:** text".
+10. **COMPLETENESS**: Do not include any other text after the JSON block.
+11. **JSON VALIDITY**: Ensure perfectly valid JSON.
+12. **RESOURCES**: Populate news_articles, youtube_videos, and research_papers arrays (up to 5 each).
+13. **MULTI-SOURCE MARKET SIZE CHART**: For 'market_size_chart_data', gather data from 2-3 sources.
+14. **SUB-CATEGORY MARKET ANALYSIS**: Generate market_subcategory_share_chart_data (pie) and market_subcategory_growth_chart_data (line).
+15. **LEGAL & FOUNDER ANALYSIS**: Populate legal_analysis and founder other_positions.
+16. **EXIT OPTIONS**: Provide 2-3 real-world examples for exit_options_ipo and exit_options_acquisition.
+17. **FINANCIAL PROJECTIONS**: Provide a 3-5 year financial projection table in financial_projections.
+
 \`\`\`json
 {
   "name": "${companyName}",
   "website": "${companyWebsite || ""}",
-  "industry": "string",
-  "description": "string",
-  "founded_year": "string",
-  "location": "string",
-  "market_analysis": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "problem_in_detail": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "solution_in_detail": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "products_analysis": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "usp_moat": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "ip_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "competition_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "traction_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "business_model": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "team_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "fundraises_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "investment_required": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "use_of_investments": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "financial_plan_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": "string"}],
-  "expert_opinion": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "exit_plan_summary": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "investment_risk": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "investment_rationale": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "conclusion": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "future_roadmap": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": "string"}],
-  "keywords": {
-    "business": ["keyword1", "keyword2"],
-    "technical": ["keyword1", "keyword2"]
+  "industry": "...",
+  "description": "...",
+  "founded_year": "...",
+  "location": "...",
+  "market_analysis": [{"value": "- **History:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "problem_in_detail": [{"value": "- **Core Problem:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "solution_in_detail": [{"value": "- **Core Solution:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "products_analysis": [{"value": "- **Product:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "pictorial_technology_definition": [{"value": "graph TD\\n    A[\\"Start\\"] --> B[\\"End\\"]", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "usp_moat": [{"value": "- **Differentiator:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "ip_summary": [{"value": "- **Patents:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "competition_summary": [{"value": "- **Overview:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "traction_summary": [{"value": "- **Metrics:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "business_model": [{"value": "- **Monetization:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "team_summary": [{"value": "- **Strength:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "fundraises_summary": [{"value": "- **Rounds:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "investment_required": [{"value": "- **The Ask:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "use_of_investments": [{"value": "- **Allocation:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "financial_plan_summary": [{"value": "- **Projections:** ...", "sourceType": "web_search", "sourceDetail": "URL"}],
+  "financial_projections": {
+    "headers": ["Metric", "2025", "2026", "2027"],
+    "rows": [
+      {"metric": "Revenue (USD)", "values": [1000000, 5000000, 15000000]},
+      {"metric": "Net Profit/Loss (USD)", "values": [300000, 2000000, 7000000]}
+    ],
+    "source": {"sourceType": "model_knowledge", "sourceDetail": "Estimated projections"}
   },
-  "news_articles": [{"title": "string", "url": "string", "summary": "string", "type": "news"}],
-  "youtube_videos": [{"title": "string", "url": "string", "summary": "string", "type": "youtube"}],
-  "research_papers": [{"title": "string", "url": "string", "summary": "string", "type": "paper"}],
+  "expert_opinion": [{"value": "- **Analysis:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "exit_plan_summary": [{"value": "- **Acquirers:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "investment_risk": [{"value": "- **Risk:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "investment_rationale": [{"value": "- **Rationale:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "conclusion": [{"value": "- **Recommendation:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "future_roadmap": [{"value": "- **Next Steps:** ...", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+  "keywords": {"business": ["keyword1"], "technical": ["keyword1"]},
+  "news_articles": [{"title": "...", "url": "...", "summary": "...", "type": "news"}],
+  "youtube_videos": [{"title": "...", "url": "...", "summary": "...", "type": "youtube"}],
+  "research_papers": [{"title": "...", "url": "...", "summary": "...", "type": "paper"}],
   "indian_competitors": [
-    {"name": "string", "website": "string", "hq": "string", "founding_year": "string", "funding": "string", "fundingAmount": 0, "valuation": "string", "key_investors": [], "notable_clients": [], "recent_moves": "string", "core_product": "string", "tech_advantage": "string", "user_co_advantage": "string"}
+    {"name": "...", "website": "...", "hq": "...", "founding_year": "...", "funding": "...", "fundingAmount": 0, "valuation": "...", "key_investors": [], "notable_clients": [], "recent_moves": "...", "core_product": "...", "tech_advantage": "...", "user_co_advantage": "..."}
   ],
   "global_competitors": [
-    {"name": "string", "website": "string", "hq": "string", "founding_year": "string", "funding": "string", "fundingAmount": 0, "valuation": "string", "key_investors": [], "notable_clients": [], "recent_moves": "string", "core_product": "string", "tech_advantage": "string", "user_co_advantage": "string"}
+    {"name": "...", "website": "...", "hq": "...", "founding_year": "...", "funding": "...", "fundingAmount": 0, "valuation": "...", "key_investors": [], "notable_clients": [], "recent_moves": "...", "core_product": "...", "tech_advantage": "...", "user_co_advantage": "..."}
   ],
   "indian_competitor_chart_data": {
     "type": "bar",
-    "labels": ["Company1", "Company2"],
-    "datasets": [{"label": "Funding ($M)", "data": [10, 20], "backgroundColor": ["#FF6384", "#36A2EB"]}]
+    "labels": ["${companyName}", "Competitor1"],
+    "datasets": [{"label": "Total Funding (USD)", "data": [10000000, 50000000], "backgroundColor": ["#36a2eb", "#ff6384"], "borderColor": ["#36a2eb", "#ff6384"], "borderWidth": 1}]
   },
   "global_competitor_chart_data": {
     "type": "bar",
-    "labels": ["Company1", "Company2"],
-    "datasets": [{"label": "Funding ($M)", "data": [10, 20], "backgroundColor": ["#FF6384", "#36A2EB"]}]
+    "labels": ["${companyName}", "Competitor1"],
+    "datasets": [{"label": "Total Funding (USD)", "data": [10000000, 120000000], "backgroundColor": ["#36a2eb", "#4bc0c0"], "borderColor": ["#36a2eb", "#4bc0c0"], "borderWidth": 1}]
   },
   "market_size_chart_data": {
     "type": "line",
     "labels": ["2024", "2025", "2026", "2027", "2028"],
-    "datasets": [{"label": "TAM", "data": [100, 120, 150, 180, 220], "borderColor": "#FF6384", "fill": false, "tension": 0.4}]
+    "datasets": [{"label": "Market Projection", "data": [15000000000, 20000000000, 28000000000, 35000000000, 45000000000], "borderColor": "#ff6384", "fill": true, "tension": 0.4}]
   },
+  "market_subcategory_share_chart_data": {
+    "type": "pie",
+    "labels": ["Sub-Category A", "Sub-Category B", "Others"],
+    "datasets": [{"label": "Market Share", "data": [40, 30, 30], "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"], "borderWidth": 2}]
+  },
+  "market_subcategory_growth_chart_data": {
+    "type": "line",
+    "labels": ["2024", "2025", "2026", "2027", "2028"],
+    "datasets": [{"label": "Sub-Category A Growth", "data": [10, 12, 15, 18, 22], "borderColor": "#FF6384", "fill": false, "tension": 0.4}]
+  },
+  "comparisonMatrix": {
+    "headers": ["Feature", "${companyName}", "Competitor A"],
+    "rows": [["Core Technology", "...", "..."], ["Pricing Model", "...", "..."]]
+  },
+  "fundingTrends": "Description of funding trends.",
   "executiveSummaryData": {
     "startup_overview": {
-      "name": [{"value": "${companyName}", "sourceType": "web_search", "sourceDetail": ""}],
-      "website": [{"value": "${companyWebsite || ""}", "sourceType": "web_search", "sourceDetail": ""}],
-      "founding_year": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "location": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "sector_subsector": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "stage": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}]
+      "name": [{"value": "${companyName}", "sourceType": "model_knowledge", "sourceDetail": "Provided"}],
+      "website": [{"value": "${companyWebsite || ""}", "sourceType": "model_knowledge", "sourceDetail": "Provided"}],
+      "founding_year": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "location": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "sector_subsector": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "investment_ask": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "investment_committed": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "investment_remaining": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Calculated"}],
+      "stage": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "date_of_review": [{"value": "Today's Date", "sourceType": "model_knowledge", "sourceDetail": "N/A"}],
+      "author_name": [{"value": "AI Analyst", "sourceType": "model_knowledge", "sourceDetail": "N/A"}]
     },
     "product_market_fit": {
-      "brief_overview": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "problem": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "solution": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "unique_selling_point": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "target_customer": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "market_size": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}]
+      "brief_overview": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "definition_of_tech": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "problem": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "products_being_sold": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "solution": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "unique_selling_point": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "product_ip_defense": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "target_customer": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "market_size": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "history_of_tech_in_india": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]
     },
     "financial_snapshot": {
-      "revenue_mrr_arr": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "use_of_funds": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}]
+      "revenue_mrr_arr": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "use_of_funds": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]
     },
     "team": {
-      "founders": [],
-      "team_gaps": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": ""}]
+      "founders": [
+        {
+          "name": [{"value": "Founder Name", "sourceType": "web_search", "sourceDetail": "LinkedIn URL"}],
+          "title": [{"value": "CEO", "sourceType": "web_search", "sourceDetail": "URL"}],
+          "background": [{"value": "Background details", "sourceType": "web_search", "sourceDetail": "URL"}],
+          "linkedin_url": [{"value": "https://linkedin.com/in/profile", "sourceType": "web_search", "sourceDetail": "LinkedIn"}],
+          "other_positions": []
+        }
+      ],
+      "team_gaps": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}]
     },
     "competitive_landscape": {
-      "key_competitors_summary": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}]
+      "key_competitors_summary": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]
     },
     "deal_evaluation": {
-      "strengths": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": ""}],
-      "risks_concerns": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": ""}],
-      "vc_fit": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": ""}],
-      "next_action": [{"value": "string", "sourceType": "model_knowledge", "sourceDetail": ""}]
+      "strengths": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}],
+      "risks_concerns": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}],
+      "vc_fit": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}],
+      "next_action": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}],
+      "potential_failure_points": [{"value": "...", "sourceType": "model_knowledge", "sourceDetail": "Analysis"}],
+      "exit_options_ipo": [{"company_name": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}], "year": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]}],
+      "exit_options_acquisition": [{"company_name": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}], "acquirer": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}], "year": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]}],
+      "exit_options_secondary_sale": [{"details": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]}]
     },
     "legal_analysis": {
-      "founder_legal_issues": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}],
-      "company_legal_issues": [{"value": "string", "sourceType": "web_search", "sourceDetail": ""}]
+      "founder_legal_issues": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}],
+      "company_legal_issues": [{"value": "...", "sourceType": "web_search", "sourceDetail": "URL"}]
     }
   }
 }
-\`\`\`
-
-CRITICAL INSTRUCTIONS FOR JSON:
-1. Provide a value for every single key.
-2. For SourcedDataPoint arrays, each entry must have value, sourceType, and sourceDetail.
-3. Find and analyze at least 5 competitors for both indian_competitors and global_competitors.
-4. Generate chart data dynamically based on actual competitor data found.
-5. All monetary values in USD as numbers, not strings.
-6. Keywords: up to 15 total split between business and technical arrays.`;
+\`\`\``;
 }
