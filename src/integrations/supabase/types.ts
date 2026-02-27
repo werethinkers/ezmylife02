@@ -126,6 +126,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           full_name: string | null
+          gemini_api_key: string | null
           id: string
           job_title: string | null
           location: string | null
@@ -142,6 +143,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
+          gemini_api_key?: string | null
           id: string
           job_title?: string | null
           location?: string | null
@@ -158,6 +160,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
+          gemini_api_key?: string | null
           id?: string
           job_title?: string | null
           location?: string | null

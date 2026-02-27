@@ -6,40 +6,174 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+// Gemini fallback keys
+function getGeminiKeys(): string[] {
+  const keys: string[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const k = Deno.env.get(`GEMINI_API_KEY_${i}`);
+    if (k) keys.push(k);
+  }
+  return keys;
+}
 
-  try {
-    const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+// Try Lovable AI first, then fallback to direct Gemini API with key rotation
+async function callAIWithFallback(
+  messages: { role: string; content: string }[],
+  model: string,
+  stream: boolean,
+  userApiKey?: string | null
+): Promise<Response> {
+  // 1. If user provided their own key, try it first
+  if (userApiKey) {
+    const geminiModel = model.replace("google/", "");
+    const res = await callGeminiDirect(userApiKey, messages, geminiModel, stream);
+    if (res.ok) return res;
+    console.warn("User API key failed, falling back...");
+  }
 
-    // Chat action
-    if (action === "chat") {
-      const systemPrompt = `You are an expert AI investment analyst assistant. The user has received an analysis report for a startup. Answer follow-up questions based on this context:\n\n${(reportContext || "").substring(0, 4000)}\n\nBe concise and helpful.`;
-
+  // 2. Try Lovable AI gateway
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (LOVABLE_API_KEY) {
+    try {
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...(chatMessages || []),
-          ],
-          stream: true,
-        }),
+        body: JSON.stringify({ model, messages, stream }),
       });
+      if (response.ok) return response;
+      const status = response.status;
+      console.warn(`Lovable AI returned ${status}, trying Gemini fallback keys...`);
+      // For non-rate-limit errors, still try fallback
+    } catch (e) {
+      console.warn("Lovable AI gateway error:", e);
+    }
+  }
 
-      if (!response.ok) {
-        const status = response.status;
-        if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (status === 402) return new Response(JSON.stringify({ error: "Payment required." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        throw new Error("AI gateway error");
+  // 3. Fallback to direct Gemini API keys
+  const geminiKeys = getGeminiKeys();
+  const geminiModel = model.replace("google/", "");
+  
+  for (let i = 0; i < geminiKeys.length; i++) {
+    try {
+      const res = await callGeminiDirect(geminiKeys[i], messages, geminiModel, stream);
+      if (res.ok) {
+        console.log(`Gemini fallback key ${i + 1} succeeded`);
+        return res;
       }
+      const status = res.status;
+      console.warn(`Gemini key ${i + 1} returned ${status}, trying next...`);
+    } catch (e) {
+      console.warn(`Gemini key ${i + 1} error:`, e);
+    }
+  }
+
+  throw new Error("All AI keys exhausted. Please try again later.");
+}
+
+async function callGeminiDirect(
+  apiKey: string,
+  messages: { role: string; content: string }[],
+  model: string,
+  stream: boolean
+): Promise<Response> {
+  // Convert OpenAI-style messages to Gemini format
+  const geminiContents = messages.map(m => ({
+    role: m.role === "assistant" ? "model" : m.role === "system" ? "user" : m.role,
+    parts: [{ text: m.content }],
+  }));
+
+  const endpoint = stream ? "streamGenerateContent" : "generateContent";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}?key=${apiKey}${stream ? "&alt=sse" : ""}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: geminiContents,
+      generationConfig: { temperature: 0.7 },
+    }),
+  });
+
+  if (!response.ok) return response;
+
+  if (!stream) {
+    // Convert Gemini response to OpenAI format
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: text } }],
+    }), { headers: { "Content-Type": "application/json" } });
+  }
+
+  // Convert Gemini SSE stream to OpenAI-compatible SSE stream
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  (async () => {
+    try {
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIdx: number;
+        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
+          const line = buffer.slice(0, newlineIdx).trim();
+          buffer = buffer.slice(newlineIdx + 1);
+
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+
+          try {
+            const geminiChunk = JSON.parse(jsonStr);
+            const text = geminiChunk.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            if (text) {
+              const openaiChunk = {
+                choices: [{ delta: { content: text } }],
+              };
+              await writer.write(encoder.encode(`data: ${JSON.stringify(openaiChunk)}\n\n`));
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+      await writer.write(encoder.encode("data: [DONE]\n\n"));
+    } catch (e) {
+      console.error("Stream transform error:", e);
+    } finally {
+      await writer.close();
+    }
+  })();
+
+  return new Response(readable, {
+    headers: { "Content-Type": "text/event-stream" },
+  });
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages, userApiKey } = await req.json();
+
+    // Chat action
+    if (action === "chat") {
+      const systemPrompt = `You are an expert AI investment analyst assistant. The user has received an analysis report for a startup. Answer follow-up questions based on this context:\n\n${(reportContext || "").substring(0, 4000)}\n\nBe concise and helpful.`;
+
+      const response = await callAIWithFallback(
+        [{ role: "system", content: systemPrompt }, ...(chatMessages || [])],
+        "gemini-2.5-flash",
+        true,
+        userApiKey
+      );
 
       return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
     }
@@ -49,30 +183,15 @@ serve(async (req) => {
 
     const analysisPrompt = getAnalysisPrompt(companyName, companyWebsite || "", pitchDeckText || "");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: "You are a world-class venture capital analyst. Generate exhaustive, detailed investment analysis reports. Always respond with the exact structure requested." },
-          { role: "user", content: analysisPrompt },
-        ],
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (status === 402) return new Response(JSON.stringify({ error: "Payment required." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const t = await response.text();
-      console.error("AI gateway error:", status, t);
-      throw new Error("AI gateway error");
-    }
+    const response = await callAIWithFallback(
+      [
+        { role: "system", content: "You are a world-class venture capital analyst. Generate exhaustive, detailed investment analysis reports. Always respond with the exact structure requested." },
+        { role: "user", content: analysisPrompt },
+      ],
+      "gemini-2.5-pro",
+      true,
+      userApiKey
+    );
 
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {

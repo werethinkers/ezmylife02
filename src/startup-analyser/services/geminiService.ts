@@ -9,7 +9,8 @@ export async function generateComprehensiveAnalysis(
   companyName: string,
   companyWebsite: string,
   onProgress: (message: string) => void,
-  pitchDeckText?: string | null
+  pitchDeckText?: string | null,
+  userApiKey?: string | null
 ): Promise<AnalysisResult> {
   onProgress('10');
 
@@ -18,8 +19,10 @@ export async function generateComprehensiveAnalysis(
     companyWebsite: companyWebsite.trim(),
   };
   if (pitchDeckText) {
-    // Limit to ~30k chars to avoid payload issues
     body.pitchDeckText = pitchDeckText.substring(0, 30000);
+  }
+  if (userApiKey) {
+    body.userApiKey = userApiKey;
   }
 
   const resp = await fetch(ANALYSER_URL, {
@@ -92,7 +95,8 @@ export async function streamChatMessage(
   reportContext: string,
   messages: { role: string; content: string }[],
   onDelta: (text: string) => void,
-  onDone: () => void
+  onDone: () => void,
+  userApiKey?: string | null
 ): Promise<void> {
   const resp = await fetch(ANALYSER_URL, {
     method: "POST",
@@ -104,6 +108,7 @@ export async function streamChatMessage(
       action: "chat",
       reportContext,
       chatMessages: messages,
+      ...(userApiKey ? { userApiKey } : {}),
     }),
   });
 
