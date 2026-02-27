@@ -577,8 +577,18 @@ export default function StartupAnalyserApp(): React.ReactNode {
 
   // --- RESULTS SCREEN ---
   if (!analysisResult?.structuredData) {
-    setError("Structured data could not be parsed.");
-    return null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center px-4 py-16">
+          <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">No analysis data available</h2>
+            <p className="text-gray-600 mb-6">Please run the analysis again.</p>
+            <button onClick={handleStartOver} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Start Over</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const { structuredData } = analysisResult;

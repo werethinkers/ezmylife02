@@ -25,6 +25,8 @@ class AIProviderError extends Error {
   }
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function callAIWithFallback(
   messages: { role: string; content: string }[],
   model: string,
@@ -71,20 +73,42 @@ async function callAIWithFallback(
   // 3. Fallback to direct Gemini API keys
   const geminiKeys = getGeminiKeys();
   const geminiModel = model.replace("google/", "");
+  const modelFallbackOrder = Array.from(new Set([
+    geminiModel,
+    geminiModel === "gemini-2.5-pro" ? "gemini-2.5-flash" : geminiModel,
+    "gemini-2.5-flash-lite",
+  ]));
 
   for (let i = 0; i < geminiKeys.length; i++) {
-    try {
-      const res = await callGeminiDirect(geminiKeys[i], messages, geminiModel, stream);
-      if (res.ok) {
-        console.log(`Gemini fallback key ${i + 1} succeeded`);
-        return res;
+    for (const candidateModel of modelFallbackOrder) {
+      let attempt = 0;
+      while (attempt < 3) {
+        try {
+          const res = await callGeminiDirect(geminiKeys[i], messages, candidateModel, stream);
+          if (res.ok) {
+            console.log(`Gemini fallback key ${i + 1} succeeded with ${candidateModel} (attempt ${attempt + 1})`);
+            return res;
+          }
+          if (res.status === 402) saw402 = true;
+          if (res.status === 429) saw429 = true;
+          if (res.status === 400) saw400 = true;
+
+          // Retry only for rate-limit responses
+          if (res.status === 429 && attempt < 2) {
+            const waitMs = 1200 * (attempt + 1);
+            console.warn(`Gemini key ${i + 1} (${candidateModel}) rate-limited, retrying in ${waitMs}ms...`);
+            await sleep(waitMs);
+            attempt++;
+            continue;
+          }
+
+          console.warn(`Gemini key ${i + 1} (${candidateModel}) returned ${res.status}, trying next...`);
+          break;
+        } catch (e) {
+          console.warn(`Gemini key ${i + 1} (${candidateModel}) error:`, e);
+          break;
+        }
       }
-      if (res.status === 402) saw402 = true;
-      if (res.status === 429) saw429 = true;
-      if (res.status === 400) saw400 = true;
-      console.warn(`Gemini key ${i + 1} returned ${res.status}, trying next...`);
-    } catch (e) {
-      console.warn(`Gemini key ${i + 1} error:`, e);
     }
   }
 
