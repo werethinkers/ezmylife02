@@ -286,7 +286,7 @@ export const tools: Tool[] = [
   },
   {
     title: "Speedy Notebook",
-    description: "Save time writing notes and content.",
+    description: "Rich-text workspace with AI rephrasing, personal shortcuts that sync to browser extensions, and auto-saving.",
     category: "Research",
     icon: <Notebook className="h-8 w-8" />,
     toolId: "speedy-notebook",
