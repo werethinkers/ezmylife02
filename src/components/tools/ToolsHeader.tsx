@@ -18,6 +18,7 @@ import { ToolsExportButton } from "./ToolsExportButton";
 interface ToolsHeaderProps {
   liveCount: number;
   totalCount: number;
+  filteredCount?: number;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   viewMode: "browse" | "list" | "featured" | "personalized";
@@ -27,11 +28,13 @@ interface ToolsHeaderProps {
 export const ToolsHeader = ({
   liveCount,
   totalCount,
+  filteredCount,
   searchQuery,
   onSearchChange,
   viewMode,
   onViewModeChange
 }: ToolsHeaderProps) => {
+  const showingFiltered = filteredCount !== undefined && filteredCount !== totalCount;
   return (
     <header className="relative overflow-hidden border-b border-border/40 pt-20 pb-8">
       {/* Background gradient mesh */}
@@ -82,6 +85,13 @@ export const ToolsHeader = ({
               <span className="font-semibold">{totalCount.toLocaleString()}</span>
               <span className="text-muted-foreground">Total</span>
             </Badge>
+            {showingFiltered && (
+              <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-primary/10 text-primary border-primary/30">
+                <span className="text-primary/70">Showing</span>
+                <span className="font-semibold">{filteredCount}</span>
+                <span className="text-primary/70">of {totalCount.toLocaleString()}</span>
+              </Badge>
+            )}
           </motion.div>
 
           {/* Search bar */}

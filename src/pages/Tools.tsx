@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { useToolsCatalogStats } from "@/hooks/useToolsCatalog";
 import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
 import { ToolsHeader } from "@/components/tools/ToolsHeader";
@@ -47,6 +48,9 @@ const Tools = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
   const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category" | "newest" | "oldest">("default");
+
+  // DB-backed tool stats (live counts from database)
+  const catalogStats = useToolsCatalogStats();
 
   // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
@@ -214,14 +218,22 @@ const Tools = () => {
   const showBrowse = viewMode === "browse" && !searchQuery && !hasToolTypeFilter;
   const showPersonalized = viewMode === "personalized";
 
+  // Compute filtered count for the header
+  const filteredCount = useMemo(() => {
+    if (showFeatured) return filteredFeaturedTools.length;
+    if (showTools) return filteredTools.length;
+    return undefined; // Don't show when browsing/personalized
+  }, [showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Enhanced Header */}
       <ToolsHeader
-        liveCount={getLiveToolsCount()}
-        totalCount={totalToolCount}
+        liveCount={catalogStats.live || getLiveToolsCount()}
+        totalCount={catalogStats.total || totalToolCount}
+        filteredCount={filteredCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         viewMode={viewMode}
