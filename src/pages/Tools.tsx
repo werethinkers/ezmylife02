@@ -164,7 +164,6 @@ const Tools = () => {
   const handleToolTypeChange = useCallback((type: string) => {
     setSelectedToolType(type);
     if (type !== "All Types") {
-      // Check if this tool type has featured tools (like Image Tools)
       const toolsForType = getToolsByType(type);
       const hasFeaturedTools = toolsForType.some(t => t.source === "featured");
       const hasBusinessTools = toolsForType.some(t => t.source === "business");
@@ -175,6 +174,11 @@ const Tools = () => {
       } else {
         setViewMode("list");
       }
+      
+      // Scroll to the tools section so filtered results are visible
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
     }
   }, []);
 
