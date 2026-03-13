@@ -218,14 +218,22 @@ const Tools = () => {
   const showBrowse = viewMode === "browse" && !searchQuery && !hasToolTypeFilter;
   const showPersonalized = viewMode === "personalized";
 
+  // Compute filtered count for the header
+  const filteredCount = useMemo(() => {
+    if (showFeatured) return filteredFeaturedTools.length;
+    if (showTools) return filteredTools.length;
+    return undefined; // Don't show when browsing/personalized
+  }, [showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Enhanced Header */}
       <ToolsHeader
-        liveCount={getLiveToolsCount()}
-        totalCount={totalToolCount}
+        liveCount={catalogStats.live || getLiveToolsCount()}
+        totalCount={catalogStats.total || totalToolCount}
+        filteredCount={filteredCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         viewMode={viewMode}
