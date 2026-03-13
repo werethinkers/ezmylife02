@@ -260,6 +260,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tools_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_live: boolean
+          name: string
+          source: string
+          tool_types: string[]
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id: string
+          is_live?: boolean
+          name: string
+          source: string
+          tool_types?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_live?: boolean
+          name?: string
+          source?: string
+          tool_types?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_creations: {
         Row: {
           created_at: string
