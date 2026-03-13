@@ -139,6 +139,7 @@ const AdminDashboard = () => {
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
+    { id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench },
   ];
 
   return (
