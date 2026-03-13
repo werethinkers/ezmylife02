@@ -85,6 +85,13 @@ export const ToolsHeader = ({
               <span className="font-semibold">{totalCount.toLocaleString()}</span>
               <span className="text-muted-foreground">Total</span>
             </Badge>
+            {showingFiltered && (
+              <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-primary/10 text-primary border-primary/30">
+                <span className="text-primary/70">Showing</span>
+                <span className="font-semibold">{filteredCount}</span>
+                <span className="text-primary/70">of {totalCount.toLocaleString()}</span>
+              </Badge>
+            )}
           </motion.div>
 
           {/* Search bar */}
