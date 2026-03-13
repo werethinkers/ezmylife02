@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Search, Eye, EyeOff, Upload, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ToolFileUploader } from "./ToolFileUploader";
 
 interface CatalogTool {
   id: string;
@@ -22,6 +24,9 @@ interface CatalogTool {
   tool_types: string[];
   source: string;
   is_live: boolean;
+  has_uploaded_files: boolean;
+  is_premium: boolean;
+  dedicated_route: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +46,9 @@ const emptyTool: Omit<CatalogTool, "created_at" | "updated_at"> = {
   tool_types: [],
   source: "featured",
   is_live: false,
+  has_uploaded_files: false,
+  is_premium: false,
+  dedicated_route: null,
 };
 
 export const ToolManagement = () => {
@@ -55,6 +63,7 @@ export const ToolManagement = () => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toolTypesInput, setToolTypesInput] = useState("");
+  const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
   const fetchTools = async () => {
     setLoading(true);
@@ -87,6 +96,7 @@ export const ToolManagement = () => {
     setEditingTool({ ...emptyTool });
     setToolTypesInput("");
     setIsNew(true);
+    setDialogTab("details");
     setDialogOpen(true);
   };
 
@@ -99,9 +109,13 @@ export const ToolManagement = () => {
       tool_types: tool.tool_types,
       source: tool.source,
       is_live: tool.is_live,
+      has_uploaded_files: tool.has_uploaded_files,
+      is_premium: tool.is_premium,
+      dedicated_route: tool.dedicated_route,
     });
     setToolTypesInput(tool.tool_types.join(", "));
     setIsNew(false);
+    setDialogTab("details");
     setDialogOpen(true);
   };
 
@@ -120,10 +134,12 @@ export const ToolManagement = () => {
       tool_types: toolTypes,
       source: editingTool.source,
       is_live: editingTool.is_live,
+      is_premium: editingTool.is_premium,
+      dedicated_route: editingTool.dedicated_route || null,
     };
 
     if (isNew) {
-      const { error } = await supabase.from("tools_catalog").insert(payload);
+      const { error } = await supabase.from("tools_catalog").insert(payload as any);
       if (error) {
         toast.error(error.message);
       } else {
@@ -132,16 +148,10 @@ export const ToolManagement = () => {
         fetchTools();
       }
     } else {
+      const { id, ...updatePayload } = payload;
       const { error } = await supabase
         .from("tools_catalog")
-        .update({
-          name: payload.name,
-          description: payload.description,
-          category: payload.category,
-          tool_types: payload.tool_types,
-          source: payload.source,
-          is_live: payload.is_live,
-        })
+        .update(updatePayload as any)
         .eq("id", editingTool.id);
       if (error) {
         toast.error(error.message);
@@ -157,7 +167,7 @@ export const ToolManagement = () => {
   const toggleLive = async (tool: CatalogTool) => {
     const { error } = await supabase
       .from("tools_catalog")
-      .update({ is_live: !tool.is_live })
+      .update({ is_live: !tool.is_live } as any)
       .eq("id", tool.id);
     if (error) {
       toast.error(error.message);
@@ -169,6 +179,17 @@ export const ToolManagement = () => {
 
   const confirmDelete = async () => {
     if (!toolToDelete) return;
+    // Delete uploaded files first
+    if (toolToDelete.has_uploaded_files) {
+      const { data: files } = await supabase.storage
+        .from("tool-uploads")
+        .list(toolToDelete.id);
+      if (files && files.length > 0) {
+        await supabase.storage
+          .from("tool-uploads")
+          .remove(files.map(f => `${toolToDelete.id}/${f.name}`));
+      }
+    }
     const { error } = await supabase.from("tools_catalog").delete().eq("id", toolToDelete.id);
     if (error) {
       toast.error(error.message);
@@ -182,11 +203,12 @@ export const ToolManagement = () => {
 
   const liveCount = tools.filter(t => t.is_live).length;
   const draftCount = tools.filter(t => !t.is_live).length;
+  const uploadedCount = tools.filter(t => t.has_uploaded_files).length;
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{tools.length}</p>
@@ -203,6 +225,12 @@ export const ToolManagement = () => {
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-yellow-500">{draftCount}</p>
             <p className="text-xs text-muted-foreground">Draft</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-blue-500">{uploadedCount}</p>
+            <p className="text-xs text-muted-foreground">With Files</p>
           </CardContent>
         </Card>
       </div>
@@ -248,7 +276,7 @@ export const ToolManagement = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -257,21 +285,31 @@ export const ToolManagement = () => {
             <TableBody>
               {filteredTools.map(tool => (
                 <TableRow key={tool.id}>
-                  <TableCell className="font-medium text-sm">{tool.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{tool.name}</span>
+                      {tool.is_premium && <Crown className="h-3.5 w-3.5 text-yellow-500" />}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">{tool.id}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">{tool.category}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={tool.source === "business" ? "bg-blue-500/10 text-blue-500" : "bg-purple-500/10 text-purple-500"}>
-                      {tool.source}
-                    </Badge>
+                    {tool.has_uploaded_files ? (
+                      <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs gap-1">
+                        <Upload className="h-3 w-3" /> Uploaded
+                      </Badge>
+                    ) : tool.dedicated_route ? (
+                      <Badge variant="outline" className="bg-purple-500/10 text-purple-500 text-xs">
+                        Internal App
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">{tool.source}</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleLive(tool)}
-                      className="flex items-center gap-1.5"
-                    >
+                    <button onClick={() => toggleLive(tool)} className="flex items-center gap-1.5">
                       {tool.is_live ? (
                         <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 cursor-pointer gap-1">
                           <Eye className="h-3 w-3" /> Live
@@ -327,88 +365,138 @@ export const ToolManagement = () => {
             <DialogTitle>{isNew ? "Add New Tool" : "Edit Tool"}</DialogTitle>
           </DialogHeader>
           {editingTool && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Tool ID (slug)</Label>
-                <Input
-                  value={editingTool.id}
-                  onChange={e => setEditingTool({ ...editingTool, id: e.target.value })}
-                  placeholder="e.g. my-new-tool"
-                  disabled={!isNew}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={editingTool.name}
-                  onChange={e => setEditingTool({ ...editingTool, name: e.target.value })}
-                  placeholder="My New Tool"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={editingTool.description}
-                  onChange={e => setEditingTool({ ...editingTool, description: e.target.value })}
-                  placeholder="What does this tool do?"
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <Tabs value={dialogTab} onValueChange={(v) => setDialogTab(v as "details" | "files")}>
+              <TabsList className="w-full">
+                <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
+                <TabsTrigger value="files" className="flex-1" disabled={isNew && !editingTool.id}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" /> Files
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select
-                    value={editingTool.category}
-                    onValueChange={v => setEditingTool({ ...editingTool, category: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label>Tool ID (slug)</Label>
+                  <Input
+                    value={editingTool.id}
+                    onChange={e => setEditingTool({ ...editingTool, id: e.target.value })}
+                    placeholder="e.g. my-new-tool"
+                    disabled={!isNew}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Source</Label>
-                  <Select
-                    value={editingTool.source}
-                    onValueChange={v => setEditingTool({ ...editingTool, source: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {SOURCES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label>Name</Label>
+                  <Input
+                    value={editingTool.name}
+                    onChange={e => setEditingTool({ ...editingTool, name: e.target.value })}
+                    placeholder="My New Tool"
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Tool Types (comma-separated)</Label>
-                <Input
-                  value={toolTypesInput}
-                  onChange={e => setToolTypesInput(e.target.value)}
-                  placeholder="e.g. ai, image, productivity"
-                />
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <Switch
-                  checked={editingTool.is_live}
-                  onCheckedChange={v => setEditingTool({ ...editingTool, is_live: v })}
-                />
-                <div>
-                  <Label className="cursor-pointer">
-                    {editingTool.is_live ? "Live — visible to all users" : "Draft — only visible to admin for testing"}
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Keep as draft to test the tool before publishing
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={editingTool.description}
+                    onChange={e => setEditingTool({ ...editingTool, description: e.target.value })}
+                    placeholder="What does this tool do?"
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select
+                      value={editingTool.category}
+                      onValueChange={v => setEditingTool({ ...editingTool, category: v })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Source</Label>
+                    <Select
+                      value={editingTool.source}
+                      onValueChange={v => setEditingTool({ ...editingTool, source: v })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SOURCES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tool Types (comma-separated)</Label>
+                  <Input
+                    value={toolTypesInput}
+                    onChange={e => setToolTypesInput(e.target.value)}
+                    placeholder="e.g. ai, image, productivity"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Dedicated Route (optional, for internal apps)</Label>
+                  <Input
+                    value={editingTool.dedicated_route || ""}
+                    onChange={e => setEditingTool({ ...editingTool, dedicated_route: e.target.value || null })}
+                    placeholder="e.g. /startup-analyser"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    For tools coded into the app (like Startup Analyser). Leave empty for uploaded or embedded tools.
                   </p>
                 </div>
-              </div>
-            </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Switch
+                    checked={editingTool.is_premium}
+                    onCheckedChange={v => setEditingTool({ ...editingTool, is_premium: v })}
+                  />
+                  <div>
+                    <Label className="cursor-pointer flex items-center gap-1.5">
+                      <Crown className="h-3.5 w-3.5 text-yellow-500" />
+                      {editingTool.is_premium ? "Premium tool" : "Free tool"}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Premium tools require a subscription to use
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Switch
+                    checked={editingTool.is_live}
+                    onCheckedChange={v => setEditingTool({ ...editingTool, is_live: v })}
+                  />
+                  <div>
+                    <Label className="cursor-pointer">
+                      {editingTool.is_live ? "Live — visible to all users" : "Draft — only visible to admin for testing"}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Keep as draft to test the tool before publishing
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="files" className="mt-4">
+                {editingTool.id ? (
+                  <ToolFileUploader
+                    toolId={editingTool.id}
+                    onUploadComplete={fetchTools}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Save the tool first to upload files
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : isNew ? "Add Tool" : "Save Changes"}
-            </Button>
+            {dialogTab === "details" && (
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : isNew ? "Add Tool" : "Save Changes"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -420,7 +508,9 @@ export const ToolManagement = () => {
             <DialogTitle>Delete Tool</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{toolToDelete?.name}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{toolToDelete?.name}</strong>? 
+            {toolToDelete?.has_uploaded_files && " All uploaded files will also be deleted."}
+            {" "}This action cannot be undone.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
