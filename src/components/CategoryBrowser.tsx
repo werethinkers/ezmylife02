@@ -143,6 +143,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { getToolNamesForType } from "@/data/toolsDatabase";
 
 interface CategoryBrowserProps {
   onSelectDepartment: (department: string) => void;
@@ -241,169 +242,40 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
   },
 };
 
-// Tool Types - Expanded with more categories
-const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; description: string; examples: string[] }> = {
-  "Image Tools": {
-    icon: Image,
-    gradient: "from-violet-500 to-purple-600",
-    glow: "group-hover:shadow-violet-500/25",
-    color: "text-violet-500",
-    description: "Edit, enhance, and transform images",
-    examples: ["Resizer", "Compressor", "Background Remover", "Cropper", "Watermark", "Filters"]
-  },
-  "Document Tools": {
-    icon: FileText,
-    gradient: "from-blue-500 to-cyan-600",
-    glow: "group-hover:shadow-blue-500/25",
-    color: "text-blue-500",
-    description: "Create, convert, and manage documents",
-    examples: ["PDF Editor", "Invoice Generator", "Contract Maker", "Resume Builder", "Word to PDF"]
-  },
-  "Video Tools": {
-    icon: Video,
-    gradient: "from-red-500 to-orange-600",
-    glow: "group-hover:shadow-red-500/25",
-    color: "text-red-500",
-    description: "Edit and enhance video content",
-    examples: ["Video Compressor", "Trimmer", "Converter", "Thumbnail Maker", "Screen Recorder"]
-  },
-  "Audio Tools": {
-    icon: Mic,
-    gradient: "from-green-500 to-emerald-600",
-    glow: "group-hover:shadow-green-500/25",
-    color: "text-green-500",
-    description: "Process and edit audio files",
-    examples: ["Audio Converter", "Voice Recorder", "Noise Remover", "Podcast Tools", "Music Editor"]
-  },
-  "AI & Automation": {
-    icon: Bot,
-    gradient: "from-indigo-500 to-violet-600",
-    glow: "group-hover:shadow-indigo-500/25",
-    color: "text-indigo-500",
-    description: "AI-powered tools for automation",
-    examples: ["AI Writer", "Chatbot", "Auto-responder", "Smart Assistant", "AI Art Generator"]
-  },
-  "Analytics Tools": {
-    icon: BarChart3,
-    gradient: "from-teal-500 to-cyan-600",
-    glow: "group-hover:shadow-teal-500/25",
-    color: "text-teal-500",
-    description: "Track, analyze, and visualize data",
-    examples: ["Dashboard Builder", "Report Generator", "Data Visualizer", "KPI Tracker", "Charts"]
-  },
-  "Developer Tools": {
-    icon: Code,
-    gradient: "from-gray-600 to-zinc-700",
-    glow: "group-hover:shadow-gray-500/25",
-    color: "text-gray-400",
-    description: "Tools for developers and tech teams",
-    examples: ["Code Formatter", "API Tester", "JSON Validator", "Regex Builder", "Diff Checker"]
-  },
-  "Communication": {
-    icon: Mail,
-    gradient: "from-sky-500 to-blue-600",
-    glow: "group-hover:shadow-sky-500/25",
-    color: "text-sky-500",
-    description: "Email, messaging, and outreach tools",
-    examples: ["Email Templates", "Newsletter Builder", "SMS Tools", "WhatsApp Tools", "Mail Merge"]
-  },
-  "Security Tools": {
-    icon: Shield,
-    gradient: "from-amber-500 to-yellow-600",
-    glow: "group-hover:shadow-amber-500/25",
-    color: "text-amber-500",
-    description: "Protect and secure your digital assets",
-    examples: ["Password Generator", "Encryption Tools", "Privacy Tools", "Access Control", "VPN"]
-  },
-  "Productivity": {
-    icon: Zap,
-    gradient: "from-yellow-500 to-orange-600",
-    glow: "group-hover:shadow-yellow-500/25",
-    color: "text-yellow-500",
-    description: "Boost efficiency and save time",
-    examples: ["Task Manager", "Calendar Tools", "Time Tracker", "Note Taking", "To-Do Lists"]
-  },
-  "Text Tools": {
-    icon: Type,
-    gradient: "from-rose-500 to-pink-600",
-    glow: "group-hover:shadow-rose-500/25",
-    color: "text-rose-500",
-    description: "Format, convert, and analyze text",
-    examples: ["Word Counter", "Case Converter", "Text Formatter", "Grammar Checker", "Translator"]
-  },
-  "QR & Barcode": {
-    icon: QrCode,
-    gradient: "from-slate-500 to-gray-600",
-    glow: "group-hover:shadow-slate-500/25",
-    color: "text-slate-500",
-    description: "Generate and scan QR codes & barcodes",
-    examples: ["QR Generator", "QR Scanner", "Barcode Maker", "Bulk QR Creator", "Dynamic QR"]
-  },
-  "Calculators": {
-    icon: Calculator,
-    gradient: "from-emerald-500 to-green-600",
-    glow: "group-hover:shadow-emerald-500/25",
-    color: "text-emerald-500",
-    description: "Calculate anything you need",
-    examples: ["Tax Calculator", "Loan Calculator", "BMI Calculator", "Currency Converter", "Tip Calculator"]
-  },
-  "Converters": {
-    icon: RefreshCw,
-    gradient: "from-cyan-500 to-teal-600",
-    glow: "group-hover:shadow-cyan-500/25",
-    color: "text-cyan-500",
-    description: "Convert between formats and units",
-    examples: ["File Converter", "Unit Converter", "Color Converter", "Date Converter", "Base Converter"]
-  },
-  "Social Media": {
-    icon: Share2,
-    gradient: "from-pink-500 to-fuchsia-600",
-    glow: "group-hover:shadow-pink-500/25",
-    color: "text-pink-500",
-    description: "Tools for social media management",
-    examples: ["Post Scheduler", "Hashtag Generator", "Profile Analyzer", "Caption Writer", "Bio Generator"]
-  },
-  "SEO Tools": {
-    icon: Search,
-    gradient: "from-orange-500 to-red-600",
-    glow: "group-hover:shadow-orange-500/25",
-    color: "text-orange-500",
-    description: "Optimize for search engines",
-    examples: ["Keyword Research", "Meta Tag Generator", "Sitemap Creator", "Backlink Checker", "SERP Analyzer"]
-  },
-  "File Management": {
-    icon: Database,
-    gradient: "from-purple-500 to-indigo-600",
-    glow: "group-hover:shadow-purple-500/25",
-    color: "text-purple-500",
-    description: "Organize and manage your files",
-    examples: ["File Merger", "File Splitter", "Zip Tools", "File Renamer", "Duplicate Finder"]
-  },
-  "Design Tools": {
-    icon: Paintbrush,
-    gradient: "from-fuchsia-500 to-pink-600",
-    glow: "group-hover:shadow-fuchsia-500/25",
-    color: "text-fuchsia-500",
-    description: "Create stunning visual designs",
-    examples: ["Logo Maker", "Banner Creator", "Icon Generator", "Color Palette", "Mockup Generator"]
-  },
-  "Writing Tools": {
-    icon: PenTool,
-    gradient: "from-lime-500 to-green-600",
-    glow: "group-hover:shadow-lime-500/25",
-    color: "text-lime-500",
-    description: "Write better content faster",
-    examples: ["Content Generator", "Blog Writer", "Copy Editor", "Headline Analyzer", "Outline Creator"]
-  },
-  "Data Tools": {
-    icon: Table,
-    gradient: "from-blue-600 to-indigo-700",
-    glow: "group-hover:shadow-blue-600/25",
-    color: "text-blue-600",
-    description: "Process and analyze data",
-    examples: ["CSV Editor", "Data Cleaner", "Excel Tools", "Data Extractor", "Pivot Tables"]
-  },
+// Tool Types - dynamically built from database
+const toolTypeVisualConfig: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; description: string }> = {
+  "Image Tools": { icon: Image, gradient: "from-violet-500 to-purple-600", glow: "group-hover:shadow-violet-500/25", color: "text-violet-500", description: "Edit, enhance, and transform images" },
+  "Document Tools": { icon: FileText, gradient: "from-blue-500 to-cyan-600", glow: "group-hover:shadow-blue-500/25", color: "text-blue-500", description: "Create, convert, and manage documents" },
+  "Video Tools": { icon: Video, gradient: "from-red-500 to-orange-600", glow: "group-hover:shadow-red-500/25", color: "text-red-500", description: "Edit and enhance video content" },
+  "Audio Tools": { icon: Mic, gradient: "from-green-500 to-emerald-600", glow: "group-hover:shadow-green-500/25", color: "text-green-500", description: "Process and edit audio files" },
+  "AI & Automation": { icon: Bot, gradient: "from-indigo-500 to-violet-600", glow: "group-hover:shadow-indigo-500/25", color: "text-indigo-500", description: "AI-powered tools for automation" },
+  "Analytics Tools": { icon: BarChart3, gradient: "from-teal-500 to-cyan-600", glow: "group-hover:shadow-teal-500/25", color: "text-teal-500", description: "Track, analyze, and visualize data" },
+  "Developer Tools": { icon: Code, gradient: "from-gray-600 to-zinc-700", glow: "group-hover:shadow-gray-500/25", color: "text-gray-400", description: "Tools for developers and tech teams" },
+  "Communication": { icon: Mail, gradient: "from-sky-500 to-blue-600", glow: "group-hover:shadow-sky-500/25", color: "text-sky-500", description: "Email, messaging, and outreach tools" },
+  "Security Tools": { icon: Shield, gradient: "from-amber-500 to-yellow-600", glow: "group-hover:shadow-amber-500/25", color: "text-amber-500", description: "Protect and secure your digital assets" },
+  "Productivity": { icon: Zap, gradient: "from-yellow-500 to-orange-600", glow: "group-hover:shadow-yellow-500/25", color: "text-yellow-500", description: "Boost efficiency and save time" },
+  "Text Tools": { icon: Type, gradient: "from-rose-500 to-pink-600", glow: "group-hover:shadow-rose-500/25", color: "text-rose-500", description: "Format, convert, and analyze text" },
+  "QR & Barcode": { icon: QrCode, gradient: "from-slate-500 to-gray-600", glow: "group-hover:shadow-slate-500/25", color: "text-slate-500", description: "Generate and scan QR codes & barcodes" },
+  "Calculators": { icon: Calculator, gradient: "from-emerald-500 to-green-600", glow: "group-hover:shadow-emerald-500/25", color: "text-emerald-500", description: "Calculate anything you need" },
+  "Converters": { icon: RefreshCw, gradient: "from-cyan-500 to-teal-600", glow: "group-hover:shadow-cyan-500/25", color: "text-cyan-500", description: "Convert between formats and units" },
+  "Social Media": { icon: Share2, gradient: "from-pink-500 to-fuchsia-600", glow: "group-hover:shadow-pink-500/25", color: "text-pink-500", description: "Tools for social media management" },
+  "SEO Tools": { icon: Search, gradient: "from-orange-500 to-red-600", glow: "group-hover:shadow-orange-500/25", color: "text-orange-500", description: "Optimize for search engines" },
+  "File Management": { icon: Database, gradient: "from-purple-500 to-indigo-600", glow: "group-hover:shadow-purple-500/25", color: "text-purple-500", description: "Organize and manage your files" },
+  "Design Tools": { icon: Paintbrush, gradient: "from-fuchsia-500 to-pink-600", glow: "group-hover:shadow-fuchsia-500/25", color: "text-fuchsia-500", description: "Create stunning visual designs" },
+  "Writing Tools": { icon: PenTool, gradient: "from-lime-500 to-green-600", glow: "group-hover:shadow-lime-500/25", color: "text-lime-500", description: "Write better content faster" },
+  "Data Tools": { icon: Table, gradient: "from-blue-600 to-indigo-700", glow: "group-hover:shadow-blue-600/25", color: "text-blue-600", description: "Process and analyze data" },
 };
+
+// Build tool type data with real tool names from the database
+const toolTypeData: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; description: string; examples: string[] }> = Object.fromEntries(
+  Object.entries(toolTypeVisualConfig).map(([type, visual]) => {
+    const realToolNames = getToolNamesForType(type);
+    return [type, {
+      ...visual,
+      examples: realToolNames.slice(0, 8), // Show up to 8 real tool names
+    }];
+  })
+);
 
 // Industry category icons - Enhanced with more categories
 const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; sectors: string[] }> = {
@@ -576,7 +448,7 @@ export const CategoryBrowser = ({
           animate="visible"
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
         >
-          {Object.entries(toolTypeData).map(([type, data]) => {
+          {Object.entries(toolTypeData).filter(([, d]) => d.examples.length > 0).map(([type, data]) => {
             const Icon = data.icon;
             const isSelected = selectedToolType === type;
             const isExpanded = expandedToolType === type;
@@ -614,8 +486,8 @@ export const CategoryBrowser = ({
                         <h3 className="font-bold text-sm group-hover:text-primary transition-colors truncate">
                           {type}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                          {data.description}
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {data.examples.length} tools
                         </p>
                       </div>
                     </div>
