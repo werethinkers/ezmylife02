@@ -367,6 +367,8 @@ const AdminDashboard = () => {
             </Card>
           </div>
         )}
+
+        {activeTab === "tool-mgmt" && <ToolManagement />}
       </div>
     </div>
   );
