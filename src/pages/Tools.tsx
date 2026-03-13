@@ -49,6 +49,9 @@ const Tools = () => {
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
   const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category" | "newest" | "oldest">("default");
 
+  // DB-backed tool stats (live counts from database)
+  const catalogStats = useToolsCatalogStats();
+
   // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
     return liveToolsList.filter(t => t.isLive);
