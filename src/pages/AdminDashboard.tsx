@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Users, Activity, Crown, BarChart3, Eye } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, Eye, Wrench } from "lucide-react";
+import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
 
 interface ActivityLog {
