@@ -260,13 +260,43 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          session_data: Json
+          tool_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_data?: Json
+          tool_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_data?: Json
+          tool_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tools_catalog: {
         Row: {
           category: string
           created_at: string
+          dedicated_route: string | null
           description: string
+          has_uploaded_files: boolean
           id: string
           is_live: boolean
+          is_premium: boolean
           name: string
           source: string
           tool_types: string[]
@@ -275,9 +305,12 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
+          dedicated_route?: string | null
           description: string
+          has_uploaded_files?: boolean
           id: string
           is_live?: boolean
+          is_premium?: boolean
           name: string
           source: string
           tool_types?: string[]
@@ -286,9 +319,12 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          dedicated_route?: string | null
           description?: string
+          has_uploaded_files?: boolean
           id?: string
           is_live?: boolean
+          is_premium?: boolean
           name?: string
           source?: string
           tool_types?: string[]
