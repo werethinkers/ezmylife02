@@ -326,6 +326,8 @@ const Tools = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="a-z">Name (A → Z)</SelectItem>
                       <SelectItem value="z-a">Name (Z → A)</SelectItem>
                       <SelectItem value="category">Category</SelectItem>
