@@ -46,7 +46,7 @@ const Tools = () => {
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured" | "personalized">("browse");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
-  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category">("default");
+  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category" | "newest" | "oldest">("default");
 
   // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
@@ -122,7 +122,10 @@ const Tools = () => {
       filtered = [...filtered].sort((a, b) => b.title.localeCompare(a.title));
     } else if (sortBy === "category") {
       filtered = [...filtered].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
+    } else if (sortBy === "newest") {
+      filtered = [...filtered].reverse();
     }
+    // "oldest" keeps original order, same as "default"
     
     return filtered;
   }, [featuredLiveTools, searchQuery, selectedToolType, sortBy]);
@@ -323,6 +326,8 @@ const Tools = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="a-z">Name (A → Z)</SelectItem>
                       <SelectItem value="z-a">Name (Z → A)</SelectItem>
                       <SelectItem value="category">Category</SelectItem>
