@@ -143,6 +143,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { getToolNamesForType } from "@/data/toolsDatabase";
 
 interface CategoryBrowserProps {
   onSelectDepartment: (department: string) => void;
