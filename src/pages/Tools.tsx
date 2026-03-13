@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { useToolsCatalogStats } from "@/hooks/useToolsCatalog";
 import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
 import { ToolsHeader } from "@/components/tools/ToolsHeader";
