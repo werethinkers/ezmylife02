@@ -18,6 +18,7 @@ import { ToolsExportButton } from "./ToolsExportButton";
 interface ToolsHeaderProps {
   liveCount: number;
   totalCount: number;
+  filteredCount?: number;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   viewMode: "browse" | "list" | "featured" | "personalized";
