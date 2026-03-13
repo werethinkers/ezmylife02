@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt">("logs");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
