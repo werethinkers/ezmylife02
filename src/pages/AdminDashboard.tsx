@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Users, Activity, Crown, BarChart3, Eye } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, Eye, Wrench } from "lucide-react";
+import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
 
 interface ActivityLog {
@@ -50,7 +51,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt">("logs");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -138,6 +139,7 @@ const AdminDashboard = () => {
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
+    { id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench },
   ];
 
   return (
@@ -365,6 +367,8 @@ const AdminDashboard = () => {
             </Card>
           </div>
         )}
+
+        {activeTab === "tool-mgmt" && <ToolManagement />}
       </div>
     </div>
   );
