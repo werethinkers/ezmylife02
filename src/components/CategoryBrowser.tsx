@@ -448,7 +448,7 @@ export const CategoryBrowser = ({
           animate="visible"
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
         >
-          {Object.entries(toolTypeData).map(([type, data]) => {
+          {Object.entries(toolTypeData).filter(([, d]) => d.examples.length > 0).map(([type, data]) => {
             const Icon = data.icon;
             const isSelected = selectedToolType === type;
             const isExpanded = expandedToolType === type;
