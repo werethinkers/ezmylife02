@@ -28,11 +28,13 @@ interface ToolsHeaderProps {
 export const ToolsHeader = ({
   liveCount,
   totalCount,
+  filteredCount,
   searchQuery,
   onSearchChange,
   viewMode,
   onViewModeChange
 }: ToolsHeaderProps) => {
+  const showingFiltered = filteredCount !== undefined && filteredCount !== totalCount;
   return (
     <header className="relative overflow-hidden border-b border-border/40 pt-20 pb-8">
       {/* Background gradient mesh */}
