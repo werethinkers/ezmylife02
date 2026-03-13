@@ -46,7 +46,7 @@ const Tools = () => {
   const [viewMode, setViewMode] = useState<"browse" | "list" | "featured" | "personalized">("browse");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
-  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category">("default");
+  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category" | "newest" | "oldest">("default");
 
   // Get live tools from tools.tsx
   const featuredLiveTools = useMemo(() => {
