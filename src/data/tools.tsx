@@ -295,10 +295,19 @@ export const tools: Tool[] = [
   },
   {
     title: "PromptMaster AI",
-    description: "Elite prompt engineering workspace with AI brainstorm, magic write, and multi-format output modes.",
+    description: "Elite prompt engineering workspace with AI brainstorm, favourites with synced shortcuts, and multi-format output.",
     category: "AI Agent",
     icon: <Wand2 className="h-8 w-8" />,
     toolId: "promptmaster-ai",
+    videoLink: "",
+    isLive: true
+  },
+  {
+    title: "Startup Analyser",
+    description: "Generate exhaustive VC-style investment reports with AI. Upload pitch decks, get competitor analysis, financials & more.",
+    category: "AI Agent",
+    icon: <BarChart3 className="h-8 w-8" />,
+    toolId: "startup-analyser",
     videoLink: "",
     isLive: true
   },

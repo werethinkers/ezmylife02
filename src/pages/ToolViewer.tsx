@@ -13,6 +13,7 @@ import logo from "@/assets/logo.png";
 const dedicatedPageTools: Record<string, string> = {
   "speedy-notebook": "/notebook",
   "promptmaster-ai": "/promptmaster",
+  "startup-analyser": "/startup-analyser",
 };
 
 const ToolViewer = () => {
