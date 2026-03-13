@@ -122,7 +122,10 @@ const Tools = () => {
       filtered = [...filtered].sort((a, b) => b.title.localeCompare(a.title));
     } else if (sortBy === "category") {
       filtered = [...filtered].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
+    } else if (sortBy === "newest") {
+      filtered = [...filtered].reverse();
     }
+    // "oldest" keeps original order, same as "default"
     
     return filtered;
   }, [featuredLiveTools, searchQuery, selectedToolType, sortBy]);
