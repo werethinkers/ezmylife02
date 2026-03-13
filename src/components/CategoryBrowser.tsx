@@ -486,8 +486,8 @@ export const CategoryBrowser = ({
                         <h3 className="font-bold text-sm group-hover:text-primary transition-colors truncate">
                           {type}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                          {data.description}
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {data.examples.length} tools
                         </p>
                       </div>
                     </div>
