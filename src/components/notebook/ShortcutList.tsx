@@ -17,6 +17,7 @@ declare const window: CustomWindow;
 interface ShortcutListProps {
   shortcuts: Map<string, ShortcutItemData[]>;
   onDeleteShortcut?: (key: string) => void;
+  onEditShortcut?: (oldKey: string, newKey: string, newValue: string, category: string) => void;
 }
 
 interface EnrichedShortcutItem {
