@@ -23,17 +23,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Tab switching
-function switchTab(tab) {
+window.switchTab = function (tab) {
   document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
   document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
   document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
   document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
-}
-
-// Attach tab click listeners
-document.querySelectorAll("[data-tab]").forEach(el => {
-  el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
-});
+};
 
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
@@ -168,17 +163,15 @@ function renderShortcutList(shortcuts) {
             <div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div>
           </div>
           <div class="actions">
-            <button class="delete-btn" data-key="${escapeHtml(key)}">✕</button>
+            <button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button>
           </div>
         </div>`
     )
     .join("");
-
-  // Attach delete listeners programmatically
-  container.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", () => handleDeleteShortcut(btn.getAttribute("data-key")));
-  });
 }
+
+// Expose to onclick handlers
+window.handleDeleteShortcut = handleDeleteShortcut;
 
 function escapeHtml(str) {
   const div = document.createElement("div");

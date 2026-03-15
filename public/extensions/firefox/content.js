@@ -1,83 +1,22 @@
 // Content script: auto-expands shortcuts on any website
 let shortcuts = {};
-let isExpanding = false;
+let isExpanding = false; // Prevent re-entrancy
 
 // Load shortcuts from storage on init
 chrome.storage.local.get(["shortcuts"], (data) => {
   if (data.shortcuts) shortcuts = data.shortcuts;
 });
 
-// Listen for storage changes (catches all updates regardless of source)
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.shortcuts) {
-    shortcuts = changes.shortcuts.newValue || {};
-  }
-});
-
-// Listen for direct messages from popup
+// Listen for updates from popup
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "SHORTCUTS_UPDATED") {
     shortcuts = msg.shortcuts || {};
   }
 });
 
-const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
-      attachToEditables(node);
-    }
-  }
-});
-
-observer.observe(document.body || document.documentElement, {
-  childList: true,
-  subtree: true,
-});
-
-function attachToEditables(root) {
-  if (!root.querySelectorAll) return;
-  const editables = root.querySelectorAll('input, textarea, [contenteditable="true"], [contenteditable=""]');
-  editables.forEach((el) => {
-    if (el._ezmylifeAttached) return;
-    el._ezmylifeAttached = true;
-    el.addEventListener("input", handleInputEvent);
-    el.addEventListener("keydown", handleKeydownEvent);
-  });
-  if (root.tagName === "INPUT" || root.tagName === "TEXTAREA" || root.isContentEditable) {
-    if (!root._ezmylifeAttached) {
-      root._ezmylifeAttached = true;
-      root.addEventListener("input", handleInputEvent);
-      root.addEventListener("keydown", handleKeydownEvent);
-    }
-  }
-}
-
-function handleInputEvent(e) {
-  if (isExpanding) return;
-  const el = e.target;
-  if (el.isContentEditable) {
-    handleContentEditable(el);
-  } else {
-    handleInputField(el);
-  }
-}
-
-function handleKeydownEvent(e) {
-  if (isExpanding) return;
-  if (e.key !== " " && e.key !== "Enter" && e.key !== "Tab") return;
-  const el = e.target;
-  setTimeout(() => {
-    if (el.isContentEditable) {
-      handleContentEditable(el);
-    } else {
-      handleInputField(el);
-    }
-  }, 10);
-}
-
 document.addEventListener("input", (e) => {
   if (isExpanding) return;
+
   const el = e.target;
   const isEditable =
     el.tagName === "INPUT" ||
@@ -89,12 +28,14 @@ document.addEventListener("input", (e) => {
     handleContentEditable(el);
     return;
   }
+
   handleInputField(el);
 });
 
 document.addEventListener("keydown", (e) => {
   if (isExpanding) return;
   if (e.key !== " " && e.key !== "Enter" && e.key !== "Tab") return;
+
   const el = e.target;
   if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && !el.isContentEditable) return;
 
@@ -104,11 +45,10 @@ document.addEventListener("keydown", (e) => {
     } else {
       handleInputField(el);
     }
-  }, 10);
+  }, 0);
 });
 
 function handleInputField(el) {
-  if (!Object.keys(shortcuts).length) return;
   const val = el.value;
   if (!val) return;
   const cursorPos = el.selectionStart;
@@ -162,7 +102,6 @@ function handleInputField(el) {
 }
 
 function handleContentEditable(el) {
-  if (!Object.keys(shortcuts).length) return;
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
 

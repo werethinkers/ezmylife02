@@ -23,16 +23,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
 });
 
-function switchTab(tab) {
+window.switchTab = function (tab) {
   document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
   document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
   document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
   document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
-}
-
-document.querySelectorAll("[data-tab]").forEach(el => {
-  el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
-});
+};
 
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
@@ -112,7 +108,7 @@ async function handleDeleteShortcut(key) {
     await syncShortcuts(accessToken);
   } catch (err) { console.error("Delete error:", err); }
 }
-
+window.handleDeleteShortcut = handleDeleteShortcut;
 
 function renderShortcutList(shortcuts) {
   const container = document.getElementById("shortcutList");
@@ -122,12 +118,8 @@ function renderShortcutList(shortcuts) {
     return;
   }
   container.innerHTML = entries.map(([key, val]) =>
-    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="delete-btn" data-key="${escapeHtml(key)}">✕</button></div></div>`
+    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
   ).join("");
-
-  container.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", () => handleDeleteShortcut(btn.getAttribute("data-key")));
-  });
 }
 
 function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
