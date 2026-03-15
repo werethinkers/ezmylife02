@@ -168,8 +168,21 @@ function renderShortcutList(shortcuts) {
     return;
   }
   container.innerHTML = entries.map(([key, val]) =>
-    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="edit-btn" onclick="handleEditShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✎</button><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
+    `<div class="shortcut-item" data-key="${escapeHtml(key)}"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="edit-btn">✎</button><button class="delete-btn">✕</button></div></div>`
   ).join("");
+
+  container.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleEditShortcut(key);
+    });
+  });
+  container.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleDeleteShortcut(key);
+    });
+  });
 }
 
 function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
