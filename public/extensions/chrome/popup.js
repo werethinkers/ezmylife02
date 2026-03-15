@@ -23,12 +23,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Tab switching
-window.switchTab = function (tab) {
+function switchTab(tab) {
   document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
   document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
   document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
   document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
-};
+}
+
+// Attach tab click listeners
+document.querySelectorAll("[data-tab]").forEach(el => {
+  el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
+});
 
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
