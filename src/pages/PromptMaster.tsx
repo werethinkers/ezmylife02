@@ -261,14 +261,65 @@ const formatOutput = (prompt: ReturnType<typeof buildPrompt>) => {
 };
 
 // ---- Favourite Item Component ----
-const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouritePrompt) => void; onRemove: (id: string) => void }> = ({ fav, onUse, onRemove }) => {
+const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouritePrompt) => void; onRemove: (id: string) => void; onEdit?: (id: string, newPrompt: string, newShortcut: string) => void }> = ({ fav, onUse, onRemove, onEdit }) => {
   const [keyCopied, setKeyCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editPrompt, setEditPrompt] = useState(fav.prompt);
+  const [editShortcut, setEditShortcut] = useState(fav.shortcut);
+
   const handleCopyKey = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText('/' + fav.shortcut);
     setKeyCopied(true);
     setTimeout(() => setKeyCopied(false), 1500);
   };
+
+  const handleSaveEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!editPrompt.trim() || !editShortcut.trim()) return;
+    onEdit?.(fav.id, editPrompt.trim(), editShortcut.trim());
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditPrompt(fav.prompt);
+    setEditShortcut(fav.shortcut);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-slate-50 border-2 border-sky-400 rounded-2xl p-3" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-2">
+          <div>
+            <label className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Shortcut</label>
+            <input
+              type="text"
+              value={editShortcut}
+              onChange={(e) => setEditShortcut(e.target.value)}
+              className="w-full mt-1 px-2 py-1 text-[10px] border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Prompt</label>
+            <textarea
+              value={editPrompt}
+              onChange={(e) => setEditPrompt(e.target.value)}
+              rows={4}
+              className="w-full mt-1 px-2 py-1 text-[10px] border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={handleCancelEdit} className="px-2 py-1 text-[8px] font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">Cancel</button>
+            <button onClick={handleSaveEdit} className="px-2 py-1 text-[8px] font-bold rounded-lg bg-sky-600 text-white hover:bg-sky-700 transition-colors">Save</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
@@ -296,6 +347,15 @@ const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouriteProm
               <Link size={10} className="text-blue-500" />
             )}
           </button>
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+              className="p-1 opacity-0 group-hover:opacity-100 hover:bg-sky-100 rounded-lg transition-all"
+              title="Edit favourite"
+            >
+              <Pen size={10} className="text-sky-500" />
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(fav.id); }}
             className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-100 rounded-lg transition-all"
@@ -592,6 +652,27 @@ const PromptMaster: React.FC = () => {
     toast.success(`Loaded favourite: /${fav.shortcut}`);
   };
 
+  const handleEditFavourite = async (favId: string, newPrompt: string, newShortcut: string) => {
+    if (!user) return;
+    const updatedFavs = favourites.map(f => 
+      f.id === favId ? { ...f, prompt: newPrompt, shortcut: newShortcut, title: newPrompt.slice(0, 40) + (newPrompt.length > 40 ? '...' : '') } : f
+    );
+    setFavourites(updatedFavs);
+
+    const sessionData: SessionData = {
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites: updatedFavs,
+    };
+    try {
+      await supabase.from('promptmaster_sessions').upsert([{
+        user_id: user.id,
+        session_data: JSON.parse(JSON.stringify(sessionData)),
+      }], { onConflict: 'user_id' });
+      toast.success('Favourite updated');
+    } catch {
+      toast.error('Failed to update favourite');
+    }
+  };
+
   const clearContext = () => {
     setContext('');
     setSuggestions([]);
@@ -850,7 +931,7 @@ const PromptMaster: React.FC = () => {
                 </div>
               ) : (
                 favourites.map(fav => (
-                  <FavouriteItem key={fav.id} fav={fav} onUse={handleUseFavourite} onRemove={handleRemoveFavourite} />
+                  <FavouriteItem key={fav.id} fav={fav} onUse={handleUseFavourite} onRemove={handleRemoveFavourite} onEdit={handleEditFavourite} />
                 ))
               )}
             </div>
