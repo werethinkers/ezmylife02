@@ -110,6 +110,52 @@ async function handleDeleteShortcut(key) {
 }
 window.handleDeleteShortcut = handleDeleteShortcut;
 
+async function handleEditShortcut(oldKey) {
+  const val = currentShortcuts[oldKey] || "";
+  const container = document.getElementById("shortcutList");
+  const items = container.querySelectorAll(".shortcut-item");
+  for (const item of items) {
+    const keyEl = item.querySelector(".key");
+    if (keyEl && keyEl.textContent === oldKey) {
+      item.innerHTML = `
+        <div style="width:100%;">
+          <label style="font-size:9px;color:#94a3b8;">Key</label>
+          <input type="text" id="editKey" value="${escapeHtml(oldKey)}" style="width:100%;padding:5px 7px;border:1px solid #3b82f6;border-radius:4px;background:#0f172a;color:#e2e8f0;font-size:11px;margin-bottom:4px;">
+          <label style="font-size:9px;color:#94a3b8;">Value</label>
+          <input type="text" id="editVal" value="${escapeHtml(val).replace(/"/g, '&quot;')}" style="width:100%;padding:5px 7px;border:1px solid #3b82f6;border-radius:4px;background:#0f172a;color:#e2e8f0;font-size:11px;margin-bottom:6px;">
+          <div style="display:flex;gap:4px;">
+            <button onclick="saveEdit('${escapeHtml(oldKey).replace(/'/g, "\\'")}')" style="flex:1;padding:5px;background:#059669;color:white;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;">Save</button>
+            <button onclick="cancelEdit()" style="padding:5px 8px;background:#334155;color:#94a3b8;border:none;border-radius:4px;font-size:10px;cursor:pointer;">✕</button>
+          </div>
+        </div>`;
+      break;
+    }
+  }
+}
+window.handleEditShortcut = handleEditShortcut;
+
+async function saveEdit(oldKey) {
+  const newKey = document.getElementById("editKey").value.trim();
+  const newVal = document.getElementById("editVal").value.trim();
+  if (!newKey || !newVal) { alert("Both fields required"); return; }
+  const { accessToken } = await storageAPI.local.get(["accessToken"]);
+  if (!accessToken) return;
+  try {
+    await fetch(`${API_BASE}/functions/v1/sync-shortcuts`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, apikey: ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ oldKey, newKey, newValue: newVal }),
+    });
+    await syncShortcuts(accessToken);
+  } catch (err) { console.error("Edit error:", err); }
+}
+window.saveEdit = saveEdit;
+
+function cancelEdit() {
+  renderShortcutList(currentShortcuts);
+}
+window.cancelEdit = cancelEdit;
+
 function renderShortcutList(shortcuts) {
   const container = document.getElementById("shortcutList");
   const entries = Object.entries(shortcuts);
@@ -118,7 +164,7 @@ function renderShortcutList(shortcuts) {
     return;
   }
   container.innerHTML = entries.map(([key, val]) =>
-    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
+    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="edit-btn" onclick="handleEditShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✎</button><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
   ).join("");
 }
 

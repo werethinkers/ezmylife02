@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // POST = add shortcut, DELETE = remove shortcut, GET = fetch all
+    // POST = add shortcut, DELETE = remove shortcut, PUT = edit shortcut, GET = fetch all
     if (req.method === "POST") {
       const body = await req.json();
       const { key, value, category } = body;
@@ -59,7 +59,6 @@ Deno.serve(async (req) => {
         ? (existing.session_shortcuts as Array<{ key: string; value: string; category: string }>)
         : [];
 
-      // Remove duplicate if exists
       const filtered = currentShortcuts.filter(
         (s) => s.key?.toLowerCase() !== key.toLowerCase()
       );
@@ -69,6 +68,90 @@ Deno.serve(async (req) => {
         [{ user_id: user.id, session_shortcuts: filtered }],
         { onConflict: "user_id" }
       );
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "PUT") {
+      const body = await req.json();
+      const { oldKey, newKey, newValue } = body;
+      if (!oldKey || !newKey || !newValue) {
+        return new Response(JSON.stringify({ error: "oldKey, newKey, and newValue required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let edited = false;
+
+      // Try editing in promptmaster_sessions favourites first
+      const { data: promptSession } = await supabase
+        .from("promptmaster_sessions")
+        .select("session_data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (promptSession?.session_data) {
+        const sd = promptSession.session_data as Record<string, unknown>;
+        const favs = sd.favourites as Array<{
+          id?: string;
+          shortcut?: string;
+          prompt?: string;
+          title?: string;
+          createdAt?: string;
+        }>;
+        if (Array.isArray(favs)) {
+          const favIndex = favs.findIndex(
+            (f) => f.shortcut?.toLowerCase() === oldKey.toLowerCase()
+          );
+          if (favIndex !== -1) {
+            favs[favIndex].shortcut = newKey;
+            favs[favIndex].prompt = newValue;
+            favs[favIndex].title = newValue.slice(0, 40) + (newValue.length > 40 ? "..." : "");
+            sd.favourites = favs;
+            await supabase.from("promptmaster_sessions").upsert(
+              [{ user_id: user.id, session_data: sd }],
+              { onConflict: "user_id" }
+            );
+            edited = true;
+          }
+        }
+      }
+
+      // Also try editing in notebook_sessions
+      const { data: notebookSession } = await supabase
+        .from("notebook_sessions")
+        .select("session_shortcuts")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const currentShortcuts = Array.isArray(notebookSession?.session_shortcuts)
+        ? (notebookSession.session_shortcuts as Array<{ key: string; value: string; category: string }>)
+        : [];
+
+      const idx = currentShortcuts.findIndex(
+        (s) => s.key?.toLowerCase() === oldKey.toLowerCase()
+      );
+      if (idx !== -1) {
+        currentShortcuts[idx].key = newKey;
+        currentShortcuts[idx].value = newValue;
+        await supabase.from("notebook_sessions").upsert(
+          [{ user_id: user.id, session_shortcuts: currentShortcuts }],
+          { onConflict: "user_id" }
+        );
+        edited = true;
+      }
+
+      if (!edited) {
+        // If not found in either, add as new to notebook_sessions
+        currentShortcuts.push({ key: newKey, value: newValue, category: "Extension" });
+        await supabase.from("notebook_sessions").upsert(
+          [{ user_id: user.id, session_shortcuts: currentShortcuts }],
+          { onConflict: "user_id" }
+        );
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -85,6 +168,7 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Delete from notebook_sessions
       const { data: existing } = await supabase
         .from("notebook_sessions")
         .select("session_shortcuts")
@@ -103,6 +187,30 @@ Deno.serve(async (req) => {
         [{ user_id: user.id, session_shortcuts: filtered }],
         { onConflict: "user_id" }
       );
+
+      // Also delete from promptmaster_sessions favourites if exists
+      const { data: promptSession } = await supabase
+        .from("promptmaster_sessions")
+        .select("session_data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (promptSession?.session_data) {
+        const sd = promptSession.session_data as Record<string, unknown>;
+        const favs = sd.favourites as Array<{ shortcut?: string }>;
+        if (Array.isArray(favs)) {
+          const filteredFavs = favs.filter(
+            (f) => f.shortcut?.toLowerCase() !== key.toLowerCase()
+          );
+          if (filteredFavs.length !== favs.length) {
+            sd.favourites = filteredFavs;
+            await supabase.from("promptmaster_sessions").upsert(
+              [{ user_id: user.id, session_data: sd }],
+              { onConflict: "user_id" }
+            );
+          }
+        }
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
