@@ -75,8 +75,8 @@ const BROWSERS: Record<string, BrowserInfo> = {
     manualSteps: [
       'Open opera://extensions/ in your browser',
       'Enable "Developer mode" (top-right toggle)',
-      'Click "Load unpacked"',
-      'Select the extracted extension folder',
+      'Click "Load unpacked" and select the extracted folder',
+      'Click the extension icon → click "Enable on All Websites"',
     ],
     extensionFolder: 'chrome',
     color: 'from-red-500 to-pink-500',
