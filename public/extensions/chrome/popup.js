@@ -12,6 +12,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     syncShortcuts(stored.accessToken);
   }
 
+  // Check site status
+  checkSiteStatus();
+
   document.getElementById("loginBtn").addEventListener("click", handleLogin);
   document.getElementById("syncBtn").addEventListener("click", () => {
     chrome.storage.local.get(["accessToken"], (d) => {
@@ -20,6 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
+  document.getElementById("enableBtn").addEventListener("click", handleEnablePermission);
 });
 
 // Tab switching
@@ -30,11 +34,118 @@ function switchTab(tab) {
   document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
 }
 
-// Attach tab click listeners
 document.querySelectorAll("[data-tab]").forEach(el => {
   el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
 });
 
+// ---- Site health check ----
+async function checkSiteStatus() {
+  const siteStatusEl = document.getElementById("siteStatus");
+  const siteDot = document.getElementById("siteDot");
+  const siteText = document.getElementById("siteStatusText");
+  const enableEl = document.getElementById("enablePermission");
+
+  siteStatusEl.style.display = "flex";
+  siteStatusEl.className = "site-status checking";
+  siteDot.className = "dot yellow";
+  siteText.textContent = "Checking this page...";
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id || !tab.url) {
+      setSiteInactive("Cannot check this page");
+      return;
+    }
+
+    // Skip chrome:// and other restricted URLs
+    if (tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://") || tab.url.startsWith("about:")) {
+      siteStatusEl.className = "site-status inactive";
+      siteDot.className = "dot yellow";
+      siteText.textContent = "Extensions can't run on this page";
+      enableEl.style.display = "none";
+      return;
+    }
+
+    // Try to ping content script
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "PING" });
+      if (response && response.type === "PONG") {
+        siteStatusEl.className = "site-status active";
+        siteDot.className = "dot green";
+        siteText.textContent = "✓ Active on this site";
+        enableEl.style.display = "none";
+        return;
+      }
+    } catch (e) {
+      // Content script not injected
+    }
+
+    // Not active — check if we have permission
+    const hasPermission = await chrome.permissions.contains({ origins: ["<all_urls>"] });
+    if (hasPermission) {
+      // We have permission but script isn't injected yet — inject now
+      try {
+        await chrome.runtime.sendMessage({ type: "INJECT_INTO_TAB", tabId: tab.id });
+        // Wait and re-check
+        await new Promise(r => setTimeout(r, 500));
+        try {
+          const response = await chrome.tabs.sendMessage(tab.id, { type: "PING" });
+          if (response && response.type === "PONG") {
+            siteStatusEl.className = "site-status active";
+            siteDot.className = "dot green";
+            siteText.textContent = "✓ Active on this site";
+            enableEl.style.display = "none";
+            return;
+          }
+        } catch (e) {}
+      } catch (e) {}
+      setSiteInactive("Script couldn't load — try refreshing the page");
+    } else {
+      setSiteInactive("Not enabled on this site");
+      enableEl.style.display = "block";
+    }
+  } catch (err) {
+    setSiteInactive("Could not check status");
+  }
+
+  function setSiteInactive(msg) {
+    siteStatusEl.className = "site-status inactive";
+    siteDot.className = "dot yellow";
+    siteText.textContent = msg;
+  }
+}
+
+// ---- Permission request ----
+async function handleEnablePermission() {
+  const btn = document.getElementById("enableBtn");
+  btn.textContent = "Requesting...";
+
+  try {
+    const granted = await chrome.permissions.request({ origins: ["<all_urls>"] });
+    if (granted) {
+      // Register content scripts via background
+      await chrome.runtime.sendMessage({ type: "REGISTER_SCRIPTS" });
+
+      // Inject into current tab immediately
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.id) {
+        await chrome.runtime.sendMessage({ type: "INJECT_INTO_TAB", tabId: tab.id });
+      }
+
+      document.getElementById("enablePermission").style.display = "none";
+      // Re-check status
+      await new Promise(r => setTimeout(r, 500));
+      checkSiteStatus();
+    } else {
+      btn.textContent = "🔓 Enable on All Websites";
+    }
+  } catch (err) {
+    btn.textContent = "🔓 Enable on All Websites";
+    console.error("Permission request error:", err);
+  }
+}
+
+// ---- Auth & Sync (unchanged logic) ----
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -174,7 +285,6 @@ function renderShortcutList(shortcuts) {
     )
     .join("");
 
-  // Attach delete listeners programmatically
   container.querySelectorAll(".delete-btn").forEach(btn => {
     btn.addEventListener("click", () => handleDeleteShortcut(btn.getAttribute("data-key")));
   });
