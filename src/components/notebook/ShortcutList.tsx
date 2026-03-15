@@ -187,7 +187,7 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
     );
 });
 
-export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteShortcut }) => {
+export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteShortcut, onEditShortcut }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
