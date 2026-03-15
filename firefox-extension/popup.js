@@ -21,6 +21,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
+  document.getElementById("tabList").addEventListener("click", () => switchTab("list"));
+  document.getElementById("tabAdd").addEventListener("click", () => switchTab("add"));
 });
 
 window.switchTab = function (tab) {
@@ -124,10 +126,12 @@ async function handleEditShortcut(oldKey) {
           <label style="font-size:9px;color:#94a3b8;">Value</label>
           <input type="text" id="editVal" value="${escapeHtml(val).replace(/"/g, '&quot;')}" style="width:100%;padding:5px 7px;border:1px solid #3b82f6;border-radius:4px;background:#0f172a;color:#e2e8f0;font-size:11px;margin-bottom:6px;">
           <div style="display:flex;gap:4px;">
-            <button onclick="saveEdit('${escapeHtml(oldKey).replace(/'/g, "\\'")}')" style="flex:1;padding:5px;background:#059669;color:white;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;">Save</button>
-            <button onclick="cancelEdit()" style="padding:5px 8px;background:#334155;color:#94a3b8;border:none;border-radius:4px;font-size:10px;cursor:pointer;">✕</button>
+            <button id="saveEditBtn" style="flex:1;padding:5px;background:#059669;color:white;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;">Save</button>
+            <button id="cancelEditBtn" style="padding:5px 8px;background:#334155;color:#94a3b8;border:none;border-radius:4px;font-size:10px;cursor:pointer;">✕</button>
           </div>
         </div>`;
+      document.getElementById("saveEditBtn").addEventListener("click", () => saveEdit(oldKey));
+      document.getElementById("cancelEditBtn").addEventListener("click", cancelEdit);
       break;
     }
   }
@@ -164,8 +168,21 @@ function renderShortcutList(shortcuts) {
     return;
   }
   container.innerHTML = entries.map(([key, val]) =>
-    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="edit-btn" onclick="handleEditShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✎</button><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
+    `<div class="shortcut-item" data-key="${escapeHtml(key)}"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="edit-btn">✎</button><button class="delete-btn">✕</button></div></div>`
   ).join("");
+
+  container.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleEditShortcut(key);
+    });
+  });
+  container.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleDeleteShortcut(key);
+    });
+  });
 }
 
 function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
