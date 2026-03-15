@@ -652,6 +652,27 @@ const PromptMaster: React.FC = () => {
     toast.success(`Loaded favourite: /${fav.shortcut}`);
   };
 
+  const handleEditFavourite = async (favId: string, newPrompt: string, newShortcut: string) => {
+    if (!user) return;
+    const updatedFavs = favourites.map(f => 
+      f.id === favId ? { ...f, prompt: newPrompt, shortcut: newShortcut, title: newPrompt.slice(0, 40) + (newPrompt.length > 40 ? '...' : '') } : f
+    );
+    setFavourites(updatedFavs);
+
+    const sessionData: SessionData = {
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites: updatedFavs,
+    };
+    try {
+      await supabase.from('promptmaster_sessions').upsert([{
+        user_id: user.id,
+        session_data: JSON.parse(JSON.stringify(sessionData)),
+      }], { onConflict: 'user_id' });
+      toast.success('Favourite updated');
+    } catch {
+      toast.error('Failed to update favourite');
+    }
+  };
+
   const clearContext = () => {
     setContext('');
     setSuggestions([]);
