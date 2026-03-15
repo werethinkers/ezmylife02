@@ -931,7 +931,7 @@ const PromptMaster: React.FC = () => {
                 </div>
               ) : (
                 favourites.map(fav => (
-                  <FavouriteItem key={fav.id} fav={fav} onUse={handleUseFavourite} onRemove={handleRemoveFavourite} />
+                  <FavouriteItem key={fav.id} fav={fav} onUse={handleUseFavourite} onRemove={handleRemoveFavourite} onEdit={handleEditFavourite} />
                 ))
               )}
             </div>
