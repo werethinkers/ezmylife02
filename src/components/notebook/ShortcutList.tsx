@@ -365,6 +365,7 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteS
                     onCopy={handleCopy}
                     isCopied={copiedKey === uniqueId}
                     onDelete={onDeleteShortcut}
+                    onEdit={onEditShortcut}
                 />
               );
             })}

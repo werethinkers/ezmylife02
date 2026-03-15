@@ -752,6 +752,44 @@ const SpeedyNotebook: React.FC = () => {
       }
   }, [shortcuts, user]);
 
+  const handleEditShortcut = useCallback((oldKey: string, newKey: string, newValue: string, category: string) => {
+      const newMap = new Map(shortcuts);
+      const sheetName = 'AI Generated';
+      const existing = newMap.get(sheetName) || [];
+      const updated = existing.map(item => 
+          item.key === oldKey ? { ...item, key: newKey, value: newValue } : item
+      );
+      newMap.set(sheetName, updated);
+      setShortcuts(newMap);
+      shortcutsRef.current = newMap;
+
+      // Update flat map
+      setFlatShortcutsMap(prev => {
+        const newFlat = new Map(prev);
+        if (oldKey.toLowerCase() !== newKey.toLowerCase()) {
+          newFlat.delete(oldKey.toLowerCase());
+        }
+        newFlat.set(newKey.toLowerCase(), newValue);
+        return newFlat;
+      });
+
+      // Persist
+      if (user) {
+        const editorContent = editorRef.current?.innerHTML || '';
+        supabase
+          .from('notebook_sessions')
+          .upsert({
+            user_id: user.id,
+            editor_content: editorContent,
+            session_shortcuts: JSON.parse(JSON.stringify(updated)),
+          }, { onConflict: 'user_id' })
+          .then(({ error }) => {
+            if (error) console.error('Edit shortcut error:', error);
+            else setSaveStatus('saved');
+          });
+      }
+  }, [shortcuts, user]);
+
   const handleDownload = () => {
       if (!editorRef.current) return;
       const text = editorRef.current.innerText;
