@@ -112,7 +112,7 @@ async function handleDeleteShortcut(key) {
     await syncShortcuts(accessToken);
   } catch (err) { console.error("Delete error:", err); }
 }
-window.handleDeleteShortcut = handleDeleteShortcut;
+
 
 function renderShortcutList(shortcuts) {
   const container = document.getElementById("shortcutList");

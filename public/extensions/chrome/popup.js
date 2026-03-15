@@ -168,15 +168,17 @@ function renderShortcutList(shortcuts) {
             <div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div>
           </div>
           <div class="actions">
-            <button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button>
+            <button class="delete-btn" data-key="${escapeHtml(key)}">✕</button>
           </div>
         </div>`
     )
     .join("");
-}
 
-// Expose to onclick handlers
-window.handleDeleteShortcut = handleDeleteShortcut;
+  // Attach delete listeners programmatically
+  container.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => handleDeleteShortcut(btn.getAttribute("data-key")));
+  });
+}
 
 function escapeHtml(str) {
   const div = document.createElement("div");
