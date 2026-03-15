@@ -202,18 +202,31 @@ function renderShortcutList(shortcuts) {
   container.innerHTML = entries
     .map(
       ([key, val]) =>
-        `<div class="shortcut-item">
+        `<div class="shortcut-item" data-key="${escapeHtml(key)}">
           <div>
             <div class="key">${escapeHtml(key)}</div>
             <div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div>
           </div>
           <div class="actions">
-            <button class="edit-btn" onclick="handleEditShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✎</button>
-            <button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button>
+            <button class="edit-btn">✎</button>
+            <button class="delete-btn">✕</button>
           </div>
         </div>`
     )
     .join("");
+
+  container.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleEditShortcut(key);
+    });
+  });
+  container.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.closest(".shortcut-item").dataset.key;
+      handleDeleteShortcut(key);
+    });
+  });
 }
 
 // Expose to onclick handlers
