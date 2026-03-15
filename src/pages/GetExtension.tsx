@@ -62,8 +62,8 @@ const BROWSERS: Record<string, BrowserInfo> = {
     manualSteps: [
       'Open edge://extensions/ in your browser',
       'Enable "Developer mode" (bottom-left toggle)',
-      'Click "Load unpacked"',
-      'Select the extracted extension folder',
+      'Click "Load unpacked" and select the extracted folder',
+      'Click the extension icon → click "Enable on All Websites"',
     ],
     extensionFolder: 'chrome',
     color: 'from-blue-600 to-cyan-500',
