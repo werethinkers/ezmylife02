@@ -261,14 +261,74 @@ const formatOutput = (prompt: ReturnType<typeof buildPrompt>) => {
 };
 
 // ---- Favourite Item Component ----
-const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouritePrompt) => void; onRemove: (id: string) => void }> = ({ fav, onUse, onRemove }) => {
+const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouritePrompt) => void; onRemove: (id: string) => void; onEdit: (id: string, newShortcut: string, newPrompt: string) => void }> = ({ fav, onUse, onRemove, onEdit }) => {
   const [keyCopied, setKeyCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editKey, setEditKey] = useState(fav.shortcut);
+  const [editPrompt, setEditPrompt] = useState(fav.prompt);
+
   const handleCopyKey = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText('/' + fav.shortcut);
     setKeyCopied(true);
     setTimeout(() => setKeyCopied(false), 1500);
   };
+
+  const handleStartEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditKey(fav.shortcut);
+    setEditPrompt(fav.prompt);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!editKey.trim() || !editPrompt.trim()) return;
+    onEdit(fav.id, editKey.trim(), editPrompt.trim());
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-blue-50 border border-blue-300 rounded-2xl p-3" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-2">
+          <div>
+            <label className="text-[7px] font-black text-blue-600 uppercase tracking-widest">Shortcut Key</label>
+            <input
+              type="text"
+              value={editKey}
+              onChange={(e) => setEditKey(e.target.value)}
+              className="w-full mt-1 px-2 py-1.5 text-[9px] font-bold bg-white border border-blue-200 rounded-lg focus:outline-none focus:border-blue-400 uppercase"
+              maxLength={10}
+            />
+          </div>
+          <div>
+            <label className="text-[7px] font-black text-blue-600 uppercase tracking-widest">Expansion Text</label>
+            <textarea
+              value={editPrompt}
+              onChange={(e) => setEditPrompt(e.target.value)}
+              className="w-full mt-1 px-2 py-1.5 text-[9px] font-bold bg-white border border-blue-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-1.5">
+            <button onClick={handleSaveEdit} className="flex-1 px-2 py-1.5 bg-blue-600 text-white text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-1">
+              <Check size={10} /> Save
+            </button>
+            <button onClick={handleCancelEdit} className="px-2 py-1.5 bg-slate-200 text-slate-600 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-300 transition-all">
+              <X size={10} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
@@ -295,6 +355,13 @@ const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouriteProm
             ) : (
               <Link size={10} className="text-blue-500" />
             )}
+          </button>
+          <button
+            onClick={handleStartEdit}
+            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-indigo-100 rounded-lg transition-all"
+            title="Edit shortcut"
+          >
+            <Pen size={10} className="text-indigo-500" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(fav.id); }}
