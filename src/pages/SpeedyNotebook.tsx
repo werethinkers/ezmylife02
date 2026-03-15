@@ -1070,7 +1070,7 @@ const SpeedyNotebook: React.FC = () => {
                     <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">My Saved Shortcuts</h2>
                     <p className="text-xs text-slate-500 mt-1">{(shortcuts.get('AI Generated') || []).length} shortcut(s)</p>
                   </div>
-                  <ShortcutList shortcuts={shortcuts} onDeleteShortcut={handleDeleteShortcut} />
+                  <ShortcutList shortcuts={shortcuts} onDeleteShortcut={handleDeleteShortcut} onEditShortcut={handleEditShortcut} />
               </div>
         </main>
         
