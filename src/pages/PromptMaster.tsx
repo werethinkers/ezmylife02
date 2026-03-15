@@ -653,6 +653,37 @@ const PromptMaster: React.FC = () => {
     }
   };
 
+  const handleEditFavourite = async (favId: string, newShortcut: string, newPrompt: string) => {
+    if (!user) return;
+    const oldFav = favourites.find(f => f.id === favId);
+    const updatedFavs = favourites.map(f =>
+      f.id === favId ? { ...f, shortcut: newShortcut, prompt: newPrompt, title: newPrompt.slice(0, 40) + (newPrompt.length > 40 ? '...' : '') } : f
+    );
+    setFavourites(updatedFavs);
+
+    const sessionData: SessionData = {
+      context, negativeInput, selections, activeFormat, writingSkill, branding, customTags, suggestions, favourites: updatedFavs,
+    };
+    try {
+      await supabase.from('promptmaster_sessions').upsert([{
+        user_id: user.id,
+        session_data: JSON.parse(JSON.stringify(sessionData)),
+      }], { onConflict: 'user_id' });
+
+      // Also sync edit to extension via edge function
+      if (oldFav) {
+        await supabase.functions.invoke('sync-shortcuts', {
+          method: 'PUT',
+          body: { oldKey: oldFav.shortcut, newKey: newShortcut, newValue: newPrompt },
+        });
+      }
+
+      toast.success(`Updated shortcut: /${newShortcut}`);
+    } catch {
+      toast.error('Failed to update favourite');
+    }
+  };
+
   const handleUseFavourite = (fav: FavouritePrompt) => {
     setContext(fav.prompt);
     setShowFavourites(false);
