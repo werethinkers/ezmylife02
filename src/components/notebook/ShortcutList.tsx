@@ -54,9 +54,12 @@ const SEARCH_RESULT_LIMIT = 100;
 const INITIAL_LIST_LIMIT = 100;
 const ALL_CATEGORIES = "All";
 
-const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: EnrichedShortcutItem) => void; isCopied: boolean; onDelete?: (key: string) => void; }> = React.memo(({ item, onCopy, isCopied, onDelete }) => {
+const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: EnrichedShortcutItem) => void; isCopied: boolean; onDelete?: (key: string) => void; onEdit?: (oldKey: string, newKey: string, newValue: string, category: string) => void; }> = React.memo(({ item, onCopy, isCopied, onDelete, onEdit }) => {
     const categoryTag = item.category;
     const [keyCopied, setKeyCopied] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editKey, setEditKey] = useState(item.key);
+    const [editValue, setEditValue] = useState(item.value);
 
     const handleCopyShortcutKey = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -64,6 +67,50 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
         setKeyCopied(true);
         setTimeout(() => setKeyCopied(false), 1500);
     };
+
+    const handleSaveEdit = () => {
+        if (!editKey.trim() || !editValue.trim()) return;
+        onEdit?.(item.key, editKey.trim(), editValue.trim(), item.category);
+        setIsEditing(false);
+    };
+
+    const handleCancelEdit = () => {
+        setEditKey(item.key);
+        setEditValue(item.value);
+        setIsEditing(false);
+    };
+
+    if (isEditing) {
+        return (
+            <li className="p-3 bg-white dark:bg-slate-900/50 rounded-lg shadow-sm border-2 border-sky-400 dark:border-sky-600">
+                <div className="space-y-2">
+                    <div>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Shortcut Key</label>
+                        <input
+                            type="text"
+                            value={editKey}
+                            onChange={(e) => setEditKey(e.target.value)}
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                            autoFocus
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Expansion Text</label>
+                        <textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            rows={3}
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+                        />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <button onClick={handleCancelEdit} className="px-3 py-1 text-xs font-medium rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                        <button onClick={handleSaveEdit} className="px-3 py-1 text-xs font-medium rounded bg-sky-600 text-white hover:bg-sky-700 transition-colors">Save</button>
+                    </div>
+                </div>
+            </li>
+        );
+    }
 
     return (
         <li className="p-3 bg-white dark:bg-slate-900/50 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700/50">
@@ -98,6 +145,18 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
                         )}
                     </button>
+                    {onEdit && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="flex-shrink-0 p-2 rounded-full text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors"
+                            aria-label={`Edit shortcut ${item.key}`}
+                            title="Edit shortcut"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                    )}
                     <button
                         onClick={() => onCopy(item)}
                         className="flex-shrink-0 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
