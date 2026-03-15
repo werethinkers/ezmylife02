@@ -1,10 +1,17 @@
 // Content script: auto-expands shortcuts on any website
 let shortcuts = {};
-let isExpanding = false; // Prevent re-entrancy
+let isExpanding = false;
 
 // Load shortcuts from storage on init
 chrome.storage.local.get(["shortcuts"], (data) => {
   if (data.shortcuts) shortcuts = data.shortcuts;
+});
+
+// Listen for storage changes (from background sync or popup)
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.shortcuts && changes.shortcuts.newValue) {
+    shortcuts = changes.shortcuts.newValue;
+  }
 });
 
 // Listen for updates from popup
@@ -15,24 +22,15 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 document.addEventListener("input", (e) => {
-  if (isExpanding) return; // Skip our own programmatic changes
-
+  if (isExpanding) return;
   const el = e.target;
-  const isEditable =
-    el.tagName === "INPUT" ||
-    el.tagName === "TEXTAREA" ||
-    el.isContentEditable;
-  if (!isEditable) return;
-
-  if (el.isContentEditable) {
+  if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+    handleInputField(el);
+  } else if (el.isContentEditable) {
     handleContentEditable(el);
-    return;
   }
-
-  handleInputField(el);
 });
 
-// Also listen for keydown to catch cases where input event doesn't fire properly
 document.addEventListener("keydown", (e) => {
   if (isExpanding) return;
   if (e.key !== " " && e.key !== "Enter" && e.key !== "Tab") return;
@@ -40,71 +38,122 @@ document.addEventListener("keydown", (e) => {
   const el = e.target;
   if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && !el.isContentEditable) return;
 
-  // Small delay to let the character be inserted first
-  setTimeout(() => {
-    if (el.isContentEditable) {
-      handleContentEditable(el);
-    } else {
-      handleInputField(el);
+  if (el.isContentEditable) {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const node = range.startContainer;
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        const cursorOffset = range.startOffset;
+        const textBeforeCursor = text.substring(0, cursorOffset);
+        const match = textBeforeCursor.match(/(\S+)$/);
+        if (match) {
+          const lastWord = match[1];
+          const key = Object.keys(shortcuts).find(k => k.toLowerCase() === lastWord.toLowerCase());
+          if (key) {
+            e.preventDefault();
+            isExpanding = true;
+            const expansion = shortcuts[key];
+            const wordStart = cursorOffset - lastWord.length;
+            node.textContent = text.substring(0, wordStart) + expansion + text.substring(cursorOffset);
+            const newRange = document.createRange();
+            newRange.setStart(node, wordStart + expansion.length);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            setTimeout(() => { isExpanding = false; }, 50);
+          }
+        }
+      }
     }
-  }, 0);
+  } else {
+    const val = el.value;
+    const cursorPos = el.selectionStart;
+    if (cursorPos == null || !val) return;
+    const textBeforeCursor = val.substring(0, cursorPos);
+    const match = textBeforeCursor.match(/(\S+)$/);
+    if (!match) return;
+    const lastWord = match[1];
+    const key = Object.keys(shortcuts).find(k => k.toLowerCase() === lastWord.toLowerCase());
+    if (key) {
+      e.preventDefault();
+      expandInputField(el, key, lastWord, cursorPos);
+    }
+  }
 });
 
 function handleInputField(el) {
   const val = el.value;
   if (!val) return;
   const cursorPos = el.selectionStart;
-  if (cursorPos === null || cursorPos === undefined) return;
+  if (cursorPos == null) return;
   const textBeforeCursor = val.substring(0, cursorPos);
 
-  const match = textBeforeCursor.match(/(\S+)$/);
+  const match = textBeforeCursor.match(/(\S+)\s$/);
   if (!match) return;
 
   const lastWord = match[1];
-
-  const key = Object.keys(shortcuts).find(
-    (k) => k.toLowerCase() === lastWord.toLowerCase()
-  );
-
+  const key = Object.keys(shortcuts).find(k => k.toLowerCase() === lastWord.toLowerCase());
   if (key) {
-    const expansion = shortcuts[key];
-    const wordStart = cursorPos - lastWord.length;
-    const before = val.substring(0, wordStart);
-    const after = val.substring(cursorPos);
-    const newValue = before + expansion + after;
-
-    isExpanding = true;
-
-    // Use native setter for React/framework compatibility
-    const nativeSetter =
-      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set ||
-      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-
-    if (nativeSetter) {
-      nativeSetter.call(el, newValue);
-    } else {
-      el.value = newValue;
-    }
-
-    // Set cursor after expansion
-    const newPos = wordStart + expansion.length;
-    el.setSelectionRange(newPos, newPos);
-
-    // Dispatch events so frameworks detect the change
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-
-    // Also dispatch React-specific events
-    const nativeInputEvent = new InputEvent("input", {
-      bubbles: true,
-      cancelable: true,
-      inputType: "insertText",
-      data: expansion,
-    });
-    el.dispatchEvent(nativeInputEvent);
-
-    setTimeout(() => { isExpanding = false; }, 50);
+    const wordStart = cursorPos - lastWord.length - 1;
+    expandInputFieldAt(el, key, wordStart, cursorPos);
   }
+}
+
+function expandInputField(el, key, lastWord, cursorPos) {
+  const val = el.value;
+  const expansion = shortcuts[key];
+  const wordStart = cursorPos - lastWord.length;
+  const before = val.substring(0, wordStart);
+  const after = val.substring(cursorPos);
+  const newValue = before + expansion + after;
+
+  isExpanding = true;
+  setNativeValue(el, newValue);
+  const newPos = wordStart + expansion.length;
+  el.setSelectionRange(newPos, newPos);
+  dispatchInputEvents(el);
+  setTimeout(() => { isExpanding = false; }, 50);
+}
+
+function expandInputFieldAt(el, key, wordStart, cursorPos) {
+  const val = el.value;
+  const expansion = shortcuts[key];
+  const before = val.substring(0, wordStart);
+  const after = val.substring(cursorPos);
+  const newValue = before + expansion + after;
+
+  isExpanding = true;
+  setNativeValue(el, newValue);
+  const newPos = wordStart + expansion.length;
+  el.setSelectionRange(newPos, newPos);
+  dispatchInputEvents(el);
+  setTimeout(() => { isExpanding = false; }, 50);
+}
+
+function setNativeValue(el, value) {
+  const proto = el.tagName === "TEXTAREA"
+    ? window.HTMLTextAreaElement.prototype
+    : window.HTMLInputElement.prototype;
+  const nativeSetter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+
+  if (nativeSetter) {
+    nativeSetter.call(el, value);
+  } else {
+    el.value = value;
+  }
+}
+
+function dispatchInputEvents(el) {
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.dispatchEvent(new InputEvent("input", {
+    bubbles: true,
+    cancelable: true,
+    inputType: "insertText",
+  }));
 }
 
 function handleContentEditable(el) {
@@ -119,23 +168,18 @@ function handleContentEditable(el) {
   const cursorOffset = range.startOffset;
   const textBeforeCursor = text.substring(0, cursorOffset);
 
-  const match = textBeforeCursor.match(/(\S+)$/);
+  const match = textBeforeCursor.match(/(\S+)\s$/);
   if (!match) return;
 
   const lastWord = match[1];
-
-  const key = Object.keys(shortcuts).find(
-    (k) => k.toLowerCase() === lastWord.toLowerCase()
-  );
+  const key = Object.keys(shortcuts).find(k => k.toLowerCase() === lastWord.toLowerCase());
 
   if (key) {
     isExpanding = true;
     const expansion = shortcuts[key];
-    const wordStart = cursorOffset - lastWord.length;
-
-    const before = text.substring(0, wordStart);
+    const wordStart = cursorOffset - lastWord.length - 1;
     const after = text.substring(cursorOffset);
-    node.textContent = before + expansion + after;
+    node.textContent = text.substring(0, wordStart) + expansion + after;
 
     const newRange = document.createRange();
     newRange.setStart(node, wordStart + expansion.length);
@@ -144,7 +188,6 @@ function handleContentEditable(el) {
     sel.addRange(newRange);
 
     el.dispatchEvent(new Event("input", { bubbles: true }));
-
     setTimeout(() => { isExpanding = false; }, 50);
   }
 }
