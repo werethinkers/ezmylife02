@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
+  document.getElementById("tabList").addEventListener("click", () => switchTab("list"));
+  document.getElementById("tabAdd").addEventListener("click", () => switchTab("add"));
 });
 
 // Tab switching
