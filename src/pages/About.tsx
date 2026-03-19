@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { Target, Users, Sparkles, Heart } from "lucide-react";
-import { Target, Users, Sparkles, Heart } from "lucide-react";
 
 const About = () => {
   return (
