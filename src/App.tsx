@@ -32,6 +32,8 @@ const PromptMaster = lazy(() => import("./pages/PromptMaster"));
 const GetExtension = lazy(() => import("./pages/GetExtension"));
 const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
 const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
+const MeetNudge = lazy(() => import("./pages/MeetNudge"));
+const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 
 const queryClient = new QueryClient();
 
@@ -179,6 +181,15 @@ const AnimatedRoutes = () => {
                 </PremiumRoute>
               }
             />
+            <Route
+              path="/meet-nudge"
+              element={
+                <PremiumRoute>
+                  <MeetNudge />
+                </PremiumRoute>
+              }
+            />
+            <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

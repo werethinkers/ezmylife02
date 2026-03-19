@@ -59,6 +59,140 @@ export type Database = {
         }
         Relationships: []
       }
+      meet_nudge_contacts: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          email: string | null
+          event_id: string | null
+          event_name: string | null
+          fun_fact: string | null
+          host_id: string
+          id: string
+          intro_sent: boolean
+          linkedin_url: string | null
+          location: string | null
+          name: string
+          occupation: string | null
+          phone: string | null
+          website: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          event_name?: string | null
+          fun_fact?: string | null
+          host_id: string
+          id?: string
+          intro_sent?: boolean
+          linkedin_url?: string | null
+          location?: string | null
+          name: string
+          occupation?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string | null
+          event_name?: string | null
+          fun_fact?: string | null
+          host_id?: string
+          id?: string
+          intro_sent?: boolean
+          linkedin_url?: string | null
+          location?: string | null
+          name?: string
+          occupation?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meet_nudge_contacts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "meet_nudge_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meet_nudge_events: {
+        Row: {
+          created_at: string
+          date: string | null
+          host_id: string
+          id: string
+          location: string | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          host_id: string
+          id?: string
+          location?: string | null
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          host_id?: string
+          id?: string
+          location?: string | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      meet_nudge_profiles: {
+        Row: {
+          bio: string | null
+          business_name: string | null
+          business_url: string | null
+          created_at: string
+          email: string | null
+          host_id: string
+          linkedin_url: string | null
+          name: string
+          occupation: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          business_name?: string | null
+          business_url?: string | null
+          created_at?: string
+          email?: string | null
+          host_id: string
+          linkedin_url?: string | null
+          name: string
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          business_name?: string | null
+          business_url?: string | null
+          created_at?: string
+          email?: string | null
+          host_id?: string
+          linkedin_url?: string | null
+          name?: string
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notebook_sessions: {
         Row: {
           created_at: string
