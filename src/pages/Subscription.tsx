@@ -370,7 +370,13 @@ const Subscription = () => {
                 <div className="absolute top-0 right-0">
                   <Badge className="rounded-none rounded-bl-xl px-4 py-1 bg-primary text-primary-foreground">
                     <Crown className="h-3 w-3 mr-1" />
-                    {accessType === "coupon" ? "Lifetime" : accessType === "trial" ? "Trial" : "Active"}
+                    {accessType === "trial" 
+                      ? "Trial" 
+                      : subscriptionEnd 
+                        ? `Expires ${new Date(subscriptionEnd).toLocaleDateString()}` 
+                        : accessType === "coupon" 
+                          ? "Lifetime" 
+                          : "Active"}
                   </Badge>
                 </div>
                 <CardContent className="relative pt-12 pb-8 text-center">
@@ -379,11 +385,13 @@ const Subscription = () => {
                   </div>
                   <h2 className="text-2xl font-bold mb-2">Premium Access Active</h2>
                   <p className="text-muted-foreground mb-6">
-                    {accessType === "coupon" 
-                      ? "You have lifetime premium access via coupon code!"
-                      : accessType === "trial"
+                    {accessType === "trial"
                       ? "Your 24-hour trial is active. Make the most of it!"
-                      : "Your subscription is active. Enjoy all premium features!"
+                      : subscriptionEnd
+                        ? `Your premium access is valid until ${new Date(subscriptionEnd).toLocaleDateString()}.`
+                        : accessType === "coupon"
+                          ? "You have lifetime premium access via coupon code!"
+                          : "Your subscription is active. Enjoy all premium features!"
                     }
                   </p>
                   <Button onClick={() => navigate("/tools")} size="lg" className="w-full">
