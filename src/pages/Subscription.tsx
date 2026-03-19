@@ -27,6 +27,7 @@ const Subscription = () => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [accessType, setAccessType] = useState<string | null>(null);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<string | null>(null);
   const [isRedeemingCoupon, setIsRedeemingCoupon] = useState(false);
