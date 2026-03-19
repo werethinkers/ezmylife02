@@ -20,7 +20,7 @@ interface HostProfile {
   bio: string;
 }
 
-const FIELDS = [
+const FIELDS: { key: keyof HostProfile; label: string; icon: any; placeholder: string; required?: boolean; multiline?: boolean }[] = [
   { key: "name", label: "Your Name", icon: User, placeholder: "John Doe", required: true },
   { key: "occupation", label: "Occupation / Title", icon: Briefcase, placeholder: "Product Manager" },
   { key: "business_name", label: "Company", icon: Building2, placeholder: "Acme Inc." },
@@ -29,7 +29,7 @@ const FIELDS = [
   { key: "email", label: "Email", icon: Mail, placeholder: "john@example.com" },
   { key: "phone", label: "Phone / WhatsApp", icon: Phone, placeholder: "+91 9876543210" },
   { key: "bio", label: "Short Bio", icon: FileText, placeholder: "Tell people about yourself...", multiline: true },
-] as const;
+];
 
 interface Props {
   userId: string;

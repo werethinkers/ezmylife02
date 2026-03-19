@@ -13,7 +13,7 @@ interface HostProfile {
   linkedin_url: string | null; email: string | null; phone: string | null; bio: string | null;
 }
 
-const STEPS = [
+const STEPS: { key: string; label: string; emoji: string; icon: any; placeholder: string; required?: boolean }[] = [
   { key: "name", label: "What's your name?", emoji: "👋", icon: User, placeholder: "Your full name", required: true },
   { key: "phone", label: "WhatsApp number?", emoji: "📱", icon: Phone, placeholder: "+91 9876543210", required: true },
   { key: "occupation", label: "What do you do?", emoji: "💼", icon: Briefcase, placeholder: "Product Designer", required: true },
@@ -23,7 +23,7 @@ const STEPS = [
   { key: "linkedin_url", label: "LinkedIn profile?", emoji: "💼", icon: Linkedin, placeholder: "https://linkedin.com/in/..." },
   { key: "email", label: "Email address?", emoji: "✉️", icon: Mail, placeholder: "you@example.com" },
   { key: "fun_fact", label: "Share a fun fact!", emoji: "✨", icon: Sparkles, placeholder: "I once climbed Everest..." },
-] as const;
+];
 
 const ENCOURAGE = [
   "Great start! 🔥", "You're on a roll! 💪", "Keep going! 🚀", "Almost halfway! ⭐",
