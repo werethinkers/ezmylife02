@@ -96,6 +96,7 @@ const Subscription = () => {
 
       setIsPremium(data.subscribed);
       setAccessType(data.access_type);
+      setSubscriptionEnd(data.subscription_end || null);
     } catch (error) {
       console.error("Error checking subscription:", error);
     } finally {
