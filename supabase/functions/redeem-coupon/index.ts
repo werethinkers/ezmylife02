@@ -108,13 +108,21 @@ serve(async (req) => {
       throw new Error("Failed to record coupon redemption");
     }
 
-    // Grant premium access (lifetime for coupon)
+    // Grant premium access
+    const daysLimit = TIME_LIMITED_COUPONS[normalizedCode];
+    let expiresAt: string | null = null;
+    if (daysLimit) {
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + daysLimit);
+      expiresAt = expiry.toISOString();
+    }
+
     const { error: accessError } = await supabaseClient
       .from("premium_access")
       .insert({
         user_id: user.id,
         access_type: "coupon",
-        expires_at: null // Lifetime access
+        expires_at: expiresAt
       });
 
     if (accessError) {
@@ -122,12 +130,13 @@ serve(async (req) => {
       throw new Error("Failed to grant premium access");
     }
 
-    logStep("Coupon redeemed successfully");
+    logStep("Coupon redeemed successfully", { expiresAt });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Coupon redeemed successfully! You now have lifetime premium access." 
-    }), {
+    const message = daysLimit
+      ? `Coupon redeemed! You now have ${daysLimit}-day free premium access.`
+      : "Coupon redeemed successfully! You now have lifetime premium access.";
+
+    return new Response(JSON.stringify({ success: true, message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
