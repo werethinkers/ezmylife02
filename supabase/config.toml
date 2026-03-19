@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.startup-analyser]
 verify_jwt = false
+
+[functions.scan-business-card]
+verify_jwt = false

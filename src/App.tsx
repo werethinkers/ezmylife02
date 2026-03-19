@@ -181,6 +181,15 @@ const AnimatedRoutes = () => {
                 </PremiumRoute>
               }
             />
+            <Route
+              path="/meet-nudge"
+              element={
+                <PremiumRoute>
+                  <MeetNudge />
+                </PremiumRoute>
+              }
+            />
+            <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
