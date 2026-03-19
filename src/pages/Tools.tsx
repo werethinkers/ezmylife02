@@ -24,7 +24,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, Sparkles } from "lucide-react";
-...
+
+interface PreviewTool {
+  id?: string;
+  toolId?: string;
+  name?: string;
+  title?: string;
+  description: string;
+  sector?: string;
+  department?: string;
+  category?: string;
+  isLive: boolean;
+  icon: ReactNode;
+}
+
+const Tools = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSector, setSelectedSector] = useState("All Sectors");
+  const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedToolType, setSelectedToolType] = useState("All Types");
+  const [viewMode, setViewMode] = useState<"browse" | "list" | "featured" | "personalized">("browse");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
+  const [sortBy, setSortBy] = useState<"default" | "a-z" | "z-a" | "category" | "newest" | "oldest">("default");
+
   // DB-backed tool stats (live counts from database)
   const catalogStats = useToolsCatalogStats();
   const { data: catalogTools = [] } = useToolsCatalog();
