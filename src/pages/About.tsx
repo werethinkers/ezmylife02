@@ -7,6 +7,11 @@ import { Target, Users, Sparkles, Heart } from "lucide-react";
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="About EZYOURLIFE - Our Mission & Story"
+        description="Learn about EZYOURLIFE's mission to make digital tools accessible, simple, and powerful for everyone. Discover our story and values."
+        path="/about"
+      />
       <Navbar />
 
       {/* Hero Section */}

@@ -62,6 +62,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Contact EZYOURLIFE - Get In Touch"
+        description="Have questions or feedback about EZYOURLIFE tools? Contact our support team. We typically reply within 24 hours."
+        path="/contact"
+      />
       <Navbar />
 
       {/* Hero Section */}
