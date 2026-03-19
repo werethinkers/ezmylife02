@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import logo from "@/assets/logo.png";
 
 export const LoadingScreen = () => {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -42,7 +43,8 @@ export const LoadingScreen = () => {
           ))}
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
