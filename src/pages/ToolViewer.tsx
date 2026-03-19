@@ -218,9 +218,9 @@ const ToolViewer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Navbar />
-      <div className="border-b border-border/40 bg-background/95 backdrop-blur-sm sticky top-0 z-20">
+      <div className="border-b border-border/40 bg-background/95 backdrop-blur-sm z-20 shrink-0">
         <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button onClick={() => navigate("/tools")} variant="ghost" size="sm" className="gap-2 h-8">
@@ -253,7 +253,7 @@ const ToolViewer = () => {
         </div>
       )}
 
-      <div className={`flex-1 ${isLoading ? 'hidden' : ''}`} style={{ height: 'calc(100vh - 8rem)' }}>
+      <div className={`flex-1 min-h-0 ${isLoading ? 'hidden' : ''}`}>
         {renderContent()}
       </div>
     </div>
