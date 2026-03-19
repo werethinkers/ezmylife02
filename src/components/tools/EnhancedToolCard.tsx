@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getToolTypeConfig } from "@/data/toolTypes";
+import { getToolIconUrl } from "@/data/toolIconMap";
 
 interface EnhancedToolCardProps {
   id?: string;
@@ -45,6 +46,9 @@ export const EnhancedToolCard = ({
   // Get tool type info for the icon badge
   const toolTypeConfig = getToolTypeConfig(displayName);
   const ToolTypeIcon = toolTypeConfig?.icon;
+  
+  // Get AI-generated icon
+  const aiIconUrl = getToolIconUrl(displayId, displayCategory);
 
   const handleClick = () => {
     if (isLive) {
@@ -84,14 +88,19 @@ export const EnhancedToolCard = ({
           {/* Header row with icon and badges */}
           <div className="flex items-start justify-between mb-4">
             <div className={cn(
-              "p-3 rounded-xl transition-all duration-500",
+              "rounded-xl transition-all duration-500",
               "bg-gradient-to-br from-primary/10 to-accent/10",
               "border border-primary/20",
-              "group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20"
+              "group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20",
+              aiIconUrl ? "p-1.5" : "p-3"
             )}>
-              <div className="text-primary h-6 w-6 flex items-center justify-center">
-                {icon}
-              </div>
+              {aiIconUrl ? (
+                <img src={aiIconUrl} alt={displayName} className="h-9 w-9 object-contain rounded-lg" />
+              ) : (
+                <div className="text-primary h-6 w-6 flex items-center justify-center">
+                  {icon}
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-1.5">
