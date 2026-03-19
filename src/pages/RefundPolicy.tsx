@@ -1,10 +1,16 @@
 import { Navbar } from "@/components/Navbar";
+import { SEOHead } from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 const RefundPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Cancellation & Refund Policy - EZYOURLIFE"
+        description="Read EZYOURLIFE's cancellation and refund policy. Learn about our process for cancellations, damaged items, and refund processing timelines."
+        path="/refund-policy"
+      />
       <Navbar />
 
       <main className="container mx-auto px-4 py-16 md:py-24">

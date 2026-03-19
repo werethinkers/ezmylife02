@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Contact EZYOURLIFE - Get In Touch"
+        description="Have questions or feedback about EZYOURLIFE tools? Contact our support team. We typically reply within 24 hours."
+        path="/contact"
+      />
       <Navbar />
 
       {/* Hero Section */}
