@@ -35,6 +35,35 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Auto-grant premium for specific domain
+    const emailDomain = user.email?.split("@")[1]?.toLowerCase();
+    if (emailDomain === "seafund.in") {
+      // Check if already has premium, if not grant it silently
+      const { data: existingAccess } = await supabaseClient
+        .from("premium_access")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!existingAccess) {
+        await supabaseClient.from("premium_access").insert({
+          user_id: user.id,
+          access_type: "coupon",
+          expires_at: null,
+        });
+        logStep("Auto-granted premium for domain user");
+      }
+
+      return new Response(JSON.stringify({
+        subscribed: true,
+        access_type: existingAccess?.access_type || "coupon",
+        subscription_end: null,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Check premium access in database
     const { data: premiumAccess } = await supabaseClient
       .from("premium_access")
