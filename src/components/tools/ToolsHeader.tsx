@@ -74,23 +74,24 @@ export const ToolsHeader = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="flex items-center justify-center gap-3 mb-8"
+            className="flex items-center justify-center gap-3 mb-8 flex-wrap"
           >
-            <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-              <Zap className="h-3.5 w-3.5" />
-              <span className="font-semibold">{liveCount}</span>
-              <span className="text-emerald-600/70">Live</span>
-            </Badge>
-            <Badge variant="secondary" className="px-4 py-1.5 gap-2">
-              <span className="font-semibold">{totalCount.toLocaleString()}</span>
-              <span className="text-muted-foreground">Total</span>
-            </Badge>
-            {showingFiltered && (
+            {showingFiltered ? (
               <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-primary/10 text-primary border-primary/30">
                 <span className="text-primary/70">Showing</span>
                 <span className="font-semibold">{filteredCount}</span>
-                <span className="text-primary/70">of {totalCount.toLocaleString()}</span>
+                <span className="text-primary/70">of {totalCount.toLocaleString()} tools</span>
               </Badge>
+            ) : (
+              <>
+                <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                  <Zap className="h-3.5 w-3.5" />
+                  <span className="font-semibold">{liveCount} Live</span>
+                </Badge>
+                <Badge variant="secondary" className="px-4 py-1.5 gap-2">
+                  <span className="font-semibold">{totalCount.toLocaleString()} Total</span>
+                </Badge>
+              </>
             )}
           </motion.div>
 

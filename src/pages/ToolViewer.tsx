@@ -4,11 +4,21 @@ import { tools, getToolUrl } from "@/data/tools";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, Clock, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { logActivity } from "@/lib/activityLogger";
+import { getToolIconUrl } from "@/data/toolIconMap";
 import logo from "@/assets/logo.png";
+
+interface CatalogTool {
+  name: string;
+  description: string;
+  category: string;
+  dedicated_route: string | null;
+  has_uploaded_files: boolean;
+  is_live: boolean;
+}
 
 const ToolViewer = () => {
   const { toolId } = useParams<{ toolId: string }>();
@@ -17,6 +27,7 @@ const ToolViewer = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [uploadedToolUrl, setUploadedToolUrl] = useState<string | null>(null);
+  const [catalogInfo, setCatalogInfo] = useState<CatalogTool | null>(null);
 
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
@@ -31,11 +42,13 @@ const ToolViewer = () => {
     const checkCatalog = async () => {
       const { data } = await supabase
         .from("tools_catalog")
-        .select("dedicated_route, has_uploaded_files")
+        .select("name, description, category, dedicated_route, has_uploaded_files, is_live")
         .eq("id", toolId)
         .single();
 
       if (data) {
+        setCatalogInfo(data as CatalogTool);
+
         // Redirect to dedicated route if set
         if ((data as any).dedicated_route) {
           navigate((data as any).dedicated_route, { replace: true });
@@ -58,7 +71,12 @@ const ToolViewer = () => {
       // Fallback: native or iframe tool
       if (isNativeTool) {
         setIsLoading(false);
-      } else if (!tool || !toolUrl) {
+      } else if (tool && toolUrl) {
+        // Has a static URL - will load via iframe
+      } else if (data) {
+        // Tool exists in catalog but has no URL/native - show preview
+        setIsLoading(false);
+      } else {
         setError("Tool not found");
         setIsLoading(false);
       }
@@ -107,10 +125,12 @@ const ToolViewer = () => {
 
   // Determine the iframe source
   const iframeSrc = uploadedToolUrl || toolUrl;
-  const toolTitle = tool?.title || toolId || "Tool";
+  const toolTitle = tool?.title || catalogInfo?.name || toolId || "Tool";
+  const toolDescription = tool?.description || catalogInfo?.description || "";
+  const toolCategory = tool?.category || catalogInfo?.category || "";
 
-  // Error state
-  if (error || (!isNativeTool && !iframeSrc && !isLoading)) {
+  // Error state - truly not found
+  if (error) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -120,6 +140,39 @@ const ToolViewer = () => {
           <p className="text-muted-foreground">The requested tool could not be found.</p>
           <Button onClick={() => navigate("/tools")} variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tools
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Tool exists in catalog but has no implementation yet - show preview page
+  if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
+    const iconUrl = toolId ? getToolIconUrl(toolId, toolCategory) : null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 px-4">
+          {iconUrl ? (
+            <img src={iconUrl} alt={toolTitle} className="h-24 w-24 object-contain rounded-2xl" />
+          ) : (
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <Sparkles className="h-12 w-12 text-primary" />
+            </div>
+          )}
+          <div className="text-center max-w-lg">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{toolTitle}</h1>
+            <Badge className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/30">
+              <Clock className="h-3 w-3 mr-1" />
+              Coming Soon
+            </Badge>
+            <p className="text-muted-foreground leading-relaxed">{toolDescription}</p>
+            {toolCategory && (
+              <Badge variant="secondary" className="mt-3">{toolCategory}</Badge>
+            )}
+          </div>
+          <Button onClick={() => navigate("/tools")} variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Back to Tools
           </Button>
         </div>
       </div>
@@ -192,7 +245,7 @@ const ToolViewer = () => {
       </div>
 
       {isLoading && (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading {toolTitle}...</p>
