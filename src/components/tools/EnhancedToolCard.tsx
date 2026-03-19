@@ -46,6 +46,9 @@ export const EnhancedToolCard = ({
   // Get tool type info for the icon badge
   const toolTypeConfig = getToolTypeConfig(displayName);
   const ToolTypeIcon = toolTypeConfig?.icon;
+  
+  // Get AI-generated icon
+  const aiIconUrl = getToolIconUrl(displayId, displayCategory);
 
   const handleClick = () => {
     if (isLive) {
