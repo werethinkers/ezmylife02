@@ -53,6 +53,11 @@ const Subscription = () => {
   }, [user, navigate]);
 
   useEffect(() => {
+    const couponParam = searchParams.get("coupon");
+    if (couponParam) {
+      setCouponCode(couponParam);
+    }
+
     if (searchParams.get("success") === "true") {
       toast({
         title: "Payment Successful!",

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import LaunchOfferBanner from "@/components/LaunchOfferBanner";
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import logo from "@/assets/logo.png";
@@ -201,6 +202,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <Navbar />
+      <LaunchOfferBanner />
 
       {/* Hero Section with Parallax */}
       <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
