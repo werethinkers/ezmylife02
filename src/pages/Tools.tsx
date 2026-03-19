@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useToolsCatalogStats } from "@/hooks/useToolsCatalog";
+import { useToolsCatalog, useToolsCatalogStats } from "@/hooks/useToolsCatalog";
 import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
 import { ToolsHeader } from "@/components/tools/ToolsHeader";
@@ -8,13 +8,13 @@ import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { PersonalizedTools } from "@/components/tools/PersonalizedTools";
-import { 
+import {
   expandedTools,
-  sectorSpecificTools, 
+  sectorSpecificTools,
   totalToolCount,
   sectorCategories,
   departments,
-  departmentSubcategories
+  departmentSubcategories,
 } from "@/data/expandedTools";
 import { tools as liveToolsList, getLiveToolsCount } from "@/data/tools";
 import { getToolNamesForType } from "@/data/toolTypes";
@@ -23,7 +23,7 @@ import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Sparkles } from "lucide-react";
 
 interface PreviewTool {
   id?: string;
@@ -51,11 +51,27 @@ const Tools = () => {
 
   // DB-backed tool stats (live counts from database)
   const catalogStats = useToolsCatalogStats();
+  const { data: catalogTools = [] } = useToolsCatalog();
 
-  // Get live tools from tools.tsx
+  // Merge static + database featured tools and dedupe by toolId
   const featuredLiveTools = useMemo(() => {
-    return liveToolsList.filter(t => t.isLive);
-  }, []);
+    const dbFeaturedTools = catalogTools
+      .filter((tool) => tool.source === "featured")
+      .map((tool) => ({
+        title: tool.name,
+        description: tool.description,
+        category: tool.category,
+        icon: <Sparkles className="h-8 w-8" />,
+        toolId: tool.id,
+        videoLink: "",
+        isLive: tool.is_live,
+      }));
+
+    const merged = [...liveToolsList, ...dbFeaturedTools];
+    const uniqueById = Array.from(new Map(merged.map((tool) => [tool.toolId, tool])).values());
+
+    return uniqueById.filter((tool) => tool.isLive);
+  }, [catalogTools]);
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
