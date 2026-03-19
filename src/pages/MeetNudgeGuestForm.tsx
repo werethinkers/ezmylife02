@@ -31,7 +31,7 @@ const ENCOURAGE = [
 ];
 
 const MeetNudgeGuestForm = () => {
-  const { eventSlug } = useParams<{ eventSlug: string }>();
+  const { eventSlug, hostSlug } = useParams<{ eventSlug: string; hostSlug?: string }>();
   const [event, setEvent] = useState<any>(null);
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
   const [loading, setLoading] = useState(true);
