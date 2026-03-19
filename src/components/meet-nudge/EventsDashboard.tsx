@@ -47,6 +47,10 @@ const generateSlug = (name: string) => {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).slice(2, 6);
 };
 
+const getHostSlug = (name: string) => {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+};
+
 export default function EventsDashboard({ userId, hostProfile }: Props) {
   const [events, setEvents] = useState<Event[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -153,9 +157,9 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
                 <DialogContent className="max-w-xs">
                   <DialogHeader><DialogTitle className="text-center">{event.name}</DialogTitle></DialogHeader>
                   <div className="flex flex-col items-center gap-3 py-4">
-                    <QRCodeSVG value={`${baseUrl}/e/${event.slug}`} size={200} />
-                    <p className="text-xs text-muted-foreground text-center break-all">{baseUrl}/e/{event.slug}</p>
-                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${baseUrl}/e/${event.slug}`); toast({ title: "Link copied!" }); }}>Copy Link</Button>
+                    <QRCodeSVG value={`${baseUrl}/meetnudge/${getHostSlug(hostProfile?.name || "host")}/${event.slug}`} size={200} />
+                    <p className="text-xs text-muted-foreground text-center break-all">{baseUrl}/meetnudge/{getHostSlug(hostProfile?.name || "host")}/{event.slug}</p>
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${baseUrl}/meetnudge/${getHostSlug(hostProfile?.name || "host")}/${event.slug}`); toast({ title: "Link copied!" }); }}>Copy Link</Button>
                   </div>
                 </DialogContent>
               </Dialog>
