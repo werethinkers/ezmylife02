@@ -202,6 +202,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <Navbar />
+      <LaunchOfferBanner />
 
       {/* Hero Section with Parallax */}
       <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
