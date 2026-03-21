@@ -3,6 +3,13 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 let currentShortcuts = {};
 
+function switchTab(tab) {
+  document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
+  document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
+  document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
+  document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const stored = await chrome.storage.local.get(["accessToken", "shortcuts"]);
 
@@ -20,15 +27,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
-});
+  document.getElementById("tabList").addEventListener("click", () => switchTab("list"));
+  document.getElementById("tabAdd").addEventListener("click", () => switchTab("add"));
 
-// Tab switching
-window.switchTab = function (tab) {
-  document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
-  document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
-  document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
-  document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
-};
+  // Event delegation for delete buttons
+  document.getElementById("shortcutList").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-delete-key]");
+    if (btn) handleDeleteShortcut(btn.dataset.deleteKey);
+  });
+});
 
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
@@ -163,15 +170,12 @@ function renderShortcutList(shortcuts) {
             <div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div>
           </div>
           <div class="actions">
-            <button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button>
+            <button class="delete-btn" data-delete-key="${escapeHtml(key)}">✕</button>
           </div>
         </div>`
     )
     .join("");
 }
-
-// Expose to onclick handlers
-window.handleDeleteShortcut = handleDeleteShortcut;
 
 function escapeHtml(str) {
   const div = document.createElement("div");
