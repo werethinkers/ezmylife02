@@ -1,6 +1,6 @@
 // Content script: auto-expands shortcuts on any website
 let shortcuts = {};
-let isExpanding = false; // Prevent re-entrancy
+let isExpanding = false;
 
 // Load shortcuts from storage on init
 chrome.storage.local.get(["shortcuts"], (data) => {
@@ -11,6 +11,13 @@ chrome.storage.local.get(["shortcuts"], (data) => {
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "SHORTCUTS_UPDATED") {
     shortcuts = msg.shortcuts || {};
+  }
+});
+
+// Real-time sync across tabs via storage changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.shortcuts) {
+    shortcuts = changes.shortcuts.newValue || {};
   }
 });
 
@@ -106,11 +113,34 @@ function handleContentEditable(el) {
   if (!sel || sel.rangeCount === 0) return;
 
   const range = sel.getRangeAt(0);
-  const node = range.startContainer;
-  if (node.nodeType !== Node.TEXT_NODE) return;
+  let node = range.startContainer;
+  let cursorOffset = range.startOffset;
+
+  if (node.nodeType !== Node.TEXT_NODE) {
+    if (node.childNodes.length > 0 && cursorOffset > 0) {
+      const child = node.childNodes[cursorOffset - 1];
+      if (child && child.nodeType === Node.TEXT_NODE) {
+        node = child;
+        cursorOffset = node.textContent.length;
+      } else if (child && child.textContent) {
+        const walker = document.createTreeWalker(child, NodeFilter.SHOW_TEXT);
+        let lastText = null;
+        while (walker.nextNode()) lastText = walker.currentNode;
+        if (lastText) {
+          node = lastText;
+          cursorOffset = lastText.textContent.length;
+        } else {
+          return;
+        }
+      } else {
+        return;
+      }
+    } else {
+      return;
+    }
+  }
 
   const text = node.textContent;
-  const cursorOffset = range.startOffset;
   const textBeforeCursor = text.substring(0, cursorOffset);
 
   const match = textBeforeCursor.match(/(\S+)$/);
@@ -127,17 +157,26 @@ function handleContentEditable(el) {
     const expansion = shortcuts[key];
     const wordStart = cursorOffset - lastWord.length;
 
-    const before = text.substring(0, wordStart);
-    const after = text.substring(cursorOffset);
-    node.textContent = before + expansion + after;
+    try {
+      const selectRange = document.createRange();
+      selectRange.setStart(node, wordStart);
+      selectRange.setEnd(node, cursorOffset);
+      sel.removeAllRanges();
+      sel.addRange(selectRange);
+      document.execCommand('insertText', false, expansion);
+    } catch (e) {
+      const before = text.substring(0, wordStart);
+      const after = text.substring(cursorOffset);
+      node.textContent = before + expansion + after;
 
-    const newRange = document.createRange();
-    newRange.setStart(node, wordStart + expansion.length);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
+      const newRange = document.createRange();
+      newRange.setStart(node, wordStart + expansion.length);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
 
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
 
     setTimeout(() => { isExpanding = false; }, 50);
   }
