@@ -7,6 +7,13 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 let currentShortcuts = {};
 
+function switchTab(tab) {
+  document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
+  document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
+  document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
+  document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const stored = await storageAPI.local.get(["accessToken", "shortcuts"]);
   if (stored.accessToken) {
@@ -21,14 +28,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addBtn").addEventListener("click", handleAddShortcut);
-});
+  document.getElementById("tabList").addEventListener("click", () => switchTab("list"));
+  document.getElementById("tabAdd").addEventListener("click", () => switchTab("add"));
 
-window.switchTab = function (tab) {
-  document.getElementById("tabList").className = tab === "list" ? "tab active" : "tab";
-  document.getElementById("tabAdd").className = tab === "add" ? "tab active" : "tab";
-  document.getElementById("listPanel").style.display = tab === "list" ? "block" : "none";
-  document.getElementById("addPanel").style.display = tab === "add" ? "block" : "none";
-};
+  document.getElementById("shortcutList").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-delete-key]");
+    if (btn) handleDeleteShortcut(btn.dataset.deleteKey);
+  });
+});
 
 async function handleLogin() {
   const email = document.getElementById("email").value.trim();
@@ -108,7 +115,6 @@ async function handleDeleteShortcut(key) {
     await syncShortcuts(accessToken);
   } catch (err) { console.error("Delete error:", err); }
 }
-window.handleDeleteShortcut = handleDeleteShortcut;
 
 function renderShortcutList(shortcuts) {
   const container = document.getElementById("shortcutList");
@@ -118,7 +124,7 @@ function renderShortcutList(shortcuts) {
     return;
   }
   container.innerHTML = entries.map(([key, val]) =>
-    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="delete-btn" onclick="handleDeleteShortcut('${escapeHtml(key).replace(/'/g, "\\'")}')">✕</button></div></div>`
+    `<div class="shortcut-item"><div><div class="key">${escapeHtml(key)}</div><div class="val" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div><div class="actions"><button class="delete-btn" data-delete-key="${escapeHtml(key)}">✕</button></div></div>`
   ).join("");
 }
 
