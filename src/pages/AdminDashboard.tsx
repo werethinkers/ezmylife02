@@ -239,8 +239,8 @@ const AdminDashboard = () => {
                         <TableCell><Badge variant="outline">{p.auth_provider || "email"}</Badge></TableCell>
                         <TableCell className="text-xs">{format(new Date(p.created_at), "MMM d, yyyy")}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedProfile(p)}>
-                            <Eye className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" onClick={() => window.open(`/admin/user/${p.id}`, '_blank')}>
+                            <ExternalLink className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -249,44 +249,6 @@ const AdminDashboard = () => {
                 </Table>
               </CardContent>
             </Card>
-
-            {/* User Detail Dialog */}
-            <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>User Details</DialogTitle>
-                </DialogHeader>
-                {selectedProfile && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        { label: "Full Name", value: selectedProfile.full_name },
-                        { label: "Display Name", value: selectedProfile.display_name },
-                        { label: "Email", value: selectedProfile.email },
-                        { label: "Phone", value: selectedProfile.phone_number },
-                        { label: "Company", value: selectedProfile.company },
-                        { label: "Job Title", value: selectedProfile.job_title },
-                        { label: "Location", value: selectedProfile.location },
-                        { label: "Website", value: selectedProfile.website },
-                        { label: "Auth Provider", value: selectedProfile.auth_provider },
-                        { label: "Joined", value: format(new Date(selectedProfile.created_at), "MMM d, yyyy HH:mm") },
-                      ].map(item => (
-                        <div key={item.label}>
-                          <p className="text-xs text-muted-foreground">{item.label}</p>
-                          <p className="text-sm font-medium">{item.value || "—"}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {selectedProfile.bio && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Bio</p>
-                        <p className="text-sm">{selectedProfile.bio}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
           </>
         )}
 
