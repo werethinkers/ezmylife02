@@ -285,6 +285,43 @@ const Home = () => {
                 </Button>
               </motion.div>
             </motion.div>
+
+            {/* Big Launch Offer CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="w-full max-w-2xl mx-auto mt-8"
+            >
+              <Link to="/subscription?coupon=ezyLAUNCH" className="block">
+                <motion.div
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative overflow-hidden rounded-2xl border-2 border-dashed border-primary/60 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-6 md:p-8 text-center"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-3xl md:text-4xl mb-2"
+                  >
+                    🎉
+                  </motion.div>
+                  <h3 className="text-xl md:text-2xl font-bold mb-1">
+                    One-Time Launch Offer — <span className="text-primary">100% FREE</span>
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground mb-3">
+                    Get your first month completely free. No credit card needed. Use code:
+                  </p>
+                  <span className="inline-block font-mono font-bold text-lg md:text-xl tracking-widest text-primary bg-background border-2 border-primary/40 rounded-lg px-6 py-2">
+                    ezyLAUNCH
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
+                    <Zap className="h-3 w-3" /> Limited to early users only • Click to redeem →
+                  </p>
+                </motion.div>
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
         
