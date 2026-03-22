@@ -403,6 +403,32 @@ const Subscription = () => {
             </div>
           ) : (
             <>
+              {/* Big Launch Offer Banner */}
+              <div className="max-w-4xl mx-auto mb-12 animate-fade-in">
+                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-primary/60 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-8 md:p-10 text-center">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl" />
+                  <div className="relative">
+                    <Badge className="mb-4 bg-primary/20 text-primary border-primary/30 text-sm px-4 py-1">
+                      <Sparkles className="h-3 w-3 mr-1" /> One-Time Launch Offer
+                    </Badge>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                      Get Your First Month <span className="text-primary">100% FREE</span>
+                    </h2>
+                    <p className="text-lg text-muted-foreground mb-5 max-w-xl mx-auto">
+                      No credit card required. Use the coupon code below to unlock 30 days of premium access — absolutely free.
+                    </p>
+                    <div className="inline-flex items-center gap-3 bg-background border-2 border-dashed border-primary/50 rounded-xl px-6 py-3 mb-4">
+                      <span className="font-mono font-bold text-2xl tracking-widest text-primary">ezyLAUNCH</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                      <Zap className="h-3 w-3" /> Valid for early users only • Scroll down to apply
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Pricing Cards */}
               <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
                 {/* Trial Plan */}
