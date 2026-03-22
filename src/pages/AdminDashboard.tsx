@@ -332,6 +332,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "tool-mgmt" && <ToolManagement />}
+        {activeTab === "tool-requests" && <ToolRequests />}
       </div>
     </div>
   );
