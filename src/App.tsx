@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
 const GetExtension = lazy(() => import("./pages/GetExtension"));
