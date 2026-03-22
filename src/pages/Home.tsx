@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import LaunchOfferBanner from "@/components/LaunchOfferBanner";
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
+import RequestToolSection from "@/components/RequestToolSection";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import logo from "@/assets/logo.png";
 import { useRef } from "react";
@@ -554,6 +555,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Request a Tool Section */}
+      <RequestToolSection />
 
       {/* Final CTA Section */}
       <section className="py-24 md:py-32">
