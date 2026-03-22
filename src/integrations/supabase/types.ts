@@ -394,6 +394,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          status: string
+          tool_description: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          status?: string
+          tool_description: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          status?: string
+          tool_description?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tool_sessions: {
         Row: {
           created_at: string
