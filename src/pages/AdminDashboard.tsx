@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus } from "lucide-react";
+import ToolRequests from "@/components/admin/ToolRequests";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
