@@ -159,6 +159,14 @@ const AnimatedRoutes = () => {
               }
             />
             <Route
+              path="/admin/user/:userId"
+              element={
+                <ProtectedRoute>
+                  <AdminUserDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/get-extension"
               element={
                 <PremiumRoute>
