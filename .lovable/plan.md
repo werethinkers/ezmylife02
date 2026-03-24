@@ -1,53 +1,54 @@
 
 
-# Fix Extension Compatibility Across Chrome Versions
+# Add Soft Delete + Undo for Meet Nudge Events
 
 ## Problem
-The extension fails on some Chrome versions because **Manifest V3 blocks inline event handlers** (`onclick="..."` in HTML). Stricter Chrome installations enforce this CSP, causing the popup to break silently.
+Events and their contacts are permanently deleted immediately with no confirmation or recovery option. A user accidentally deleted an event and lost all contacts.
 
-## Root Causes
-1. `popup.html` has `onclick="switchTab('list')"` and `onclick="switchTab('add')"` on tab elements
-2. `renderShortcutList()` in `popup.js` generates delete buttons with `onclick="handleDeleteShortcut('...')"` via `innerHTML`
-3. Both rely on `window.switchTab` and `window.handleDeleteShortcut` globals, which only work if inline handlers are allowed
+## Current Behavior
+`deleteEvent` does a hard `DELETE` on both `meet_nudge_contacts` and `meet_nudge_events` rows -- data is gone forever.
 
-## Fix (4 file sets, same changes mirrored)
+## Solution: Soft Delete with Undo + Confirmation Dialog
 
-### Step 1: Remove inline onclick from popup.html
-- Remove `onclick` attributes from tab divs (lines 76-77)
-- Keep the `id` attributes for programmatic binding
+### Step 1: Database Migration -- Add soft delete columns
+Add `deleted_at` (nullable timestamp) to both `meet_nudge_events` and `meet_nudge_contacts` tables. Update RLS policies and queries to filter by `deleted_at IS NULL`.
 
-**Files**: `chrome-extension/popup.html`, `public/extensions/chrome/popup.html`, `firefox-extension/popup.html`, `public/extensions/firefox/popup.html`
-
-### Step 2: Fix popup.js — programmatic tab + delete listeners
-- Add `addEventListener` for `tabList` and `tabAdd` clicks in `DOMContentLoaded`
-- Remove `window.switchTab` and `window.handleDeleteShortcut` global assignments
-- In `renderShortcutList()`, use **event delegation** on the `shortcutList` container instead of inline `onclick` on each delete button. Add `data-key` attributes to delete buttons and listen for clicks on the container.
-
-**Files**: `chrome-extension/popup.js`, `public/extensions/chrome/popup.js`, `firefox-extension/popup.js`, `public/extensions/firefox/popup.js`
-
-### Step 3: Fix content.js — WhatsApp Web + SPA compatibility
-- Replace direct `node.textContent` manipulation in `handleContentEditable` with `document.execCommand('insertText')` — this is the only method that works with WhatsApp Web's editor
-- Add `chrome.storage.onChanged` listener for real-time shortcut sync across tabs
-- These are the same content.js fixes from the previously approved plan
-
-**Files**: All 4 content.js copies
-
-### Technical Detail — Key Change in handleContentEditable
-```javascript
-// Instead of: node.textContent = before + expansion + after
-// Use:
-range.setStart(node, wordStart);
-range.setEnd(node, cursorOffset);
-sel.removeAllRanges();
-sel.addRange(range);
-document.execCommand('insertText', false, expansion);
+```sql
+ALTER TABLE meet_nudge_events ADD COLUMN deleted_at timestamptz DEFAULT NULL;
+ALTER TABLE meet_nudge_contacts ADD COLUMN deleted_at timestamptz DEFAULT NULL;
 ```
 
-### Technical Detail — Event Delegation for Delete
-```javascript
-document.getElementById("shortcutList").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-delete-key]");
-  if (btn) handleDeleteShortcut(btn.dataset.deleteKey);
-});
+### Step 2: Update EventsDashboard.tsx
+- **Confirmation dialog**: Add an `AlertDialog` before delete (using existing `alert-dialog.tsx` component). "Are you sure? This will archive the event and its contacts."
+- **Soft delete**: Instead of `DELETE`, set `deleted_at = now()` on the event and its contacts.
+- **Undo toast**: After soft-deleting, show a toast with an "Undo" action button. Clicking it sets `deleted_at = null` on both event and contacts.
+- **Auto-purge timeout**: After 30 seconds, if not undone, the undo option expires (data stays soft-deleted in DB but disappears from UI).
+- **Filter queries**: Update `fetchData` to only fetch rows where `deleted_at IS NULL`.
+
+### Step 3: Recovery of contacts
+Since we're switching to soft delete, contacts are preserved. The undo restores both the event AND all its contacts. Even if the undo window passes, an admin could still recover data from the database since rows aren't hard-deleted.
+
+### Technical Details
+
+**Soft delete function:**
+```typescript
+const deleteEvent = async (id: string) => {
+  const now = new Date().toISOString();
+  await supabase.from("meet_nudge_contacts").update({ deleted_at: now }).eq("event_id", id);
+  await supabase.from("meet_nudge_events").update({ deleted_at: now }).eq("id", id);
+  // Show undo toast
+};
 ```
+
+**Undo function:**
+```typescript
+const undoDelete = async (eventId: string) => {
+  await supabase.from("meet_nudge_events").update({ deleted_at: null }).eq("id", eventId);
+  await supabase.from("meet_nudge_contacts").update({ deleted_at: null }).eq("event_id", eventId);
+};
+```
+
+**Files to modify:**
+- Database migration (add `deleted_at` columns)
+- `src/components/meet-nudge/EventsDashboard.tsx` (soft delete, undo toast, confirmation dialog, filtered queries)
 
