@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { Plus, QrCode, Trash2, MapPin, Calendar, Users, Camera } from "lucide-react";
+import { Plus, QrCode, Trash2, MapPin, Calendar, Users, Camera, Undo2 } from "lucide-react";
 import ContactCard from "./ContactCard";
 import BusinessCardScanner from "./BusinessCardScanner";
 
@@ -64,8 +65,8 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
 
   const fetchData = async () => {
     const [evRes, coRes] = await Promise.all([
-      supabase.from("meet_nudge_events").select("*").eq("host_id", userId).order("created_at", { ascending: false }),
-      supabase.from("meet_nudge_contacts").select("*").eq("host_id", userId).order("created_at", { ascending: false }),
+      supabase.from("meet_nudge_events").select("*").eq("host_id", userId).is("deleted_at", null).order("created_at", { ascending: false }),
+      supabase.from("meet_nudge_contacts").select("*").eq("host_id", userId).is("deleted_at", null).order("created_at", { ascending: false }),
     ]);
     if (evRes.data) setEvents(evRes.data);
     if (coRes.data) setContacts(coRes.data as Contact[]);
@@ -98,9 +99,29 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
   };
 
   const deleteEvent = async (id: string) => {
-    await supabase.from("meet_nudge_contacts").delete().eq("event_id", id);
-    await supabase.from("meet_nudge_events").delete().eq("id", id);
-    toast({ title: "Event deleted" });
+    const now = new Date().toISOString();
+    await supabase.from("meet_nudge_contacts").update({ deleted_at: now } as any).eq("event_id", id);
+    await supabase.from("meet_nudge_events").update({ deleted_at: now } as any).eq("id", id);
+    
+    // Remove from local state immediately
+    setEvents(prev => prev.filter(e => e.id !== id));
+    setContacts(prev => prev.filter(c => c.event_id !== id));
+    
+    toast({
+      title: "Event archived",
+      description: "You can undo this action within 30 seconds.",
+      action: (
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => undoDelete(id)}>
+          <Undo2 className="h-3 w-3" /> Undo
+        </Button>
+      ),
+    });
+  };
+
+  const undoDelete = async (eventId: string) => {
+    await supabase.from("meet_nudge_events").update({ deleted_at: null } as any).eq("id", eventId);
+    await supabase.from("meet_nudge_contacts").update({ deleted_at: null } as any).eq("event_id", eventId);
+    toast({ title: "Event restored! ✅" });
     fetchData();
   };
 
@@ -172,9 +193,23 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
                   <BusinessCardScanner userId={userId} eventId={event.id} eventName={event.name} onSaved={() => { setScanEvent(null); fetchData(); }} />
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteEvent(event.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete "{event.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription>This will archive the event and all its contacts. You'll have 30 seconds to undo.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteEvent(event.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {eventContacts(event.id).length > 0 && (
