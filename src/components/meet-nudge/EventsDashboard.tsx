@@ -99,9 +99,29 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
   };
 
   const deleteEvent = async (id: string) => {
-    await supabase.from("meet_nudge_contacts").delete().eq("event_id", id);
-    await supabase.from("meet_nudge_events").delete().eq("id", id);
-    toast({ title: "Event deleted" });
+    const now = new Date().toISOString();
+    await supabase.from("meet_nudge_contacts").update({ deleted_at: now } as any).eq("event_id", id);
+    await supabase.from("meet_nudge_events").update({ deleted_at: now } as any).eq("id", id);
+    
+    // Remove from local state immediately
+    setEvents(prev => prev.filter(e => e.id !== id));
+    setContacts(prev => prev.filter(c => c.event_id !== id));
+    
+    toast({
+      title: "Event archived",
+      description: "You can undo this action within 30 seconds.",
+      action: (
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => undoDelete(id)}>
+          <Undo2 className="h-3 w-3" /> Undo
+        </Button>
+      ),
+    });
+  };
+
+  const undoDelete = async (eventId: string) => {
+    await supabase.from("meet_nudge_events").update({ deleted_at: null } as any).eq("id", eventId);
+    await supabase.from("meet_nudge_contacts").update({ deleted_at: null } as any).eq("event_id", eventId);
+    toast({ title: "Event restored! ✅" });
     fetchData();
   };
 
