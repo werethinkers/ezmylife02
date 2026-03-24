@@ -193,9 +193,23 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
                   <BusinessCardScanner userId={userId} eventId={event.id} eventName={event.name} onSaved={() => { setScanEvent(null); fetchData(); }} />
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteEvent(event.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete "{event.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription>This will archive the event and all its contacts. You'll have 30 seconds to undo.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteEvent(event.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {eventContacts(event.id).length > 0 && (
