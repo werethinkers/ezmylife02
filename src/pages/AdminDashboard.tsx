@@ -335,6 +335,7 @@ const AdminDashboard = () => {
 
         {activeTab === "tool-mgmt" && <ToolManagement />}
         {activeTab === "tool-requests" && <ToolRequests />}
+        {activeTab === "archived-events" && <ArchivedEvents />}
       </div>
     </div>
   );
