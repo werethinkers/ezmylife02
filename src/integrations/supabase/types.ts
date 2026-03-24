@@ -63,6 +63,7 @@ export type Database = {
         Row: {
           business_name: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           event_id: string | null
           event_name: string | null
@@ -80,6 +81,7 @@ export type Database = {
         Insert: {
           business_name?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           event_id?: string | null
           event_name?: string | null
@@ -97,6 +99,7 @@ export type Database = {
         Update: {
           business_name?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           event_id?: string | null
           event_name?: string | null
@@ -125,6 +128,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string | null
+          deleted_at: string | null
           host_id: string
           id: string
           location: string | null
@@ -134,6 +138,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date?: string | null
+          deleted_at?: string | null
           host_id: string
           id?: string
           location?: string | null
@@ -143,6 +148,7 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string | null
+          deleted_at?: string | null
           host_id?: string
           id?: string
           location?: string | null
