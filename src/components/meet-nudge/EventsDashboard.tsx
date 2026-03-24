@@ -65,8 +65,8 @@ export default function EventsDashboard({ userId, hostProfile }: Props) {
 
   const fetchData = async () => {
     const [evRes, coRes] = await Promise.all([
-      supabase.from("meet_nudge_events").select("*").eq("host_id", userId).order("created_at", { ascending: false }),
-      supabase.from("meet_nudge_contacts").select("*").eq("host_id", userId).order("created_at", { ascending: false }),
+      supabase.from("meet_nudge_events").select("*").eq("host_id", userId).is("deleted_at", null).order("created_at", { ascending: false }),
+      supabase.from("meet_nudge_contacts").select("*").eq("host_id", userId).is("deleted_at", null).order("created_at", { ascending: false }),
     ]);
     if (evRes.data) setEvents(evRes.data);
     if (coRes.data) setContacts(coRes.data as Contact[]);
