@@ -7,6 +7,8 @@ interface SEOHeadProps {
   type?: "website" | "article" | "product";
   image?: string;
   noindex?: boolean;
+  keywords?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 const BASE_URL = "https://ezmylife02.lovable.app";
@@ -18,15 +20,15 @@ export const SEOHead = ({
   type = "website",
   image = `${BASE_URL}/og-image.png`,
   noindex = false,
+  keywords,
+  jsonLd,
 }: SEOHeadProps) => {
   const fullTitle = title.includes("EZYOURLIFE") ? title : `${title} | EZYOURLIFE`;
   const canonicalUrl = `${BASE_URL}${path}`;
 
   useEffect(() => {
-    // Title
     document.title = fullTitle;
 
-    // Helper to set/create meta tags
     const setMeta = (attr: string, key: string, content: string) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement;
       if (!el) {
@@ -39,7 +41,13 @@ export const SEOHead = ({
 
     // Standard meta
     setMeta("name", "description", description);
-    setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow");
+    setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large");
+    setMeta("name", "author", "EZYOURLIFE");
+    setMeta("name", "application-name", "EZYOURLIFE");
+
+    if (keywords) {
+      setMeta("name", "keywords", keywords);
+    }
 
     // Open Graph
     setMeta("property", "og:title", fullTitle);
@@ -72,7 +80,7 @@ export const SEOHead = ({
     script.id = "seo-jsonld";
     script.type = "application/ld+json";
 
-    const jsonLd: Record<string, unknown> = {
+    const defaultJsonLd: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": type === "website" ? "WebSite" : "WebPage",
       name: fullTitle,
@@ -82,6 +90,7 @@ export const SEOHead = ({
       publisher: {
         "@type": "Organization",
         name: "EZYOURLIFE",
+        alternateName: ["ezyourlife", "ez your life"],
         url: BASE_URL,
         logo: {
           "@type": "ImageObject",
@@ -91,22 +100,28 @@ export const SEOHead = ({
     };
 
     if (path === "/") {
-      jsonLd["@type"] = "WebSite";
-      jsonLd.potentialAction = {
+      defaultJsonLd["@type"] = "WebSite";
+      defaultJsonLd.potentialAction = {
         "@type": "SearchAction",
         target: `${BASE_URL}/tools?q={search_term_string}`,
         "query-input": "required name=search_term_string",
       };
     }
 
-    script.textContent = JSON.stringify(jsonLd);
+    script.textContent = JSON.stringify(jsonLd || defaultJsonLd);
     document.head.appendChild(script);
+
+    // Page-specific JSON-LD
+    if (jsonLd) {
+      const existingPageLd = document.getElementById("seo-page-jsonld");
+      if (existingPageLd) existingPageLd.remove();
+    }
 
     return () => {
       const el = document.getElementById("seo-jsonld");
       if (el) el.remove();
     };
-  }, [fullTitle, description, canonicalUrl, type, image, noindex]);
+  }, [fullTitle, description, canonicalUrl, type, image, noindex, keywords, jsonLd]);
 
   return null;
 };
