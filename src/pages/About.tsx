@@ -7,9 +7,10 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="About EZYOURLIFE - Our Mission & Story"
-        description="Learn about EZYOURLIFE's mission to make digital tools accessible, simple, and powerful for everyone. Discover our story and values."
+        title="About EZYOURLIFE - The World's First AI App Store | Our Mission"
+        description="What is EZYOURLIFE? Learn about the world's first AI App Store platform offering 50,000+ free and premium AI tools for productivity, business, content creation and education. Discover the ezyourlife mission and values."
         path="/about"
+        keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
       />
       <Navbar />
 
