@@ -685,6 +685,7 @@ const Home = () => {
           </motion.div>
         </div>
       </footer>
+      <SEOFooter />
     </div>
   );
 };
