@@ -322,6 +322,12 @@ const Subscription = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="EZYOURLIFE Pricing - Free & Premium AI Tools Plans"
+        description="Choose your EZYOURLIFE plan. Start free with access to AI tools, or upgrade to Premium for unlimited access to 50,000+ AI tools. Affordable AI tools subscription for students, creators and businesses."
+        path="/subscription"
+        keywords="ezyourlife pricing, ai tools subscription, premium ai tools plan, free ai tools, ezyourlife premium, ai tools for students, affordable ai tools"
+      />
       <Navbar />
       
       {/* Hero Section */}
