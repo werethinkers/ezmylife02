@@ -63,9 +63,10 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Contact EZYOURLIFE - Get In Touch"
-        description="Have questions or feedback about EZYOURLIFE tools? Contact our support team. We typically reply within 24 hours."
+        title="Contact EZYOURLIFE - AI Tools Support & Feedback"
+        description="Contact the EZYOURLIFE team for support with AI tools, premium subscriptions, or feedback. We reply within 24 hours. Reach ezyourlife support at support@ezyourlife.com."
         path="/contact"
+        keywords="contact ezyourlife, ezyourlife support, ai tools help, ezyourlife email, ezyourlife customer service"
       />
       <Navbar />
 
