@@ -504,6 +504,7 @@ const Tools = () => {
 
       {/* Chatbot */}
       <ToolsChatbot />
+      <SEOFooter />
     </div>
   );
 };
