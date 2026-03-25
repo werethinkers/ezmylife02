@@ -171,16 +171,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30 py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">EZYOURLIFE</span> — Simplifying complexity
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SEOFooter />
     </div>
   );
 };
