@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,9 +64,10 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Contact EZYOURLIFE - Get In Touch"
-        description="Have questions or feedback about EZYOURLIFE tools? Contact our support team. We typically reply within 24 hours."
+        title="Contact EZYOURLIFE - AI Tools Support & Feedback"
+        description="Contact the EZYOURLIFE team for support with AI tools, premium subscriptions, or feedback. We reply within 24 hours. Reach ezyourlife support at support@ezyourlife.com."
         path="/contact"
+        keywords="contact ezyourlife, ezyourlife support, ai tools help, ezyourlife email, ezyourlife customer service"
       />
       <Navbar />
 
@@ -203,16 +205,7 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30 py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">EZYOURLIFE</span> — Simplifying complexity
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SEOFooter />
     </div>
   );
 };

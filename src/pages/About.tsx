@@ -1,15 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { Target, Users, Sparkles, Heart } from "lucide-react";
 
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="About EZYOURLIFE - Our Mission & Story"
-        description="Learn about EZYOURLIFE's mission to make digital tools accessible, simple, and powerful for everyone. Discover our story and values."
+        title="About EZYOURLIFE - The World's First AI App Store | Our Mission"
+        description="What is EZYOURLIFE? Learn about the world's first AI App Store platform offering 50,000+ free and premium AI tools for productivity, business, content creation and education. Discover the ezyourlife mission and values."
         path="/about"
+        keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
       />
       <Navbar />
 
@@ -170,16 +172,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30 py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              © 2025 <span className="font-semibold text-foreground">EZYOURLIFE</span> — Simplifying complexity
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SEOFooter />
     </div>
   );
 };

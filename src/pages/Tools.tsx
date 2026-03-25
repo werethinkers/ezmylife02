@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
+import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { useToolsCatalog, useToolsCatalogStats } from "@/hooks/useToolsCatalog";
 import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
@@ -243,6 +245,12 @@ const Tools = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="50,000+ Free AI Tools Online - EZYOURLIFE AI App Store"
+        description="Browse 50,000+ free and premium AI tools on EZYOURLIFE. AI image editor, invoice generator, content creator, study planner, background remover and more. The best free AI tools collection online."
+        path="/tools"
+        keywords="ai tools, free ai tools online, premium ai tools, ai image editor, ai invoice generator, ai content creator, ai study planner, best ai tools, online tools, ezyourlife tools"
+      />
       <Navbar />
       
       {/* Enhanced Header */}
@@ -496,6 +504,7 @@ const Tools = () => {
 
       {/* Chatbot */}
       <ToolsChatbot />
+      <SEOFooter />
     </div>
   );
 };

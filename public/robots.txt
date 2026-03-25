@@ -4,6 +4,7 @@ Disallow: /admin
 Disallow: /auth/callback
 Disallow: /profile
 
+Host: https://ezmylife02.lovable.app
 Sitemap: https://ezmylife02.lovable.app/sitemap.xml
 
 User-agent: Googlebot
@@ -37,4 +38,16 @@ User-agent: PerplexityBot
 Allow: /
 
 User-agent: Bytespider
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Slurp
 Allow: /
