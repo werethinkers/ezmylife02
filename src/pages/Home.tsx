@@ -204,9 +204,10 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEOHead
-        title="EZYOURLIFE - 50,000+ Premium AI Tools for Productivity & Business"
-        description="Discover 50,000+ AI-powered digital tools for productivity, content creation, business automation, education and more. Start free today."
+        title="EZYOURLIFE - Best Free AI Tools Online | AI App Store for Productivity, Business & Education"
+        description="EZYOURLIFE is the world's first AI App Store with 50,000+ free and premium AI tools. Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
         path="/"
+        keywords="ezyourlife, ai tools, free ai tools, premium ai tools, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
       />
       <Navbar />
       <LaunchOfferBanner />
