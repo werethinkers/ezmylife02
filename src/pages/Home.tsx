@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import LaunchOfferBanner from "@/components/LaunchOfferBanner";
