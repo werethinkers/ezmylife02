@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
+import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { useToolsCatalog, useToolsCatalogStats } from "@/hooks/useToolsCatalog";
 import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
