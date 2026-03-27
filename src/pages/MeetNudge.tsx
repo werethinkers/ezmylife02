@@ -17,6 +17,7 @@ const MeetNudge = () => {
   const [hostProfile, setHostProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [allContacts, setAllContacts] = useState<any[]>([]);
 
   const fetchProfile = async () => {
     if (!user) return;
