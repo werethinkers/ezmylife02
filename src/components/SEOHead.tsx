@@ -108,13 +108,19 @@ export const SEOHead = ({
       };
     }
 
-    script.textContent = JSON.stringify(jsonLd || defaultJsonLd);
-    document.head.appendChild(script);
-
-    // Page-specific JSON-LD
-    if (jsonLd) {
-      const existingPageLd = document.getElementById("seo-page-jsonld");
-      if (existingPageLd) existingPageLd.remove();
+    const jsonLdData = jsonLd || defaultJsonLd;
+    if (Array.isArray(jsonLdData)) {
+      // Inject multiple JSON-LD blocks
+      jsonLdData.forEach((ld, i) => {
+        const s = document.createElement("script");
+        s.id = `seo-jsonld-${i}`;
+        s.type = "application/ld+json";
+        s.textContent = JSON.stringify(ld);
+        document.head.appendChild(s);
+      });
+    } else {
+      script.textContent = JSON.stringify(jsonLdData);
+      document.head.appendChild(script);
     }
 
     return () => {
