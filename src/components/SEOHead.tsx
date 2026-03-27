@@ -8,7 +8,7 @@ interface SEOHeadProps {
   image?: string;
   noindex?: boolean;
   keywords?: string;
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const BASE_URL = "https://ezyourlife.com";
