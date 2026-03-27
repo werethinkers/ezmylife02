@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import {
   User, Cpu, Sparkles, Rocket, MapIcon, Mountain, Building, Bird, Shield, TreesIcon, Bot,
   Heart, Moon, Cloud, Zap, Clock3, CloudRain, Wind, Sun,
@@ -702,6 +703,12 @@ const PromptMaster: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-[#F2F4F7] text-slate-900 flex flex-col font-sans select-none overflow-hidden h-screen">
+      <SEOHead
+        title="Prompt Master - AI Prompt Builder & Optimizer"
+        description="Prompt Master by EZYOURLIFE — build perfect AI prompts for images, videos, stories and text. Select subjects, styles, lighting, motion and more. Save favourites as shortcuts."
+        path="/promptmaster"
+        keywords="prompt master, ai prompt builder, prompt optimizer, image prompt generator, ezyourlife prompt master, ai prompt creator"
+      />
       {/* HEADER */}
       <div className="h-14 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 z-50 shadow-sm shrink-0">
         <div className="flex items-center gap-3">

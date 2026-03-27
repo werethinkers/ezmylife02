@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive } from "lucide-react";
 import ToolRequests from "@/components/admin/ToolRequests";
 import ArchivedEvents from "@/components/admin/ArchivedEvents";
+import ActivityArchive from "@/components/admin/ActivityArchive";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
@@ -186,32 +187,7 @@ const AdminDashboard = () => {
         </div>
 
         {activeTab === "logs" && (
-          <Card>
-            <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Details</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map(log => (
-                    <TableRow key={log.id}>
-                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(log.created_at), "MMM d, HH:mm")}</TableCell>
-                      <TableCell className="text-sm">{getEmailForUser(log.user_id)}</TableCell>
-                      <TableCell><Badge variant="outline" className={actionTypeColor(log.action_type)}>{log.action_type}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate">{log.action_details ? JSON.stringify(log.action_details) : "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {logs.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No activity logs yet</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <ActivityArchive logs={logs} profiles={profiles} />
         )}
 
         {activeTab === "users" && (

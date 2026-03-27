@@ -4,8 +4,8 @@ Disallow: /admin
 Disallow: /auth/callback
 Disallow: /profile
 
-Host: https://ezmylife02.lovable.app
-Sitemap: https://ezmylife02.lovable.app/sitemap.xml
+Host: https://ezyourlife.com
+Sitemap: https://ezyourlife.com/sitemap.xml
 
 User-agent: Googlebot
 Allow: /

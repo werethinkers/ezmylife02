@@ -4,16 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import HostProfileSetup from "@/components/meet-nudge/HostProfileSetup";
 import EventsDashboard from "@/components/meet-nudge/EventsDashboard";
 import AllContacts from "@/components/meet-nudge/AllContacts";
-import { CalendarDays, Users, Settings } from "lucide-react";
+import ContactsAnalytics from "@/components/meet-nudge/ContactsAnalytics";
+import { CalendarDays, Users, Settings, BarChart3 } from "lucide-react";
 
 const MeetNudge = () => {
   const { user } = useAuth();
   const [hostProfile, setHostProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [allContacts, setAllContacts] = useState<any[]>([]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -23,6 +27,16 @@ const MeetNudge = () => {
   };
 
   useEffect(() => { fetchProfile(); }, [user]);
+
+  // Fetch all contacts for analytics
+  useEffect(() => {
+    if (!user) return;
+    const fetchContacts = async () => {
+      const { data } = await supabase.from("meet_nudge_contacts").select("*").eq("host_id", user.id).is("deleted_at", null);
+      setAllContacts(data || []);
+    };
+    fetchContacts();
+  }, [user]);
 
   // Save session for tool_sessions like other tools
   useEffect(() => {
@@ -39,6 +53,12 @@ const MeetNudge = () => {
   if (!hostProfile || editing) {
     return (
       <div className="min-h-screen bg-background">
+        <SEOHead
+          title="Meet Nudge - AI Business Card Scanner & Networking Tool"
+          description="Meet Nudge by EZYOURLIFE helps you capture contacts at events with AI-powered business card scanning, contact management, and networking insights."
+          path="/meet-nudge"
+          keywords="meet nudge, business card scanner, ai networking tool, event contact management, ezyourlife meet nudge"
+        />
         <Navbar />
         <div className="pt-20 pb-8">
           <HostProfileSetup userId={user.id} onComplete={() => { setEditing(false); fetchProfile(); }} existingProfile={editing ? hostProfile : null} />
@@ -49,6 +69,12 @@ const MeetNudge = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Meet Nudge - AI Business Card Scanner & Networking Tool"
+        description="Meet Nudge by EZYOURLIFE helps you capture contacts at events with AI-powered business card scanning, contact management, and networking insights."
+        path="/meet-nudge"
+        keywords="meet nudge, business card scanner, ai networking tool, event contact management, ezyourlife meet nudge"
+      />
       <Navbar />
       <div className="pt-20 pb-8 px-4 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-4">
@@ -65,6 +91,7 @@ const MeetNudge = () => {
           <TabsList className="w-full">
             <TabsTrigger value="events" className="flex-1 gap-1"><CalendarDays className="h-4 w-4" /> Events</TabsTrigger>
             <TabsTrigger value="contacts" className="flex-1 gap-1"><Users className="h-4 w-4" /> All Contacts</TabsTrigger>
+            <TabsTrigger value="insights" className="flex-1 gap-1"><BarChart3 className="h-4 w-4" /> Insights</TabsTrigger>
           </TabsList>
           <TabsContent value="events">
             <EventsDashboard userId={user.id} hostProfile={hostProfile} />
@@ -72,8 +99,12 @@ const MeetNudge = () => {
           <TabsContent value="contacts">
             <AllContacts userId={user.id} hostProfile={hostProfile} />
           </TabsContent>
+          <TabsContent value="insights">
+            <ContactsAnalytics contacts={allContacts} />
+          </TabsContent>
         </Tabs>
       </div>
+      <SEOFooter />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { downloadExtension } from '@/components/extension/ExtensionDownloader';
 import InstallationGuide from '@/components/extension/InstallationGuide';
+import { SEOHead } from '@/components/SEOHead';
+import SEOFooter from '@/components/SEOFooter';
 
 type BrowserInfo = {
   name: string;
@@ -147,7 +149,12 @@ const GetExtension: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      {/* Header */}
+      <SEOHead
+        title="EZYOURLIFE Browser Extension - Use AI Shortcuts Everywhere"
+        description="Download the EZYOURLIFE browser extension for Chrome, Firefox, Brave and Edge. Auto-expand your AI shortcuts on ChatGPT, Gemini, Grok and any website."
+        path="/get-extension"
+        keywords="ezyourlife extension, ai browser extension, chatgpt shortcuts, ai tools extension, chrome extension ai"
+      />
       <div className="border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
@@ -304,6 +311,7 @@ const GetExtension: React.FC = () => {
             </Button>
           </Link>
         </div>
+        <SEOFooter />
       </div>
     </div>
   );
