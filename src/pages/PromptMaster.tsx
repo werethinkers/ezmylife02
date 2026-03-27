@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import {
   User, Cpu, Sparkles, Rocket, MapIcon, Mountain, Building, Bird, Shield, TreesIcon, Bot,
   Heart, Moon, Cloud, Zap, Clock3, CloudRain, Wind, Sun,

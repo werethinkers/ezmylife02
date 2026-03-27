@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SEOHead } from '@/components/SEOHead';
 import type { 
   ShortcutMap,
   ShortcutItemData,

@@ -664,6 +664,7 @@ const Subscription = () => {
           )}
         </main>
       </div>
+      <SEOFooter />
     </div>
   );
 };
