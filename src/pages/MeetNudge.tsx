@@ -53,6 +53,12 @@ const MeetNudge = () => {
   if (!hostProfile || editing) {
     return (
       <div className="min-h-screen bg-background">
+        <SEOHead
+          title="Meet Nudge - AI Business Card Scanner & Networking Tool"
+          description="Meet Nudge by EZYOURLIFE helps you capture contacts at events with AI-powered business card scanning, contact management, and networking insights."
+          path="/meet-nudge"
+          keywords="meet nudge, business card scanner, ai networking tool, event contact management, ezyourlife meet nudge"
+        />
         <Navbar />
         <div className="pt-20 pb-8">
           <HostProfileSetup userId={user.id} onComplete={() => { setEditing(false); fetchProfile(); }} existingProfile={editing ? hostProfile : null} />
