@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import HostProfileSetup from "@/components/meet-nudge/HostProfileSetup";
 import EventsDashboard from "@/components/meet-nudge/EventsDashboard";
 import AllContacts from "@/components/meet-nudge/AllContacts";
-import { CalendarDays, Users, Settings } from "lucide-react";
+import ContactsAnalytics from "@/components/meet-nudge/ContactsAnalytics";
+import { CalendarDays, Users, Settings, BarChart3 } from "lucide-react";
 
 const MeetNudge = () => {
   const { user } = useAuth();
