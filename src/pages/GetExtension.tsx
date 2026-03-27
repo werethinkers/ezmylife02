@@ -154,6 +154,23 @@ const GetExtension: React.FC = () => {
         description="Download the EZYOURLIFE browser extension for Chrome, Firefox, Brave and Edge. Auto-expand your AI shortcuts on ChatGPT, Gemini, Grok and any website."
         path="/get-extension"
         keywords="ezyourlife extension, ai browser extension, chatgpt shortcuts, ai tools extension, chrome extension ai"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "EZYOURLIFE Browser Extension",
+            description: "Download the EZYOURLIFE browser extension for Chrome, Firefox, Brave and Edge.",
+            url: "https://ezyourlife.com/get-extension",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Get Extension", item: "https://ezyourlife.com/get-extension" },
+            ],
+          },
+        ]}
       />
       <div className="border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">

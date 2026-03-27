@@ -209,6 +209,27 @@ const Home = () => {
         description="EZYOURLIFE is the world's first AI App Store with 50,000+ free and premium AI tools. Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
         path="/"
         keywords="ezyourlife, ai tools, free ai tools, premium ai tools, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "EZYOURLIFE",
+            alternateName: ["ezyourlife", "ez your life"],
+            url: "https://ezyourlife.com",
+            description: "The world's first AI App Store with 50,000+ free and premium AI tools.",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://ezyourlife.com/tools?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "EZYOURLIFE",
+              url: "https://ezyourlife.com",
+              logo: { "@type": "ImageObject", url: "https://ezyourlife.com/favicon.png" },
+            },
+          },
+        ]}
       />
       <Navbar />
       <LaunchOfferBanner />

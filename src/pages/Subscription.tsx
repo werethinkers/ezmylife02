@@ -328,6 +328,35 @@ const Subscription = () => {
         description="Choose your EZYOURLIFE plan. Start free with access to AI tools, or upgrade to Premium for unlimited access to 50,000+ AI tools. Affordable AI tools subscription for students, creators and businesses."
         path="/subscription"
         keywords="ezyourlife pricing, ai tools subscription, premium ai tools plan, free ai tools, ezyourlife premium, ai tools for students, affordable ai tools"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "EZYOURLIFE Pricing",
+            description: "Choose your EZYOURLIFE plan — free or premium access to 50,000+ AI tools.",
+            url: "https://ezyourlife.com/subscription",
+            mainEntity: {
+              "@type": "Product",
+              name: "EZYOURLIFE Premium",
+              description: "Unlimited access to 50,000+ AI tools for productivity, business, and education.",
+              brand: { "@type": "Brand", name: "EZYOURLIFE" },
+              offers: {
+                "@type": "AggregateOffer",
+                priceCurrency: "INR",
+                lowPrice: "0",
+                offerCount: "2",
+              },
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Pricing", item: "https://ezyourlife.com/subscription" },
+            ],
+          },
+        ]}
       />
       <Navbar />
       

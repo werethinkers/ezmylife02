@@ -95,6 +95,27 @@ const MeetNudge = () => {
         description="Meet Nudge by EZYOURLIFE helps you capture contacts at events with AI-powered business card scanning, contact management, and networking insights."
         path="/meet-nudge"
         keywords="meet nudge, business card scanner, ai networking tool, event contact management, ezyourlife meet nudge"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Meet Nudge",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            description: "AI-powered business card scanner and event contact management tool.",
+            url: "https://ezyourlife.com/meet-nudge",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+            publisher: { "@type": "Organization", name: "EZYOURLIFE", url: "https://ezyourlife.com" },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Meet Nudge", item: "https://ezyourlife.com/meet-nudge" },
+            ],
+          },
+        ]}
       />
       <Navbar />
       <div className="pt-20 pb-8 px-4 max-w-2xl mx-auto">

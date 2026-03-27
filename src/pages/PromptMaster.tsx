@@ -708,6 +708,27 @@ const PromptMaster: React.FC = () => {
         description="Prompt Master by EZYOURLIFE — build perfect AI prompts for images, videos, stories and text. Select subjects, styles, lighting, motion and more. Save favourites as shortcuts."
         path="/promptmaster"
         keywords="prompt master, ai prompt builder, prompt optimizer, image prompt generator, ezyourlife prompt master, ai prompt creator"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Prompt Master",
+            applicationCategory: "MultimediaApplication",
+            operatingSystem: "Web",
+            description: "AI prompt builder and optimizer for images, videos, stories and text content.",
+            url: "https://ezyourlife.com/promptmaster",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+            publisher: { "@type": "Organization", name: "EZYOURLIFE", url: "https://ezyourlife.com" },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Prompt Master", item: "https://ezyourlife.com/promptmaster" },
+            ],
+          },
+        ]}
       />
       {/* HEADER */}
       <div className="h-14 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 z-50 shadow-sm shrink-0">

@@ -12,6 +12,29 @@ const About = () => {
         description="What is EZYOURLIFE? Learn about the world's first AI App Store platform offering 50,000+ free and premium AI tools for productivity, business, content creation and education. Discover the ezyourlife mission and values."
         path="/about"
         keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            name: "About EZYOURLIFE",
+            description: "Learn about EZYOURLIFE, the world's first AI App Store offering 50,000+ free and premium AI tools.",
+            url: "https://ezyourlife.com/about",
+            mainEntity: {
+              "@type": "Organization",
+              name: "EZYOURLIFE",
+              url: "https://ezyourlife.com",
+              logo: { "@type": "ImageObject", url: "https://ezyourlife.com/favicon.png" },
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "About", item: "https://ezyourlife.com/about" },
+            ],
+          },
+        ]}
       />
       <Navbar />
 
