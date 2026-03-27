@@ -985,6 +985,27 @@ const SpeedyNotebook: React.FC = () => {
           description="Speedy Notebook by EZYOURLIFE — an AI writing tool with auto-expanding shortcuts, smart autocomplete, speech-to-text, and document analysis. Boost your writing speed."
           path="/notebook"
           keywords="speedy notebook, ai writing tool, text shortcuts, ai autocomplete, ezyourlife notebook, productivity writing"
+          jsonLd={[
+            {
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Speedy Notebook",
+              applicationCategory: "ProductivityApplication",
+              operatingSystem: "Web",
+              description: "AI-powered writing tool with auto-expanding shortcuts, smart autocomplete, and speech-to-text.",
+              url: "https://ezyourlife.com/notebook",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+              publisher: { "@type": "Organization", name: "EZYOURLIFE", url: "https://ezyourlife.com" },
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+                { "@type": "ListItem", position: 2, name: "Speedy Notebook", item: "https://ezyourlife.com/notebook" },
+              ],
+            },
+          ]}
         />
         <header className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 z-20">
              <div className="flex items-center gap-3">

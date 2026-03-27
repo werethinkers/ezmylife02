@@ -10,6 +10,23 @@ const RefundPolicy = () => {
         title="Cancellation & Refund Policy - EZYOURLIFE"
         description="Read EZYOURLIFE's cancellation and refund policy. Learn about our process for cancellations, damaged items, and refund processing timelines."
         path="/refund-policy"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Cancellation & Refund Policy",
+            description: "EZYOURLIFE cancellation and refund policy.",
+            url: "https://ezyourlife.com/refund-policy",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Refund Policy", item: "https://ezyourlife.com/refund-policy" },
+            ],
+          },
+        ]}
       />
       <Navbar />
 

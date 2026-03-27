@@ -250,6 +250,28 @@ const Tools = () => {
         description="Browse 50,000+ free and premium AI tools on EZYOURLIFE. AI image editor, invoice generator, content creator, study planner, background remover and more. The best free AI tools collection online."
         path="/tools"
         keywords="ai tools, free ai tools online, premium ai tools, ai image editor, ai invoice generator, ai content creator, ai study planner, best ai tools, online tools, ezyourlife tools"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "AI Tools Collection - EZYOURLIFE",
+            description: "Browse 50,000+ free and premium AI tools on EZYOURLIFE.",
+            url: "https://ezyourlife.com/tools",
+            publisher: {
+              "@type": "Organization",
+              name: "EZYOURLIFE",
+              url: "https://ezyourlife.com",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "AI Tools", item: "https://ezyourlife.com/tools" },
+            ],
+          },
+        ]}
       />
       <Navbar />
       

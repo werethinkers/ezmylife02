@@ -8,7 +8,7 @@ interface SEOHeadProps {
   image?: string;
   noindex?: boolean;
   keywords?: string;
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const BASE_URL = "https://ezyourlife.com";
@@ -108,18 +108,26 @@ export const SEOHead = ({
       };
     }
 
-    script.textContent = JSON.stringify(jsonLd || defaultJsonLd);
-    document.head.appendChild(script);
-
-    // Page-specific JSON-LD
-    if (jsonLd) {
-      const existingPageLd = document.getElementById("seo-page-jsonld");
-      if (existingPageLd) existingPageLd.remove();
+    const jsonLdData = jsonLd || defaultJsonLd;
+    if (Array.isArray(jsonLdData)) {
+      // Inject multiple JSON-LD blocks
+      jsonLdData.forEach((ld, i) => {
+        const s = document.createElement("script");
+        s.id = `seo-jsonld-${i}`;
+        s.type = "application/ld+json";
+        s.textContent = JSON.stringify(ld);
+        document.head.appendChild(s);
+      });
+    } else {
+      script.textContent = JSON.stringify(jsonLdData);
+      document.head.appendChild(script);
     }
 
     return () => {
       const el = document.getElementById("seo-jsonld");
       if (el) el.remove();
+      // Clean up array JSON-LD blocks
+      document.querySelectorAll('script[id^="seo-jsonld-"]').forEach(el => el.remove());
     };
   }, [fullTitle, description, canonicalUrl, type, image, noindex, keywords, jsonLd]);
 

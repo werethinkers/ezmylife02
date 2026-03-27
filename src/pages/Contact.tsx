@@ -68,6 +68,29 @@ const Contact = () => {
         description="Contact the EZYOURLIFE team for support with AI tools, premium subscriptions, or feedback. We reply within 24 hours. Reach ezyourlife support at support@ezyourlife.com."
         path="/contact"
         keywords="contact ezyourlife, ezyourlife support, ai tools help, ezyourlife email, ezyourlife customer service"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "ContactPage",
+            name: "Contact EZYOURLIFE",
+            description: "Contact the EZYOURLIFE team for support, feedback, or questions about AI tools.",
+            url: "https://ezyourlife.com/contact",
+            mainEntity: {
+              "@type": "Organization",
+              name: "EZYOURLIFE",
+              url: "https://ezyourlife.com",
+              email: "support@ezyourlife.com",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+              { "@type": "ListItem", position: 2, name: "Contact", item: "https://ezyourlife.com/contact" },
+            ],
+          },
+        ]}
       />
       <Navbar />
 
