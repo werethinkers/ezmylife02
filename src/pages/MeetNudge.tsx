@@ -28,6 +28,16 @@ const MeetNudge = () => {
 
   useEffect(() => { fetchProfile(); }, [user]);
 
+  // Fetch all contacts for analytics
+  useEffect(() => {
+    if (!user) return;
+    const fetchContacts = async () => {
+      const { data } = await supabase.from("meet_nudge_contacts").select("*").eq("host_id", user.id).is("deleted_at", null);
+      setAllContacts(data || []);
+    };
+    fetchContacts();
+  }, [user]);
+
   // Save session for tool_sessions like other tools
   useEffect(() => {
     if (!user || !hostProfile) return;
