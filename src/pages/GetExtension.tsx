@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { downloadExtension } from '@/components/extension/ExtensionDownloader';
 import InstallationGuide from '@/components/extension/InstallationGuide';
+import { SEOHead } from '@/components/SEOHead';
+import SEOFooter from '@/components/SEOFooter';
 
 type BrowserInfo = {
   name: string;
