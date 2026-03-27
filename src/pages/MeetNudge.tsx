@@ -69,6 +69,12 @@ const MeetNudge = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Meet Nudge - AI Business Card Scanner & Networking Tool"
+        description="Meet Nudge by EZYOURLIFE helps you capture contacts at events with AI-powered business card scanning, contact management, and networking insights."
+        path="/meet-nudge"
+        keywords="meet nudge, business card scanner, ai networking tool, event contact management, ezyourlife meet nudge"
+      />
       <Navbar />
       <div className="pt-20 pb-8 px-4 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-4">
@@ -85,6 +91,7 @@ const MeetNudge = () => {
           <TabsList className="w-full">
             <TabsTrigger value="events" className="flex-1 gap-1"><CalendarDays className="h-4 w-4" /> Events</TabsTrigger>
             <TabsTrigger value="contacts" className="flex-1 gap-1"><Users className="h-4 w-4" /> All Contacts</TabsTrigger>
+            <TabsTrigger value="insights" className="flex-1 gap-1"><BarChart3 className="h-4 w-4" /> Insights</TabsTrigger>
           </TabsList>
           <TabsContent value="events">
             <EventsDashboard userId={user.id} hostProfile={hostProfile} />
@@ -92,8 +99,12 @@ const MeetNudge = () => {
           <TabsContent value="contacts">
             <AllContacts userId={user.id} hostProfile={hostProfile} />
           </TabsContent>
+          <TabsContent value="insights">
+            <ContactsAnalytics contacts={allContacts} />
+          </TabsContent>
         </Tabs>
       </div>
+      <SEOFooter />
     </div>
   );
 };

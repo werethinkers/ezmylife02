@@ -311,6 +311,7 @@ const GetExtension: React.FC = () => {
             </Button>
           </Link>
         </div>
+        <SEOFooter />
       </div>
     </div>
   );
