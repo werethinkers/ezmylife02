@@ -126,6 +126,8 @@ export const SEOHead = ({
     return () => {
       const el = document.getElementById("seo-jsonld");
       if (el) el.remove();
+      // Clean up array JSON-LD blocks
+      document.querySelectorAll('script[id^="seo-jsonld-"]').forEach(el => el.remove());
     };
   }, [fullTitle, description, canonicalUrl, type, image, noindex, keywords, jsonLd]);
 
