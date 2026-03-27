@@ -2,77 +2,77 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://ezmylife02.lovable.app/</loc>
+    <loc>https://ezyourlife.com/</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://ezmylife02.lovable.app/og-image.png</image:loc>
+      <image:loc>https://ezyourlife.com/og-image.png</image:loc>
       <image:title>EZYOURLIFE - AI App Store</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/tools</loc>
+    <loc>https://ezyourlife.com/tools</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/about</loc>
+    <loc>https://ezyourlife.com/about</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/contact</loc>
+    <loc>https://ezyourlife.com/contact</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/subscription</loc>
+    <loc>https://ezyourlife.com/subscription</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/refund-policy</loc>
+    <loc>https://ezyourlife.com/refund-policy</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/auth</loc>
+    <loc>https://ezyourlife.com/auth</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/get-extension</loc>
+    <loc>https://ezyourlife.com/get-extension</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/startup-analyser</loc>
+    <loc>https://ezyourlife.com/startup-analyser</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/notebook</loc>
+    <loc>https://ezyourlife.com/notebook</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/promptmaster</loc>
+    <loc>https://ezyourlife.com/promptmaster</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ezmylife02.lovable.app/meet-nudge</loc>
+    <loc>https://ezyourlife.com/meet-nudge</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

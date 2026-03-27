@@ -56,7 +56,7 @@ const SEOFooter = () => {
         {/* Bottom bar */}
         <div className="border-t border-border/40 pt-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            © 2025 <span className="font-semibold text-foreground">EZYOURLIFE</span> — The World's First AI App Store
+            © 2026 <span className="font-semibold text-foreground">EZYOURLIFE</span> — The World's First AI App Store
           </p>
           <p className="text-xs text-muted-foreground">
             Best free AI tools online • Premium AI tools for productivity • AI app store for business & education • ezyourlife.com

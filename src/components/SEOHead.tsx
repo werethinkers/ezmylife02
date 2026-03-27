@@ -11,7 +11,7 @@ interface SEOHeadProps {
   jsonLd?: Record<string, unknown>;
 }
 
-const BASE_URL = "https://ezmylife02.lovable.app";
+const BASE_URL = "https://ezyourlife.com";
 
 export const SEOHead = ({
   title,
