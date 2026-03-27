@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
 
 const RefundPolicy = () => {
   return (
