@@ -60,14 +60,18 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
-    const checkAdmin = async () => {
-      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!data) { navigate("/"); return; }
+    const checkAccess = async () => {
+      const [{ data: isAdminRole }, { data: isModRole }] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: user.id, _role: "moderator" }),
+      ]);
+      if (!isAdminRole && !isModRole) { navigate("/"); return; }
       setIsAdmin(true);
+      setIsViewOnly(!isAdminRole && !!isModRole);
       setChecking(false);
       fetchData();
     };
-    checkAdmin();
+    checkAccess();
   }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
