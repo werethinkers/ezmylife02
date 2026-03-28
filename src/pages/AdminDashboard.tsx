@@ -50,6 +50,7 @@ const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isViewOnly, setIsViewOnly] = useState(false);
   const [checking, setChecking] = useState(true);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -59,14 +60,18 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
-    const checkAdmin = async () => {
-      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!data) { navigate("/"); return; }
+    const checkAccess = async () => {
+      const [{ data: isAdminRole }, { data: isModRole }] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: user.id, _role: "moderator" }),
+      ]);
+      if (!isAdminRole && !isModRole) { navigate("/"); return; }
       setIsAdmin(true);
+      setIsViewOnly(!isAdminRole && !!isModRole);
       setChecking(false);
       fetchData();
     };
-    checkAdmin();
+    checkAccess();
   }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
@@ -141,7 +146,7 @@ const AdminDashboard = () => {
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
-    { id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench },
+    ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
     { id: "archived-events" as const, label: "Archived Events", icon: Archive },
   ];
@@ -150,7 +155,8 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        {isViewOnly && <p className="text-sm text-muted-foreground mb-6">View-only access</p>}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
