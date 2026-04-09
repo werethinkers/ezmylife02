@@ -62,6 +62,7 @@ export type Database = {
       meet_nudge_contacts: {
         Row: {
           business_name: string | null
+          connected_via_host_id: string | null
           created_at: string
           deleted_at: string | null
           email: string | null
@@ -80,6 +81,7 @@ export type Database = {
         }
         Insert: {
           business_name?: string | null
+          connected_via_host_id?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -98,6 +100,7 @@ export type Database = {
         }
         Update: {
           business_name?: string | null
+          connected_via_host_id?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -167,6 +170,7 @@ export type Database = {
           host_id: string
           linkedin_url: string | null
           name: string
+          nudge_id: string | null
           occupation: string | null
           phone: string | null
           updated_at: string
@@ -180,6 +184,7 @@ export type Database = {
           host_id: string
           linkedin_url?: string | null
           name: string
+          nudge_id?: string | null
           occupation?: string | null
           phone?: string | null
           updated_at?: string
@@ -193,6 +198,7 @@ export type Database = {
           host_id?: string
           linkedin_url?: string | null
           name?: string
+          nudge_id?: string | null
           occupation?: string | null
           phone?: string | null
           updated_at?: string
