@@ -127,7 +127,9 @@ const MeetNudgeGuestForm = () => {
 
   const sendMagicLink = async () => {
     if (!form.email) return;
-    const redirectUrl = `${window.location.origin}/meet-nudge`;
+    // Store redirect so AuthCallback sends user to /meet-nudge
+    localStorage.setItem("auth_redirect_to", "/meet-nudge");
+    const redirectUrl = `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOtp({
       email: form.email,
       options: { emailRedirectTo: redirectUrl },
