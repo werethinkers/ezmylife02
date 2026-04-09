@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake } from "lucide-react";
 import ToolRequests from "@/components/admin/ToolRequests";
 import ArchivedEvents from "@/components/admin/ArchivedEvents";
 import ActivityArchive from "@/components/admin/ActivityArchive";
+import MeetNudgeAdmin from "@/components/admin/MeetNudgeAdmin";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
@@ -55,7 +56,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge">("logs");
 
   useEffect(() => {
     if (authLoading) return;
@@ -149,6 +150,7 @@ const AdminDashboard = () => {
     ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
     { id: "archived-events" as const, label: "Archived Events", icon: Archive },
+    { id: "meet-nudge" as const, label: "Meet Nudge", icon: Handshake },
   ];
 
   return (
@@ -318,6 +320,7 @@ const AdminDashboard = () => {
         {activeTab === "tool-mgmt" && <ToolManagement />}
         {activeTab === "tool-requests" && <ToolRequests />}
         {activeTab === "archived-events" && <ArchivedEvents />}
+        {activeTab === "meet-nudge" && <MeetNudgeAdmin />}
       </div>
     </div>
   );

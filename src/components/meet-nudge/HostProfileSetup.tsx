@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { User, Briefcase, Building2, Globe, Linkedin, Mail, Phone, FileText, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { User, Briefcase, Building2, Globe, Linkedin, Mail, Phone, FileText } from "lucide-react";
 
 interface HostProfile {
   name: string;
@@ -21,7 +20,7 @@ interface HostProfile {
 }
 
 const FIELDS: { key: keyof HostProfile; label: string; icon: any; placeholder: string; required?: boolean; multiline?: boolean }[] = [
-  { key: "name", label: "Your Name", icon: User, placeholder: "John Doe", required: true },
+  { key: "name", label: "Your Name *", icon: User, placeholder: "John Doe", required: true },
   { key: "occupation", label: "Occupation / Title", icon: Briefcase, placeholder: "Product Manager" },
   { key: "business_name", label: "Company", icon: Building2, placeholder: "Acme Inc." },
   { key: "business_url", label: "Website", icon: Globe, placeholder: "https://example.com" },
@@ -38,7 +37,6 @@ interface Props {
 }
 
 export default function HostProfileSetup({ userId, onComplete, existingProfile }: Props) {
-  const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<HostProfile>({
     name: "", occupation: "", business_name: "", business_url: "",
     linkedin_url: "", email: "", phone: "", bio: "",
@@ -50,7 +48,6 @@ export default function HostProfileSetup({ userId, onComplete, existingProfile }
       setProfile(existingProfile);
       return;
     }
-    // Pre-fill from user profile
     (async () => {
       const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
       if (data) {
@@ -68,19 +65,11 @@ export default function HostProfileSetup({ userId, onComplete, existingProfile }
     })();
   }, [userId, existingProfile]);
 
-  const currentField = FIELDS[step];
-  const isLast = step === FIELDS.length - 1;
-
-  const handleNext = () => {
-    if (currentField.required && !profile[currentField.key]) {
-      toast({ title: `${currentField.label} is required`, variant: "destructive" });
+  const handleSave = async () => {
+    if (!profile.name.trim()) {
+      toast({ title: "Name is required", variant: "destructive" });
       return;
     }
-    if (isLast) handleSave();
-    else setStep(s => s + 1);
-  };
-
-  const handleSave = async () => {
     setSaving(true);
     try {
       const { error } = await supabase.from("meet_nudge_profiles").upsert({
@@ -97,72 +86,43 @@ export default function HostProfileSetup({ userId, onComplete, existingProfile }
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !currentField.multiline) handleNext();
-  };
-
-  const Icon = currentField.icon;
-
   return (
     <div className="max-w-lg mx-auto p-4">
       <Card className="border-primary/20">
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Set Up Your Host Profile</CardTitle>
-          <p className="text-sm text-muted-foreground">Step {step + 1} of {FIELDS.length}</p>
-          <div className="flex gap-1 justify-center mt-3">
-            {FIELDS.map((_, i) => (
-              <div key={i} className={`h-1.5 w-8 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"}`} />
-            ))}
-          </div>
+          <p className="text-sm text-muted-foreground">Fill in your details so guests can connect with you</p>
         </CardHeader>
-        <CardContent>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <Label className="text-base font-medium">{currentField.label}</Label>
+        <CardContent className="space-y-4">
+          {FIELDS.map(field => {
+            const Icon = field.icon;
+            return (
+              <div key={field.key} className="space-y-1.5">
+                <Label className="text-sm flex items-center gap-1.5">
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                  {field.label}
+                </Label>
+                {field.multiline ? (
+                  <Textarea
+                    value={profile[field.key]}
+                    onChange={e => setProfile(p => ({ ...p, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    rows={3}
+                  />
+                ) : (
+                  <Input
+                    value={profile[field.key]}
+                    onChange={e => setProfile(p => ({ ...p, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                  />
+                )}
               </div>
-              {currentField.multiline ? (
-                <Textarea
-                  value={profile[currentField.key]}
-                  onChange={e => setProfile(p => ({ ...p, [currentField.key]: e.target.value }))}
-                  placeholder={currentField.placeholder}
-                  rows={3}
-                  autoFocus
-                />
-              ) : (
-                <Input
-                  value={profile[currentField.key]}
-                  onChange={e => setProfile(p => ({ ...p, [currentField.key]: e.target.value }))}
-                  placeholder={currentField.placeholder}
-                  onKeyDown={handleKeyDown}
-                  autoFocus
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+            );
+          })}
 
-          <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
-            </Button>
-            <Button onClick={handleNext} disabled={saving}>
-              {isLast ? (
-                <>{saving ? "Saving..." : "Complete"} <Check className="h-4 w-4 ml-1" /></>
-              ) : (
-                <>Next <ArrowRight className="h-4 w-4 ml-1" /></>
-              )}
-            </Button>
-          </div>
+          <Button className="w-full mt-2" onClick={handleSave} disabled={saving} size="lg">
+            {saving ? "Saving..." : "Save Profile ✓"}
+          </Button>
         </CardContent>
       </Card>
     </div>

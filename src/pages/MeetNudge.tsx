@@ -10,7 +10,8 @@ import HostProfileSetup from "@/components/meet-nudge/HostProfileSetup";
 import EventsDashboard from "@/components/meet-nudge/EventsDashboard";
 import AllContacts from "@/components/meet-nudge/AllContacts";
 import ContactsAnalytics from "@/components/meet-nudge/ContactsAnalytics";
-import { CalendarDays, Users, Settings, BarChart3 } from "lucide-react";
+import { CalendarDays, Users, Settings, BarChart3, Copy, Share2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const MeetNudge = () => {
   const { user } = useAuth();
@@ -123,6 +124,20 @@ const MeetNudge = () => {
           <div>
             <h1 className="text-2xl font-bold">Meet Nudge</h1>
             <p className="text-sm text-muted-foreground">Welcome, {hostProfile.name} 👋</p>
+            {hostProfile.nudge_id && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{hostProfile.nudge_id}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(hostProfile.nudge_id);
+                    toast({ title: "Nudge ID copied! 📋" });
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
           </div>
           <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
             <Settings className="h-5 w-5" />

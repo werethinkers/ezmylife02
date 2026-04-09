@@ -2,46 +2,36 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { User, Phone, Briefcase, Building2, MapPin, Globe, Linkedin, Mail, Sparkles, Download, Check, PartyPopper } from "lucide-react";
+import { motion } from "framer-motion";
+import { User, Phone, Briefcase, Building2, MapPin, Globe, Linkedin, Mail, Sparkles, Download, PartyPopper, Search, Copy, ArrowRight } from "lucide-react";
 
 interface HostProfile {
   name: string; occupation: string | null; business_name: string | null; business_url: string | null;
   linkedin_url: string | null; email: string | null; phone: string | null; bio: string | null;
+  nudge_id: string | null;
 }
-
-const STEPS: { key: string; label: string; emoji: string; icon: any; placeholder: string; required?: boolean }[] = [
-  { key: "name", label: "What's your name?", emoji: "👋", icon: User, placeholder: "Your full name", required: true },
-  { key: "phone", label: "WhatsApp number?", emoji: "📱", icon: Phone, placeholder: "+91 9876543210", required: true },
-  { key: "occupation", label: "What do you do?", emoji: "💼", icon: Briefcase, placeholder: "Product Designer", required: true },
-  { key: "business_name", label: "Company name?", emoji: "🏢", icon: Building2, placeholder: "Acme Inc." },
-  { key: "location", label: "Where are you from?", emoji: "📍", icon: MapPin, placeholder: "Mumbai, India" },
-  { key: "website", label: "Got a website?", emoji: "🌐", icon: Globe, placeholder: "https://..." },
-  { key: "linkedin_url", label: "LinkedIn profile?", emoji: "💼", icon: Linkedin, placeholder: "https://linkedin.com/in/..." },
-  { key: "email", label: "Email address?", emoji: "✉️", icon: Mail, placeholder: "you@example.com" },
-  { key: "fun_fact", label: "Share a fun fact!", emoji: "✨", icon: Sparkles, placeholder: "I once climbed Everest..." },
-];
-
-const ENCOURAGE = [
-  "Great start! 🔥", "You're on a roll! 💪", "Keep going! 🚀", "Almost halfway! ⭐",
-  "Doing awesome! 🎯", "So close! 🌟", "Nearly there! ✨", "One more! 🎉", "Last one! 🏁",
-];
 
 const MeetNudgeGuestForm = () => {
   const { eventSlug, hostSlug } = useParams<{ eventSlug: string; hostSlug?: string }>();
   const [event, setEvent] = useState<any>(null);
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<Record<string, string>>({});
-  const [streak, setStreak] = useState(0);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [nudgeIdLookup, setNudgeIdLookup] = useState("");
+  const [lookingUp, setLookingUp] = useState(false);
+  const [returnedNudgeId, setReturnedNudgeId] = useState<string | null>(null);
   const startTime = useRef(Date.now());
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "", occupation: "",
+    business_name: "", location: "", website: "", linkedin_url: "", fun_fact: "",
+  });
 
   useEffect(() => {
     (async () => {
@@ -50,43 +40,63 @@ const MeetNudgeGuestForm = () => {
       if (!ev) { setLoading(false); return; }
       setEvent(ev);
       const { data: hp } = await supabase.from("meet_nudge_profiles").select("*").eq("host_id", ev.host_id).single();
-      setHostProfile(hp);
+      setHostProfile(hp as HostProfile | null);
       setLoading(false);
     })();
   }, [eventSlug]);
 
-  useEffect(() => { inputRef.current?.focus(); }, [step]);
-
-  const currentStep = STEPS[step];
-  const filledCount = Object.values(form).filter(v => v.trim()).length;
-
-  const handleNext = async () => {
-    const val = (form[currentStep.key] || "").trim();
-    if (currentStep.required && !val) {
-      toast({ title: `${currentStep.label.replace("?", "")} is required`, variant: "destructive" });
-      return;
-    }
-    if (val) setStreak(s => s + 1); else setStreak(0);
-
-    if (step === STEPS.length - 1) {
-      // Submit
-      setSubmitting(true);
-      const { error } = await supabase.from("meet_nudge_contacts").insert({
-        host_id: event.host_id, event_id: event.id, event_name: event.name,
-        name: form.name, phone: form.phone, occupation: form.occupation,
-        business_name: form.business_name || null, location: form.location || null,
-        website: form.website || null, linkedin_url: form.linkedin_url || null,
-        email: form.email || null, fun_fact: form.fun_fact || null,
+  const handleNudgeIdLookup = async () => {
+    if (!nudgeIdLookup.trim()) return;
+    setLookingUp(true);
+    const { data } = await supabase
+      .from("meet_nudge_profiles")
+      .select("*")
+      .eq("nudge_id", nudgeIdLookup.trim().toUpperCase())
+      .single();
+    setLookingUp(false);
+    if (data) {
+      setForm({
+        name: data.name || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        occupation: data.occupation || "",
+        business_name: data.business_name || "",
+        location: "",
+        website: data.business_url || "",
+        linkedin_url: data.linkedin_url || "",
+        fun_fact: "",
       });
-      setSubmitting(false);
-      if (error) { toast({ title: "Error submitting", description: error.message, variant: "destructive" }); return; }
-      setDone(true);
+      toast({ title: `Welcome back, ${data.name}! 👋` });
     } else {
-      setStep(s => s + 1);
+      toast({ title: "Nudge ID not found", variant: "destructive" });
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") handleNext(); };
+  const handleSubmit = async () => {
+    if (!form.name || !form.phone || !form.email || !form.occupation) {
+      toast({ title: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Call edge function for background account creation
+      const { data: signupData, error: signupError } = await supabase.functions.invoke("meet-nudge-signup", {
+        body: {
+          ...form,
+          event_id: event?.id,
+          host_id: event?.host_id,
+        },
+      });
+
+      if (signupError) throw signupError;
+      setReturnedNudgeId(signupData?.nudge_id || null);
+      setDone(true);
+    } catch (err: any) {
+      toast({ title: "Error submitting", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const downloadVCard = () => {
     if (!hostProfile) return;
@@ -108,6 +118,23 @@ const MeetNudgeGuestForm = () => {
     URL.revokeObjectURL(url);
   };
 
+  const copyNudgeId = () => {
+    if (returnedNudgeId) {
+      navigator.clipboard.writeText(returnedNudgeId);
+      toast({ title: "Nudge ID copied! 📋" });
+    }
+  };
+
+  const sendMagicLink = async () => {
+    if (!form.email) return;
+    const { error } = await supabase.auth.signInWithOtp({ email: form.email });
+    if (error) {
+      toast({ title: "Error sending login link", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Login link sent! Check your email 📧" });
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">Loading...</div>;
   if (!event) return <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">Event not found</div>;
 
@@ -118,7 +145,21 @@ const MeetNudgeGuestForm = () => {
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-sm w-full space-y-6">
           <PartyPopper className="h-16 w-16 mx-auto text-primary" />
           <h1 className="text-2xl font-bold">You're all set! 🎉</h1>
-          <p className="text-muted-foreground">Completed in {seconds}s with {filledCount} fields filled</p>
+          <p className="text-muted-foreground">Completed in {seconds}s</p>
+
+          {returnedNudgeId && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-4 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">Your Nudge ID</p>
+                <p className="text-2xl font-bold tracking-wider text-primary">{returnedNudgeId}</p>
+                <p className="text-xs text-muted-foreground">Share this at events instead of scanning QR!</p>
+                <Button size="sm" variant="outline" onClick={copyNudgeId}>
+                  <Copy className="h-4 w-4 mr-1" /> Copy Nudge ID
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {hostProfile && (
             <Card className="text-left">
               <CardContent className="pt-4 space-y-2">
@@ -133,83 +174,82 @@ const MeetNudgeGuestForm = () => {
               </CardContent>
             </Card>
           )}
+
+          <Button className="w-full" onClick={sendMagicLink}>
+            <ArrowRight className="h-4 w-4 mr-1" /> Create Account & Start Networking
+          </Button>
+          <p className="text-xs text-muted-foreground">We'll send a login link to {form.email}</p>
         </motion.div>
       </div>
     );
   }
 
-  const Icon = currentStep.icon;
-  const progress = ((step + 1) / STEPS.length) * 100;
+  const FIELDS = [
+    { key: "name", label: "Your Name *", icon: User, placeholder: "John Doe", required: true },
+    { key: "phone", label: "WhatsApp / Phone *", icon: Phone, placeholder: "+91 9876543210", required: true },
+    { key: "email", label: "Email *", icon: Mail, placeholder: "you@example.com", required: true },
+    { key: "occupation", label: "What do you do? *", icon: Briefcase, placeholder: "Product Designer", required: true },
+    { key: "business_name", label: "Company", icon: Building2, placeholder: "Acme Inc." },
+    { key: "location", label: "Location", icon: MapPin, placeholder: "Mumbai, India" },
+    { key: "website", label: "Website", icon: Globe, placeholder: "https://..." },
+    { key: "linkedin_url", label: "LinkedIn", icon: Linkedin, placeholder: "https://linkedin.com/in/..." },
+    { key: "fun_fact", label: "Fun Fact ✨", icon: Sparkles, placeholder: "I once climbed Everest..." },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Progress */}
-      <div className="p-4 space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{event.name}</span>
-          <span>Step {step + 1}/{STEPS.length}</span>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-lg mx-auto p-4 pt-8 space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-bold">👋 Connect at {event.name}</h1>
+          {hostProfile && <p className="text-sm text-muted-foreground">Hosted by {hostProfile.name}</p>}
         </div>
-        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-          <motion.div className="absolute inset-y-0 left-0 bg-primary rounded-full" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
-        </div>
-        <div className="flex justify-center gap-1.5">
-          {STEPS.map((_, i) => (
-            <div key={i} className={`h-2 w-2 rounded-full transition-colors ${i < step ? "bg-primary" : i === step ? "bg-primary animate-pulse" : "bg-muted-foreground/20"}`} />
-          ))}
-        </div>
-      </div>
 
-      {/* Streak */}
-      {streak >= 2 && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-          <span className="text-xs font-medium text-primary">🔥 {streak} streak!</span>
-        </motion.div>
-      )}
-
-      {/* Form */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="w-full max-w-sm space-y-6"
-          >
-            <div className="text-center space-y-2">
-              <span className="text-4xl">{currentStep.emoji}</span>
-              <h2 className="text-xl font-semibold">{currentStep.label}</h2>
-              <p className="text-sm text-muted-foreground">{ENCOURAGE[step]}</p>
-            </div>
-            <div className="relative">
-              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                ref={inputRef}
-                value={form[currentStep.key] || ""}
-                onChange={e => setForm(p => ({ ...p, [currentStep.key]: e.target.value }))}
-                onKeyDown={handleKeyDown}
-                placeholder={currentStep.placeholder}
-                className="pl-10 h-12 text-base"
-                autoFocus
-              />
-            </div>
+        {/* Nudge ID lookup */}
+        <Card className="border-dashed">
+          <CardContent className="pt-4">
+            <p className="text-sm font-medium mb-2">Already have a Nudge ID?</p>
             <div className="flex gap-2">
-              {step > 0 && <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="flex-1">Back</Button>}
-              <Button onClick={handleNext} disabled={submitting} className="flex-1">
-                {step === STEPS.length - 1 ? (submitting ? "Submitting..." : "Submit ✨") : currentStep.required ? "Next →" : "Skip / Next →"}
+              <Input
+                value={nudgeIdLookup}
+                onChange={e => setNudgeIdLookup(e.target.value)}
+                placeholder="e.g. ABHI-ORBIT-23"
+                className="flex-1"
+                onKeyDown={e => e.key === "Enter" && handleNudgeIdLookup()}
+              />
+              <Button variant="outline" onClick={handleNudgeIdLookup} disabled={lookingUp}>
+                <Search className="h-4 w-4" />
               </Button>
             </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+          </CardContent>
+        </Card>
 
-      {/* Host badge */}
-      {hostProfile && (
-        <div className="p-4 text-center">
-          <p className="text-xs text-muted-foreground">Hosted by <span className="font-medium text-foreground">{hostProfile.name}</span></p>
-        </div>
-      )}
+        {/* Form */}
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            {FIELDS.map(field => {
+              const Icon = field.icon;
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label className="text-sm flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {field.label}
+                  </Label>
+                  <Input
+                    value={(form as any)[field.key] || ""}
+                    onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                  />
+                </div>
+              );
+            })}
+
+            <Button className="w-full mt-4" onClick={handleSubmit} disabled={submitting} size="lg">
+              {submitting ? "Submitting..." : "Submit & Connect ✨"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
