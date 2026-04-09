@@ -17,7 +17,8 @@ function generateNudgeId(firstName: string): string {
   const name = firstName.toUpperCase().replace(/[^A-Z]/g, "") || "USER";
   const word = SIMPLE_WORDS[Math.floor(Math.random() * SIMPLE_WORDS.length)];
   const num = Math.floor(Math.random() * 90) + 10;
-  return `${name}-${word}-${num}`;
+  // No dashes — concatenated format e.g. ABHIORBIT23
+  return `${name}${word}${num}`;
 }
 
 Deno.serve(async (req) => {
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
         website: website || null,
       }).eq("id", userId);
 
-      // Generate unique nudge_id
+      // Generate unique nudge_id (no dashes)
       for (let i = 0; i < 10; i++) {
         const candidate = generateNudgeId(firstName);
         const { data: collision } = await admin.from("meet_nudge_profiles").select("nudge_id").eq("nudge_id", candidate).single();
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
       }
 
       if (!nudgeId) {
-        nudgeId = `${firstName.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+        nudgeId = `${firstName.toUpperCase()}${Date.now().toString(36).toUpperCase()}`;
       }
 
       // Create meet_nudge_profiles entry
@@ -119,13 +120,27 @@ Deno.serve(async (req) => {
         expires_at: expiresAt.toISOString(),
       });
 
-      // Auto-create "My Network" event
-      const eventSlug = `${firstName.toLowerCase()}-network-${Date.now().toString(36)}`;
+      // Auto-create event with SAME details as referrer's event (if available)
+      let eventName = "My Network";
+      let eventLocation: string | null = null;
+      let eventDate: string | null = new Date().toISOString().split("T")[0];
+
+      if (event_id) {
+        const { data: referrerEvent } = await admin.from("meet_nudge_events").select("name, location, date").eq("id", event_id).single();
+        if (referrerEvent) {
+          eventName = referrerEvent.name;
+          eventLocation = referrerEvent.location;
+          eventDate = referrerEvent.date;
+        }
+      }
+
+      const eventSlug = `${firstName.toLowerCase()}-${eventName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
       await admin.from("meet_nudge_events").insert({
         host_id: userId,
-        name: "My Network",
+        name: eventName,
         slug: eventSlug,
-        date: new Date().toISOString().split("T")[0],
+        date: eventDate,
+        location: eventLocation,
       });
     }
 

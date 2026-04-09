@@ -52,8 +52,12 @@ const AuthCallback = () => {
           return;
         }
 
-        // Route based on subscription status
-        if (data?.subscribed) {
+        // Check if there's a redirect URL stored (e.g. from Meet Nudge magic link)
+        const redirectTo = localStorage.getItem("auth_redirect_to");
+        if (redirectTo) {
+          localStorage.removeItem("auth_redirect_to");
+          navigate(redirectTo, { replace: true });
+        } else if (data?.subscribed) {
           navigate("/tools", { replace: true });
         } else {
           navigate("/subscription", { replace: true });
