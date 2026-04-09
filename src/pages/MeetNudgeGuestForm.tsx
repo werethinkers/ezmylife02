@@ -51,7 +51,7 @@ const MeetNudgeGuestForm = () => {
     const { data } = await supabase
       .from("meet_nudge_profiles")
       .select("*")
-      .eq("nudge_id", nudgeIdLookup.trim().toUpperCase())
+      .eq("nudge_id", nudgeIdLookup.trim().toUpperCase().replace(/[\s\-_]/g, ""))
       .single();
     setLookingUp(false);
     if (data) {
@@ -127,7 +127,13 @@ const MeetNudgeGuestForm = () => {
 
   const sendMagicLink = async () => {
     if (!form.email) return;
-    const { error } = await supabase.auth.signInWithOtp({ email: form.email });
+    // Store redirect so AuthCallback sends user to /meet-nudge
+    localStorage.setItem("auth_redirect_to", "/meet-nudge");
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: form.email,
+      options: { emailRedirectTo: redirectUrl },
+    });
     if (error) {
       toast({ title: "Error sending login link", description: error.message, variant: "destructive" });
     } else {
@@ -152,7 +158,7 @@ const MeetNudgeGuestForm = () => {
               <CardContent className="pt-4 text-center space-y-2">
                 <p className="text-sm text-muted-foreground">Your Nudge ID</p>
                 <p className="text-2xl font-bold tracking-wider text-primary">{returnedNudgeId}</p>
-                <p className="text-xs text-muted-foreground">Share this at events instead of scanning QR!</p>
+                <p className="text-xs text-muted-foreground">Share this at events instead of scanning QR! (no dashes needed)</p>
                 <Button size="sm" variant="outline" onClick={copyNudgeId}>
                   <Copy className="h-4 w-4 mr-1" /> Copy Nudge ID
                 </Button>
@@ -213,7 +219,7 @@ const MeetNudgeGuestForm = () => {
               <Input
                 value={nudgeIdLookup}
                 onChange={e => setNudgeIdLookup(e.target.value)}
-                placeholder="e.g. ABHI-ORBIT-23"
+                placeholder="e.g. ABHIORBIT23"
                 className="flex-1"
                 onKeyDown={e => e.key === "Enter" && handleNudgeIdLookup()}
               />
