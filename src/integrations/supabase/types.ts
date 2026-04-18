@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gemini_api_keys: {
+        Row: {
+          created_at: string
+          failure_count: number
+          id: string
+          is_active: boolean
+          key_value: string
+          label: string | null
+          last_used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          key_value: string
+          label?: string | null
+          last_used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          key_value?: string
+          label?: string | null
+          last_used_at?: string | null
+        }
+        Relationships: []
+      }
       meet_nudge_contacts: {
         Row: {
           business_name: string | null
@@ -472,8 +502,10 @@ export type Database = {
           created_at: string
           dedicated_route: string | null
           description: string
+          display_order: number
           has_uploaded_files: boolean
           id: string
+          is_free: boolean
           is_live: boolean
           is_premium: boolean
           name: string
@@ -486,8 +518,10 @@ export type Database = {
           created_at?: string
           dedicated_route?: string | null
           description: string
+          display_order?: number
           has_uploaded_files?: boolean
           id: string
+          is_free?: boolean
           is_live?: boolean
           is_premium?: boolean
           name: string
@@ -500,8 +534,10 @@ export type Database = {
           created_at?: string
           dedicated_route?: string | null
           description?: string
+          display_order?: number
           has_uploaded_files?: boolean
           id?: string
+          is_free?: boolean
           is_live?: boolean
           is_premium?: boolean
           name?: string
