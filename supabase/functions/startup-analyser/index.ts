@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Gemini fallback keys
+// Gemini fallback keys (env)
 function getGeminiKeys(): string[] {
   const keys: string[] = [];
   for (let i = 1; i <= 10; i++) {
@@ -14,6 +15,23 @@ function getGeminiKeys(): string[] {
     if (k) keys.push(k);
   }
   return keys;
+}
+
+// DB-backed Gemini keys
+async function fetchDbGeminiKeys(): Promise<string[]> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return [];
+    const sb = createClient(url, key);
+    const { data } = await sb
+      .from("gemini_api_keys")
+      .select("key_value")
+      .eq("is_active", true)
+      .order("failure_count", { ascending: true })
+      .order("last_used_at", { ascending: true, nullsFirst: true });
+    return ((data as Array<{ key_value: string }>) ?? []).map((r) => r.key_value);
+  } catch { return []; }
 }
 
 // Try Lovable AI first, then fallback to direct Gemini API with key rotation
@@ -70,8 +88,10 @@ async function callAIWithFallback(
     }
   }
 
-  // 3. Fallback to direct Gemini API keys
-  const geminiKeys = getGeminiKeys();
+  // 3. Fallback to direct Gemini API keys (DB first, then env)
+  const dbKeys = await fetchDbGeminiKeys();
+  const envKeys = getGeminiKeys();
+  const geminiKeys = Array.from(new Set([...dbKeys, ...envKeys]));
   const geminiModel = model.replace("google/", "");
   const modelFallbackOrder = Array.from(new Set([
     geminiModel,

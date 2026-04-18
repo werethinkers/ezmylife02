@@ -9,6 +9,8 @@ export interface CatalogTool {
   tool_types: string[];
   source: "business" | "featured";
   is_live: boolean;
+  is_free?: boolean;
+  display_order?: number;
   created_at: string;
   updated_at: string;
 }

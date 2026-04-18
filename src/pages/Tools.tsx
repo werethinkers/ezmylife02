@@ -55,7 +55,14 @@ const Tools = () => {
   const catalogStats = useToolsCatalogStats();
   const { data: catalogTools = [] } = useToolsCatalog();
 
-  // Merge static + database featured tools and dedupe by toolId
+  // Build a quick lookup for catalog (for is_free + display_order)
+  const catalogById = useMemo(() => {
+    const m = new Map<string, typeof catalogTools[number]>();
+    catalogTools.forEach((t) => m.set(t.id, t));
+    return m;
+  }, [catalogTools]);
+
+  // Merge static + database featured tools and dedupe by toolId, sorted by display_order
   const featuredLiveTools = useMemo(() => {
     const dbFeaturedTools = catalogTools
       .filter((tool) => tool.source === "featured")
@@ -72,8 +79,14 @@ const Tools = () => {
     const merged = [...liveToolsList, ...dbFeaturedTools];
     const uniqueById = Array.from(new Map(merged.map((tool) => [tool.toolId, tool])).values());
 
-    return uniqueById.filter((tool) => tool.isLive);
-  }, [catalogTools]);
+    const live = uniqueById.filter((tool) => tool.isLive);
+    // Sort by display_order from catalog (default 0 → preserve original order)
+    return live.sort((a, b) => {
+      const oa = catalogById.get(a.toolId)?.display_order ?? 999999;
+      const ob = catalogById.get(b.toolId)?.display_order ?? 999999;
+      return oa - ob;
+    });
+  }, [catalogTools, catalogById]);
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
@@ -229,19 +242,101 @@ const Tools = () => {
     }
   }, []);
 
+  // Global search across ALL sources (featured + browse + catalog) when search is active
+  const globalSearchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+
+    type ResultTool = {
+      id: string;
+      name: string;
+      description: string;
+      category: string;
+      isLive: boolean;
+      isFree: boolean;
+      icon: ReactNode;
+    };
+    const results = new Map<string, ResultTool>();
+
+    // 1. Featured/live tools
+    featuredLiveTools.forEach((t) => {
+      if (
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q)
+      ) {
+        results.set(t.toolId, {
+          id: t.toolId,
+          name: t.title,
+          description: t.description,
+          category: t.category,
+          isLive: t.isLive,
+          isFree: !!catalogById.get(t.toolId)?.is_free,
+          icon: t.icon,
+        });
+      }
+    });
+
+    // 2. Browse catalog (expanded static tools)
+    expandedTools.forEach((t) => {
+      if (results.has(t.id)) return;
+      if (
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.department.toLowerCase().includes(q)
+      ) {
+        results.set(t.id, {
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          category: t.department,
+          isLive: t.isLive,
+          isFree: false,
+          icon: t.icon,
+        });
+      }
+    });
+
+    // 3. DB catalog (drafts/live business tools too)
+    catalogTools.forEach((t) => {
+      if (!t.is_live) return;
+      if (results.has(t.id)) return;
+      if (
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q)
+      ) {
+        results.set(t.id, {
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          category: t.category,
+          isLive: t.is_live,
+          isFree: !!t.is_free,
+          icon: <Sparkles className="h-8 w-8" />,
+        });
+      }
+    });
+
+    return Array.from(results.values());
+  }, [searchQuery, featuredLiveTools, catalogTools, catalogById]);
+
+  const isGlobalSearching = searchQuery.trim().length > 0;
+
   // Determine what to show based on view mode and tool type
   const hasToolTypeFilter = selectedToolType !== "All Types";
-  const showTools = viewMode === "list" && !hasToolTypeFilter;
-  const showFeatured = viewMode === "featured" || (hasToolTypeFilter && viewMode !== "list");
-  const showBrowse = viewMode === "browse" && !searchQuery && !hasToolTypeFilter;
-  const showPersonalized = viewMode === "personalized";
+  const showTools = !isGlobalSearching && viewMode === "list" && !hasToolTypeFilter;
+  const showFeatured = !isGlobalSearching && (viewMode === "featured" || (hasToolTypeFilter && viewMode !== "list"));
+  const showBrowse = !isGlobalSearching && viewMode === "browse" && !hasToolTypeFilter;
+  const showPersonalized = !isGlobalSearching && viewMode === "personalized";
 
   // Compute filtered count for the header
   const filteredCount = useMemo(() => {
+    if (isGlobalSearching) return globalSearchResults.length;
     if (showFeatured) return filteredFeaturedTools.length;
     if (showTools) return filteredTools.length;
-    return undefined; // Don't show when browsing/personalized
-  }, [showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
+    return undefined;
+  }, [isGlobalSearching, globalSearchResults.length, showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -288,6 +383,56 @@ const Tools = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+
+        {/* Global Search Results — overrides view mode when search is active */}
+        <AnimatePresence mode="wait">
+          {isGlobalSearching && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 className="text-xl font-semibold">
+                  Search results for "{searchQuery}"
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({globalSearchResults.length} found)
+                  </span>
+                </h2>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Clear search
+                </button>
+              </div>
+              {globalSearchResults.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {globalSearchResults.map((tool, index) => (
+                    <EnhancedToolCard
+                      key={tool.id}
+                      id={tool.id}
+                      toolId={tool.id}
+                      name={tool.name}
+                      description={tool.description}
+                      category={tool.category}
+                      isLive={tool.isLive}
+                      isFree={tool.isFree}
+                      icon={tool.icon}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ToolsEmptyState
+                  onClearFilters={() => setSearchQuery("")}
+                  hasActiveFilters={true}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Filters - Only show in list mode */}
         <AnimatePresence>
@@ -404,6 +549,7 @@ const Tools = () => {
                       description={tool.description}
                       category={tool.category}
                       isLive={tool.isLive}
+                      isFree={!!catalogById.get(tool.toolId)?.is_free}
                       icon={tool.icon}
                       index={index}
                       onQuickPreview={() => handleQuickPreview({
