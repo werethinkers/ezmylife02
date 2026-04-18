@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,25 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown, GripVertical, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface CatalogTool {
   id: string;
@@ -26,6 +41,8 @@ interface CatalogTool {
   is_live: boolean;
   has_uploaded_files: boolean;
   is_premium: boolean;
+  is_free: boolean;
+  display_order: number;
   dedicated_route: string | null;
   created_at: string;
   updated_at: string;
@@ -48,8 +65,34 @@ const emptyTool: Omit<CatalogTool, "created_at" | "updated_at"> = {
   is_live: false,
   has_uploaded_files: false,
   is_premium: false,
+  is_free: false,
+  display_order: 0,
   dedicated_route: null,
 };
+
+// --- Sortable card component ---
+function SortableToolCard({ tool }: { tool: CatalogTool }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tool.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-2 bg-card border rounded-md text-sm"
+    >
+      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </button>
+      <span className="font-medium truncate flex-1">{tool.name}</span>
+      {tool.is_free && <Badge variant="outline" className="text-xs gap-1"><Gift className="h-3 w-3" />FREE</Badge>}
+      <Badge variant="outline" className="text-xs">{tool.category}</Badge>
+    </div>
+  );
+}
 
 export const ToolManagement = () => {
   const [tools, setTools] = useState<CatalogTool[]>([]);
@@ -65,21 +108,63 @@ export const ToolManagement = () => {
   const [toolTypesInput, setToolTypesInput] = useState("");
   const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
   const fetchTools = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("tools_catalog")
       .select("*")
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) {
       toast.error("Failed to load tools");
     } else {
-      setTools((data as CatalogTool[]) ?? []);
+      setTools((data as unknown as CatalogTool[]) ?? []);
     }
     setLoading(false);
   };
 
   useEffect(() => { fetchTools(); }, []);
+
+  // Live tools only, sorted by display_order — for drag-drop section
+  const liveToolsOrdered = useMemo(
+    () => tools.filter((t) => t.is_live).sort((a, b) => (a.display_order || 0) - (b.display_order || 0)),
+    [tools]
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = liveToolsOrdered.findIndex((t) => t.id === active.id);
+    const newIndex = liveToolsOrdered.findIndex((t) => t.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reordered = arrayMove(liveToolsOrdered, oldIndex, newIndex);
+    // Optimistic UI
+    setTools((prev) => {
+      const map = new Map(prev.map((t) => [t.id, t]));
+      reordered.forEach((t, idx) => {
+        const cur = map.get(t.id);
+        if (cur) map.set(t.id, { ...cur, display_order: idx });
+      });
+      return Array.from(map.values());
+    });
+
+    // Batch update display_order
+    const updates = reordered.map((t, idx) =>
+      supabase.from("tools_catalog").update({ display_order: idx } as never).eq("id", t.id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      toast.error("Failed to save new order");
+      fetchTools();
+    } else {
+      toast.success("Order saved");
+    }
+  };
 
   const filteredTools = tools.filter(t => {
     const matchesSearch = !search || 
@@ -111,6 +196,8 @@ export const ToolManagement = () => {
       is_live: tool.is_live,
       has_uploaded_files: tool.has_uploaded_files,
       is_premium: tool.is_premium,
+      is_free: tool.is_free,
+      display_order: tool.display_order,
       dedicated_route: tool.dedicated_route,
     });
     setToolTypesInput(tool.tool_types.join(", "));
@@ -135,11 +222,12 @@ export const ToolManagement = () => {
       source: editingTool.source,
       is_live: editingTool.is_live,
       is_premium: editingTool.is_premium,
+      is_free: editingTool.is_free,
       dedicated_route: editingTool.dedicated_route || null,
     };
 
     if (isNew) {
-      const { error } = await supabase.from("tools_catalog").insert(payload as any);
+      const { error } = await supabase.from("tools_catalog").insert(payload as never);
       if (error) {
         toast.error(error.message);
       } else {
@@ -151,7 +239,7 @@ export const ToolManagement = () => {
       const { id, ...updatePayload } = payload;
       const { error } = await supabase
         .from("tools_catalog")
-        .update(updatePayload as any)
+        .update(updatePayload as never)
         .eq("id", editingTool.id);
       if (error) {
         toast.error(error.message);
@@ -167,7 +255,7 @@ export const ToolManagement = () => {
   const toggleLive = async (tool: CatalogTool) => {
     const { error } = await supabase
       .from("tools_catalog")
-      .update({ is_live: !tool.is_live } as any)
+      .update({ is_live: !tool.is_live } as never)
       .eq("id", tool.id);
     if (error) {
       toast.error(error.message);
@@ -177,9 +265,21 @@ export const ToolManagement = () => {
     }
   };
 
+  const toggleFree = async (tool: CatalogTool) => {
+    const { error } = await supabase
+      .from("tools_catalog")
+      .update({ is_free: !tool.is_free } as never)
+      .eq("id", tool.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${tool.name} is now ${!tool.is_free ? "FREE" : "premium"}`);
+      fetchTools();
+    }
+  };
+
   const confirmDelete = async () => {
     if (!toolToDelete) return;
-    // Delete uploaded files first
     if (toolToDelete.has_uploaded_files) {
       const { data: files } = await supabase.storage
         .from("tool-uploads")
@@ -204,36 +304,45 @@ export const ToolManagement = () => {
   const liveCount = tools.filter(t => t.is_live).length;
   const draftCount = tools.filter(t => !t.is_live).length;
   const uploadedCount = tools.filter(t => t.has_uploaded_files).length;
+  const freeCount = tools.filter(t => t.is_free).length;
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{tools.length}</p>
-            <p className="text-xs text-muted-foreground">Total Tools</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-500">{liveCount}</p>
-            <p className="text-xs text-muted-foreground">Live</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-500">{draftCount}</p>
-            <p className="text-xs text-muted-foreground">Draft</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-500">{uploadedCount}</p>
-            <p className="text-xs text-muted-foreground">With Files</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{tools.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{liveCount}</p><p className="text-xs text-muted-foreground">Live</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-yellow-500">{draftCount}</p><p className="text-xs text-muted-foreground">Draft</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-500">{uploadedCount}</p><p className="text-xs text-muted-foreground">With Files</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{freeCount}</p><p className="text-xs text-muted-foreground">Free</p></CardContent></Card>
       </div>
+
+      {/* Drag-drop ordering */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <GripVertical className="h-4 w-4" /> Live Tool Order (drag to reorder)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-3">
+            Drag the cards below to set the order live tools appear in the Featured grid on /tools.
+          </p>
+          {liveToolsOrdered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No live tools yet.</p>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={liveToolsOrdered.map((t) => t.id)} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {liveToolsOrdered.map((t) => (
+                    <SortableToolCard key={t.id} tool={t} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Controls */}
       <Card>
@@ -250,9 +359,7 @@ export const ToolManagement = () => {
                 />
               </div>
               <Select value={filterLive} onValueChange={(v: "all" | "live" | "draft") => setFilterLive(v)}>
-                <SelectTrigger className="w-28">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="live">Live</SelectItem>
@@ -260,9 +367,7 @@ export const ToolManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={openAdd} className="gap-2">
-              <Plus className="h-4 w-4" /> Add Tool
-            </Button>
+            <Button onClick={openAdd} className="gap-2"><Plus className="h-4 w-4" /> Add Tool</Button>
           </div>
         </CardContent>
       </Card>
@@ -277,6 +382,7 @@ export const ToolManagement = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Free</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -292,9 +398,7 @@ export const ToolManagement = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">{tool.id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">{tool.category}</Badge>
-                  </TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{tool.category}</Badge></TableCell>
                   <TableCell>
                     {tool.has_uploaded_files ? (
                       <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs gap-1">
@@ -307,6 +411,9 @@ export const ToolManagement = () => {
                     ) : (
                       <Badge variant="outline" className="text-xs">{tool.source}</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={tool.is_free} onCheckedChange={() => toggleFree(tool)} />
                   </TableCell>
                   <TableCell>
                     <button onClick={() => toggleLive(tool)} className="flex items-center gap-1.5">
@@ -348,7 +455,7 @@ export const ToolManagement = () => {
               ))}
               {filteredTools.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {loading ? "Loading tools..." : "No tools found"}
                   </TableCell>
                 </TableRow>
@@ -447,16 +554,31 @@ export const ToolManagement = () => {
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <Switch
+                    checked={editingTool.is_free}
+                    onCheckedChange={v => setEditingTool({ ...editingTool, is_free: v })}
+                  />
+                  <div>
+                    <Label className="cursor-pointer flex items-center gap-1.5">
+                      <Gift className="h-3.5 w-3.5 text-blue-500" />
+                      {editingTool.is_free ? "Free — anyone can use" : "Requires subscription"}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Free tools bypass the premium check entirely
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Switch
                     checked={editingTool.is_premium}
                     onCheckedChange={v => setEditingTool({ ...editingTool, is_premium: v })}
                   />
                   <div>
                     <Label className="cursor-pointer flex items-center gap-1.5">
                       <Crown className="h-3.5 w-3.5 text-yellow-500" />
-                      {editingTool.is_premium ? "Premium tool" : "Free tool"}
+                      {editingTool.is_premium ? "Premium tool" : "Standard tool"}
                     </Label>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Premium tools require a subscription to use
+                      Marks tool as premium-tier
                     </p>
                   </div>
                 </div>
@@ -508,7 +630,7 @@ export const ToolManagement = () => {
             <DialogTitle>Delete Tool</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{toolToDelete?.name}</strong>? 
+            Are you sure you want to delete <strong>{toolToDelete?.name}</strong>?
             {toolToDelete?.has_uploaded_files && " All uploaded files will also be deleted."}
             {" "}This action cannot be undone.
           </p>
