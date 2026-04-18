@@ -383,6 +383,56 @@ const Tools = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+
+        {/* Global Search Results — overrides view mode when search is active */}
+        <AnimatePresence mode="wait">
+          {isGlobalSearching && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 className="text-xl font-semibold">
+                  Search results for "{searchQuery}"
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({globalSearchResults.length} found)
+                  </span>
+                </h2>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Clear search
+                </button>
+              </div>
+              {globalSearchResults.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {globalSearchResults.map((tool, index) => (
+                    <EnhancedToolCard
+                      key={tool.id}
+                      id={tool.id}
+                      toolId={tool.id}
+                      name={tool.name}
+                      description={tool.description}
+                      category={tool.category}
+                      isLive={tool.isLive}
+                      isFree={tool.isFree}
+                      icon={tool.icon}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ToolsEmptyState
+                  onClearFilters={() => setSearchQuery("")}
+                  hasActiveFilters={true}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Filters - Only show in list mode */}
         <AnimatePresence>
