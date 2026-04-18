@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PremiumRoute } from "@/components/PremiumRoute";
+import { ToolAccessGuard } from "@/components/ToolAccessGuard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -81,29 +82,18 @@ const AnimatedRoutes = () => {
         <Suspense fallback={<LoadingScreen />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
-            <Route
-              path="/tools"
-              element={
-                <PremiumRoute>
-                  <Tools />
-                </PremiumRoute>
-              }
-            />
+            <Route path="/tools" element={<Tools />} />
             <Route
               path="/tool/:toolId"
               element={
-                <PremiumRoute>
+                <ToolAccessGuard>
                   <ToolViewer />
-                </PremiumRoute>
+                </ToolAccessGuard>
               }
             />
             <Route
               path="/tool-preview/:toolId"
-              element={
-                <PremiumRoute>
-                  <ToolPreview />
-                </PremiumRoute>
-              }
+              element={<ToolPreview />}
             />
             <Route path="/about" element={<About />} />
             <Route
