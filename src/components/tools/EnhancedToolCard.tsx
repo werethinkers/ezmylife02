@@ -19,6 +19,7 @@ interface EnhancedToolCardProps {
   department?: string;
   category?: string;
   isLive: boolean;
+  isFree?: boolean;
   icon: ReactNode;
   onQuickPreview?: () => void;
   index?: number;
@@ -34,6 +35,7 @@ export const EnhancedToolCard = ({
   department, 
   category,
   isLive,
+  isFree,
   icon,
   onQuickPreview,
   index = 0
@@ -104,6 +106,11 @@ export const EnhancedToolCard = ({
             </div>
             
             <div className="flex items-center gap-1.5">
+              {isFree && (
+                <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">
+                  FREE
+                </Badge>
+              )}
               {isLive ? (
                 <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
