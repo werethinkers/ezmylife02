@@ -55,7 +55,14 @@ const Tools = () => {
   const catalogStats = useToolsCatalogStats();
   const { data: catalogTools = [] } = useToolsCatalog();
 
-  // Merge static + database featured tools and dedupe by toolId
+  // Build a quick lookup for catalog (for is_free + display_order)
+  const catalogById = useMemo(() => {
+    const m = new Map<string, typeof catalogTools[number]>();
+    catalogTools.forEach((t) => m.set(t.id, t));
+    return m;
+  }, [catalogTools]);
+
+  // Merge static + database featured tools and dedupe by toolId, sorted by display_order
   const featuredLiveTools = useMemo(() => {
     const dbFeaturedTools = catalogTools
       .filter((tool) => tool.source === "featured")
@@ -72,8 +79,14 @@ const Tools = () => {
     const merged = [...liveToolsList, ...dbFeaturedTools];
     const uniqueById = Array.from(new Map(merged.map((tool) => [tool.toolId, tool])).values());
 
-    return uniqueById.filter((tool) => tool.isLive);
-  }, [catalogTools]);
+    const live = uniqueById.filter((tool) => tool.isLive);
+    // Sort by display_order from catalog (default 0 → preserve original order)
+    return live.sort((a, b) => {
+      const oa = catalogById.get(a.toolId)?.display_order ?? 999999;
+      const ob = catalogById.get(b.toolId)?.display_order ?? 999999;
+      return oa - ob;
+    });
+  }, [catalogTools, catalogById]);
 
   // Filter tools based on all filters
   const filteredTools = useMemo(() => {
