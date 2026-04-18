@@ -242,19 +242,101 @@ const Tools = () => {
     }
   }, []);
 
+  // Global search across ALL sources (featured + browse + catalog) when search is active
+  const globalSearchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+
+    type ResultTool = {
+      id: string;
+      name: string;
+      description: string;
+      category: string;
+      isLive: boolean;
+      isFree: boolean;
+      icon: ReactNode;
+    };
+    const results = new Map<string, ResultTool>();
+
+    // 1. Featured/live tools
+    featuredLiveTools.forEach((t) => {
+      if (
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q)
+      ) {
+        results.set(t.toolId, {
+          id: t.toolId,
+          name: t.title,
+          description: t.description,
+          category: t.category,
+          isLive: t.isLive,
+          isFree: !!catalogById.get(t.toolId)?.is_free,
+          icon: t.icon,
+        });
+      }
+    });
+
+    // 2. Browse catalog (expanded static tools)
+    expandedTools.forEach((t) => {
+      if (results.has(t.id)) return;
+      if (
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.department.toLowerCase().includes(q)
+      ) {
+        results.set(t.id, {
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          category: t.department,
+          isLive: t.isLive,
+          isFree: false,
+          icon: t.icon,
+        });
+      }
+    });
+
+    // 3. DB catalog (drafts/live business tools too)
+    catalogTools.forEach((t) => {
+      if (!t.is_live) return;
+      if (results.has(t.id)) return;
+      if (
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q)
+      ) {
+        results.set(t.id, {
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          category: t.category,
+          isLive: t.is_live,
+          isFree: !!t.is_free,
+          icon: <Sparkles className="h-8 w-8" />,
+        });
+      }
+    });
+
+    return Array.from(results.values());
+  }, [searchQuery, featuredLiveTools, catalogTools, catalogById]);
+
+  const isGlobalSearching = searchQuery.trim().length > 0;
+
   // Determine what to show based on view mode and tool type
   const hasToolTypeFilter = selectedToolType !== "All Types";
-  const showTools = viewMode === "list" && !hasToolTypeFilter;
-  const showFeatured = viewMode === "featured" || (hasToolTypeFilter && viewMode !== "list");
-  const showBrowse = viewMode === "browse" && !searchQuery && !hasToolTypeFilter;
-  const showPersonalized = viewMode === "personalized";
+  const showTools = !isGlobalSearching && viewMode === "list" && !hasToolTypeFilter;
+  const showFeatured = !isGlobalSearching && (viewMode === "featured" || (hasToolTypeFilter && viewMode !== "list"));
+  const showBrowse = !isGlobalSearching && viewMode === "browse" && !hasToolTypeFilter;
+  const showPersonalized = !isGlobalSearching && viewMode === "personalized";
 
   // Compute filtered count for the header
   const filteredCount = useMemo(() => {
+    if (isGlobalSearching) return globalSearchResults.length;
     if (showFeatured) return filteredFeaturedTools.length;
     if (showTools) return filteredTools.length;
-    return undefined; // Don't show when browsing/personalized
-  }, [showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
+    return undefined;
+  }, [isGlobalSearching, globalSearchResults.length, showFeatured, showTools, filteredFeaturedTools.length, filteredTools.length]);
 
   return (
     <div className="min-h-screen bg-background">
