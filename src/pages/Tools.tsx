@@ -549,6 +549,7 @@ const Tools = () => {
                       description={tool.description}
                       category={tool.category}
                       isLive={tool.isLive}
+                      isFree={!!catalogById.get(tool.toolId)?.is_free}
                       icon={tool.icon}
                       index={index}
                       onQuickPreview={() => handleQuickPreview({
