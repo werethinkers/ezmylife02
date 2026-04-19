@@ -517,6 +517,25 @@ export const ToolManagement = () => {
                     rows={3}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Icon URL (optional)</Label>
+                  <div className="flex gap-2 items-start">
+                    <Input
+                      value={editingTool.icon_url ?? ""}
+                      onChange={e => setEditingTool({ ...editingTool, icon_url: e.target.value || null })}
+                      placeholder="https://example.com/icon.png"
+                    />
+                    {editingTool.icon_url && (
+                      <img
+                        src={editingTool.icon_url}
+                        alt="preview"
+                        className="h-10 w-10 rounded-md border object-contain bg-muted"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Public URL of the tool's icon. Leave blank to use the default.</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>
