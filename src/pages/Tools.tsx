@@ -341,10 +341,10 @@ const Tools = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="50,000+ Free AI Tools Online - EZYOURLIFE AI App Store"
-        description="Browse 50,000+ free and premium AI tools on EZYOURLIFE. AI image editor, invoice generator, content creator, study planner, background remover and more. The best free AI tools collection online."
+        title="2000+ Free AI Tools — Browse Without Signup | EZYOURLIFE"
+        description="Browse 2000+ free & premium AI tools instantly — no signup needed. AI image editor, invoice generator, content creator, study planner, background remover and more. The Future's First AI App Store."
         path="/tools"
-        keywords="ai tools, free ai tools online, premium ai tools, ai image editor, ai invoice generator, ai content creator, ai study planner, best ai tools, online tools, ezyourlife tools"
+        keywords="free ai tools, no signup ai tools, ai image editor, ai invoice generator, ai content creator, ai study planner, best free ai tools online, ezyourlife tools"
         jsonLd={[
           {
             "@context": "https://schema.org",
