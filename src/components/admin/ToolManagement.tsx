@@ -19,6 +19,8 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -44,6 +46,7 @@ interface CatalogTool {
   is_free: boolean;
   display_order: number;
   dedicated_route: string | null;
+  icon_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +71,7 @@ const emptyTool: Omit<CatalogTool, "created_at" | "updated_at"> = {
   is_free: false,
   display_order: 0,
   dedicated_route: null,
+  icon_url: null,
 };
 
 // --- Sortable card component ---
@@ -108,7 +112,11 @@ export const ToolManagement = () => {
   const [toolTypesInput, setToolTypesInput] = useState("");
   const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const fetchTools = async () => {
     setLoading(true);
@@ -199,6 +207,7 @@ export const ToolManagement = () => {
       is_free: tool.is_free,
       display_order: tool.display_order,
       dedicated_route: tool.dedicated_route,
+      icon_url: tool.icon_url ?? null,
     });
     setToolTypesInput(tool.tool_types.join(", "));
     setIsNew(false);
@@ -224,6 +233,7 @@ export const ToolManagement = () => {
       is_premium: editingTool.is_premium,
       is_free: editingTool.is_free,
       dedicated_route: editingTool.dedicated_route || null,
+      icon_url: editingTool.icon_url || null,
     };
 
     if (isNew) {
