@@ -6,12 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VALID_COUPONS = ["ezmylife2000", "abhi2k", "abhi100", "ezylaunch"];
-const TIME_LIMITED_COUPONS: Record<string, number> = {
-  "ezylaunch": 30, // 30 days
-};
-
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[REDEEM-COUPON] ${step}${detailsStr}`);
 };
@@ -43,77 +38,84 @@ serve(async (req) => {
     const { coupon_code } = await req.json();
     if (!coupon_code) throw new Error("Coupon code is required");
 
-    const normalizedCode = coupon_code.toLowerCase().trim();
+    const normalizedCode = String(coupon_code).toLowerCase().trim();
     logStep("Checking coupon", { code: normalizedCode });
 
-    // Validate coupon code
-    if (!VALID_COUPONS.includes(normalizedCode)) {
-      logStep("Invalid coupon code");
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "Invalid coupon code" 
-      }), {
+    // Look up coupon in DB
+    const { data: coupon } = await supabaseClient
+      .from("coupon_codes")
+      .select("*")
+      .eq("code", normalizedCode)
+      .maybeSingle();
+
+    if (!coupon) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid coupon code" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // Check if already redeemed this coupon
+    if (!coupon.is_active) {
+      return new Response(JSON.stringify({ success: false, error: "This coupon is no longer active" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now()) {
+      return new Response(JSON.stringify({ success: false, error: "This coupon has expired" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    if (coupon.max_uses != null && coupon.use_count >= coupon.max_uses) {
+      return new Response(JSON.stringify({ success: false, error: "This coupon has reached its usage limit" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Already redeemed by this user?
     const { data: existingRedemption } = await supabaseClient
       .from("coupon_redemptions")
-      .select("*")
+      .select("id")
       .eq("user_id", user.id)
       .eq("coupon_code", normalizedCode)
-      .single();
+      .maybeSingle();
 
     if (existingRedemption) {
-      logStep("Coupon already redeemed by user");
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "You have already redeemed this coupon" 
-      }), {
+      return new Response(JSON.stringify({ success: false, error: "You have already redeemed this coupon" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // Check if user already has premium access
+    // Already premium?
     const { data: existingAccess } = await supabaseClient
       .from("premium_access")
-      .select("*")
+      .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (existingAccess) {
-      logStep("User already has premium access");
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "You already have premium access" 
-      }), {
+      return new Response(JSON.stringify({ success: false, error: "You already have premium access" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
-    // Record the redemption
+    // Record redemption
     const { error: redemptionError } = await supabaseClient
       .from("coupon_redemptions")
-      .insert({
-        user_id: user.id,
-        coupon_code: normalizedCode
-      });
+      .insert({ user_id: user.id, coupon_code: normalizedCode });
+    if (redemptionError) throw new Error("Failed to record coupon redemption");
 
-    if (redemptionError) {
-      logStep("Failed to record redemption", { error: redemptionError.message });
-      throw new Error("Failed to record coupon redemption");
-    }
-
-    // Grant premium access
-    const daysLimit = TIME_LIMITED_COUPONS[normalizedCode];
+    // Compute expiry from duration_days
     let expiresAt: string | null = null;
-    if (daysLimit) {
+    if (coupon.duration_days) {
       const expiry = new Date();
-      expiry.setDate(expiry.getDate() + daysLimit);
+      expiry.setDate(expiry.getDate() + coupon.duration_days);
       expiresAt = expiry.toISOString();
     }
 
@@ -121,19 +123,21 @@ serve(async (req) => {
       .from("premium_access")
       .insert({
         user_id: user.id,
-        access_type: "coupon",
-        expires_at: expiresAt
+        access_type: coupon.access_type || "coupon",
+        expires_at: expiresAt,
       });
+    if (accessError) throw new Error("Failed to grant premium access");
 
-    if (accessError) {
-      logStep("Failed to grant access", { error: accessError.message });
-      throw new Error("Failed to grant premium access");
-    }
+    // Increment use_count
+    await supabaseClient
+      .from("coupon_codes")
+      .update({ use_count: coupon.use_count + 1 })
+      .eq("id", coupon.id);
 
-    logStep("Coupon redeemed successfully", { expiresAt });
+    logStep("Coupon redeemed", { code: normalizedCode, expiresAt });
 
-    const message = daysLimit
-      ? `Coupon redeemed! You now have ${daysLimit}-day free premium access.`
+    const message = coupon.duration_days
+      ? `Coupon redeemed! You now have ${coupon.duration_days}-day premium access.`
       : "Coupon redeemed successfully! You now have lifetime premium access.";
 
     return new Response(JSON.stringify({ success: true, message }), {
