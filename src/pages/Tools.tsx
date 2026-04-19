@@ -419,6 +419,7 @@ const Tools = () => {
                       category={tool.category}
                       isLive={tool.isLive}
                       isFree={tool.isFree}
+                      iconUrl={catalogById.get(tool.id)?.icon_url ?? null}
                       icon={tool.icon}
                       index={index}
                     />
@@ -550,6 +551,7 @@ const Tools = () => {
                       category={tool.category}
                       isLive={tool.isLive}
                       isFree={!!catalogById.get(tool.toolId)?.is_free}
+                      iconUrl={catalogById.get(tool.toolId)?.icon_url ?? null}
                       icon={tool.icon}
                       index={index}
                       onQuickPreview={() => handleQuickPreview({
