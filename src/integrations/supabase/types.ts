@@ -38,6 +38,48 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_codes: {
+        Row: {
+          access_type: string
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_days: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          use_count: number
+        }
+        Insert: {
+          access_type?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          use_count?: number
+        }
+        Update: {
+          access_type?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          use_count?: number
+        }
+        Relationships: []
+      }
       coupon_redemptions: {
         Row: {
           coupon_code: string
@@ -259,6 +301,51 @@ export type Database = {
           session_shortcuts?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      page_views: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }
@@ -504,6 +591,7 @@ export type Database = {
           description: string
           display_order: number
           has_uploaded_files: boolean
+          icon_url: string | null
           id: string
           is_free: boolean
           is_live: boolean
@@ -520,6 +608,7 @@ export type Database = {
           description: string
           display_order?: number
           has_uploaded_files?: boolean
+          icon_url?: string | null
           id: string
           is_free?: boolean
           is_live?: boolean
@@ -536,6 +625,7 @@ export type Database = {
           description?: string
           display_order?: number
           has_uploaded_files?: boolean
+          icon_url?: string | null
           id?: string
           is_free?: boolean
           is_live?: boolean
@@ -601,6 +691,45 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      utm_links: {
+        Row: {
+          click_count: number
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          short_code: string | null
+          target_path: string
+          utm_campaign: string
+          utm_medium: string
+          utm_source: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          short_code?: string | null
+          target_path?: string
+          utm_campaign: string
+          utm_medium: string
+          utm_source: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          short_code?: string | null
+          target_path?: string
+          utm_campaign?: string
+          utm_medium?: string
+          utm_source?: string
         }
         Relationships: []
       }
