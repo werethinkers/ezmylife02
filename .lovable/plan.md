@@ -1,111 +1,114 @@
 
 
-# Tools Access Flow Overhaul + Admin Controls + Multi-Key Gemini
+The user wants several admin/SEO/perf improvements. Let me consolidate and plan.
 
-This plan covers 5 distinct improvements:
+Requests:
+1. Fix drag & drop in admin tool ordering (not working)
+2. Live analytics: page views, visitor count, geo source on admin
+3. UTM link builder + tracking dashboard
+4. Admin can edit tool icon + description (already has description, need icon)
+5. SEO boost (now that browsing is public — leverage it)
+6. Faster loading/access checks (ToolAccessGuard is slow)
+7. Admin coupon code management
 
-## 1. Restructure Access: View First, Pay Later
+# Admin Analytics, UTM Tracking, Coupons, Drag-Drop Fix & Perf
 
-**Current problem:** `/tools` is wrapped in `PremiumRoute` which forces login → subscription → tools. Users can't browse before paying.
+## 1. Fix Drag & Drop (ToolManagement.tsx)
+The current `@dnd-kit` setup likely missing `SortableContext` items array or sensors. Will rebuild with proper `DndContext` + `SortableContext` (verticalListSortingStrategy) + `useSortable` per row, persisting `display_order` via batch update on drop end.
 
-**New flow:**
-- `/tools` → public (anyone can browse all tools)
-- Click a tool → if not logged in → `/auth` → after login back to tool
-- After login, when launching a tool → check if it's free OR user has subscription
-  - If free or subscribed → open tool
-  - Else → redirect to `/subscription` with toast "This tool requires premium"
-
-**Changes:**
-- `src/App.tsx`: Remove `PremiumRoute` wrapper from `/tools`. Keep on `/tool/:toolId`, `/tool-preview/:toolId` but replace with new `ToolAccessGuard` that allows access if `tools_catalog.is_free = true`.
-- New `src/components/ToolAccessGuard.tsx`: checks login → checks `is_free` flag on the tool → checks subscription → routes accordingly.
-
-## 2. Admin: Mark Tools as Free + Drag-Drop Ordering
-
-**DB migration:**
+## 2. Live Analytics (Admin Dashboard)
+**New table `page_views`:**
 ```sql
-ALTER TABLE tools_catalog ADD COLUMN is_free boolean NOT NULL DEFAULT false;
-ALTER TABLE tools_catalog ADD COLUMN display_order integer NOT NULL DEFAULT 0;
-CREATE INDEX idx_tools_catalog_display_order ON tools_catalog(display_order);
+- id, path, referrer, utm_source, utm_medium, utm_campaign,
+  country, city, user_agent, session_id, user_id (nullable),
+  created_at
+```
+- Public INSERT policy (anyone can log a view)
+- Admin/moderator SELECT only
+
+**Tracking:** New `src/hooks/usePageTracking.ts` mounted in `App.tsx` — fires on every route change, captures URL, referrer, UTM params, and uses a free IP geolocation API (`ipapi.co/json`) for country/city.
+
+**Admin tab "Analytics":** new `AnalyticsDashboard.tsx`
+- Total views (today / 7d / 30d)
+- Unique visitors (by session_id)
+- Top pages
+- Top referrers
+- Geo breakdown (country list with counts)
+- Top UTM sources/campaigns
+- Live counter: views in last 5 min (via realtime subscription)
+
+## 3. UTM Builder (Admin)
+**New table `utm_links`:** id, label, target_path, utm_source, utm_medium, utm_campaign, short_code (unique), click_count, created_at, created_by.
+
+**New admin component `UtmLinkBuilder.tsx`:**
+- Form: target path + source/medium/campaign + label
+- Generates: `https://ezyourlife.com/{path}?utm_source=...&utm_medium=...&utm_campaign=...`
+- List of all created links with click counts (joined from page_views by utm_campaign match)
+- Copy button per link
+
+## 4. Tool Icon + Description Editing
+`tools_catalog` already has `description`. Add `icon_url` column. Update `ToolManagement.tsx` edit dialog with:
+- Description textarea (already present, verify)
+- Icon URL input + image preview
+- Optional: file upload to existing `tool-uploads` storage bucket → store public URL
+
+Render `icon_url` in `EnhancedToolCard.tsx` (fallback to current icon mapping).
+
+## 5. SEO Boost (public browsing now possible)
+- Update `SEOHead.tsx` props on `/tools` to richer description: "Browse 2000+ AI tools free — no signup needed"
+- Add JSON-LD `ItemList` schema on `/tools` listing top featured tools (helps Google sitelinks)
+- Update `public/sitemap.xml` to include all live tool routes (`/tool-preview/{id}` for each catalog tool — generated client-side via a simple build hint, or a static expanded list)
+- Add `<meta name="robots" content="index, follow">` explicitly on tool pages
+- Update homepage hero copy to mention "Browse free, no signup"
+
+## 6. Performance Fix — ToolAccessGuard (currently slow)
+**Problem:** Every tool launch makes 2 sequential awaits: catalog fetch + edge function `check-subscription` call (~1-3s).
+
+**Fix:**
+- Cache subscription status in `AuthContext` on login (single check, refreshed every 5 min via React Query)
+- Cache `is_free` flag locally via the existing `useToolsCatalog` hook (already cached 5 min)
+- Guard becomes synchronous: `tool.is_free || isSubscribed → render` instantly
+- Show loader only if catalog/auth still loading (rare)
+
+Add `useSubscription()` hook returning `{ isSubscribed, loading }` cached globally.
+
+## 7. Admin Coupon Codes Management
+**New table `coupon_codes`:**
+```sql
+- id, code (unique), description, access_type (trial|monthly|yearly|lifetime|complimentary),
+  duration_days (nullable), max_uses (nullable), use_count, is_active,
+  expires_at (nullable), created_at, created_by
 ```
 
-**Admin UI (`ToolManagement.tsx`):**
-- Add "Free" toggle column (per row + in edit dialog)
-- Add a new "Live Tool Order" section above the table: shows only `is_live = true` tools as draggable cards using `@dnd-kit/core` (already supported pattern). On drop, batch-update `display_order`.
+**New admin tab "Coupons"** → `CouponManager.tsx`:
+- Create/edit/delete codes
+- Toggle active
+- See use count vs max
+- See list of redemptions (join `coupon_redemptions`)
 
-**Tools page (`Tools.tsx`):**
-- Sort `featuredLiveTools` by `display_order` ascending by default
-- Show a small "FREE" badge on tool cards where `is_free = true`
-
-## 3. Global Search Across All Tabs
-
-**Current problem:** Search only filters within the active view mode (browse/featured/list/personalized).
-
-**Fix in `Tools.tsx`:**
-- When `searchQuery.length > 0`, override view mode and show a unified "Search Results" section that searches:
-  - `featuredLiveTools` (live/featured tools)
-  - `expandedTools` (all browse tools)
-  - `catalogTools` (DB catalog including drafts that are live)
-- Dedupe by id/name, render in single grid using `EnhancedToolCard`
-- Keep current view mode state but visually switch to search results until query is cleared
-
-## 4. Admin: Unlimited Gemini Keys
-
-**Current:** Hardcoded loop `GEMINI_API_KEY_1` → `_10` in env vars. Only 4 keys currently set.
-
-**New approach (DB-backed key pool):**
-```sql
-CREATE TABLE gemini_api_keys (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  key_value text NOT NULL,
-  label text,
-  is_active boolean NOT NULL DEFAULT true,
-  last_used_at timestamptz,
-  failure_count integer NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE gemini_api_keys ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins manage keys" ON gemini_api_keys FOR ALL TO authenticated 
-  USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
-```
-
-**Edge function update** (`notebook-ai`, `startup-analyser`, `promptmaster-ai`):
-- Replace `getGeminiKeys()` env loop with a fetch from `gemini_api_keys` where `is_active = true` (using service role)
-- On failure of one key → increment `failure_count`, try next key
-- On success → update `last_used_at`
-- Auto-disable a key when `failure_count >= 5`
-
-**New admin tab "API Keys"** (`src/components/admin/GeminiKeysManager.tsx`):
-- Add/delete/toggle keys
-- Show last_used_at, failure_count, status
-- Mask key value (show last 4 chars)
-- Admin-only (hidden for moderators)
-
-## 5. Frontend Error Toast on AI Failure
-
-**In all AI-using components** (PromptMaster, SpeedyNotebook, StartupAnalyser, etc.):
-- When edge function returns non-OK or all keys fail → show toast: **"Something went wrong. Please retry — our AI is busy."**
-- Add a "Retry" button on the toast where applicable
+Update `redeem-coupon` edge function to look up codes from this table (instead of hardcoded list), enforce max_uses + expiry, and grant correct `access_type`/duration.
 
 ## Files Changed/Created
 
 | File | Action |
 |------|--------|
-| `src/App.tsx` | Remove PremiumRoute from `/tools`; add ToolAccessGuard to `/tool/:toolId` |
-| `src/components/ToolAccessGuard.tsx` | **New** — login + free/premium check |
-| `src/pages/Tools.tsx` | Global search; sort by display_order; FREE badges |
-| `src/components/tools/EnhancedToolCard.tsx` | Add FREE badge support |
-| `src/components/admin/ToolManagement.tsx` | Add free toggle + drag-drop ordering section |
-| `src/components/admin/GeminiKeysManager.tsx` | **New** — manage keys |
-| `src/pages/AdminDashboard.tsx` | Add "API Keys" tab (admin-only) |
-| `supabase/functions/notebook-ai/index.ts` | DB-backed key fallback + better error |
-| `supabase/functions/startup-analyser/index.ts` | DB-backed key fallback |
-| `supabase/functions/promptmaster-ai/index.ts` | DB-backed key fallback |
-| Migration SQL | Add `is_free`, `display_order`, `gemini_api_keys` table |
-| `package.json` | Add `@dnd-kit/core`, `@dnd-kit/sortable` if missing |
+| Migration | Add `page_views`, `utm_links`, `coupon_codes` tables + `tools_catalog.icon_url` |
+| `src/hooks/usePageTracking.ts` | **New** |
+| `src/hooks/useSubscription.ts` | **New** — cached sub status |
+| `src/components/ToolAccessGuard.tsx` | Modify — use cached hooks, instant decision |
+| `src/App.tsx` | Mount page tracking |
+| `src/components/admin/AnalyticsDashboard.tsx` | **New** |
+| `src/components/admin/UtmLinkBuilder.tsx` | **New** |
+| `src/components/admin/CouponManager.tsx` | **New** |
+| `src/components/admin/ToolManagement.tsx` | Fix drag-drop, add icon URL field |
+| `src/components/tools/EnhancedToolCard.tsx` | Render custom icon_url |
+| `src/pages/AdminDashboard.tsx` | Add 3 new tabs (Analytics, UTM, Coupons) |
+| `src/components/SEOHead.tsx` + `src/pages/Tools.tsx` | Boost meta + JSON-LD ItemList |
+| `public/sitemap.xml` | Expand with tool routes |
+| `supabase/functions/redeem-coupon/index.ts` | Use DB-backed coupons |
 
 ## Limitations
-
-- Existing `GEMINI_API_KEY_1..4` env secrets remain as a final fallback for safety; admin should migrate them into the DB table via the new UI
-- Drag-drop order only affects "Featured/Live Tools" grid (not the giant 50K browse catalog which is static data)
-- "Free" flag only applies to DB catalog tools (not the 50K static `expandedTools`); static tools remain premium-by-default
+- Geo lookup uses free `ipapi.co` (rate-limited to ~1k/day) — fine for current traffic; can swap if needed
+- "Live" counter polls every 30s (not true websocket) to avoid realtime channel cost
+- Sitemap is static — won't auto-update for new catalog tools without rebuild; we'll include the top live tools
 
