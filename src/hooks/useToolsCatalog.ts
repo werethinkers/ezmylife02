@@ -11,6 +11,7 @@ export interface CatalogTool {
   is_live: boolean;
   is_free?: boolean;
   display_order?: number;
+  icon_url?: string | null;
   created_at: string;
   updated_at: string;
 }

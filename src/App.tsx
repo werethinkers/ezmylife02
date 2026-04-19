@@ -10,6 +10,7 @@ import { ToolAccessGuard } from "@/components/ToolAccessGuard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 // Build cache buster v2
 
@@ -68,6 +69,7 @@ const pageVariants = {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  usePageTracking();
 
   return (
     <AnimatePresence mode="wait" initial={false}>

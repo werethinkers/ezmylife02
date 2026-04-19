@@ -19,6 +19,8 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -44,6 +46,7 @@ interface CatalogTool {
   is_free: boolean;
   display_order: number;
   dedicated_route: string | null;
+  icon_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +71,7 @@ const emptyTool: Omit<CatalogTool, "created_at" | "updated_at"> = {
   is_free: false,
   display_order: 0,
   dedicated_route: null,
+  icon_url: null,
 };
 
 // --- Sortable card component ---
@@ -108,7 +112,11 @@ export const ToolManagement = () => {
   const [toolTypesInput, setToolTypesInput] = useState("");
   const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const fetchTools = async () => {
     setLoading(true);
@@ -199,6 +207,7 @@ export const ToolManagement = () => {
       is_free: tool.is_free,
       display_order: tool.display_order,
       dedicated_route: tool.dedicated_route,
+      icon_url: tool.icon_url ?? null,
     });
     setToolTypesInput(tool.tool_types.join(", "));
     setIsNew(false);
@@ -224,6 +233,7 @@ export const ToolManagement = () => {
       is_premium: editingTool.is_premium,
       is_free: editingTool.is_free,
       dedicated_route: editingTool.dedicated_route || null,
+      icon_url: editingTool.icon_url || null,
     };
 
     if (isNew) {
@@ -506,6 +516,25 @@ export const ToolManagement = () => {
                     placeholder="What does this tool do?"
                     rows={3}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Icon URL (optional)</Label>
+                  <div className="flex gap-2 items-start">
+                    <Input
+                      value={editingTool.icon_url ?? ""}
+                      onChange={e => setEditingTool({ ...editingTool, icon_url: e.target.value || null })}
+                      placeholder="https://example.com/icon.png"
+                    />
+                    {editingTool.icon_url && (
+                      <img
+                        src={editingTool.icon_url}
+                        alt="preview"
+                        className="h-10 w-10 rounded-md border object-contain bg-muted"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Public URL of the tool's icon. Leave blank to use the default.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

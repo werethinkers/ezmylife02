@@ -20,6 +20,7 @@ interface EnhancedToolCardProps {
   category?: string;
   isLive: boolean;
   isFree?: boolean;
+  iconUrl?: string | null;
   icon: ReactNode;
   onQuickPreview?: () => void;
   index?: number;
@@ -36,6 +37,7 @@ export const EnhancedToolCard = ({
   category,
   isLive,
   isFree,
+  iconUrl,
   icon,
   onQuickPreview,
   index = 0
@@ -49,8 +51,8 @@ export const EnhancedToolCard = ({
   const toolTypeConfig = getToolTypeConfig(displayName);
   const ToolTypeIcon = toolTypeConfig?.icon;
   
-  // Get AI-generated icon
-  const aiIconUrl = getToolIconUrl(displayId, displayCategory);
+  // Custom icon URL takes precedence over AI-generated
+  const aiIconUrl = iconUrl || getToolIconUrl(displayId, displayCategory);
 
   const handleClick = () => {
     if (isLive) {
