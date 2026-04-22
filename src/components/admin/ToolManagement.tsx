@@ -15,6 +15,8 @@ import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
+import { useToolViewCounts } from "@/hooks/useToolViewCounts";
+import { ToolViewChart } from "./ToolViewChart";
 import {
   DndContext,
   closestCenter,
@@ -316,6 +318,14 @@ export const ToolManagement = () => {
   const uploadedCount = tools.filter(t => t.has_uploaded_files).length;
   const freeCount = tools.filter(t => t.is_free).length;
 
+  const toolIds = useMemo(() => tools.map((t) => t.id), [tools]);
+  const { data: viewStats } = useToolViewCounts(toolIds);
+  const toolNameMap = useMemo(() => new Map(tools.map((t) => [t.id, t.name])), [tools]);
+  const totalViews = useMemo(
+    () => Array.from(viewStats?.values() ?? []).reduce((s, v) => s + v.view_count, 0),
+    [viewStats]
+  );
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -324,8 +334,11 @@ export const ToolManagement = () => {
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{liveCount}</p><p className="text-xs text-muted-foreground">Live</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-yellow-500">{draftCount}</p><p className="text-xs text-muted-foreground">Draft</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-500">{uploadedCount}</p><p className="text-xs text-muted-foreground">With Files</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{freeCount}</p><p className="text-xs text-muted-foreground">Free</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{totalViews.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Views</p></CardContent></Card>
       </div>
+
+      {/* Per-tool view chart */}
+      <ToolViewChart stats={viewStats ?? new Map()} toolNames={toolNameMap} />
 
       {/* Drag-drop ordering */}
       <Card>
