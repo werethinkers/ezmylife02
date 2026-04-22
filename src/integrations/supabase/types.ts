@@ -313,6 +313,7 @@ export type Database = {
           path: string
           referrer: string | null
           session_id: string | null
+          tool_id: string | null
           user_agent: string | null
           user_id: string | null
           utm_campaign: string | null
@@ -327,6 +328,7 @@ export type Database = {
           path: string
           referrer?: string | null
           session_id?: string | null
+          tool_id?: string | null
           user_agent?: string | null
           user_id?: string | null
           utm_campaign?: string | null
@@ -341,13 +343,22 @@ export type Database = {
           path?: string
           referrer?: string | null
           session_id?: string | null
+          tool_id?: string | null
           user_agent?: string | null
           user_id?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "page_views_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       premium_access: {
         Row: {
@@ -738,6 +749,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_tool_view_counts: {
+        Args: { _tool_ids: string[] }
+        Returns: {
+          last_viewed: string
+          tool_id: string
+          unique_visitors: number
+          view_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

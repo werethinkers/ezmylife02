@@ -8,16 +8,21 @@ interface SubscriptionState {
   expiresAt?: string | null;
 }
 
-async function fetchSubscription(): Promise<SubscriptionState> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return { isSubscribed: false };
+const AUTO_PREMIUM_DOMAINS = ["@ezyourlife.com"];
 
-  // First, check premium_access table directly for instant decision
+async function fetchSubscription(userId: string, email: string | null): Promise<SubscriptionState> {
+  // 0. Auto-premium domain shortcut — skip all network calls
+  if (email && AUTO_PREMIUM_DOMAINS.some((d) => email.toLowerCase().endsWith(d))) {
+    return { isSubscribed: true, accessType: "lifetime" };
+  }
+
+  // 1. Direct DB read — fast path, no edge function
   const { data: rows } = await supabase
     .from("premium_access")
     .select("access_type, expires_at")
-    .eq("user_id", session.user.id)
-    .order("granted_at", { ascending: false });
+    .eq("user_id", userId)
+    .order("granted_at", { ascending: false })
+    .limit(5);
 
   const now = Date.now();
   const active = (rows ?? []).find((r) => !r.expires_at || new Date(r.expires_at).getTime() > now);
@@ -25,29 +30,19 @@ async function fetchSubscription(): Promise<SubscriptionState> {
     return { isSubscribed: true, accessType: active.access_type, expiresAt: active.expires_at };
   }
 
-  // Fallback: invoke edge function (handles auto-premium domains, etc.)
-  try {
-    const { data } = await supabase.functions.invoke("check-subscription", {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    return {
-      isSubscribed: !!data?.subscribed,
-      accessType: data?.access_type,
-      expiresAt: data?.expires_at,
-    };
-  } catch {
-    return { isSubscribed: false };
-  }
+  return { isSubscribed: false };
 }
 
 export function useSubscription() {
   const { user, loading: authLoading } = useAuth();
   const q = useQuery({
     queryKey: ["subscription", user?.id ?? "anon"],
-    queryFn: fetchSubscription,
+    queryFn: () => fetchSubscription(user!.id, user?.email ?? null),
     enabled: !!user && !authLoading,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 min cache (was 5)
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   return {
     isSubscribed: q.data?.isSubscribed ?? false,

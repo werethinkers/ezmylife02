@@ -15,6 +15,8 @@ import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
+import { useToolViewCounts } from "@/hooks/useToolViewCounts";
+import { ToolViewChart } from "./ToolViewChart";
 import {
   DndContext,
   closestCenter,
@@ -316,6 +318,14 @@ export const ToolManagement = () => {
   const uploadedCount = tools.filter(t => t.has_uploaded_files).length;
   const freeCount = tools.filter(t => t.is_free).length;
 
+  const toolIds = useMemo(() => tools.map((t) => t.id), [tools]);
+  const { data: viewStats } = useToolViewCounts(toolIds);
+  const toolNameMap = useMemo(() => new Map(tools.map((t) => [t.id, t.name])), [tools]);
+  const totalViews = useMemo(
+    () => Array.from(viewStats?.values() ?? []).reduce((s, v) => s + v.view_count, 0),
+    [viewStats]
+  );
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -324,8 +334,11 @@ export const ToolManagement = () => {
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{liveCount}</p><p className="text-xs text-muted-foreground">Live</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-yellow-500">{draftCount}</p><p className="text-xs text-muted-foreground">Draft</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-500">{uploadedCount}</p><p className="text-xs text-muted-foreground">With Files</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{freeCount}</p><p className="text-xs text-muted-foreground">Free</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{totalViews.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Views</p></CardContent></Card>
       </div>
+
+      {/* Per-tool view chart */}
+      <ToolViewChart stats={viewStats ?? new Map()} toolNames={toolNameMap} />
 
       {/* Drag-drop ordering */}
       <Card>
@@ -394,12 +407,15 @@ export const ToolManagement = () => {
                 <TableHead>Type</TableHead>
                 <TableHead>Free</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Views</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTools.map(tool => (
+              {filteredTools.map(tool => {
+                const stat = viewStats?.get(tool.id);
+                return (
                 <TableRow key={tool.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -438,6 +454,16 @@ export const ToolManagement = () => {
                       )}
                     </button>
                   </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">
+                    {stat ? (
+                      <div className="leading-tight">
+                        <div className="font-semibold">{stat.view_count.toLocaleString()}</div>
+                        <div className="text-muted-foreground">{stat.unique_visitors.toLocaleString()} unique</div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {format(new Date(tool.created_at), "MMM d, yyyy")}
                   </TableCell>
@@ -462,10 +488,11 @@ export const ToolManagement = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
               {filteredTools.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     {loading ? "Loading tools..." : "No tools found"}
                   </TableCell>
                 </TableRow>

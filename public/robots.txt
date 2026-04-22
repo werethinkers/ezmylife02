@@ -6,6 +6,7 @@ Disallow: /profile
 
 Host: https://ezyourlife.com
 Sitemap: https://ezyourlife.com/sitemap.xml
+Sitemap: https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap
 
 User-agent: Googlebot
 Allow: /
