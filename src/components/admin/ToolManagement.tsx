@@ -454,6 +454,16 @@ export const ToolManagement = () => {
                       )}
                     </button>
                   </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">
+                    {stat ? (
+                      <div className="leading-tight">
+                        <div className="font-semibold">{stat.view_count.toLocaleString()}</div>
+                        <div className="text-muted-foreground">{stat.unique_visitors.toLocaleString()} unique</div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {format(new Date(tool.created_at), "MMM d, yyyy")}
                   </TableCell>
@@ -478,10 +488,11 @@ export const ToolManagement = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
               {filteredTools.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     {loading ? "Loading tools..." : "No tools found"}
                   </TableCell>
                 </TableRow>
