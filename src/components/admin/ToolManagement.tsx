@@ -407,12 +407,15 @@ export const ToolManagement = () => {
                 <TableHead>Type</TableHead>
                 <TableHead>Free</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Views</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTools.map(tool => (
+              {filteredTools.map(tool => {
+                const stat = viewStats?.get(tool.id);
+                return (
                 <TableRow key={tool.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
