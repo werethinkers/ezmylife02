@@ -1,86 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+<!--
+  This static sitemap is a bootstrap fallback. The canonical, always-up-to-date
+  sitemap is generated dynamically from the live tools_catalog at:
+  https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap
+
+  Search engines should be pointed there via robots.txt.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ezyourlife.com/</loc>
-    <lastmod>2026-04-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://ezyourlife.com/og-image.png</image:loc>
-      <image:title>EZYOURLIFE - The Future's First AI App Store</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://ezyourlife.com/tools</loc>
-    <lastmod>2026-04-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.98</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/about</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/contact</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/subscription</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/refund-policy</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/auth</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/get-extension</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/startup-analyser</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/notebook</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/promptmaster</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/meet-nudge</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/mobile-shortcuts</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
 </urlset>
