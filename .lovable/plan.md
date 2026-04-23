@@ -1,114 +1,194 @@
 
 
-The user wants several admin/SEO/perf improvements. Let me consolidate and plan.
+# Remove Cloud Run Tools + Add Virasat (Father's Legacy Storyteller)
 
-Requests:
-1. Fix drag & drop in admin tool ordering (not working)
-2. Live analytics: page views, visitor count, geo source on admin
-3. UTM link builder + tracking dashboard
-4. Admin can edit tool icon + description (already has description, need icon)
-5. SEO boost (now that browsing is public — leverage it)
-6. Faster loading/access checks (ToolAccessGuard is slow)
-7. Admin coupon code management
+Two parts: a small cleanup, plus the full Virasat tool with persistence, pre-generation review, and near-instant turn-taking.
 
-# Admin Analytics, UTM Tracking, Coupons, Drag-Drop Fix & Perf
+---
 
-## 1. Fix Drag & Drop (ToolManagement.tsx)
-The current `@dnd-kit` setup likely missing `SortableContext` items array or sensors. Will rebuild with proper `DndContext` + `SortableContext` (verticalListSortingStrategy) + `useSortable` per row, persisting `display_order` via batch update on drop end.
+## Part 1: Remove all `*.run.app` tools (keep Pi7)
 
-## 2. Live Analytics (Admin Dashboard)
-**New table `page_views`:**
+In `src/data/tools.tsx`, the `toolUrls` map has ~40 Cloud Run entries. **All will be removed:**
+
+`ai-invoice-generator`, `jain-audio-stream`, `jain-video-stream`, `jaingyan-ai`, `advance-ai-bot`, `shastra-pdf-reader`, `jain-encyclopedia`, `jain-panchang`, `shastra-multi-pdf-ai-bot`, `quiz`, `image-creator`, `storybook-creator`, `advance-text-extractor`, `create-3d-images`, `sketchflow-ai`, `speedy-notebook` (the cloud run one — native `/notebook` stays), `rich-editor`, `pdf-chart-image-extractor`, `shastra-hover-dictionary`, `html-editor`, `wrong-written-words`, `book-editor`, `book-editor-html`, `ocr`, `dictionary-extractor-ai`, `pdf-profile-extractor`, `pdf-metadata-ai-analyst`, `soul-mirror`, `cognimap`, `ai-data-analysis`, `kundkund-ebook-bot`, `kundkund-mindmap`, `jain-ganit`, `jainbhugol-maps`, `interactive-videos`, `smart-diagram-ai`, `auto-text-extractor`.
+
+**Kept untouched:** all Pi7 tools, ToolFK ID photo, native React tools, DB-catalog tools, AI Invoice Generator (`tool-1` native version stays).
+
+I'll also remove their corresponding entries from the `tools` array (so they don't appear in browse/search) and clean `expandedTools.tsx` if any references remain.
+
+---
+
+## Part 2: Add Virasat — A Father's Legacy
+
+A premium native tool at `/virasat` for fathers to record life stories in podcast style; AI generates a heartfelt book for their children.
+
+### Improvements over the original AI Studio app
+
+| Original | Virasat on EZYOURLIFE |
+|---|---|
+| State lost on refresh | Every Q&A persisted instantly to Supabase |
+| Hard 15-question cap | Unlimited; AI progresses chapter-by-chapter; user clicks "Done" when ready |
+| Book generated blindly | **Bird's-eye Review screen first** — see all stories, edit/delete, change style, see chapter outline |
+| ~3-5s gap between turns | <2s gap (parallel refine + nextQ + TTS pre-fetch) |
+| Auto-restart only | "Pause" button so user can think before next question |
+| In-browser only Gemini key | DB-backed key rotation via edge function |
+
+### Routes & files
+
+**New route:** `/virasat` (wrapped in `PremiumRoute`, like Startup Analyser).
+
+**New files:**
+- `src/pages/Virasat.tsx` — shell with modes: `welcome → interview → review → generating → book`
+- `src/components/virasat/VoiceRecorder.tsx` — ported from upload (Web Speech API, hi-IN, with Pause button added)
+- `src/components/virasat/BookView.tsx` — ported from upload (ReactMarkdown chapter renderer)
+- `src/components/virasat/ReviewPanel.tsx` — **new** bird's-eye view
+- `src/components/virasat/lib/audio.ts` — ported PCM player
+- `src/components/virasat/services/virasatService.ts` — wraps edge-function calls
+- `supabase/functions/virasat-ai/index.ts` — single edge function with action-based routing
+- New SQL migration
+
+**Edited files:**
+- `src/App.tsx` — add `/virasat` route
+- `src/data/tools.tsx` — remove `*.run.app` tools (Part 1)
+- `supabase/config.toml` — register `virasat-ai` function
+- `src/components/Navbar.tsx` — add "Virasat" link for premium users (optional)
+
+### Edge function (`virasat-ai`) actions
+
+Single endpoint, switched by `action` field in body. All use the existing **DB-backed Gemini key rotation** pattern (same as `notebook-ai`).
+
+| action | model | purpose |
+|---|---|---|
+| `next_question` | gemini-2.5-flash | uses `SYSTEM_INSTRUCTION` from uploaded `gemini.ts`; returns next conversational question |
+| `refine_response` | gemini-2.5-flash | cleans raw Hindi/Hinglish transcript into narrative prose |
+| `tts` | gemini-2.5-flash-preview-tts | returns base64 PCM (voice: Kore) |
+| `chapter_outline` | gemini-2.5-flash | for Review screen — produces ordered list of chapter titles + 1-line synopsis |
+| `generate_book` | gemini-2.5-pro | uses full conversation verbatim; sticks strictly to user's stories; returns markdown book |
+
+The system prompt and book-generation prompts come **directly from the uploaded `services/gemini.ts`** (preserved verbatim so the warmth/tone is unchanged).
+
+### Database migration
+
 ```sql
-- id, path, referrer, utm_source, utm_medium, utm_campaign,
-  country, city, user_agent, session_id, user_id (nullable),
-  created_at
-```
-- Public INSERT policy (anyone can log a view)
-- Admin/moderator SELECT only
+CREATE TABLE public.virasat_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL DEFAULT 'Meri Kahani',
+  book_style text NOT NULL DEFAULT 'emotional',  -- emotional|factual|legacy
+  conversation jsonb NOT NULL DEFAULT '[]'::jsonb, -- [{role,text,createdAt}]
+  chapter_outline jsonb,
+  book_content text,
+  status text NOT NULL DEFAULT 'recording', -- recording|reviewing|generating|done
+  question_count integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE virasat_sessions ENABLE ROW LEVEL SECURITY;
 
-**Tracking:** New `src/hooks/usePageTracking.ts` mounted in `App.tsx` — fires on every route change, captures URL, referrer, UTM params, and uses a free IP geolocation API (`ipapi.co/json`) for country/city.
+-- Owner CRUD
+CREATE POLICY "owner_all" ON virasat_sessions FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-**Admin tab "Analytics":** new `AnalyticsDashboard.tsx`
-- Total views (today / 7d / 30d)
-- Unique visitors (by session_id)
-- Top pages
-- Top referrers
-- Geo breakdown (country list with counts)
-- Top UTM sources/campaigns
-- Live counter: views in last 5 min (via realtime subscription)
+-- Admin/moderator read-only
+CREATE POLICY "admin_read" ON virasat_sessions FOR SELECT TO authenticated
+  USING (has_role(auth.uid(),'admin') OR has_role(auth.uid(),'moderator'));
 
-## 3. UTM Builder (Admin)
-**New table `utm_links`:** id, label, target_path, utm_source, utm_medium, utm_campaign, short_code (unique), click_count, created_at, created_by.
+CREATE INDEX idx_virasat_user ON virasat_sessions(user_id, updated_at DESC);
 
-**New admin component `UtmLinkBuilder.tsx`:**
-- Form: target path + source/medium/campaign + label
-- Generates: `https://ezyourlife.com/{path}?utm_source=...&utm_medium=...&utm_campaign=...`
-- List of all created links with click counts (joined from page_views by utm_campaign match)
-- Copy button per link
-
-## 4. Tool Icon + Description Editing
-`tools_catalog` already has `description`. Add `icon_url` column. Update `ToolManagement.tsx` edit dialog with:
-- Description textarea (already present, verify)
-- Icon URL input + image preview
-- Optional: file upload to existing `tool-uploads` storage bucket → store public URL
-
-Render `icon_url` in `EnhancedToolCard.tsx` (fallback to current icon mapping).
-
-## 5. SEO Boost (public browsing now possible)
-- Update `SEOHead.tsx` props on `/tools` to richer description: "Browse 2000+ AI tools free — no signup needed"
-- Add JSON-LD `ItemList` schema on `/tools` listing top featured tools (helps Google sitelinks)
-- Update `public/sitemap.xml` to include all live tool routes (`/tool-preview/{id}` for each catalog tool — generated client-side via a simple build hint, or a static expanded list)
-- Add `<meta name="robots" content="index, follow">` explicitly on tool pages
-- Update homepage hero copy to mention "Browse free, no signup"
-
-## 6. Performance Fix — ToolAccessGuard (currently slow)
-**Problem:** Every tool launch makes 2 sequential awaits: catalog fetch + edge function `check-subscription` call (~1-3s).
-
-**Fix:**
-- Cache subscription status in `AuthContext` on login (single check, refreshed every 5 min via React Query)
-- Cache `is_free` flag locally via the existing `useToolsCatalog` hook (already cached 5 min)
-- Guard becomes synchronous: `tool.is_free || isSubscribed → render` instantly
-- Show loader only if catalog/auth still loading (rare)
-
-Add `useSubscription()` hook returning `{ isSubscribed, loading }` cached globally.
-
-## 7. Admin Coupon Codes Management
-**New table `coupon_codes`:**
-```sql
-- id, code (unique), description, access_type (trial|monthly|yearly|lifetime|complimentary),
-  duration_days (nullable), max_uses (nullable), use_count, is_active,
-  expires_at (nullable), created_at, created_by
+-- Register in catalog
+INSERT INTO tools_catalog (id, name, description, category, source, is_live, is_premium, dedicated_route, display_order)
+VALUES ('virasat', 'Virasat — A Father''s Legacy',
+        'Record your life stories by voice; AI turns them into a beautiful book for your children.',
+        'AI Agent', 'native', true, true, '/virasat', 5);
 ```
 
-**New admin tab "Coupons"** → `CouponManager.tsx`:
-- Create/edit/delete codes
-- Toggle active
-- See use count vs max
-- See list of redemptions (join `coupon_redemptions`)
+### Persistence flow (no data loss)
 
-Update `redeem-coupon` edge function to look up codes from this table (instead of hardcoded list), enforce max_uses + expiry, and grant correct `access_type`/duration.
+```
+User answers → onTranscript fires
+   ├─→ append {role:'user', text:refined} to local state
+   ├─→ debounced upsert (300ms) to virasat_sessions.conversation
+   └─→ also save question_count + status
+On every chapter advance → save current_chapter
+On revisit /virasat → query for status≠'done' session → show "Continue your story" card
+```
+
+### Bird's-eye Review screen (before book generation)
+
+Triggered by clicking "Bas itna hi, ab review karein" instead of the old "make book" button.
+
+```
+┌────────────────────────────────────────┐
+│  📖 Aapki kahani ka jaiza               │
+├────────────────────────────────────────┤
+│  Style: ⦿ Dil se  ○ Sahi yaadein  ○ Seekh │
+│                                         │
+│  AI Chapter Outline (preview)           │
+│  ─────────────────────────────          │
+│  1. Bachpan       — "Aapka pehla ghar…"│
+│  2. Jawaani        — "Naye sapne…"      │
+│  3. Sangharsh     — "Mushkil samay…"   │
+│  4. Parivaar      — "Pyaar mila…"      │
+│  5. Mere bachche  — "Beta, yaad rakhna"│
+│                                         │
+│  Your Stories (24 recorded)             │
+│  ─────────────────────────────          │
+│  ☑ Q: "Bachpan ki yaad?"               │
+│     A: "Mere papa ne mujhe…" [edit][❌]  │
+│  ☑ Q: "Sabse mushkil pal?"             │
+│     A: "Jab pitaji nahi rahe…" [edit][❌]│
+│  ☑ … (all 24 listed)                   │
+│                                         │
+│  [← Aur stories add karein]            │
+│  [✨ Kitaab banayein]                   │
+└────────────────────────────────────────┘
+```
+
+User can: change style, delete weak answers, edit refined text, see chapter preview before committing. Hitting "Kitaab banayein" calls `generate_book`.
+
+### Sub-2-second turn-taking
+
+```
+User stops speaking
+  ├─ Parallel batch (Promise.all):
+  │     ├─ refineResponse(raw)
+  │     ├─ getNextQuestion(history + raw)   ← uses raw, not refined, for speed
+  │     └─ Pre-fetch TTS for next question (kicked off as soon as nextQ resolves)
+  ├─ Save to DB (fire-and-forget, non-blocking)
+  ├─ Render next question (~1-1.5s)
+  ├─ Show "Pause" button + auto-resume countdown (2s)
+  └─ Play TTS, then auto-restart mic (unless user paused)
+```
+
+### Unlimited but progressive
+
+Question limit removed. The AI's system instruction is augmented to track which **life chapter** it's currently exploring (childhood → youth → struggle → family → wisdom → message-to-child) and only advances when 2-4 follow-ups in the current chapter are done. The user always sees a "Bas itna hi, review karein" button to stop whenever they want — even at question 5 or question 200.
+
+### Story-grounded book
+
+The `generate_book` prompt (taken verbatim from uploaded `gemini.ts`) already enforces **STRICT FIDELITY: "Do not add any external facts, stories, or events that the user did not mention."** I'll keep this unchanged and pass the full refined conversation history.
+
+---
 
 ## Files Changed/Created
 
 | File | Action |
-|------|--------|
-| Migration | Add `page_views`, `utm_links`, `coupon_codes` tables + `tools_catalog.icon_url` |
-| `src/hooks/usePageTracking.ts` | **New** |
-| `src/hooks/useSubscription.ts` | **New** — cached sub status |
-| `src/components/ToolAccessGuard.tsx` | Modify — use cached hooks, instant decision |
-| `src/App.tsx` | Mount page tracking |
-| `src/components/admin/AnalyticsDashboard.tsx` | **New** |
-| `src/components/admin/UtmLinkBuilder.tsx` | **New** |
-| `src/components/admin/CouponManager.tsx` | **New** |
-| `src/components/admin/ToolManagement.tsx` | Fix drag-drop, add icon URL field |
-| `src/components/tools/EnhancedToolCard.tsx` | Render custom icon_url |
-| `src/pages/AdminDashboard.tsx` | Add 3 new tabs (Analytics, UTM, Coupons) |
-| `src/components/SEOHead.tsx` + `src/pages/Tools.tsx` | Boost meta + JSON-LD ItemList |
-| `public/sitemap.xml` | Expand with tool routes |
-| `supabase/functions/redeem-coupon/index.ts` | Use DB-backed coupons |
+|---|---|
+| `src/data/tools.tsx` | Remove all `*.run.app` URL entries + their tool array entries |
+| `src/pages/Virasat.tsx` | **New** — main shell |
+| `src/components/virasat/VoiceRecorder.tsx` | **New** — ported with Pause button |
+| `src/components/virasat/BookView.tsx` | **New** — ported markdown renderer |
+| `src/components/virasat/ReviewPanel.tsx` | **New** — bird's-eye review |
+| `src/components/virasat/lib/audio.ts` | **New** — PCM player |
+| `src/components/virasat/services/virasatService.ts` | **New** — edge fn wrapper + persistence |
+| `supabase/functions/virasat-ai/index.ts` | **New** — 5 actions, DB key rotation |
+| Migration | `virasat_sessions` table + RLS + catalog row |
+| `src/App.tsx` | Add `/virasat` premium route |
+| `supabase/config.toml` | Register `virasat-ai` function (verify_jwt = true) |
 
 ## Limitations
-- Geo lookup uses free `ipapi.co` (rate-limited to ~1k/day) — fine for current traffic; can swap if needed
-- "Live" counter polls every 30s (not true websocket) to avoid realtime channel cost
-- Sitemap is static — won't auto-update for new catalog tools without rebuild; we'll include the top live tools
+
+- Web Speech API STT is best on Chrome; Safari/Firefox fall back gracefully but may lose some Hindi accuracy. Optional MediaRecorder + server-side transcription path can be added later if needed.
+- Gemini TTS first call adds ~500ms latency on a fresh question; we pre-fetch the next question's audio while the user is still answering to keep the perceived gap under 2s.
+- Removing ~40 `*.run.app` tools will reduce the visible tool count immediately; the catalog database tools and Pi7 image tools remain.
 
