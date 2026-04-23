@@ -139,7 +139,7 @@ export const tools: Tool[] = [
     toolId: "startup-analyser",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ TOOLFK - ID PHOTO TOOLS (LIVE) ============
   {
     title: "AI ID Photo Generator",
@@ -149,7 +149,7 @@ export const tools: Tool[] = [
     toolId: "ai-id-photo-generator",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 IMAGE TOOLS - MOST USED (LIVE) ============
   {
     title: "Passport Photo Maker",
@@ -231,7 +231,7 @@ export const tools: Tool[] = [
     toolId: "resize-image-3.5x4.5",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - BASIC EDITING (LIVE) ============
   {
     title: "Blur Background",
@@ -385,7 +385,7 @@ export const tools: Tool[] = [
     toolId: "remove-metadata",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - BLUR, PIXELATE & EFFECTS (LIVE) ============
   {
     title: "Beautify Image",
@@ -539,7 +539,7 @@ export const tools: Tool[] = [
     toolId: "add-logo-image",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - DPI & QUALITY (LIVE) ============
   {
     title: "Increase Image Quality",
@@ -576,7 +576,7 @@ export const tools: Tool[] = [
     toolId: "super-resolution",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - GENERAL RESIZING (LIVE) ============
   {
     title: "Resize Image in Millimeters",
@@ -613,7 +613,7 @@ export const tools: Tool[] = [
     toolId: "upscale-image-ai",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - OFFICIAL SIZES (LIVE) ============
   {
     title: "Resize to A4 Size",
@@ -659,7 +659,7 @@ export const tools: Tool[] = [
     toolId: "psc-photo-resize",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - PASSPORT & ID SIZES (LIVE) ============
   {
     title: "Resize Sign 6cm x 2cm",
@@ -723,7 +723,7 @@ export const tools: Tool[] = [
     toolId: "resize-600x600",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ PI7 - SOCIAL MEDIA (LIVE) ============
   {
     title: "Instagram Resize (No Crop)",
@@ -769,7 +769,7 @@ export const tools: Tool[] = [
     toolId: "zoom-out-image",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ EDUCATION TOOLS - FOR STUDENTS ============
   {
     title: "Quiz Maker",
@@ -833,7 +833,7 @@ export const tools: Tool[] = [
     toolId: "exam-scheduler",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ EDUCATION TOOLS - FOR TEACHERS ============
   {
     title: "Lesson Planner",
@@ -870,7 +870,7 @@ export const tools: Tool[] = [
     toolId: "flashcard-maker",
     videoLink: "",
     isLive: true
-  }
+  },
   // ============ CONTENT CREATION TOOLS ============
   {
     title: "Social Post Generator",
