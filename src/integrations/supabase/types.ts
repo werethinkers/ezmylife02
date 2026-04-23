@@ -744,6 +744,48 @@ export type Database = {
         }
         Relationships: []
       }
+      virasat_sessions: {
+        Row: {
+          book_content: string | null
+          book_style: string
+          chapter_outline: Json | null
+          conversation: Json
+          created_at: string
+          id: string
+          question_count: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_content?: string | null
+          book_style?: string
+          chapter_outline?: Json | null
+          conversation?: Json
+          created_at?: string
+          id?: string
+          question_count?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_content?: string | null
+          book_style?: string
+          chapter_outline?: Json | null
+          conversation?: Json
+          created_at?: string
+          id?: string
+          question_count?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
