@@ -119,144 +119,9 @@ export const getComingSoonToolsCount = (): number => {
   return tools.filter(t => !t.isLive).length;
 };
 
-export const tools: Tool[
-] = [
+export const tools: Tool[] = [
+
   // ============ EXISTING EZYOURLIFE TOOLS (LIVE) ============
-  {
-    title: "Audio Stream",
-    description: "Listen to various audios, lectures, and music for relaxation and learning.",
-    category: "Popular",
-    icon: <Headphones className="h-8 w-8" />,
-    toolId: "jain-audio-stream",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Video Stream",
-    description: "Watch lectures, documentaries, and educational videos.",
-    category: "Popular",
-    icon: <PlayCircle className="h-8 w-8" />,
-    toolId: "jain-video-stream",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Gyan AI",
-    description: "An intelligent AI assistant providing insights and answers on various topics.",
-    category: "AI Agent",
-    icon: <Sparkles className="h-8 w-8" />,
-    toolId: "jaingyan-ai",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Advance AI Bot",
-    description: "Ask questions from multiple specified sources to get instant answers.",
-    category: "Popular",
-    icon: <Bot className="h-8 w-8" />,
-    toolId: "advance-ai-bot",
-    videoLink: "https://www.loom.com/share/88b01502cfc94549961e5a65aaae8603?sid=f7e70c03-a887-4e0d-bafe-6fd85d27dd45",
-    isLive: true
-  },
-  {
-    title: "PDF Reader",
-    description: "Read documents in digital format. This tool helps you easily read and study texts in PDF format.",
-    category: "Popular",
-    icon: <BookOpen className="h-8 w-8" />,
-    toolId: "shastra-pdf-reader",
-    videoLink: "https://www.loom.com/share/88c39a36c6cc499a85d913e69347ea18?sid=a8906f09-33fb-4ba4-918c-2b9890fd4d66",
-    isLive: true
-  },
-  {
-    title: "Encyclopedia",
-    description: "A comprehensive encyclopedia of terms, concepts, and history.",
-    category: "Popular",
-    icon: <Library className="h-8 w-8" />,
-    toolId: "jain-encyclopedia",
-    videoLink: "https://www.loom.com/share/f94c887d82ca415c8a5e47943d4ce237?sid=419fd2ff-d39a-4a88-8042-1e137f14ff5d",
-    isLive: true
-  },
-  {
-    title: "Panchang",
-    description: "Stay updated with upcoming festivals, dates, and important days.",
-    category: "Content",
-    icon: <Calendar className="h-8 w-8" />,
-    toolId: "jain-panchang",
-    videoLink: "https://www.loom.com/share/27c8f352c22f48df9f8efb0b15327506?sid=9b8b19a6-9810-4674-8c6f-b4dc0562073b",
-    isLive: true
-  },
-  {
-    title: "Multi-PDF AI Bot",
-    description: "Ask questions from multiple documents at once with our advanced AI and get answers.",
-    category: "Popular",
-    icon: <Layers className="h-8 w-8" />,
-    toolId: "shastra-multi-pdf-ai-bot",
-    videoLink: "https://www.loom.com/share/419a9d4378b8417491a95d0e1d4cdb0d?sid=74611eba-9223-4985-a782-231e36c0f8e2",
-    isLive: true
-  },
-  {
-    title: "Quiz",
-    description: "Test your knowledge on various topics by creating quizzes of your choice and reinforce your understanding.",
-    category: "Content",
-    icon: <ClipboardList className="h-8 w-8" />,
-    toolId: "quiz",
-    videoLink: "https://www.loom.com/share/20204bab9ceb46e68027cde57ed2bbfc?sid=74e8480-087c-42fe-83f6-038ea97e780e",
-    isLive: true
-  },
-  {
-    title: "Image Creator",
-    description: "Create and share beautiful and inspiring images and quotes.",
-    category: "Content",
-    icon: <Image className="h-8 w-8" />,
-    toolId: "image-creator",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "StoryBook Creator",
-    description: "Use AI to create new, inspiring stories and illustrations based on principles and narratives.",
-    category: "Content",
-    icon: <BookText className="h-8 w-8" />,
-    toolId: "storybook-creator",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Advance Text Extractor",
-    description: "Extract and organize important excerpts from documents.",
-    category: "Content",
-    icon: <FileText className="h-8 w-8" />,
-    toolId: "advance-text-extractor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Create 3D Images",
-    description: "Design and generate stunning 3D images and models for visual representations of concepts.",
-    category: "Content",
-    icon: <Image className="h-8 w-8" />,
-    toolId: "create-3d-images",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "SketchFlow AI",
-    description: "Transform your ideas into detailed flowcharts, diagrams, and visual plans with AI assistance.",
-    category: "Content",
-    icon: <Pencil className="h-8 w-8" />,
-    toolId: "sketchflow-ai",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Speedy Notebook",
-    description: "Rich-text workspace with AI rephrasing, personal shortcuts that sync to browser extensions, and auto-saving.",
-    category: "Research",
-    icon: <Notebook className="h-8 w-8" />,
-    toolId: "speedy-notebook",
-    videoLink: "https://www.loom.com/share/ef5ff4f1569b4d87962d83483e619e98?sid=1258a673-0f71-404c-ac29-11bf9b03ce99",
-    isLive: true
-  },
   {
     title: "PromptMaster AI",
     description: "Elite prompt engineering workspace with AI brainstorm, favourites with synced shortcuts, and multi-format output.",
@@ -274,197 +139,7 @@ export const tools: Tool[
     toolId: "startup-analyser",
     videoLink: "",
     isLive: true
-  },
-  {
-    title: "Rich Editor",
-    description: "This is a powerful tool for formatting text in digital form.",
-    category: "Research",
-    icon: <Edit className="h-8 w-8" />,
-    toolId: "rich-editor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "PDF Chart & Image Extractor",
-    description: "A powerful tool to extract charts and images from PDFs.",
-    category: "Research",
-    icon: <FileImage className="h-8 w-8" />,
-    toolId: "pdf-chart-image-extractor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Hover Dictionary",
-    description: "See the meaning of difficult words from documents by simply hovering over them.",
-    category: "Research",
-    icon: <Languages className="h-8 w-8" />,
-    toolId: "shastra-hover-dictionary",
-    videoLink: "https://www.loom.com/share/ef5ff4f1569b4d87962d83483e619e98?sid=1258a673-0f71-404c-ac29-11bf9b03ce99",
-    isLive: true
-  },
-  {
-    title: "HTML Editor",
-    description: "Create and edit HTML content with a simple and powerful editor.",
-    category: "Research",
-    icon: <Code className="h-8 w-8" />,
-    toolId: "html-editor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Wrong Written Words",
-    description: "It identifies incorrectly written words and finds their correct forms, improving writing accuracy.",
-    category: "Research",
-    icon: <Eraser className="h-8 w-8" />,
-    toolId: "wrong-written-words",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Book Editor",
-    description: "Edit and format books and texts with a dedicated book editor.",
-    category: "Research",
-    icon: <BookMarked className="h-8 w-8" />,
-    toolId: "book-editor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Book Editor with HTML",
-    description: "Edit and format books and texts, including HTML content, with an advanced book editor.",
-    category: "Research",
-    icon: <FileCode className="h-8 w-8" />,
-    toolId: "book-editor-html",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "OCR",
-    description: "Convert images or scanned documents into editable and searchable text with high accuracy.",
-    category: "Research",
-    icon: <ScanText className="h-8 w-8" />,
-    toolId: "ocr",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Dictionary Extractor AI",
-    description: "Extract and compile dictionaries from texts using AI.",
-    category: "Research",
-    icon: <Database className="h-8 w-8" />,
-    toolId: "dictionary-extractor-ai",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "PDF Profile Extractor",
-    description: "Extract profiles and structured data from PDF documents.",
-    category: "Research",
-    icon: <FileSearch className="h-8 w-8" />,
-    toolId: "pdf-profile-extractor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "PDF Metadata AI Analyst",
-    description: "Extract, analyze, and visualize metadata from PDF documents using AI.",
-    category: "Research",
-    icon: <Eye className="h-8 w-8" />,
-    toolId: "pdf-metadata-ai-analyst",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Soul Mirror - Johari Window",
-    description: "Reflect on self-awareness and personal growth through the Johari Window model.",
-    category: "Modern Science",
-    icon: <Heart className="h-8 w-8" />,
-    toolId: "soul-mirror",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Cognimap - Mental Models",
-    description: "Explore and apply various mental models for improved thinking and decision-making.",
-    category: "Modern Science",
-    icon: <Lightbulb className="h-8 w-8" />,
-    toolId: "cognimap",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "AI Data Analysis",
-    description: "Visualize and analyze data with our interactive AI-powered dashboard.",
-    category: "Lab",
-    icon: <BarChart3 className="h-8 w-8" />,
-    toolId: "ai-data-analysis",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "E-book & Advance Bot",
-    description: "An advanced e-book reader with an integrated AI assistant.",
-    category: "Lab",
-    icon: <Brain className="h-8 w-8" />,
-    toolId: "kundkund-ebook-bot",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "MindMap",
-    description: "Visually organize and explore concepts with mind maps.",
-    category: "Lab",
-    icon: <Map className="h-8 w-8" />,
-    toolId: "kundkund-mindmap",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Ganit",
-    description: "Explore complex mathematics and cosmology concepts.",
-    category: "Lab",
-    icon: <Calculator className="h-8 w-8" />,
-    toolId: "jain-ganit",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Bhugol Maps (Beta)",
-    description: "Explore the concepts of geography and cosmology with interactive maps. (Beta Version)",
-    category: "Lab",
-    icon: <Globe className="h-8 w-8" />,
-    toolId: "jainbhugol-maps",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Interactive Videos (Beta)",
-    description: "Engage with educational content through interactive videos with quizzes. (Beta Version)",
-    category: "Lab",
-    icon: <Video className="h-8 w-8" />,
-    toolId: "interactive-videos",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Create Smart Diagram AI v2.0",
-    description: "Generate complex diagrams, flowcharts, and visual aids from your notes and ideas using AI.",
-    category: "Lab",
-    icon: <Network className="h-8 w-8" />,
-    toolId: "smart-diagram-ai",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-  {
-    title: "Auto Text Extractor Agent",
-    description: "Automatically extract and organize text from various sources using an intelligent AI agent.",
-    category: "AI Agent",
-    icon: <ScanText className="h-8 w-8" />,
-    toolId: "auto-text-extractor",
-    videoLink: "https://kundkund.com/Videos/Training_Videos/About_Home_Page.mp4",
-    isLive: true
-  },
-
+  }
   // ============ TOOLFK - ID PHOTO TOOLS (LIVE) ============
   {
     title: "AI ID Photo Generator",
@@ -474,8 +149,7 @@ export const tools: Tool[
     toolId: "ai-id-photo-generator",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 IMAGE TOOLS - MOST USED (LIVE) ============
   {
     title: "Passport Photo Maker",
@@ -557,8 +231,7 @@ export const tools: Tool[
     toolId: "resize-image-3.5x4.5",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - BASIC EDITING (LIVE) ============
   {
     title: "Blur Background",
@@ -712,8 +385,7 @@ export const tools: Tool[
     toolId: "remove-metadata",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - BLUR, PIXELATE & EFFECTS (LIVE) ============
   {
     title: "Beautify Image",
@@ -867,8 +539,7 @@ export const tools: Tool[
     toolId: "add-logo-image",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - DPI & QUALITY (LIVE) ============
   {
     title: "Increase Image Quality",
@@ -905,8 +576,7 @@ export const tools: Tool[
     toolId: "super-resolution",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - GENERAL RESIZING (LIVE) ============
   {
     title: "Resize Image in Millimeters",
@@ -943,8 +613,7 @@ export const tools: Tool[
     toolId: "upscale-image-ai",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - OFFICIAL SIZES (LIVE) ============
   {
     title: "Resize to A4 Size",
@@ -990,8 +659,7 @@ export const tools: Tool[
     toolId: "psc-photo-resize",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - PASSPORT & ID SIZES (LIVE) ============
   {
     title: "Resize Sign 6cm x 2cm",
@@ -1055,8 +723,7 @@ export const tools: Tool[
     toolId: "resize-600x600",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ PI7 - SOCIAL MEDIA (LIVE) ============
   {
     title: "Instagram Resize (No Crop)",
@@ -1102,8 +769,7 @@ export const tools: Tool[
     toolId: "zoom-out-image",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ EDUCATION TOOLS - FOR STUDENTS ============
   {
     title: "Quiz Maker",
@@ -1167,8 +833,7 @@ export const tools: Tool[
     toolId: "exam-scheduler",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ EDUCATION TOOLS - FOR TEACHERS ============
   {
     title: "Lesson Planner",
@@ -1205,8 +870,7 @@ export const tools: Tool[
     toolId: "flashcard-maker",
     videoLink: "",
     isLive: true
-  },
-
+  }
   // ============ CONTENT CREATION TOOLS ============
   {
     title: "Social Post Generator",
@@ -1279,5 +943,5 @@ export const tools: Tool[
     toolId: "video-maker",
     videoLink: "",
     isLive: true
-  },
+  }
 ];
