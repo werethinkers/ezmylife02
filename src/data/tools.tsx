@@ -14,45 +14,8 @@ export interface Tool {
 // Internal mapping - not exported to keep URLs hidden
 const toolUrls: Record<string, string> = {
   // AI Invoice Generator (tool-1)
-  "ai-invoice-generator": "https://ezmy-life-ai-invoice-generator-211032720934.us-west1.run.app/",
   
   // Existing ezyourlife tools
-  "jain-audio-stream": "https://kundkund-audio-stream-v3-0-157395066757.us-west1.run.app/",
-  "jain-video-stream": "https://kundkund-video-stream-157395066757.us-west1.run.app/",
-  "jaingyan-ai": "https://jaingyan-ai-157395066757.us-west1.run.app/",
-  "advance-ai-bot": "https://kundkund-advance-bot-v2-0-157395066757.us-west1.run.app/",
-  "shastra-pdf-reader": "https://kundkund-shastra-reader-v20-0-157395066757.us-west1.run.app/",
-  "jain-encyclopedia": "https://jain-encyclopedia-v2-0-157395066757.us-west1.run.app/",
-  "jain-panchang": "https://jain-panchang-digamber-157395066757.us-west1.run.app/",
-  "shastra-multi-pdf-ai-bot": "https://shastra-multi-pdf-ai-bot-157395066757.us-west1.run.app/",
-  "quiz": "https://kundkund-quiz-2-0-800030665261.us-west1.run.app/",
-  "image-creator": "https://kundkund-image-creator-157395066757.us-west1.run.app/",
-  "storybook-creator": "https://kundkund-storybook-creator-157395066757.us-west1.run.app/",
-  "advance-text-extractor": "https://kundkund-text-extractor-v3-0-800030665261.us-west1.run.app/",
-  "create-3d-images": "https://create-3d-images-157395066757.us-west1.run.app/",
-  "sketchflow-ai": "https://sketchflow-ai-800030665261.us-west1.run.app/",
-  "speedy-notebook": "https://kundkund-speedy-notebook-157395066757.us-west1.run.app/",
-  "rich-editor": "https://kundkund-rich-editor-v5-0-800030665261.us-west1.run.app/",
-  "pdf-chart-image-extractor": "https://pdf-chart-image-bulk-cover-extractor-v2-0-157395066757.us-west1.run.app/",
-  "shastra-hover-dictionary": "https://kundkund-hover-dictionary-157395066757.us-west1.run.app/",
-  "html-editor": "https://ezmylife-html-editor-v2-0-157395066757.us-west1.run.app/",
-  "wrong-written-words": "https://wrong-written-words-157395066757.us-west1.run.app/",
-  "book-editor": "https://kundkund-book-editor-800030665261.us-west1.run.app/",
-  "book-editor-html": "https://kundkund-book-editor-with-html-800030665261.us-west1.run.app/",
-  "ocr": "https://kundkund-ocr-812410895718.us-west1.run.app/",
-  "dictionary-extractor-ai": "https://dictionary-extractor-ai-157395066757.us-west1.run.app/",
-  "pdf-profile-extractor": "https://pdf-profile-extractor-3-157395066757.us-west1.run.app/",
-  "pdf-metadata-ai-analyst": "https://pdf-metadata-ai-analyst-800030665261.us-west1.run.app/",
-  "soul-mirror": "https://soulmirror-johari-jainism-157395066757.us-west1.run.app/",
-  "cognimap": "https://cognimap-mental-models-157395066757.us-west1.run.app/",
-  "ai-data-analysis": "https://ai-data-analysis-dashboard-v3-0-157395066757.us-west1.run.app/",
-  "kundkund-ebook-bot": "https://kundkund-e-book-multi-source-based-ai-bot-157395066757.us-west1.run.app/",
-  "kundkund-mindmap": "https://kundkund-mindmap-157395066757.us-west1.run.app/",
-  "jain-ganit": "https://jain-ganit-bhugol-157395066757.us-west1.run.app/",
-  "jainbhugol-maps": "https://kundkund-jainbhugol-maps-2-0-157395066757.us-west1.run.app/",
-  "interactive-videos": "https://kundkund-interactive-video-quiz-157395066757.us-west1.run.app/",
-  "smart-diagram-ai": "https://create-smart-diagram-ai-v2-0-157395066757.us-west1.run.app/",
-  "auto-text-extractor": "https://auto-text-extractor-agent-157395066757.us-west1.run.app/",
   
   // ToolFK - AI ID Photo Generator
   "ai-id-photo-generator": "https://www.toolfk.com/tools/online-idphotos.html",
@@ -156,7 +119,8 @@ export const getComingSoonToolsCount = (): number => {
   return tools.filter(t => !t.isLive).length;
 };
 
-export const tools: Tool[] = [
+export const tools: Tool[
+] = [
   // ============ EXISTING EZYOURLIFE TOOLS (LIVE) ============
   {
     title: "Audio Stream",
