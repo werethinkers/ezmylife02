@@ -41,6 +41,3 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
-
-[functions.virasat-ai]
-verify_jwt = false
