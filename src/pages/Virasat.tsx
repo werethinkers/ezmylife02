@@ -251,55 +251,72 @@ export default function Virasat() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Virasat — A Father's Legacy | EZYOURLIFE"
+        title="Virasat — A Father's Legacy"
         description="Record your life stories by voice. AI turns them into a beautiful Hindi/Hinglish book for your children."
-        canonicalUrl="https://ezyourlife.com/virasat"
+        path="/virasat"
       />
       <Navbar />
 
       <div className="container mx-auto pt-24 pb-16">
         <AnimatePresence mode="wait">
           {mode === "welcome" && (
-            <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl mx-auto text-center px-4">
-              <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 3 }} className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-                <Heart className="h-10 w-10 text-primary" />
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-foreground">Virasat</h1>
-              <p className="text-lg text-muted-foreground mb-2">A Father's Legacy</p>
-              <p className="text-foreground/80 mb-8">
-                Apni zindagi ki kahaniyan apni awaaz mein record kijiye. Hum unhe ek khoobsurat kitaab mein badal denge — aapke bachchon ke liye, hamesha ke liye.
-              </p>
+            <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl mx-auto px-4">
+              {hasResume && (
+                <ContinueStoryCard
+                  resume={hasResume}
+                  onResume={resumeSession}
+                  onDismiss={() => setHasResume(null)}
+                />
+              )}
 
-              <Card className="p-6 mb-6 text-left bg-card/50 backdrop-blur border-border">
-                <h3 className="font-semibold mb-3 text-foreground">Kya milega aapko:</h3>
-                <ul className="space-y-2 text-sm text-foreground/80">
-                  <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Warm AI host jo aapse Hindi mein baat karega</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Har answer turant save — kuch nahi khoyega</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Kitaab banane se pehle aap sab review kar sakte hain</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Jitni chahein utni kahaniyan — koi limit nahi</li>
-                </ul>
-              </Card>
+              <div className="text-center">
+                <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 3 }} className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                  <Heart className="h-10 w-10 text-primary" />
+                </motion.div>
+                <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-foreground">Virasat</h1>
+                <p className="text-lg text-muted-foreground mb-2">A Father's Legacy</p>
+                <p className="text-foreground/80 mb-8">
+                  Apni zindagi ki kahaniyan apni awaaz mein record kijiye. Hum unhe ek khoobsurat kitaab mein badal denge — aapke bachchon ke liye, hamesha ke liye.
+                </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" onClick={startNewSession} className="gap-2">
-                  <Sparkles className="h-5 w-5" /> Shuru Karein
-                </Button>
-                {hasResume && (
-                  <Button size="lg" variant="outline" onClick={resumeSession} className="gap-2">
-                    <BookOpen className="h-5 w-5" /> Pichli kahani jaari rakhein
+                <Card className="p-6 mb-6 text-left bg-card/50 backdrop-blur border-border">
+                  <h3 className="font-semibold mb-3 text-foreground">Kya milega aapko:</h3>
+                  <ul className="space-y-2 text-sm text-foreground/80">
+                    <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Warm AI host jo aapse Hindi mein baat karega</li>
+                    <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Har answer turant save — kuch nahi khoyega</li>
+                    <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Kitaab banane se pehle aap sab review kar sakte hain</li>
+                    <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> Jitni chahein utni kahaniyan — koi limit nahi</li>
+                  </ul>
+                </Card>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button size="lg" onClick={startNewSession} className="gap-2">
+                    <Sparkles className="h-5 w-5" /> Shuru Karein
                   </Button>
-                )}
+                </div>
               </div>
             </motion.div>
           )}
 
           {mode === "interview" && (
             <motion.div key="interview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-2xl mx-auto px-4">
-              <div className="text-center mb-6">
+              <div className="text-center mb-4">
                 <p className="text-xs text-muted-foreground mb-2">{userStoryCount} kahaniyan record ki gayi hain</p>
                 <Card className="p-6 bg-card/50 backdrop-blur border-border">
                   <p className="text-lg md:text-xl font-serif text-foreground italic">"{currentQuestion}"</p>
                 </Card>
+              </div>
+
+              <div className="mb-6">
+                <PodcastPlayer
+                  audioBase64={lastQuestionAudio}
+                  questionText={currentQuestion}
+                  onUserPlay={() => {
+                    // User chose to manually replay — pause auto-mic so they can listen
+                    setAutoStartMic(false);
+                    if (!isPaused) setIsPaused(true);
+                  }}
+                />
               </div>
 
               <VoiceRecorder
