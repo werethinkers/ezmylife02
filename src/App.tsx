@@ -191,14 +191,6 @@ const AnimatedRoutes = () => {
                 </PremiumRoute>
               }
             />
-            <Route
-              path="/virasat"
-              element={
-                <PremiumRoute>
-                  <Virasat />
-                </PremiumRoute>
-              }
-            />
             <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
             <Route path="/meetnudge/:hostSlug/:eventSlug" element={<MeetNudgeGuestForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
