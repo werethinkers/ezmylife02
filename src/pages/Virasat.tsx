@@ -128,6 +128,7 @@ export default function Virasat() {
     try {
       const { audio } = await virasatService.tts(text);
       if (audio) {
+        setLastQuestionAudio(audio);
         await playPCMAudio(audio);
       }
     } catch (e) {
@@ -180,12 +181,16 @@ export default function Virasat() {
       const audio = prefetchedAudio.current;
       prefetchedAudio.current = null;
       if (audio) {
+        setLastQuestionAudio(audio);
         await playPCMAudio(audio);
       } else {
         // Fallback: synth in parallel
         try {
           const r = await virasatService.tts(nextQ);
-          if (r.audio) await playPCMAudio(r.audio);
+          if (r.audio) {
+            setLastQuestionAudio(r.audio);
+            await playPCMAudio(r.audio);
+          }
         } catch {
           try {
             const u = new SpeechSynthesisUtterance(nextQ);
