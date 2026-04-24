@@ -37,7 +37,7 @@ const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
 const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 const MeetNudge = lazy(() => import("./pages/MeetNudge"));
 const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
-const Virasat = lazy(() => import("./pages/Virasat"));
+
 
 const queryClient = new QueryClient();
 
