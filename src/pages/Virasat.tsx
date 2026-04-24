@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import VoiceRecorder from "@/components/virasat/VoiceRecorder";
 import BookView from "@/components/virasat/BookView";
 import ReviewPanel from "@/components/virasat/ReviewPanel";
+import PodcastPlayer from "@/components/virasat/PodcastPlayer";
+import ContinueStoryCard, { type ResumeInfo } from "@/components/virasat/ContinueStoryCard";
 import { virasatService, type VirasatMessage } from "@/components/virasat/services/virasatService";
 import { playPCMAudio, stopPlayback } from "@/components/virasat/lib/audio";
 
@@ -31,23 +33,36 @@ export default function Virasat() {
   const [isPaused, setIsPaused] = useState(false);
   const [autoStartMic, setAutoStartMic] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasResume, setHasResume] = useState<{ id: string; updated_at: string } | null>(null);
+  const [hasResume, setHasResume] = useState<ResumeInfo | null>(null);
+  const [lastQuestionAudio, setLastQuestionAudio] = useState<string | null>(null);
 
   const saveTimer = useRef<number | null>(null);
   const prefetchedAudio = useRef<string | null>(null);
 
-  // Look for existing unfinished session
+  // Look for the latest unfinished session and preload preview details
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
         .from("virasat_sessions")
-        .select("id, updated_at, status")
+        .select("id, updated_at, status, title, question_count, conversation")
         .eq("user_id", user.id)
         .neq("status", "done")
         .order("updated_at", { ascending: false })
         .limit(1);
-      if (data && data.length > 0) setHasResume({ id: data[0].id, updated_at: data[0].updated_at });
+      if (data && data.length > 0) {
+        const row = data[0] as any;
+        const conv = (row.conversation as any[]) || [];
+        const lastModel = [...conv].reverse().find((m) => m.role === "model");
+        setHasResume({
+          id: row.id,
+          updated_at: row.updated_at,
+          status: row.status,
+          title: row.title || "Meri Kahani",
+          question_count: row.question_count || conv.filter((m: any) => m.role === "user").length || 0,
+          last_question: lastModel?.text,
+        });
+      }
     })();
   }, [user]);
 
