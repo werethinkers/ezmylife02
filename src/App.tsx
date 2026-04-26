@@ -194,6 +194,14 @@ const AnimatedRoutes = () => {
             />
             <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
             <Route path="/meetnudge/:hostSlug/:eventSlug" element={<MeetNudgeGuestForm />} />
+            <Route
+              path="/virasat"
+              element={
+                <PremiumRoute>
+                  <Virasat />
+                </PremiumRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
