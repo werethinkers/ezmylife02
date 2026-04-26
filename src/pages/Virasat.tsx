@@ -27,7 +27,7 @@ import BookView from "@/components/virasat/BookView";
 type AppMode = "welcome" | "interview" | "review" | "generating" | "book";
 
 const FIRST_QUESTION =
-  "Papa, aap bas aaram se baat kariye. Aapko kuch type karne ki zarurat nahi hai. Main aapse dheere dheere sawal puchunga, aur hum milke aapki kahani likhenge — aapke bachche ke liye.\n\nSabse pehst, mujhe apne bachpan ke baare mein bataiye. Koi aisi yaad jo aapke dil ke bahut kareeb ho?";
+  "Papa, aap bas aaram se baat kariye. Aapko kuch type karne ki zarurat nahi hai. Main aapse dheere dheere sawal puchunga, aur hum milke aapki kahani likhenge — aapke bachche ke liye.\n\nSabse pehle, mujhe apne bachpan ke baare mein bataiye. Koi aisi yaad jo aapke dil ke bahut kareeb ho?";
 
 export default function Virasat() {
   const { user } = useAuth();
