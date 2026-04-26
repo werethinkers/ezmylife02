@@ -37,6 +37,7 @@ const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
 const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 const MeetNudge = lazy(() => import("./pages/MeetNudge"));
 const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
+const Virasat = lazy(() => import("./pages/Virasat"));
 
 
 const queryClient = new QueryClient();
@@ -193,6 +194,14 @@ const AnimatedRoutes = () => {
             />
             <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
             <Route path="/meetnudge/:hostSlug/:eventSlug" element={<MeetNudgeGuestForm />} />
+            <Route
+              path="/virasat"
+              element={
+                <PremiumRoute>
+                  <Virasat />
+                </PremiumRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
