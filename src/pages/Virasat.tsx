@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
+// Cast: virasat_sessions table types not yet regenerated
+const supabase = supabaseClient as unknown as {
+  from: (table: string) => any;
+};
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
