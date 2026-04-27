@@ -744,6 +744,101 @@ export type Database = {
         }
         Relationships: []
       }
+      virasat_media: {
+        Row: {
+          caption: string | null
+          chapter: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          media_type: string
+          question_index: number | null
+          session_id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          chapter?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          media_type: string
+          question_index?: number | null
+          session_id: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          chapter?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          media_type?: string
+          question_index?: number | null
+          session_id?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "virasat_media_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "virasat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      virasat_sessions: {
+        Row: {
+          book_content: string | null
+          book_style: string
+          child_name: string | null
+          created_at: string
+          current_question: string | null
+          father_name: string | null
+          history: Json
+          id: string
+          input_mode: string
+          question_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_content?: string | null
+          book_style?: string
+          child_name?: string | null
+          created_at?: string
+          current_question?: string | null
+          father_name?: string | null
+          history?: Json
+          id?: string
+          input_mode?: string
+          question_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_content?: string | null
+          book_style?: string
+          child_name?: string | null
+          created_at?: string
+          current_question?: string | null
+          father_name?: string | null
+          history?: Json
+          id?: string
+          input_mode?: string
+          question_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
