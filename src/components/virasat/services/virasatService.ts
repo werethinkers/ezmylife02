@@ -1,8 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface MediaSummary {
+  question_index: number | null;
+  type: "image" | "video" | "audio";
+  caption?: string;
+}
+
 export interface Message {
   role: "user" | "model";
   text: string;
+  audio_path?: string;
+  media_ids?: string[];
 }
 
 export type BookStyle = "emotional" | "factual" | "legacy";
@@ -29,8 +37,18 @@ export async function refineResponse(text: string): Promise<string> {
   }
 }
 
-export async function generateBook(history: Message[], style: BookStyle): Promise<string> {
-  const data = await call<{ text: string }>("book", { history, style });
+export async function generateBook(
+  history: Message[],
+  style: BookStyle,
+  opts?: { childName?: string; fatherName?: string; media?: MediaSummary[] },
+): Promise<string> {
+  const data = await call<{ text: string }>("book", {
+    history,
+    style,
+    childName: opts?.childName || "",
+    fatherName: opts?.fatherName || "",
+    media: opts?.media || [],
+  });
   return data.text || "Error generating book.";
 }
 

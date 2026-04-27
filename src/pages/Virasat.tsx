@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks } from "lucide-react";
+import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks, Mic, Pencil } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
-// Cast: virasat_sessions table types not yet regenerated
-const supabase = supabaseClient as unknown as {
-  from: (table: string) => any;
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = supabaseClient as unknown as { from: (table: string) => any };
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
@@ -22,19 +20,25 @@ import {
 } from "@/components/virasat/services/virasatService";
 import { playPCMAudio } from "@/components/virasat/lib/audio";
 import VoiceRecorder from "@/components/virasat/VoiceRecorder";
+import WrittenInput from "@/components/virasat/WrittenInput";
+import MediaAttacher, { type AttachedMedia } from "@/components/virasat/MediaAttacher";
 import BookView from "@/components/virasat/BookView";
 
 type AppMode = "welcome" | "interview" | "review" | "generating" | "book";
+type InputMode = "voice" | "write";
 
 const FIRST_QUESTION =
-  "Papa, aap bas aaram se baat kariye. Aapko kuch type karne ki zarurat nahi hai. Main aapse dheere dheere sawal puchunga, aur hum milke aapki kahani likhenge — aapke bachche ke liye.\n\nSabse pehle, mujhe apne bachpan ke baare mein bataiye. Koi aisi yaad jo aapke dil ke bahut kareeb ho?";
+  "Aap bas aaram se baat kariye. Main aapse dheere dheere sawal puchunga, aur hum milke aapki kahani sanjoyenge — aapke bachche ke liye.\n\nSabse pehle, mujhe apne bachpan ke baare mein bataiye. Koi aisi yaad jo aapke dil ke bahut kareeb ho?";
 
 export default function Virasat() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<AppMode>("welcome");
+  const [inputMode, setInputMode] = useState<InputMode>("voice");
   const [bookStyle, setBookStyle] = useState<BookStyle>("emotional");
+  const [childName, setChildName] = useState("");
+  const [fatherName, setFatherName] = useState("");
   const [history, setHistory] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,20 +47,18 @@ export default function Virasat() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [hasResume, setHasResume] = useState(false);
   const [prefetchedNextAudio, setPrefetchedNextAudio] = useState<string | null>(null);
+  const [attachedMedia, setAttachedMedia] = useState<AttachedMedia[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [history, currentQuestion]);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!user) navigate("/auth");
   }, [user, navigate]);
 
-  // Check for resumable session
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -72,7 +74,6 @@ export default function Virasat() {
     })();
   }, [user]);
 
-  // Save session helper (debounced via direct call after state changes)
   const saveSession = useCallback(
     async (overrides?: Partial<{
       status: string;
@@ -81,12 +82,18 @@ export default function Virasat() {
       questionCount: number;
       bookContent: string;
       bookStyle: BookStyle;
+      inputMode: InputMode;
+      childName: string;
+      fatherName: string;
     }>) => {
-      if (!user) return;
+      if (!user) return null;
       const payload = {
         user_id: user.id,
         status: overrides?.status ?? "in_progress",
         book_style: overrides?.bookStyle ?? bookStyle,
+        input_mode: overrides?.inputMode ?? inputMode,
+        child_name: overrides?.childName ?? childName,
+        father_name: overrides?.fatherName ?? fatherName,
         history: (overrides?.history ?? history) as unknown as never,
         current_question: overrides?.currentQuestion ?? currentQuestion,
         question_count: overrides?.questionCount ?? questionCount,
@@ -95,19 +102,24 @@ export default function Virasat() {
       try {
         if (sessionId) {
           await supabase.from("virasat_sessions").update(payload).eq("id", sessionId);
+          return sessionId;
         } else {
           const { data } = await supabase
             .from("virasat_sessions")
             .insert(payload)
             .select("id")
             .single();
-          if (data) setSessionId(data.id);
+          if (data) {
+            setSessionId(data.id);
+            return data.id as string;
+          }
         }
       } catch (e) {
         console.error("Save failed:", e);
       }
+      return null;
     },
-    [user, sessionId, bookStyle, history, currentQuestion, questionCount, bookContent]
+    [user, sessionId, bookStyle, inputMode, childName, fatherName, history, currentQuestion, questionCount, bookContent]
   );
 
   const startInterview = useCallback(async () => {
@@ -118,10 +130,11 @@ export default function Virasat() {
       history: [],
       questionCount: 0,
     });
-    // Play first question voice (fetch fresh — usually <2s)
-    const audio = await generateSpeech(FIRST_QUESTION);
-    if (audio) playPCMAudio(audio).catch(() => { /* ignore */ });
-  }, [saveSession]);
+    if (inputMode === "voice") {
+      const audio = await generateSpeech(FIRST_QUESTION);
+      if (audio) playPCMAudio(audio).catch(() => { /* ignore */ });
+    }
+  }, [saveSession, inputMode]);
 
   const resumeInterview = useCallback(async () => {
     if (!user) return;
@@ -139,6 +152,9 @@ export default function Virasat() {
     }
     setSessionId(data.id);
     setBookStyle((data.book_style as BookStyle) || "emotional");
+    setInputMode((data.input_mode as InputMode) || "voice");
+    setChildName(data.child_name || "");
+    setFatherName(data.father_name || "");
     setHistory((data.history as unknown as Message[]) || []);
     setCurrentQuestion(data.current_question || FIRST_QUESTION);
     setQuestionCount(data.question_count || 0);
@@ -151,7 +167,23 @@ export default function Virasat() {
       setMode("generating");
       setIsProcessing(true);
       try {
-        const book = await generateBook(finalHistory, style);
+        // Collect media summaries
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: mediaRows } = sessionId ? await (supabase as any)
+          .from("virasat_media")
+          .select("question_index,media_type,caption")
+          .eq("session_id", sessionId) : { data: [] };
+        const mediaSummaries = (mediaRows || []).map((m: { question_index: number | null; media_type: string; caption: string | null }) => ({
+          question_index: m.question_index,
+          type: m.media_type,
+          caption: m.caption || undefined,
+        }));
+
+        const book = await generateBook(finalHistory, style, {
+          childName,
+          fatherName,
+          media: mediaSummaries,
+        });
         setBookContent(book);
         setMode("book");
         await saveSession({
@@ -174,16 +206,15 @@ export default function Virasat() {
         setIsProcessing(false);
       }
     },
-    [saveSession]
+    [saveSession, sessionId, childName, fatherName]
   );
 
   const handleTranscript = useCallback(
-    async (text: string) => {
+    async (text: string, audioPath?: string) => {
       if (!text.trim()) return;
       setIsProcessing(true);
 
       try {
-        // Parallel: refine + next question
         const [refined, nextQ] = await Promise.all([
           refineResponse(text),
           getNextQuestion([
@@ -196,35 +227,34 @@ export default function Virasat() {
         const newHistory: Message[] = [
           ...history,
           { role: "model", text: currentQuestion },
-          { role: "user", text: refined },
+          { role: "user", text: refined, audio_path: audioPath, media_ids: attachedMedia.map((m) => m.id) },
         ];
         const newCount = questionCount + 1;
         setHistory(newHistory);
         setQuestionCount(newCount);
         setCurrentQuestion(nextQ);
+        setAttachedMedia([]);
         setIsProcessing(false);
 
-        // Persist after every step
         await saveSession({
           history: newHistory,
           currentQuestion: nextQ,
           questionCount: newCount,
         });
 
-        // Use prefetched audio if available, else generate; then prefetch the *next* question's audio in background
-        let audioToPlay = prefetchedNextAudio;
-        if (!audioToPlay) {
-          audioToPlay = await generateSpeech(nextQ);
+        if (inputMode === "voice") {
+          let audioToPlay = prefetchedNextAudio;
+          if (!audioToPlay) audioToPlay = await generateSpeech(nextQ);
+          setPrefetchedNextAudio(null);
+          if (audioToPlay) playPCMAudio(audioToPlay).catch(() => { /* ignore */ });
         }
-        setPrefetchedNextAudio(null);
-        if (audioToPlay) playPCMAudio(audioToPlay).catch(() => { /* ignore */ });
       } catch (e) {
         console.error(e);
         toast.error("Kuch gadbad hui. Phir se koshish karein.");
         setIsProcessing(false);
       }
     },
-    [history, currentQuestion, questionCount, prefetchedNextAudio, saveSession]
+    [history, currentQuestion, questionCount, prefetchedNextAudio, attachedMedia, inputMode, saveSession]
   );
 
   const goToReview = () => setMode("review");
@@ -236,17 +266,17 @@ export default function Virasat() {
     setBookContent("");
     setQuestionCount(0);
     setSessionId(null);
+    setAttachedMedia([]);
   };
 
   return (
     <>
       <SEOHead
-        title="Virasat: A Father's Legacy — Record Your Life Stories"
-        description="Record your life stories in podcast form with a warm AI host, then turn them into a beautiful keepsake book for your children."
+        title="Virasat: A Personal Keepsake for Your Children"
+        description="Record or write your life stories — and turn them into a beautifully personalised keepsake book your children will treasure forever."
         path="/virasat"
       />
       <div className="min-h-screen flex flex-col bg-[hsl(36_55%_97%)] text-[hsl(25_30%_15%)] font-sans">
-        {/* Header */}
         <header className="p-6 flex justify-between items-center border-b border-[hsl(25_40%_45%/0.1)] bg-[hsl(36_55%_97%/0.5)] backdrop-blur-sm sticky top-0 z-50">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-[hsl(25_40%_45%)] rounded-full flex items-center justify-center text-white shadow-md">
@@ -280,14 +310,55 @@ export default function Virasat() {
                   <BookOpen size={80} className="text-[hsl(25_40%_45%)] mx-auto" />
                 </div>
                 <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">
-                  Papa, aapki kahani <br />
-                  <span className="text-[hsl(25_40%_45%)] italic">aapki zubani.</span>
+                  Aapki kahani <br />
+                  <span className="text-[hsl(25_40%_45%)] italic">aapke bachche ke liye.</span>
                 </h2>
 
+                <div className="mb-6 w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    placeholder="Aapke bachche ka naam"
+                    className="px-4 py-3 rounded-xl border-2 border-[hsl(25_40%_45%/0.15)] bg-white focus:border-[hsl(25_40%_45%)] focus:outline-none text-base"
+                  />
+                  <input
+                    value={fatherName}
+                    onChange={(e) => setFatherName(e.target.value)}
+                    placeholder="Aapka naam (optional)"
+                    className="px-4 py-3 rounded-xl border-2 border-[hsl(25_40%_45%/0.15)] bg-white focus:border-[hsl(25_40%_45%)] focus:outline-none text-base"
+                  />
+                </div>
+
+                <div className="mb-6 w-full max-w-md">
+                  <p className="text-sm font-bold uppercase tracking-widest text-[hsl(25_15%_55%)] mb-3">Kaise share karenge?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setInputMode("voice")}
+                      className={cn(
+                        "px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium flex items-center justify-center gap-2",
+                        inputMode === "voice"
+                          ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.05)] text-[hsl(25_40%_45%)]"
+                          : "border-[hsl(25_40%_45%/0.1)] text-[hsl(25_15%_55%)] hover:border-[hsl(25_40%_45%/0.3)]"
+                      )}
+                    >
+                      <Mic size={16} /> Bolkar
+                    </button>
+                    <button
+                      onClick={() => setInputMode("write")}
+                      className={cn(
+                        "px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium flex items-center justify-center gap-2",
+                        inputMode === "write"
+                          ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.05)] text-[hsl(25_40%_45%)]"
+                          : "border-[hsl(25_40%_45%/0.1)] text-[hsl(25_15%_55%)] hover:border-[hsl(25_40%_45%/0.3)]"
+                      )}
+                    >
+                      <Pencil size={16} /> Likhkar
+                    </button>
+                  </div>
+                </div>
+
                 <div className="mb-8 w-full max-w-md">
-                  <p className="text-sm font-bold uppercase tracking-widest text-[hsl(25_15%_55%)] mb-4">
-                    Kitaab ka andaaz chuniye:
-                  </p>
+                  <p className="text-sm font-bold uppercase tracking-widest text-[hsl(25_15%_55%)] mb-3">Kitaab ka andaaz:</p>
                   <div className="grid grid-cols-3 gap-3">
                     {(["emotional", "factual", "legacy"] as BookStyle[]).map((style) => (
                       <button
@@ -306,10 +377,6 @@ export default function Virasat() {
                   </div>
                 </div>
 
-                <p className="text-xl text-[hsl(25_15%_55%)] mb-12 leading-relaxed">
-                  Aapki yaadon ko ek khoobsurat kitaab mein badalne ke liye hum taiyaar hain.
-                </p>
-
                 <div className="flex flex-col items-center gap-4">
                   <button
                     onClick={startInterview}
@@ -318,7 +385,6 @@ export default function Virasat() {
                     Shuru Karein
                     <ArrowRight className="group-hover:translate-x-1 transition-transform" />
                   </button>
-
                   {hasResume && (
                     <button
                       onClick={resumeInterview}
@@ -339,7 +405,6 @@ export default function Virasat() {
                 exit={{ opacity: 0 }}
                 className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 md:p-8"
               >
-                {/* Live Indicator */}
                 <div className="flex items-center justify-between mb-6 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full border border-[hsl(25_40%_45%/0.1)] shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="relative flex h-3 w-3">
@@ -348,33 +413,32 @@ export default function Virasat() {
                     </div>
                     <span className="text-xs font-bold uppercase tracking-widest text-red-500">On Air</span>
                   </div>
-                  <div className="text-xs font-medium text-[hsl(25_15%_55%)] flex items-center gap-3">
-                    <span>Stories: {questionCount}</span>
-                    <div className="w-2 h-2 bg-[hsl(25_40%_45%)] rounded-full animate-pulse" />
-                    Podcast Mode
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setInputMode(inputMode === "voice" ? "write" : "voice")}
+                      className="text-xs text-[hsl(25_40%_45%)] hover:underline flex items-center gap-1 font-medium"
+                    >
+                      {inputMode === "voice" ? <><Pencil size={12} /> Likhne par jaayein</> : <><Mic size={12} /> Bolne par jaayein</>}
+                    </button>
+                    <span className="text-xs text-[hsl(25_15%_55%)]">· {questionCount}</span>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto mb-8 space-y-8 pr-2 scroll-smooth" ref={scrollRef}>
+                <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2 scroll-smooth" ref={scrollRef}>
                   {history.map((msg, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, x: msg.role === "user" ? 20 : -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={cn(
-                        "flex flex-col max-w-[85%]",
-                        msg.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
-                      )}
+                      className={cn("flex flex-col max-w-[85%]", msg.role === "user" ? "ml-auto items-end" : "mr-auto items-start")}
                     >
-                      <div
-                        className={cn(
-                          "p-5 rounded-2xl shadow-sm",
-                          msg.role === "user"
-                            ? "bg-[hsl(25_40%_45%)] text-white rounded-tr-none"
-                            : "bg-white border border-[hsl(25_40%_45%/0.1)] rounded-tl-none"
-                        )}
-                      >
-                        <p className="text-lg leading-relaxed">{msg.text}</p>
+                      <div className={cn(
+                        "p-5 rounded-2xl shadow-sm",
+                        msg.role === "user"
+                          ? "bg-[hsl(25_40%_45%)] text-white rounded-tr-none"
+                          : "bg-white border border-[hsl(25_40%_45%/0.1)] rounded-tl-none"
+                      )}>
+                        <p className="text-lg leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     </motion.div>
                   ))}
@@ -392,9 +456,27 @@ export default function Virasat() {
                   )}
                 </div>
 
-                <div className="sticky bottom-0 bg-[hsl(36_55%_97%/0.8)] backdrop-blur-md pt-4 pb-8 border-t border-[hsl(25_40%_45%/0.05)]">
-                  <VoiceRecorder onTranscript={handleTranscript} isProcessing={isProcessing} />
-                  <div className="mt-4 flex justify-center">
+                <div className="sticky bottom-0 bg-[hsl(36_55%_97%/0.85)] backdrop-blur-md pt-4 pb-6 border-t border-[hsl(25_40%_45%/0.05)] space-y-3">
+                  {inputMode === "voice" ? (
+                    <VoiceRecorder
+                      onTranscript={handleTranscript}
+                      isProcessing={isProcessing}
+                      sessionId={sessionId}
+                      onRequestWrite={() => setInputMode("write")}
+                    />
+                  ) : (
+                    <WrittenInput onSubmit={(t) => handleTranscript(t)} isProcessing={isProcessing} />
+                  )}
+
+                  <MediaAttacher
+                    sessionId={sessionId}
+                    questionIndex={questionCount}
+                    onAttached={(m) => setAttachedMedia((prev) => [...prev, m])}
+                    attached={attachedMedia}
+                    onRemove={(id) => setAttachedMedia((prev) => prev.filter((x) => x.id !== id))}
+                  />
+
+                  <div className="flex justify-center">
                     <button
                       onClick={goToReview}
                       disabled={history.length === 0}
@@ -424,9 +506,7 @@ export default function Virasat() {
                 </p>
 
                 <div className="bg-white border border-[hsl(25_40%_45%/0.1)] rounded-2xl p-6 mb-6 shadow-sm">
-                  <p className="text-sm font-bold uppercase tracking-widest text-[hsl(25_15%_55%)] mb-4">
-                    Kitaab ka andaaz:
-                  </p>
+                  <p className="text-sm font-bold uppercase tracking-widest text-[hsl(25_15%_55%)] mb-4">Kitaab ka andaaz:</p>
                   <div className="grid grid-cols-3 gap-3 mb-6">
                     {(["emotional", "factual", "legacy"] as BookStyle[]).map((style) => (
                       <button
@@ -443,16 +523,11 @@ export default function Virasat() {
                           {style === "emotional" ? "Dil se" : style === "factual" ? "Sahi yaadein" : "Seekh"}
                         </div>
                         <div className="text-xs opacity-80 leading-snug">
-                          {style === "emotional"
-                            ? "Bhavnaon aur yaadon par zor"
-                            : style === "factual"
-                            ? "Sahi tareekh aur ghatnaayein"
-                            : "Zindagi ke sabaq aur salaah"}
+                          {style === "emotional" ? "Bhavnaon aur yaadon par zor" : style === "factual" ? "Sahi tareekh aur ghatnaayein" : "Zindagi ke sabaq aur salaah"}
                         </div>
                       </button>
                     ))}
                   </div>
-
                   <div className="border-t border-[hsl(25_40%_45%/0.1)] pt-4">
                     <p className="text-sm text-[hsl(25_15%_55%)]">
                       Aapne <span className="font-bold text-[hsl(25_40%_45%)]">{questionCount}</span> kahaniyan share ki hain.
@@ -504,7 +579,12 @@ export default function Virasat() {
 
             {mode === "book" && (
               <motion.div key="book" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1">
-                <BookView content={bookContent} />
+                <BookView
+                  content={bookContent}
+                  childName={childName}
+                  fatherName={fatherName}
+                  sessionId={sessionId}
+                />
               </motion.div>
             )}
           </AnimatePresence>
