@@ -183,20 +183,40 @@ async function refineResponse(rawText: string): Promise<string> {
   });
 }
 
-async function generateBook(history: Message[], style: "emotional" | "factual" | "legacy"): Promise<string> {
+interface MediaSummary { question_index: number | null; type: string; caption?: string }
+
+async function generateBook(
+  history: Message[],
+  style: "emotional" | "factual" | "legacy",
+  childName?: string,
+  fatherName?: string,
+  media?: MediaSummary[],
+): Promise<string> {
   const styleInstructions = {
     emotional: "Focus heavily on feelings, nostalgia, and the heart. Use poetic Hindi/Hinglish.",
     factual: "Focus on accuracy, dates, and clear events. Keep the tone grounded and clear.",
     legacy: "Focus on life lessons, wisdom, and advice. Every story should lead to a 'seekh'.",
   };
+
+  const childAddress = childName?.trim() ? `"${childName}"` : `"Beta" / "Mere bachche"`;
+  const fatherIntro = fatherName?.trim() ? `The storyteller is ${fatherName}.` : "";
+
+  const mediaNote = media && media.length > 0
+    ? `\nATTACHED MEMORIES (${media.length} item${media.length > 1 ? "s" : ""}): The user has attached ${media.filter((m) => m.type === "image").length} photo(s), ${media.filter((m) => m.type === "video").length} video(s), and ${media.filter((m) => m.type === "audio").length} voice clip(s) at various points. In the relevant chapters, gently acknowledge these with phrases like "(Yahan us pal ki tasveer lagi hai)" or "(Yeh meri awaaz mein bhi hai)" — but ONLY when narratively appropriate. Do NOT invent details about what is in them.`
+    : "";
+
   const sys = `
-You are a master storyteller and ghostwriter. Transform the conversation into a beautifully written book from a father to his child.
+You are a master storyteller and ghostwriter. This is NOT a publishable book — this is a deeply personal keepsake letter from a parent to their child, meant to be read and treasured by their family.
+
+${fatherIntro}
+Address the child as ${childAddress} throughout. The tone is intimate, like a long, loving letter — never academic or generic.
 
 STYLE PREFERENCE: ${styleInstructions[style]}
+${mediaNote}
 
 STRICT STRUCTURE:
-1. Title Page (#): "# Virasat – Mere Bachche Ke Naam"
-2. ## Dedication
+1. Title Page (#): "# Virasat${childName ? ` – ${childName} Ke Naam` : " – Mere Bachche Ke Naam"}"
+2. ## Dedication (a short, warm dedication directly to ${childAddress})
 3. Chapters (## each):
    - ## Bachpan
    - ## Jawaani aur Sapne
@@ -209,12 +229,13 @@ STRICT STRUCTURE:
 WRITING STYLE & FIDELITY:
 - STRICT FIDELITY: don't add facts not mentioned.
 - EMOTIONAL ENHANCEMENT: enhance depth using the feelings the user expressed.
-- First-person ("Main", "Maine"). Direct address ("Beta", "Mere bache").
+- First-person ("Main", "Maine"). Direct, intimate address.
 - Narrative flow — no bullet points.
-- Preserve the specific stories.
-- If a chapter has no relevant content, keep it brief — do not invent.
+- Preserve the specific stories verbatim where powerful.
+- If a chapter has no relevant content, keep it short and honest — do not invent.
+- This is private, for family eyes only. Write like a letter, not a book for publication.
 `;
-  const contents = [{ role: "user", parts: [{ text: `Conversation History:\n${history.map((m) => `${m.role}: ${m.text}`).join("\n")}\n\nTask: Generate a complete book in '${style}' style.` }] }];
+  const contents = [{ role: "user", parts: [{ text: `Conversation History:\n${history.map((m) => `${m.role}: ${m.text}`).join("\n")}\n\nTask: Generate a complete personal keepsake in '${style}' style for ${childAddress}.` }] }];
   return await withKeyRotation<string>(async (apiKey) => {
     const resp = await callGeminiText(apiKey, "gemini-2.5-pro", contents, sys);
     if (!resp.ok) return { ok: false, status: resp.status };
@@ -251,7 +272,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ text: result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (action === "book") {
-      const result = await generateBook(body.history || [], (body.style || "emotional"));
+      const result = await generateBook(
+        body.history || [],
+        (body.style || "emotional"),
+        body.childName,
+        body.fatherName,
+        body.media || [],
+      );
       return new Response(JSON.stringify({ text: result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (action === "tts") {
