@@ -58,6 +58,15 @@ const Subscription = () => {
     checkSubscriptionStatus();
   }, [user, navigate]);
 
+  // Forward redirect (no homepage bounce after success)
+  const goNext = () => {
+    const stored = (() => { try { return localStorage.getItem("auth_redirect_to"); } catch { return null; } })();
+    const queryNext = searchParams.get("next");
+    const dest = stored || queryNext || "/tools";
+    try { localStorage.removeItem("auth_redirect_to"); } catch { /* ignore */ }
+    setTimeout(() => navigate(dest, { replace: true }), 700);
+  };
+
   useEffect(() => {
     const couponParam = searchParams.get("coupon");
     if (couponParam) {
@@ -67,25 +76,17 @@ const Subscription = () => {
     if (searchParams.get("success") === "true") {
       toast({
         title: "Payment Successful!",
-        description: "Welcome to Premium! You now have full access to all tools.",
+        description: "Welcome to Premium! Taking you to your next step…",
       });
       checkSubscriptionStatus();
-      const redirectTo = localStorage.getItem("auth_redirect_to");
-      if (redirectTo) {
-        localStorage.removeItem("auth_redirect_to");
-        setTimeout(() => navigate(redirectTo, { replace: true }), 800);
-      }
+      goNext();
     } else if (searchParams.get("trial_success") === "true") {
       toast({
         title: "Trial Activated!",
-        description: "You have 24-hour access to all tools. Enjoy!",
+        description: "You have 24-hour access. Let's open your tool.",
       });
       checkSubscriptionStatus();
-      const redirectTo = localStorage.getItem("auth_redirect_to");
-      if (redirectTo) {
-        localStorage.removeItem("auth_redirect_to");
-        setTimeout(() => navigate(redirectTo, { replace: true }), 800);
-      }
+      goNext();
     } else if (searchParams.get("canceled") === "true") {
       toast({
         title: "Payment Canceled",
