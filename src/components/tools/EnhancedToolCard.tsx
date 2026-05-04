@@ -2,12 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, CheckCircle2, Eye, Sparkles } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getToolTypeConfig } from "@/data/toolTypes";
 import { getToolIconUrl } from "@/data/toolIconMap";
+import { FloatingMediaPreview } from "@/components/tools/FloatingMediaPreview";
 
 interface EnhancedToolCardProps {
   id?: string;
