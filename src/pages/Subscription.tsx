@@ -494,7 +494,7 @@ const Subscription = () => {
               </div>
 
               {/* Pricing Cards */}
-              <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
                 {/* Trial Plan */}
                 <Card className="relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in" style={{ animationDelay: "100ms" }}>
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted to-muted-foreground/50" />
