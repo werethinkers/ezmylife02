@@ -206,6 +206,8 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
         </div>
       )}
 
+      <BulkParamsForm config={config} values={params} onChange={setParams} />
+
       {submitting && uploadProgress > 0 && uploadProgress < 100 && (
         <div className="space-y-1">
           <Progress value={uploadProgress} />
