@@ -70,7 +70,8 @@ export const PremiumRoute = ({ children }: PremiumRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    try { localStorage.setItem("auth_redirect_to", location.pathname + location.search); } catch { /* ignore */ }
+    return <Navigate to="/auth" state={{ from: location.pathname + location.search }} replace />;
   }
 
   if (!isPremium) {
