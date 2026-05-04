@@ -85,7 +85,7 @@ const AnimatedRoutes = () => {
         variants={pageVariants}
         className="will-change-transform"
       >
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<DelayedFallback />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/tools" element={<Tools />} />
