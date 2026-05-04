@@ -299,12 +299,14 @@ const Subscription = () => {
   const trialFeatures = [
     "Full access for 24 hours",
     "All 200+ live AI tools unlocked (2,000+ coming within a year)",
+    "⚡ Bulk Mode included — drop dozens of files, get all outputs at once",
     "Perfect for trying before buying",
     "No automatic renewal",
   ];
 
   const monthlyFeatures = [
     "Access to all 200+ live AI tools (2,000+ coming within a year)",
+    "⚡ Unlimited Bulk Mode — process 50+ files in one drop",
     "30 days of full access",
     "Flexible month-to-month",
     "Cancel anytime",
@@ -313,6 +315,7 @@ const Subscription = () => {
 
   const yearlyFeatures = [
     "Access to all 200+ live AI tools + every new tool we ship (2,000+ planned)",
+    "⚡ Unlimited Bulk Mode across all supported tools",
     "Business automation & content creation",
     "AI-powered assistants & chatbots",
     "Document analysis & PDF tools",
