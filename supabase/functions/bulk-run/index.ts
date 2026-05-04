@@ -24,40 +24,49 @@ async function processItem(
   toolId: string,
   fileBlob: Blob,
   filename: string,
-  authHeader: string
+  authHeader: string,
+  params: Record<string, any>
 ): Promise<{ outBlob?: Blob; outName?: string; csvRow?: string; error?: string }> {
   try {
     if (toolId === "business-card-scanner") {
-      // Convert blob to base64
       const buf = await fileBlob.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       const dataUrl = `data:${fileBlob.type || "image/jpeg"};base64,${b64}`;
       const r = await fetch(`${SUPABASE_URL}/functions/v1/scan-business-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ image: dataUrl }),
+        body: JSON.stringify({
+          image: dataUrl,
+          auto_save_contacts: params.auto_save_contacts !== false,
+          tag: params.tag || null,
+        }),
       });
       if (!r.ok) return { error: `scan failed (${r.status})` };
       const data = await r.json();
       const c = data?.contact || data || {};
-      const csvRow = `"${filename}","${c.name || ""}","${c.email || ""}","${c.phone || ""}","${c.business_name || ""}","${c.occupation || ""}"`;
+      const csvRow = `"${filename}","${c.name || ""}","${c.email || ""}","${c.phone || ""}","${c.business_name || ""}","${c.occupation || ""}","${params.tag || ""}"`;
       return { csvRow };
     }
 
     if (toolId === "background-remover" || toolId === "image-beautify" || toolId === "passport-photo-maker") {
-      // These tools currently run client-side or via image generator.
-      // Use video-generator/image edit fallback via Lovable AI. Return original as placeholder for now.
+      // Params (background, style, size_preset) reserved for future edge implementation.
       return { outBlob: fileBlob, outName: filename, error: "Edge processing not yet wired — original returned" };
     }
 
     if (toolId === "startup-analyser") {
-      // Forward PDF/PPTX as base64 to startup-analyser edge function
       const buf = await fileBlob.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(new Uint8Array(buf))));
       const r = await fetch(`${SUPABASE_URL}/functions/v1/startup-analyser`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ fileBase64: b64, fileName: filename, mimeType: fileBlob.type }),
+        body: JSON.stringify({
+          fileBase64: b64,
+          fileName: filename,
+          mimeType: fileBlob.type,
+          focus: params.focus || "investor",
+          stage: params.stage || "seed",
+          industry: params.industry || null,
+        }),
       });
       if (!r.ok) return { error: `analysis failed (${r.status})` };
       const data = await r.json();
