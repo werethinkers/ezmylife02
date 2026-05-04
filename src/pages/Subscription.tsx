@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
+import { FunnelStepper } from "@/components/FunnelStepper";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Crown, Loader2, Sparkles, Tag, Zap, Star, Shield, Clock } from "lucide-react";
+import { Check, Crown, Loader2, Sparkles, Tag, Zap, Star, Shield, Clock, Building2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { EnterpriseContactDialog } from "@/components/EnterpriseContactDialog";
 
 declare global {
   interface Window {
