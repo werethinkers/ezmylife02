@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, Download, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 
 export const BackgroundRemover = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
