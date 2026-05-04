@@ -206,6 +206,22 @@ const AnimatedRoutes = () => {
                 </PremiumRoute>
               }
             />
+            <Route
+              path="/bulk/jobs"
+              element={
+                <PremiumRoute>
+                  <BulkJobs />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/bulk/jobs/:id"
+              element={
+                <PremiumRoute>
+                  <BulkJobDetail />
+                </PremiumRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
