@@ -352,7 +352,7 @@ const Home = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.6 }}
-          style={{ opacity: heroOpacity }}
+          
         >
           <motion.div
             className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1.5"
