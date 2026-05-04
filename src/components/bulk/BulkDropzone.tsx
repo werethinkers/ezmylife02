@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import type { BulkToolConfig } from "@/data/bulkTools";
+import { defaultBulkParams, type BulkToolConfig } from "@/data/bulkTools";
 import { runClientImageBatch } from "@/lib/bulkClientImageOps";
+import { BulkParamsForm } from "./BulkParamsForm";
 
 interface Props {
   config: BulkToolConfig;
@@ -24,6 +25,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [params, setParams] = useState<Record<string, any>>(() => defaultBulkParams(config));
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   const estCost = (files.length * config.estCostPerItemInr).toFixed(2);
