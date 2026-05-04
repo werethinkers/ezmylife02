@@ -72,7 +72,7 @@ const ParallaxBackground = () => {
   const y4 = useSpring(useTransform(scrollY, [0, 1000], [0, -200]), springConfig);
   
   // Opacity fade on scroll
-  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0]), springConfig);
+  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0.4]), springConfig);
   
   // Scale effect
   const scale = useSpring(useTransform(scrollY, [0, 800], [1, 1.1]), springConfig);
@@ -167,11 +167,9 @@ const Home = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   
-  // Parallax for hero content
+  // Subtle parallax only — no opacity/scale fade so hero never goes blank
   const springConfig = { stiffness: 100, damping: 30, mass: 1 };
-  const heroY = useSpring(useTransform(scrollY, [0, 500], [0, 50]), springConfig);
-  const heroOpacity = useSpring(useTransform(scrollY, [0, 400], [1, 0]), springConfig);
-  const heroScale = useSpring(useTransform(scrollY, [0, 500], [1, 0.98]), springConfig);
+  const heroY = useSpring(useTransform(scrollY, [0, 600], [0, 30]), springConfig);
 
   const features = [
     {
@@ -241,7 +239,7 @@ const Home = () => {
         <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
           <motion.div
             className="mx-auto max-w-5xl text-center space-y-8"
-            style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
+            style={{ y: heroY }}
           >
             <motion.div
               initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
@@ -354,7 +352,7 @@ const Home = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.6 }}
-          style={{ opacity: heroOpacity }}
+          
         >
           <motion.div
             className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1.5"
