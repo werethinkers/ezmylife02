@@ -370,6 +370,7 @@ const Tools = () => {
         ]}
       />
       <Navbar />
+      <FunnelStepper current="tool" />
       
       {/* Enhanced Header */}
       <ToolsHeader
