@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import LaunchOfferBanner from "@/components/LaunchOfferBanner";
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
 import RequestToolSection from "@/components/RequestToolSection";
+import { BulkPromoSection } from "@/components/home/BulkPromoSection";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import logo from "@/assets/logo.png";
 import { useRef } from "react";
