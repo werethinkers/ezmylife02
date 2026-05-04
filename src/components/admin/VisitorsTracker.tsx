@@ -59,6 +59,7 @@ const DeviceIcon = ({ d }: { d: string | null }) => {
 const VisitorsTracker = () => {
   const [sessions, setSessions] = useState<VisitorSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24);
   const [audience, setAudience] = useState<"all" | "registered" | "anonymous">("all");
   const [bouncedOnly, setBouncedOnly] = useState(false);
@@ -68,9 +69,17 @@ const VisitorsTracker = () => {
 
   const fetchSessions = async () => {
     setLoading(true);
+    setError(null);
     const since = new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString();
-    const { data, error } = await supabase.rpc("get_visitor_sessions", { _since: since, _limit: 1000 });
-    if (!error && data) setSessions(data as VisitorSession[]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcErr } = await (supabase.rpc as any)("get_visitor_sessions", { _since: since, _limit: 1000 });
+    if (rpcErr) {
+      setError(rpcErr.message);
+      toast.error("Failed to load visitors: " + rpcErr.message);
+      setSessions([]);
+    } else {
+      setSessions((data as VisitorSession[]) ?? []);
+    }
     setLoading(false);
   };
 
@@ -81,16 +90,19 @@ const VisitorsTracker = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeHours]);
 
-  const toggleExpand = async (sid: string) => {
+  const toggleExpand = async (sid: string, ipHash: string | null) => {
     if (expanded === sid) { setExpanded(null); return; }
     setExpanded(sid);
     if (!steps[sid]) {
-      const { data } = await supabase
+      // Sessions without a real session_id are grouped by ip_hash in the RPC.
+      const useSession = sid.startsWith("s_");
+      let q = supabase
         .from("page_views")
         .select("id, path, created_at, time_on_page_ms, referrer")
-        .eq("session_id", sid)
         .order("created_at", { ascending: true })
         .limit(200);
+      q = useSession ? q.eq("session_id", sid) : q.eq("ip_hash", ipHash ?? sid);
+      const { data } = await q;
       setSteps((s) => ({ ...s, [sid]: (data as PageStep[]) ?? [] }));
     }
   };
