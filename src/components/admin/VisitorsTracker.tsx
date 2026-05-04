@@ -206,12 +206,19 @@ const VisitorsTracker = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && (
+                {error && (
+                  <TableRow><TableCell colSpan={9} className="py-6">
+                    <div className="flex items-center gap-2 text-destructive text-sm justify-center">
+                      <AlertCircle className="h-4 w-4" /> Failed to load: {error}
+                    </div>
+                  </TableCell></TableRow>
+                )}
+                {!error && filtered.length === 0 && (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No visitors in this range</TableCell></TableRow>
                 )}
                 {filtered.map((s) => (
-                  <>
-                    <TableRow key={s.session_id} className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id)}>
+                  <Fragment key={s.session_id}>
+                    <TableRow className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id, s.ip_hash)}>
                       <TableCell>{expanded === s.session_id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TableCell>
                       <TableCell>
                         <div className="font-medium text-sm">
@@ -244,7 +251,7 @@ const VisitorsTracker = () => {
                       <TableCell>
                         <div className="text-xs text-muted-foreground truncate max-w-[160px]">
                           {s.utm_source ? <Badge variant="secondary" className="mr-1">{s.utm_source}</Badge> : null}
-                          {s.referrer ? new URL(s.referrer).hostname.replace(/^www\./, "") : "Direct"}
+                          {s.referrer ? (() => { try { return new URL(s.referrer).hostname.replace(/^www\./, ""); } catch { return "Direct"; } })() : "Direct"}
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground" title={format(new Date(s.last_seen), "PPpp")}>
@@ -252,11 +259,13 @@ const VisitorsTracker = () => {
                       </TableCell>
                     </TableRow>
                     {expanded === s.session_id && (
-                      <TableRow key={s.session_id + "-exp"} className="bg-muted/20">
+                      <TableRow className="bg-muted/20">
                         <TableCell colSpan={9} className="p-4">
                           <div className="text-xs font-semibold mb-2 text-muted-foreground">CLICK PATH</div>
                           {!steps[s.session_id] ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : steps[s.session_id].length === 0 ? (
+                            <div className="text-xs text-muted-foreground">No detailed steps recorded.</div>
                           ) : (
                             <ol className="space-y-1.5">
                               {steps[s.session_id].map((p, i) => (
@@ -279,7 +288,7 @@ const VisitorsTracker = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
