@@ -174,11 +174,12 @@ const Subscription = () => {
             if (verifyData.success) {
               toast({
                 title: planType === "trial" ? "Trial Activated!" : "Payment Successful!",
-                description: planType === "trial" 
-                  ? "You have 24-hour access to all tools. Enjoy!"
-                  : "Welcome to Premium! You now have full access to all tools.",
+                description: planType === "trial"
+                  ? "Taking you to your tool — enjoy 24h access."
+                  : "Welcome to Premium! Heading to your next step…",
               });
               checkSubscriptionStatus();
+              goNext();
             } else {
               throw new Error(verifyData.error || "Payment verification failed");
             }
