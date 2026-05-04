@@ -150,6 +150,7 @@ const AdminDashboard = () => {
 
   const tabs = [
     { id: "analytics" as const, label: "Analytics", icon: LineChart },
+    { id: "visitors" as const, label: "Visitors", icon: Footprints },
     { id: "logs" as const, label: "Activity Logs", icon: Activity },
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
