@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Download, FileDown, Gauge } from "lucide-react";
 import { toast } from "sonner";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 
 type CompressionMode = "quality" | "size";
 
