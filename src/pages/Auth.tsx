@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -45,9 +45,18 @@ const staggerContainer = {
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Capture intended destination from guard navigation state
+  useEffect(() => {
+    const from = (location.state as { from?: string } | null)?.from;
+    if (from) {
+      try { localStorage.setItem("auth_redirect_to", from); } catch { /* ignore */ }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (user) navigate("/auth/callback", { replace: true });

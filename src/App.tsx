@@ -8,9 +8,19 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PremiumRoute } from "@/components/PremiumRoute";
 import { ToolAccessGuard } from "@/components/ToolAccessGuard";
 import { AnimatePresence, motion } from "framer-motion";
-import { Suspense, lazy, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
+
+// Delay the loading screen so cached/instant chunks don't flash a spinner.
+const DelayedFallback = ({ delayMs = 180 }: { delayMs?: number }) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), delayMs);
+    return () => clearTimeout(t);
+  }, [delayMs]);
+  return show ? <LoadingScreen /> : null;
+};
 
 // Build cache buster v2
 
@@ -43,27 +53,19 @@ const Virasat = lazy(() => import("./pages/Virasat"));
 const queryClient = new QueryClient();
 
 const pageVariants = {
-  initial: {
-    opacity: 0,
-    y: 8,
-    filter: "blur(4px)",
-  },
+  initial: { opacity: 0, y: 4 },
   animate: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.5,
+      duration: 0.22,
       ease: [0.25, 0.46, 0.45, 0.94] as const,
-      staggerChildren: 0.05,
     },
   },
   exit: {
     opacity: 0,
-    y: -4,
-    filter: "blur(2px)",
     transition: {
-      duration: 0.3,
+      duration: 0.14,
       ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
@@ -83,7 +85,7 @@ const AnimatedRoutes = () => {
         variants={pageVariants}
         className="will-change-transform"
       >
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<DelayedFallback />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/tools" element={<Tools />} />

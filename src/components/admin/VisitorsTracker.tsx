@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, RefreshCw, Footprints, ChevronDown, ChevronRight, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
+import { Loader2, RefreshCw, Footprints, ChevronDown, ChevronRight, Globe, Monitor, Smartphone, Tablet, AlertCircle } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { Fragment } from "react";
+import { toast } from "sonner";
 
 interface VisitorSession {
   session_id: string;
@@ -57,6 +59,7 @@ const DeviceIcon = ({ d }: { d: string | null }) => {
 const VisitorsTracker = () => {
   const [sessions, setSessions] = useState<VisitorSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24);
   const [audience, setAudience] = useState<"all" | "registered" | "anonymous">("all");
   const [bouncedOnly, setBouncedOnly] = useState(false);
@@ -66,9 +69,17 @@ const VisitorsTracker = () => {
 
   const fetchSessions = async () => {
     setLoading(true);
+    setError(null);
     const since = new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString();
-    const { data, error } = await supabase.rpc("get_visitor_sessions", { _since: since, _limit: 1000 });
-    if (!error && data) setSessions(data as VisitorSession[]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcErr } = await (supabase.rpc as any)("get_visitor_sessions", { _since: since, _limit: 1000 });
+    if (rpcErr) {
+      setError(rpcErr.message);
+      toast.error("Failed to load visitors: " + rpcErr.message);
+      setSessions([]);
+    } else {
+      setSessions((data as VisitorSession[]) ?? []);
+    }
     setLoading(false);
   };
 
@@ -79,16 +90,19 @@ const VisitorsTracker = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeHours]);
 
-  const toggleExpand = async (sid: string) => {
+  const toggleExpand = async (sid: string, ipHash: string | null) => {
     if (expanded === sid) { setExpanded(null); return; }
     setExpanded(sid);
     if (!steps[sid]) {
-      const { data } = await supabase
+      // Sessions without a real session_id are grouped by ip_hash in the RPC.
+      const useSession = sid.startsWith("s_");
+      let q = supabase
         .from("page_views")
         .select("id, path, created_at, time_on_page_ms, referrer")
-        .eq("session_id", sid)
         .order("created_at", { ascending: true })
         .limit(200);
+      q = useSession ? q.eq("session_id", sid) : q.eq("ip_hash", ipHash ?? sid);
+      const { data } = await q;
       setSteps((s) => ({ ...s, [sid]: (data as PageStep[]) ?? [] }));
     }
   };
@@ -192,12 +206,19 @@ const VisitorsTracker = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && (
+                {error && (
+                  <TableRow><TableCell colSpan={9} className="py-6">
+                    <div className="flex items-center gap-2 text-destructive text-sm justify-center">
+                      <AlertCircle className="h-4 w-4" /> Failed to load: {error}
+                    </div>
+                  </TableCell></TableRow>
+                )}
+                {!error && filtered.length === 0 && (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No visitors in this range</TableCell></TableRow>
                 )}
                 {filtered.map((s) => (
-                  <>
-                    <TableRow key={s.session_id} className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id)}>
+                  <Fragment key={s.session_id}>
+                    <TableRow className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id, s.ip_hash)}>
                       <TableCell>{expanded === s.session_id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TableCell>
                       <TableCell>
                         <div className="font-medium text-sm">
@@ -230,7 +251,7 @@ const VisitorsTracker = () => {
                       <TableCell>
                         <div className="text-xs text-muted-foreground truncate max-w-[160px]">
                           {s.utm_source ? <Badge variant="secondary" className="mr-1">{s.utm_source}</Badge> : null}
-                          {s.referrer ? new URL(s.referrer).hostname.replace(/^www\./, "") : "Direct"}
+                          {s.referrer ? (() => { try { return new URL(s.referrer).hostname.replace(/^www\./, ""); } catch { return "Direct"; } })() : "Direct"}
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground" title={format(new Date(s.last_seen), "PPpp")}>
@@ -238,11 +259,13 @@ const VisitorsTracker = () => {
                       </TableCell>
                     </TableRow>
                     {expanded === s.session_id && (
-                      <TableRow key={s.session_id + "-exp"} className="bg-muted/20">
+                      <TableRow className="bg-muted/20">
                         <TableCell colSpan={9} className="p-4">
                           <div className="text-xs font-semibold mb-2 text-muted-foreground">CLICK PATH</div>
                           {!steps[s.session_id] ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : steps[s.session_id].length === 0 ? (
+                            <div className="text-xs text-muted-foreground">No detailed steps recorded.</div>
                           ) : (
                             <ol className="space-y-1.5">
                               {steps[s.session_id].map((p, i) => (
@@ -265,7 +288,7 @@ const VisitorsTracker = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>

@@ -22,17 +22,24 @@ export const ToolAccessGuard = ({ children }: ToolAccessGuardProps) => {
   const isFree = !!tool?.is_free;
 
   // Static (non-DB) tools default to premium-required
-  const stillResolving = authLoading || catalogLoading || (!!user && subLoading);
+  const stillResolving = authLoading || catalogLoading;
 
   useEffect(() => {
     if (stillResolving) return;
     if (isFree) return;
-    if (!user) return;
+    if (!user) {
+      // Persist where to send the user back after login
+      try {
+        localStorage.setItem("auth_redirect_to", location.pathname + location.search);
+      } catch { /* ignore */ }
+      return;
+    }
+    if (subLoading) return;
     if (!isSubscribed && !toastShown.current) {
       toastShown.current = true;
       toast.error("This tool requires a premium subscription");
     }
-  }, [stillResolving, isFree, user, isSubscribed]);
+  }, [stillResolving, isFree, user, isSubscribed, subLoading, location.pathname, location.search]);
 
   if (stillResolving) {
     return (
@@ -42,8 +49,17 @@ export const ToolAccessGuard = ({ children }: ToolAccessGuardProps) => {
     );
   }
 
+  // Free tools: render immediately
   if (isFree) return <>{children}</>;
-  if (!user) return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
+  if (!user) return <Navigate to="/auth" state={{ from: location.pathname + location.search }} replace />;
+  // Wait for subscription resolution only for premium tools
+  if (subLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   if (!isSubscribed) return <Navigate to="/subscription" replace />;
 
   return <>{children}</>;

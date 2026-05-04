@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -20,6 +20,20 @@ export const PremiumRoute = ({ children }: PremiumRouteProps) => {
         return;
       }
 
+      // Session cache (60s) for snappy back/forward
+      const cacheKey = `premium_${user.id}`;
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const { value, ts } = JSON.parse(cached) as { value: boolean; ts: number };
+          if (Date.now() - ts < 60_000) {
+            setIsPremium(value);
+            setIsChecking(false);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -28,17 +42,12 @@ export const PremiumRoute = ({ children }: PremiumRouteProps) => {
         }
 
         const { data, error } = await supabase.functions.invoke("check-subscription", {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
+          headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
-        if (error) {
-          console.error("Error checking premium status:", error);
-          setIsPremium(false);
-        } else {
-          setIsPremium(data.subscribed);
-        }
+        const value = !error && !!data?.subscribed;
+        setIsPremium(value);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify({ value, ts: Date.now() })); } catch { /* ignore */ }
       } catch (error) {
         console.error("Error checking premium status:", error);
         setIsPremium(false);
@@ -61,7 +70,8 @@ export const PremiumRoute = ({ children }: PremiumRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    try { localStorage.setItem("auth_redirect_to", location.pathname + location.search); } catch { /* ignore */ }
+    return <Navigate to="/auth" state={{ from: location.pathname + location.search }} replace />;
   }
 
   if (!isPremium) {
