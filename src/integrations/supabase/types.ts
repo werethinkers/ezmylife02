@@ -306,13 +306,19 @@ export type Database = {
       }
       page_views: {
         Row: {
+          browser: string | null
           city: string | null
           country: string | null
           created_at: string
+          device_type: string | null
           id: string
+          ip_address: string | null
+          ip_hash: string | null
+          os: string | null
           path: string
           referrer: string | null
           session_id: string | null
+          time_on_page_ms: number | null
           tool_id: string | null
           user_agent: string | null
           user_id: string | null
@@ -321,13 +327,19 @@ export type Database = {
           utm_source: string | null
         }
         Insert: {
+          browser?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
+          ip_address?: string | null
+          ip_hash?: string | null
+          os?: string | null
           path: string
           referrer?: string | null
           session_id?: string | null
+          time_on_page_ms?: number | null
           tool_id?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -336,13 +348,19 @@ export type Database = {
           utm_source?: string | null
         }
         Update: {
+          browser?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
+          ip_address?: string | null
+          ip_hash?: string | null
+          os?: string | null
           path?: string
           referrer?: string | null
           session_id?: string | null
+          time_on_page_ms?: number | null
           tool_id?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -851,6 +869,32 @@ export type Database = {
           tool_id: string
           unique_visitors: number
           view_count: number
+        }[]
+      }
+      get_visitor_sessions: {
+        Args: { _limit?: number; _since: string }
+        Returns: {
+          browser: string
+          city: string
+          country: string
+          device_type: string
+          duration_seconds: number
+          entry_path: string
+          exit_path: string
+          first_seen: string
+          ip_address: string
+          ip_hash: string
+          is_bounce: boolean
+          last_seen: string
+          os: string
+          page_count: number
+          referrer: string
+          session_id: string
+          user_email: string
+          user_id: string
+          utm_campaign: string
+          utm_medium: string
+          utm_source: string
         }[]
       }
       has_role: {

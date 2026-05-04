@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.virasat-ai]
 verify_jwt = false
+
+[functions.log-pageview]
+verify_jwt = false

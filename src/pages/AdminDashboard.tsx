@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints } from "lucide-react";
 import ToolRequests from "@/components/admin/ToolRequests";
 import ArchivedEvents from "@/components/admin/ArchivedEvents";
 import ActivityArchive from "@/components/admin/ActivityArchive";
@@ -17,6 +17,7 @@ import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import UtmLinkBuilder from "@/components/admin/UtmLinkBuilder";
 import CouponManager from "@/components/admin/CouponManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
+import VisitorsTracker from "@/components/admin/VisitorsTracker";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -149,6 +150,7 @@ const AdminDashboard = () => {
 
   const tabs = [
     { id: "analytics" as const, label: "Analytics", icon: LineChart },
+    { id: "visitors" as const, label: "Visitors", icon: Footprints },
     { id: "logs" as const, label: "Activity Logs", icon: Activity },
     { id: "users" as const, label: "Users", icon: Users },
     { id: "premium" as const, label: "Premium", icon: Crown },
@@ -334,6 +336,7 @@ const AdminDashboard = () => {
         {activeTab === "virasat" && <VirasatArchive />}
         {activeTab === "api-keys" && !isViewOnly && <GeminiKeysManager />}
         {activeTab === "analytics" && <AnalyticsDashboard />}
+        {activeTab === "visitors" && <VisitorsTracker />}
         {activeTab === "utm" && !isViewOnly && <UtmLinkBuilder />}
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
       </div>
