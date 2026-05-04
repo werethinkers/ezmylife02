@@ -22,6 +22,7 @@ import { tools as liveToolsList, getLiveToolsCount } from "@/data/tools";
 import { getToolNamesForType } from "@/data/toolTypes";
 import { toolsDatabase, getToolsByType } from "@/data/toolsDatabase";
 import { Navbar } from "@/components/Navbar";
+import { FunnelStepper } from "@/components/FunnelStepper";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -369,6 +370,7 @@ const Tools = () => {
         ]}
       />
       <Navbar />
+      <FunnelStepper current="tool" />
       
       {/* Enhanced Header */}
       <ToolsHeader

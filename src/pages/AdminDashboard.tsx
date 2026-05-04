@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints } from "lucide-react";
+import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2 } from "lucide-react";
+import ToolMediaManager from "@/components/admin/ToolMediaManager";
+import EnterpriseLeads from "@/components/admin/EnterpriseLeads";
 import ToolRequests from "@/components/admin/ToolRequests";
 import ArchivedEvents from "@/components/admin/ArchivedEvents";
 import ActivityArchive from "@/components/admin/ActivityArchive";
@@ -62,7 +64,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -162,6 +164,8 @@ const AdminDashboard = () => {
     { id: "virasat" as const, label: "Virasat", icon: BookHeart },
     ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
     ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
+    ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
+    { id: "enterprise" as const, label: "Enterprise Leads", icon: Building2 },
     ...(!isViewOnly ? [{ id: "api-keys" as const, label: "API Keys", icon: KeyRound }] : []),
   ];
 
@@ -339,6 +343,8 @@ const AdminDashboard = () => {
         {activeTab === "visitors" && <VisitorsTracker />}
         {activeTab === "utm" && !isViewOnly && <UtmLinkBuilder />}
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
+        {activeTab === "tool-media" && !isViewOnly && <ToolMediaManager />}
+        {activeTab === "enterprise" && <EnterpriseLeads />}
       </div>
     </div>
   );

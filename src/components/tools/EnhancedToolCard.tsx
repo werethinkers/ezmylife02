@@ -2,12 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, CheckCircle2, Eye, Sparkles } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getToolTypeConfig } from "@/data/toolTypes";
 import { getToolIconUrl } from "@/data/toolIconMap";
+import { FloatingMediaPreview } from "@/components/tools/FloatingMediaPreview";
 
 interface EnhancedToolCardProps {
   id?: string;
@@ -43,6 +44,7 @@ export const EnhancedToolCard = ({
   index = 0
 }: EnhancedToolCardProps) => {
   const navigate = useNavigate();
+  const [hover, setHover] = useState(false);
   const displayName = name || title || "";
   const displayId = toolId || id || "";
   const displayCategory = department || category || "";
@@ -79,7 +81,10 @@ export const EnhancedToolCard = ({
           !isLive && "opacity-80"
         )}
         onClick={handleClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
       >
+        {displayId && <FloatingMediaPreview toolId={displayId} visible={hover} />}
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
