@@ -17,6 +17,7 @@ import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import UtmLinkBuilder from "@/components/admin/UtmLinkBuilder";
 import CouponManager from "@/components/admin/CouponManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
+import VisitorsTracker from "@/components/admin/VisitorsTracker";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
