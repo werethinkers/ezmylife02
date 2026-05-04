@@ -342,8 +342,8 @@ const Tools = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="2000+ Free AI Tools — Browse Without Signup | EZYOURLIFE"
-        description="Browse 2000+ free & premium AI tools instantly — no signup needed. AI image editor, invoice generator, content creator, study planner, background remover and more. The Future's First AI App Store."
+        title="200+ Live AI Tools (2,000+ Coming Soon) — Browse Without Signup | EZYOURLIFE"
+        description="Browse 200+ live AI tools today (2,000+ launching within a year) — no signup needed. AI image editor, invoice generator, content creator, study planner, background remover and more. The Future's First AI App Store."
         path="/tools"
         keywords="free ai tools, no signup ai tools, ai image editor, ai invoice generator, ai content creator, ai study planner, best free ai tools online, ezyourlife tools"
         jsonLd={[
@@ -351,7 +351,7 @@ const Tools = () => {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: "AI Tools Collection - EZYOURLIFE",
-            description: "Browse 50,000+ free and premium AI tools on EZYOURLIFE.",
+            description: "Browse 200+ live AI tools today on EZYOURLIFE — 2,000+ launching within a year.",
             url: "https://ezyourlife.com/tools",
             publisher: {
               "@type": "Organization",

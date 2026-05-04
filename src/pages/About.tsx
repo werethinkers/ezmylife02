@@ -9,7 +9,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="About EZYOURLIFE - The World's First AI App Store | Our Mission"
-        description="What is EZYOURLIFE? Learn about the world's first AI App Store platform offering 50,000+ free and premium AI tools for productivity, business, content creation and education. Discover the ezyourlife mission and values."
+        description="What is EZYOURLIFE? Learn about the world's first AI App Store — 200+ live AI tools today and 2,000+ launching within a year, for productivity, business, content creation and education. Discover the ezyourlife mission and values."
         path="/about"
         keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
         jsonLd={[
@@ -17,7 +17,7 @@ const About = () => {
             "@context": "https://schema.org",
             "@type": "AboutPage",
             name: "About EZYOURLIFE",
-            description: "Learn about EZYOURLIFE, the world's first AI App Store offering 50,000+ free and premium AI tools.",
+            description: "Learn about EZYOURLIFE, the world's first AI App Store — 200+ live AI tools today and 2,000+ launching within a year.",
             url: "https://ezyourlife.com/about",
             mainEntity: {
               "@type": "Organization",
@@ -162,14 +162,23 @@ const About = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center">
               <div className="space-y-2">
                 <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  2000+
+                  200+
                 </div>
-                <p className="text-lg font-semibold">AI Tools</p>
+                <p className="text-lg font-semibold">Live Now</p>
                 <p className="text-sm text-muted-foreground">
-                  Carefully curated for maximum productivity
+                  AI tools you can use today
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
+                  2,000+
+                </div>
+                <p className="text-lg font-semibold">Coming Year 1</p>
+                <p className="text-sm text-muted-foreground">
+                  Launching within a year
                 </p>
               </div>
               <div className="space-y-2">
@@ -178,7 +187,7 @@ const About = () => {
                 </div>
                 <p className="text-lg font-semibold">Browser-Based</p>
                 <p className="text-sm text-muted-foreground">
-                  No downloads or installations required
+                  No downloads or installations
                 </p>
               </div>
               <div className="space-y-2">
@@ -187,7 +196,7 @@ const About = () => {
                 </div>
                 <p className="text-lg font-semibold">Always Available</p>
                 <p className="text-sm text-muted-foreground">
-                  Access your tools anytime, anywhere
+                  Access anytime, anywhere
                 </p>
               </div>
             </div>
