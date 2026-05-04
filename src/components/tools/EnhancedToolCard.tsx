@@ -44,6 +44,7 @@ export const EnhancedToolCard = ({
   index = 0
 }: EnhancedToolCardProps) => {
   const navigate = useNavigate();
+  const [hover, setHover] = useState(false);
   const displayName = name || title || "";
   const displayId = toolId || id || "";
   const displayCategory = department || category || "";
