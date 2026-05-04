@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { job_id, tool_id, input_manifest } = await req.json();
+    const { job_id, tool_id, input_manifest, params } = await req.json();
     if (!job_id || !tool_id || !Array.isArray(input_manifest)) {
       return new Response(JSON.stringify({ error: "missing fields" }), {
         status: 400,
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
 
     // @ts-ignore EdgeRuntime
-    EdgeRuntime.waitUntil(processJob(job_id, tool_id, input_manifest, authHeader));
+    EdgeRuntime.waitUntil(processJob(job_id, tool_id, input_manifest, authHeader, params || {}));
 
     return new Response(JSON.stringify({ ok: true, job_id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
