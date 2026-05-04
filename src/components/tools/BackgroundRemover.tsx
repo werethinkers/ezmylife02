@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, Download, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 
 export const BackgroundRemover = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -132,6 +133,9 @@ export const BackgroundRemover = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Background Remover</h1>
           <p className="text-muted-foreground">Remove backgrounds from images with one click</p>
+          <div className="flex justify-center pt-2">
+            <BulkModeToggle toolId="background-remover" />
+          </div>
         </div>
 
         {!originalImage ? (

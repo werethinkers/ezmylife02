@@ -48,6 +48,8 @@ const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 const MeetNudge = lazy(() => import("./pages/MeetNudge"));
 const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 const Virasat = lazy(() => import("./pages/Virasat"));
+const BulkJobs = lazy(() => import("./pages/BulkJobs"));
+const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
 
 
 const queryClient = new QueryClient();
@@ -201,6 +203,22 @@ const AnimatedRoutes = () => {
               element={
                 <PremiumRoute>
                   <Virasat />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/bulk/jobs"
+              element={
+                <PremiumRoute>
+                  <BulkJobs />
+                </PremiumRoute>
+              }
+            />
+            <Route
+              path="/bulk/jobs/:id"
+              element={
+                <PremiumRoute>
+                  <BulkJobDetail />
                 </PremiumRoute>
               }
             />

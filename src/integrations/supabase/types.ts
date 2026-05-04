@@ -38,6 +38,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bulk_jobs: {
+        Row: {
+          completed_at: string | null
+          completed_items: number
+          created_at: string
+          error_message: string | null
+          failed_items: number
+          id: string
+          input_manifest: Json
+          output_zip_path: string | null
+          outputs: Json
+          status: string
+          tool_id: string
+          tool_name: string
+          total_items: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_items?: number
+          created_at?: string
+          error_message?: string | null
+          failed_items?: number
+          id?: string
+          input_manifest?: Json
+          output_zip_path?: string | null
+          outputs?: Json
+          status?: string
+          tool_id: string
+          tool_name: string
+          total_items?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_items?: number
+          created_at?: string
+          error_message?: string | null
+          failed_items?: number
+          id?: string
+          input_manifest?: Json
+          output_zip_path?: string | null
+          outputs?: Json
+          status?: string
+          tool_id?: string
+          tool_name?: string
+          total_items?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupon_codes: {
         Row: {
           access_type: string

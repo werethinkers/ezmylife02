@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Download, FileDown, Gauge } from "lucide-react";
 import { toast } from "sonner";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 
 type CompressionMode = "quality" | "size";
 
@@ -156,6 +157,9 @@ export const ImageCompressor = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Image Compressor</h1>
           <p className="text-muted-foreground">Reduce image file size while maintaining quality</p>
+          <div className="flex justify-center pt-2">
+            <BulkModeToggle toolId="image-compressor" />
+          </div>
         </div>
 
         {!image ? (
