@@ -164,6 +164,8 @@ const AdminDashboard = () => {
     { id: "virasat" as const, label: "Virasat", icon: BookHeart },
     ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
     ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
+    ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
+    { id: "enterprise" as const, label: "Enterprise Leads", icon: Building2 },
     ...(!isViewOnly ? [{ id: "api-keys" as const, label: "API Keys", icon: KeyRound }] : []),
   ];
 
