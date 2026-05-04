@@ -38,7 +38,10 @@ export const Navbar = () => {
   ];
 
   const premiumLinks = user
-    ? [{ to: "/get-extension", label: "Get Extension" }]
+    ? [
+        { to: "/get-extension", label: "Get Extension" },
+        { to: "/bulk/jobs", label: "Bulk Jobs" },
+      ]
     : [];
 
   return (
