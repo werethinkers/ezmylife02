@@ -374,6 +374,18 @@ const Subscription = () => {
         ]}
       />
       <Navbar />
+      <FunnelStepper current="plan" />
+
+      {/* What is this page strip */}
+      <div className="border-b border-border/40 bg-muted/20">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium">Step 2 — Choose your plan</p>
+            <p className="text-xs text-muted-foreground">Pick a plan and we'll take you straight to the tool you wanted next.</p>
+          </div>
+          <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">No homepage detours</Badge>
+        </div>
+      </div>
       
       {/* Hero Section */}
       <div className="relative overflow-hidden">
