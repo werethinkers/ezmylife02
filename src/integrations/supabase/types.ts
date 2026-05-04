@@ -49,6 +49,7 @@ export type Database = {
           input_manifest: Json
           output_zip_path: string | null
           outputs: Json
+          params: Json
           status: string
           tool_id: string
           tool_name: string
@@ -66,6 +67,7 @@ export type Database = {
           input_manifest?: Json
           output_zip_path?: string | null
           outputs?: Json
+          params?: Json
           status?: string
           tool_id: string
           tool_name: string
@@ -83,6 +85,7 @@ export type Database = {
           input_manifest?: Json
           output_zip_path?: string | null
           outputs?: Json
+          params?: Json
           status?: string
           tool_id?: string
           tool_name?: string
