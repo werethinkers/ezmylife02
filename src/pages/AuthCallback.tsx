@@ -52,14 +52,21 @@ const AuthCallback = () => {
           return;
         }
 
-        // Check if there's a redirect URL stored (e.g. from Meet Nudge magic link)
+        // Check if there's a redirect URL stored (e.g. from tool guard or Meet Nudge)
         const redirectTo = localStorage.getItem("auth_redirect_to");
-        if (redirectTo) {
+        const isToolRedirect = redirectTo?.startsWith("/tool/") || redirectTo?.startsWith("/tool-preview/");
+
+        if (redirectTo && data?.subscribed) {
+          localStorage.removeItem("auth_redirect_to");
+          navigate(redirectTo, { replace: true });
+        } else if (redirectTo && !data?.subscribed && !isToolRedirect) {
+          // Non-tool redirect (e.g. Meet Nudge) — go there even without subscription
           localStorage.removeItem("auth_redirect_to");
           navigate(redirectTo, { replace: true });
         } else if (data?.subscribed) {
           navigate("/tools", { replace: true });
         } else {
+          // Keep auth_redirect_to so we can return to the tool after upgrade
           navigate("/subscription", { replace: true });
         }
       } catch (error) {
