@@ -615,6 +615,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Bulk Mode Promo */}
+      <BulkPromoSection />
+
       {/* Request a Tool Section */}
       <RequestToolSection />
 
