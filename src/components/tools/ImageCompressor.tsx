@@ -156,6 +156,9 @@ export const ImageCompressor = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Image Compressor</h1>
           <p className="text-muted-foreground">Reduce image file size while maintaining quality</p>
+          <div className="flex justify-center pt-2">
+            <BulkModeToggle toolId="image-compressor" />
+          </div>
         </div>
 
         {!image ? (
