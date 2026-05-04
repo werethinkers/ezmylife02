@@ -336,6 +336,7 @@ const AdminDashboard = () => {
         {activeTab === "virasat" && <VirasatArchive />}
         {activeTab === "api-keys" && !isViewOnly && <GeminiKeysManager />}
         {activeTab === "analytics" && <AnalyticsDashboard />}
+        {activeTab === "visitors" && <VisitorsTracker />}
         {activeTab === "utm" && !isViewOnly && <UtmLinkBuilder />}
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
       </div>
