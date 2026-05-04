@@ -239,7 +239,7 @@ const Home = () => {
         <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
           <motion.div
             className="mx-auto max-w-5xl text-center space-y-8"
-            style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
+            style={{ y: heroY }}
           >
             <motion.div
               initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
