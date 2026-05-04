@@ -84,6 +84,23 @@ const BulkJobDetail = () => {
               <Progress value={pct} />
             </div>
 
+            {job.params && Object.keys(job.params).length > 0 && (
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <div className="text-xs font-medium text-muted-foreground mb-2">
+                  Settings used
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(job.params).map(([k, v]) =>
+                    v === "" || v === null || v === undefined ? null : (
+                      <Badge key={k} variant="outline" className="text-xs">
+                        {k}: {String(v)}
+                      </Badge>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
             {job.output_zip_path && (
               <Button onClick={handleDownload} size="lg" className="w-full">
                 <Download className="h-4 w-4 mr-2" /> Download ZIP
