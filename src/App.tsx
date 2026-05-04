@@ -48,6 +48,8 @@ const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 const MeetNudge = lazy(() => import("./pages/MeetNudge"));
 const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 const Virasat = lazy(() => import("./pages/Virasat"));
+const BulkJobs = lazy(() => import("./pages/BulkJobs"));
+const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
 
 
 const queryClient = new QueryClient();
