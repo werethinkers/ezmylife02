@@ -67,12 +67,22 @@ const Subscription = () => {
         description: "Welcome to Premium! You now have full access to all tools.",
       });
       checkSubscriptionStatus();
+      const redirectTo = localStorage.getItem("auth_redirect_to");
+      if (redirectTo) {
+        localStorage.removeItem("auth_redirect_to");
+        setTimeout(() => navigate(redirectTo, { replace: true }), 800);
+      }
     } else if (searchParams.get("trial_success") === "true") {
       toast({
         title: "Trial Activated!",
         description: "You have 24-hour access to all tools. Enjoy!",
       });
       checkSubscriptionStatus();
+      const redirectTo = localStorage.getItem("auth_redirect_to");
+      if (redirectTo) {
+        localStorage.removeItem("auth_redirect_to");
+        setTimeout(() => navigate(redirectTo, { replace: true }), 800);
+      }
     } else if (searchParams.get("canceled") === "true") {
       toast({
         title: "Payment Canceled",
