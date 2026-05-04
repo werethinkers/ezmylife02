@@ -81,7 +81,7 @@ async function processItem(
   }
 }
 
-async function processJob(jobId: string, toolId: string, manifest: ManifestItem[], authHeader: string) {
+async function processJob(jobId: string, toolId: string, manifest: ManifestItem[], authHeader: string, params: Record<string, any>) {
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   await sb.from("bulk_jobs").update({ status: "running" }).eq("id", jobId);
 
@@ -92,7 +92,7 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
   const csvRows: string[] = [];
 
   if (toolId === "business-card-scanner") {
-    csvRows.push("source_file,name,email,phone,business,occupation");
+    csvRows.push("source_file,name,email,phone,business,occupation,tag");
   }
 
   for (const item of manifest) {
@@ -102,7 +102,7 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
         .download(item.storage_path);
       if (dlErr || !blob) throw new Error("download failed");
 
-      const result = await processItem(toolId, blob, item.filename, authHeader);
+      const result = await processItem(toolId, blob, item.filename, authHeader, params);
       if (result.error && !result.outBlob) {
         outputs.push({ input_filename: item.filename, status: "error", error: result.error });
         failed++;
