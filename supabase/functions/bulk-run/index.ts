@@ -24,40 +24,49 @@ async function processItem(
   toolId: string,
   fileBlob: Blob,
   filename: string,
-  authHeader: string
+  authHeader: string,
+  params: Record<string, any>
 ): Promise<{ outBlob?: Blob; outName?: string; csvRow?: string; error?: string }> {
   try {
     if (toolId === "business-card-scanner") {
-      // Convert blob to base64
       const buf = await fileBlob.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       const dataUrl = `data:${fileBlob.type || "image/jpeg"};base64,${b64}`;
       const r = await fetch(`${SUPABASE_URL}/functions/v1/scan-business-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ image: dataUrl }),
+        body: JSON.stringify({
+          image: dataUrl,
+          auto_save_contacts: params.auto_save_contacts !== false,
+          tag: params.tag || null,
+        }),
       });
       if (!r.ok) return { error: `scan failed (${r.status})` };
       const data = await r.json();
       const c = data?.contact || data || {};
-      const csvRow = `"${filename}","${c.name || ""}","${c.email || ""}","${c.phone || ""}","${c.business_name || ""}","${c.occupation || ""}"`;
+      const csvRow = `"${filename}","${c.name || ""}","${c.email || ""}","${c.phone || ""}","${c.business_name || ""}","${c.occupation || ""}","${params.tag || ""}"`;
       return { csvRow };
     }
 
     if (toolId === "background-remover" || toolId === "image-beautify" || toolId === "passport-photo-maker") {
-      // These tools currently run client-side or via image generator.
-      // Use video-generator/image edit fallback via Lovable AI. Return original as placeholder for now.
+      // Params (background, style, size_preset) reserved for future edge implementation.
       return { outBlob: fileBlob, outName: filename, error: "Edge processing not yet wired — original returned" };
     }
 
     if (toolId === "startup-analyser") {
-      // Forward PDF/PPTX as base64 to startup-analyser edge function
       const buf = await fileBlob.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(new Uint8Array(buf))));
       const r = await fetch(`${SUPABASE_URL}/functions/v1/startup-analyser`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ fileBase64: b64, fileName: filename, mimeType: fileBlob.type }),
+        body: JSON.stringify({
+          fileBase64: b64,
+          fileName: filename,
+          mimeType: fileBlob.type,
+          focus: params.focus || "investor",
+          stage: params.stage || "seed",
+          industry: params.industry || null,
+        }),
       });
       if (!r.ok) return { error: `analysis failed (${r.status})` };
       const data = await r.json();
@@ -72,7 +81,7 @@ async function processItem(
   }
 }
 
-async function processJob(jobId: string, toolId: string, manifest: ManifestItem[], authHeader: string) {
+async function processJob(jobId: string, toolId: string, manifest: ManifestItem[], authHeader: string, params: Record<string, any>) {
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   await sb.from("bulk_jobs").update({ status: "running" }).eq("id", jobId);
 
@@ -83,7 +92,7 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
   const csvRows: string[] = [];
 
   if (toolId === "business-card-scanner") {
-    csvRows.push("source_file,name,email,phone,business,occupation");
+    csvRows.push("source_file,name,email,phone,business,occupation,tag");
   }
 
   for (const item of manifest) {
@@ -93,7 +102,7 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
         .download(item.storage_path);
       if (dlErr || !blob) throw new Error("download failed");
 
-      const result = await processItem(toolId, blob, item.filename, authHeader);
+      const result = await processItem(toolId, blob, item.filename, authHeader, params);
       if (result.error && !result.outBlob) {
         outputs.push({ input_filename: item.filename, status: "error", error: result.error });
         failed++;
@@ -156,7 +165,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { job_id, tool_id, input_manifest } = await req.json();
+    const { job_id, tool_id, input_manifest, params } = await req.json();
     if (!job_id || !tool_id || !Array.isArray(input_manifest)) {
       return new Response(JSON.stringify({ error: "missing fields" }), {
         status: 400,
@@ -167,7 +176,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
 
     // @ts-ignore EdgeRuntime
-    EdgeRuntime.waitUntil(processJob(job_id, tool_id, input_manifest, authHeader));
+    EdgeRuntime.waitUntil(processJob(job_id, tool_id, input_manifest, authHeader, params || {}));
 
     return new Response(JSON.stringify({ ok: true, job_id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import type { BulkToolConfig } from "@/data/bulkTools";
+import { defaultBulkParams, type BulkToolConfig } from "@/data/bulkTools";
 import { runClientImageBatch } from "@/lib/bulkClientImageOps";
+import { BulkParamsForm } from "./BulkParamsForm";
 
 interface Props {
   config: BulkToolConfig;
@@ -24,6 +25,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [params, setParams] = useState<Record<string, any>>(() => defaultBulkParams(config));
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   const estCost = (files.length * config.estCostPerItemInr).toFixed(2);
@@ -94,6 +96,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
         status: "queued",
         total_items: files.length,
         input_manifest: inputManifest,
+        params,
       });
       if (insErr) throw insErr;
 
@@ -106,6 +109,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           userId: user.id,
           toolId: config.toolId,
           files,
+          params,
         }).catch((e) => {
           console.error(e);
           toast.error("Bulk processing failed");
@@ -113,7 +117,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       } else {
         // Dispatch to edge function
         const { error: fnErr } = await supabase.functions.invoke("bulk-run", {
-          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest },
+          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params },
         });
         if (fnErr) throw fnErr;
         toast.success("Bulk job started");
@@ -201,6 +205,8 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           </div>
         </div>
       )}
+
+      <BulkParamsForm config={config} values={params} onChange={setParams} />
 
       {submitting && uploadProgress > 0 && uploadProgress < 100 && (
         <div className="space-y-1">
