@@ -89,6 +89,8 @@ const BulkJobs = () => {
       <SEOHead
         title="Bulk Jobs · EZYOURLIFE"
         description="Track your bulk AI processing jobs — drop dozens of files, get all outputs at once. Included free with EZYOURLIFE Premium."
+        path="/bulk/jobs"
+        noindex
       />
       <Navbar />
       <div className="container max-w-5xl mx-auto px-4 pt-24 pb-16">
