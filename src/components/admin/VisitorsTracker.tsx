@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, RefreshCw, Footprints, ChevronDown, ChevronRight, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
+import { Loader2, RefreshCw, Footprints, ChevronDown, ChevronRight, Globe, Monitor, Smartphone, Tablet, AlertCircle } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { Fragment } from "react";
+import { toast } from "sonner";
 
 interface VisitorSession {
   session_id: string;
