@@ -1,41 +1,44 @@
-## Plan
+# Honest Tool Count Messaging
 
-Two deliverables, run as direct sandbox scripts (not new app features):
+Remove all inflated "50,000+" and standalone "2000+" claims. Replace with honest, dual-number messaging: **"200+ live tools today, 2,000+ coming within a year"**, so the catalog feels ambitious without false promotion.
 
-### 1. CSV of live tools
+## New Standard Phrasings
 
-- Query `tools_catalog` where `is_live = true`.
-- Columns: `name`, `description`, `category`, `dedicated_route`.
-- Save to `/mnt/documents/ezyourlife-live-tools.csv`.
-- Surface via `<lov-artifact>` so the user can download immediately.
+Use these consistently:
 
-### 2. Media for every live tool (image + animated preview)
+- **Short / badges**: `200+ Live Tools` (fact) or `200+ Live · 2,000+ Coming Soon` (vision)
+- **Headlines**: `200+ AI tools live today — 2,000+ launching within a year`
+- **SEO meta**: `200+ live AI tools (2,000+ coming) for productivity, content, business & education`
+- **Subscription/feature lists**: `Access to all 200+ live AI tools + every new tool as we launch (2,000+ planned)`
+- **Footer / About stats**: stat block shows `200+` (Live Now) and `2,000+` (Coming Year 1)
 
-For each live tool (~50+ rows):
+Never say "50,000+" anywhere. Never say a flat "2,000+ tools" without the "coming" qualifier.
 
-1. **Hero image** — generate a 16:9 branded poster using `google/gemini-3.1-flash-image-preview` via the Lovable AI gateway. Prompt = stylized scene representing the tool's purpose, on-brand dark glassmorphism aesthetic, no text overlays, vibrant accent gradients. Saved as PNG.
-2. **Animated preview** — generate 4 keyframe variations of the same scene (subtle camera-push / color shift), then stitch into a looping ~3s GIF with `ffmpeg` at 12fps. Lightweight, autoplay-friendly, no audio.
-3. **Upload** both files to the existing public `tool-media` Supabase storage bucket under `{tool_id}/hero.png` and `{tool_id}/preview.gif`.
-4. **Insert** two rows into `tool_media` per tool: one `kind=image` (sort_order 0, used as poster), one `kind=gif` (sort_order 1). Skip tools that already have media to keep the script idempotent.
+## Files to Update
 
-The existing `ToolMediaCarousel` and `FloatingMediaPreview` components already render whatever is in `tool_media` — no UI changes needed.
+**SEO / metadata**
+- `index.html` — meta description, og:title, og:description, twitter:description, JSON-LD `description` fields, FAQ answers (lines ~7, 31, 32, 43, 55, 84, 100, 108, 116, 124, 132, 185, 203, 215, 221)
+- `src/pages/Home.tsx` — SEOHead description + JSON-LD (lines 207, 217), hero copy (277, 386), pricing feature (588), problem-solver card (178)
+- `src/pages/Tools.tsx` — title + description + JSON-LD (lines 345, 346, 354)
+- `src/pages/About.tsx` — SEO description + JSON-LD + stats block "2000+" (lines 12, 20, 168) → split into two stats: `200+ Live Now` and `2,000+ Coming Year 1`
+- `src/pages/Subscription.tsx` — feature lists & SEO (lines 301, 307, 315, 343, 351, 356, 424, 738)
+- `src/pages/Auth.tsx` — sign-in subtitle (line 171)
+- `src/components/SEOFooter.tsx` — tagline (line 12)
+- `src/components/LaunchOfferBanner.tsx` — slide 2 headline (line 84)
 
-### Execution order
+**Edge functions**
+- `supabase/functions/tools-chat/index.ts` — system prompt (lines 8, 10): change to "200+ live AI tools (2,000+ launching within a year)"
 
-1. Pull live tools list via `supabase--read_query`.
-2. Write & run `/tmp/export_live_tools_csv.py` → CSV artifact.
-3. Write & run `/tmp/generate_tool_media.py`:
-   - Loop tools, skip those already in `tool_media`.
-   - Generate hero PNG (1 call) + 4 keyframe PNGs → ffmpeg GIF.
-   - Upload to storage via REST (service role key).
-   - Insert `tool_media` rows via service role.
-   - Throttle ~1.5s between tools to respect rate limits; resume on partial failure.
-4. Spot-check a few generated assets (download & view) before declaring done.
-5. Report counts: tools processed, skipped, failed.
+**Memory**
+- Update `mem://pages/about-us-content` — currently says "2000+ premium tools count". Replace rule with: "Always show 200+ live + 2,000+ coming (within a year). Never claim 50,000+ or a flat 2,000+ live."
+- Add core memory line to `mem://index.md`: `Honest counts: "200+ live · 2,000+ coming within a year". Never use "50,000+" or imply 2,000+ are live.`
 
-### Notes / tradeoffs
+## Out of Scope
 
-- ~50 tools × 5 image generations ≈ 250 AI calls. Will batch with delays; total run could take 10–20 minutes but runs unattended in the sandbox.
-- GIFs (not MP4) chosen so they autoplay everywhere without codec issues and stay small (~300–600KB).
-- No new tables, no new edge functions, no schema changes. Purely data + storage population.
-- Idempotent: re-running only fills in missing tools.
+- No changes to actual tool catalog data
+- No DB changes
+- `public/sitemap.xml` / `robots.txt` not affected (no count claims)
+
+## QA After Implementation
+
+Run `rg "50,000\+|50000\+"` and `rg "2000\+ AI tools|2,000\+ AI tools"` — both should return zero matches in `src/`, `index.html`, and `supabase/functions/`. Only the new dual-phrasing should remain.

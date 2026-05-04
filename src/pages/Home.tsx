@@ -175,12 +175,12 @@ const Home = () => {
     {
       icon: Zap,
       title: "Think it → Done",
-      description: "Instant answers to any business or personal challenge with 2000+ specialized AI tools.",
+      description: "Instant answers to any business or personal challenge with 200+ live AI tools (2,000+ coming within a year).",
     },
     {
       icon: Globe,
       title: "One Platform, Everything",
-      description: "Replace 50+ expensive subscriptions with a single, unified AI ecosystem.",
+      description: "Replace dozens of expensive subscriptions with a single, unified AI ecosystem.",
     },
     {
       icon: Shield,
@@ -204,7 +204,7 @@ const Home = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       <SEOHead
         title="EZYOURLIFE - Best Free AI Tools Online | AI App Store for Productivity, Business & Education"
-        description="EZYOURLIFE is the world's first AI App Store with 50,000+ free and premium AI tools. Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
+        description="EZYOURLIFE is the world's first AI App Store with 200+ live AI tools today (2,000+ launching within a year). Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
         path="/"
         keywords="ezyourlife, ai tools, free ai tools, premium ai tools, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
         jsonLd={[
@@ -214,7 +214,7 @@ const Home = () => {
             name: "EZYOURLIFE",
             alternateName: ["ezyourlife", "ez your life"],
             url: "https://ezyourlife.com",
-            description: "The world's first AI App Store with 50,000+ free and premium AI tools.",
+            description: "The world's first AI App Store with 200+ live AI tools today (2,000+ launching within a year).",
             potentialAction: {
               "@type": "SearchAction",
               target: "https://ezyourlife.com/tools?q={search_term_string}",
@@ -274,7 +274,7 @@ const Home = () => {
               transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light"
             >
-              Access 2000+ AI-powered tools that simplify life and business. 
+              Access 200+ live AI-powered tools today — and 2,000+ launching within a year. 
               One subscription replaces dozens of apps. Think it → Done.
             </motion.p>
 
@@ -383,7 +383,7 @@ const Home = () => {
               Everything You Need in One Place
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              2000+ AI tools to simplify your life and work
+              200+ live AI tools today — 2,000+ launching within a year
             </p>
           </motion.div>
 
@@ -585,7 +585,7 @@ const Home = () => {
                   </div>
                   <div className="space-y-4">
                     {[
-                      "Access to 2000+ AI tools",
+                      "Access to all 200+ live AI tools (2,000+ coming within a year)",
                       "Unlimited usage",
                       "Priority support",
                       "New tools added weekly",

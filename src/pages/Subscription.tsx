@@ -298,13 +298,13 @@ const Subscription = () => {
 
   const trialFeatures = [
     "Full access for 24 hours",
-    "All 2000+ AI tools unlocked",
+    "All 200+ live AI tools unlocked (2,000+ coming within a year)",
     "Perfect for trying before buying",
     "No automatic renewal",
   ];
 
   const monthlyFeatures = [
-    "Access to all 2000+ AI tools",
+    "Access to all 200+ live AI tools (2,000+ coming within a year)",
     "30 days of full access",
     "Flexible month-to-month",
     "Cancel anytime",
@@ -312,7 +312,7 @@ const Subscription = () => {
   ];
 
   const yearlyFeatures = [
-    "Access to all 2000+ AI tools",
+    "Access to all 200+ live AI tools + every new tool we ship (2,000+ planned)",
     "Business automation & content creation",
     "AI-powered assistants & chatbots",
     "Document analysis & PDF tools",
@@ -340,7 +340,7 @@ const Subscription = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="EZYOURLIFE Pricing - Free & Premium AI Tools Plans"
-        description="Choose your EZYOURLIFE plan. Start free with access to AI tools, or upgrade to Premium for unlimited access to 50,000+ AI tools. Affordable AI tools subscription for students, creators and businesses."
+        description="Choose your EZYOURLIFE plan. Start free, or upgrade to Premium for unlimited access to 200+ live AI tools today (2,000+ launching within a year). Affordable AI tools subscription for students, creators and businesses."
         path="/subscription"
         keywords="ezyourlife pricing, ai tools subscription, premium ai tools plan, free ai tools, ezyourlife premium, ai tools for students, affordable ai tools"
         jsonLd={[
@@ -348,12 +348,12 @@ const Subscription = () => {
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "EZYOURLIFE Pricing",
-            description: "Choose your EZYOURLIFE plan — free or premium access to 50,000+ AI tools.",
+            description: "Choose your EZYOURLIFE plan — free or premium access to 200+ live AI tools (2,000+ coming within a year).",
             url: "https://ezyourlife.com/subscription",
             mainEntity: {
               "@type": "Product",
               name: "EZYOURLIFE Premium",
-              description: "Unlimited access to 50,000+ AI tools for productivity, business, and education.",
+              description: "Unlimited access to 200+ live AI tools today (2,000+ launching within a year) for productivity, business, and education.",
               brand: { "@type": "Brand", name: "EZYOURLIFE" },
               offers: {
                 "@type": "AggregateOffer",
@@ -421,7 +421,7 @@ const Subscription = () => {
                   </span>
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                  Get unlimited access to 2000+ AI tools. Automate your work, boost productivity, and simplify your life.
+                  Get unlimited access to 200+ live AI tools (and every new tool we ship — 2,000+ planned within a year). Automate your work, boost productivity, and simplify your life.
                 </p>
               </>
             )}
@@ -735,7 +735,7 @@ const Subscription = () => {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Star className="h-5 w-5" />
-                  <span className="text-sm">2000+ AI Tools</span>
+                  <span className="text-sm">200+ Live · 2,000+ Coming</span>
                 </div>
               </div>
 

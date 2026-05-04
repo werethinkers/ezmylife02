@@ -9,7 +9,7 @@ const SEOFooter = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-foreground">EZYOURLIFE</h3>
             <p className="text-sm text-muted-foreground">
-              The Future's First AI App Store. 50,000+ free and premium AI tools for productivity, content creation, business automation and education.
+              The Future's First AI App Store. 200+ live AI tools today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
             </p>
             <p className="text-xs text-muted-foreground">
               ezyourlife — Making digital tools accessible to everyone.

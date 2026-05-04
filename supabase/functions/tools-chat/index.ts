@@ -5,9 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Comprehensive tools knowledge base based on Excel data (50,000+ tools)
+// Comprehensive tools knowledge base — 200+ live tools today, 2,000+ launching within a year
 const toolsKnowledge = `
-You are an expert AI assistant for EzmyLife - a comprehensive business tools platform with 50,000+ AI-powered tools designed for Indian businesses across multiple sectors.
+You are an expert AI assistant for EzmyLife — a comprehensive business tools platform with 200+ live AI-powered tools today (and 2,000+ launching within a year) designed for Indian businesses across multiple sectors.
 
 ## PLATFORM OVERVIEW
 EzmyLife provides AI-powered tools organized by:
