@@ -1,139 +1,81 @@
+## Add Per-Tool Parameters to Bulk Mode
 
-# Bulk Mode for AI Tools (Drag-and-Drop, Multi-File)
+Right now bulk mode only takes files. Several tools genuinely need extra inputs (e.g. resize dimensions, rotation angle, blur radius, passport size, compression quality, beautify style, startup-analyser focus area, business-card tags). These will be collected once in the dropzone and applied to every file in the batch — keeping the UX truly "drop and go" while respecting each tool's needs.
 
-Add a unified **Bulk Runner** that lets premium users drop **multiple files at once** (images, PDFs, pitch decks, business cards, docs) into supported AI tools and get all outputs back together. No CSV, no spreadsheet — just drag, drop, run, download.
+### 1. Extend the bulk registry (`src/data/bulkTools.ts`)
 
-## 1. Where Bulk IS available (file/object-based tools)
+Add an optional `params` schema per tool:
 
-Bulk mode is enabled only on tools where "many of the same input type" makes sense:
+```ts
+type BulkParamField =
+  | { key: string; label: string; type: "select"; options: {value: string; label: string}[]; default: string }
+  | { key: string; label: string; type: "number"; min?: number; max?: number; step?: number; default: number; suffix?: string }
+  | { key: string; label: string; type: "text"; default?: string; placeholder?: string }
+  | { key: string; label: string; type: "toggle"; default: boolean };
 
-**Image tools** (drop N images → ZIP of N outputs)
-- Background Remover, Image Compressor, Image Resizer, Image Cropper, Image Rotator, Image Grayscale, Image Blur, Image Pixelate, Image Beautify, Image Watermark, Image Text Overlay, DPI Converter, Add Logo to Image, Passport Photo Maker, Metadata Viewer, Color Picker, Thumbnail Maker (image variant)
-
-**Document / AI-on-file tools**
-- Startup Analyser (drop N pitch decks → N analyses, ZIP of PDFs + combined index)
-- Business Card Scanner / Meet Nudge (drop N card photos → N contacts saved + CSV export)
-- Contract Drafter (drop N reference docs → N drafted contracts) *(file-input variant)*
-- Bibliography Generator (drop N PDFs → combined bibliography)
-
-**Media generation tools** (single text prompt isn't bulk; bulk takes a prompts.txt **file** drop only — kept simple)
-- AI Video Maker, AI Thumbnail Maker, Video Script Writer: drop a `.txt` file with one prompt per line → ZIP of outputs.
-
-## 2. Where Bulk is explicitly NOT available
-
-These tools are **interactive workspaces / single-session** by nature — no bulk button rendered:
-- Speedy Notebook
-- PromptMaster AI
-- Virasat (memoir interviewer)
-- Personalized Tools / Tools Chat (conversational)
-- Meet Nudge dashboards / event pages
-- Calculators (Salary, Tax, Profit, Grade, Expense, Invoice, Assignment Tracker, Exam Scheduler, Study Planner, Lesson Planner, Quiz Maker, Flashcard Maker — instant single-input)
-- All wrapped 3rd-party iframe tools (Bhugol, Gyan, Shastra, etc.)
-
-## 3. Database (1 migration)
-
-**Table `bulk_jobs`** (RLS: owner CRUD, admins read all)
-- `id`, `user_id`, `tool_id`, `tool_name`
-- `status` — `queued | running | completed | partial | failed`
-- `total_items`, `completed_items`, `failed_items`
-- `input_manifest` jsonb — `[{filename, storage_path, size}]`
-- `outputs` jsonb — `[{input_filename, output_filename, status, error?}]`
-- `output_zip_url` (storage link, signed)
-- `error_message`, `created_at`, `updated_at`, `completed_at`
-
-**Storage buckets** (private, owner-read RLS)
-- `bulk-inputs` — uploaded files
-- `bulk-outputs` — final ZIPs
-
-Realtime enabled on `bulk_jobs` for live progress.
-
-## 4. Backend — One generic edge function
-
-**`supabase/functions/bulk-run/index.ts`**
-- Validates premium (`premium_access` check).
-- Accepts `{ tool_id, input_paths[] }` (files already uploaded to `bulk-inputs/{user_id}/{job_id}/`).
-- Inserts `bulk_jobs` row, returns `job_id` immediately.
-- Uses `EdgeRuntime.waitUntil(processJob(...))` for async work.
-- Per `tool_id`, dispatches to the right handler:
-  - **Pure-browser image ops** (compress, resize, crop, rotate, grayscale, blur, pixelate, watermark, text-overlay, DPI) — actually run **client-side** in a Web Worker, then upload only the final ZIP. Edge function just records the job. (Saves cost; reuses existing canvas logic.)
-  - **AI image ops** (Background Remover, Beautify, Passport Photo) — call existing edge handlers per file with concurrency 3.
-  - **Startup Analyser** — invokes `startup-analyser` per deck, collects markdown, generates one PDF per deck via existing exporter.
-  - **Business Card Scanner** — invokes `scan-business-card` per image, inserts contacts, builds `contacts.csv`.
-  - **Prompt-list tools** (Video, Thumbnail, Script) — parses uploaded `.txt`, loops through prompts.
-- Uses existing AI fallback (user key → Lovable AI → rotating Gemini keys).
-- Builds final ZIP with `jszip` (npm:jszip), uploads to `bulk-outputs/{user_id}/{job_id}.zip`, signs URL, marks job complete/partial.
-- ZIP always includes `manifest.csv` mapping input → output → status; failed rows go in `errors.txt`.
-
-## 5. Frontend — Shared Bulk components
-
-**`src/components/bulk/BulkDropzone.tsx`** — reusable drag-and-drop:
-- Accepts `accept` (e.g. `image/*`, `.pdf,.pptx,.docx`, `.txt`) and `maxFiles` from caller.
-- Visual: large dashed zone, "Drop up to N files" message, file chips with remove, total size, type badges.
-- Validates file type + size (per-file 20MB, total 200MB), shows estimated cost preview using existing per-output cost map.
-- "Run Bulk Job" → uploads all files to `bulk-inputs/...` then calls `bulk-run`.
-
-**`src/components/bulk/BulkModeToggle.tsx`** — small pill rendered inside supported tool components: **"⚡ Bulk Mode"**. Toggling swaps the tool's single-input UI for `<BulkDropzone />` configured for that tool. One-line drop-in:
-```tsx
-<BulkModeToggle toolId="background-remover" accept="image/*" maxFiles={50} />
+interface BulkToolConfig {
+  // ...existing fields
+  params?: BulkParamField[];
+}
 ```
-Free users see the pill; clicking triggers upgrade prompt.
 
-**`src/pages/BulkJobs.tsx`** — premium-gated history page (`/bulk/jobs`)
-- Table: tool, file count, status, progress bar, created, [Download ZIP] / [Re-run] / [Delete].
-- Realtime subscription on `bulk_jobs`.
+### 2. Per-tool param definitions
 
-**`src/pages/BulkJobDetail.tsx`** (`/bulk/jobs/:id`)
-- Live progress, per-file outcomes, download button.
+| Tool | Params |
+|------|--------|
+| Image Compressor | Quality (number 10–100, default 70), Format (select: jpg/webp/png) |
+| Image Resizer | Max longest edge (number, 320–4096, default 1280), Maintain aspect (toggle, default on) |
+| Image Rotator | Angle (select: 90 / 180 / 270) |
+| Image Blur | Blur radius px (number 1–40, default 8) |
+| Image Grayscale | (none) |
+| Metadata Viewer | (none) |
+| Background Remover | Output format (select: PNG transparent / White bg / Custom hex), Hex (text, conditional) |
+| Passport Photo Maker | Size preset (select: India 35×45 / US 2×2 / Schengen 35×45 / UK 35×45), Background (select: white/blue/red) |
+| Image Beautify | Style (select: Natural / Studio / Cinematic / Vivid), Strength (number 1–10, default 6) |
+| Startup Analyser | Report focus (select: Investor / Founder / Market), Industry (text, optional), Stage (select: Pre-seed / Seed / Series A+) |
+| Business Card Scanner | Auto-add to contacts (toggle, default on), Tag (text, optional) |
 
-No standalone `/bulk` runner page — bulk is invoked from inside each supported tool, keeping flow contextual.
+### 3. UI changes — `BulkDropzone.tsx`
 
-## 6. Site-wide promotion
+- Render a "Settings (applied to all files)" section above the Run button when `config.params` is defined.
+- Use existing shadcn primitives (Select, Input, Switch, Label) — compact 2-column grid.
+- Initialize `params` state from defaults; conditional fields (e.g. hex when "Custom hex" selected) shown via simple `if`.
+- Pass `params` in the job-create payload and to `runClientImageBatch` / `bulk-run` invoke body.
 
-- **Home hero badge**: *"NEW · Drop 50 images at once. AI processes them all. Included free with Premium."*
-- **`BulkPromoSection`** on Home: 3 visual cards (drop pitch decks → analyses · drop product photos → bg-removed · drop business cards → contacts) with "Try Bulk Mode" CTAs linking to a representative tool with bulk pre-enabled.
-- **Subscription page**: add bullet to all paid tiers — *"✓ Unlimited bulk processing — drop dozens of files, get all outputs at once"*. Add comparison row.
-- **Tools page banner**: *"Many tools support Bulk Mode — look for the ⚡ pill"*.
-- **Navbar**: `Bulk Jobs` link visible to premium users.
-- **Launch banner**: rotating slide *"Bulk Mode is live · 50 images. One drop. One ZIP."*
-- **SEO**: Home/Tools/Subscription meta + JSON-LD mention "bulk image processing", "batch pitch deck analysis", "bulk business card scanning". New FAQ entry.
+### 4. Persist on the job row
 
-## 7. Pricing copy
+Store params in the existing `bulk_jobs.input_manifest` JSON as `{ files: [...], params: {...} }`, OR add a dedicated `params jsonb` column.
 
-On the dropzone empty state and Subscription page show value framing:
-*"50 images through Background Remover individually = ₹X. With Premium it's all included — drop, run, download."*
+**Chosen**: add a `params jsonb default '{}'::jsonb` column via migration — cleaner separation, easier to display on the job-detail page.
 
-## Technical Notes
+### 5. Client processor — `bulkClientImageOps.ts`
 
-- **Per-tool registry** `src/data/bulkTools.ts`: `{ toolId, accept, maxFiles, mode: 'client'|'edge', estCostPerItem }`. Tools not in the registry don't render the bulk pill.
-- **Concurrency**: edge dispatch limited to 3 parallel AI calls; client-side image ops run sequentially in a Worker to avoid main-thread freeze.
-- **Failure handling**: per-item try/catch → job marked `partial` if any fail; ZIP still delivered with `errors.txt`.
-- **Cleanup**: input files in `bulk-inputs` auto-deleted 24h after job completion (scheduled cleanup left as follow-up — initial release just keeps them).
+- Accept `params` in `RunArgs`.
+- Wire each branch to use them:
+  - compressor → `canvasToBlob(canvas, mimeFor(format), quality/100)`
+  - resizer → use `params.maxEdge`, respect `maintainAspect`
+  - rotator → arbitrary angle math
+  - blur → `ctx.filter = blur(${radius}px)`
 
-## Out of Scope
+### 6. Edge dispatcher — `supabase/functions/bulk-run/index.ts`
 
-- CSV / paste / Google Sheets input (removed per request).
-- Bulk for chat/workspace/calculator tools.
-- Scheduled or webhook-triggered jobs.
+- Accept `params` in the request body, pass it to `processItem`.
+- Forward to per-tool edge functions:
+  - `scan-business-card` → include `tag`, `auto_add_contact`
+  - `startup-analyser` → include `focus`, `industry`, `stage` (the existing function already accepts optional context)
+  - background-remover / passport-photo / beautify → include in payload (image generation prompt assembly).
 
-## Files Created / Modified
+### 7. Job detail page — `BulkJobDetail.tsx`
 
-**Created**
-- `supabase/functions/bulk-run/index.ts`
-- 1 SQL migration (table + 2 storage buckets + RLS + realtime)
-- `src/pages/BulkJobs.tsx`, `src/pages/BulkJobDetail.tsx`
-- `src/components/bulk/BulkDropzone.tsx`, `BulkModeToggle.tsx`, `BulkJobProgress.tsx`
-- `src/components/home/BulkPromoSection.tsx`
-- `src/data/bulkTools.ts` (registry of bulk-enabled tools only)
-- `src/hooks/useBulkJobs.ts`
-- `src/lib/bulkClientImageOps.ts` (Web Worker entrypoint for browser-side image batches)
+- Show a small "Settings used" card listing the params (read-only) so users remember what they ran.
 
-**Modified**
-- `src/App.tsx` — 2 new routes (`/bulk/jobs`, `/bulk/jobs/:id`)
-- `src/components/Navbar.tsx` — Bulk Jobs link (premium)
-- `src/pages/Home.tsx` — hero badge + BulkPromoSection
-- `src/pages/Tools.tsx` — banner strip
-- `src/pages/Subscription.tsx` — feature bullets + comparison row
-- `src/components/LaunchOfferBanner.tsx` — new slide
-- `index.html` + SEO heads — meta/JSON-LD
-- ~25 supported tool components — drop in `<BulkModeToggle .../>` (single line each)
-- `mem://index.md` + new memory `mem://features/bulk-runner` — record bulk system rules and exclusion list
+### Out of scope
+
+- Per-file overrides (settings are batch-level — keeps drag-and-drop simple).
+- Saving param presets.
+
+### Files
+
+- **Edit**: `src/data/bulkTools.ts`, `src/components/bulk/BulkDropzone.tsx`, `src/lib/bulkClientImageOps.ts`, `src/pages/BulkJobDetail.tsx`, `supabase/functions/bulk-run/index.ts`
+- **New migration**: add `params jsonb` column to `bulk_jobs`
+- **Memory**: update `mem://features/bulk-runner` to note per-tool params support
