@@ -81,7 +81,7 @@ const LaunchOfferBanner = () => {
               <div className="flex items-center gap-3">
                 <Sparkles className="h-5 w-5 text-primary" />
                 <p className="font-semibold text-sm md:text-base">
-                  2000+ AI Tools — One Platform
+                  200+ Live AI Tools · 2,000+ Coming Soon
                 </p>
               </div>
               <div className="flex items-center gap-4 text-xs md:text-sm text-muted-foreground">
