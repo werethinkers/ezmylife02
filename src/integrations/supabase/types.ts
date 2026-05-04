@@ -101,6 +101,48 @@ export type Database = {
         }
         Relationships: []
       }
+      enterprise_inquiries: {
+        Row: {
+          company: string | null
+          company_size: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          status: string
+          updated_at: string
+          use_case: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company?: string | null
+          company_size?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          use_case?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company?: string | null
+          company_size?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          use_case?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gemini_api_keys: {
         Row: {
           created_at: string
@@ -549,6 +591,39 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tool_media: {
+        Row: {
+          alt: string | null
+          created_at: string
+          id: string
+          kind: string
+          poster_url: string | null
+          sort_order: number
+          tool_id: string
+          url: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          poster_url?: string | null
+          sort_order?: number
+          tool_id: string
+          url: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          poster_url?: string | null
+          sort_order?: number
+          tool_id?: string
+          url?: string
         }
         Relationships: []
       }
