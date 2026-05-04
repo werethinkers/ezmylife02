@@ -167,11 +167,9 @@ const Home = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   
-  // Parallax for hero content
+  // Subtle parallax only — no opacity/scale fade so hero never goes blank
   const springConfig = { stiffness: 100, damping: 30, mass: 1 };
-  const heroY = useSpring(useTransform(scrollY, [0, 500], [0, 50]), springConfig);
-  const heroOpacity = useSpring(useTransform(scrollY, [0, 400], [1, 0]), springConfig);
-  const heroScale = useSpring(useTransform(scrollY, [0, 500], [1, 0.98]), springConfig);
+  const heroY = useSpring(useTransform(scrollY, [0, 600], [0, 30]), springConfig);
 
   const features = [
     {
