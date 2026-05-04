@@ -72,7 +72,7 @@ const ParallaxBackground = () => {
   const y4 = useSpring(useTransform(scrollY, [0, 1000], [0, -200]), springConfig);
   
   // Opacity fade on scroll
-  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0]), springConfig);
+  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0.4]), springConfig);
   
   // Scale effect
   const scale = useSpring(useTransform(scrollY, [0, 800], [1, 1.1]), springConfig);
