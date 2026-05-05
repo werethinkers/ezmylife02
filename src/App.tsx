@@ -36,6 +36,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Subscription = lazy(() => import("./pages/Subscription"));
 const Credits = lazy(() => import("./pages/Credits"));
 const CreditsSuccess = lazy(() => import("./pages/CreditsSuccess"));
+const CreditsHistory = lazy(() => import("./pages/CreditsHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
@@ -111,6 +112,14 @@ const AnimatedRoutes = () => {
               element={
                 <ProtectedRoute>
                   <Credits />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/credits/history"
+              element={
+                <ProtectedRoute>
+                  <CreditsHistory />
                 </ProtectedRoute>
               }
             />
