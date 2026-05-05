@@ -37,10 +37,12 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
     if (images.length === 0) { toast({ title: "Add at least one image", variant: "destructive" }); return; }
     setScanning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scan-business-card", { body: { images } });
-      if (error) throw error;
-      if (data?.contact) setExtracted(data.contact);
-      else throw new Error("No contact extracted");
+      await charge(async () => {
+        const { data, error } = await supabase.functions.invoke("scan-business-card", { body: { images } });
+        if (error) throw error;
+        if (data?.contact) setExtracted(data.contact);
+        else throw new Error("No contact extracted");
+      });
     } catch (e: any) {
       toast({ title: "Scan failed", description: e.message, variant: "destructive" });
     } finally {
