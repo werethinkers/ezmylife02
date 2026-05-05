@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 export const HashtagGenerator = () => {
@@ -16,7 +17,7 @@ export const HashtagGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-    const { charge: __charge_generateHashtags, dialogProps: __dlg_generateHashtags } = useCredits("hashtag-generator");
+    const { charge: __charge_generateHashtags, dialogProps: __dlg_generateHashtags, loginDialogProps: __login_generateHashtags } = useCredits("hashtag-generator");
 
   const generateHashtags = async () => {
     if (!topic.trim()) {
@@ -148,6 +149,7 @@ export const HashtagGenerator = () => {
         </CardContent>
       </Card>
       <BuyCreditsDialog {...__dlg_generateHashtags} />
+      <LoginPromptDialog {...__login_generateHashtags} />
     </div>
   );
 };

@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCredits } from '@/hooks/useCredits';
 import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 interface Creation {
@@ -34,7 +35,7 @@ interface ProgressStep {
 
 const VideoMaker = () => {
   const { user } = useAuth();
-  const { charge, dialogProps } = useCredits('video-maker');
+  const { charge, dialogProps, loginDialogProps } = useCredits('video-maker');
   const [prompt, setPrompt] = useState('');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('5');
@@ -583,6 +584,7 @@ const VideoMaker = () => {
         </CardContent>
       </Card>
       <BuyCreditsDialog {...dialogProps} />
+      <LoginPromptDialog {...loginDialogProps} />
     </div>
   );
 };
