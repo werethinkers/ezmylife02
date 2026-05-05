@@ -94,6 +94,10 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       toast.error("Drop some files first");
       return;
     }
+    if (missingMeta) {
+      toast.error("Fill all required fields per file");
+      return;
+    }
 
     setSubmitting(true);
     try {
