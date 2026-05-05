@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Camera, Upload, Loader2 } from "lucide-react";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 
 interface Props {
   userId: string;
