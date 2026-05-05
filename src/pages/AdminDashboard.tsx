@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, Crown, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2 } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap } from "lucide-react";
 import ToolMediaManager from "@/components/admin/ToolMediaManager";
 import EnterpriseLeads from "@/components/admin/EnterpriseLeads";
 import ToolRequests from "@/components/admin/ToolRequests";
@@ -20,6 +20,7 @@ import UtmLinkBuilder from "@/components/admin/UtmLinkBuilder";
 import CouponManager from "@/components/admin/CouponManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
 import VisitorsTracker from "@/components/admin/VisitorsTracker";
+import CreditsAdmin from "@/components/admin/CreditsAdmin";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
@@ -47,13 +48,7 @@ interface Profile {
   created_at: string;
 }
 
-interface PremiumAccess {
-  id: string;
-  user_id: string;
-  access_type: string;
-  expires_at: string | null;
-  granted_at: string;
-}
+interface CreditsSold { credits: number; inr_amount: number }
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -63,8 +58,8 @@ const AdminDashboard = () => {
   const [checking, setChecking] = useState(true);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [premiumUsers, setPremiumUsers] = useState<PremiumAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "premium" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
+  const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -84,14 +79,20 @@ const AdminDashboard = () => {
   }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
-    const [logsRes, profilesRes, premiumRes] = await Promise.all([
+    const [logsRes, profilesRes, purchasesRes] = await Promise.all([
       supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("premium_access").select("*").order("granted_at", { ascending: false }),
+      supabase.from("credit_purchases").select("credits, inr_amount").eq("status", "paid"),
     ]);
     if (logsRes.data) setLogs(logsRes.data as ActivityLog[]);
     if (profilesRes.data) setProfiles(profilesRes.data as Profile[]);
-    if (premiumRes.data) setPremiumUsers(premiumRes.data);
+    if (purchasesRes.data) {
+      const totals = purchasesRes.data.reduce(
+        (acc, p) => ({ credits: acc.credits + (p.credits || 0), inr_amount: acc.inr_amount + (p.inr_amount || 0) }),
+        { credits: 0, inr_amount: 0 },
+      );
+      setCreditsSold(totals);
+    }
   };
 
   const getEmailForUser = (userId: string) => {
@@ -124,7 +125,8 @@ const AdminDashboard = () => {
   const stats = {
     totalUsers: profiles.length,
     totalLogs: logs.length,
-    premiumUsers: premiumUsers.length,
+    creditsSold: creditsSold.credits,
+    revenueInr: creditsSold.inr_amount,
     todayLogins: logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
   };
 
@@ -155,7 +157,7 @@ const AdminDashboard = () => {
     { id: "visitors" as const, label: "Visitors", icon: Footprints },
     { id: "logs" as const, label: "Activity Logs", icon: Activity },
     { id: "users" as const, label: "Users", icon: Users },
-    { id: "premium" as const, label: "Premium", icon: Crown },
+    ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
     ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
@@ -180,7 +182,7 @@ const AdminDashboard = () => {
           {[
             { label: "Total Users", value: stats.totalUsers, icon: Users },
             { label: "Activity Logs", value: stats.totalLogs, icon: Activity },
-            { label: "Premium Users", value: stats.premiumUsers, icon: Crown },
+            { label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
             { label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
           ].map(s => (
             <Card key={s.label}>
@@ -256,34 +258,7 @@ const AdminDashboard = () => {
           </>
         )}
 
-        {activeTab === "premium" && (
-          <Card>
-            <CardHeader><CardTitle>Premium Subscriptions</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Granted</TableHead>
-                    <TableHead>Expires</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {premiumUsers.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="text-sm">{getEmailForUser(p.user_id)}</TableCell>
-                      <TableCell><Badge variant="outline">{p.access_type}</Badge></TableCell>
-                      <TableCell className="text-xs">{format(new Date(p.granted_at), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="text-xs">{p.expires_at ? format(new Date(p.expires_at), "MMM d, yyyy") : "Never"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {premiumUsers.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No premium users</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+        {activeTab === "credits" && !isViewOnly && <CreditsAdmin />}
 
         {activeTab === "tool-usage" && (
           <div className="grid gap-6 md:grid-cols-2">

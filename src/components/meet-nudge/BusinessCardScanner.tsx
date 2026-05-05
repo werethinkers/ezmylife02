@@ -8,6 +8,7 @@ import { Camera, Upload, Loader2 } from "lucide-react";
 import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 import { useCredits } from "@/hooks/useCredits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 interface Props {
@@ -22,7 +23,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
   const [scanning, setScanning] = useState(false);
   const [extracted, setExtracted] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { charge, dialogProps } = useCredits("business-card-scanner");
+  const { charge, dialogProps, loginDialogProps } = useCredits("business-card-scanner");
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -112,6 +113,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
         <BulkModeToggle toolId="business-card-scanner" />
       </div>
       <BuyCreditsDialog {...dialogProps} />
+      <LoginPromptDialog {...loginDialogProps} />
     </div>
   );
 }

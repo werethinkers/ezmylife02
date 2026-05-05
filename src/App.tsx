@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { PremiumRoute } from "@/components/PremiumRoute";
 import { ToolAccessGuard } from "@/components/ToolAccessGuard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
@@ -178,33 +177,33 @@ const AnimatedRoutes = () => {
             <Route
               path="/get-extension"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <GetExtension />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/mobile-shortcuts"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <MobileShortcuts />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/startup-analyser"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <StartupAnalyser />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/meet-nudge"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <MeetNudge />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
@@ -212,25 +211,25 @@ const AnimatedRoutes = () => {
             <Route
               path="/virasat"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <Virasat />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/bulk/jobs"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <BulkJobs />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/bulk/jobs/:id"
               element={
-                <PremiumRoute>
+                <ProtectedRoute>
                   <BulkJobDetail />
-                </PremiumRoute>
+                </ProtectedRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

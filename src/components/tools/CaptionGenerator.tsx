@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 const captionStyles = [
@@ -27,7 +28,7 @@ export const CaptionGenerator = () => {
   const [captions, setCaptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const { charge, dialogProps } = useCredits("caption-generator");
+  const { charge, dialogProps, loginDialogProps } = useCredits("caption-generator");
 
   const generateCaptions = async () => {
     if (!description.trim()) {
@@ -128,6 +129,7 @@ export const CaptionGenerator = () => {
             )}
           </Button>
           <BuyCreditsDialog {...dialogProps} />
+      <LoginPromptDialog {...loginDialogProps} />
 
           {captions.length > 0 && (
             <div className="mt-6 space-y-3">

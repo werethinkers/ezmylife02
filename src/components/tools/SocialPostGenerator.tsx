@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 const platforms = [
@@ -26,7 +27,7 @@ export const SocialPostGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-    const { charge: __charge_generatePost, dialogProps: __dlg_generatePost } = useCredits("social-post-generator");
+    const { charge: __charge_generatePost, dialogProps: __dlg_generatePost, loginDialogProps: __login_generatePost } = useCredits("social-post-generator");
 
   const generatePost = async () => {
     if (!topic.trim()) {
@@ -178,6 +179,7 @@ export const SocialPostGenerator = () => {
         </CardContent>
       </Card>
       <BuyCreditsDialog {...__dlg_generatePost} />
+      <LoginPromptDialog {...__login_generatePost} />
     </div>
   );
 };

@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BulkModeToggle } from '@/components/bulk/BulkModeToggle';
 import { useCredits } from '@/hooks/useCredits';
 import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 declare global {
@@ -151,7 +152,7 @@ const NewsSnippetCard = ({ article }: { article: ResourceItem }) => (
 export default function StartupAnalyserApp(): React.ReactNode {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { charge: chargeAnalysis, dialogProps: analysisDialog } = useCredits('startup-analyser');
+  const { charge: chargeAnalysis, dialogProps: analysisDialog, loginDialogProps: analysisLogin } = useCredits('startup-analyser');
   const [step, setStep] = useState<AppStep>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -796,6 +797,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
         {renderContent()}
       </main>
       <BuyCreditsDialog {...analysisDialog} />
+      <LoginPromptDialog {...analysisLogin} />
     </div>
   );
 }

@@ -3,28 +3,27 @@ import { runWithCredits } from "@/lib/credits";
 import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 /**
  * Convenience hook: wraps a tool's compute work with credit gating.
  * Returns:
  *   - charge(work): runs work() and debits credits on success.
  *   - dialogProps: spread onto <BuyCreditsDialog {...dialogProps} />.
+ *   - loginDialogProps: spread onto <LoginPromptDialog {...loginDialogProps} />.
  */
 export function useCredits(toolId: string) {
   const { user } = useAuth();
   const refresh = useRefreshWallet();
   const wallet = useWallet();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [required, setRequired] = useState<number>(0);
   const [balance, setBalance] = useState<number>(0);
 
   const charge = useCallback(
     async <T,>(work: () => Promise<T>): Promise<T | null> => {
       if (!user) {
-        toast.error("Please sign in to use this tool");
-        navigate("/auth");
+        setLoginOpen(true);
         return null;
       }
       try {
@@ -43,17 +42,17 @@ export function useCredits(toolId: string) {
         return result;
       } catch (e) {
         if (e instanceof Error && e.message === "insufficient_credits") {
-          // dialog already opened
           return null;
         }
         throw e;
       }
     },
-    [toolId, user, navigate, refresh, wallet.total],
+    [toolId, user, refresh, wallet.total],
   );
 
   return {
     charge,
     dialogProps: { open, onOpenChange: setOpen, required, balance },
+    loginDialogProps: { open: loginOpen, onOpenChange: setLoginOpen },
   };
 }

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 interface ScriptSection {
@@ -27,7 +28,7 @@ export const VideoScriptWriter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-    const { charge: __charge_generateScript, dialogProps: __dlg_generateScript } = useCredits("video-script-writer");
+    const { charge: __charge_generateScript, dialogProps: __dlg_generateScript, loginDialogProps: __login_generateScript } = useCredits("video-script-writer");
 
   const generateScript = async () => {
     if (!topic.trim()) {
@@ -193,6 +194,7 @@ export const VideoScriptWriter = () => {
         </CardContent>
       </Card>
       <BuyCreditsDialog {...__dlg_generateScript} />
+      <LoginPromptDialog {...__login_generateScript} />
     </div>
   );
 };
