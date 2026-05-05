@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Copy, Check, Sparkles, Instagram, Twitter, Linkedin, Facebook } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 const platforms = [
   { id: "instagram", name: "Instagram", icon: Instagram, charLimit: 2200 },
@@ -23,6 +26,8 @@ export const SocialPostGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+    const { charge: __charge_generatePost, dialogProps: __dlg_generatePost } = useCredits("social-post-generator");
+
   const generatePost = async () => {
     if (!topic.trim()) {
       toast.error("Please enter a topic or idea");
@@ -33,6 +38,7 @@ export const SocialPostGenerator = () => {
     setGeneratedPost("");
 
     try {
+      await __charge_generatePost(async () => {
       const selectedPlatform = platforms.find(p => p.id === platform);
       
       const response = await supabase.functions.invoke("content-generator", {
@@ -48,6 +54,7 @@ export const SocialPostGenerator = () => {
       if (response.error) throw response.error;
       setGeneratedPost(response.data.content);
       toast.success("Post generated successfully!");
+      });
     } catch (error) {
       console.error("Error generating post:", error);
       toast.error("Failed to generate post. Please try again.");
@@ -170,6 +177,7 @@ export const SocialPostGenerator = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...__dlg_generatePost} />
     </div>
   );
 };

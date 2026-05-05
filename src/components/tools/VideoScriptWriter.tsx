@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Copy, Check, Video, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 interface ScriptSection {
   section: string;
@@ -24,6 +27,8 @@ export const VideoScriptWriter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+    const { charge: __charge_generateScript, dialogProps: __dlg_generateScript } = useCredits("video-script-writer");
+
   const generateScript = async () => {
     if (!topic.trim()) {
       toast.error("Please enter a video topic");
@@ -34,6 +39,7 @@ export const VideoScriptWriter = () => {
     setScript([]);
 
     try {
+      await __charge_generateScript(async () => {
       const response = await supabase.functions.invoke("content-generator", {
         body: {
           type: "video-script",
@@ -47,6 +53,7 @@ export const VideoScriptWriter = () => {
       if (response.error) throw response.error;
       setScript(response.data.script);
       toast.success("Script generated!");
+      });
     } catch (error) {
       console.error("Error generating script:", error);
       toast.error("Failed to generate script. Please try again.");
@@ -185,6 +192,7 @@ export const VideoScriptWriter = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...__dlg_generateScript} />
     </div>
   );
 };

@@ -11,6 +11,9 @@ import { Loader2, Video, Download, Trash2, History, Sparkles, Upload, CheckCircl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCredits } from '@/hooks/useCredits';
+import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 interface Creation {
   id: string;
@@ -31,6 +34,7 @@ interface ProgressStep {
 
 const VideoMaker = () => {
   const { user } = useAuth();
+  const { charge, dialogProps } = useCredits('video-maker');
   const [prompt, setPrompt] = useState('');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('5');
@@ -158,18 +162,28 @@ const VideoMaker = () => {
       updateStep('generate', 'active', 'AI is creating your video frame...');
       setProgress(50);
 
-      const { data, error } = await supabase.functions.invoke('video-generator', {
-        body: {
-          prompt,
-          duration: parseInt(duration),
-          aspectRatio,
-          resolution,
-          startingFrame
-        }
+      const charged = await charge(async () => {
+        const { data, error } = await supabase.functions.invoke('video-generator', {
+          body: {
+            prompt,
+            duration: parseInt(duration),
+            aspectRatio,
+            resolution,
+            startingFrame
+          }
+        });
+        if (error) throw error;
+        return data;
       });
-
-      if (error) throw error;
-
+      if (!charged) {
+        // insufficient credits / not signed in — abort cleanly
+        if (creationId) {
+          await supabase.from('user_creations').update({ status: 'failed' }).eq('id', creationId);
+        }
+        setIsGenerating(false);
+        return;
+      }
+      const data = charged;
       setProgress(75);
       updateStep('generate', 'completed', 'Frame generated successfully');
 
@@ -425,6 +439,7 @@ const VideoMaker = () => {
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
                     Generate Video
+                    <CreditCostBadge toolId="video-maker" className="ml-2" />
                   </>
                 )}
               </Button>
@@ -567,6 +582,7 @@ const VideoMaker = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...dialogProps} />
     </div>
   );
 };

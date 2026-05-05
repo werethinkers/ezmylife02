@@ -25,6 +25,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BulkModeToggle } from '@/components/bulk/BulkModeToggle';
+import { useCredits } from '@/hooks/useCredits';
+import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 declare global {
   interface Window {
@@ -148,6 +151,7 @@ const NewsSnippetCard = ({ article }: { article: ResourceItem }) => (
 export default function StartupAnalyserApp(): React.ReactNode {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { charge: chargeAnalysis, dialogProps: analysisDialog } = useCredits('startup-analyser');
   const [step, setStep] = useState<AppStep>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -343,7 +347,10 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setCurrentSessionId(null);
 
     try {
-      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey);
+      const result = await chargeAnalysis(async () =>
+        generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey),
+      );
+      if (!result) { setStep('input'); return; }
       setAnalysisResult(result);
       setChatHistory([]);
       setStep('results');
@@ -539,7 +546,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
                   </button>
                 )}
                 <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite || isExtractingPdf} className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none disabled:cursor-not-allowed">
-                  <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span>
+                  <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span><CreditCostBadge toolId="startup-analyser" />
                 </button>
               </div>
             </div>
@@ -788,6 +795,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {renderContent()}
       </main>
+      <BuyCreditsDialog {...analysisDialog} />
     </div>
   );
 }

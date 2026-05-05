@@ -6,12 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Copy, Check, Hash, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 export const HashtagGenerator = () => {
   const [topic, setTopic] = useState("");
   const [hashtags, setHashtags] = useState<{ tag: string; popularity: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+    const { charge: __charge_generateHashtags, dialogProps: __dlg_generateHashtags } = useCredits("hashtag-generator");
 
   const generateHashtags = async () => {
     if (!topic.trim()) {
@@ -23,6 +28,7 @@ export const HashtagGenerator = () => {
     setHashtags([]);
 
     try {
+      await __charge_generateHashtags(async () => {
       const response = await supabase.functions.invoke("content-generator", {
         body: {
           type: "hashtags",
@@ -34,6 +40,7 @@ export const HashtagGenerator = () => {
       if (response.error) throw response.error;
       setHashtags(response.data.hashtags);
       toast.success("Hashtags generated!");
+      });
     } catch (error) {
       console.error("Error generating hashtags:", error);
       toast.error("Failed to generate hashtags. Please try again.");
@@ -140,6 +147,7 @@ export const HashtagGenerator = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...__dlg_generateHashtags} />
     </div>
   );
 };

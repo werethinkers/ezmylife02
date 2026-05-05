@@ -6,6 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Camera, Upload, Loader2 } from "lucide-react";
 import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 interface Props {
   userId: string;
@@ -19,6 +22,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
   const [scanning, setScanning] = useState(false);
   const [extracted, setExtracted] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { charge, dialogProps } = useCredits("business-card-scanner");
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -33,10 +37,12 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
     if (images.length === 0) { toast({ title: "Add at least one image", variant: "destructive" }); return; }
     setScanning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scan-business-card", { body: { images } });
-      if (error) throw error;
-      if (data?.contact) setExtracted(data.contact);
-      else throw new Error("No contact extracted");
+      await charge(async () => {
+        const { data, error } = await supabase.functions.invoke("scan-business-card", { body: { images } });
+        if (error) throw error;
+        if (data?.contact) setExtracted(data.contact);
+        else throw new Error("No contact extracted");
+      });
     } catch (e: any) {
       toast({ title: "Scan failed", description: e.message, variant: "destructive" });
     } finally {
@@ -100,11 +106,12 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
         </div>
       )}
       <Button onClick={scan} disabled={scanning || images.length === 0} className="w-full">
-        {scanning ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : "Scan & Extract"}
+        {scanning ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : <>Scan & Extract <CreditCostBadge toolId="business-card-scanner" className="ml-2" /></>}
       </Button>
       <div className="flex justify-center pt-1">
         <BulkModeToggle toolId="business-card-scanner" />
       </div>
+      <BuyCreditsDialog {...dialogProps} />
     </div>
   );
 }

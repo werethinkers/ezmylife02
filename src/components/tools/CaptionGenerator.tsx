@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Copy, Check, MessageSquare, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 const captionStyles = [
   { id: "engaging", name: "Engaging & Catchy" },
@@ -24,6 +27,7 @@ export const CaptionGenerator = () => {
   const [captions, setCaptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const { charge, dialogProps } = useCredits("caption-generator");
 
   const generateCaptions = async () => {
     if (!description.trim()) {
@@ -35,19 +39,20 @@ export const CaptionGenerator = () => {
     setCaptions([]);
 
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "captions",
-          description,
-          keywords: keywords.split(",").map(k => k.trim()).filter(Boolean),
-          style,
-          count: 5,
-        },
+      await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "captions",
+            description,
+            keywords: keywords.split(",").map((k) => k.trim()).filter(Boolean),
+            style,
+            count: 5,
+          },
+        });
+        if (response.error) throw response.error;
+        setCaptions(response.data.captions);
+        toast.success("Captions generated!");
       });
-
-      if (response.error) throw response.error;
-      setCaptions(response.data.captions);
-      toast.success("Captions generated!");
     } catch (error) {
       console.error("Error generating captions:", error);
       toast.error("Failed to generate captions. Please try again.");
@@ -118,9 +123,11 @@ export const CaptionGenerator = () => {
               <>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Generate 5 Captions
+                <CreditCostBadge toolId="caption-generator" className="ml-2" />
               </>
             )}
           </Button>
+          <BuyCreditsDialog {...dialogProps} />
 
           {captions.length > 0 && (
             <div className="mt-6 space-y-3">

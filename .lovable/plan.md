@@ -1,135 +1,66 @@
-## Goal
-Remove every subscription concept and replace it with a transparent, pay-as-you-go credit wallet. Users get free credits monthly, buy paid credits in fixed packs, and each tool deducts credits only on a successful run.
+## Continue Credits Migration — Remaining Work
 
-## 1. Data model (new migration)
+The credit-based monetization foundation is in place (DB schema, wallet, purchase flow, `tool-charge` RPC, `useWallet`/`runWithCredits`, Credits page, navbar badge). What remains is to actually charge credits on every tool run, seed pricing, build the admin pricing UI, and clean up the old subscription surface.
 
-New tables:
+### 1. Seed `tool_pricing`
+Insert rows for every tool in `tools_catalog` + native tools. Defaults:
+- Pure client-side image tools (resize, rotate, crop, blur, grayscale, watermark, etc.) → `cost_inr = 0.10` → 1 credit
+- AI text generation (caption, hashtag, content idea, social post, video script, job post, contract, bibliography) → `cost_inr = 0.30` → 1 credit
+- AI image generation / passport photo / background remover / image beautify → `cost_inr = 1.50` → 5 credits
+- Video generator → `cost_inr = 4.00` → 14 credits
+- Startup Analyser (per deck) → `cost_inr = 5.00` → 17 credits
+- Business card scanner / Meet Nudge AI ops → `cost_inr = 0.50` → 2 credits
+- Notebook AI / PromptMaster AI / Tools chatbot per message → `cost_inr = 0.20` → 1 credit
+Admins can adjust later from the new pricing UI.
 
-- `credit_wallets` — one row per user
-  - `user_id uuid PK`, `free_balance int default 0`, `paid_balance int default 0`,
-    `last_free_reset_at timestamptz`, `signup_bonus_granted bool default false`,
-    `first_action_bonus_granted bool default false`, `updated_at`.
-- `credit_ledger` — append-only audit
-  - `id`, `user_id`, `delta int` (negative = spend, positive = top-up/grant),
-    `bucket text check in ('free','paid','mixed')`, `reason text`
-    (`signup_bonus`, `first_action_bonus`, `monthly_reset`, `purchase`,
-    `tool_run`, `coupon`, `admin_adjust`, `refund`),
-    `tool_id text null`, `run_id uuid null`, `cost_inr numeric null`,
-    `metadata jsonb`, `created_at`.
-- `credit_purchases` — Razorpay orders
-  - `id`, `user_id`, `pack_id text`, `inr_amount int`, `credits int`,
-    `razorpay_order_id`, `razorpay_payment_id`, `status` (`created|paid|failed`),
-    `coupon_code text null`, `created_at`, `paid_at`.
-- `tool_pricing` — admin-controlled
-  - `tool_id text PK`, `cost_inr numeric not null`, `credit_cost int not null`,
-    `updated_by uuid`, `updated_at`.
-  - Trigger / app logic: `credit_cost = GREATEST(1, CEIL((cost_inr * 1.5) / 0.45))`.
-- `tool_runs` — used to gate the “successful run → deduct + first-action bonus”
-  - `id`, `user_id`, `tool_id`, `status` (`started|succeeded|failed`),
-    `credits_charged int`, `free_used int`, `paid_used int`,
-    `started_at`, `finished_at`, `error text`.
+### 2. Wire charging into tool actions
+Wrap the action that actually consumes compute with `runWithCredits(toolId, work)` and show `BuyCreditsDialog` on `insufficient_credits`. Add a `<CreditCostBadge toolId=...>` next to the primary action button.
 
-RLS: users read their own wallet/ledger/purchases/runs; only admins write `tool_pricing`. Wallet/ledger writes happen exclusively through SECURITY DEFINER functions:
+Tools to wire (calls Lovable AI / Gemini / generates output):
+- Frontend AI tools: `CaptionGenerator`, `HashtagGenerator`, `ContentIdeaGenerator`, `SocialPostGenerator`, `VideoScriptWriter`, `JobPostGenerator`, `ContractDrafter`, `BibliographyGenerator`, `LessonPlanner`, `QuizMaker`, `FlashcardMaker`, `ThumbnailMaker`, `ImageBeautify`, `BackgroundRemover`, `PassportPhotoMaker`, `VideoMaker`, `AddLogoToImage`, `ImageTextOverlay`
+- Native apps: `StartupAnalyserApp` (per analysis), `BusinessCardScanner` (per scan), `SpeedyNotebook`/`PromptMaster` (per AI action), `Virasat` (per AI question), `ToolsChatbot` (per message), `PersonalizedTools` (per recommendation)
+- Pure client-side image tools: leave free (cost 0) but still call `runWithCredits` so admin can monetize later by editing pricing — passes through with 1 credit minimum only if `cost_inr > 0`. Update `compute_credit_cost` to return 0 when cost is 0 (free tools).
 
-- `grant_signup_bonus(uid)` — idempotent, +50 free.
-- `grant_first_action_bonus(uid)` — idempotent, +50 free, only after first `succeeded` run.
-- `monthly_free_reset()` — sets `free_balance = 100`, `last_free_reset_at = now()` for everyone where last reset is in a previous IST month. Scheduled via `pg_cron` at `30 18 * * *` UTC (= 00:00 IST) and gated to only run on day 1 IST.
-- `charge_credits(uid, tool_id, run_id, credits)` — debit free first then paid; returns success/failure; writes ledger row.
-- `credit_purchase_apply(purchase_id)` — called by verify webhook; adds to `paid_balance`, writes ledger.
+**Migration tweak**: change `compute_credit_cost` so `cost_inr = 0` ⇒ `credit_cost = 0`, and update `start_tool_run` to skip balance check + ledger write when `credit_cost = 0`.
 
-Drop / ignore: `premium_access` reads in app code (table can stay but is no longer consulted). Coupons are repurposed to grant **bonus credits** (see §6) rather than premium access.
+### 3. Bulk runner integration
+In `supabase/functions/bulk-run/index.ts`:
+- Before processing: call `start_tool_run` per item; if total exceeds balance, refuse with clear error.
+- After each item: call `complete_tool_run(success)` so failed items aren't charged.
+- Surface `total_credits_charged` on the job row (add column via migration) and show in `BulkJobDetail`.
 
-## 2. Backend / edge functions
+### 4. Post-Run summary
+New `src/components/wallet/PostRunSummary.tsx` — small toast/inline card after a successful charge: "Charged 5 credits · Balance: 142". Trigger from `runWithCredits` via callback.
 
-- **New `wallet`** — GET returns `{ free, paid, total, last_reset, next_reset_ist }`.
-- **New `create-credit-order`** — replaces `create-razorpay-order`. Accepts `pack_id`; creates Razorpay order + `credit_purchases` row.
-- **New `verify-credit-payment`** — replaces `verify-razorpay-payment`. Verifies signature, marks purchase paid, calls `credit_purchase_apply`.
-- **New `tool-charge`** — RPC-style: `start_run(tool_id)` → returns `run_id` + `quoted_credits` after pre-checking balance (no debit yet). `complete_run(run_id, success: bool, error?)` → on success calls `charge_credits` and, if applicable, `grant_first_action_bonus`.
-- **New `admin-tool-pricing`** — admin-only CRUD for `tool_pricing`.
-- **Update `redeem-coupon`** — grant credits to wallet instead of premium access.
-- **Delete (or stub)**: `check-subscription`, `create-razorpay-order`, `verify-razorpay-payment`'s subscription branches.
-- **Wire existing AI tool functions** (`startup-analyser`, `scan-business-card`, `bulk-run`, `content-generator`, `notebook-ai`, `promptmaster-ai`, `video-generator`, `personalized-tools`, `tools-chat`, `virasat-ai`) to call `start_run` before work and `complete_run(success)` after. Bulk: charge per successful item.
-- Trigger `handle_new_user` extended (or new trigger) to call `grant_signup_bonus`.
+### 5. Admin: Credits & Pricing tab
+Replace the existing "Subscriptions" tab in `AdminDashboard` with `CreditsAdmin.tsx`:
+- **Pricing table**: list every `tool_id` with editable `cost_inr` (credits auto-computed via trigger). Add/save via `admin-tool-pricing` edge function.
+- **Aggregates**: cards showing total free credits granted, paid credits sold, INR revenue, INR cost (sum of `tool_runs.cost_inr` where succeeded), profit margin %.
+- **Per-user wallet lookup**: search by email → show balances + `admin_adjust_credits` form.
+- **Recent purchases** + **recent runs** tables.
 
-## 3. Frontend — remove subscription, add wallet
+Also extend `AdminUserDetail` with a "Credits" section (wallet + adjust + ledger).
 
-Remove / rewrite:
+### 6. Coupons → credit grants
+`coupon_codes.credit_grant` already exists. Update `CouponManager` admin form to include `credit_grant` field. `redeem-coupon` already grants credits (verified earlier).
 
-- `src/hooks/useSubscription.ts` → replace with `useWallet()` (React Query, returns `{ free, paid, total, isLoading, refresh }`).
-- `src/components/PremiumRoute.tsx` → delete; replace usage with simple `ProtectedRoute` (login required, no premium check). Premium-gated routes (`/get-extension`, `/mobile-shortcuts`, `/startup-analyser`, `/meet-nudge`, `/virasat`, `/bulk/*`) become login-only; their tools deduct credits on use.
-- `src/components/ToolAccessGuard.tsx` → drop subscription gate; only require login for non-free tools. Credit checks happen at run time via `useToolPricing`/`start_run`.
-- `src/pages/Subscription.tsx` → replaced by **`src/pages/Credits.tsx`** (route stays `/credits`; `/subscription` redirects to `/credits` for backward compat).
-- `LaunchOfferBanner`, `BulkPromoSection`, `FunnelStepper`, `Navbar`, `Home`, `SEOFooter`, `AdminDashboard`, `AdminUserDetail`, `BulkModeToggle` — strip “Premium / Subscribe” copy, replace with “Credits / Buy credits”.
+### 7. Cleanup of subscription surface
+- Remove `LaunchOfferBanner` mounts; delete file.
+- Remove `BulkPromoSection` "premium" copy → "use credits".
+- Remove `AUTO_PREMIUM_DOMAINS` enforcement from any remaining check; keep `premium_access` table read-only for legacy users (display "Lifetime" badge if they have a row, no gate).
+- `Subscription.tsx` already redirects → keep redirect, delete page body.
+- Update `Navbar` "Upgrade"/"Premium" link → "Buy Credits" linking to `/credits` (WalletBadge already added).
+- Update copy on `About`, `Home`, `Tools`, footer mentioning subscriptions/plans → pay-as-you-go credits messaging.
 
-New components:
+### 8. Memory updates
+- Add `mem://features/credits-system` describing wallet, pricing formula, packs, free monthly reset, signup/first-action bonuses.
+- Mark `mem://features/subscription-system`, `auto-premium-domains`, `premium-status-display`, `launch-offer-promotion`, `promotional-codes` as superseded; update `index.md` to remove or annotate.
 
-- `src/components/wallet/WalletBadge.tsx` — pill in `Navbar` showing `⚡ {total}` with hover popover breaking down free vs paid and a “Buy credits” button. Visible on all pages when logged in.
-- `src/components/wallet/BuyCreditsCard.tsx` — used on `/credits`.
-- `src/components/wallet/CouponPopover.tsx` — collapsible/popover coupon UI (kept off the main pricing layout).
-- `src/components/tools/CreditCostBadge.tsx` — “This will use **X credits**” shown on every tool before run; reads from `tool_pricing` via `useToolPricing(toolId)`.
-- `src/components/tools/PostRunSummary.tsx` — toast/inline panel after each run: “Used X credits · Y remaining · [Try another tool] [Buy more]”.
-- `src/pages/CreditsConfirmation.tsx` — post-purchase success page (`/credits/success?order=…`) showing new balance and CTA back to the tool.
+### Out of scope
+- Migrating existing Razorpay subscribers — `premium_access` rows stay valid, no automatic credit grant.
+- Refunds, GST invoicing, multi-currency.
 
-Pricing packs (hardcoded in `src/data/creditPacks.ts`):
-
-```ts
-[
-  { id: "p10",   inr: 10,   credits: 15 },
-  { id: "p50",   inr: 50,   credits: 80 },
-  { id: "p100",  inr: 100,  credits: 180 },
-  { id: "p250",  inr: 250,  credits: 500,  badge: "Popular" },
-  { id: "p500",  inr: 500,  credits: 1100, badge: "Better value" },
-  { id: "p1000", inr: 1000, credits: 2200, badge: "Best value" },
-]
-```
-
-Each card shows credits/₹ and highlights savings vs the smallest pack.
-
-## 4. Tool integration pattern
-
-Each tool (`src/components/tools/*`, `src/startup-analyser/*`, etc.) follows:
-
-```text
-1. const { credits } = useToolPricing(toolId)            // shows badge
-2. onRun: balance check → if insufficient, open BuyCreditsDialog
-3. const { runId } = await startRun(toolId)
-4. perform work
-5. await completeRun(runId, success, error?)            // server debits
-6. show PostRunSummary
-```
-
-Helper `src/lib/credits.ts` wraps `start_run` / `complete_run` and refreshes `useWallet`.
-
-For **bulk-run** edge function: pre-check `total_credits ≥ N * cost`, then for each item call `complete_run` with success/failure individually (so failed items aren’t charged and trigger no first-action bonus by themselves).
-
-## 5. Admin
-
-In `AdminDashboard`, replace “Subscriptions” tab with **“Credits & Pricing”**:
-
-- Per-tool table (read from `tool_pricing` joined with `tools_catalog`) with editable `cost_inr`. Credit cost is computed live from the formula and saved.
-- Aggregates: total credits issued (free vs paid), total ₹ revenue (sum `credit_purchases.inr_amount` where paid), total ₹ cost (sum `credit_ledger.cost_inr` where reason=`tool_run`), profit & margin.
-- Per-tool usage: runs, credits spent, est. cost, est. revenue share, margin.
-- Per-user wallet view in `AdminUserDetail` with manual adjust (writes via `admin_adjust_credits` SECURITY DEFINER fn).
-
-## 6. Coupons
-
-- `coupon_codes` schema gains `credit_grant int null`. Existing premium-granting coupons are migrated to a sensible credit equivalent (e.g. lifetime → admin chooses; default 500 credits) — surfaced for admin review.
-- Redeem flow: enter code in `CouponPopover` on `/credits` → adds credits to free balance.
-
-## 7. Memory & docs
-
-- Update `mem://index.md` Core: drop subscription/Razorpay-subscription rules, add “Credits-first, pay-as-you-go, no subscriptions; 50 signup + 50 first-action + 100/month free reset on day 1 IST; pricing formula `MAX(1, CEIL(cost*1.5/0.45))`”.
-- Add `mem://features/credits-system` with packs, formula, monthly reset, ledger semantics.
-- Mark superseded memory files (`subscription-system`, `launch-offer-promotion`, `auto-premium-domains`, `premium-status-display`, `promotional-codes`) as deprecated and remove from index.
-
-## 8. Cleanup
-
-- Remove `AUTO_PREMIUM_DOMAINS` shortcut and the `seafund.in` auto-premium logic — replaced with a one-time admin credit grant.
-- Remove `LaunchOfferBanner` and `ezyLAUNCH` references, or repurpose banner to advertise the launch credit pack discount.
-- Keep `premium_access` table (read-only, hidden) so historical data is preserved; no app code reads it.
-
-## Out of scope
-
-- Refunds or partial credit charge for partially-successful bulk jobs (per-item charge is enough).
-- Multi-currency — INR only.
-- Migrating existing active subscribers to credits beyond a one-time admin-issued credit grant (admin handles per user).
+### Technical notes
+- All charging goes through `runWithCredits` → `tool-charge` edge fn → `start_tool_run`/`complete_tool_run` RPCs. No client-side balance mutation.
+- Free tools (`cost_inr = 0`) skip both balance check and ledger write to keep noise low.
+- Bulk jobs charge per-item, never up-front, so partial failures refund automatically (failed item = no charge).
