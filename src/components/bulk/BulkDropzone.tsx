@@ -70,7 +70,19 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
     [files]
   );
 
-  const removeFile = (i: number) => setFiles(files.filter((_, idx) => idx !== i));
+  const removeFile = (i: number) => {
+    setFiles(files.filter((_, idx) => idx !== i));
+    setPerFileMeta(perFileMeta.filter((_, idx) => idx !== i));
+  };
+  const updateMeta = (i: number, key: string, value: string) => {
+    const next = [...perFileMeta];
+    next[i] = { ...(next[i] || {}), [key]: value };
+    setPerFileMeta(next);
+  };
+
+  const missingMeta = perFileFields.length > 0
+    ? files.some((_, i) => perFileFields.some((f) => f.required && !(perFileMeta[i]?.[f.key] || "").trim()))
+    : false;
 
   const handleSubmit = async () => {
     if (!user) {
