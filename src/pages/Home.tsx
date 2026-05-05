@@ -3,7 +3,7 @@ import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
-import LaunchOfferBanner from "@/components/LaunchOfferBanner";
+
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
 import RequestToolSection from "@/components/RequestToolSection";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
@@ -231,7 +231,6 @@ const Home = () => {
         ]}
       />
       <Navbar />
-      <LaunchOfferBanner />
 
       {/* Hero Section with Parallax */}
       <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
