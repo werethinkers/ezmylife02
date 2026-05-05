@@ -47,7 +47,18 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
     if (files.length + valid.length > config.maxFiles) {
       toast.warning(`Only first ${config.maxFiles} files kept`);
     }
+    // Initialize per-file meta for the newly added files
+    const newMeta = valid.slice(0, config.maxFiles - files.length).map((f) => {
+      const m: Record<string, string> = {};
+      for (const field of perFileFields) {
+        m[field.key] = field.prefillFromFilename
+          ? f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ")
+          : "";
+      }
+      return m;
+    });
     setFiles(merged);
+    setPerFileMeta([...perFileMeta, ...newMeta].slice(0, config.maxFiles));
   };
 
   const handleDrop = useCallback(
