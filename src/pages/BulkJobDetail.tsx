@@ -111,22 +111,32 @@ const BulkJobDetail = () => {
               <div>
                 <h3 className="font-semibold mb-2">Files</h3>
                 <div className="space-y-1 max-h-96 overflow-y-auto">
-                  {job.outputs.map((o: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 text-sm p-2 rounded bg-muted/30"
-                    >
-                      {o.status === "ok" ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      ) : o.status === "error" ? (
-                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                      ) : (
-                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <span className="truncate flex-1">{o.input_filename}</span>
-                      {o.error && <span className="text-xs text-red-400">{o.error}</span>}
-                    </div>
-                  ))}
+                  {job.outputs.map((o: any, i: number) => {
+                    const meta = Array.isArray(job.per_file_meta) ? job.per_file_meta[i] : null;
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 text-sm p-2 rounded bg-muted/30"
+                      >
+                        {o.status === "ok" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : o.status === "error" ? (
+                          <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate">{o.input_filename}</div>
+                          {meta && Object.keys(meta).length > 0 && (
+                            <div className="text-xs text-muted-foreground truncate">
+                              {Object.entries(meta).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                            </div>
+                          )}
+                        </div>
+                        {o.error && <span className="text-xs text-red-400">{o.error}</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
