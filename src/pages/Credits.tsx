@@ -172,9 +172,14 @@ const Credits = () => {
                   <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
                 </p>
               </div>
-              <Button asChild variant="outline">
-                <Link to="/tools">Browse tools</Link>
-              </Button>
+              <div className="flex gap-2">
+                <Button asChild variant="outline">
+                  <Link to="/credits/history">Transaction history</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/tools">Browse tools</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
