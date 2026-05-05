@@ -546,7 +546,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
                   </button>
                 )}
                 <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite || isExtractingPdf} className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none disabled:cursor-not-allowed">
-                  <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span>
+                  <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span><CreditCostBadge toolId="startup-analyser" />
                 </button>
               </div>
             </div>
