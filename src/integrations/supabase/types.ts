@@ -54,6 +54,7 @@ export type Database = {
           status: string
           tool_id: string
           tool_name: string
+          total_credits_charged: number
           total_items: number
           updated_at: string
           user_id: string
@@ -73,6 +74,7 @@ export type Database = {
           status?: string
           tool_id: string
           tool_name: string
+          total_credits_charged?: number
           total_items?: number
           updated_at?: string
           user_id: string
@@ -92,6 +94,7 @@ export type Database = {
           status?: string
           tool_id?: string
           tool_name?: string
+          total_credits_charged?: number
           total_items?: number
           updated_at?: string
           user_id?: string
