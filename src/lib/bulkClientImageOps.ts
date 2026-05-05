@@ -245,16 +245,19 @@ export async function runClientImageBatch(args: RunArgs) {
   let completed = 0;
   let failed = 0;
 
+  const op = PI7_BULK_OP_ALIAS[toolId] ?? toolId;
+
   if (toolId === "startup-analyser") {
     const r = await runStartupAnalyserBatch(args, zip, outputs);
     completed = r.completed;
     failed = r.failed;
-  } else if (toolId === "metadata-viewer") {
-    const rows: string[] = ["filename,size_kb,type,width,height"];
+  } else if (op === "metadata-viewer") {
+    const rows: string[] = ["filename,size_kb,type,width,height,dpi_estimate"];
     for (const f of files) {
       try {
         const img = await loadImage(f);
-        rows.push(`"${f.name}",${(f.size / 1024).toFixed(0)},${f.type},${img.naturalWidth},${img.naturalHeight}`);
+        // dpi guess: assume 96 if unknown (browser EXIF not directly accessible without a lib)
+        rows.push(`"${f.name}",${(f.size / 1024).toFixed(0)},${f.type},${img.naturalWidth},${img.naturalHeight},96`);
         outputs.push({ input_filename: f.name, output_filename: "metadata.csv", status: "ok" });
         completed++;
       } catch (e: any) {
@@ -264,6 +267,91 @@ export async function runClientImageBatch(args: RunArgs) {
       await supabase.from("bulk_jobs").update({ completed_items: completed, failed_items: failed }).eq("id", jobId);
     }
     zip.file("metadata.csv", rows.join("\n"));
+  } else if (op === "color-extract") {
+    const rows: string[] = ["filename,avg_hex,avg_r,avg_g,avg_b"];
+    for (const f of files) {
+      try {
+        const img = await loadImage(f);
+        const c = document.createElement("canvas");
+        c.width = Math.min(64, img.naturalWidth);
+        c.height = Math.min(64, img.naturalHeight);
+        const cx = c.getContext("2d")!;
+        cx.drawImage(img, 0, 0, c.width, c.height);
+        const d = cx.getImageData(0, 0, c.width, c.height).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        const hex = "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+        rows.push(`"${f.name}",${hex},${r},${g},${b}`);
+        outputs.push({ input_filename: f.name, output_filename: "colors.csv", status: "ok" });
+        completed++;
+      } catch (e: any) {
+        outputs.push({ input_filename: f.name, status: "error", error: e.message });
+        failed++;
+      }
+      await supabase.from("bulk_jobs").update({ completed_items: completed, failed_items: failed }).eq("id", jobId);
+    }
+    zip.file("colors.csv", rows.join("\n"));
+  } else if (op === "image-join") {
+    // Join all uploaded images into one canvas
+    try {
+      const imgs = await Promise.all(files.map(loadImage));
+      const direction = String(params.direction ?? "vertical");
+      const c = document.createElement("canvas");
+      if (direction === "horizontal") {
+        const h = Math.max(...imgs.map(i => i.naturalHeight));
+        const w = imgs.reduce((s, i) => s + Math.round(i.naturalWidth * (h / i.naturalHeight)), 0);
+        c.width = w; c.height = h;
+        const cx = c.getContext("2d")!; let x = 0;
+        for (const i of imgs) {
+          const iw = Math.round(i.naturalWidth * (h / i.naturalHeight));
+          cx.drawImage(i, x, 0, iw, h); x += iw;
+        }
+      } else {
+        const w = Math.max(...imgs.map(i => i.naturalWidth));
+        const h = imgs.reduce((s, i) => s + Math.round(i.naturalHeight * (w / i.naturalWidth)), 0);
+        c.width = w; c.height = h;
+        const cx = c.getContext("2d")!; let y = 0;
+        for (const i of imgs) {
+          const ih = Math.round(i.naturalHeight * (w / i.naturalWidth));
+          cx.drawImage(i, 0, y, w, ih); y += ih;
+        }
+      }
+      const blob = await canvasToBlob(c, "image/png");
+      zip.file("joined.png", blob);
+      outputs.push({ input_filename: files.map(f => f.name).join("|"), output_filename: "joined.png", status: "ok" });
+      completed = files.length;
+    } catch (e: any) {
+      outputs.push({ status: "error", error: e.message });
+      failed = files.length;
+    }
+    await supabase.from("bulk_jobs").update({ completed_items: completed, failed_items: failed, outputs }).eq("id", jobId);
+  } else if (op === "image-split") {
+    const rows = Math.max(1, Math.min(10, Number(params.rows ?? 3)));
+    const cols = Math.max(1, Math.min(10, Number(params.cols ?? 3)));
+    for (const f of files) {
+      try {
+        const img = await loadImage(f);
+        const tw = Math.floor(img.naturalWidth / cols);
+        const th = Math.floor(img.naturalHeight / rows);
+        const baseName = f.name.replace(/\.[^.]+$/, "");
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const tile = document.createElement("canvas");
+            tile.width = tw; tile.height = th;
+            tile.getContext("2d")!.drawImage(img, c * tw, r * th, tw, th, 0, 0, tw, th);
+            const blob = await canvasToBlob(tile, "image/png");
+            zip.file(`${baseName}/tile_${r + 1}_${c + 1}.png`, blob);
+          }
+        }
+        outputs.push({ input_filename: f.name, output_filename: `${baseName}/`, status: "ok" });
+        completed++;
+      } catch (e: any) {
+        outputs.push({ input_filename: f.name, status: "error", error: e.message });
+        failed++;
+      }
+      await supabase.from("bulk_jobs").update({ completed_items: completed, failed_items: failed, outputs }).eq("id", jobId);
+    }
   } else {
     for (const f of files) {
       try {
