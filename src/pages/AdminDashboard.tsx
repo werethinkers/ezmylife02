@@ -125,7 +125,8 @@ const AdminDashboard = () => {
   const stats = {
     totalUsers: profiles.length,
     totalLogs: logs.length,
-    premiumUsers: premiumUsers.length,
+    creditsSold: creditsSold.credits,
+    revenueInr: creditsSold.inr_amount,
     todayLogins: logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
   };
 
@@ -156,7 +157,7 @@ const AdminDashboard = () => {
     { id: "visitors" as const, label: "Visitors", icon: Footprints },
     { id: "logs" as const, label: "Activity Logs", icon: Activity },
     { id: "users" as const, label: "Users", icon: Users },
-    { id: "premium" as const, label: "Premium", icon: Crown },
+    ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
     ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
@@ -181,7 +182,7 @@ const AdminDashboard = () => {
           {[
             { label: "Total Users", value: stats.totalUsers, icon: Users },
             { label: "Activity Logs", value: stats.totalLogs, icon: Activity },
-            { label: "Premium Users", value: stats.premiumUsers, icon: Crown },
+            { label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
             { label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
           ].map(s => (
             <Card key={s.label}>
