@@ -22,6 +22,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
   const [scanning, setScanning] = useState(false);
   const [extracted, setExtracted] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { charge, dialogProps } = useCredits("business-card-scanner");
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
