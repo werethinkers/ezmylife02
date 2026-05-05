@@ -47,3 +47,15 @@ verify_jwt = false
 
 [functions.log-pageview]
 verify_jwt = false
+
+[functions.wallet]
+verify_jwt = false
+
+[functions.tool-charge]
+verify_jwt = false
+
+[functions.admin-tool-pricing]
+verify_jwt = false
+
+[functions.bulk-tool-media]
+verify_jwt = false

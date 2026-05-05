@@ -10,7 +10,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Crown } from "lucide-react";
+import { Menu, X, User, LogOut, Zap } from "lucide-react";
+import WalletBadge from "@/components/wallet/WalletBadge";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.png";
@@ -32,7 +33,7 @@ export const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/tools", label: "Tools" },
-    { to: "/subscription", label: "Pricing" },
+    { to: "/credits", label: "Credits" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
   ];
@@ -101,7 +102,8 @@ export const Navbar = () => {
            </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {user && <WalletBadge />}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -128,9 +130,9 @@ export const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/subscription" className="cursor-pointer">
-                      <Crown className="mr-2 h-4 w-4" />
-                      Subscription
+                    <Link to="/credits" className="cursor-pointer">
+                      <Zap className="mr-2 h-4 w-4" />
+                      Credits
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

@@ -1,3 +1,4 @@
+// Redeems a coupon code: grants credits to the user's wallet.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -6,150 +7,79 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[REDEEM-COUPON] ${step}${detailsStr}`);
-};
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const supabaseClient = createClient(
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
+    { auth: { persistSession: false } },
   );
 
   try {
-    logStep("Function started");
-
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user) throw new Error("User not authenticated");
-    logStep("User authenticated", { userId: user.id });
+    if (!authHeader) throw new Error("No authorization header");
+    const { data: ud, error: ue } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (ue || !ud.user) throw new Error("Auth failed");
+    const user = ud.user;
 
     const { coupon_code } = await req.json();
     if (!coupon_code) throw new Error("Coupon code is required");
+    const code = String(coupon_code).toLowerCase().trim();
 
-    const normalizedCode = String(coupon_code).toLowerCase().trim();
-    logStep("Checking coupon", { code: normalizedCode });
+    const { data: coupon } = await supabase
+      .from("coupon_codes").select("*").eq("code", code).maybeSingle();
+    if (!coupon) return json({ success: false, error: "Invalid coupon code" }, 400);
+    if (!coupon.is_active) return json({ success: false, error: "Coupon is no longer active" }, 400);
+    if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now())
+      return json({ success: false, error: "Coupon has expired" }, 400);
+    if (coupon.max_uses != null && coupon.use_count >= coupon.max_uses)
+      return json({ success: false, error: "Coupon usage limit reached" }, 400);
 
-    // Look up coupon in DB
-    const { data: coupon } = await supabaseClient
-      .from("coupon_codes")
-      .select("*")
-      .eq("code", normalizedCode)
-      .maybeSingle();
+    const { data: existing } = await supabase
+      .from("coupon_redemptions").select("id")
+      .eq("user_id", user.id).eq("coupon_code", code).maybeSingle();
+    if (existing) return json({ success: false, error: "You have already redeemed this coupon" }, 400);
 
-    if (!coupon) {
-      return new Response(JSON.stringify({ success: false, error: "Invalid coupon code" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
+    // Determine credits to grant. Prefer credit_grant; fallback by access_type.
+    const credits = coupon.credit_grant
+      ?? (coupon.access_type === "lifetime" ? 1000
+        : coupon.access_type === "trial" ? 100
+        : 50);
 
-    if (!coupon.is_active) {
-      return new Response(JSON.stringify({ success: false, error: "This coupon is no longer active" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
+    const { error: redErr } = await supabase
+      .from("coupon_redemptions").insert({ user_id: user.id, coupon_code: code });
+    if (redErr) throw new Error("Failed to record redemption");
 
-    if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now()) {
-      return new Response(JSON.stringify({ success: false, error: "This coupon has expired" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    if (coupon.max_uses != null && coupon.use_count >= coupon.max_uses) {
-      return new Response(JSON.stringify({ success: false, error: "This coupon has reached its usage limit" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    // Already redeemed by this user?
-    const { data: existingRedemption } = await supabaseClient
-      .from("coupon_redemptions")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("coupon_code", normalizedCode)
-      .maybeSingle();
-
-    if (existingRedemption) {
-      return new Response(JSON.stringify({ success: false, error: "You have already redeemed this coupon" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    // Already premium?
-    const { data: existingAccess } = await supabaseClient
-      .from("premium_access")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existingAccess) {
-      return new Response(JSON.stringify({ success: false, error: "You already have premium access" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    // Record redemption
-    const { error: redemptionError } = await supabaseClient
-      .from("coupon_redemptions")
-      .insert({ user_id: user.id, coupon_code: normalizedCode });
-    if (redemptionError) throw new Error("Failed to record coupon redemption");
-
-    // Compute expiry from duration_days
-    let expiresAt: string | null = null;
-    if (coupon.duration_days) {
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + coupon.duration_days);
-      expiresAt = expiry.toISOString();
-    }
-
-    const { error: accessError } = await supabaseClient
-      .from("premium_access")
-      .insert({
+    const { error: adjErr } = await supabase.rpc("admin_adjust_credits", {
+      _target: user.id, _delta: credits, _bucket: "free", _note: `coupon:${code}`,
+    });
+    // admin_adjust_credits requires admin role; fall back to direct ledger via service role.
+    if (adjErr) {
+      // Direct apply: use a synthetic purchase row
+      const { data: purchase } = await supabase.from("credit_purchases").insert({
         user_id: user.id,
-        access_type: coupon.access_type || "coupon",
-        expires_at: expiresAt,
-      });
-    if (accessError) throw new Error("Failed to grant premium access");
+        pack_id: `coupon:${code}`,
+        inr_amount: 0,
+        credits,
+        razorpay_order_id: `coupon_${code}_${user.id}_${Date.now()}`,
+        status: "created",
+        coupon_code: code,
+      }).select().single();
+      if (purchase) {
+        await supabase.rpc("apply_credit_purchase", { _purchase_id: purchase.id, _payment_id: "coupon" });
+      }
+    }
 
-    // Increment use_count
-    await supabaseClient
-      .from("coupon_codes")
-      .update({ use_count: coupon.use_count + 1 })
-      .eq("id", coupon.id);
+    await supabase.from("coupon_codes").update({ use_count: coupon.use_count + 1 }).eq("id", coupon.id);
 
-    logStep("Coupon redeemed", { code: normalizedCode, expiresAt });
-
-    const message = coupon.duration_days
-      ? `Coupon redeemed! You now have ${coupon.duration_days}-day premium access.`
-      : "Coupon redeemed successfully! You now have lifetime premium access.";
-
-    return new Response(JSON.stringify({ success: true, message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return json({ success: true, credits, message: `Coupon redeemed! ${credits} credits added to your wallet.` });
+  } catch (e) {
+    return json({ success: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" }, status,
+  });
+}

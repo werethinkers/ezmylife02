@@ -1,91 +1,135 @@
+## Goal
+Remove every subscription concept and replace it with a transparent, pay-as-you-go credit wallet. Users get free credits monthly, buy paid credits in fixed packs, and each tool deducts credits only on a successful run.
 
-# Make Bulk Mode actually work for every supported tool
+## 1. Data model (new migration)
 
-## Problems found in the current implementation
+New tables:
 
-1. **AI image tools are stubs.** In `supabase/functions/bulk-run/index.ts`, the branch for `background-remover`, `passport-photo-maker`, `image-beautify` literally returns the **original file** with the comment *"Edge processing not yet wired"*. Nothing happens.
-2. **Business Card Scanner payload is wrong.** `bulk-run` sends `{ image: dataUrl }`, but `scan-business-card` expects `{ images: [...] }`. Every card fails.
-3. **Startup Analyser bulk doesn't work.** `bulk-run` sends `fileBase64` to `startup-analyser`, but that function only accepts `companyName`/`companyWebsite`/`pitchDeckText` (text, not PDF). Also there is no way to pass a per-deck **company name + website**.
-4. **`BulkModeToggle` is only mounted on 2 tools** (Background Remover + Image Compressor). The other 7 in the registry (Passport Photo Maker, Image Beautify, Image Resizer/Rotator/Blur/Grayscale, Metadata Viewer, Startup Analyser, Business Card Scanner) never expose the button.
-5. **No per-file metadata.** Today only a single set of params is shared across all files. Startup Analyser needs name+website **per deck**.
+- `credit_wallets` — one row per user
+  - `user_id uuid PK`, `free_balance int default 0`, `paid_balance int default 0`,
+    `last_free_reset_at timestamptz`, `signup_bonus_granted bool default false`,
+    `first_action_bonus_granted bool default false`, `updated_at`.
+- `credit_ledger` — append-only audit
+  - `id`, `user_id`, `delta int` (negative = spend, positive = top-up/grant),
+    `bucket text check in ('free','paid','mixed')`, `reason text`
+    (`signup_bonus`, `first_action_bonus`, `monthly_reset`, `purchase`,
+    `tool_run`, `coupon`, `admin_adjust`, `refund`),
+    `tool_id text null`, `run_id uuid null`, `cost_inr numeric null`,
+    `metadata jsonb`, `created_at`.
+- `credit_purchases` — Razorpay orders
+  - `id`, `user_id`, `pack_id text`, `inr_amount int`, `credits int`,
+    `razorpay_order_id`, `razorpay_payment_id`, `status` (`created|paid|failed`),
+    `coupon_code text null`, `created_at`, `paid_at`.
+- `tool_pricing` — admin-controlled
+  - `tool_id text PK`, `cost_inr numeric not null`, `credit_cost int not null`,
+    `updated_by uuid`, `updated_at`.
+  - Trigger / app logic: `credit_cost = GREATEST(1, CEIL((cost_inr * 1.5) / 0.45))`.
+- `tool_runs` — used to gate the “successful run → deduct + first-action bonus”
+  - `id`, `user_id`, `tool_id`, `status` (`started|succeeded|failed`),
+    `credits_charged int`, `free_used int`, `paid_used int`,
+    `started_at`, `finished_at`, `error text`.
 
-## What to build
+RLS: users read their own wallet/ledger/purchases/runs; only admins write `tool_pricing`. Wallet/ledger writes happen exclusively through SECURITY DEFINER functions:
 
-### 1. Per-file fields schema
-Extend `BulkToolConfig` in `src/data/bulkTools.ts` with an optional `perFileFields` array (`{key,label,type,required,placeholder}`). Configure for `startup-analyser`:
-- `company_name` (text, required)
-- `company_website` (text, required)
-- `industry` (text, optional, overrides batch param)
+- `grant_signup_bonus(uid)` — idempotent, +50 free.
+- `grant_first_action_bonus(uid)` — idempotent, +50 free, only after first `succeeded` run.
+- `monthly_free_reset()` — sets `free_balance = 100`, `last_free_reset_at = now()` for everyone where last reset is in a previous IST month. Scheduled via `pg_cron` at `30 18 * * *` UTC (= 00:00 IST) and gated to only run on day 1 IST.
+- `charge_credits(uid, tool_id, run_id, credits)` — debit free first then paid; returns success/failure; writes ledger row.
+- `credit_purchase_apply(purchase_id)` — called by verify webhook; adds to `paid_balance`, writes ledger.
 
-### 2. Dropzone UI: per-file inputs
-Update `BulkDropzone.tsx` so each file row exposes the configured per-file inputs inline (compact two-column grid for desktop, stacked on mobile). Auto-prefill `company_name` from the filename. Block submit until required per-file fields are filled. Persist them into a new `per_file_meta` array on the job payload (sent with `input_manifest`).
+Drop / ignore: `premium_access` reads in app code (table can stay but is no longer consulted). Coupons are repurposed to grant **bonus credits** (see §6) rather than premium access.
 
-### 3. Database
-Add `per_file_meta jsonb default '[]'` to `bulk_jobs` (parallel to `input_manifest`, indexed by file index).
+## 2. Backend / edge functions
 
-### 4. Wire AI image tools in `bulk-run`
-Replace the stub branch with real Gemini image-edit calls (model `google/gemini-3.1-flash-image-preview` via Lovable AI Gateway). One generic helper `editImageWithGemini(blob, prompt) -> Blob` used by:
-- **background-remover**: prompt built from `params.background` (transparent / solid white / solid black / custom hex). Output PNG.
-- **passport-photo-maker**: prompt built from `params.size_preset` + `params.background` (e.g. "passport photo, white bg, 35x45mm crop, head centered, neutral expression").
-- **image-beautify**: prompt from `params.style` + `params.strength` (e.g. "studio portrait enhancement, strength 6/10, preserve identity").
+- **New `wallet`** — GET returns `{ free, paid, total, last_reset, next_reset_ist }`.
+- **New `create-credit-order`** — replaces `create-razorpay-order`. Accepts `pack_id`; creates Razorpay order + `credit_purchases` row.
+- **New `verify-credit-payment`** — replaces `verify-razorpay-payment`. Verifies signature, marks purchase paid, calls `credit_purchase_apply`.
+- **New `tool-charge`** — RPC-style: `start_run(tool_id)` → returns `run_id` + `quoted_credits` after pre-checking balance (no debit yet). `complete_run(run_id, success: bool, error?)` → on success calls `charge_credits` and, if applicable, `grant_first_action_bonus`.
+- **New `admin-tool-pricing`** — admin-only CRUD for `tool_pricing`.
+- **Update `redeem-coupon`** — grant credits to wallet instead of premium access.
+- **Delete (or stub)**: `check-subscription`, `create-razorpay-order`, `verify-razorpay-payment`'s subscription branches.
+- **Wire existing AI tool functions** (`startup-analyser`, `scan-business-card`, `bulk-run`, `content-generator`, `notebook-ai`, `promptmaster-ai`, `video-generator`, `personalized-tools`, `tools-chat`, `virasat-ai`) to call `start_run` before work and `complete_run(success)` after. Bulk: charge per successful item.
+- Trigger `handle_new_user` extended (or new trigger) to call `grant_signup_bonus`.
 
-Keep the existing key-rotation/fallback pattern from `startup-analyser/index.ts` — extract that into a shared inline helper inside `bulk-run`.
+## 3. Frontend — remove subscription, add wallet
 
-### 5. Fix Business Card Scanner branch
-- Send `{ images: [dataUrl] }` (the array shape the function actually accepts).
-- Persist each scanned contact into `meet_nudge_contacts` server-side when `params.auto_save_contacts !== false`, attaching `params.tag` to `event_name`. The current edge function only returns contact JSON; insert directly from `bulk-run` using the user's auth token via PostgREST.
+Remove / rewrite:
 
-### 6. Startup Analyser bulk path (browser-driven)
-Pure edge-side PDF processing is fragile (pdf.js is browser-only). Switch this tool to **`mode: "client"`** in the registry and add a new branch in `src/lib/bulkClientImageOps.ts` (rename file or add `bulkClientStartupAnalyser.ts`):
-- For each deck:
-  1. Extract PDF text in the browser (`extractPdfText` already exists in `src/startup-analyser/services/geminiService.ts`).
-  2. Call `generateComprehensiveAnalysis(name, website, onProgress, pitchDeckText, userApiKey)` — already wired and streaming-tolerant.
-  3. Insert a `startup_analyses` row with the result so the user sees it in their Saved Sessions sidebar too.
-  4. Add the markdown report to the ZIP as `<safe-company-name>.md`.
-- Update `bulk_jobs.completed_items`/`outputs`/`status` after each deck. ZIP is uploaded to `bulk-outputs` exactly like image bulk runs.
+- `src/hooks/useSubscription.ts` → replace with `useWallet()` (React Query, returns `{ free, paid, total, isLoading, refresh }`).
+- `src/components/PremiumRoute.tsx` → delete; replace usage with simple `ProtectedRoute` (login required, no premium check). Premium-gated routes (`/get-extension`, `/mobile-shortcuts`, `/startup-analyser`, `/meet-nudge`, `/virasat`, `/bulk/*`) become login-only; their tools deduct credits on use.
+- `src/components/ToolAccessGuard.tsx` → drop subscription gate; only require login for non-free tools. Credit checks happen at run time via `useToolPricing`/`start_run`.
+- `src/pages/Subscription.tsx` → replaced by **`src/pages/Credits.tsx`** (route stays `/credits`; `/subscription` redirects to `/credits` for backward compat).
+- `LaunchOfferBanner`, `BulkPromoSection`, `FunnelStepper`, `Navbar`, `Home`, `SEOFooter`, `AdminDashboard`, `AdminUserDetail`, `BulkModeToggle` — strip “Premium / Subscribe” copy, replace with “Credits / Buy credits”.
 
-This avoids the 150s edge timeout per deck, gives each user real-time progress, and reuses the working analyser pipeline as-is.
+New components:
 
-### 7. Mount `BulkModeToggle` on every supported tool
-Add the toggle to the headers of:
-- `PassportPhotoMaker.tsx`
-- `ImageBeautify.tsx`
-- `ImageResizer.tsx`
-- `ImageRotator.tsx`
-- `ImageBlur.tsx`
-- `ImageGrayscale.tsx`
-- `MetadataViewer.tsx`
-- `BusinessCardScanner.tsx` (in `src/components/meet-nudge/`)
-- Startup Analyser (`StartupAnalyserApp.tsx`, near the input form)
+- `src/components/wallet/WalletBadge.tsx` — pill in `Navbar` showing `⚡ {total}` with hover popover breaking down free vs paid and a “Buy credits” button. Visible on all pages when logged in.
+- `src/components/wallet/BuyCreditsCard.tsx` — used on `/credits`.
+- `src/components/wallet/CouponPopover.tsx` — collapsible/popover coupon UI (kept off the main pricing layout).
+- `src/components/tools/CreditCostBadge.tsx` — “This will use **X credits**” shown on every tool before run; reads from `tool_pricing` via `useToolPricing(toolId)`.
+- `src/components/tools/PostRunSummary.tsx` — toast/inline panel after each run: “Used X credits · Y remaining · [Try another tool] [Buy more]”.
+- `src/pages/CreditsConfirmation.tsx` — post-purchase success page (`/credits/success?order=…`) showing new balance and CTA back to the tool.
 
-Same pattern as `BackgroundRemover.tsx`:
-```tsx
-<div className="flex justify-center pt-2">
-  <BulkModeToggle toolId="<tool-id>" />
-</div>
+Pricing packs (hardcoded in `src/data/creditPacks.ts`):
+
+```ts
+[
+  { id: "p10",   inr: 10,   credits: 15 },
+  { id: "p50",   inr: 50,   credits: 80 },
+  { id: "p100",  inr: 100,  credits: 180 },
+  { id: "p250",  inr: 250,  credits: 500,  badge: "Popular" },
+  { id: "p500",  inr: 500,  credits: 1100, badge: "Better value" },
+  { id: "p1000", inr: 1000, credits: 2200, badge: "Best value" },
+]
 ```
 
-### 8. Job detail UX
-In `BulkJobDetail.tsx`, render per-file metadata next to each file when `per_file_meta` is present (e.g., for Startup Analyser show the company name + website per row).
+Each card shows credits/₹ and highlights savings vs the smallest pack.
+
+## 4. Tool integration pattern
+
+Each tool (`src/components/tools/*`, `src/startup-analyser/*`, etc.) follows:
+
+```text
+1. const { credits } = useToolPricing(toolId)            // shows badge
+2. onRun: balance check → if insufficient, open BuyCreditsDialog
+3. const { runId } = await startRun(toolId)
+4. perform work
+5. await completeRun(runId, success, error?)            // server debits
+6. show PostRunSummary
+```
+
+Helper `src/lib/credits.ts` wraps `start_run` / `complete_run` and refreshes `useWallet`.
+
+For **bulk-run** edge function: pre-check `total_credits ≥ N * cost`, then for each item call `complete_run` with success/failure individually (so failed items aren’t charged and trigger no first-action bonus by themselves).
+
+## 5. Admin
+
+In `AdminDashboard`, replace “Subscriptions” tab with **“Credits & Pricing”**:
+
+- Per-tool table (read from `tool_pricing` joined with `tools_catalog`) with editable `cost_inr`. Credit cost is computed live from the formula and saved.
+- Aggregates: total credits issued (free vs paid), total ₹ revenue (sum `credit_purchases.inr_amount` where paid), total ₹ cost (sum `credit_ledger.cost_inr` where reason=`tool_run`), profit & margin.
+- Per-tool usage: runs, credits spent, est. cost, est. revenue share, margin.
+- Per-user wallet view in `AdminUserDetail` with manual adjust (writes via `admin_adjust_credits` SECURITY DEFINER fn).
+
+## 6. Coupons
+
+- `coupon_codes` schema gains `credit_grant int null`. Existing premium-granting coupons are migrated to a sensible credit equivalent (e.g. lifetime → admin chooses; default 500 credits) — surfaced for admin review.
+- Redeem flow: enter code in `CouponPopover` on `/credits` → adds credits to free balance.
+
+## 7. Memory & docs
+
+- Update `mem://index.md` Core: drop subscription/Razorpay-subscription rules, add “Credits-first, pay-as-you-go, no subscriptions; 50 signup + 50 first-action + 100/month free reset on day 1 IST; pricing formula `MAX(1, CEIL(cost*1.5/0.45))`”.
+- Add `mem://features/credits-system` with packs, formula, monthly reset, ledger semantics.
+- Mark superseded memory files (`subscription-system`, `launch-offer-promotion`, `auto-premium-domains`, `premium-status-display`, `promotional-codes`) as deprecated and remove from index.
+
+## 8. Cleanup
+
+- Remove `AUTO_PREMIUM_DOMAINS` shortcut and the `seafund.in` auto-premium logic — replaced with a one-time admin credit grant.
+- Remove `LaunchOfferBanner` and `ezyLAUNCH` references, or repurpose banner to advertise the launch credit pack discount.
+- Keep `premium_access` table (read-only, hidden) so historical data is preserved; no app code reads it.
 
 ## Out of scope
-- New per-tool admin UI for params.
-- Concurrent (parallel) processing inside the browser — keep sequential to avoid Gemini rate limits.
-- Bulk for Speedy Notebook / PromptMaster / Virasat (still excluded by design).
 
-## Files
-
-**Edit**
-- `src/data/bulkTools.ts` — add `perFileFields`; switch `startup-analyser` to `mode: "client"`.
-- `src/components/bulk/BulkDropzone.tsx` — per-file inputs, validation, send `per_file_meta`.
-- `src/lib/bulkClientImageOps.ts` — add Startup Analyser client branch (or split into a new helper).
-- `src/pages/BulkJobDetail.tsx` — show per-file metadata.
-- `supabase/functions/bulk-run/index.ts` — real Gemini image edits, fix card scanner payload+save, drop the old startup-analyser branch.
-- All 9 tool components above — add `<BulkModeToggle/>`.
-
-**Create**
-- New migration: `alter table bulk_jobs add column per_file_meta jsonb not null default '[]'::jsonb`.
-
-**Memory**
-- Update `mem://features/bulk-runner` to record the per-file metadata pattern and the client-side Startup Analyser path.
-
+- Refunds or partial credit charge for partially-successful bulk jobs (per-item charge is enough).
+- Multi-currency — INR only.
+- Migrating existing active subscribers to credits beyond a one-time admin-issued credit grant (admin handles per user).
