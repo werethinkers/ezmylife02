@@ -13,8 +13,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
 import { CREDIT_PACKS, BASELINE_CREDITS_PER_RUPEE } from "@/data/creditPacks";
-import { Zap, Loader2, ChevronDown, Check, Sparkles, ShieldCheck } from "lucide-react";
+import { Zap, Loader2, ChevronDown, Check, Sparkles, ShieldCheck, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
+import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 
 declare global { interface Window { Razorpay: any } }
 
@@ -30,6 +31,8 @@ const Credits = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [pendingPack, setPendingPack] = useState<string | null>(null);
 
   useEffect(() => {
     const s = document.createElement("script");
