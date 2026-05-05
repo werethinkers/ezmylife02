@@ -123,9 +123,11 @@ export const CaptionGenerator = () => {
               <>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Generate 5 Captions
+                <CreditCostBadge toolId="caption-generator" className="ml-2" />
               </>
             )}
           </Button>
+          <BuyCreditsDialog {...dialogProps} />
 
           {captions.length > 0 && (
             <div className="mt-6 space-y-3">
