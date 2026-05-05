@@ -258,34 +258,7 @@ const AdminDashboard = () => {
           </>
         )}
 
-        {activeTab === "premium" && (
-          <Card>
-            <CardHeader><CardTitle>Premium Subscriptions</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Granted</TableHead>
-                    <TableHead>Expires</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {premiumUsers.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="text-sm">{getEmailForUser(p.user_id)}</TableCell>
-                      <TableCell><Badge variant="outline">{p.access_type}</Badge></TableCell>
-                      <TableCell className="text-xs">{format(new Date(p.granted_at), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="text-xs">{p.expires_at ? format(new Date(p.expires_at), "MMM d, yyyy") : "Never"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {premiumUsers.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No premium users</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+        {activeTab === "credits" && !isViewOnly && <CreditsAdmin />}
 
         {activeTab === "tool-usage" && (
           <div className="grid gap-6 md:grid-cols-2">
