@@ -329,13 +329,13 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
   "startup-analyser": {
     toolId: "startup-analyser",
     toolName: "Startup Analyser",
-    accept: ".pdf,.pptx,.docx",
-    hint: "Drop up to 10 pitch decks",
+    accept: ".pdf",
+    hint: "Drop up to 10 pitch decks (PDF) — fill name + website per deck",
     maxFiles: 10,
-    maxFileSizeMb: 20,
-    mode: "edge",
+    maxFileSizeMb: 25,
+    mode: "client",
     estCostPerItemInr: 11.4,
-    outputDescription: "ZIP of investor-grade reports",
+    outputDescription: "ZIP of investor-grade reports (.md per deck)",
     params: [
       {
         key: "focus",
@@ -348,6 +348,30 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
           { value: "market", label: "Market deep-dive" },
         ],
       },
+      {
+        key: "stage",
+        label: "Stage",
+        type: "select",
+        default: "seed",
+        options: [
+          { value: "preseed", label: "Pre-seed" },
+          { value: "seed", label: "Seed" },
+          { value: "seriesa", label: "Series A+" },
+        ],
+      },
+      {
+        key: "industry",
+        label: "Default industry (optional)",
+        type: "text",
+        default: "",
+        placeholder: "e.g. Fintech, SaaS, D2C",
+      },
+    ],
+    perFileFields: [
+      { key: "company_name", label: "Company name", type: "text", required: true, prefillFromFilename: true, placeholder: "Acme Inc." },
+      { key: "company_website", label: "Website", type: "text", required: true, placeholder: "acme.com" },
+    ],
+  },
       {
         key: "stage",
         label: "Stage",
