@@ -54,19 +54,33 @@ serve(async (req) => {
       return json({ ok: true, item: data });
     }
     if (action === "grant_credits") {
-      const { user_id, credits, note } = body;
-      if (!user_id || !credits) throw new Error("user_id and credits required");
-      // call as the admin user so RPC's auth.uid() admin check passes
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-        { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } },
-      );
-      const { data, error } = await userClient.rpc("admin_adjust_credits", {
-        _target: user_id, _delta: Number(credits), _bucket: "free", _note: note || "admin grant",
+      const { user_id, credits, note, bucket } = body;
+      const delta = Math.trunc(Number(credits));
+      if (!user_id || !delta) throw new Error("user_id and credits required");
+      const buck = bucket === "paid" ? "paid" : "free";
+      // Ensure wallet exists
+      await supabase.from("credit_wallets").upsert({ user_id }, { onConflict: "user_id" });
+      // Read current
+      const { data: w } = await supabase
+        .from("credit_wallets").select("free_balance, paid_balance").eq("user_id", user_id).maybeSingle();
+      const cur = w || { free_balance: 0, paid_balance: 0 };
+      const newFree = buck === "free" ? Math.max(0, (cur.free_balance ?? 0) + delta) : (cur.free_balance ?? 0);
+      const newPaid = buck === "paid" ? Math.max(0, (cur.paid_balance ?? 0) + delta) : (cur.paid_balance ?? 0);
+      const { error: upErr } = await supabase
+        .from("credit_wallets")
+        .update({ free_balance: newFree, paid_balance: newPaid, updated_at: new Date().toISOString() })
+        .eq("user_id", user_id);
+      if (upErr) throw new Error(upErr.message);
+      const { error: ledErr } = await supabase.from("credit_ledger").insert({
+        user_id,
+        delta,
+        free_delta: buck === "free" ? delta : 0,
+        paid_delta: buck === "paid" ? delta : 0,
+        reason: "admin_adjust",
+        metadata: { note: note || "admin grant", by: ud.user.id },
       });
-      if (error) throw new Error(error.message);
-      return json({ ok: true, result: data });
+      if (ledErr) throw new Error(ledErr.message);
+      return json({ ok: true, new_free: newFree, new_paid: newPaid });
     }
     throw new Error("Unknown action");
   } catch (e) {
