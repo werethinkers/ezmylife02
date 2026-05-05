@@ -204,22 +204,37 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       </motion.div>
 
       {files.length > 0 && (
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+        <div className="space-y-2 max-h-80 overflow-y-auto">
           {files.map((f, i) => (
             <div
               key={i}
-              className="flex items-center justify-between p-2 rounded-md bg-muted/40 text-sm"
+              className="rounded-md bg-muted/40 text-sm p-2 space-y-2"
             >
-              <div className="flex items-center gap-2 truncate">
-                <FileIcon className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{f.name}</span>
-                <Badge variant="outline" className="text-xs">
-                  {(f.size / 1024).toFixed(0)} KB
-                </Badge>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 truncate min-w-0">
+                  <FileIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{f.name}</span>
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                    {(f.size / 1024).toFixed(0)} KB
+                  </Badge>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => removeFile(i)}>
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => removeFile(i)}>
-                <X className="h-3 w-3" />
-              </Button>
+              {perFileFields.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                  {perFileFields.map((field) => (
+                    <Input
+                      key={field.key}
+                      className="h-8 text-xs"
+                      placeholder={`${field.label}${field.required ? " *" : ""}`}
+                      value={perFileMeta[i]?.[field.key] ?? ""}
+                      onChange={(e) => updateMeta(i, field.key, e.target.value)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
