@@ -1,3 +1,4 @@
+// Verifies Razorpay signature and credits the purchase to the user's wallet.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -6,155 +7,66 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[VERIFY-RAZORPAY-PAYMENT] ${step}${detailsStr}`);
-};
-
-// HMAC SHA256 signature verification using Web Crypto API
-async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const data = encoder.encode(`${orderId}|${paymentId}`);
-  const signatureBuffer = await crypto.subtle.sign("HMAC", key, data);
-  const generatedSignature = Array.from(new Uint8Array(signatureBuffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
-  return generatedSignature === signature;
+async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`${orderId}|${paymentId}`));
+  const hex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return hex === signature;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    logStep("Function started");
+    const secret = Deno.env.get("RAZORPAY_KEY_SECRET");
+    if (!secret) throw new Error("Razorpay not configured");
 
-    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
-    if (!keySecret) {
-      throw new Error("Razorpay secret not configured");
-    }
-
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) throw new Error("No authorization header");
+    const { data: ud, error: ue } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (ue || !ud.user) throw new Error("Auth failed");
+    const user = ud.user;
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
-    if (!user) throw new Error("User not authenticated");
-    logStep("User authenticated", { userId: user.id });
-
-    const body = await req.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_type } = body;
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      throw new Error("Missing payment verification parameters");
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, purchase_id } = await req.json();
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !purchase_id) {
+      throw new Error("Missing parameters");
     }
 
-    logStep("Verifying payment", { orderId: razorpay_order_id, paymentId: razorpay_payment_id, planType: plan_type });
-
-    // Verify signature
-    const isValid = await verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret);
-
-    if (!isValid) {
-      logStep("Signature verification failed");
-      return new Response(JSON.stringify({ error: "Invalid payment signature" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+    const valid = await verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, secret);
+    if (!valid) {
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
       });
     }
 
-    logStep("Signature verified successfully");
+    const { data: purchase } = await supabase
+      .from("credit_purchases").select("*").eq("id", purchase_id).maybeSingle();
+    if (!purchase || purchase.user_id !== user.id) throw new Error("Purchase not found");
 
-    // Calculate expiry date based on plan type
-    const now = new Date();
-    let expiresAt: string | null = null;
-    let accessType = "subscription";
-
-    if (plan_type === "trial") {
-      // 24-hour trial
-      expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-      accessType = "trial";
-    } else if (plan_type === "monthly") {
-      // Monthly subscription - 30 days
-      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      accessType = "subscription";
-    } else {
-      // Yearly subscription - 365 days
-      expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      accessType = "subscription";
-    }
-
-    logStep("Granting access", { accessType, expiresAt });
-
-    // Delete any existing access first
-    await supabaseClient
-      .from("premium_access")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Insert new premium access
-    const { error: insertError } = await supabaseClient
-      .from("premium_access")
-      .insert({
-        user_id: user.id,
-        access_type: accessType,
-        expires_at: expiresAt,
-        stripe_customer_id: razorpay_payment_id,
-        stripe_subscription_id: razorpay_order_id,
-      });
-
-    if (insertError) {
-      logStep("Database insert error", { error: insertError.message });
-      throw new Error(`Failed to grant access: ${insertError.message}`);
-    }
-
-    logStep("Access granted successfully");
-
-    // Log payment activity
-    await supabaseClient.from("activity_logs").insert([{
-      user_id: user.id,
-      action_type: "payment",
-      action_details: {
-        plan_type: plan_type,
-        payment_id: razorpay_payment_id,
-        order_id: razorpay_order_id,
-        access_type: accessType,
-        expires_at: expiresAt,
-      },
-    }]);
-
-    return new Response(JSON.stringify({
-      success: true,
-      access_type: accessType,
-      expires_at: expiresAt,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+    const { data: applied, error: aerr } = await supabase.rpc("apply_credit_purchase", {
+      _purchase_id: purchase_id,
+      _payment_id: razorpay_payment_id,
     });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+    if (aerr) throw new Error(aerr.message);
+
+    await supabase.from("activity_logs").insert({
+      user_id: user.id,
+      action_type: "credit_purchase",
+      action_details: { pack_id: purchase.pack_id, credits: purchase.credits, inr: purchase.inr_amount, payment_id: razorpay_payment_id },
+    });
+
+    return new Response(JSON.stringify({ success: true, credits: purchase.credits, applied }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500,
     });
   }
 });
