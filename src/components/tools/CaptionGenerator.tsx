@@ -27,6 +27,7 @@ export const CaptionGenerator = () => {
   const [captions, setCaptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const { charge, dialogProps } = useCredits("caption-generator");
 
   const generateCaptions = async () => {
     if (!description.trim()) {
@@ -38,19 +39,20 @@ export const CaptionGenerator = () => {
     setCaptions([]);
 
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "captions",
-          description,
-          keywords: keywords.split(",").map(k => k.trim()).filter(Boolean),
-          style,
-          count: 5,
-        },
+      await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "captions",
+            description,
+            keywords: keywords.split(",").map((k) => k.trim()).filter(Boolean),
+            style,
+            count: 5,
+          },
+        });
+        if (response.error) throw response.error;
+        setCaptions(response.data.captions);
+        toast.success("Captions generated!");
       });
-
-      if (response.error) throw response.error;
-      setCaptions(response.data.captions);
-      toast.success("Captions generated!");
     } catch (error) {
       console.error("Error generating captions:", error);
       toast.error("Failed to generate captions. Please try again.");
