@@ -51,7 +51,7 @@ function mimeFor(format: string): { mime: string; ext: string } {
   }
 }
 
-async function processOne(
+export async function processOne(
   toolId: string,
   file: File,
   params: Record<string, any>
