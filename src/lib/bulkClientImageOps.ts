@@ -67,7 +67,7 @@ async function processOne(
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0);
 
-  switch (toolId) {
+  switch (op) {
     case "image-compressor": {
       const { mime, ext } = mimeFor(params.format || "jpeg");
       const q = Math.min(100, Math.max(10, Number(params.quality ?? 70))) / 100;
@@ -122,8 +122,66 @@ async function processOne(
       c2ctx.drawImage(canvas, 0, 0);
       return { blob: await canvasToBlob(c2, "image/png"), ext: "png" };
     }
+    case "image-pixelate": {
+      const block = Math.max(2, Math.min(60, Number(params.block_size ?? 12)));
+      const c2 = document.createElement("canvas");
+      c2.width = canvas.width;
+      c2.height = canvas.height;
+      const c2ctx = c2.getContext("2d")!;
+      c2ctx.imageSmoothingEnabled = false;
+      const w = Math.max(1, Math.floor(canvas.width / block));
+      const h = Math.max(1, Math.floor(canvas.height / block));
+      c2ctx.drawImage(canvas, 0, 0, w, h);
+      c2ctx.drawImage(c2, 0, 0, w, h, 0, 0, canvas.width, canvas.height);
+      return { blob: await canvasToBlob(c2, "image/png"), ext: "png" };
+    }
+    case "image-watermark": {
+      const text = String(params.text ?? "© ezyourlife");
+      const opacity = Math.max(0.05, Math.min(1, Number(params.opacity ?? 40) / 100));
+      const fs = Math.round(Math.min(canvas.width, canvas.height) / 18);
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = Math.max(1, fs / 12);
+      ctx.font = `bold ${fs}px sans-serif`;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      const x = canvas.width - fs * 0.6;
+      const y = canvas.height - fs * 0.6;
+      ctx.strokeText(text, x, y);
+      ctx.fillText(text, x, y);
+      ctx.restore();
+      return { blob: await canvasToBlob(canvas, "image/png"), ext: "png" };
+    }
+    case "image-text": {
+      const text = String(params.text ?? "");
+      const pos = String(params.position ?? "bottom");
+      const fs = Math.round(Math.min(canvas.width, canvas.height) / 14);
+      ctx.save();
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "rgba(0,0,0,0.7)";
+      ctx.lineWidth = Math.max(1, fs / 10);
+      ctx.font = `bold ${fs}px sans-serif`;
+      ctx.textAlign = "center";
+      const x = canvas.width / 2;
+      const y = pos === "top" ? fs * 1.2 : pos === "center" ? canvas.height / 2 : canvas.height - fs * 0.6;
+      ctx.textBaseline = pos === "top" ? "top" : pos === "center" ? "middle" : "bottom";
+      ctx.strokeText(text, x, y);
+      ctx.fillText(text, x, y);
+      ctx.restore();
+      return { blob: await canvasToBlob(canvas, "image/png"), ext: "png" };
+    }
+    case "image-passthrough": {
+      return { blob: await canvasToBlob(canvas, "image/png"), ext: "png" };
+    }
+    case "image-split":
+    case "image-join": {
+      // Handled at batch level (see runClientImageBatch); shouldn't reach here.
+      return { blob: await canvasToBlob(canvas, "image/png"), ext: "png" };
+    }
     default:
-      throw new Error(`Unsupported client tool: ${toolId}`);
+      throw new Error(`Unsupported client tool: ${toolId} (op=${op})`);
   }
 }
 
