@@ -1,9 +1,8 @@
-// Browser-side bulk processing for free image ops.
-// Reads each file, applies the operation via canvas, builds a ZIP,
-// uploads it to bulk-outputs, and updates the bulk_jobs row.
+// Browser-side bulk processing for free image ops + Startup Analyser bulk.
 
 import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
+import { extractPdfText, generateComprehensiveAnalysis } from "@/startup-analyser/services/geminiService";
 
 interface RunArgs {
   jobId: string;
@@ -11,6 +10,7 @@ interface RunArgs {
   toolId: string;
   files: File[];
   params?: Record<string, any>;
+  perFileMeta?: Record<string, string>[];
 }
 
 async function loadImage(file: File): Promise<HTMLImageElement> {
