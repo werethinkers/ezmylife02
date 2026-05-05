@@ -3,6 +3,7 @@
 import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
 import { extractPdfText, generateComprehensiveAnalysis } from "@/startup-analyser/services/geminiService";
+import { PI7_BULK_OP_ALIAS } from "@/data/bulkTools";
 
 interface RunArgs {
   jobId: string;
