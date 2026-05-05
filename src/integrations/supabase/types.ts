@@ -640,7 +640,6 @@ export type Database = {
           display_name: string | null
           email: string | null
           full_name: string | null
-          gemini_api_key: string | null
           id: string
           job_title: string | null
           location: string | null
@@ -657,7 +656,6 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
-          gemini_api_key?: string | null
           id: string
           job_title?: string | null
           location?: string | null
@@ -674,7 +672,6 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
-          gemini_api_key?: string | null
           id?: string
           job_title?: string | null
           location?: string | null
@@ -1050,6 +1047,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_secrets: {
+        Row: {
+          gemini_api_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          gemini_api_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          gemini_api_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       utm_links: {
         Row: {
           click_count: number
@@ -1262,6 +1277,7 @@ export type Database = {
         Args: { _tool_id: string; _uid: string }
         Returns: Json
       }
+      validate_coupon: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
