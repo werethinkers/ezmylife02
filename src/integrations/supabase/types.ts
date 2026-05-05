@@ -104,6 +104,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          credit_grant: number | null
           description: string | null
           duration_days: number | null
           expires_at: string | null
@@ -117,6 +118,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
+          credit_grant?: number | null
           description?: string | null
           duration_days?: number | null
           expires_at?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
+          credit_grant?: number | null
           description?: string | null
           duration_days?: number | null
           expires_at?: string | null
@@ -157,6 +160,120 @@ export type Database = {
           coupon_code?: string
           id?: string
           redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          cost_inr: number | null
+          created_at: string
+          delta: number
+          free_delta: number
+          id: string
+          metadata: Json
+          paid_delta: number
+          reason: string
+          run_id: string | null
+          tool_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_inr?: number | null
+          created_at?: string
+          delta: number
+          free_delta?: number
+          id?: string
+          metadata?: Json
+          paid_delta?: number
+          reason: string
+          run_id?: string | null
+          tool_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_inr?: number | null
+          created_at?: string
+          delta?: number
+          free_delta?: number
+          id?: string
+          metadata?: Json
+          paid_delta?: number
+          reason?: string
+          run_id?: string | null
+          tool_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_purchases: {
+        Row: {
+          coupon_code: string | null
+          created_at: string
+          credits: number
+          id: string
+          inr_amount: number
+          pack_id: string
+          paid_at: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string
+          credits: number
+          id?: string
+          inr_amount: number
+          pack_id: string
+          paid_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string
+          credits?: number
+          id?: string
+          inr_amount?: number
+          pack_id?: string
+          paid_at?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_wallets: {
+        Row: {
+          first_action_bonus_granted: boolean
+          free_balance: number
+          last_free_reset_at: string | null
+          paid_balance: number
+          signup_bonus_granted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          first_action_bonus_granted?: boolean
+          free_balance?: number
+          last_free_reset_at?: string | null
+          paid_balance?: number
+          signup_bonus_granted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          first_action_bonus_granted?: boolean
+          free_balance?: number
+          last_free_reset_at?: string | null
+          paid_balance?: number
+          signup_bonus_granted?: boolean
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -687,6 +804,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_pricing: {
+        Row: {
+          cost_inr: number
+          credit_cost: number
+          tool_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cost_inr?: number
+          credit_cost?: number
+          tool_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cost_inr?: number
+          credit_cost?: number
+          tool_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tool_requests: {
         Row: {
           admin_notes: string | null
@@ -717,6 +858,54 @@ export type Database = {
           status?: string
           tool_description?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tool_runs: {
+        Row: {
+          cost_inr: number | null
+          credits_charged: number
+          credits_quoted: number
+          error: string | null
+          finished_at: string | null
+          free_used: number
+          id: string
+          metadata: Json
+          paid_used: number
+          started_at: string
+          status: string
+          tool_id: string
+          user_id: string
+        }
+        Insert: {
+          cost_inr?: number | null
+          credits_charged?: number
+          credits_quoted?: number
+          error?: string | null
+          finished_at?: string | null
+          free_used?: number
+          id?: string
+          metadata?: Json
+          paid_used?: number
+          started_at?: string
+          status?: string
+          tool_id: string
+          user_id: string
+        }
+        Update: {
+          cost_inr?: number | null
+          credits_charged?: number
+          credits_quoted?: number
+          error?: string | null
+          finished_at?: string | null
+          free_used?: number
+          id?: string
+          metadata?: Json
+          paid_used?: number
+          started_at?: string
+          status?: string
+          tool_id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -997,6 +1186,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_credits: {
+        Args: {
+          _bucket: string
+          _delta: number
+          _note: string
+          _target: string
+        }
+        Returns: Json
+      }
+      apply_credit_purchase: {
+        Args: { _payment_id: string; _purchase_id: string }
+        Returns: Json
+      }
+      complete_tool_run: {
+        Args: {
+          _error?: string
+          _run_id: string
+          _success: boolean
+          _uid: string
+        }
+        Returns: Json
+      }
+      compute_credit_cost: { Args: { _cost_inr: number }; Returns: number }
+      ensure_wallet: { Args: { _uid: string }; Returns: undefined }
       get_tool_view_counts: {
         Args: { _tool_ids: string[] }
         Returns: {
@@ -1032,12 +1245,19 @@ export type Database = {
           utm_source: string
         }[]
       }
+      grant_first_action_bonus: { Args: { _uid: string }; Returns: undefined }
+      grant_signup_bonus: { Args: { _uid: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      monthly_free_reset: { Args: never; Returns: number }
+      start_tool_run: {
+        Args: { _tool_id: string; _uid: string }
+        Returns: Json
       }
     }
     Enums: {
