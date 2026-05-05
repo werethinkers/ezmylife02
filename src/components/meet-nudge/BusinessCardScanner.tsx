@@ -102,6 +102,9 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
       <Button onClick={scan} disabled={scanning || images.length === 0} className="w-full">
         {scanning ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : "Scan & Extract"}
       </Button>
+      <div className="flex justify-center pt-1">
+        <BulkModeToggle toolId="business-card-scanner" />
+      </div>
     </div>
   );
 }
