@@ -14,7 +14,7 @@ const CreditsSuccess = () => {
 
   return (
     <>
-      <SEOHead title="Credits added — EZYOURLIFE" description="Your wallet has been topped up." />
+      <SEOHead title="Credits added — EZYOURLIFE" description="Your wallet has been topped up." path="/credits/success" />
       <Navbar />
       <main className="container mx-auto px-4 py-16 max-w-xl">
         <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>

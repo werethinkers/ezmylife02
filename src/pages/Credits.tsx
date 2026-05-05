@@ -137,6 +137,7 @@ const Credits = () => {
       <SEOHead
         title="Credits — Pay-as-you-go AI tools"
         description="Top up your EZYOURLIFE wallet. No subscriptions, just credits. Starts at ₹10."
+        path="/credits"
       />
       <Navbar />
       <main className="container mx-auto px-4 py-10 max-w-5xl">
