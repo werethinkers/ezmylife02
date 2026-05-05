@@ -130,8 +130,8 @@ function safeFilename(s: string): string {
 
 async function loadUserApiKey(userId: string): Promise<string | null> {
   try {
-    const { data } = await supabase.from("profiles").select("gemini_api_key").eq("id", userId).maybeSingle();
-    return data?.gemini_api_key || null;
+    const { data } = await supabase.from("user_secrets" as never).select("gemini_api_key").eq("user_id", userId).maybeSingle();
+    return (data as { gemini_api_key?: string | null } | null)?.gemini_api_key || null;
   } catch { return null; }
 }
 

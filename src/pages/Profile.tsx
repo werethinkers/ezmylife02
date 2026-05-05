@@ -47,12 +47,11 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, full_name, phone_number, bio, company, job_title, location, website, gemini_api_key")
+        .select("display_name, full_name, phone_number, bio, company, job_title, location, website")
         .eq("id", user?.id)
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        setGeminiApiKey(data.gemini_api_key || "");
         setProfile({
           display_name: data.display_name || "", full_name: data.full_name || "",
           phone_number: data.phone_number || "", bio: data.bio || "",
@@ -60,6 +59,12 @@ const Profile = () => {
           location: data.location || "", website: data.website || "",
         });
       }
+      const { data: secret } = await supabase
+        .from("user_secrets" as never)
+        .select("gemini_api_key")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+      if (secret) setGeminiApiKey((secret as { gemini_api_key?: string | null }).gemini_api_key || "");
     } catch (error) {
       console.error("Error loading profile:", error);
     } finally {
@@ -265,7 +270,7 @@ const Profile = () => {
                   e.preventDefault();
                   setSavingApiKey(true);
                   try {
-                    const { error } = await supabase.from("profiles").update({ gemini_api_key: geminiApiKey || null }).eq("id", user?.id);
+                    const { error } = await supabase.from("user_secrets" as never).upsert({ user_id: user?.id, gemini_api_key: geminiApiKey || null } as never);
                     if (error) throw error;
                     toast({ title: "API Key saved", description: "Your Gemini API key has been saved securely." });
                   } catch {
