@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Lightbulb, Calendar, TrendingUp, Bookmark, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 interface ContentIdea {
   title: string;
@@ -31,6 +34,8 @@ export const ContentIdeaGenerator = () => {
   const [ideas, setIdeas] = useState<ContentIdea[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+    const { charge: __charge_generateIdeas, dialogProps: __dlg_generateIdeas } = useCredits("content-idea-generator");
+
   const generateIdeas = async () => {
     if (!niche.trim()) {
       toast.error("Please enter your niche or industry");
@@ -41,6 +46,7 @@ export const ContentIdeaGenerator = () => {
     setIdeas([]);
 
     try {
+      await __charge_generateIdeas(async () => {
       const response = await supabase.functions.invoke("content-generator", {
         body: {
           type: "content-ideas",
@@ -53,6 +59,7 @@ export const ContentIdeaGenerator = () => {
       if (response.error) throw response.error;
       setIdeas(response.data.ideas.map((idea: ContentIdea) => ({ ...idea, saved: false })));
       toast.success("Ideas generated!");
+      });
     } catch (error) {
       console.error("Error generating ideas:", error);
       toast.error("Failed to generate ideas. Please try again.");
@@ -176,6 +183,7 @@ export const ContentIdeaGenerator = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...__dlg_generateIdeas} />
     </div>
   );
 };
