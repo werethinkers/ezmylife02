@@ -25,6 +25,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BulkModeToggle } from '@/components/bulk/BulkModeToggle';
+import { useCredits } from '@/hooks/useCredits';
+import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 declare global {
   interface Window {
