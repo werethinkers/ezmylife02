@@ -267,7 +267,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
 
       <Button
         onClick={handleSubmit}
-        disabled={submitting || files.length === 0}
+        disabled={submitting || files.length === 0 || missingMeta}
         className="w-full"
         size="lg"
       >
