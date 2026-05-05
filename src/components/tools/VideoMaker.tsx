@@ -11,6 +11,9 @@ import { Loader2, Video, Download, Trash2, History, Sparkles, Upload, CheckCircl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCredits } from '@/hooks/useCredits';
+import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
 
 interface Creation {
   id: string;
