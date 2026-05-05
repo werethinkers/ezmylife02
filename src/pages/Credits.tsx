@@ -158,24 +158,38 @@ const Credits = () => {
           </p>
         </motion.section>
 
-        {/* Wallet snapshot */}
-        <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-          <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Your wallet</p>
-              <p className="text-4xl font-semibold tabular-nums flex items-center gap-2">
-                <Zap className="h-6 w-6 text-primary" />
-                {walletLoading ? "—" : total}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
-              </p>
-            </div>
-            <Button asChild variant="outline">
-              <Link to="/tools">Browse tools</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Wallet snapshot or sign-in CTA */}
+        {user ? (
+          <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your wallet</p>
+                <p className="text-4xl font-semibold tabular-nums flex items-center gap-2">
+                  <Zap className="h-6 w-6 text-primary" />
+                  {walletLoading ? "—" : total}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
+                </p>
+              </div>
+              <Button asChild variant="outline">
+                <Link to="/tools">Browse tools</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Sign in to top up your wallet</p>
+                <p className="text-xs text-muted-foreground mt-1">New accounts start with free credits.</p>
+              </div>
+              <Button onClick={() => setLoginOpen(true)}>
+                <LogIn className="h-4 w-4 mr-2" /> Sign in
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Packs */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -199,7 +213,7 @@ const Credits = () => {
                   <span className="font-medium tabular-nums">{pack.credits}</span> credits
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {cpr.toFixed(2)} credits per ₹{savePct > 0 && (
+                  For ₹1 you get <span className="font-medium text-foreground">{cpr.toFixed(2)}</span> credits{savePct > 0 && (
                     <span className="text-emerald-500"> · save {savePct}%</span>
                   )}
                 </p>
@@ -245,6 +259,7 @@ const Credits = () => {
           <div className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-primary" /> 50 free on signup + 50 after first action.</div>
         </div>
       </main>
+      <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={pendingPack ? `/credits?pack=${pendingPack}` : "/credits"} />
       <SEOFooter />
     </>
   );
