@@ -190,8 +190,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
     if (user) {
       loadSavedSessions();
       // Load user's Gemini API key from profile
-      supabase.from('profiles').select('gemini_api_key').eq('id', user.id).maybeSingle()
-        .then(({ data }) => { if (data?.gemini_api_key) setUserApiKey(data.gemini_api_key); });
+      supabase.from('user_secrets' as never).select('gemini_api_key').eq('user_id', user.id).maybeSingle()
+        .then(({ data }) => { const k = (data as { gemini_api_key?: string | null } | null)?.gemini_api_key; if (k) setUserApiKey(k); });
     }
   }, [user]);
 
