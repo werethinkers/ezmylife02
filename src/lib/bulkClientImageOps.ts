@@ -184,7 +184,11 @@ export async function runClientImageBatch(args: RunArgs) {
   let completed = 0;
   let failed = 0;
 
-  if (toolId === "metadata-viewer") {
+  if (toolId === "startup-analyser") {
+    const r = await runStartupAnalyserBatch(args, zip, outputs);
+    completed = r.completed;
+    failed = r.failed;
+  } else if (toolId === "metadata-viewer") {
     const rows: string[] = ["filename,size_kb,type,width,height"];
     for (const f of files) {
       try {
