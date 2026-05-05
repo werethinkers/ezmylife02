@@ -34,6 +34,7 @@ interface ProgressStep {
 
 const VideoMaker = () => {
   const { user } = useAuth();
+  const { charge, dialogProps } = useCredits('video-maker');
   const [prompt, setPrompt] = useState('');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('5');
