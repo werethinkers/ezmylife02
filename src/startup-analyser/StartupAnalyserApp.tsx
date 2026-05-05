@@ -347,7 +347,10 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setCurrentSessionId(null);
 
     try {
-      const result = await generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey);
+      const result = await chargeAnalysis(async () =>
+        generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey),
+      );
+      if (!result) { setStep('input'); return; }
       setAnalysisResult(result);
       setChatHistory([]);
       setStep('results');
