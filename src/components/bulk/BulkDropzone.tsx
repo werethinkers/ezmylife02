@@ -126,6 +126,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
         status: "queued",
         total_items: files.length,
         input_manifest: inputManifest,
+        per_file_meta: perFileMeta,
         params,
       });
       if (insErr) throw insErr;
@@ -140,6 +141,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           toolId: config.toolId,
           files,
           params,
+          perFileMeta,
         }).catch((e) => {
           console.error(e);
           toast.error("Bulk processing failed");
@@ -147,7 +149,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       } else {
         // Dispatch to edge function
         const { error: fnErr } = await supabase.functions.invoke("bulk-run", {
-          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params },
+          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params, per_file_meta: perFileMeta },
         });
         if (fnErr) throw fnErr;
         toast.success("Bulk job started");
