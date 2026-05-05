@@ -52,6 +52,11 @@ const nativeTools: Record<string, React.ComponentType> = {
   "resize-image-mm": ImageResizer,
   "resize-image-inch": ImageResizer,
   "resize-image-3.5x4.5": ImageResizer,
+  "resize-image-3-5x4-5": ImageResizer,
+
+  // AI image (mapped to closest native impl until dedicated UIs ship)
+  "ai-face-generator": ImageBeautify,
+  "remove-object-photo": BackgroundRemover,
   "resize-35x45mm": ImageResizer,
   "resize-2x2-inch": ImageResizer,
   "resize-3x4-inch": ImageResizer,

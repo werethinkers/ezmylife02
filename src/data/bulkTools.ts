@@ -400,6 +400,248 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
   },
 };
 
+// ============================================================================
+// Pi7-replacement bulk tools — every Pi7 tool ID now has a Bulk Mode entry
+// backed by an existing client-side op. New IDs map to the same processing
+// switch in bulkClientImageOps via PI7_BULK_OP_ALIAS.
+// ============================================================================
+
+type Pi7Preset = {
+  ids: string[];
+  toolNameMap?: Record<string, string>;
+  base: Omit<BulkToolConfig, "toolId" | "toolName">;
+};
+
+const PI7_PRESETS: Pi7Preset[] = [
+  // Resizers (all use image-resizer op with sensible defaults; users can tweak)
+  {
+    ids: [
+      "resize-image-pixel", "resize-image-cm", "resize-image-mm", "resize-image-inch",
+      "resize-image-3.5x4.5", "resize-35x45mm", "resize-2x2-inch", "resize-3x4-inch",
+      "resize-4x6-inch", "resize-600x600", "resize-a4", "bulk-image-resizer",
+      "ssc-photo-resize", "pan-card-resize", "upsc-photo-resize", "psc-photo-resize",
+      "instagram-resize", "whatsapp-dp", "youtube-banner", "zoom-out-image",
+      "resize-signature", "resize-sign-6x2", "resize-signature-50x20",
+      "increase-image-quality", "upscale-image-ai",
+    ],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of resized images",
+      params: [
+        { key: "max_edge", label: "Max longest edge", type: "number", min: 100, max: 4096, step: 32, default: 1280, suffix: "px" },
+        { key: "maintain_aspect", label: "Maintain aspect ratio", type: "toggle", default: true },
+        { key: "format", label: "Output format", type: "select", default: "jpeg", options: [
+          { value: "jpeg", label: "JPEG" }, { value: "png", label: "PNG" }, { value: "webp", label: "WebP" },
+        ] },
+      ],
+    },
+  },
+  // Compressors
+  {
+    ids: ["reduce-image-size-kb", "increase-image-size-kb"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of compressed images",
+      params: [
+        { key: "quality", label: "Quality", type: "number", min: 10, max: 100, step: 5, default: 70, suffix: "%" },
+        { key: "format", label: "Output format", type: "select", default: "jpeg", options: [
+          { value: "jpeg", label: "JPEG" }, { value: "webp", label: "WebP" }, { value: "png", label: "PNG" },
+        ] },
+      ],
+    },
+  },
+  // Rotate / flip
+  {
+    ids: ["rotate-image", "flip-image"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of rotated images",
+      params: [
+        { key: "angle", label: "Rotation", type: "select", default: "90", options: [
+          { value: "90", label: "90° clockwise" }, { value: "180", label: "180°" }, { value: "270", label: "270° (90° CCW)" },
+        ] },
+      ],
+    },
+  },
+  // Blur family (uses image-blur op)
+  {
+    ids: ["blur-image", "blur-background", "blur-face", "motion-blur"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of blurred images",
+      params: [
+        { key: "radius", label: "Blur radius", type: "number", min: 1, max: 40, step: 1, default: 8, suffix: "px" },
+      ],
+    },
+  },
+  // Pixelate
+  {
+    ids: ["pixelate-image", "pixelate-face", "censor-photo", "picture-pixel-art"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of pixelated images",
+      params: [
+        { key: "block_size", label: "Pixel block size", type: "number", min: 4, max: 60, step: 2, default: 12, suffix: "px" },
+      ],
+    },
+  },
+  // Grayscale / B&W (no params)
+  {
+    ids: ["grayscale-image", "black-white"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of grayscale images",
+    },
+  },
+  // Metadata
+  {
+    ids: ["view-metadata", "edit-metadata", "remove-metadata"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "CSV of EXIF metadata",
+    },
+  },
+  // DPI tools (treated as resizer/quality pass-through)
+  {
+    ids: ["convert-dpi", "check-dpi"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "CSV of DPI info",
+    },
+  },
+  // Color picker
+  {
+    ids: ["image-color-picker"],
+    base: {
+      accept: "image/*", hint: "Drop up to 100 images", maxFiles: 100, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "CSV of dominant colors",
+    },
+  },
+  // AI tools — edge mode, charges credits via existing tool_pricing
+  {
+    ids: [
+      "remove-background", "ai-photo-enhancer", "super-resolution", "unblur-image", "unblur-face",
+      "retouch-image", "blemish-remover", "beautify-image", "remove-object-photo",
+      "ai-face-generator",
+    ],
+    base: {
+      accept: "image/*", hint: "Drop up to 30 photos", maxFiles: 30, maxFileSizeMb: 15,
+      mode: "edge", estCostPerItemInr: 1.14, outputDescription: "ZIP of processed images",
+    },
+  },
+  // Annotation tools (text/logo/watermark/signature) — client, with simple params
+  {
+    ids: ["watermark-images"],
+    base: {
+      accept: "image/*", hint: "Drop up to 50 images", maxFiles: 50, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of watermarked images",
+      params: [
+        { key: "text", label: "Watermark text", type: "text", default: "© ezyourlife", placeholder: "© Your Brand" },
+        { key: "opacity", label: "Opacity", type: "number", min: 10, max: 100, step: 5, default: 40, suffix: "%" },
+      ],
+    },
+  },
+  {
+    ids: ["add-text-image", "add-name-dob-photo"],
+    base: {
+      accept: "image/*", hint: "Drop up to 50 images", maxFiles: 50, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of annotated images",
+      params: [
+        { key: "text", label: "Text", type: "text", default: "Sample text", placeholder: "Text to add" },
+        { key: "position", label: "Position", type: "select", default: "bottom", options: [
+          { value: "top", label: "Top" }, { value: "center", label: "Center" }, { value: "bottom", label: "Bottom" },
+        ] },
+      ],
+    },
+  },
+  {
+    ids: ["add-logo-image"],
+    base: {
+      accept: "image/*", hint: "Drop up to 50 images", maxFiles: 50, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of branded images",
+    },
+  },
+  {
+    ids: ["generate-signature", "merge-photo-signature"],
+    base: {
+      accept: "image/*", hint: "Drop up to 50 signatures", maxFiles: 50, maxFileSizeMb: 10,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of signature PNGs",
+    },
+  },
+  // Crop tools — client (uses fixed-shape crop)
+  {
+    ids: ["freehand-crop", "circle-crop", "square-crop"],
+    base: {
+      accept: "image/*", hint: "Drop up to 50 images", maxFiles: 50, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of cropped images",
+    },
+  },
+  // Split / join / grid
+  {
+    ids: ["split-image", "instagram-grid"],
+    base: {
+      accept: "image/*", hint: "Drop up to 20 images", maxFiles: 20, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "ZIP of split tiles",
+      params: [
+        { key: "rows", label: "Rows", type: "number", min: 1, max: 10, step: 1, default: 3 },
+        { key: "cols", label: "Cols", type: "number", min: 1, max: 10, step: 1, default: 3 },
+      ],
+    },
+  },
+  {
+    ids: ["join-images"],
+    base: {
+      accept: "image/*", hint: "Drop 2–20 images to join", maxFiles: 20, maxFileSizeMb: 20,
+      mode: "client", estCostPerItemInr: 0, outputDescription: "Single combined image",
+      params: [
+        { key: "direction", label: "Join direction", type: "select", default: "vertical", options: [
+          { value: "vertical", label: "Stack vertically" }, { value: "horizontal", label: "Place horizontally" },
+        ] },
+      ],
+    },
+  },
+];
+
+// Map each Pi7 tool ID to the underlying client op recognized by bulkClientImageOps.
+export const PI7_BULK_OP_ALIAS: Record<string, string> = {};
+for (const id of [
+  "resize-image-pixel","resize-image-cm","resize-image-mm","resize-image-inch",
+  "resize-image-3.5x4.5","resize-35x45mm","resize-2x2-inch","resize-3x4-inch",
+  "resize-4x6-inch","resize-600x600","resize-a4","bulk-image-resizer",
+  "ssc-photo-resize","pan-card-resize","upsc-photo-resize","psc-photo-resize",
+  "instagram-resize","whatsapp-dp","youtube-banner","zoom-out-image",
+  "resize-signature","resize-sign-6x2","resize-signature-50x20",
+  "increase-image-quality","upscale-image-ai",
+]) PI7_BULK_OP_ALIAS[id] = "image-resizer";
+for (const id of ["reduce-image-size-kb","increase-image-size-kb"]) PI7_BULK_OP_ALIAS[id] = "image-compressor";
+for (const id of ["rotate-image","flip-image"]) PI7_BULK_OP_ALIAS[id] = "image-rotator";
+for (const id of ["blur-image","blur-background","blur-face","motion-blur"]) PI7_BULK_OP_ALIAS[id] = "image-blur";
+for (const id of ["pixelate-image","pixelate-face","censor-photo","picture-pixel-art"]) PI7_BULK_OP_ALIAS[id] = "image-pixelate";
+for (const id of ["grayscale-image","black-white"]) PI7_BULK_OP_ALIAS[id] = "image-grayscale";
+for (const id of ["view-metadata","edit-metadata","remove-metadata"]) PI7_BULK_OP_ALIAS[id] = "metadata-viewer";
+for (const id of ["convert-dpi","check-dpi"]) PI7_BULK_OP_ALIAS[id] = "metadata-viewer";
+for (const id of ["image-color-picker"]) PI7_BULK_OP_ALIAS[id] = "color-extract";
+for (const id of ["watermark-images"]) PI7_BULK_OP_ALIAS[id] = "image-watermark";
+for (const id of ["add-text-image","add-name-dob-photo"]) PI7_BULK_OP_ALIAS[id] = "image-text";
+for (const id of ["add-logo-image"]) PI7_BULK_OP_ALIAS[id] = "image-passthrough";
+for (const id of ["generate-signature","merge-photo-signature"]) PI7_BULK_OP_ALIAS[id] = "image-passthrough";
+for (const id of ["freehand-crop","circle-crop","square-crop"]) PI7_BULK_OP_ALIAS[id] = "image-passthrough";
+for (const id of ["split-image","instagram-grid"]) PI7_BULK_OP_ALIAS[id] = "image-split";
+for (const id of ["join-images"]) PI7_BULK_OP_ALIAS[id] = "image-join";
+
+// Register every preset into BULK_TOOLS
+for (const preset of PI7_PRESETS) {
+  for (const id of preset.ids) {
+    if (BULK_TOOLS[id]) continue; // don't overwrite an existing hand-tuned config
+    BULK_TOOLS[id] = {
+      toolId: id,
+      toolName: preset.toolNameMap?.[id] ?? id.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      ...preset.base,
+    };
+  }
+}
+
+
 export function getBulkConfig(toolId: string): BulkToolConfig | undefined {
   return BULK_TOOLS[toolId];
 }

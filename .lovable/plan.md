@@ -1,86 +1,89 @@
 ## Goal
+Stop loading any tool from `image.pi7.org` / `vision.pi7.org` / `bulkresizer.pi7.org`. Replace each Pi7 iframe with a native in-house tool that runs in the browser (Canvas) or via a Lovable AI edge function. Every replaced tool gets a Bulk Mode entry so users can process many files at once.
 
-Tighten the credit-only model: hide every Premium reference and ₹ amount from end-users, let admins grant free credits and set credit costs directly per tool, open the Credits page to logged-out visitors, and replace mid-flow auth redirects with a friendly login dialog.
+## Inventory: the 67 Pi7 tools, grouped by implementation strategy
 
----
+### A. Pure-browser Canvas tools — no AI, free, instant (~45 tools)
+Built with one shared `src/lib/imageOps/` library (Canvas 2D + a few small WASM-free helpers). Each gets a single-file React page under `src/components/native-tools/image/` and a `BULK_TOOLS` entry.
 
-## 1. Hide all "Premium" branding
+| Group | Tools |
+|---|---|
+| Resize / crop | resize-image-pixel, resize-image-cm, resize-image-mm, resize-image-inch, resize-a4, resize-2x2-inch, resize-3x4-inch, resize-4x6-inch, resize-600x600, resize-image-3.5x4.5, resize-35x45mm, resize-sign-6x2, resize-signature-50x20, resize-signature, ssc-photo-resize, pan-card-resize, upsc-photo-resize, psc-photo-resize, instagram-resize, whatsapp-dp, youtube-banner, freehand-crop, circle-crop, square-crop, instagram-grid, split-image, join-images, bulk-image-resizer |
+| Compress / file size | reduce-image-size-kb, increase-image-size-kb |
+| Rotate / flip | rotate-image, flip-image |
+| Blur / pixelate / effects | blur-image, motion-blur, pixelate-image, grayscale-image, black-white, picture-pixel-art, beautify-image (curves preset), zoom-out-image |
+| Annotate | watermark-images, add-text-image, add-logo-image, add-name-dob-photo, generate-signature, merge-photo-signature |
+| Color / metadata | image-color-picker, view-metadata, edit-metadata, remove-metadata |
+| DPI | convert-dpi, check-dpi |
 
-- **`src/components/Navbar.tsx`** — remove the `premiumLinks` block entirely; merge "Get Extension" and "Bulk Jobs" into the main `navLinks` (only shown when `user` exists), styled like the rest.
-- **`src/components/PremiumRoute.tsx`** — delete the file.
-- **`src/App.tsx`** — replace every `<PremiumRoute>` wrapper with `<ProtectedRoute>` (already exists), drop the `PremiumRoute` import.
-- **`src/components/ToolAccessGuard.tsx`** — drop the comment language; rename behavior comment, no premium wording.
-- **`src/pages/AdminDashboard.tsx`** — remove the "Premium" tab, its `Crown` icon usage in tabs, the `premiumUsers` state/query, and the "Premium Users" stat card. Replace that stat card with **"Total Credits Sold"** (sum from `credit_purchases` where status='paid') and add a **Credits** tab (see §3).
-- **`src/pages/Home.tsx`, `src/pages/About.tsx`, `src/pages/Contact.tsx`, `src/components/SEOFooter.tsx`** — replace any user-visible "Premium" copy with "Pro tools" / generic descriptors. Remove the `Premium Access` block on Home.tsx (~line 564). Update SEO keywords/footer link text (the `/subscription` link stays for legacy redirects but renamed to "Pricing — Credits").
+### B. AI tools — Lovable AI edge functions, charge credits (~17 tools)
+One shared `pi7-image-ai` edge function with an `op` parameter, using `google/gemini-3.1-flash-image-preview` (Nano Banana 2). Each tool calls it with a tailored prompt and shows the result.
 
-Net result: no "Premium" string anywhere users see.
+| Op | Tools | Model prompt |
+|---|---|---|
+| `remove-bg` | remove-background, blur-background | "Return only the subject on transparent background" |
+| `enhance` | ai-photo-enhancer, increase-image-quality, super-resolution, upscale-image-ai, unblur-image, unblur-face, retouch-image | "Restore + upscale + sharpen" |
+| `remove-object` | remove-object-photo (with mask), blemish-remover | mask + inpaint prompt |
+| `passport` | passport-photo-maker (already in BULK_TOOLS — wire to native page), ai-id-photo-generator | passport prompt + Canvas crop |
+| `face-anonymize` | blur-face, pixelate-face, censor-photo | face-detection (BlazeFace via tfjs CDN) + Canvas blur/pixel/box |
+| `generate-face` | ai-face-generator | text-to-image |
 
----
+## Architecture
 
-## 2. Show credits, not ₹, on every tool
+```text
+src/
+├─ lib/imageOps/
+│   ├─ canvas.ts        load/decode/encode helpers, EXIF read/write
+│   ├─ resize.ts        pixel/cm/mm/inch/preset resizers
+│   ├─ compress.ts      target-KB binary search on JPEG quality
+│   ├─ effects.ts       blur, pixelate, grayscale, motion-blur, pixel-art
+│   ├─ overlay.ts       text, logo, watermark, signature merge
+│   ├─ crop.ts          rect, circle, freehand path, splitter, joiner
+│   ├─ metadata.ts      EXIF view/edit/strip (piexifjs CDN)
+│   └─ faces.ts         BlazeFace detection wrapper
+├─ components/native-tools/image/
+│   ├─ ImageToolShell.tsx  shared layout: dropzone, params, preview, download, "Bulk Mode" toggle
+│   └─ <ToolName>.tsx      ~40 thin wrappers, each ~30 LOC over ImageToolShell
+├─ components/native-tools/ai-image/
+│   └─ AiImageShell.tsx    same shell, calls pi7-image-ai edge function, shows credit cost, charges via start_tool_run
+└─ pages/ToolViewer.tsx    routes Pi7 toolIds to the new native components instead of the iframe
+```
 
-- **`src/components/tools/CreditCostBadge.tsx`** — already credit-only ✅. No change.
-- **`src/hooks/useToolPricing.ts`** — keep `cost_inr` available for admin only; stop exporting `costInr` for end-user components (only `creditCost`).
-- Audit any tool component that prints ₹ alongside credits — none currently do, so nothing else to change.
+## Bulk Mode integration
+Extend `src/data/bulkTools.ts` with `BulkToolConfig` entries for every replaced tool:
+- Client-mode for all browser tools (mode: "client", estCostPerItemInr: 0).
+- Edge-mode for AI tools (mode: "edge", estCostPerItemInr from current `tool_pricing`).
+- Add `client` ops to `src/lib/bulkClientImageOps.ts` so the existing `BulkDropzone` can dispatch them.
+- AI bulk runs go through the new edge function (one call per file, ZIP'd by the existing `bulk-run` worker).
 
----
+## Routing changes
+- `src/pages/ToolViewer.tsx`: build a `NATIVE_TOOL_COMPONENT: Record<string, React.LazyExoticComponent>` map keyed by toolId. If a toolId resolves to a native component, render it full-screen instead of the iframe block. The iframe path stays only for non-Pi7 wrapped tools (currently just `ai-id-photo-generator` from ToolFK — also being replaced).
+- `src/data/tools.tsx`: delete the entire `toolUrls` map for Pi7 entries (lines 23–105). Keep only the ToolFK entry until that's also migrated. `getToolUrl()` returns `null` for migrated tools.
 
-## 3. Admin: grant free credits + set credit cost directly
+## Pricing & credits
+- Pure-browser tools: `tool_pricing.cost_inr = 0`, `credit_cost = 0` → run for free, no auth required to try.
+- AI tools: keep existing pricing rows. Login dialog already triggers via `useCredits` when a guest clicks Generate — no new work.
 
-### 3a. Edge function `admin-tool-pricing` (extend)
+## Edge function: `pi7-image-ai`
+Single function, JWT-required, validates body with Zod, dispatches by `op`, calls Lovable AI Gateway `google/gemini-3.1-flash-image-preview`, returns base64 PNG. Surfaces 402/429 to client. Charges via the existing `start_tool_run` / `complete_tool_run` flow keyed by the toolId so credit deduction stays consistent.
 
-Add two new actions:
-- `set_credits` — `{ tool_id, credit_cost }`: directly upsert `credit_cost` (bypasses the `tool_pricing_set_credits` trigger by also passing `cost_inr` derived as `credit_cost * 0.30` so the trigger keeps the row consistent — or drop the trigger; see §3c).
-- `grant_credits` — `{ user_id, credits, note }`: server-side calls `admin_adjust_credits(user_id, credits, 'free', note)`.
+## Removed/replaced
+- Delete every Pi7 URL in `src/data/tools.tsx` `toolUrls`.
+- Update memory `mem://features/tool-viewer/native-and-wrapped-display-v3` to note that Pi7 tools are now native.
 
-### 3b. New admin UI: `src/components/admin/CreditsAdmin.tsx`
+## Out of scope
+- Admin "grant free credits" UI — already exists in `CreditsAdmin` from the previous loop, no changes.
+- Coupon/launch banners — already removed.
+- Toolfk `ai-id-photo-generator` iframe stays for now (covered by the new `passport` AI op once shipped, can be flipped later).
 
-Two sections inside one tab:
+## Phased delivery (one PR each, but all in this loop)
+1. Build `lib/imageOps/` + `ImageToolShell.tsx` + 5 representative Canvas tools (resize-pixel, reduce-kb, rotate, grayscale, watermark) and wire them into ToolViewer + BulkRunner. Confirm the pattern works.
+2. Generate the remaining ~40 Canvas tool components from the shared shell (mostly preset configs).
+3. Build `pi7-image-ai` edge function + `AiImageShell.tsx` + the 17 AI tools. Wire credits.
+4. Remove all Pi7 URLs from `tools.tsx`. Smoke-test ToolViewer for each toolId.
+5. Update memory.
 
-1. **Tool pricing table** — list all rows from `tool_pricing` joined with `tools_catalog.name`. Each row has an editable input for **Credit cost** (integer) with a Save button. Shows the implied ₹ purely for admin context.
-2. **Grant credits to user** — search field that queries `profiles` by email/name, picks a user, integer input + reason + Grant button. Calls `admin-tool-pricing` `grant_credits`.
-3. **Recent activity** — last 20 rows from `credit_ledger` where `reason='admin_adjust'`.
-
-Wire it into AdminDashboard as a new tab labeled **"Credits"** (icon `Zap`), admin-only (hidden in view-only/moderator mode).
-
-### 3c. Migration
-
-- Modify `public.tool_pricing_set_credits` trigger so it ONLY recomputes `credit_cost` from `cost_inr` when `credit_cost` was not explicitly provided (i.e. when `NEW.credit_cost IS DISTINCT FROM OLD.credit_cost` is false on update). Easiest: change the trigger to fire only when `cost_inr` changes (`WHEN (OLD.cost_inr IS DISTINCT FROM NEW.cost_inr)`), so admin can update `credit_cost` independently.
-
----
-
-## 4. Public Credits page (no forced auth)
-
-- **`src/pages/Credits.tsx`** — remove the `if (!user) navigate("/auth")` redirect. Logged-out users see packs, pricing breakdown, and FAQ. The wallet snapshot card only renders if `user` exists; otherwise show a "Sign in to top up" CTA in its place.
-- Clicking **Buy** while logged out opens the same login dialog as §5 (with a return-to `/credits?pack=<id>`).
-- **Replace the "credits per ₹" line** with a **"For ₹1 you get N credits"** label and the savings % vs the smallest pack.
-- **`src/components/wallet/BuyCreditsDialog.tsx`** — already routes to `/credits?pack=…`, no change needed.
-
----
-
-## 5. Login-required popup for generation actions
-
-Today, `useCredits.charge()` calls `navigate("/auth")` for guests, and `ToolAccessGuard` redirects on tool pages. Instead:
-
-- **New component `src/components/auth/LoginPromptDialog.tsx`** — small Dialog with two buttons: "Sign in" / "Create account", both linking to `/auth` with the current path stored in `localStorage.auth_redirect_to`.
-- **`src/hooks/useCredits.ts`** — when `!user`, instead of navigating, set `loginOpen=true` and return null. Expose `loginDialogProps` alongside `dialogProps`.
-- Tool components already render `<BuyCreditsDialog {...dialogProps} />` — they will additionally render `<LoginPromptDialog {...loginDialogProps} />` (one-line addition per tool — list below).
-- **`src/components/ToolAccessGuard.tsx`** — for non-free tools when logged out, render the page with the dialog auto-open instead of redirecting. Implementation: render children + dialog in a wrapper component; if user dismisses, send them home.
-
-Tools to update (add `<LoginPromptDialog />`): CaptionGenerator, HashtagGenerator, ContentIdeaGenerator, SocialPostGenerator, VideoScriptWriter, VideoMaker, BusinessCardScanner, StartupAnalyserApp.
-
----
-
-## 6. Memory updates
-
-- Update `mem://features/credits-system` to reflect: credits-only display, public Credits page, admin direct credit-cost editing, admin grant-credits flow, login dialog pattern.
-- Update `mem://index.md` Core: add "Never display ₹ cost on tool UI — credits only. Never use the word 'Premium' in user-facing copy."
-
----
-
-## Technical notes
-
-- `admin_adjust_credits` RPC already exists and enforces admin role — reuse via edge function.
-- `BuyCreditsDialog` doesn't require auth to render, so it's safe to show before login.
-- Keep `Subscription.tsx` as a redirect-to-`/credits` page (already done) for backward links.
-- Touched files (~15 edits, 2 new, 1 delete, 1 SQL migration). No breaking schema changes.
+## Risks / heads-up
+- Face-detection models (BlazeFace) add ~2 MB on first load for the few face tools — lazy-loaded only on those pages.
+- `super-resolution` / `unblur` quality from Gemini image preview is best-effort, not equal to dedicated upscalers; we'll set expectations in the UI copy.
+- This is a large change set (~60 new files). Expect the build to take longer than usual.
