@@ -372,26 +372,6 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
       { key: "company_website", label: "Website", type: "text", required: true, placeholder: "acme.com" },
     ],
   },
-      {
-        key: "stage",
-        label: "Stage",
-        type: "select",
-        default: "seed",
-        options: [
-          { value: "preseed", label: "Pre-seed" },
-          { value: "seed", label: "Seed" },
-          { value: "seriesa", label: "Series A+" },
-        ],
-      },
-      {
-        key: "industry",
-        label: "Industry (optional)",
-        type: "text",
-        default: "",
-        placeholder: "e.g. Fintech, SaaS, D2C",
-      },
-    ],
-  },
   "business-card-scanner": {
     toolId: "business-card-scanner",
     toolName: "Business Card Scanner",
