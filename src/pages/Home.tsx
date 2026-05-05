@@ -541,8 +541,11 @@ const Home = () => {
             >
               <p className="text-sm uppercase tracking-widest text-muted-foreground">Simple Pricing</p>
               <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-                One Plan, Everything Included
+                Pay-as-you-go. No subscriptions.
               </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Just credits. Top up from ₹10. Free credits on signup. You only pay for what you use.
+              </p>
             </motion.div>
 
             <motion.div
@@ -550,65 +553,14 @@ const Home = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6 }}
-              className="relative"
+              className="text-center"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent to-primary/5 rounded-3xl blur-3xl opacity-50" />
-              <motion.div
-                className="relative p-8 md:p-12 rounded-3xl border border-border bg-card"
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="grid md:grid-cols-2 gap-12 items-center">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <p className="text-sm uppercase tracking-widest text-muted-foreground">Premium Access</p>
-                      <motion.div
-                        className="flex items-baseline gap-2"
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        whileInView={{ scale: 1, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                      >
-                        <span className="font-display text-5xl md:text-6xl font-semibold">₹2000</span>
-                        <span className="text-muted-foreground">/year</span>
-                      </motion.div>
-                      <p className="text-muted-foreground">or $19.99/month globally</p>
-                    </div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button asChild size="lg" className="w-full md:w-auto px-8 h-14">
-                        <Link to="/subscription">
-                          Subscribe Now
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                      </Button>
-                    </motion.div>
-                  </div>
-                  <div className="space-y-4">
-                    {[
-                      "Access to all 200+ live AI tools (2,000+ coming within a year)",
-                      "Unlimited usage",
-                      "Priority support",
-                      "New tools added weekly",
-                      "BYO API support",
-                      "Personal dashboard",
-                    ].map((benefit, index) => (
-                      <motion.div
-                        key={benefit}
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
-                      >
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                          <Check className="h-4 w-4 text-foreground" />
-                        </div>
-                        <span className="text-muted-foreground">{benefit}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
+              <Button asChild size="lg" className="px-8 h-14">
+                <Link to="/credits">
+                  See credit packs
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </motion.div>
           </div>
         </div>
