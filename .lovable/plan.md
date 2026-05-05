@@ -1,89 +1,69 @@
-## Goal
-Stop loading any tool from `image.pi7.org` / `vision.pi7.org` / `bulkresizer.pi7.org`. Replace each Pi7 iframe with a native in-house tool that runs in the browser (Canvas) or via a Lovable AI edge function. Every replaced tool gets a Bulk Mode entry so users can process many files at once.
+## Transaction History
 
-## Inventory: the 67 Pi7 tools, grouped by implementation strategy
+Add a unified "Transaction History" view so users can see every credit movement: purchases (and how many credits were added) and tool runs (which tool was used, when, credits charged, and a link to the output where available).
 
-### A. Pure-browser Canvas tools — no AI, free, instant (~45 tools)
-Built with one shared `src/lib/imageOps/` library (Canvas 2D + a few small WASM-free helpers). Each gets a single-file React page under `src/components/native-tools/image/` and a `BULK_TOOLS` entry.
+### Where it lives
+- New page **`/credits/history`** (component `src/pages/CreditsHistory.tsx`).
+- Add a **"Transaction history"** link/button on:
+  - `src/pages/Credits.tsx` (near the wallet balance)
+  - `src/pages/Profile.tsx` (in the credits/wallet section)
+- Add it to the Navbar wallet dropdown if present (otherwise just the two entry points above).
 
-| Group | Tools |
-|---|---|
-| Resize / crop | resize-image-pixel, resize-image-cm, resize-image-mm, resize-image-inch, resize-a4, resize-2x2-inch, resize-3x4-inch, resize-4x6-inch, resize-600x600, resize-image-3.5x4.5, resize-35x45mm, resize-sign-6x2, resize-signature-50x20, resize-signature, ssc-photo-resize, pan-card-resize, upsc-photo-resize, psc-photo-resize, instagram-resize, whatsapp-dp, youtube-banner, freehand-crop, circle-crop, square-crop, instagram-grid, split-image, join-images, bulk-image-resizer |
-| Compress / file size | reduce-image-size-kb, increase-image-size-kb |
-| Rotate / flip | rotate-image, flip-image |
-| Blur / pixelate / effects | blur-image, motion-blur, pixelate-image, grayscale-image, black-white, picture-pixel-art, beautify-image (curves preset), zoom-out-image |
-| Annotate | watermark-images, add-text-image, add-logo-image, add-name-dob-photo, generate-signature, merge-photo-signature |
-| Color / metadata | image-color-picker, view-metadata, edit-metadata, remove-metadata |
-| DPI | convert-dpi, check-dpi |
+### Data sources (already exist, RLS-protected to the user)
+- `credit_ledger` — every credit delta with `reason` (`signup_bonus`, `first_action_bonus`, `monthly_reset`, `purchase`, `tool_run`, `admin_adjust`), `tool_id`, `run_id`, `cost_inr`, `metadata`.
+- `credit_purchases` — pack purchases (`pack_id`, `inr_amount`, `credits`, `status`, `paid_at`).
+- `tool_runs` — per-run details (`tool_id`, `credits_charged`, `status`, `started_at`, `finished_at`, `metadata`, `error`).
+- `tools_catalog` — to resolve `tool_id` → friendly name + `dedicated_route`.
 
-### B. AI tools — Lovable AI edge functions, charge credits (~17 tools)
-One shared `pi7-image-ai` edge function with an `op` parameter, using `google/gemini-3.1-flash-image-preview` (Nano Banana 2). Each tool calls it with a tailored prompt and shows the result.
+No schema changes needed. No new edge function needed (direct selects via RLS).
 
-| Op | Tools | Model prompt |
-|---|---|---|
-| `remove-bg` | remove-background, blur-background | "Return only the subject on transparent background" |
-| `enhance` | ai-photo-enhancer, increase-image-quality, super-resolution, upscale-image-ai, unblur-image, unblur-face, retouch-image | "Restore + upscale + sharpen" |
-| `remove-object` | remove-object-photo (with mask), blemish-remover | mask + inpaint prompt |
-| `passport` | passport-photo-maker (already in BULK_TOOLS — wire to native page), ai-id-photo-generator | passport prompt + Canvas crop |
-| `face-anonymize` | blur-face, pixelate-face, censor-photo | face-detection (BlazeFace via tfjs CDN) + Canvas blur/pixel/box |
-| `generate-face` | ai-face-generator | text-to-image |
+### UI
 
-## Architecture
+Single page with three tabs (shadcn `Tabs`):
 
-```text
-src/
-├─ lib/imageOps/
-│   ├─ canvas.ts        load/decode/encode helpers, EXIF read/write
-│   ├─ resize.ts        pixel/cm/mm/inch/preset resizers
-│   ├─ compress.ts      target-KB binary search on JPEG quality
-│   ├─ effects.ts       blur, pixelate, grayscale, motion-blur, pixel-art
-│   ├─ overlay.ts       text, logo, watermark, signature merge
-│   ├─ crop.ts          rect, circle, freehand path, splitter, joiner
-│   ├─ metadata.ts      EXIF view/edit/strip (piexifjs CDN)
-│   └─ faces.ts         BlazeFace detection wrapper
-├─ components/native-tools/image/
-│   ├─ ImageToolShell.tsx  shared layout: dropzone, params, preview, download, "Bulk Mode" toggle
-│   └─ <ToolName>.tsx      ~40 thin wrappers, each ~30 LOC over ImageToolShell
-├─ components/native-tools/ai-image/
-│   └─ AiImageShell.tsx    same shell, calls pi7-image-ai edge function, shows credit cost, charges via start_tool_run
-└─ pages/ToolViewer.tsx    routes Pi7 toolIds to the new native components instead of the iframe
-```
+1. **All activity** (default) — merged feed from `credit_ledger`, newest first.
+   Each row shows: date/time, icon, title, sub-line, credit delta (+green / −red), running balance.
+   - `purchase` → "Bought {credits} credits ({pack_id}) — ₹{inr_amount}" + link to Razorpay receipt id (if stored in metadata).
+   - `tool_run` → "{Tool name} · {status}" with link to the tool page; show `cost_inr` and any `metadata.output_url` / output filename if present.
+   - `signup_bonus` / `first_action_bonus` / `monthly_reset` → friendly label.
+   - `admin_adjust` → "Admin grant" + note from metadata.
 
-## Bulk Mode integration
-Extend `src/data/bulkTools.ts` with `BulkToolConfig` entries for every replaced tool:
-- Client-mode for all browser tools (mode: "client", estCostPerItemInr: 0).
-- Edge-mode for AI tools (mode: "edge", estCostPerItemInr from current `tool_pricing`).
-- Add `client` ops to `src/lib/bulkClientImageOps.ts` so the existing `BulkDropzone` can dispatch them.
-- AI bulk runs go through the new edge function (one call per file, ZIP'd by the existing `bulk-run` worker).
+2. **Purchases** — table of `credit_purchases` where `status='paid'`: date, pack, ₹, credits added, payment id.
 
-## Routing changes
-- `src/pages/ToolViewer.tsx`: build a `NATIVE_TOOL_COMPONENT: Record<string, React.LazyExoticComponent>` map keyed by toolId. If a toolId resolves to a native component, render it full-screen instead of the iframe block. The iframe path stays only for non-Pi7 wrapped tools (currently just `ai-id-photo-generator` from ToolFK — also being replaced).
-- `src/data/tools.tsx`: delete the entire `toolUrls` map for Pi7 entries (lines 23–105). Keep only the ToolFK entry until that's also migrated. `getToolUrl()` returns `null` for migrated tools.
+3. **Tool usage** — table of `tool_runs` joined w/ catalog name: date, tool (link), status badge, credits charged, output preview.
+   - "Output" column: if `metadata.output_url` exists → "View" link; else if `bulk_jobs` exists for this run via `tool_id` → link to `/bulk-jobs/:id`; otherwise "—".
 
-## Pricing & credits
-- Pure-browser tools: `tool_pricing.cost_inr = 0`, `credit_cost = 0` → run for free, no auth required to try.
-- AI tools: keep existing pricing rows. Login dialog already triggers via `useCredits` when a guest clicks Generate — no new work.
+### Output linking
+Most tool runs do not currently persist `output_url`. To make the "what the output was" column meaningful:
+- For **bulk runs**, look up `bulk_jobs` for the user (`tool_id`, time window) and link to `/bulk-jobs/:id` which already shows outputs.
+- For **AI single-tool runs**, query `user_creations` (already user-scoped) by `tool_type`/`created_at` proximity and surface `result_url` / `title`.
+- For runs with neither, show "—" (no fabricated data).
 
-## Edge function: `pi7-image-ai`
-Single function, JWT-required, validates body with Zod, dispatches by `op`, calls Lovable AI Gateway `google/gemini-3.1-flash-image-preview`, returns base64 PNG. Surfaces 402/429 to client. Charges via the existing `start_tool_run` / `complete_tool_run` flow keyed by the toolId so credit deduction stays consistent.
+This is best-effort matching done client-side (no DB change). A small helper `src/lib/transactionHistory.ts` will:
+- Fetch latest 200 ledger entries.
+- Batch-fetch related `bulk_jobs` (by `user_id` + `tool_id` + window) and `user_creations` (by `user_id` + `created_at` window).
+- Compute a running balance from current wallet total going backwards.
 
-## Removed/replaced
-- Delete every Pi7 URL in `src/data/tools.tsx` `toolUrls`.
-- Update memory `mem://features/tool-viewer/native-and-wrapped-display-v3` to note that Pi7 tools are now native.
+### Filters & UX
+- Date range (Last 7d / 30d / 90d / All) using a `Select`.
+- Type filter chips: Purchases, Tool runs, Bonuses, Admin grants.
+- CSV export button (client-side, reuses pattern from `ToolsExportButton`).
+- Pagination: load 50 at a time, "Load more" button.
+- Empty state: "No transactions yet" with link back to Credits page.
+- Mobile: switches to card list layout (re-uses Tailwind responsive patterns).
 
-## Out of scope
-- Admin "grant free credits" UI — already exists in `CreditsAdmin` from the previous loop, no changes.
-- Coupon/launch banners — already removed.
-- Toolfk `ai-id-photo-generator` iframe stays for now (covered by the new `passport` AI op once shipped, can be flipped later).
+### Files to create
+- `src/pages/CreditsHistory.tsx` — page shell, SEO, tabs.
+- `src/components/credits/TransactionList.tsx` — merged ledger feed.
+- `src/components/credits/PurchasesTable.tsx`
+- `src/components/credits/ToolRunsTable.tsx`
+- `src/lib/transactionHistory.ts` — fetch + enrichment helpers.
 
-## Phased delivery (one PR each, but all in this loop)
-1. Build `lib/imageOps/` + `ImageToolShell.tsx` + 5 representative Canvas tools (resize-pixel, reduce-kb, rotate, grayscale, watermark) and wire them into ToolViewer + BulkRunner. Confirm the pattern works.
-2. Generate the remaining ~40 Canvas tool components from the shared shell (mostly preset configs).
-3. Build `pi7-image-ai` edge function + `AiImageShell.tsx` + the 17 AI tools. Wire credits.
-4. Remove all Pi7 URLs from `tools.tsx`. Smoke-test ToolViewer for each toolId.
-5. Update memory.
+### Files to edit
+- `src/App.tsx` — add `/credits/history` route.
+- `src/pages/Credits.tsx` — add "Transaction history" link near wallet badge.
+- `src/pages/Profile.tsx` — add same link in credits section.
 
-## Risks / heads-up
-- Face-detection models (BlazeFace) add ~2 MB on first load for the few face tools — lazy-loaded only on those pages.
-- `super-resolution` / `unblur` quality from Gemini image preview is best-effort, not equal to dedicated upscalers; we'll set expectations in the UI copy.
-- This is a large change set (~60 new files). Expect the build to take longer than usual.
+### Out of scope
+- Persisting `output_url` on every tool run (would require edge-function changes across many tools). Instead we infer via `bulk_jobs` and `user_creations` where possible.
+- Admin-side "user transaction history" (admin already sees ledger via `CreditsAdmin`).
