@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Copy, Check, MessageSquare, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 
 const captionStyles = [
   { id: "engaging", name: "Engaging & Catchy" },
