@@ -527,6 +527,9 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 </div>
               )}
               {error && <p className="text-red-500 text-sm">{error}</p>}
+              <div className="flex justify-center pt-1">
+                <BulkModeToggle toolId="startup-analyser" />
+              </div>
               <div className="flex gap-3">
                 {user && savedSessions.length > 0 && (
                   <button onClick={() => setSidebarOpen(true)} className="px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
