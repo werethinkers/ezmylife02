@@ -41,6 +41,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminBulkQA = lazy(() => import("./pages/AdminBulkQA"));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
@@ -172,6 +173,14 @@ const AnimatedRoutes = () => {
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/bulk-qa"
+              element={
+                <ProtectedRoute>
+                  <AdminBulkQA />
                 </ProtectedRoute>
               }
             />

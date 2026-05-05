@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { defaultBulkParams, type BulkToolConfig } from "@/data/bulkTools";
+import { useToolPricing } from "@/hooks/useToolPricing";
 import { runClientImageBatch } from "@/lib/bulkClientImageOps";
 import { BulkParamsForm } from "./BulkParamsForm";
 
@@ -32,7 +33,8 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const perFileFields = config.perFileFields || [];
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
-  const estCost = (files.length * config.estCostPerItemInr).toFixed(2);
+  const { creditCost } = useToolPricing(config.toolId);
+  const totalCredits = files.length * Math.max(1, creditCost);
 
   const addFiles = (incoming: FileList | File[]) => {
     const arr = Array.from(incoming);
@@ -248,8 +250,8 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
             <span className="text-muted-foreground">{totalSizeMb.toFixed(1)} MB</span>
           </div>
           <div className="text-muted-foreground">
-            Est. cost: <span className="font-semibold text-foreground">₹{estCost}</span>{" "}
-            <span className="text-xs">(included with Premium)</span>
+            Credits required: <span className="font-semibold text-foreground">{totalCredits}</span>
+            <span className="text-xs ml-1">({Math.max(1, creditCost)}/file)</span>
           </div>
         </div>
       )}
