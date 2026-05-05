@@ -257,8 +257,22 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
     csvRows.push("source_file,name,email,phone,business,occupation,tag");
   }
 
+  let totalCharged = 0;
   for (const item of manifest) {
+    let runId: string | null = null;
     try {
+      // Per-item credit start
+      if (userId) {
+        const { data: startRes } = await sb.rpc("start_tool_run", { _uid: userId, _tool_id: toolId });
+        if (startRes && startRes.ok === false) {
+          outputs.push({ input_filename: item.filename, status: "error", error: "insufficient_credits" });
+          failed++;
+          await sb.from("bulk_jobs").update({ completed_items: completed, failed_items: failed, outputs }).eq("id", jobId);
+          continue;
+        }
+        runId = startRes?.run_id || null;
+      }
+
       const { data: blob, error: dlErr } = await sb.storage
         .from("bulk-inputs")
         .download(item.storage_path);
@@ -268,6 +282,7 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
       if (result.error && !result.outBlob) {
         outputs.push({ input_filename: item.filename, status: "error", error: result.error });
         failed++;
+        if (runId && userId) await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: false, _error: result.error });
       } else {
         if (result.outBlob && result.outName) {
           zip.file(result.outName, await result.outBlob.arrayBuffer());
@@ -279,15 +294,20 @@ async function processJob(jobId: string, toolId: string, manifest: ManifestItem[
           status: "ok",
         });
         completed++;
+        if (runId && userId) {
+          const { data: done } = await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: true });
+          if (done?.charged) totalCharged += done.charged;
+        }
       }
     } catch (e) {
       outputs.push({ input_filename: item.filename, status: "error", error: (e as Error).message });
       failed++;
+      if (runId && userId) await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: false, _error: (e as Error).message });
     }
 
     await sb
       .from("bulk_jobs")
-      .update({ completed_items: completed, failed_items: failed, outputs })
+      .update({ completed_items: completed, failed_items: failed, outputs, total_credits_charged: totalCharged })
       .eq("id", jobId);
   }
 
