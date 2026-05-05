@@ -207,7 +207,7 @@ const Home = () => {
         title="EZYOURLIFE - Best Free AI Tools Online | AI App Store for Productivity, Business & Education"
         description="EZYOURLIFE is the world's first AI App Store with 200+ live AI tools today (2,000+ launching within a year). Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
         path="/"
-        keywords="ezyourlife, ai tools, free ai tools, premium ai tools, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
+        keywords="ezyourlife, ai tools, free ai tools, pay as you go ai, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
         jsonLd={[
           {
             "@context": "https://schema.org",

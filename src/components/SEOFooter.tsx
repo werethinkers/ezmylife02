@@ -33,7 +33,7 @@ const SEOFooter = () => {
             <h4 className="text-sm font-semibold text-foreground">Platform</h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li><Link to="/tools" className="hover:text-primary transition-colors">Browse All AI Tools</Link></li>
-              <li><Link to="/subscription" className="hover:text-primary transition-colors">Pricing — Free & Premium Plans</Link></li>
+              <li><Link to="/credits" className="hover:text-primary transition-colors">Pricing — Credits</Link></li>
               <li><Link to="/startup-analyser" className="hover:text-primary transition-colors">AI Startup Analyser</Link></li>
               <li><Link to="/notebook" className="hover:text-primary transition-colors">Speedy Notebook</Link></li>
               <li><Link to="/promptmaster" className="hover:text-primary transition-colors">Prompt Master</Link></li>
@@ -59,7 +59,7 @@ const SEOFooter = () => {
             © 2026 <span className="font-semibold text-foreground">EZYOURLIFE</span> — The World's First AI App Store
           </p>
           <p className="text-xs text-muted-foreground">
-            Best free AI tools online • Premium AI tools for productivity • AI app store for business & education • ezyourlife.com
+            Best free AI tools online • Pay-as-you-go AI tools for productivity • AI app store for business & education • ezyourlife.com
           </p>
         </div>
       </div>
