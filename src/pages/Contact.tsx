@@ -65,7 +65,7 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="Contact EZYOURLIFE - AI Tools Support & Feedback"
-        description="Contact the EZYOURLIFE team for support with AI tools, premium subscriptions, or feedback. We reply within 24 hours. Reach ezyourlife support at support@ezyourlife.com."
+        description="Contact the EZYOURLIFE team for support with AI tools, credit top-ups, or feedback. We reply within 24 hours. Reach ezyourlife support at support@ezyourlife.com."
         path="/contact"
         keywords="contact ezyourlife, ezyourlife support, ai tools help, ezyourlife email, ezyourlife customer service"
         jsonLd={[

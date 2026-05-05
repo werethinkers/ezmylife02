@@ -71,7 +71,7 @@ const About = () => {
                     We noticed that people were spending hours searching for the right tools, dealing with complicated setups, and juggling multiple subscriptions. There had to be a better way.
                   </p>
                   <p>
-                    That's why we created EZYOURLIFE—a single platform where you can access premium digital tools instantly, with no installation, no complexity, just results.
+                    That's why we created EZYOURLIFE—a single platform where you can access professional digital tools instantly, with no installation, no complexity, just results.
                   </p>
                 </div>
               </div>
@@ -122,7 +122,7 @@ const About = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Everyone deserves access to premium tools. We make sure they're available to all.
+                  Everyone deserves access to professional tools. We make sure they're available to all.
                 </p>
               </CardContent>
             </Card>
