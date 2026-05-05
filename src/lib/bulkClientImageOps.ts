@@ -1,9 +1,8 @@
-// Browser-side bulk processing for free image ops.
-// Reads each file, applies the operation via canvas, builds a ZIP,
-// uploads it to bulk-outputs, and updates the bulk_jobs row.
+// Browser-side bulk processing for free image ops + Startup Analyser bulk.
 
 import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
+import { extractPdfText, generateComprehensiveAnalysis } from "@/startup-analyser/services/geminiService";
 
 interface RunArgs {
   jobId: string;
@@ -11,6 +10,7 @@ interface RunArgs {
   toolId: string;
   files: File[];
   params?: Record<string, any>;
+  perFileMeta?: Record<string, string>[];
 }
 
 async function loadImage(file: File): Promise<HTMLImageElement> {
@@ -124,7 +124,59 @@ async function processOne(
   }
 }
 
-export async function runClientImageBatch({ jobId, userId, toolId, files, params = {} }: RunArgs) {
+function safeFilename(s: string): string {
+  return (s || "report").replace(/[^a-z0-9-_]+/gi, "_").slice(0, 60);
+}
+
+async function loadUserApiKey(userId: string): Promise<string | null> {
+  try {
+    const { data } = await supabase.from("profiles").select("gemini_api_key").eq("id", userId).maybeSingle();
+    return data?.gemini_api_key || null;
+  } catch { return null; }
+}
+
+async function runStartupAnalyserBatch(args: RunArgs, zip: JSZip, outputs: any[]) {
+  const { jobId, userId, files, perFileMeta = [], params = {} } = args;
+  let completed = 0;
+  let failed = 0;
+  const userApiKey = await loadUserApiKey(userId);
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const meta = perFileMeta[i] || {};
+    const name = (meta.company_name || f.name.replace(/\.[^.]+$/, "")).trim();
+    const website = (meta.company_website || "").trim();
+    try {
+      const pitchText = await extractPdfText(f);
+      const result = await generateComprehensiveAnalysis(name, website, () => {}, pitchText, userApiKey);
+      const md = result.markdownReport || JSON.stringify(result.structuredData, null, 2);
+      const focus = params.focus ? `\n\n_Focus: ${params.focus} · Stage: ${params.stage || "n/a"}_\n` : "";
+      const out = `# ${name}\n_Website: ${website || "n/a"}_${focus}\n\n${md}`;
+      zip.file(`${safeFilename(name)}.md`, out);
+      // Persist to startup_analyses
+      try {
+        await supabase.from("startup_analyses").insert({
+          user_id: userId,
+          company_name: name,
+          company_website: website || null,
+          analysis_data: (result.structuredData || {}) as any,
+          markdown_report: md,
+          status: "completed",
+        });
+      } catch { /* non-fatal */ }
+      outputs.push({ input_filename: f.name, output_filename: `${safeFilename(name)}.md`, status: "ok", company_name: name });
+      completed++;
+    } catch (e: any) {
+      outputs.push({ input_filename: f.name, status: "error", error: e.message || "analysis failed", company_name: name });
+      failed++;
+    }
+    await supabase.from("bulk_jobs").update({ completed_items: completed, failed_items: failed, outputs }).eq("id", jobId);
+  }
+  return { completed, failed };
+}
+
+export async function runClientImageBatch(args: RunArgs) {
+  const { jobId, userId, toolId, files, params = {} } = args;
   await supabase.from("bulk_jobs").update({ status: "running" }).eq("id", jobId);
 
   const zip = new JSZip();
@@ -132,7 +184,11 @@ export async function runClientImageBatch({ jobId, userId, toolId, files, params
   let completed = 0;
   let failed = 0;
 
-  if (toolId === "metadata-viewer") {
+  if (toolId === "startup-analyser") {
+    const r = await runStartupAnalyserBatch(args, zip, outputs);
+    completed = r.completed;
+    failed = r.failed;
+  } else if (toolId === "metadata-viewer") {
     const rows: string[] = ["filename,size_kb,type,width,height"];
     for (const f of files) {
       try {

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -137,6 +138,7 @@ export const MetadataViewer = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Image Metadata Viewer</h1>
+          <div className="flex justify-center pt-2"><BulkModeToggle toolId="metadata-viewer" /></div>
           <p className="text-muted-foreground">View and manage image metadata</p>
         </div>
 

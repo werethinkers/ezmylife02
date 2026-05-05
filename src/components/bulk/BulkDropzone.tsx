@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Upload, X, Loader2, FileIcon, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -22,10 +23,13 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [files, setFiles] = useState<File[]>([]);
+  const [perFileMeta, setPerFileMeta] = useState<Record<string, string>[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [params, setParams] = useState<Record<string, any>>(() => defaultBulkParams(config));
+
+  const perFileFields = config.perFileFields || [];
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   const estCost = (files.length * config.estCostPerItemInr).toFixed(2);
@@ -44,7 +48,18 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
     if (files.length + valid.length > config.maxFiles) {
       toast.warning(`Only first ${config.maxFiles} files kept`);
     }
+    // Initialize per-file meta for the newly added files
+    const newMeta = valid.slice(0, config.maxFiles - files.length).map((f) => {
+      const m: Record<string, string> = {};
+      for (const field of perFileFields) {
+        m[field.key] = field.prefillFromFilename
+          ? f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ")
+          : "";
+      }
+      return m;
+    });
     setFiles(merged);
+    setPerFileMeta([...perFileMeta, ...newMeta].slice(0, config.maxFiles));
   };
 
   const handleDrop = useCallback(
@@ -56,7 +71,19 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
     [files]
   );
 
-  const removeFile = (i: number) => setFiles(files.filter((_, idx) => idx !== i));
+  const removeFile = (i: number) => {
+    setFiles(files.filter((_, idx) => idx !== i));
+    setPerFileMeta(perFileMeta.filter((_, idx) => idx !== i));
+  };
+  const updateMeta = (i: number, key: string, value: string) => {
+    const next = [...perFileMeta];
+    next[i] = { ...(next[i] || {}), [key]: value };
+    setPerFileMeta(next);
+  };
+
+  const missingMeta = perFileFields.length > 0
+    ? files.some((_, i) => perFileFields.some((f) => f.required && !(perFileMeta[i]?.[f.key] || "").trim()))
+    : false;
 
   const handleSubmit = async () => {
     if (!user) {
@@ -66,6 +93,10 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
     }
     if (files.length === 0) {
       toast.error("Drop some files first");
+      return;
+    }
+    if (missingMeta) {
+      toast.error("Fill all required fields per file");
       return;
     }
 
@@ -96,6 +127,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
         status: "queued",
         total_items: files.length,
         input_manifest: inputManifest,
+        per_file_meta: perFileMeta,
         params,
       });
       if (insErr) throw insErr;
@@ -110,6 +142,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           toolId: config.toolId,
           files,
           params,
+          perFileMeta,
         }).catch((e) => {
           console.error(e);
           toast.error("Bulk processing failed");
@@ -117,7 +150,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       } else {
         // Dispatch to edge function
         const { error: fnErr } = await supabase.functions.invoke("bulk-run", {
-          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params },
+          body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params, per_file_meta: perFileMeta },
         });
         if (fnErr) throw fnErr;
         toast.success("Bulk job started");
@@ -172,22 +205,37 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       </motion.div>
 
       {files.length > 0 && (
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+        <div className="space-y-2 max-h-80 overflow-y-auto">
           {files.map((f, i) => (
             <div
               key={i}
-              className="flex items-center justify-between p-2 rounded-md bg-muted/40 text-sm"
+              className="rounded-md bg-muted/40 text-sm p-2 space-y-2"
             >
-              <div className="flex items-center gap-2 truncate">
-                <FileIcon className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{f.name}</span>
-                <Badge variant="outline" className="text-xs">
-                  {(f.size / 1024).toFixed(0)} KB
-                </Badge>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 truncate min-w-0">
+                  <FileIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{f.name}</span>
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                    {(f.size / 1024).toFixed(0)} KB
+                  </Badge>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => removeFile(i)}>
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => removeFile(i)}>
-                <X className="h-3 w-3" />
-              </Button>
+              {perFileFields.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                  {perFileFields.map((field) => (
+                    <Input
+                      key={field.key}
+                      className="h-8 text-xs"
+                      placeholder={`${field.label}${field.required ? " *" : ""}`}
+                      value={perFileMeta[i]?.[field.key] ?? ""}
+                      onChange={(e) => updateMeta(i, field.key, e.target.value)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -219,7 +267,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
 
       <Button
         onClick={handleSubmit}
-        disabled={submitting || files.length === 0}
+        disabled={submitting || files.length === 0 || missingMeta}
         className="w-full"
         size="lg"
       >

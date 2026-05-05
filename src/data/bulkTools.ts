@@ -41,6 +41,16 @@ export type BulkParamField =
       help?: string;
     };
 
+export interface BulkPerFileField {
+  key: string;
+  label: string;
+  type: "text";
+  required?: boolean;
+  placeholder?: string;
+  /** When true, prefill from filename (without extension) on first add. */
+  prefillFromFilename?: boolean;
+}
+
 export interface BulkToolConfig {
   toolId: string;
   toolName: string;
@@ -59,6 +69,8 @@ export interface BulkToolConfig {
   outputDescription: string;
   /** Optional per-tool settings — applied to every file in the batch. */
   params?: BulkParamField[];
+  /** Optional per-file inputs collected inline next to each uploaded file. */
+  perFileFields?: BulkPerFileField[];
 }
 
 export const BULK_TOOLS: Record<string, BulkToolConfig> = {
@@ -317,13 +329,13 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
   "startup-analyser": {
     toolId: "startup-analyser",
     toolName: "Startup Analyser",
-    accept: ".pdf,.pptx,.docx",
-    hint: "Drop up to 10 pitch decks",
+    accept: ".pdf",
+    hint: "Drop up to 10 pitch decks (PDF) — fill name + website per deck",
     maxFiles: 10,
-    maxFileSizeMb: 20,
-    mode: "edge",
+    maxFileSizeMb: 25,
+    mode: "client",
     estCostPerItemInr: 11.4,
-    outputDescription: "ZIP of investor-grade reports",
+    outputDescription: "ZIP of investor-grade reports (.md per deck)",
     params: [
       {
         key: "focus",
@@ -349,11 +361,15 @@ export const BULK_TOOLS: Record<string, BulkToolConfig> = {
       },
       {
         key: "industry",
-        label: "Industry (optional)",
+        label: "Default industry (optional)",
         type: "text",
         default: "",
         placeholder: "e.g. Fintech, SaaS, D2C",
       },
+    ],
+    perFileFields: [
+      { key: "company_name", label: "Company name", type: "text", required: true, prefillFromFilename: true, placeholder: "Acme Inc." },
+      { key: "company_website", label: "Website", type: "text", required: true, placeholder: "acme.com" },
     ],
   },
   "business-card-scanner": {
