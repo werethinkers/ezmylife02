@@ -43,13 +43,8 @@ const Credits = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) navigate("/auth");
-  }, [user, navigate]);
-
-  useEffect(() => {
     const pack = searchParams.get("pack");
     if (pack && user) {
-      // auto-trigger after a small delay to let scripts load
       const t = setTimeout(() => buyPack(pack), 600);
       return () => clearTimeout(t);
     }
@@ -59,10 +54,16 @@ const Credits = () => {
   const buyPack = async (packId: string) => {
     const pack = CREDIT_PACKS.find((p) => p.id === packId);
     if (!pack) return;
+    if (!user) {
+      setPendingPack(packId);
+      try { localStorage.setItem("auth_redirect_to", `/credits?pack=${packId}`); } catch { /* ignore */ }
+      setLoginOpen(true);
+      return;
+    }
     try {
       setBusyPack(packId);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/auth"); return; }
+      if (!session) { setLoginOpen(true); return; }
 
       const { data: orderData, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: { pack_id: packId },
