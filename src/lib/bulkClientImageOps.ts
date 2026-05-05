@@ -56,7 +56,9 @@ async function processOne(
   file: File,
   params: Record<string, any>
 ): Promise<{ blob: Blob; ext: string } | null> {
-  if (toolId === "metadata-viewer") return null;
+  // Resolve Pi7 aliases to underlying op
+  const op = PI7_BULK_OP_ALIAS[toolId] ?? toolId;
+  if (op === "metadata-viewer" || op === "color-extract") return null;
 
   const img = await loadImage(file);
   const canvas = document.createElement("canvas");
