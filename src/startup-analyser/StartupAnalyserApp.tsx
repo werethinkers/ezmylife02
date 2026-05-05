@@ -151,6 +151,7 @@ const NewsSnippetCard = ({ article }: { article: ResourceItem }) => (
 export default function StartupAnalyserApp(): React.ReactNode {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { charge: chargeAnalysis, dialogProps: analysisDialog } = useCredits('startup-analyser');
   const [step, setStep] = useState<AppStep>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
