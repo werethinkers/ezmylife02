@@ -582,6 +582,7 @@ const VideoMaker = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...dialogProps} />
     </div>
   );
 };
