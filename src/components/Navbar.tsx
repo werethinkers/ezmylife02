@@ -36,14 +36,13 @@ export const Navbar = () => {
     { to: "/credits", label: "Credits" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
+    ...(user
+      ? [
+          { to: "/get-extension", label: "Get Extension" },
+          { to: "/bulk/jobs", label: "Bulk Jobs" },
+        ]
+      : []),
   ];
-
-  const premiumLinks = user
-    ? [
-        { to: "/get-extension", label: "Get Extension" },
-        { to: "/bulk/jobs", label: "Bulk Jobs" },
-      ]
-    : [];
 
   return (
     <motion.nav
