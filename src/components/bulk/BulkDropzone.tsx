@@ -22,10 +22,13 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [files, setFiles] = useState<File[]>([]);
+  const [perFileMeta, setPerFileMeta] = useState<Record<string, string>[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [params, setParams] = useState<Record<string, any>>(() => defaultBulkParams(config));
+
+  const perFileFields = config.perFileFields || [];
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   const estCost = (files.length * config.estCostPerItemInr).toFixed(2);
