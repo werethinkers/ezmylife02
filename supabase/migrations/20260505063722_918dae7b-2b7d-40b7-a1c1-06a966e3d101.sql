@@ -1,0 +1,1 @@
+ALTER TABLE public.bulk_jobs ADD COLUMN IF NOT EXISTS per_file_meta jsonb NOT NULL DEFAULT '[]'::jsonb;

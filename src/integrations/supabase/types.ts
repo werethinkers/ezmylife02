@@ -50,6 +50,7 @@ export type Database = {
           output_zip_path: string | null
           outputs: Json
           params: Json
+          per_file_meta: Json
           status: string
           tool_id: string
           tool_name: string
@@ -68,6 +69,7 @@ export type Database = {
           output_zip_path?: string | null
           outputs?: Json
           params?: Json
+          per_file_meta?: Json
           status?: string
           tool_id: string
           tool_name: string
@@ -86,6 +88,7 @@ export type Database = {
           output_zip_path?: string | null
           outputs?: Json
           params?: Json
+          per_file_meta?: Json
           status?: string
           tool_id?: string
           tool_name?: string
