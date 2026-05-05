@@ -41,6 +41,16 @@ export type BulkParamField =
       help?: string;
     };
 
+export interface BulkPerFileField {
+  key: string;
+  label: string;
+  type: "text";
+  required?: boolean;
+  placeholder?: string;
+  /** When true, prefill from filename (without extension) on first add. */
+  prefillFromFilename?: boolean;
+}
+
 export interface BulkToolConfig {
   toolId: string;
   toolName: string;
@@ -59,6 +69,8 @@ export interface BulkToolConfig {
   outputDescription: string;
   /** Optional per-tool settings — applied to every file in the batch. */
   params?: BulkParamField[];
+  /** Optional per-file inputs collected inline next to each uploaded file. */
+  perFileFields?: BulkPerFileField[];
 }
 
 export const BULK_TOOLS: Record<string, BulkToolConfig> = {
