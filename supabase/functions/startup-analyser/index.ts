@@ -233,6 +233,11 @@ async function callGeminiDirect(
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   try {
     const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages, userApiKey } = await req.json();
 
