@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid } from "lucide-react";
+import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import ToolMediaManager from "@/components/admin/ToolMediaManager";
 import EnterpriseLeads from "@/components/admin/EnterpriseLeads";
 import ToolRequests from "@/components/admin/ToolRequests";
@@ -59,7 +60,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -160,6 +161,7 @@ const AdminDashboard = () => {
     ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
     ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
+    ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
     { id: "archived-events" as const, label: "Archived Events", icon: Archive },
     { id: "meet-nudge" as const, label: "Meet Nudge", icon: Handshake },
@@ -309,6 +311,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "tool-mgmt" && <ToolManagement />}
+        {activeTab === "home-sections" && !isViewOnly && <HomeSectionsManager />}
         {activeTab === "tool-requests" && <ToolRequests />}
         {activeTab === "archived-events" && <ArchivedEvents />}
         {activeTab === "meet-nudge" && <MeetNudgeAdmin />}
