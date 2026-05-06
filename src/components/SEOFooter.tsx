@@ -9,22 +9,22 @@ const SEOFooter = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-foreground">EZYOURLIFE</h3>
             <p className="text-sm text-muted-foreground">
-              The Future's First AI App Store. 200+ live AI tools today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
+              The Future's First AI App Store. 200+ live AI apps today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
             </p>
             <p className="text-xs text-muted-foreground">
               ezyourlife — Making digital tools accessible to everyone.
             </p>
           </div>
 
-          {/* AI Tool Categories */}
+          {/* AI App Categories */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">AI Tool Categories</h4>
+            <h4 className="text-sm font-semibold text-foreground">AI App Categories</h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li><Link to="/tools" className="hover:text-primary transition-colors">AI Image Tools — Background Remover, Compressor</Link></li>
-              <li><Link to="/tools" className="hover:text-primary transition-colors">AI Business Tools — Invoice, Contract, Tax</Link></li>
-              <li><Link to="/tools" className="hover:text-primary transition-colors">AI Content Creator — Captions, Social Posts</Link></li>
-              <li><Link to="/tools" className="hover:text-primary transition-colors">AI Education Tools — Quiz, Flashcards, Planner</Link></li>
-              <li><Link to="/tools" className="hover:text-primary transition-colors">AI Productivity — Notebook, Prompt Master</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Image Apps — Background Remover, Compressor</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Business Apps — Invoice, Contract, Tax</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Content Creator — Captions, Social Posts</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Education Apps — Quiz, Flashcards, Planner</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Productivity — Notebook, Prompt Master</Link></li>
             </ul>
           </div>
 
@@ -32,7 +32,7 @@ const SEOFooter = () => {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Platform</h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li><Link to="/tools" className="hover:text-primary transition-colors">Browse All AI Tools</Link></li>
+              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">Browse All AI Apps</Link></li>
               <li><Link to="/credits" className="hover:text-primary transition-colors">Pricing — Credits</Link></li>
               <li><Link to="/startup-analyser" className="hover:text-primary transition-colors">AI Startup Analyser</Link></li>
               <li><Link to="/notebook" className="hover:text-primary transition-colors">Speedy Notebook</Link></li>
@@ -46,7 +46,7 @@ const SEOFooter = () => {
             <h4 className="text-sm font-semibold text-foreground">Company</h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-primary transition-colors">About EZYOURLIFE</Link></li>
-              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
+              <li><Link to="/about#contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
               <li><Link to="/get-extension" className="hover:text-primary transition-colors">Browser Extension</Link></li>
               <li><Link to="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</Link></li>
             </ul>
@@ -59,7 +59,7 @@ const SEOFooter = () => {
             © 2026 <span className="font-semibold text-foreground">EZYOURLIFE</span> — The World's First AI App Store
           </p>
           <p className="text-xs text-muted-foreground">
-            Best free AI tools online • Pay-as-you-go AI tools for productivity • AI app store for business & education • ezyourlife.com
+            Best free AI apps online • Pay-as-you-go AI apps for productivity • AI app store for business & education • ezyourlife.com
           </p>
         </div>
       </div>

@@ -1,665 +1,349 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
-
-import { ArrowRight, Sparkles, Zap, Shield, Globe, Check, FileText, Palette, FileSearch, Settings, GraduationCap } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  ArrowRight, Sparkles, Zap, ShieldCheck, Wallet, Search,
+  MessageSquare, Image as ImageIcon, Video, AudioLines, Pencil,
+  Briefcase, Megaphone, LayoutGrid, Star,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { useHomeSections } from "@/hooks/useHomeSections";
+import { ToolLandscapeCard } from "@/components/tools/ToolLandscapeCard";
+import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import logo from "@/assets/logo.png";
-import { useRef } from "react";
 
-const TOTAL_TOOLS_COUNT = 50000;
-
-const problemCards = [
-  {
-    id: "gst-compliance",
-    title: "I need help with GST & compliance",
-    icon: FileText,
-    toolKeywords: ["invoice", "tax", "gst", "compliance", "legal", "contract"],
-  },
-  {
-    id: "content-creation",
-    title: "I want to create better content",
-    icon: Palette,
-    toolKeywords: ["content", "image", "video", "storybook", "creative", "design"],
-  },
-  {
-    id: "pdf-documents",
-    title: "I need to analyze PDFs and documents",
-    icon: FileSearch,
-    toolKeywords: ["pdf", "document", "text", "extractor", "ocr", "reader"],
-  },
-  {
-    id: "automation",
-    title: "I want to automate business tasks",
-    icon: Settings,
-    toolKeywords: ["automation", "bot", "ai", "workflow", "expense", "tracker"],
-  },
-  {
-    id: "studying",
-    title: "I need help studying or learning",
-    icon: GraduationCap,
-    toolKeywords: ["quiz", "learning", "encyclopedia", "notebook", "mindmap"],
-  },
-];
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-// Parallax Background Component
-const ParallaxBackground = () => {
-  const { scrollY } = useScroll();
-  
-  // Smooth spring physics for parallax
-  const springConfig = { stiffness: 100, damping: 30, mass: 1 };
-  
-  // Different speeds for different layers (creates depth)
-  const y1 = useSpring(useTransform(scrollY, [0, 1000], [0, -150]), springConfig);
-  const y2 = useSpring(useTransform(scrollY, [0, 1000], [0, -250]), springConfig);
-  const y3 = useSpring(useTransform(scrollY, [0, 1000], [0, -100]), springConfig);
-  const y4 = useSpring(useTransform(scrollY, [0, 1000], [0, -200]), springConfig);
-  
-  // Opacity fade on scroll
-  const opacity = useSpring(useTransform(scrollY, [0, 600], [1, 0.4]), springConfig);
-  
-  // Scale effect
-  const scale = useSpring(useTransform(scrollY, [0, 800], [1, 1.1]), springConfig);
-  
-  // Rotation for floating elements
-  const rotate1 = useSpring(useTransform(scrollY, [0, 1000], [0, 15]), { stiffness: 50, damping: 20 });
-  const rotate2 = useSpring(useTransform(scrollY, [0, 1000], [0, -10]), { stiffness: 50, damping: 20 });
-
-  return (
-    <motion.div 
-      className="absolute inset-0 overflow-hidden pointer-events-none"
-      style={{ opacity }}
-    >
-      {/* Main gradient background with scale */}
-      <motion.div 
-        className="absolute inset-0 bg-gradient-to-b from-accent/50 to-background"
-        style={{ scale }}
-      />
-      
-      {/* Layer 1 - Slowest (furthest back) */}
-      <motion.div
-        className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full"
-        style={{
-          y: y1,
-          rotate: rotate1,
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
-          filter: "blur(60px)",
-        }}
-      />
-      
-      {/* Layer 2 - Medium speed */}
-      <motion.div
-        className="absolute top-40 right-0 w-[600px] h-[600px] rounded-full"
-        style={{
-          y: y2,
-          rotate: rotate2,
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
-          filter: "blur(80px)",
-        }}
-      />
-      
-      {/* Layer 3 - Floating orb left */}
-      <motion.div
-        className="absolute top-60 left-[10%] w-72 h-72 rounded-full"
-        style={{
-          y: y3,
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 60%)",
-          filter: "blur(40px)",
-        }}
-        animate={{
-          x: [0, 20, 0],
-          scale: [1, 1.05, 1],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      
-      {/* Layer 4 - Floating orb right */}
-      <motion.div
-        className="absolute bottom-20 right-[15%] w-96 h-96 rounded-full"
-        style={{
-          y: y4,
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 60%)",
-          filter: "blur(50px)",
-        }}
-        animate={{
-          x: [0, -15, 0],
-          scale: [1, 1.08, 1],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      
-      {/* Noise texture overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]" 
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} 
-      />
-    </motion.div>
-  );
+const CATEGORY_ICONS: Record<string, typeof MessageSquare> = {
+  "Chatbots": MessageSquare,
+  "Image Processing": ImageIcon,
+  "Image": ImageIcon,
+  "Video": Video,
+  "Audio": AudioLines,
+  "Content Creation": Pencil,
+  "Writing": Pencil,
+  "Productivity": Zap,
+  "Marketing": Megaphone,
+  "Business & Finance": Briefcase,
+  "Business": Briefcase,
+  "AI Tools": Sparkles,
 };
 
 const Home = () => {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  
-  // Subtle parallax only — no opacity/scale fade so hero never goes blank
-  const springConfig = { stiffness: 100, damping: 30, mass: 1 };
-  const heroY = useSpring(useTransform(scrollY, [0, 600], [0, 30]), springConfig);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { total: walletTotal } = useWallet();
+  const { data: catalog = [] } = useToolsCatalog();
+  const { hot, featured } = useHomeSections();
+  const [search, setSearch] = useState("");
 
-  const features = [
-    {
-      icon: Zap,
-      title: "Think it → Done",
-      description: "Instant answers to any business or personal challenge with 200+ live AI tools (2,000+ coming within a year).",
-    },
-    {
-      icon: Globe,
-      title: "One Platform, Everything",
-      description: "Replace dozens of expensive subscriptions with a single, unified AI ecosystem.",
-    },
-    {
-      icon: Shield,
-      title: "Secure & Private",
-      description: "Your data is protected with bank-grade encryption and privacy standards.",
-    },
-  ];
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = search.trim();
+    navigate(q ? `/ai-apps?q=${encodeURIComponent(q)}` : "/ai-apps");
+  };
 
-  const categories = [
-    "Business Automation",
-    "Content Creation",
-    "Finance & Accounting",
-    "Marketing & Sales",
-    "Education & Learning",
-    "Personal Productivity",
-    "Legal & Compliance",
-    "Design & Creative",
-  ];
+  const categories = useMemo(() => {
+    const map = new Map<string, number>();
+    catalog.filter((t) => t.is_live).forEach((t) => {
+      map.set(t.category, (map.get(t.category) ?? 0) + 1);
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count, Icon: CATEGORY_ICONS[name] ?? LayoutGrid }));
+  }, [catalog]);
+
+  const popularPacks = useMemo(() => {
+    const ids = ["p100", "p250", "p1000"];
+    return CREDIT_PACKS.filter((p) => ids.includes(p.id));
+  }, []);
+
+  const topPicks = (hot.length ? hot : featured).slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background">
       <SEOHead
-        title="EZYOURLIFE - Best Free AI Tools Online | AI App Store for Productivity, Business & Education"
-        description="EZYOURLIFE is the world's first AI App Store with 200+ live AI tools today (2,000+ launching within a year). Discover the best online AI tools for productivity, content creation, business automation, image editing, education and more. Try ezyourlife free today!"
+        title="EZYOURLIFE - The Future's First AI App Store | 200+ AI Apps"
+        description="EZYOURLIFE is the world's first AI App Store with 200+ live AI apps today (2,000+ launching within a year). Pay-as-you-go, no subscriptions."
         path="/"
-        keywords="ezyourlife, ai tools, free ai tools, pay as you go ai, best ai tools 2026, ai app store, online ai tools, productivity tools, content creation, business automation, image editing, education tools, free online tools"
-        jsonLd={[
-          {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "EZYOURLIFE",
-            alternateName: ["ezyourlife", "ez your life"],
-            url: "https://ezyourlife.com",
-            description: "The world's first AI App Store with 200+ live AI tools today (2,000+ launching within a year).",
-            potentialAction: {
-              "@type": "SearchAction",
-              target: "https://ezyourlife.com/tools?q={search_term_string}",
-              "query-input": "required name=search_term_string",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "EZYOURLIFE",
-              url: "https://ezyourlife.com",
-              logo: { "@type": "ImageObject", url: "https://ezyourlife.com/favicon.png" },
-            },
-          },
-        ]}
+        keywords="ezyourlife, ai apps, ai app store, pay as you go ai, free ai apps"
       />
       <Navbar />
 
-      {/* Hero Section with Parallax */}
-      <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
-        <ParallaxBackground />
-        
-        <div className="relative container mx-auto px-4 py-24 md:py-32 lg:py-40">
-          <motion.div
-            className="mx-auto max-w-5xl text-center space-y-8"
-            style={{ y: heroY }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="flex justify-center mb-2"
-            >
-              <motion.img
-                src={logo}
-                alt="EZYOURLIFE"
-                className="h-20 md:h-28 lg:h-36 object-contain will-change-transform"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.div>
-            
-            <motion.h1
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="font-display text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight"
-            >
-              The Future's First{" "}
-              <span className="text-gradient bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-                AI App Store
-              </span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light"
-            >
-              Access 200+ live AI-powered tools today — and 2,000+ launching within a year. 
-              One subscription replaces dozens of apps. Think it → Done.
-            </motion.p>
+      <main className="container mx-auto px-4 pt-8 pb-12">
+        {/* Search bar */}
+        <form onSubmit={onSearch} className="relative mb-10 max-w-5xl mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search AI apps, tools and more…"
+            className="pl-12 h-14 text-base bg-card/60 border-border/60 rounded-2xl shadow-sm"
+          />
+        </form>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6"
-            >
-              <motion.div 
-                whileHover={{ scale: 1.05, y: -2 }} 
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
-                  <Link to="/auth">
-                    Get Started
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </Button>
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.05, y: -2 }} 
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button asChild variant="outline" size="lg" className="text-base px-8 h-14">
-                  <Link to="/tools">Explore Tools</Link>
-                </Button>
-              </motion.div>
-            </motion.div>
-
-            {/* Big Launch Offer CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="w-full max-w-2xl mx-auto mt-8"
-            >
-              <Link to="/subscription?coupon=ezyLAUNCH" className="block">
-                <motion.div
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative overflow-hidden rounded-2xl border-2 border-dashed border-primary/60 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-6 md:p-8 text-center"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-3xl md:text-4xl mb-2"
-                  >
-                    🎉
-                  </motion.div>
-                  <h3 className="text-xl md:text-2xl font-bold mb-1">
-                    One-Time Launch Offer — <span className="text-primary">100% FREE</span>
-                  </h3>
-                  <p className="text-sm md:text-base text-muted-foreground mb-3">
-                    Get your first month completely free. No credit card needed. Use code:
-                  </p>
-                  <span className="inline-block font-mono font-bold text-lg md:text-xl tracking-widest text-primary bg-background border-2 border-primary/40 rounded-lg px-6 py-2">
-                    ezyLAUNCH
-                  </span>
-                  <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
-                    <Zap className="h-3 w-3" /> Limited to early users only • Click to redeem →
-                  </p>
-                </motion.div>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-        
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6 }}
-          
-        >
-          <motion.div
-            className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1.5"
-            animate={{ y: [0, 5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <motion.div
-              className="w-1.5 h-3 rounded-full bg-muted-foreground/50"
-              animate={{ y: [0, 8, 0], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-4">
+        {/* Hero split: left copy, right credits card */}
+        <section className="grid lg:grid-cols-2 gap-8 items-stretch mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16 space-y-4"
-          >
-            <p className="text-sm uppercase tracking-widest text-muted-foreground">Why EZYOURLIFE</p>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-              Everything You Need in One Place
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              200+ live AI tools today — 2,000+ launching within a year
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="group p-8 rounded-2xl border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300"
-              >
-                <div className="flex items-start gap-5">
-                  <motion.div
-                    className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 transition-colors"
-                    whileHover={{ rotate: 5 }}
-                  >
-                    <feature.icon className="h-6 w-6 text-foreground" />
-                  </motion.div>
-                  <div className="space-y-2">
-                    <h3 className="font-display text-xl font-semibold">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-24 bg-accent/30">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16 space-y-4"
-          >
-            <p className="text-sm uppercase tracking-widest text-muted-foreground">Categories</p>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-              Every Tool You Need
-            </h2>
-          </motion.div>
-
-          <motion.div
-            className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={staggerContainer}
-          >
-            {categories.map((category, index) => (
-              <motion.div
-                key={category}
-                variants={fadeInUp}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                whileHover={{ scale: 1.1, y: -3 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-3 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer shadow-sm hover:shadow-md"
-              >
-                <span className="text-sm font-medium">{category}</span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Tool Discovery Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6"
-            >
-              <div className="space-y-4">
-                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-                  Start with your problem
-                </h2>
-                <p className="text-lg text-muted-foreground max-w-xl">
-                  Choose what you're trying to solve. We'll show you only the tools you need.
-                </p>
-              </div>
-              <motion.div
-                className="flex-shrink-0"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="px-5 py-3 rounded-full bg-accent border border-border">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total Tools: <span className="text-foreground font-semibold">{TOTAL_TOOLS_COUNT.toLocaleString()}+</span> <span className="text-xs">(including upcoming)</span>
-                  </span>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {problemCards.map((card, index) => (
-                <motion.div
-                  key={card.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Link
-                    to={`/tools?problem=${card.id}`}
-                    className="group block p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-                  >
-                    <motion.div
-                      className="flex items-start gap-4"
-                      whileHover={{ x: 5 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <motion.div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors"
-                        whileHover={{ rotate: 10, scale: 1.1 }}
-                      >
-                        <card.icon className="h-6 w-6 text-foreground group-hover:text-primary transition-colors" />
-                      </motion.div>
-                      <div className="flex-1 space-y-1">
-                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors leading-snug">
-                          {card.title}
-                        </h3>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <span>Explore solutions</span>
-                          <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-24 md:py-32 bg-accent/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-              className="text-center mb-16 space-y-4"
-            >
-              <p className="text-sm uppercase tracking-widest text-muted-foreground">Simple Pricing</p>
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-                Pay-as-you-go. No subscriptions.
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Just credits. Top up from ₹10. Free credits on signup. You only pay for what you use.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <Button asChild size="lg" className="px-8 h-14">
-                <Link to="/credits">
-                  See credit packs
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Bulk Mode Promo */}
-      <BulkPromoSection />
-
-      {/* Request a Tool Section */}
-      <RequestToolSection />
-
-      {/* Final CTA Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto text-center space-y-8"
-          >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
-              Stop searching for tools.<br />
-              <span className="text-primary">Start solving problems.</span>
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              One subscription. Thousands of focused tools.
-            </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button asChild size="lg" className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all group">
-                <Link to="/auth">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 md:py-32 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto text-center space-y-8"
-          >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold">
-              Ready to Transform Your Workflow?
-            </h2>
-            <p className="text-lg opacity-80 max-w-2xl mx-auto">
-              Join thousands of businesses and individuals who have simplified their digital life with EZYOURLIFE.
-            </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button asChild size="lg" variant="secondary" className="text-base px-8 h-14 shadow-lg">
-                <Link to="/auth">
-                  Get Started Free
-                  <Sparkles className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border py-16">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col md:flex-row items-center justify-between gap-8"
+            className="space-y-6"
           >
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="EZYOURLIFE" className="h-16 object-contain" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">AI Marketplace for Everyday Superpowers</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
-              {["About", "Tools", "Pricing", "Contact", "Refund Policy"].map((item) => (
+            <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[1.05]">
+              Find the right AI apps.<br />
+              Simplify life.<br />
+              <span className="bg-gradient-to-r from-primary via-primary/80 to-accent-foreground bg-clip-text text-transparent">
+                Spend smarter.
+              </span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl">
+              Explore, compare and buy powerful AI apps. All purchases are credit-based — simple, secure and flexible.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg" className="h-12 px-6 rounded-xl shadow-lg group">
+                <Link to="/ai-apps">
+                  Explore AI Apps
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 px-6 rounded-xl">
+                <a href="#how-it-works">How It Works</a>
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              {[
+                { v: "200+", l: "AI Apps" },
+                { v: "10K+", l: "Happy Users" },
+                { v: "4.8★", l: "Avg Rating" },
+              ].map((s) => (
+                <div key={s.l} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/40 border border-border/50">
+                  <span className="text-lg font-bold text-foreground">{s.v}</span>
+                  <span className="text-xs text-muted-foreground">{s.l}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Credits card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-7 overflow-hidden"
+          >
+            <div className="absolute -top-12 -right-12 h-56 w-56 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-xl font-semibold">Your Credits</h2>
+                <span className="text-xs text-muted-foreground">ⓘ</span>
+              </div>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="h-14 w-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+                  <Zap className="h-7 w-7 text-primary" />
+                </div>
+                <div className="text-5xl font-bold tabular-nums">
+                  {user ? walletTotal.toLocaleString() : "—"}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-5">Credits Available</p>
+              <div className="space-y-2 mb-6">
+                <Button asChild size="lg" className="w-full h-12 rounded-xl">
+                  <Link to="/credits">Top Up Credits</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="w-full h-12 rounded-xl">
+                  <Link to={user ? "/credits/history" : "/credits"}>Transaction History</Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
+                {[
+                  { Icon: Wallet, t: "Pay with Credits", s: "No subscriptions" },
+                  { Icon: ShieldCheck, t: "Secure & Safe", s: "Trusted payments" },
+                  { Icon: Zap, t: "Use Instantly", s: "Start in seconds" },
+                ].map((b) => (
+                  <div key={b.t} className="text-center space-y-1">
+                    <b.Icon className="h-5 w-5 text-primary mx-auto" />
+                    <p className="text-[11px] font-semibold leading-tight">{b.t}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{b.s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Categories */}
+        {categories.length > 0 && (
+          <section className="mb-16">
+            <div className="flex items-end justify-between mb-5">
+              <h2 className="text-2xl md:text-3xl font-bold">Browse by Categories</h2>
+              <Link to="/ai-apps" className="text-sm text-primary hover:underline">View all categories →</Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              {categories.map(({ name, count, Icon }) => (
                 <Link
-                  key={item}
-                  to={`/${item.toLowerCase().replace(" ", "-")}`}
-                  className="hover:text-foreground transition-colors relative group"
+                  key={name}
+                  to={`/ai-apps?category=${encodeURIComponent(name)}`}
+                  className="group rounded-2xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-md transition-all p-4 text-center"
                 >
-                  {item}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                  <div className="h-12 w-12 mx-auto rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-2 group-hover:bg-primary/20 transition">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold truncate">{name}</p>
+                  <p className="text-xs text-muted-foreground">{count} AI Apps</p>
                 </Link>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2025 EZYOURLIFE. All rights reserved.
-            </p>
-          </motion.div>
-        </div>
-      </footer>
+          </section>
+        )}
+
+        {/* Featured AI Apps */}
+        {featured.length > 0 && (
+          <section className="mb-16">
+            <div className="flex items-end justify-between mb-5">
+              <h2 className="text-2xl md:text-3xl font-bold">Featured AI Apps</h2>
+              <Link to="/ai-apps" className="text-sm text-primary hover:underline">View all AI apps →</Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {featured.slice(0, 6).map((t) => (
+                <ToolLandscapeCard
+                  key={t.id}
+                  toolId={t.id}
+                  name={t.name}
+                  description={t.description}
+                  category={t.category}
+                  isLive={t.isLive}
+                  iconUrl={t.iconUrl}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* How it works + Credit packs */}
+        <section id="how-it-works" className="mb-16 rounded-3xl border border-border/60 bg-card/50 p-6 md:p-10">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6">Simple. Credit-Based. Hassle-Free.</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { n: 1, t: "Buy Credits", s: "Pick a pack that fits your needs", Icon: Wallet },
+                  { n: 2, t: "Choose an AI App", s: "Browse and pick the best app", Icon: LayoutGrid },
+                  { n: 3, t: "Pay with Credits", s: "Unlock or run the app", Icon: Zap },
+                  { n: 4, t: "Start Using", s: "Instant access. No waiting.", Icon: Sparkles },
+                ].map((s) => (
+                  <div key={s.n} className="rounded-2xl bg-background/60 border border-border/50 p-4 text-center">
+                    <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
+                      <s.Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-xs font-semibold text-primary mb-1">Step {s.n}</div>
+                    <p className="font-bold text-sm mb-1">{s.t}</p>
+                    <p className="text-xs text-muted-foreground leading-snug">{s.s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/70 p-5">
+              <h3 className="font-bold mb-4">Popular Credit Packs</h3>
+              <ul className="space-y-3">
+                {popularPacks.map((p, idx) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3 py-2 border-b border-border/40 last:border-0">
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {idx === 0 ? "Starter" : idx === 1 ? "Pro" : "Ultimate"}
+                        {idx === 1 && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary">Best Value</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{p.credits.toLocaleString()} credits</p>
+                    </div>
+                    <span className="font-bold tabular-nums">₹{p.inr}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button asChild variant="outline" className="w-full mt-4">
+                <Link to="/credits">View All Packs</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Top Picks */}
+        {topPicks.length > 0 && (
+          <section className="mb-16">
+            <div className="flex items-end justify-between mb-5">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold">Top Picks for You</h2>
+                <p className="text-sm text-muted-foreground">Curated AI apps based on what users love.</p>
+              </div>
+              <Link to="/ai-apps" className="text-sm text-primary hover:underline">View more →</Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {topPicks.map((t) => (
+                <Link
+                  key={t.id}
+                  to={`/tool-preview/${t.id}`}
+                  className="rounded-2xl border border-border/50 bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all flex gap-3"
+                >
+                  <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm truncate">{t.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
+                    <p className="text-xs text-primary mt-1 font-medium">View app →</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Trust strip */}
+        <section className="mb-12 rounded-2xl border border-border/50 bg-muted/40 p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-8 w-8 text-primary" />
+            <div>
+              <p className="font-semibold">Trusted by thousands of smart users worldwide.</p>
+              <p className="text-xs text-muted-foreground">Secure payments · 24/7 support · Your data is always protected.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-8 w-8 rounded-full border-2 border-background bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center text-xs font-bold text-foreground"
+                >
+                  {String.fromCharCode(65 + i)}
+                </div>
+              ))}
+            </div>
+            <div className="text-sm">
+              <span className="font-bold">10K+</span> <span className="text-muted-foreground">Happy Users</span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> 4.8 average
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <BulkPromoSection />
+        <RequestToolSection />
+      </main>
+
       <SEOFooter />
     </div>
   );

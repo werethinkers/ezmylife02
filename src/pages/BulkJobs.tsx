@@ -116,7 +116,7 @@ const BulkJobs = () => {
             <p className="text-muted-foreground mb-4">
               Open any AI tool with the ⚡ Bulk Mode pill and drop your files.
             </p>
-            <Link to="/tools">
+            <Link to="/ai-apps">
               <Button>Browse tools</Button>
             </Link>
           </Card>

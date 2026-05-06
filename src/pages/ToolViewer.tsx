@@ -138,7 +138,7 @@ const ToolViewer = () => {
           <AlertCircle className="h-16 w-16 text-destructive" />
           <h1 className="text-2xl font-bold text-foreground">Tool Not Found</h1>
           <p className="text-muted-foreground">The requested tool could not be found.</p>
-          <Button onClick={() => navigate("/tools")} variant="outline">
+          <Button onClick={() => navigate("/ai-apps")} variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tools
           </Button>
         </div>
@@ -171,7 +171,7 @@ const ToolViewer = () => {
               <Badge variant="secondary" className="mt-3">{toolCategory}</Badge>
             )}
           </div>
-          <Button onClick={() => navigate("/tools")} variant="outline" className="gap-2">
+          <Button onClick={() => navigate("/ai-apps")} variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Tools
           </Button>
         </div>
@@ -223,7 +223,7 @@ const ToolViewer = () => {
       <div className="border-b border-border/40 bg-background/95 backdrop-blur-sm z-20 shrink-0">
         <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/tools")} variant="ghost" size="sm" className="gap-2 h-8">
+            <Button onClick={() => navigate("/ai-apps")} variant="ghost" size="sm" className="gap-2 h-8">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
             </Button>

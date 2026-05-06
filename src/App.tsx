@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ToolAccessGuard } from "@/components/ToolAccessGuard";
@@ -29,7 +29,7 @@ const Tools = lazy(() => import("./pages/Tools"));
 const ToolViewer = lazy(() => import("./pages/ToolViewer"));
 const ToolPreview = lazy(() => import("./pages/ToolPreview"));
 const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
+
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -93,7 +93,8 @@ const AnimatedRoutes = () => {
         <Suspense fallback={<DelayedFallback />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
-            <Route path="/tools" element={<Tools />} />
+            <Route path="/ai-apps" element={<Tools />} />
+            <Route path="/tools" element={<Navigate to="/ai-apps" replace />} />
             <Route
               path="/tool/:toolId"
               element={
@@ -132,7 +133,7 @@ const AnimatedRoutes = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/contact" element={<Contact />} />
+            <Route path="/contact" element={<Navigate to="/about#contact" replace />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />

@@ -128,10 +128,10 @@ const Tools = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="200+ Live AI Tools (2,000+ Coming Soon) — Browse Without Signup | EZYOURLIFE"
-        description="Browse 200+ live AI tools today (2,000+ launching within a year) — no signup needed. The Future's First AI App Store."
-        path="/tools"
-        keywords="free ai tools, no signup ai tools, ezyourlife tools"
+        title="200+ Live AI Apps (2,000+ Coming Soon) — Browse Without Signup | EZYOURLIFE"
+        description="Browse 200+ live AI apps today (2,000+ launching within a year) — no signup needed. The Future's First AI App Store."
+        path="/ai-apps"
+        keywords="free ai apps, no signup ai apps, ezyourlife ai apps"
       />
       <Navbar />
 
