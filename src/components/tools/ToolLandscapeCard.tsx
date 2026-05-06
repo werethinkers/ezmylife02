@@ -98,7 +98,7 @@ export const ToolLandscapeCard = ({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleStart(); } }}
-      className="relative w-full rounded-3xl bg-card/90 backdrop-blur-sm border-2 border-border/60 p-5 shadow-[0_10px_30px_-12px_hsl(var(--primary)/0.35),0_2px_6px_-2px_hsl(var(--foreground)/0.08)] hover:shadow-[0_20px_50px_-12px_hsl(var(--primary)/0.5),0_4px_12px_-2px_hsl(var(--foreground)/0.12)] hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
+      className="relative w-full h-full rounded-3xl bg-card/90 backdrop-blur-sm border-2 border-border/60 p-5 shadow-[0_10px_30px_-12px_hsl(var(--primary)/0.35),0_2px_6px_-2px_hsl(var(--foreground)/0.08)] hover:shadow-[0_20px_50px_-12px_hsl(var(--primary)/0.5),0_4px_12px_-2px_hsl(var(--foreground)/0.12)] hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
     >
       {/* Favourite */}
       <button
@@ -115,8 +115,8 @@ export const ToolLandscapeCard = ({
         <Heart className={cn("h-4 w-4", isFav && "fill-rose-500")} />
       </button>
 
-      {/* Header */}
-      <div className="flex items-start gap-4 mb-4 pr-10">
+      {/* Header — fixed height */}
+      <div className="flex items-start gap-4 mb-3 pr-10 h-20">
         <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
           {aiIcon ? (
             <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", iconFit === "contain" ? "object-contain p-2" : "object-cover")} />
@@ -126,37 +126,29 @@ export const ToolLandscapeCard = ({
         </div>
         <div className="min-w-0 flex-1 pt-1">
           <h3 className="text-2xl font-bold text-foreground leading-tight truncate">{name}</h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 truncate">
             {version} · {category || "AI App"}
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-foreground/80 mb-3 line-clamp-2 leading-snug">{description}</p>
+      {/* Description — fixed 2-line height */}
+      <p className="text-sm text-foreground/80 mb-3 line-clamp-2 leading-snug h-10">{description}</p>
 
-      {/* App Preview - single big image */}
-      <div className="mb-4">
+      {/* App Preview — fixed 4:3 box, admin-exported assets fill cleanly */}
+      <div className="mb-3">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onPreview?.(); }}
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
-            <>
-              <img src={previewImageUrl} aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50" />
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-fuchsia-500/10 to-purple-600/20" />
-              <img
-                src={previewImageUrl}
-                alt={`${name} preview`}
-                className={cn(
-                  "relative z-10 drop-shadow-2xl group-hover:scale-[1.03] transition-transform duration-500 rounded-xl",
-                  previewImageFit === "cover"
-                    ? "absolute inset-0 w-full h-full object-cover"
-                    : "max-w-full max-h-full w-auto h-auto object-contain"
-                )}
-                loading="lazy"
-              />
-            </>
+            <img
+              src={previewImageUrl}
+              alt={`${name} preview`}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              loading="lazy"
+            />
           ) : (
             <PlayCircle className="h-20 w-20 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
           )}
@@ -165,7 +157,7 @@ export const ToolLandscapeCard = ({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onPreview(); }}
-            className="text-sm text-cyan-500 hover:text-cyan-400 hover:underline mt-3 block w-full text-center font-medium"
+            className="text-xs text-cyan-500 hover:text-cyan-400 hover:underline mt-2 block w-full text-center font-medium h-5"
           >
             View more screenshots and video demos →
           </button>
