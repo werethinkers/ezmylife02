@@ -1,56 +1,61 @@
-## Continue: Polish, Rename, Theme & Auth Audit
 
-Four parallel tracks to finalize the redesign.
+## 1. Favourite AI Apps
 
-### 1. Finish "Tools" → "AI Apps" rename (UI copy)
+**DB (migration):** new table `tool_favorites (user_id uuid, tool_id text, created_at timestamptz default now(), primary key(user_id, tool_id))` with RLS — users can `SELECT/INSERT/DELETE` rows where `auth.uid() = user_id`.
 
-- Sweep `src/pages/**` and `src/components/**` for user-facing strings: "Tool", "Tools", "AI Tool(s)", "Find Tools", "My Tools", "Tool Catalog", "Browse Tools", "Request a Tool", "Top Tools", etc.
-- Replace with "AI App", "AI Apps", "My AI Apps", "AI App Catalog", "Browse AI Apps", "Request an AI App", "Top AI Apps" — case preserving.
-- Files in scope: `Home.tsx` (placeholder, "AI Tools" category, RequestToolSection labels), `Tools.tsx` (hero/title), `ToolsHero.tsx`, `ToolLandscapeCard.tsx`, `RequestToolSection.tsx`, `Navbar.tsx` mobile labels, `SEOFooter.tsx`, `ComingSoon.tsx`, `MeetNudge.tsx`, `PromptMaster.tsx`, `SpeedyNotebook.tsx`, `BulkModeToggle.tsx`, `BulkDropzone.tsx`, `LoginPromptDialog.tsx`, page `<title>`/meta on every page.
-- Update SEO: `index.html` meta, JSON-LD strings, sitemap titles.
-- **Untouched**: code identifiers (`Tool`, `ToolViewer`, `tool_id`, `useToolsCatalog`), DB tables, edge function names, admin internals, route variable names.
-- Delete leftover `src/pages/Contact.tsx` (already merged into About; route already redirects).
+**Hook:** `src/hooks/useFavorites.ts` — React Query: `useFavorites()` returns `Set<toolId>`; `useToggleFavorite()` mutates with optimistic update. Returns empty set when logged out.
 
-### 2. Polish the new Home page
+**UI:**
+- Heart button on `ToolLandscapeCard` (and small variant on `ToolCard` if used). Click toggles; if logged out, opens `LoginPromptDialog` (no redirect).
+- New "⭐ Favourite Apps" section at the top of `/ai-apps` (`Tools.tsx`), rendered only when logged in AND user has ≥1 favourite. Uses existing carousel/grid styling.
 
-Tighten the redesigned Home to feel closer to the screenshot reference while keeping our dark-glass + teal/purple gradient tokens.
+## 2. Eliminate all up-front login gates
 
-- Hero row: tighter vertical rhythm, larger H1, cleaner search-bar shadow, credits card with subtle gradient border + balance, free-credits, "Buy credits" link.
-- Categories row: 8 pills with consistent icon + label, hover glow, equal sizing on mobile (2-col grid <md).
-- Featured AI Apps: keep static carousel, ensure 3-up at md and 1-up at sm, add "View all →" link.
-- How It Works (4 steps) + Popular Credit Packs panel: align to 2-col grid on lg, stack on mobile. Show real packs from credits config, mark "Most popular".
-- Top Picks for You: pull from `useHomeSections` "personalized" or recently added when signed-out.
-- Trust strip: 3 stat cards (Active users, AI Apps live, Avg rating) styled as glass chips.
-- Remove leftover RequestToolSection placement if it duplicates the new "Request an AI App" CTA; keep one final CTA above footer.
-- Audit spacing tokens, ensure all colors come from semantic tokens (no raw hex in JSX).
+Remove auth gating from browsing, the credits page, and tool entry. Login is requested only when the user clicks a button that produces output or spends credits.
 
-### 3. Apply light + purple theme site-wide
+- **`ToolAccessGuard.tsx`**: drop the "Sign in to use this tool" screen for non-free tools — always render `children`. Login prompt fires from inside the tool when the user clicks generate.
+- **`/credits` (`Credits.tsx`)**: allow anonymous viewing of packs. The login prompt only appears when "Buy" is clicked (handled by the new in-page checkout flow below).
+- **Audit**: replace any remaining `navigate("/auth")` in browse paths (Home hero "Get started", category pills, app cards, ToolPreview) with `LoginPromptDialog` opened in place. `ProtectedRoute` stays for Profile / Credits History / Bulk Jobs / Admin only.
+- Remove `LoginPromptDialog` mount from `ToolLandscapeCard`'s "Start using" handler when the tool is free; non-free tools still let the user enter the tool — the prompt fires on generate inside the tool.
 
-- Update `src/index.css` `:root` tokens to a light base: `--background` near-white, `--foreground` deep ink, `--primary` purple (e.g. `262 83% 58%`), `--primary-glow` lighter lavender, `--accent` soft lilac, surfaces with subtle lavender tint, borders softened.
-- Keep `.dark` class for opt-in dark mode but make light the default.
-- Refresh gradient tokens (`--gradient-primary`, `--gradient-hero`) to purple/lavender blend.
-- Update shadow tokens for a lighter elevation.
-- Sweep components that hardcoded dark assumptions (e.g., `bg-black/40`, `text-white`) and switch to semantic tokens (`bg-card`, `text-foreground`).
-- Verify Navbar, Footer, ToolLandscapeCard, Hero, Tool Viewer chrome, Admin pages, Auth pages all read correctly on light bg.
-- Tool Viewer iframes remain untouched (no overlay/branding on external tools).
+## 3. Hero — show signup card to logged-out users
 
-### 4. Audit deferred-auth coverage
+In `ToolsHero.tsx`, the right-side glass card currently shows the wallet ("Your Credits"). When `!user`, swap it for a **"Welcome to EzYourLife 👋 — Log in or sign up and get 100 free credits!"** card matching the uploaded reference: gift-box visual placeholder, primary "Sign Up Free" button, secondary "Log In" button, "No credit card required" footnote. Logged-in users keep the existing credits panel.
 
-Walk every CTA and ensure anonymous users can browse; only paid actions prompt login via `LoginPromptDialog`.
+## 4. Remove "Happy Users" segment from the home page
 
-- **Allow anonymous**: Home hero CTAs, category pills, Featured/Top Picks cards, `/ai-apps` listing, Tool Viewer for free apps, Coming Soon, About, Credits info page (view only), Get Extension marketing, search.
-- **Require login (prompt, don't redirect)**: running a paid tool (credits > 0), buying credits, redeeming coupons, opening Bulk Mode, downloading the extension ZIP, saving notebook/prompts, Profile/Credits History/Bulk Jobs/Admin routes (keep `ProtectedRoute`).
-- Replace lingering `navigate("/auth")` in browse paths with `LoginPromptDialog` open. Files to check: `ToolViewer.tsx`, `ToolPreview.tsx`, `MeetNudge.tsx`, `SpeedyNotebook.tsx`, `PromptMaster.tsx`, `Credits.tsx`, `BulkModeToggle.tsx`, `BulkDropzone.tsx`.
-- Final test pass: log out, click through Home → category → app card → viewer → Run (prompt) → Buy credits (prompt). Confirm no premature redirects.
+Search `src/pages/Home.tsx` and `src/components/home/*` for the "Happy Users" / trust strip stat and delete just that block (keep surrounding sections). Admin dashboard is **not** touched (per clarification).
 
-### Memory updates
+## 5. "Simple. Credit-Based. Hassle-Free." — real figures
 
-- `mem://navigation/navbar-links` — confirm Contact/Bulk Jobs removed, "Tools"→"AI Apps".
-- `mem://design/visual-aesthetic-animations` — switch to light + purple palette.
-- `mem://project/brand-identity` — note "AI Apps" terminology.
-- New `mem://design/theme-tokens` — list new HSL primary/accent/background values.
-- New `mem://features/auth/deferred-login` — rule that browsing is anonymous; only paid actions prompt.
+Update the 3-step section on Home to pull from `src/data/creditPacks.ts` (`CREDIT_PACKS`):
+- Step 1: "Start from **₹10 → 15 credits**" (smallest pack).
+- Step 2: "Most popular: **₹250 → 500 credits**" (the pack flagged `Popular`).
+- Step 3: "Best value: **₹1000 → 2200 credits**" (pack flagged `Best value`).
+Values are read from the array, not hard-coded, so they auto-update if packs change.
 
-### Out of scope
+## 6. In-page Razorpay popup (no navigation)
 
-No DB schema changes, no AI/billing changes, no admin tab restructuring, no new images, no tool catalog data edits.
+New component `src/components/wallet/BuyCreditsInlineDialog.tsx` (replaces full-page redirect to `/credits` from prompts):
+- Shows the 6 credit packs as selectable tiles.
+- On "Buy", calls existing `create-razorpay-order` edge function, then opens Razorpay Checkout modal **on top of the current page** (script loaded once via `useRazorpayScript()` hook).
+- On payment success, calls `verify-razorpay-payment`, refreshes the wallet, toasts "Credits added", and (if invoked from a tool) automatically retries the original action.
+- On dismiss, the user stays exactly where they were.
+
+Wire-up:
+- `useCredits.ts`: when `runWithCredits` reports `insufficient_credits`, open `BuyCreditsInlineDialog` instead of the existing `BuyCreditsDialog` redirect.
+- `ToolLandscapeCard` "Buy more" link → opens the same inline dialog instead of navigating.
+- `Credits.tsx` "Buy" buttons → use the same inline Razorpay flow (no page change).
+
+## 7. Razorpay credentials rotation
+
+After the user confirms, request `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` via `add_secret` (overwrites existing values). The publishable Key ID is also exposed to the frontend through a small `get-razorpay-key` edge function (or returned by `create-razorpay-order`) so we don't hard-code it.
+
+## Out of scope
+- No changes to admin dashboard, AI logic, pricing rules, or DB schema beyond `tool_favorites`.
+- No theme changes (light + purple already applied).
+- "Happy Users" only removed from the home page (not admin).
+
+## Files touched
+- New: `supabase/migrations/<ts>_tool_favorites.sql`, `src/hooks/useFavorites.ts`, `src/components/wallet/BuyCreditsInlineDialog.tsx`, `src/hooks/useRazorpayScript.ts`.
+- Edited: `src/pages/Tools.tsx`, `src/pages/Home.tsx`, `src/pages/ToolsHero.tsx`, `src/pages/Credits.tsx`, `src/components/tools/ToolLandscapeCard.tsx`, `src/components/ToolAccessGuard.tsx`, `src/hooks/useCredits.ts`, `src/components/auth/LoginPromptDialog.tsx` (no redirect needed), and minor cleanup in pages still calling `navigate("/auth")` for browsing.
