@@ -12,6 +12,8 @@ import { ExploreMoreTools } from "@/components/tools/ExploreMoreTools";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { expandedTools } from "@/data/expandedTools";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
@@ -35,6 +37,12 @@ const Tools = () => {
 
   const { data: catalogTools = [] } = useToolsCatalog();
   const { hot, trending, featured, mostUsed } = useHomeSections();
+  const { user } = useAuth();
+  const { favorites } = useFavorites();
+  const favoriteTools = useMemo(
+    () => catalogTools.filter((t) => t.is_live && favorites.has(t.id)),
+    [catalogTools, favorites]
+  );
 
   const catalogById = useMemo(() => {
     const m = new Map<string, typeof catalogTools[number]>();
