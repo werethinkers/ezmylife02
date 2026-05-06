@@ -18,6 +18,33 @@ const contactSchema = z.object({
 });
 
 const About = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+
+  useEffect(() => {
+    if (window.location.hash === "#contact") {
+      setTimeout(() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      contactSchema.parse(formData);
+      await new Promise((r) => setTimeout(r, 800));
+      toast({ title: "Message sent!", description: "We'll get back to you soon." });
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({ title: "Validation error", description: error.errors[0].message, variant: "destructive" });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
