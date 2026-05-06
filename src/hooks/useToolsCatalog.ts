@@ -12,6 +12,9 @@ export interface CatalogTool {
   is_free?: boolean;
   display_order?: number;
   icon_url?: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+  preview_image_url?: string | null;
   created_at: string;
   updated_at: string;
 }

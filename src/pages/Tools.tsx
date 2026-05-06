@@ -111,27 +111,33 @@ const Tools = () => {
     setPreviewOpen(true);
   }, []);
 
-  const renderCard = (t: { id: string; name: string; description: string; category: string; isLive: boolean; iconUrl?: string | null }) => (
-    <ToolLandscapeCard
-      key={t.id}
-      toolId={t.id}
-      name={t.name}
-      description={t.description}
-      category={t.category}
-      isLive={t.isLive}
-      iconUrl={t.iconUrl ?? catalogById.get(t.id)?.icon_url ?? null}
-      onPreview={() =>
-        handlePreview({
-          toolId: t.id,
-          title: t.name,
-          description: t.description,
-          category: t.category,
-          isLive: t.isLive,
-          icon: <Sparkles className="h-8 w-8" />,
-        })
-      }
-    />
-  );
+  const renderCard = (t: { id: string; name: string; description: string; category: string; isLive: boolean; iconUrl?: string | null }) => {
+    const c = catalogById.get(t.id);
+    return (
+      <ToolLandscapeCard
+        key={t.id}
+        toolId={t.id}
+        name={t.name}
+        description={t.description}
+        category={t.category}
+        isLive={t.isLive}
+        iconUrl={t.iconUrl ?? c?.icon_url ?? null}
+        previewImageUrl={c?.preview_image_url ?? null}
+        rating={c?.rating ?? null}
+        reviewCount={c?.review_count ?? null}
+        onPreview={() =>
+          handlePreview({
+            toolId: t.id,
+            title: t.name,
+            description: t.description,
+            category: t.category,
+            isLive: t.isLive,
+            icon: <Sparkles className="h-8 w-8" />,
+          })
+        }
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">

@@ -969,6 +969,9 @@ export type Database = {
           is_live: boolean
           is_premium: boolean
           name: string
+          preview_image_url: string | null
+          rating: number | null
+          review_count: number | null
           source: string
           tool_types: string[]
           updated_at: string
@@ -987,6 +990,9 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name: string
+          preview_image_url?: string | null
+          rating?: number | null
+          review_count?: number | null
           source: string
           tool_types?: string[]
           updated_at?: string
@@ -1005,6 +1011,9 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name?: string
+          preview_image_url?: string | null
+          rating?: number | null
+          review_count?: number | null
           source?: string
           tool_types?: string[]
           updated_at?: string

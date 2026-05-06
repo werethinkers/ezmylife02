@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, ReactNode } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ToolSectionProps {
   title: string;
@@ -11,10 +12,11 @@ interface ToolSectionProps {
 }
 
 export const ToolSection = ({ title, emoji, children }: ToolSectionProps) => {
+  const isMobile = useIsMobile();
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
-    align: "start",
-    dragFree: true,
+    align: isMobile ? "center" : "start",
+    dragFree: !isMobile,
     direction: "ltr",
   });
 
@@ -62,7 +64,7 @@ export const ToolSection = ({ title, emoji, children }: ToolSectionProps) => {
           {children.map((child, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[88%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%]"
+              className="flex-shrink-0 w-[100%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%]"
             >
               {child}
             </div>

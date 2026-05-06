@@ -18,6 +18,9 @@ interface ToolLandscapeCardProps {
   category: string;
   isLive: boolean;
   iconUrl?: string | null;
+  previewImageUrl?: string | null;
+  rating?: number | null;
+  reviewCount?: number | null;
   icon?: ReactNode;
   onPreview?: () => void;
 }
@@ -44,6 +47,9 @@ export const ToolLandscapeCard = ({
   category,
   isLive,
   iconUrl,
+  previewImageUrl,
+  rating: ratingProp,
+  reviewCount: reviewCountProp,
   icon,
   onPreview,
 }: ToolLandscapeCardProps) => {
@@ -58,20 +64,21 @@ export const ToolLandscapeCard = ({
 
   const aiIcon = iconUrl || getToolIconUrl(toolId, category);
 
-  const { rating, reviews, version, gradients } = useMemo(() => {
+  const { rating, reviews, version } = useMemo(() => {
     const h = hash(toolId);
-    const rating = (4 + ((h % 60) / 100)).toFixed(2);
-    const reviews = (((h >> 3) % 90) + 10) / 10;
+    const fallbackRating = (4 + ((h % 60) / 100));
+    const fallbackReviews = (((h >> 3) % 90) + 10) * 100; // ~1000-9900
     const major = ((h >> 5) % 5) + 1;
     const minor = ((h >> 7) % 9) + 1;
-    const grads = [
-      GRADIENTS[h % GRADIENTS.length],
-      GRADIENTS[(h >> 2) % GRADIENTS.length],
-      GRADIENTS[(h >> 4) % GRADIENTS.length],
-      GRADIENTS[(h >> 6) % GRADIENTS.length],
-    ];
-    return { rating, reviews: reviews.toFixed(1), version: `v${major}.${minor}`, gradients: grads };
-  }, [toolId]);
+    const r = ratingProp ?? fallbackRating;
+    const rc = reviewCountProp ?? fallbackReviews;
+    const reviewsLabel = rc >= 1000 ? `${(rc / 1000).toFixed(1)}k` : `${rc}`;
+    return {
+      rating: r.toFixed(2),
+      reviews: reviewsLabel,
+      version: `v${major}.${minor}`,
+    };
+  }, [toolId, ratingProp, reviewCountProp]);
 
   const handleStart = () => {
     // Always let users enter the tool — login is requested at generate-time.
@@ -134,27 +141,28 @@ export const ToolLandscapeCard = ({
             />
           ))}
         </div>
-        <span className="text-muted-foreground text-xs">({reviews}k reviews)</span>
+        <span className="text-muted-foreground text-xs">({reviews} reviews)</span>
       </div>
 
-      {/* App Preview - horizontal row of squares */}
+      {/* App Preview - single big image */}
       <div className="mb-4">
         <p className="text-base font-bold mb-3">App Preview</p>
-        <div className="flex gap-2 overflow-hidden">
-          {gradients.slice(0, 3).map((g, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={onPreview}
-              className={cn(
-                "relative aspect-square w-1/3 rounded-2xl bg-gradient-to-br overflow-hidden flex items-center justify-center group",
-                g
-              )}
-            >
-              <PlayCircle className="h-10 w-10 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={onPreview}
+          className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
+        >
+          {previewImageUrl ? (
+            <img
+              src={previewImageUrl}
+              alt={`${name} preview`}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <PlayCircle className="h-16 w-16 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
+          )}
+        </button>
         {onPreview && (
           <button
             type="button"
