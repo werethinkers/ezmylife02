@@ -182,19 +182,7 @@ const Credits = () => {
               </div>
             </CardContent>
           </Card>
-        ) : (
-          <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Sign in to top up your wallet</p>
-                <p className="text-xs text-muted-foreground mt-1">New accounts start with free credits.</p>
-              </div>
-              <Button onClick={() => setLoginOpen(true)}>
-                <LogIn className="h-4 w-4 mr-2" /> Sign in
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        ) : null}
 
         {/* Packs */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

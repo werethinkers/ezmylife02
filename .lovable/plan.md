@@ -1,69 +1,141 @@
-## Transaction History
+## Goals
 
-Add a unified "Transaction History" view so users can see every credit movement: purchases (and how many credits were added) and tool runs (which tool was used, when, credits charged, and a link to the output where available).
+1. Remove the funnel stepper bar (Sign in → Choose plan → Pick a tool → Use it).
+2. Remove the sign-in wall on `/credits` — anyone can browse packs.
+3. Only prompt sign-in at the moment of an action that costs credits or generates output.
+4. Replace the "For You / Live Tools / Browse / All Tools" toggle and category browser with a clean home: title → description → search bar → 4 section carousels.
+5. Each tool card uses a wide "app store" layout (matches the reference screenshot) and the sections auto-scroll horizontally, alternating direction.
+6. **Do not touch any existing tool implementations** — only the discovery page, the funnel, and the /credits gating change.
 
-### Where it lives
-- New page **`/credits/history`** (component `src/pages/CreditsHistory.tsx`).
-- Add a **"Transaction history"** link/button on:
-  - `src/pages/Credits.tsx` (near the wallet balance)
-  - `src/pages/Profile.tsx` (in the credits/wallet section)
-- Add it to the Navbar wallet dropdown if present (otherwise just the two entry points above).
+## Out of scope (untouched)
 
-### Data sources (already exist, RLS-protected to the user)
-- `credit_ledger` — every credit delta with `reason` (`signup_bonus`, `first_action_bonus`, `monthly_reset`, `purchase`, `tool_run`, `admin_adjust`), `tool_id`, `run_id`, `cost_inr`, `metadata`.
-- `credit_purchases` — pack purchases (`pack_id`, `inr_amount`, `credits`, `status`, `paid_at`).
-- `tool_runs` — per-run details (`tool_id`, `credits_charged`, `status`, `started_at`, `finished_at`, `metadata`, `error`).
-- `tools_catalog` — to resolve `tool_id` → friendly name + `dedicated_route`.
+- All native tools (Speedy Notebook, PromptMaster, Startup Analyser, Meet Nudge, Virasat, Bulk Mode, Get Extension)
+- Auth flow itself, Razorpay/credits backend, admin dashboard
+- Tool Viewer / iframe rendering
+- Existing protected routes
 
-No schema changes needed. No new edge function needed (direct selects via RLS).
+## What changes
 
-### UI
+### 1. Funnel stepper removal
 
-Single page with three tabs (shadcn `Tabs`):
+- Delete the `<FunnelStepper />` render from `Tools.tsx` (line 373) and `Auth.tsx` (line 158).
+- Keep the `FunnelStepper.tsx` file in case it's needed later, but unused.
 
-1. **All activity** (default) — merged feed from `credit_ledger`, newest first.
-   Each row shows: date/time, icon, title, sub-line, credit delta (+green / −red), running balance.
-   - `purchase` → "Bought {credits} credits ({pack_id}) — ₹{inr_amount}" + link to Razorpay receipt id (if stored in metadata).
-   - `tool_run` → "{Tool name} · {status}" with link to the tool page; show `cost_inr` and any `metadata.output_url` / output filename if present.
-   - `signup_bonus` / `first_action_bonus` / `monthly_reset` → friendly label.
-   - `admin_adjust` → "Admin grant" + note from metadata.
+### 2. /credits — no login wall
 
-2. **Purchases** — table of `credit_purchases` where `status='paid'`: date, pack, ₹, credits added, payment id.
+- `Credits.tsx`: keep the page open to anonymous visitors. The "Sign in to top up" card stays as a soft prompt, but the packs grid is already visible — no change needed there.
+- The actual sign-in dialog (`LoginPromptDialog`) only fires when the user clicks "Buy" on a pack and isn't authenticated (this already works at `buyPack` — line 57). Confirmed correct.
+- Remove the `<Card>` block at lines 186–197 that nags anonymous users to sign in (the wallet card just hides for them).
 
-3. **Tool usage** — table of `tool_runs` joined w/ catalog name: date, tool (link), status badge, credits charged, output preview.
-   - "Output" column: if `metadata.output_url` exists → "View" link; else if `bulk_jobs` exists for this run via `tool_id` → link to `/bulk-jobs/:id`; otherwise "—".
+### 3. Login only at action time
 
-### Output linking
-Most tool runs do not currently persist `output_url`. To make the "what the output was" column meaningful:
-- For **bulk runs**, look up `bulk_jobs` for the user (`tool_id`, time window) and link to `/bulk-jobs/:id` which already shows outputs.
-- For **AI single-tool runs**, query `user_creations` (already user-scoped) by `tool_type`/`created_at` proximity and surface `result_url` / `title`.
-- For runs with neither, show "—" (no fabricated data).
+- Audit non-action pages that gate behind login and remove the gating where the user is just browsing:
+  - `/tools` — no auth needed (already open).
+  - `/credits` — no auth needed to view packs.
+  - Tool cards / quick-preview — no auth needed.
+- Login still triggers from:
+  - Buying a credit pack (existing).
+  - Starting a tool that consumes credits via `useCredits` (existing — `LoginPromptDialog` already fires inside `charge()`).
+  - Navigating to `/profile`, `/admin`, `/credits/history`, native tools that save user data — these stay protected as before.
 
-This is best-effort matching done client-side (no DB change). A small helper `src/lib/transactionHistory.ts` will:
-- Fetch latest 200 ledger entries.
-- Batch-fetch related `bulk_jobs` (by `user_id` + `tool_id` + window) and `user_creations` (by `user_id` + `created_at` window).
-- Compute a running balance from current wallet total going backwards.
+### 4. New /tools layout
 
-### Filters & UX
-- Date range (Last 7d / 30d / 90d / All) using a `Select`.
-- Type filter chips: Purchases, Tool runs, Bonuses, Admin grants.
-- CSV export button (client-side, reuses pattern from `ToolsExportButton`).
-- Pagination: load 50 at a time, "Load more" button.
-- Empty state: "No transactions yet" with link back to Credits page.
-- Mobile: switches to card list layout (re-uses Tailwind responsive patterns).
+Replace everything between `<Navbar />` and the chatbot/footer with this structure:
 
-### Files to create
-- `src/pages/CreditsHistory.tsx` — page shell, SEO, tabs.
-- `src/components/credits/TransactionList.tsx` — merged ledger feed.
-- `src/components/credits/PurchasesTable.tsx`
-- `src/components/credits/ToolRunsTable.tsx`
-- `src/lib/transactionHistory.ts` — fetch + enrichment helpers.
+```text
+┌─────────────────────────────────────────────┐
+│   AI-Powered Apps (pill)                   │
+│   Discover AI Apps                            │
+│   small description                         │
+│   [    search bar    ]                      │
+└─────────────────────────────────────────────┘
 
-### Files to edit
-- `src/App.tsx` — add `/credits/history` route.
-- `src/pages/Credits.tsx` — add "Transaction history" link near wallet badge.
-- `src/pages/Profile.tsx` — add same link in credits section.
+🔥 Hot Tools         1/12        ‹ ›
+[ landscape card ][ landscape card ][ … ]   ← auto-scrolls left
 
-### Out of scope
-- Persisting `output_url` on every tool run (would require edge-function changes across many tools). Instead we infer via `bulk_jobs` and `user_creations` where possible.
-- Admin-side "user transaction history" (admin already sees ledger via `CreditsAdmin`).
+📈 Trending Tools    1/12        ‹ ›
+[ landscape card ][ landscape card ][ … ]   ← auto-scrolls right
+
+⭐ Featured Tools    1/12        ‹ ›
+[ landscape card ][ landscape card ][ … ]   ← auto-scrolls left
+
+🏆 Most Used Tools   1/12        ‹ ›
+[ landscape card ][ landscape card ][ … ]   ← auto-scrolls right
+```
+
+Removed: the For You / Live Tools / Browse / All Tools toggle, the stats badges ("200 Live · 2,000 Total"), the `CategoryBrowser`, the `ToolsFilters` (sector / department / tool-type selects), the personalized view, the export button.
+
+Search bar still works — when the user types, the four carousels collapse into a single grid of search results (existing global search logic kept).
+
+### 5. Landscape "app store" tool card
+
+A new component `ToolLandscapeCard` matching the reference screenshot. Each card is wide (≈340 px on mobile, ≈420 px on desktop) and contains:
+
+- Top row: rounded-square icon (left, 64 px) · name + `vX.Y · AI Agent` + 2-line description
+- Live badge (existing emerald pill) + ⭐ rating (use a deterministic pseudo-rating per tool id so it stays stable)
+- "App Preview" mini grid (2×2 of gradient thumbnails using the tool icon as overlay)
+- "View more screenshots and video demos →" link → opens existing `ToolQuickPreview`
+- "Minimum Credit to Start: N CREDITS for 1 Generation" panel (uses `useToolPricing`)
+- Big gradient button "START USING · N CREDITS" → navigates to `/tool/:toolId`
+- Anonymous-only sub-line: "Sign in to start using" (just text, not a button — the sign-in dialog opens automatically when the action triggers a paid run)
+
+### 6. Carousels
+
+Use the existing `embla-carousel-react` (already in `src/components/ui/carousel.tsx`).
+
+- Section component `ToolSection` takes `{ title, icon, tools, autoScrollDirection: "ltr" | "rtl" }`.
+- Auto-scroll using `embla-carousel-auto-scroll` plugin (need to add). Speed: ~1 px / frame, pauses on hover, resumes on leave.
+- Sections alternate direction so the page feels alive: Hot ←, Trending →, Featured ←, Most Used →.
+- Manual prev/next arrows + counter "1/12" stay visible.
+
+### 7. Section data source
+
+Approach (no admin UI built right now — just plumbing):
+
+- Tools in each section come from `tools_catalog` filtered by a new optional column `home_section` (text, nullable). Values: `hot`, `trending`, `featured`, `most_used`. A tool can be in only one section at a time; admin can change later from the existing tool-management screen (we'll wire that in a follow-up — out of scope today).
+- For now, since no tools are tagged, fall back to picking 12 tools per section automatically:
+  - Hot: top 12 by `display_order` from live + featured.
+  - Trending: 12 most-recently-added live tools.
+  - Featured: 12 with `is_premium` or `source = 'featured'`.
+  - Most Used: 12 from `tool_runs` aggregated count (last 30 days). If the table is empty, fall back to the same pool.
+- All sections gracefully hide if they end up with <3 tools.
+
+A small migration adds the `home_section` column so the admin can populate it later. No data is written.
+
+## Technical changes (developer-facing)
+
+**Edits**
+
+- `src/pages/Tools.tsx` — gut the body, replace with new `<ToolsHero />` + four `<ToolSection />` blocks; keep global search results and `ToolQuickPreview`/`ToolsChatbot`.
+- `src/pages/Auth.tsx` — remove `<FunnelStepper />` import + render.
+- `src/pages/Credits.tsx` — drop the anonymous "Sign in to top up" card; rest stays.
+
+**New files**
+
+- `src/components/tools/ToolsHero.tsx` — pill + title + description + search input only.
+- `src/components/tools/ToolLandscapeCard.tsx` — the wide app-store card.
+- `src/components/tools/ToolSection.tsx` — auto-scrolling embla carousel wrapper + arrows + counter.
+- `src/hooks/useHomeSections.ts` — picks 12 tools per section from catalog/`tool_runs`.
+
+**Migration**
+
+- `ALTER TABLE public.tools_catalog ADD COLUMN home_section TEXT;` (nullable, defaults to `NULL` — no policy changes needed; existing policies cover it).
+
+**Dependency**
+
+- Add `embla-carousel-auto-scroll` (~3 KB).
+
+**Removed (left in repo, no longer rendered)**
+
+- `FunnelStepper`, `ToolsHeader`, `ToolsFilters`, `CategoryBrowser`, `PersonalizedTools` — keep files so we can restore later, but delete the imports/renders from `Tools.tsx`.
+
+## Acceptance checklist
+
+- No funnel bar on `/tools` or `/auth`.
+- `/credits` packs visible without login; clicking Buy without login opens the sign-in dialog.
+- Browsing tool cards / opening preview never asks for login. Login only triggers when the user clicks a tool action that runs/charges.
+- `/tools` shows: pill → "Discover Tools" → description → search bar → 4 carousels.
+- Each carousel auto-scrolls (alternating direction), pauses on hover.
+- Each card matches the reference screenshot layout.
+- Search still works and overrides the carousels with a results grid.
+- All existing tool pages (`/tool/:id`, native tools, admin, bulk QA) untouched.
