@@ -969,6 +969,7 @@ export type Database = {
           is_live: boolean
           is_premium: boolean
           name: string
+          preview_image_fit: string
           preview_image_url: string | null
           rating: number | null
           review_count: number | null
@@ -990,6 +991,7 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name: string
+          preview_image_fit?: string
           preview_image_url?: string | null
           rating?: number | null
           review_count?: number | null
@@ -1011,6 +1013,7 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name?: string
+          preview_image_fit?: string
           preview_image_url?: string | null
           rating?: number | null
           review_count?: number | null
