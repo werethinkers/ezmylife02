@@ -18,6 +18,9 @@ interface ToolLandscapeCardProps {
   category: string;
   isLive: boolean;
   iconUrl?: string | null;
+  previewImageUrl?: string | null;
+  rating?: number | null;
+  reviewCount?: number | null;
   icon?: ReactNode;
   onPreview?: () => void;
 }
