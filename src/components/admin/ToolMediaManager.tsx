@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Image as ImageIcon, Save } from "lucide-react";
+import { Loader2, Image as ImageIcon, Save, Crop } from "lucide-react";
+import ImageCropDialog from "./ImageCropDialog";
 
 interface CatalogRow {
   id: string;
