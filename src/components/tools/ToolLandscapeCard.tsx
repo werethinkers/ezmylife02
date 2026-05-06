@@ -138,7 +138,7 @@ export const ToolLandscapeCard = ({
       <div className="mb-4">
         <button
           type="button"
-          onClick={onPreview}
+          onClick={(e) => { e.stopPropagation(); onPreview?.(); }}
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
@@ -158,7 +158,7 @@ export const ToolLandscapeCard = ({
         {onPreview && (
           <button
             type="button"
-            onClick={onPreview}
+            onClick={(e) => { e.stopPropagation(); onPreview(); }}
             className="text-sm text-cyan-500 hover:text-cyan-400 hover:underline mt-3 block w-full text-center font-medium"
           >
             View more screenshots and video demos →
