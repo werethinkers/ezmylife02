@@ -32,7 +32,7 @@ const CreditsSuccess = () => {
                 </div>
               </div>
               <div className="mt-8 flex gap-2 justify-center">
-                <Button asChild><Link to="/tools">Browse tools</Link></Button>
+                <Button asChild><Link to="/ai-apps">Browse tools</Link></Button>
                 <Button asChild variant="outline"><Link to="/credits">Buy more</Link></Button>
               </div>
             </CardContent>

@@ -64,7 +64,7 @@ const AuthCallback = () => {
           localStorage.removeItem("auth_redirect_to");
           navigate(redirectTo, { replace: true });
         } else if (data?.subscribed) {
-          navigate("/tools", { replace: true });
+          navigate("/ai-apps", { replace: true });
         } else {
           // Keep auth_redirect_to so we can return to the tool after upgrade
           navigate("/subscription", { replace: true });

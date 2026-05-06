@@ -177,7 +177,7 @@ const Credits = () => {
                   <Link to="/credits/history">Transaction history</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/tools">Browse tools</Link>
+                  <Link to="/ai-apps">Browse AI apps</Link>
                 </Button>
               </div>
             </CardContent>

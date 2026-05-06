@@ -7,9 +7,8 @@ const SITE = "https://ezyourlife.com";
 
 const STATIC_ROUTES: Array<{ path: string; priority: string; changefreq: string }> = [
   { path: "/", priority: "1.0", changefreq: "daily" },
-  { path: "/tools", priority: "0.98", changefreq: "daily" },
+  { path: "/ai-apps", priority: "0.98", changefreq: "daily" },
   { path: "/about", priority: "0.8", changefreq: "monthly" },
-  { path: "/contact", priority: "0.6", changefreq: "monthly" },
   { path: "/subscription", priority: "0.85", changefreq: "weekly" },
   { path: "/refund-policy", priority: "0.3", changefreq: "yearly" },
   { path: "/auth", priority: "0.4", changefreq: "monthly" },
