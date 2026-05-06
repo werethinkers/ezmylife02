@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Zap, PlayCircle } from "lucide-react";
+import { Star, Zap, PlayCircle, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useWallet } from "@/hooks/useWallet";
+import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
 import { getToolIconUrl } from "@/data/toolIconMap";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { ReactNode } from "react";
@@ -51,6 +52,9 @@ export const ToolLandscapeCard = ({
   const { creditCost, costInr } = useToolPricing(toolId);
   const { total: walletTotal } = useWallet();
   const [loginOpen, setLoginOpen] = useState(false);
+  const { favorites } = useFavorites();
+  const { toggle: toggleFav, loginOpen: favLoginOpen, setLoginOpen: setFavLoginOpen } = useToggleFavorite();
+  const isFav = favorites.has(toolId);
 
   const aiIcon = iconUrl || getToolIconUrl(toolId, category);
 
@@ -69,14 +73,8 @@ export const ToolLandscapeCard = ({
     return { rating, reviews: reviews.toFixed(1), version: `v${major}.${minor}`, gradients: grads };
   }, [toolId]);
 
-  const requiresLogin = creditCost > 0;
-
   const handleStart = () => {
-    // Browsing/viewing is always free. Only paid runs require login.
-    if (requiresLogin && !user) {
-      setLoginOpen(true);
-      return;
-    }
+    // Always let users enter the tool — login is requested at generate-time.
     if (isLive) navigate(`/tool/${toolId}`);
     else navigate(`/tool-preview/${toolId}`, { state: { name, description, isLive } });
   };
@@ -84,9 +82,24 @@ export const ToolLandscapeCard = ({
   const inrValue = (costInr || creditCost * 0.45).toFixed(2);
 
   return (
-    <div className="w-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+    <div className="relative w-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+      {/* Favourite */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); toggleFav(toolId, isFav); }}
+        aria-label={isFav ? "Remove from favourites" : "Add to favourites"}
+        className={cn(
+          "absolute top-3 right-3 z-10 h-9 w-9 rounded-full flex items-center justify-center border transition-all",
+          isFav
+            ? "bg-rose-500/15 border-rose-500/40 text-rose-500"
+            : "bg-background/80 border-border/60 text-muted-foreground hover:text-rose-500 hover:border-rose-500/40"
+        )}
+      >
+        <Heart className={cn("h-4 w-4", isFav && "fill-rose-500")} />
+      </button>
+
       {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-4 mb-4 pr-10">
         <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10">
           {aiIcon ? (
             <img src={aiIcon} alt={name} className="h-14 w-14 object-contain rounded-xl" />
@@ -208,6 +221,7 @@ export const ToolLandscapeCard = ({
       </div>
 
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/tool/${toolId}`} />
+      <LoginPromptDialog open={favLoginOpen} onOpenChange={setFavLoginOpen} />
     </div>
   );
 };

@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Sparkles, Zap, ShieldCheck, Wallet, Search,
   MessageSquare, Image as ImageIcon, Video, AudioLines, Pencil,
-  Briefcase, Megaphone, LayoutGrid, Star,
+  Briefcase, Megaphone, LayoutGrid, Gift, LogIn, UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
@@ -126,7 +126,7 @@ const Home = () => {
             <div className="flex flex-wrap gap-3 pt-2">
               {[
                 { v: "200+", l: "AI Apps" },
-                { v: "10K+", l: "Happy Users" },
+                { v: "₹10", l: "Min Pack" },
                 { v: "4.8★", l: "Avg Rating" },
               ].map((s) => (
                 <div key={s.l} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/40 border border-border/50">
@@ -137,50 +137,73 @@ const Home = () => {
             </div>
           </motion.div>
 
-          {/* Credits card */}
+          {/* Right card: credits (logged in) or signup CTA (logged out) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="relative rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-7 overflow-hidden"
+            className="relative"
           >
-            <div className="absolute -top-12 -right-12 h-56 w-56 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-xl font-semibold">Your Credits</h2>
-                <span className="text-xs text-muted-foreground">ⓘ</span>
-              </div>
-              <div className="flex items-center gap-4 mb-2">
-                <div className="h-14 w-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-                  <Zap className="h-7 w-7 text-primary" />
-                </div>
-                <div className="text-5xl font-bold tabular-nums">
-                  {user ? walletTotal.toLocaleString() : "—"}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-5">Credits Available</p>
-              <div className="space-y-2 mb-6">
-                <Button asChild size="lg" className="w-full h-12 rounded-xl">
-                  <Link to="/credits">Top Up Credits</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="w-full h-12 rounded-xl">
-                  <Link to={user ? "/credits/history" : "/credits"}>Transaction History</Link>
-                </Button>
-              </div>
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
-                {[
-                  { Icon: Wallet, t: "Pay with Credits", s: "No subscriptions" },
-                  { Icon: ShieldCheck, t: "Secure & Safe", s: "Trusted payments" },
-                  { Icon: Zap, t: "Use Instantly", s: "Start in seconds" },
-                ].map((b) => (
-                  <div key={b.t} className="text-center space-y-1">
-                    <b.Icon className="h-5 w-5 text-primary mx-auto" />
-                    <p className="text-[11px] font-semibold leading-tight">{b.t}</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight">{b.s}</p>
+            {user ? (
+              <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-7 overflow-hidden h-full">
+                <div className="absolute -top-12 -right-12 h-56 w-56 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h2 className="text-xl font-semibold">Your Credits</h2>
                   </div>
-                ))}
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+                      <Zap className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="text-5xl font-bold tabular-nums">{walletTotal.toLocaleString()}</div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-5">Credits Available</p>
+                  <div className="space-y-2 mb-6">
+                    <Button asChild size="lg" className="w-full h-12 rounded-xl">
+                      <Link to="/credits">Top Up Credits</Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="w-full h-12 rounded-xl">
+                      <Link to="/credits/history">Transaction History</Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
+                    {[
+                      { Icon: Wallet, t: "Pay with Credits", s: "No subscriptions" },
+                      { Icon: ShieldCheck, t: "Secure & Safe", s: "Trusted payments" },
+                      { Icon: Zap, t: "Use Instantly", s: "Start in seconds" },
+                    ].map((b) => (
+                      <div key={b.t} className="text-center space-y-1">
+                        <b.Icon className="h-5 w-5 text-primary mx-auto" />
+                        <p className="text-[11px] font-semibold leading-tight">{b.t}</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">{b.s}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative rounded-3xl bg-gradient-to-br from-primary via-primary to-purple-600 p-7 text-primary-foreground shadow-xl overflow-hidden h-full">
+                <div className="absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                <p className="text-sm font-medium mb-1 opacity-90">Welcome to EzYourLife 👋</p>
+                <h2 className="text-3xl font-bold leading-tight mb-5">
+                  Log in or sign up and<br />
+                  get <span className="underline decoration-white/40">100 free credits!</span>
+                </h2>
+                <div className="flex justify-center mb-5">
+                  <div className="h-32 w-32 rounded-3xl bg-white/15 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <Gift className="h-16 w-16 text-white drop-shadow" />
+                  </div>
+                </div>
+                <Button asChild size="lg" variant="secondary" className="w-full h-12 font-bold rounded-xl">
+                  <Link to="/auth?mode=signup"><UserPlus className="h-4 w-4 mr-2" /> Sign Up Free</Link>
+                </Button>
+                <div className="text-center text-xs my-2 opacity-80">or</div>
+                <Button asChild size="lg" variant="outline" className="w-full h-12 rounded-xl bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
+                  <Link to="/auth"><LogIn className="h-4 w-4 mr-2" /> Log In</Link>
+                </Button>
+                <p className="text-center text-xs mt-3 opacity-80">No credit card required</p>
+              </div>
+            )}
           </motion.div>
         </section>
 
@@ -236,23 +259,31 @@ const Home = () => {
         <section id="how-it-works" className="mb-16 rounded-3xl border border-border/60 bg-card/50 p-6 md:p-10">
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h2 className="text-2xl md:text-3xl font-bold mb-6">Simple. Credit-Based. Hassle-Free.</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { n: 1, t: "Buy Credits", s: "Pick a pack that fits your needs", Icon: Wallet },
-                  { n: 2, t: "Choose an AI App", s: "Browse and pick the best app", Icon: LayoutGrid },
-                  { n: 3, t: "Pay with Credits", s: "Unlock or run the app", Icon: Zap },
-                  { n: 4, t: "Start Using", s: "Instant access. No waiting.", Icon: Sparkles },
-                ].map((s) => (
-                  <div key={s.n} className="rounded-2xl bg-background/60 border border-border/50 p-4 text-center">
-                    <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
-                      <s.Icon className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Simple. Credit-Based. Hassle-Free.</h2>
+              <p className="text-sm text-muted-foreground mb-6">Real prices, real packs. No subscriptions, no surprises.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(() => {
+                  const starter = CREDIT_PACKS[0];
+                  const popular = CREDIT_PACKS.find((p) => p.badge === "Popular") ?? CREDIT_PACKS[3];
+                  const best = CREDIT_PACKS.find((p) => p.badge === "Best value") ?? CREDIT_PACKS[CREDIT_PACKS.length - 1];
+                  const steps = [
+                    { n: 1, t: "Start small", v: `₹${starter.inr}`, sub: `${starter.credits} credits`, s: "Try AI apps with our smallest pack.", Icon: Wallet },
+                    { n: 2, t: "Most popular", v: `₹${popular.inr}`, sub: `${popular.credits} credits`, s: "What most users pick — great value.", Icon: LayoutGrid, highlight: true },
+                    { n: 3, t: "Best value", v: `₹${best.inr}`, sub: `${best.credits} credits`, s: "Lowest cost per credit. Stock up.", Icon: Zap },
+                  ];
+                  return steps.map((s) => (
+                    <div key={s.n} className={`rounded-2xl bg-background/60 border p-5 text-center ${s.highlight ? "border-primary/50 shadow-lg shadow-primary/10" : "border-border/50"}`}>
+                      <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
+                        <s.Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-xs font-semibold text-primary mb-1">Step {s.n}</div>
+                      <p className="font-bold text-sm mb-1">{s.t}</p>
+                      <p className="text-2xl font-bold tabular-nums">{s.v}</p>
+                      <p className="text-xs font-medium text-primary mb-1">{s.sub}</p>
+                      <p className="text-xs text-muted-foreground leading-snug">{s.s}</p>
                     </div>
-                    <div className="text-xs font-semibold text-primary mb-1">Step {s.n}</div>
-                    <p className="font-bold text-sm mb-1">{s.t}</p>
-                    <p className="text-xs text-muted-foreground leading-snug">{s.s}</p>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/70 p-5">
@@ -311,32 +342,12 @@ const Home = () => {
           </section>
         )}
 
-        {/* Trust strip */}
-        <section className="mb-12 rounded-2xl border border-border/50 bg-muted/40 p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-8 w-8 text-primary" />
-            <div>
-              <p className="font-semibold">Trusted by thousands of smart users worldwide.</p>
-              <p className="text-xs text-muted-foreground">Secure payments · 24/7 support · Your data is always protected.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-8 w-8 rounded-full border-2 border-background bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center text-xs font-bold text-foreground"
-                >
-                  {String.fromCharCode(65 + i)}
-                </div>
-              ))}
-            </div>
-            <div className="text-sm">
-              <span className="font-bold">10K+</span> <span className="text-muted-foreground">Happy Users</span>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> 4.8 average
-              </div>
-            </div>
+        {/* Trust strip (Happy Users removed) */}
+        <section className="mb-12 rounded-2xl border border-border/50 bg-muted/40 p-6 flex items-center gap-3">
+          <ShieldCheck className="h-8 w-8 text-primary flex-shrink-0" />
+          <div>
+            <p className="font-semibold">Secure payments · 24/7 support · Your data is always protected.</p>
+            <p className="text-xs text-muted-foreground">Pay-as-you-go credits — no subscriptions, ever.</p>
           </div>
         </section>
 
