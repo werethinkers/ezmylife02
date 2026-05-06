@@ -64,20 +64,21 @@ export const ToolLandscapeCard = ({
 
   const aiIcon = iconUrl || getToolIconUrl(toolId, category);
 
-  const { rating, reviews, version, gradients } = useMemo(() => {
+  const { rating, reviews, version } = useMemo(() => {
     const h = hash(toolId);
-    const rating = (4 + ((h % 60) / 100)).toFixed(2);
-    const reviews = (((h >> 3) % 90) + 10) / 10;
+    const fallbackRating = (4 + ((h % 60) / 100));
+    const fallbackReviews = (((h >> 3) % 90) + 10) * 100; // ~1000-9900
     const major = ((h >> 5) % 5) + 1;
     const minor = ((h >> 7) % 9) + 1;
-    const grads = [
-      GRADIENTS[h % GRADIENTS.length],
-      GRADIENTS[(h >> 2) % GRADIENTS.length],
-      GRADIENTS[(h >> 4) % GRADIENTS.length],
-      GRADIENTS[(h >> 6) % GRADIENTS.length],
-    ];
-    return { rating, reviews: reviews.toFixed(1), version: `v${major}.${minor}`, gradients: grads };
-  }, [toolId]);
+    const r = ratingProp ?? fallbackRating;
+    const rc = reviewCountProp ?? fallbackReviews;
+    const reviewsLabel = rc >= 1000 ? `${(rc / 1000).toFixed(1)}k` : `${rc}`;
+    return {
+      rating: r.toFixed(2),
+      reviews: reviewsLabel,
+      version: `v${major}.${minor}`,
+    };
+  }, [toolId, ratingProp, reviewCountProp]);
 
   const handleStart = () => {
     // Always let users enter the tool — login is requested at generate-time.
