@@ -142,25 +142,21 @@ export const ToolLandscapeCard = ({
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
-            previewImageFit === "contain" ? (
-              <>
-                <img src={previewImageUrl} aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60" />
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/30 via-fuchsia-500/20 to-purple-600/30" />
-                <img
-                  src={previewImageUrl}
-                  alt={`${name} preview`}
-                  className="relative z-10 max-w-[92%] max-h-[92%] object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 rounded-xl"
-                  loading="lazy"
-                />
-              </>
-            ) : (
+            <>
+              <img src={previewImageUrl} aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-fuchsia-500/10 to-purple-600/20" />
               <img
                 src={previewImageUrl}
                 alt={`${name} preview`}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className={cn(
+                  "relative z-10 drop-shadow-2xl group-hover:scale-[1.03] transition-transform duration-500 rounded-xl",
+                  previewImageFit === "cover"
+                    ? "absolute inset-0 w-full h-full object-cover"
+                    : "max-w-full max-h-full w-auto h-auto object-contain"
+                )}
                 loading="lazy"
               />
-            )
+            </>
           ) : (
             <PlayCircle className="h-20 w-20 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
           )}
