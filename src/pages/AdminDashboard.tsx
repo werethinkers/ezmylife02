@@ -311,6 +311,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "tool-mgmt" && <ToolManagement />}
+        {activeTab === "home-sections" && !isViewOnly && <HomeSectionsManager />}
         {activeTab === "tool-requests" && <ToolRequests />}
         {activeTab === "archived-events" && <ArchivedEvents />}
         {activeTab === "meet-nudge" && <MeetNudgeAdmin />}
