@@ -510,9 +510,12 @@ export const ToolManagement = () => {
             <DialogTitle>{isNew ? "Add New Tool" : "Edit Tool"}</DialogTitle>
           </DialogHeader>
           {editingTool && (
-            <Tabs value={dialogTab} onValueChange={(v) => setDialogTab(v as "details" | "files")}>
+            <Tabs value={dialogTab} onValueChange={(v) => setDialogTab(v as "details" | "files" | "media")}>
               <TabsList className="w-full">
                 <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
+                <TabsTrigger value="media" className="flex-1" disabled={isNew && !editingTool.id}>
+                  Gallery
+                </TabsTrigger>
                 <TabsTrigger value="files" className="flex-1" disabled={isNew && !editingTool.id}>
                   <Upload className="h-3.5 w-3.5 mr-1.5" /> Files
                 </TabsTrigger>
