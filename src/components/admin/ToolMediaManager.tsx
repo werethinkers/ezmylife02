@@ -34,10 +34,17 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
   const [iconUrl, setIconUrl] = useState(tool.icon_url);
   const [previewUrl, setPreviewUrl] = useState(tool.preview_image_url);
   const [fit, setFit] = useState<"cover" | "contain">((tool.preview_image_fit as any) ?? "cover");
+  const [iconFit, setIconFit] = useState<"cover" | "contain">((tool.icon_fit as any) ?? "cover");
 
   const updateFit = async (next: "cover" | "contain") => {
     setFit(next);
     await supabase.from("tools_catalog").update({ preview_image_fit: next }).eq("id", tool.id);
+    onChanged();
+  };
+
+  const updateIconFit = async (next: "cover" | "contain") => {
+    setIconFit(next);
+    await (supabase.from("tools_catalog") as any).update({ icon_fit: next }).eq("id", tool.id);
     onChanged();
   };
 
