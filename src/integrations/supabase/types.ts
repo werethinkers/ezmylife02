@@ -944,6 +944,7 @@ export type Database = {
           description: string
           display_order: number
           has_uploaded_files: boolean
+          home_section: string | null
           icon_url: string | null
           id: string
           is_free: boolean
@@ -961,6 +962,7 @@ export type Database = {
           description: string
           display_order?: number
           has_uploaded_files?: boolean
+          home_section?: string | null
           icon_url?: string | null
           id: string
           is_free?: boolean
@@ -978,6 +980,7 @@ export type Database = {
           description?: string
           display_order?: number
           has_uploaded_files?: boolean
+          home_section?: string | null
           icon_url?: string | null
           id?: string
           is_free?: boolean

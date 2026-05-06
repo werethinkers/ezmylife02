@@ -1,0 +1,1 @@
+ALTER TABLE public.tools_catalog ADD COLUMN IF NOT EXISTS home_section TEXT;
