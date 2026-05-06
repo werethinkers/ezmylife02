@@ -29,7 +29,7 @@ const Tools = lazy(() => import("./pages/Tools"));
 const ToolViewer = lazy(() => import("./pages/ToolViewer"));
 const ToolPreview = lazy(() => import("./pages/ToolPreview"));
 const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
+
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Profile = lazy(() => import("./pages/Profile"));
