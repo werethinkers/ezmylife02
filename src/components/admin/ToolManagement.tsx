@@ -658,6 +658,16 @@ export const ToolManagement = () => {
                 </div>
               </TabsContent>
 
+              <TabsContent value="media" className="mt-4">
+                {editingTool.id ? (
+                  <ToolDetailMediaEditor toolId={editingTool.id} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Save the tool first to add gallery media
+                  </p>
+                )}
+              </TabsContent>
+
               <TabsContent value="files" className="mt-4">
                 {editingTool.id ? (
                   <ToolFileUploader
