@@ -244,6 +244,84 @@ const About = () => {
         </div>
       </section>
 
+      {/* Contact Section (merged from /contact) */}
+      <section id="contact" className="py-20 bg-muted/30 border-t border-border/40 scroll-mt-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 space-y-3">
+            <h2 className="text-3xl md:text-4xl font-bold">Get in Touch</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Have questions or feedback? We'd love to hear from you.
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
+            <div className="space-y-6">
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Email Us</CardTitle>
+                      <CardDescription>support@ezyourlife.com</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Quick Response</CardTitle>
+                      <CardDescription>We typically reply within 24 hours</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            </div>
+            <Card className="border-border/50 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl">Send us a message</CardTitle>
+                <CardDescription>We'll get back to you as soon as possible.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" type="text" placeholder="Your name" value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required disabled={isSubmitting} maxLength={100} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="you@example.com" value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required disabled={isSubmitting} maxLength={255} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Message</Label>
+                    <Textarea id="message" placeholder="Tell us how we can help..." value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      required disabled={isSubmitting} className="min-h-[150px]" maxLength={1000} />
+                    <p className="text-xs text-muted-foreground">{formData.message.length}/1000 characters</p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+                    ) : (
+                      <><Send className="mr-2 h-4 w-4" /> Send Message</>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <SEOFooter />
     </div>
   );
