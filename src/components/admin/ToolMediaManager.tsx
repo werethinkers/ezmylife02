@@ -32,6 +32,13 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
   const [busy, setBusy] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState(tool.icon_url);
   const [previewUrl, setPreviewUrl] = useState(tool.preview_image_url);
+  const [fit, setFit] = useState<"cover" | "contain">((tool.preview_image_fit as any) ?? "cover");
+
+  const updateFit = async (next: "cover" | "contain") => {
+    setFit(next);
+    await supabase.from("tools_catalog").update({ preview_image_fit: next }).eq("id", tool.id);
+    onChanged();
+  };
 
   const handleUpload = async (kind: "icon" | "preview", file: File) => {
     setBusy(kind);
