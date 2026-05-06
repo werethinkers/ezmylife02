@@ -49,15 +49,17 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
     onChanged();
   };
 
-  const handleUpload = async (kind: "icon" | "preview", file: File) => {
+  const [cropState, setCropState] = useState<{ kind: "icon" | "preview"; src: string } | null>(null);
+
+  const handleUpload = async (kind: "icon" | "preview", blob: Blob, filename = "image.jpg") => {
     setBusy(kind);
     try {
+      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
       const url = await uploadFile(tool.id, file, kind);
       const patch: any = kind === "icon" ? { icon_url: url } : { preview_image_url: url };
       const { error } = await supabase.from("tools_catalog").update(patch).eq("id", tool.id);
       if (error) throw error;
       if (kind === "icon") setIconUrl(url); else setPreviewUrl(url);
-      // Also keep tool_media in sync for the preview image (used elsewhere)
       if (kind === "preview") {
         await supabase.from("tool_media").delete().eq("tool_id", tool.id).eq("kind", "image");
         await supabase.from("tool_media").insert({ tool_id: tool.id, kind: "image", url, sort_order: 0 });
@@ -68,6 +70,24 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
     } finally {
       setBusy(null);
+    }
+  };
+
+  const openCropFromFile = (kind: "icon" | "preview", file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setCropState({ kind, src: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
+  const openCropFromUrl = async (kind: "icon" | "preview", url: string) => {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => setCropState({ kind, src: reader.result as string });
+      reader.readAsDataURL(blob);
+    } catch {
+      toast({ title: "Cannot load image", description: "Re-upload to crop.", variant: "destructive" });
     }
   };
 
