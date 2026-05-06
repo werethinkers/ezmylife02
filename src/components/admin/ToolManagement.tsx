@@ -15,7 +15,6 @@ import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
-import { ToolDetailMediaEditor } from "./ToolDetailMediaEditor";
 import { useToolViewCounts } from "@/hooks/useToolViewCounts";
 import { ToolViewChart } from "./ToolViewChart";
 import {
@@ -113,7 +112,7 @@ export const ToolManagement = () => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toolTypesInput, setToolTypesInput] = useState("");
-  const [dialogTab, setDialogTab] = useState<"details" | "files" | "media">("details");
+  const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
@@ -510,12 +509,9 @@ export const ToolManagement = () => {
             <DialogTitle>{isNew ? "Add New Tool" : "Edit Tool"}</DialogTitle>
           </DialogHeader>
           {editingTool && (
-            <Tabs value={dialogTab} onValueChange={(v) => setDialogTab(v as "details" | "files" | "media")}>
+            <Tabs value={dialogTab} onValueChange={(v) => setDialogTab(v as "details" | "files")}>
               <TabsList className="w-full">
                 <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
-                <TabsTrigger value="media" className="flex-1" disabled={isNew && !editingTool.id}>
-                  Gallery
-                </TabsTrigger>
                 <TabsTrigger value="files" className="flex-1" disabled={isNew && !editingTool.id}>
                   <Upload className="h-3.5 w-3.5 mr-1.5" /> Files
                 </TabsTrigger>
@@ -656,16 +652,6 @@ export const ToolManagement = () => {
                     </p>
                   </div>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="media" className="mt-4">
-                {editingTool.id ? (
-                  <ToolDetailMediaEditor toolId={editingTool.id} />
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Save the tool first to add gallery media
-                  </p>
-                )}
               </TabsContent>
 
               <TabsContent value="files" className="mt-4">

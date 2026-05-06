@@ -27,7 +27,6 @@ const DelayedFallback = ({ delayMs = 180 }: { delayMs?: number }) => {
 const Home = lazy(() => import("./pages/Home"));
 const Tools = lazy(() => import("./pages/Tools"));
 const ToolViewer = lazy(() => import("./pages/ToolViewer"));
-const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolPreview = lazy(() => import("./pages/ToolPreview"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -95,9 +94,8 @@ const AnimatedRoutes = () => {
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/tools" element={<Tools />} />
-            <Route path="/tool/:toolId" element={<ToolDetail />} />
             <Route
-              path="/tool/:toolId/use"
+              path="/tool/:toolId"
               element={
                 <ToolAccessGuard>
                   <ToolViewer />

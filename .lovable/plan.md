@@ -1,91 +1,69 @@
-## Goals
+## Transaction History
 
-1. Remove the "Sign in / Choose plan / Pick a tool / Use it" funnel stepper from the top of public pages.
-2. Allow guests to **view a tool's detail page** (gallery, description, credit cost) without signing in. Sign-in is only required when they hit the "Start Using" button.
-3. Redesign every tool entry into an **App-Store style detail page** matching the reference screenshot, but with our existing dark/glassmorphism color scheme (no purple→pink gradient — use our primary/accent gradient).
-4. Make this detail page editable from the **Admin tab**: name, tool ID, description, app icon, and a gallery of up to 4 images + 1 video.
+Add a unified "Transaction History" view so users can see every credit movement: purchases (and how many credits were added) and tool runs (which tool was used, when, credits charged, and a link to the output where available).
 
-## What changes
+### Where it lives
+- New page **`/credits/history`** (component `src/pages/CreditsHistory.tsx`).
+- Add a **"Transaction history"** link/button on:
+  - `src/pages/Credits.tsx` (near the wallet balance)
+  - `src/pages/Profile.tsx` (in the credits/wallet section)
+- Add it to the Navbar wallet dropdown if present (otherwise just the two entry points above).
 
-### A. Remove funnel stepper
-- Delete `<FunnelStepper>` usage from `src/pages/Tools.tsx` and `src/pages/Auth.tsx`.
-- Keep the component file for now (unused) so we can revert easily.
+### Data sources (already exist, RLS-protected to the user)
+- `credit_ledger` — every credit delta with `reason` (`signup_bonus`, `first_action_bonus`, `monthly_reset`, `purchase`, `tool_run`, `admin_adjust`), `tool_id`, `run_id`, `cost_inr`, `metadata`.
+- `credit_purchases` — pack purchases (`pack_id`, `inr_amount`, `credits`, `status`, `paid_at`).
+- `tool_runs` — per-run details (`tool_id`, `credits_charged`, `status`, `started_at`, `finished_at`, `metadata`, `error`).
+- `tools_catalog` — to resolve `tool_id` → friendly name + `dedicated_route`.
 
-### B. New App-Store style Tool Detail page (`/tool/:toolId`)
+No schema changes needed. No new edge function needed (direct selects via RLS).
 
-Currently `/tool/:toolId` goes straight into `ToolViewer` (iframe / native renderer) behind `ToolAccessGuard`. We split this:
+### UI
 
-- **`/tool/:toolId`** → new `ToolDetail.tsx` (PUBLIC, no auth guard). Shows the app-store style page.
-- **`/tool/:toolId/use`** → existing `ToolViewer` wrapped in `ToolAccessGuard` (sign-in required for paid tools, free tools open directly).
+Single page with three tabs (shadcn `Tabs`):
 
-`ToolDetail.tsx` layout (mobile-first, matches screenshot):
+1. **All activity** (default) — merged feed from `credit_ledger`, newest first.
+   Each row shows: date/time, icon, title, sub-line, credit delta (+green / −red), running balance.
+   - `purchase` → "Bought {credits} credits ({pack_id}) — ₹{inr_amount}" + link to Razorpay receipt id (if stored in metadata).
+   - `tool_run` → "{Tool name} · {status}" with link to the tool page; show `cost_inr` and any `metadata.output_url` / output filename if present.
+   - `signup_bonus` / `first_action_bonus` / `monthly_reset` → friendly label.
+   - `admin_adjust` → "Admin grant" + note from metadata.
 
-```text
-[← Back]                                    [♥ Favorite]
+2. **Purchases** — table of `credit_purchases` where `status='paid'`: date, pack, ₹, credits added, payment id.
 
-┌────────┐   Tool Name
-│  Icon  │   v1.0 · Category
-│ (96px) │
-└────────┘   Short description (2-3 lines)
-             ★ rating · (reviews)   [optional, from view counts]
+3. **Tool usage** — table of `tool_runs` joined w/ catalog name: date, tool (link), status badge, credits charged, output preview.
+   - "Output" column: if `metadata.output_url` exists → "View" link; else if `bulk_jobs` exists for this run via `tool_id` → link to `/bulk-jobs/:id`; otherwise "—".
 
-App Preview
-[ img ][ img ][ img ][ video ]   ← horizontal scroll carousel
-View more screenshots →
+### Output linking
+Most tool runs do not currently persist `output_url`. To make the "what the output was" column meaningful:
+- For **bulk runs**, look up `bulk_jobs` for the user (`tool_id`, time window) and link to `/bulk-jobs/:id` which already shows outputs.
+- For **AI single-tool runs**, query `user_creations` (already user-scoped) by `tool_type`/`created_at` proximity and surface `result_url` / `title`.
+- For runs with neither, show "—" (no fabricated data).
 
-To Start Using
-┌──────────────────────────────────────┐
-│ ⚡  Credits per run:                  │
-│     {creditCost} CREDITS              │
-│     (Approx. ₹{cost_inr} value)       │
-└──────────────────────────────────────┘
+This is best-effort matching done client-side (no DB change). A small helper `src/lib/transactionHistory.ts` will:
+- Fetch latest 200 ledger entries.
+- Batch-fetch related `bulk_jobs` (by `user_id` + `tool_id` + window) and `user_creations` (by `user_id` + `created_at` window).
+- Compute a running balance from current wallet total going backwards.
 
-[  START USING · {creditCost} CREDITS  ]   ← gradient CTA
-You have {wallet} credits · Buy more
-```
+### Filters & UX
+- Date range (Last 7d / 30d / 90d / All) using a `Select`.
+- Type filter chips: Purchases, Tool runs, Bonuses, Admin grants.
+- CSV export button (client-side, reuses pattern from `ToolsExportButton`).
+- Pagination: load 50 at a time, "Load more" button.
+- Empty state: "No transactions yet" with link back to Credits page.
+- Mobile: switches to card list layout (re-uses Tailwind responsive patterns).
 
-Behavior:
-- Anyone (guest or signed-in) can view this page.
-- `START USING` button:
-  - If guest → open `LoginPromptDialog` with `returnTo=/tool/:toolId/use`.
-  - If signed-in & free tool → navigate to `/tool/:toolId/use`.
-  - If signed-in & paid tool & enough credits → navigate to `/tool/:toolId/use`.
-  - If signed-in but insufficient credits → open existing `BuyCreditsDialog`.
-- Pulls data from `tools_catalog` (name, description, category, icon_url), `tool_pricing` (credit cost, INR), `tool_media` (gallery), `useWallet` (balance).
+### Files to create
+- `src/pages/CreditsHistory.tsx` — page shell, SEO, tabs.
+- `src/components/credits/TransactionList.tsx` — merged ledger feed.
+- `src/components/credits/PurchasesTable.tsx`
+- `src/components/credits/ToolRunsTable.tsx`
+- `src/lib/transactionHistory.ts` — fetch + enrichment helpers.
 
-Color scheme: dark glassmorphism card + our `from-primary to-accent` gradient on the CTA button (NOT the reference's purple-pink). `Space Grotesk` headings.
+### Files to edit
+- `src/App.tsx` — add `/credits/history` route.
+- `src/pages/Credits.tsx` — add "Transaction history" link near wallet badge.
+- `src/pages/Profile.tsx` — add same link in credits section.
 
-### C. Routing
-In `src/App.tsx`:
-- `/tool/:toolId`  → `<ToolDetail />` (public)
-- `/tool/:toolId/use` → `<ToolAccessGuard><ToolViewer /></ToolAccessGuard>` (guarded)
-
-Update `EnhancedToolCard` "Open" handler to keep navigating to `/tool/:toolId` (now the detail page). No change needed there.
-
-### D. Admin: edit detail-page content
-
-`tool_media` table and `ToolMediaManager` already exist (image/video/gif uploads keyed by tool_id). We extend the admin UX so editing one tool's "App Store page" feels like one screen instead of two:
-
-- In `ToolManagement.tsx`, on each tool row add an **"Edit detail page"** button → opens a `ToolDetailEditor` dialog with two sections:
-  1. **Basics** — name, tool ID (read-only), description, category, app icon (uploads to existing `tool-media` bucket as `kind=icon`, persisted to `tools_catalog.icon_url`).
-  2. **Gallery** — drag-and-drop up to **4 images + 1 video**. Reuses existing `tool_media` rows; enforces the 4-image / 1-video limit client-side. Drag handles reorder via `sort_order`.
-- `ToolMediaManager` stays for power-use bulk admin.
-
-No schema changes needed (`tool_media`, `tools_catalog.icon_url`, `tool_pricing` all already exist).
-
-## Out of scope
-- Real ratings / reviews (we'll show view-count-based "popularity" if available, otherwise omit the stars).
-- Changing how `ToolViewer` itself renders.
-
-## Files
-
-**New**
-- `src/pages/ToolDetail.tsx` — App-store style public detail page
-- `src/components/tools/ToolGallery.tsx` — image/video carousel
-- `src/components/admin/ToolDetailEditor.tsx` — single-screen editor dialog
-
-**Modified**
-- `src/App.tsx` — add `/tool/:toolId/use`, repoint `/tool/:toolId`
-- `src/pages/Tools.tsx` — remove `<FunnelStepper>`
-- `src/pages/Auth.tsx` — remove `<FunnelStepper>`
-- `src/components/admin/ToolManagement.tsx` — add "Edit detail page" action
+### Out of scope
+- Persisting `output_url` on every tool run (would require edge-function changes across many tools). Instead we infer via `bulk_jobs` and `user_creations` where possible.
+- Admin-side "user transaction history" (admin already sees ledger via `CreditsAdmin`).
