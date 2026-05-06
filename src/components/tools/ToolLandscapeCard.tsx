@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Zap, PlayCircle, Heart } from "lucide-react";
+import { Zap, PlayCircle, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
