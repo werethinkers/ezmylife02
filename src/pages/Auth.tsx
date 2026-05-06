@@ -14,7 +14,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
-import { FunnelStepper } from "@/components/FunnelStepper";
+
 
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
