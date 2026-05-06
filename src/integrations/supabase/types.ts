@@ -771,6 +771,24 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_favorites: {
+        Row: {
+          created_at: string
+          tool_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          tool_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          tool_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tool_media: {
         Row: {
           alt: string | null
