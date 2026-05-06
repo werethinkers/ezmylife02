@@ -8,6 +8,7 @@ import { ToolQuickPreview } from "@/components/tools/ToolQuickPreview";
 import { ToolsHero } from "@/components/tools/ToolsHero";
 import { ToolSection } from "@/components/tools/ToolSection";
 import { ToolLandscapeCard } from "@/components/tools/ToolLandscapeCard";
+import { ExploreMoreTools } from "@/components/tools/ExploreMoreTools";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { expandedTools } from "@/data/expandedTools";
