@@ -82,9 +82,24 @@ export const ToolLandscapeCard = ({
   const inrValue = (costInr || creditCost * 0.45).toFixed(2);
 
   return (
-    <div className="w-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+    <div className="relative w-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+      {/* Favourite */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); toggleFav(toolId, isFav); }}
+        aria-label={isFav ? "Remove from favourites" : "Add to favourites"}
+        className={cn(
+          "absolute top-3 right-3 z-10 h-9 w-9 rounded-full flex items-center justify-center border transition-all",
+          isFav
+            ? "bg-rose-500/15 border-rose-500/40 text-rose-500"
+            : "bg-background/80 border-border/60 text-muted-foreground hover:text-rose-500 hover:border-rose-500/40"
+        )}
+      >
+        <Heart className={cn("h-4 w-4", isFav && "fill-rose-500")} />
+      </button>
+
       {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-4 mb-4 pr-10">
         <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10">
           {aiIcon ? (
             <img src={aiIcon} alt={name} className="h-14 w-14 object-contain rounded-xl" />
