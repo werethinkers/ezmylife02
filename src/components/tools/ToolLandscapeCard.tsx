@@ -52,6 +52,9 @@ export const ToolLandscapeCard = ({
   const { creditCost, costInr } = useToolPricing(toolId);
   const { total: walletTotal } = useWallet();
   const [loginOpen, setLoginOpen] = useState(false);
+  const { favorites } = useFavorites();
+  const { toggle: toggleFav, loginOpen: favLoginOpen, setLoginOpen: setFavLoginOpen } = useToggleFavorite();
+  const isFav = favorites.has(toolId);
 
   const aiIcon = iconUrl || getToolIconUrl(toolId, category);
 
@@ -70,14 +73,8 @@ export const ToolLandscapeCard = ({
     return { rating, reviews: reviews.toFixed(1), version: `v${major}.${minor}`, gradients: grads };
   }, [toolId]);
 
-  const requiresLogin = creditCost > 0;
-
   const handleStart = () => {
-    // Browsing/viewing is always free. Only paid runs require login.
-    if (requiresLogin && !user) {
-      setLoginOpen(true);
-      return;
-    }
+    // Always let users enter the tool — login is requested at generate-time.
     if (isLive) navigate(`/tool/${toolId}`);
     else navigate(`/tool-preview/${toolId}`, { state: { name, description, isLive } });
   };
