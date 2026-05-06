@@ -23,7 +23,7 @@ export const LoginPromptDialog = ({ open, onOpenChange, returnTo }: Props) => {
         <DialogHeader>
           <DialogTitle>Sign in to continue</DialogTitle>
           <DialogDescription>
-            You need an account to use this tool. New users get free credits to try it instantly.
+            You need an account to use this AI App. New users get free credits to try it instantly.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 mt-2">

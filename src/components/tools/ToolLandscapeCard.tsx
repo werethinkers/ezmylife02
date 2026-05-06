@@ -97,7 +97,7 @@ export const ToolLandscapeCard = ({
         <div className="min-w-0 flex-1 pt-1">
           <h3 className="text-2xl font-bold text-foreground leading-tight truncate">{name}</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {version} · {category || "AI Tool"}
+            {version} · {category || "AI App"}
           </p>
         </div>
       </div>

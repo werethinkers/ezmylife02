@@ -17,7 +17,7 @@ export const ToolsChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your AI assistant powered by advanced AI. Tell me about your business or what problem you're trying to solve, and I'll recommend the perfect tools for you. 🚀"
+      content: "Hi! I'm your AI assistant powered by advanced AI. Tell me about your business or what problem you're trying to solve, and I'll recommend the perfect AI Apps for you. 🚀"
     }
   ]);
   const [input, setInput] = useState("");
@@ -145,7 +145,7 @@ export const ToolsChatbot = () => {
           <CardHeader className="border-b border-border/50 bg-muted/30 py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Bot className="h-5 w-5 text-primary" />
-              AI Tool Assistant
+              AI App Assistant
             </CardTitle>
             <p className="text-xs text-muted-foreground">Powered by AI • Ask me anything about tools</p>
           </CardHeader>

@@ -139,7 +139,7 @@ const Credits = () => {
   return (
     <>
       <SEOHead
-        title="Credits — Pay-as-you-go AI tools"
+        title="Credits — Pay-as-you-go AI Apps"
         description="Top up your EZYOURLIFE wallet. No subscriptions, just credits. Starts at ₹10."
         path="/credits"
       />

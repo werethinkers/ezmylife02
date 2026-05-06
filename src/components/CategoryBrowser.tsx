@@ -427,7 +427,7 @@ export const CategoryBrowser = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold">Browse by Tool Type</h2>
-              <p className="text-sm text-muted-foreground">Find tools by what they do</p>
+              <p className="text-sm text-muted-foreground">Find AI Apps by what they do</p>
             </div>
           </div>
           {selectedToolType !== "All Types" && onSelectToolType && (
@@ -549,7 +549,7 @@ export const CategoryBrowser = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold">Browse by Department</h2>
-              <p className="text-sm text-muted-foreground">Find tools organized by business function</p>
+              <p className="text-sm text-muted-foreground">Find AI Apps organized by business function</p>
             </div>
           </div>
           {selectedDepartment !== "All Departments" && (
@@ -679,7 +679,7 @@ export const CategoryBrowser = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold">Browse by Industry</h2>
-              <p className="text-sm text-muted-foreground">Explore tools tailored to your sector</p>
+              <p className="text-sm text-muted-foreground">Explore AI Apps tailored to your sector</p>
             </div>
           </div>
           {selectedSector !== "All Sectors" && (

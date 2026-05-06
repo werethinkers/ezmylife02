@@ -44,7 +44,7 @@ export const BulkPromoSection = () => (
           Drop dozens of files. Get all outputs at once.
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Stop running tools one image at a time. Bulk Mode is included free with every Premium plan.
+          Stop running AI Apps one image at a time. Bulk Mode is included free with every Premium plan.
         </p>
       </motion.div>
 

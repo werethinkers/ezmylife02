@@ -65,7 +65,7 @@ export const ToolsHeader = ({
             </h1>
             
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Explore our collection of powerful AI tools designed to solve real problems
+              Explore our collection of powerful AI Apps designed to solve real problems
             </p>
           </div>
 

@@ -49,7 +49,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="About EZYOURLIFE - The World's First AI App Store | Our Mission"
-        description="What is EZYOURLIFE? Learn about the world's first AI App Store — 200+ live AI tools today and 2,000+ launching within a year, for productivity, business, content creation and education. Discover the ezyourlife mission and values."
+        description="What is EZYOURLIFE? Learn about the world's first AI App Store — 200+ live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Discover the ezyourlife mission and values."
         path="/about"
         keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
         jsonLd={[
@@ -57,7 +57,7 @@ const About = () => {
             "@context": "https://schema.org",
             "@type": "AboutPage",
             name: "About EZYOURLIFE",
-            description: "Learn about EZYOURLIFE, the world's first AI App Store — 200+ live AI tools today and 2,000+ launching within a year.",
+            description: "Learn about EZYOURLIFE, the world's first AI App Store — 200+ live AI Apps today and 2,000+ launching within a year.",
             url: "https://ezyourlife.com/about",
             mainEntity: {
               "@type": "Organization",
@@ -209,7 +209,7 @@ const About = () => {
                 </div>
                 <p className="text-lg font-semibold">Live Now</p>
                 <p className="text-sm text-muted-foreground">
-                  AI tools you can use today
+                  AI Apps you can use today
                 </p>
               </div>
               <div className="space-y-2">

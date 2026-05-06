@@ -59,7 +59,7 @@ const RequestToolSection = () => {
                   <Wrench className="h-7 w-7 text-primary" />
                 </motion.div>
                 <h2 className="font-display text-2xl md:text-3xl font-semibold leading-tight">
-                  Can't find the tool you need?
+                  Can't find the AI App you need?
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Tell us what you're looking for and we'll build it for you within{" "}
@@ -138,9 +138,9 @@ const RequestToolSection = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Describe the tool you need</label>
+                        <label className="text-sm font-medium">Describe the AI App you need</label>
                         <Textarea
-                          placeholder="I need a tool that can..."
+                          placeholder="I need an AI App that can..."
                           value={toolDescription}
                           onChange={(e) => setToolDescription(e.target.value)}
                           required
@@ -153,7 +153,7 @@ const RequestToolSection = () => {
                           "Submitting..."
                         ) : (
                           <>
-                            Request This Tool
+                            Request This AI App
                             <Send className="ml-2 h-4 w-4" />
                           </>
                         )}

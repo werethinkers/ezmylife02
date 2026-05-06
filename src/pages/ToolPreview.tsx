@@ -68,7 +68,7 @@ const ToolPreview = () => {
                     This tool is launching shortly
                   </h2>
                   <p className="text-muted-foreground">
-                    We're building this tool for you. It will be available soon with all the features you need.
+                    We're building this AI App for you. It will be available soon with all the features you need.
                   </p>
                 </div>
                 

@@ -168,7 +168,7 @@ const Auth = () => {
           <motion.div variants={fadeInUp} transition={{ duration: 0.5 }} className="text-center space-y-4">
             <motion.img src={logo} alt="EZYOURLIFE" className="h-14 mx-auto" whileHover={{ scale: 1.05, rotate: 2 }} transition={{ duration: 0.3 }} />
             <h1 className="font-display text-2xl font-semibold">Welcome to EZYOURLIFE</h1>
-            <p className="text-muted-foreground">Sign in to access 200+ live AI tools (2,000+ coming soon)</p>
+            <p className="text-muted-foreground">Sign in to access 200+ live AI Apps (2,000+ coming soon)</p>
           </motion.div>
 
           <motion.div variants={fadeInUp} transition={{ duration: 0.5, delay: 0.1 }} className="space-y-3">

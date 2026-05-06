@@ -200,7 +200,7 @@ const Tools = () => {
               <ToolSection title="Trending Tools" emoji="📈" direction="rtl">
                 {trending.map(renderCard)}
               </ToolSection>
-              <ToolSection title="Featured Tools" emoji="⭐" direction="ltr">
+              <ToolSection title="Featured AI Apps" emoji="⭐" direction="ltr">
                 {featured.map(renderCard)}
               </ToolSection>
               <ToolSection title="Most Used Tools" emoji="🏆" direction="rtl">
