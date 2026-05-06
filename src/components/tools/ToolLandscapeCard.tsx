@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Zap, PlayCircle } from "lucide-react";
+import { Star, Zap, PlayCircle, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useWallet } from "@/hooks/useWallet";
+import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
 import { getToolIconUrl } from "@/data/toolIconMap";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { ReactNode } from "react";
