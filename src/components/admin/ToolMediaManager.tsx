@@ -11,6 +11,7 @@ interface CatalogRow {
   id: string;
   name: string;
   icon_url: string | null;
+  icon_fit: "cover" | "contain" | null;
   preview_image_url: string | null;
   preview_image_fit: "cover" | "contain" | null;
   rating: number | null;
@@ -33,10 +34,17 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
   const [iconUrl, setIconUrl] = useState(tool.icon_url);
   const [previewUrl, setPreviewUrl] = useState(tool.preview_image_url);
   const [fit, setFit] = useState<"cover" | "contain">((tool.preview_image_fit as any) ?? "cover");
+  const [iconFit, setIconFit] = useState<"cover" | "contain">((tool.icon_fit as any) ?? "cover");
 
   const updateFit = async (next: "cover" | "contain") => {
     setFit(next);
     await supabase.from("tools_catalog").update({ preview_image_fit: next }).eq("id", tool.id);
+    onChanged();
+  };
+
+  const updateIconFit = async (next: "cover" | "contain") => {
+    setIconFit(next);
+    await (supabase.from("tools_catalog") as any).update({ icon_fit: next }).eq("id", tool.id);
     onChanged();
   };
 
@@ -92,14 +100,20 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
       <TableCell>
         <div className="flex items-center gap-2">
           <div className="h-12 w-12 rounded-lg border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {iconUrl ? <img src={iconUrl} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
+            {iconUrl ? <img src={iconUrl} alt="" className={`w-full h-full ${iconFit === "contain" ? "object-contain p-1" : "object-cover"}`} /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
           </div>
-          <label className="cursor-pointer">
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
-            <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
-              <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : "Upload"}</span>
-            </Button>
-          </label>
+          <div className="flex flex-col gap-1">
+            <label className="cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
+              <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
+                <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : (iconUrl ? "Replace" : "Upload")}</span>
+              </Button>
+            </label>
+            <div className="inline-flex rounded-md border overflow-hidden text-xs">
+              <button type="button" onClick={() => updateIconFit("cover")} className={`px-2 py-1 ${iconFit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
+              <button type="button" onClick={() => updateIconFit("contain")} className={`px-2 py-1 ${iconFit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
+            </div>
+          </div>
         </div>
       </TableCell>
       <TableCell>
@@ -146,7 +160,7 @@ export const ToolMediaManager = () => {
     setLoading(true);
     const { data } = await supabase
       .from("tools_catalog")
-      .select("id, name, icon_url, preview_image_url, preview_image_fit, rating, review_count")
+      .select("id, name, icon_url, icon_fit, preview_image_url, preview_image_fit, rating, review_count")
       .order("name");
     setRows((data as CatalogRow[]) ?? []);
     setLoading(false);

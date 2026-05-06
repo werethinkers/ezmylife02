@@ -20,6 +20,7 @@ interface ToolLandscapeCardProps {
   iconUrl?: string | null;
   previewImageUrl?: string | null;
   previewImageFit?: "cover" | "contain";
+  iconFit?: "cover" | "contain";
   rating?: number | null;
   reviewCount?: number | null;
   icon?: ReactNode;
@@ -50,6 +51,7 @@ export const ToolLandscapeCard = ({
   iconUrl,
   previewImageUrl,
   previewImageFit = "cover",
+  iconFit = "cover",
   rating: ratingProp,
   reviewCount: reviewCountProp,
   icon,
@@ -91,7 +93,13 @@ export const ToolLandscapeCard = ({
   const inrValue = (costInr || creditCost * 0.45).toFixed(2);
 
   return (
-    <div className="relative w-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+    <div
+      onClick={handleStart}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleStart(); } }}
+      className="relative w-full rounded-3xl bg-card/90 backdrop-blur-sm border-2 border-border/60 p-5 shadow-[0_10px_30px_-12px_hsl(var(--primary)/0.35),0_2px_6px_-2px_hsl(var(--foreground)/0.08)] hover:shadow-[0_20px_50px_-12px_hsl(var(--primary)/0.5),0_4px_12px_-2px_hsl(var(--foreground)/0.12)] hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
+    >
       {/* Favourite */}
       <button
         type="button"
@@ -109,9 +117,9 @@ export const ToolLandscapeCard = ({
 
       {/* Header */}
       <div className="flex items-start gap-4 mb-4 pr-10">
-        <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10">
+        <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
           {aiIcon ? (
-            <img src={aiIcon} alt={name} className="h-14 w-14 object-contain rounded-xl" />
+            <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", iconFit === "contain" ? "object-contain p-2" : "object-cover")} />
           ) : (
             <div className="text-primary">{icon}</div>
           )}
@@ -130,7 +138,7 @@ export const ToolLandscapeCard = ({
       <div className="mb-4">
         <button
           type="button"
-          onClick={onPreview}
+          onClick={(e) => { e.stopPropagation(); onPreview?.(); }}
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
@@ -150,7 +158,7 @@ export const ToolLandscapeCard = ({
         {onPreview && (
           <button
             type="button"
-            onClick={onPreview}
+            onClick={(e) => { e.stopPropagation(); onPreview(); }}
             className="text-sm text-cyan-500 hover:text-cyan-400 hover:underline mt-3 block w-full text-center font-medium"
           >
             View more screenshots and video demos →

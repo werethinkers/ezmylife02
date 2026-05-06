@@ -1,0 +1,1 @@
+ALTER TABLE public.tools_catalog ADD COLUMN IF NOT EXISTS icon_fit text NOT NULL DEFAULT 'cover' CHECK (icon_fit IN ('cover','contain'));

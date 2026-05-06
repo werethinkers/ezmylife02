@@ -16,6 +16,7 @@ export interface CatalogTool {
   review_count?: number | null;
   preview_image_url?: string | null;
   preview_image_fit?: "cover" | "contain" | null;
+  icon_fit?: "cover" | "contain" | null;
   created_at: string;
   updated_at: string;
 }
