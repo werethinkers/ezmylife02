@@ -113,7 +113,7 @@ export const ToolManagement = () => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toolTypesInput, setToolTypesInput] = useState("");
-  const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
+  const [dialogTab, setDialogTab] = useState<"details" | "files" | "media">("details");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
