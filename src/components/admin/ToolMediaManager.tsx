@@ -178,6 +178,18 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           Save
         </Button>
       </TableCell>
+      <td className="hidden">
+        <ImageCropDialog
+          open={!!cropState}
+          onOpenChange={(v) => !v && setCropState(null)}
+          imageSrc={cropState?.src ?? null}
+          aspect={cropState?.kind === "icon" ? 1 : 4 / 3}
+          title={cropState?.kind === "icon" ? "Adjust icon" : "Adjust preview image"}
+          onCropped={async (blob) => {
+            if (cropState) await handleUpload(cropState.kind, blob, `${cropState.kind}.jpg`);
+          }}
+        />
+      </td>
     </TableRow>
   );
 };
