@@ -1,8 +1,21 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
-import { Target, Users, Sparkles, Heart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Target, Users, Sparkles, Heart, Mail, MessageSquare, Send, Loader2 } from "lucide-react";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.string().trim().email("Invalid email address").max(255),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(1000),
+});
 
 const About = () => {
   return (
