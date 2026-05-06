@@ -12,14 +12,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
 
 // Delay the loading screen so cached/instant chunks don't flash a spinner.
-const DelayedFallback = ({ delayMs = 180 }: { delayMs?: number }) => {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setShow(true), delayMs);
-    return () => clearTimeout(t);
-  }, [delayMs]);
-  return show ? <LoadingScreen /> : null;
-};
+const DelayedFallback = () => null;
 
 // Build cache buster v2
 
@@ -63,14 +56,14 @@ const pageVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.22,
+      duration: 0.1,
       ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
   exit: {
     opacity: 0,
     transition: {
-      duration: 0.14,
+      duration: 0.06,
       ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
@@ -109,14 +102,7 @@ const AnimatedRoutes = () => {
             />
             <Route path="/about" element={<About />} />
             <Route path="/subscription" element={<Subscription />} />
-            <Route
-              path="/credits"
-              element={
-                <ProtectedRoute>
-                  <Credits />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/credits" element={<Credits />} />
             <Route
               path="/credits/history"
               element={
