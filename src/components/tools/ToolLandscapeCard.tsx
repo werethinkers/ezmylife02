@@ -124,43 +124,25 @@ export const ToolLandscapeCard = ({
 
       <p className="text-sm text-foreground/80 mb-3 line-clamp-2 leading-snug">{description}</p>
 
-      {/* Rating */}
-      <div className="flex items-center gap-2 mb-5 text-sm">
-        <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-        <span className="font-bold text-foreground">{rating}</span>
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Star
-              key={i}
-              className={cn(
-                "h-4 w-4",
-                i <= Math.round(parseFloat(rating))
-                  ? "fill-amber-400 text-amber-400"
-                  : "text-muted-foreground/30"
-              )}
-            />
-          ))}
-        </div>
-        <span className="text-muted-foreground text-xs">({reviews} reviews)</span>
-      </div>
-
       {/* App Preview - single big image */}
       <div className="mb-4">
-        <p className="text-base font-bold mb-3">App Preview</p>
         <button
           type="button"
           onClick={onPreview}
-          className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
+          className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
             <img
               src={previewImageUrl}
               alt={`${name} preview`}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className={cn(
+                "absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-500",
+                previewImageFit === "contain" ? "object-contain bg-background" : "object-cover"
+              )}
               loading="lazy"
             />
           ) : (
-            <PlayCircle className="h-16 w-16 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
+            <PlayCircle className="h-20 w-20 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
           )}
         </button>
         {onPreview && (
