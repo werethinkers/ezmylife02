@@ -100,14 +100,20 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
       <TableCell>
         <div className="flex items-center gap-2">
           <div className="h-12 w-12 rounded-lg border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {iconUrl ? <img src={iconUrl} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
+            {iconUrl ? <img src={iconUrl} alt="" className={`w-full h-full ${iconFit === "contain" ? "object-contain p-1" : "object-cover"}`} /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
           </div>
-          <label className="cursor-pointer">
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
-            <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
-              <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : "Upload"}</span>
-            </Button>
-          </label>
+          <div className="flex flex-col gap-1">
+            <label className="cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
+              <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
+                <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : (iconUrl ? "Replace" : "Upload")}</span>
+              </Button>
+            </label>
+            <div className="inline-flex rounded-md border overflow-hidden text-xs">
+              <button type="button" onClick={() => updateIconFit("cover")} className={`px-2 py-1 ${iconFit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
+              <button type="button" onClick={() => updateIconFit("contain")} className={`px-2 py-1 ${iconFit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
+            </div>
+          </div>
         </div>
       </TableCell>
       <TableCell>
