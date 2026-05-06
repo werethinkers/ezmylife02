@@ -15,6 +15,7 @@ import { Plus, Pencil, Trash2, Search, Eye, EyeOff, ExternalLink, Upload, Crown,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
+import { ToolDetailMediaEditor } from "./ToolDetailMediaEditor";
 import { useToolViewCounts } from "@/hooks/useToolViewCounts";
 import { ToolViewChart } from "./ToolViewChart";
 import {
