@@ -49,6 +49,7 @@ export const ToolLandscapeCard = ({
   isLive,
   iconUrl,
   previewImageUrl,
+  previewImageFit = "cover",
   rating: ratingProp,
   reviewCount: reviewCountProp,
   icon,
