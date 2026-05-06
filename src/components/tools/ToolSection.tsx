@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, ReactNode } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import AutoScroll from "embla-carousel-auto-scroll";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -11,19 +10,13 @@ interface ToolSectionProps {
   children: ReactNode[];
 }
 
-export const ToolSection = ({ title, emoji, direction = "ltr", children }: ToolSectionProps) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, align: "start", dragFree: true, direction: "ltr" },
-    [
-      AutoScroll({
-        speed: 0.6,
-        direction: direction === "rtl" ? "backward" : "forward",
-        stopOnInteraction: false,
-        stopOnMouseEnter: true,
-        playOnInit: true,
-      }),
-    ]
-  );
+export const ToolSection = ({ title, emoji, children }: ToolSectionProps) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
+    align: "start",
+    dragFree: true,
+    direction: "ltr",
+  });
 
   const [current, setCurrent] = useState(1);
   const total = children.length;
