@@ -114,10 +114,10 @@ const BulkJobs = () => {
             <Inbox className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-xl font-semibold mb-2">No bulk jobs yet</h2>
             <p className="text-muted-foreground mb-4">
-              Open any AI tool with the ⚡ Bulk Mode pill and drop your files.
+              Open any AI App with the ⚡ Bulk Mode pill and drop your files.
             </p>
             <Link to="/ai-apps">
-              <Button>Browse tools</Button>
+              <Button>Browse AI Apps</Button>
             </Link>
           </Card>
         ) : (

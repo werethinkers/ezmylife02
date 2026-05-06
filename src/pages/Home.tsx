@@ -33,7 +33,7 @@ const CATEGORY_ICONS: Record<string, typeof MessageSquare> = {
   "Marketing": Megaphone,
   "Business & Finance": Briefcase,
   "Business": Briefcase,
-  "AI Tools": Sparkles,
+  "AI Apps": Sparkles,
 };
 
 const Home = () => {

@@ -76,7 +76,7 @@ const ComingSoon = () => {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-in stagger-2">
-              Preview the next generation of AI tools we're building. Get notified when they launch.
+              Preview the next generation of AI Apps we're building. Get notified when they launch.
             </p>
           </div>
         </div>

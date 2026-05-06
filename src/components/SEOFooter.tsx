@@ -12,7 +12,7 @@ const SEOFooter = () => {
               The Future's First AI App Store. 200+ live AI apps today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
             </p>
             <p className="text-xs text-muted-foreground">
-              ezyourlife — Making digital tools accessible to everyone.
+              ezyourlife — Making digital AI Apps accessible to everyone.
             </p>
           </div>
 

@@ -153,7 +153,7 @@ const GetExtension: React.FC = () => {
         title="EZYOURLIFE Browser Extension - Use AI Shortcuts Everywhere"
         description="Download the EZYOURLIFE browser extension for Chrome, Firefox, Brave and Edge. Auto-expand your AI shortcuts on ChatGPT, Gemini, Grok and any website."
         path="/get-extension"
-        keywords="ezyourlife extension, ai browser extension, chatgpt shortcuts, ai tools extension, chrome extension ai"
+        keywords="ezyourlife extension, ai browser extension, chatgpt shortcuts, ai apps extension, chrome extension ai"
         jsonLd={[
           {
             "@context": "https://schema.org",
