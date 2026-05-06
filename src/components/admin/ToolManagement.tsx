@@ -328,11 +328,9 @@ export const ToolManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{tools.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{liveCount}</p><p className="text-xs text-muted-foreground">Live</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-yellow-500">{draftCount}</p><p className="text-xs text-muted-foreground">Draft</p></CardContent></Card>
+      {/* Stats — live tools only */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{liveCount}</p><p className="text-xs text-muted-foreground">Live Tools</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-500">{uploadedCount}</p><p className="text-xs text-muted-foreground">With Files</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-purple-500">{totalViews.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Views</p></CardContent></Card>
       </div>

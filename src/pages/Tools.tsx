@@ -76,6 +76,7 @@ const Tools = () => {
     });
     expandedTools.forEach((t) => {
       if (out.has(t.id)) return;
+      if (!t.isLive) return;
       if (
         t.name.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
