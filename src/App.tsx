@@ -95,8 +95,9 @@ const AnimatedRoutes = () => {
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/tools" element={<Tools />} />
+            <Route path="/tool/:toolId" element={<ToolDetail />} />
             <Route
-              path="/tool/:toolId"
+              path="/tool/:toolId/use"
               element={
                 <ToolAccessGuard>
                   <ToolViewer />
