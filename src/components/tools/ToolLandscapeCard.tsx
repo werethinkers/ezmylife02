@@ -141,27 +141,28 @@ export const ToolLandscapeCard = ({
             />
           ))}
         </div>
-        <span className="text-muted-foreground text-xs">({reviews}k reviews)</span>
+        <span className="text-muted-foreground text-xs">({reviews} reviews)</span>
       </div>
 
-      {/* App Preview - horizontal row of squares */}
+      {/* App Preview - single big image */}
       <div className="mb-4">
         <p className="text-base font-bold mb-3">App Preview</p>
-        <div className="flex gap-2 overflow-hidden">
-          {gradients.slice(0, 3).map((g, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={onPreview}
-              className={cn(
-                "relative aspect-square w-1/3 rounded-2xl bg-gradient-to-br overflow-hidden flex items-center justify-center group",
-                g
-              )}
-            >
-              <PlayCircle className="h-10 w-10 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={onPreview}
+          className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
+        >
+          {previewImageUrl ? (
+            <img
+              src={previewImageUrl}
+              alt={`${name} preview`}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <PlayCircle className="h-16 w-16 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
+          )}
+        </button>
         {onPreview && (
           <button
             type="button"
