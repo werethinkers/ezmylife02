@@ -202,6 +202,14 @@ const Tools = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
+              {user && favoriteTools.length > 0 && (
+                <ToolSection title="Favourite Apps" emoji="❤️" direction="ltr">
+                  {favoriteTools.map((t) => renderCard({
+                    id: t.id, name: t.name, description: t.description,
+                    category: t.category, isLive: t.is_live, iconUrl: t.icon_url,
+                  }))}
+                </ToolSection>
+              )}
               <ToolSection title="Hot Tools" emoji="🔥" direction="ltr">
                 {hot.map(renderCard)}
               </ToolSection>
