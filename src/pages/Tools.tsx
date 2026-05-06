@@ -205,6 +205,7 @@ const Tools = () => {
               <ToolSection title="Most Used Tools" emoji="🏆" direction="rtl">
                 {mostUsed.map(renderCard)}
               </ToolSection>
+              <ExploreMoreTools onPreview={handlePreview} />
             </motion.div>
           )}
         </AnimatePresence>
