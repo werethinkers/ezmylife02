@@ -142,15 +142,25 @@ export const ToolLandscapeCard = ({
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
           {previewImageUrl ? (
-            <img
-              src={previewImageUrl}
-              alt={`${name} preview`}
-              className={cn(
-                "absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-500",
-                previewImageFit === "contain" ? "object-contain bg-background" : "object-cover"
-              )}
-              loading="lazy"
-            />
+            previewImageFit === "contain" ? (
+              <>
+                <img src={previewImageUrl} aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/30 via-fuchsia-500/20 to-purple-600/30" />
+                <img
+                  src={previewImageUrl}
+                  alt={`${name} preview`}
+                  className="relative z-10 max-w-[92%] max-h-[92%] object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 rounded-xl"
+                  loading="lazy"
+                />
+              </>
+            ) : (
+              <img
+                src={previewImageUrl}
+                alt={`${name} preview`}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            )
           ) : (
             <PlayCircle className="h-20 w-20 text-white/90 drop-shadow-lg group-hover:scale-110 transition-transform" />
           )}
