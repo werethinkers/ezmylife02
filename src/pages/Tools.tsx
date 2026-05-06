@@ -123,6 +123,7 @@ const Tools = () => {
         isLive={t.isLive}
         iconUrl={t.iconUrl ?? c?.icon_url ?? null}
         previewImageUrl={c?.preview_image_url ?? null}
+        previewImageFit={(c?.preview_image_fit as "cover" | "contain") ?? "cover"}
         rating={c?.rating ?? null}
         reviewCount={c?.review_count ?? null}
         onPreview={() =>

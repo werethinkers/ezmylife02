@@ -12,6 +12,7 @@ interface CatalogRow {
   name: string;
   icon_url: string | null;
   preview_image_url: string | null;
+  preview_image_fit: "cover" | "contain" | null;
   rating: number | null;
   review_count: number | null;
 }
@@ -31,6 +32,13 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
   const [busy, setBusy] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState(tool.icon_url);
   const [previewUrl, setPreviewUrl] = useState(tool.preview_image_url);
+  const [fit, setFit] = useState<"cover" | "contain">((tool.preview_image_fit as any) ?? "cover");
+
+  const updateFit = async (next: "cover" | "contain") => {
+    setFit(next);
+    await supabase.from("tools_catalog").update({ preview_image_fit: next }).eq("id", tool.id);
+    onChanged();
+  };
 
   const handleUpload = async (kind: "icon" | "preview", file: File) => {
     setBusy(kind);
@@ -97,14 +105,20 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
       <TableCell>
         <div className="flex items-center gap-2">
           <div className="h-12 w-20 rounded-lg border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {previewUrl ? <img src={previewUrl} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
+            {previewUrl ? <img src={previewUrl} alt="" className={`w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"}`} /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
           </div>
-          <label className="cursor-pointer">
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("preview", e.target.files[0])} />
-            <Button size="sm" variant="outline" asChild disabled={busy === "preview"}>
-              <span>{busy === "preview" ? <Loader2 className="h-3 w-3 animate-spin" /> : "Upload"}</span>
-            </Button>
-          </label>
+          <div className="flex flex-col gap-1">
+            <label className="cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("preview", e.target.files[0])} />
+              <Button size="sm" variant="outline" asChild disabled={busy === "preview"}>
+                <span>{busy === "preview" ? <Loader2 className="h-3 w-3 animate-spin" /> : (previewUrl ? "Replace" : "Upload")}</span>
+              </Button>
+            </label>
+            <div className="inline-flex rounded-md border overflow-hidden text-xs">
+              <button type="button" onClick={() => updateFit("cover")} className={`px-2 py-1 ${fit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
+              <button type="button" onClick={() => updateFit("contain")} className={`px-2 py-1 ${fit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
+            </div>
+          </div>
         </div>
       </TableCell>
       <TableCell>
@@ -132,7 +146,7 @@ export const ToolMediaManager = () => {
     setLoading(true);
     const { data } = await supabase
       .from("tools_catalog")
-      .select("id, name, icon_url, preview_image_url, rating, review_count")
+      .select("id, name, icon_url, preview_image_url, preview_image_fit, rating, review_count")
       .order("name");
     setRows((data as CatalogRow[]) ?? []);
     setLoading(false);
