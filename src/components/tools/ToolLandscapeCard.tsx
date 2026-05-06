@@ -20,6 +20,7 @@ interface ToolLandscapeCardProps {
   iconUrl?: string | null;
   previewImageUrl?: string | null;
   previewImageFit?: "cover" | "contain";
+  iconFit?: "cover" | "contain";
   rating?: number | null;
   reviewCount?: number | null;
   icon?: ReactNode;
