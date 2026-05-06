@@ -90,10 +90,10 @@ const Credits = () => {
           navigate(`/credits/success?credits=${pack.credits}&pack=${packId}`);
         },
         prefill: { email: orderData.user_email },
-        theme: { color: "#000000" },
+        theme: { color: "#7c3aed" },
         modal: { ondismiss: () => setBusyPack(null) },
       };
-      const rzp = new window.Razorpay(options);
+      const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", (r: any) => {
         toast({ title: "Payment failed", description: r.error?.description || "Try again.", variant: "destructive" });
       });
