@@ -184,7 +184,10 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           onOpenChange={(v) => !v && setCropState(null)}
           imageSrc={cropState?.src ?? null}
           aspect={cropState?.kind === "icon" ? 1 : 4 / 3}
-          title={cropState?.kind === "icon" ? "Adjust icon" : "Adjust preview image"}
+          outputWidth={cropState?.kind === "icon" ? 512 : 1200}
+          outputHeight={cropState?.kind === "icon" ? 512 : 900}
+          fitMode={cropState?.kind === "icon" ? iconFit : fit}
+          title={cropState?.kind === "icon" ? "Adjust icon (512×512)" : "Adjust preview image (1200×900)"}
           onCropped={async (blob) => {
             if (cropState) await handleUpload(cropState.kind, blob, `${cropState.kind}.jpg`);
           }}
