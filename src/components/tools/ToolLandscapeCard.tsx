@@ -51,6 +51,7 @@ export const ToolLandscapeCard = ({
   iconUrl,
   previewImageUrl,
   previewImageFit = "cover",
+  iconFit = "cover",
   rating: ratingProp,
   reviewCount: reviewCountProp,
   icon,
