@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, Zap, PlayCircle } from "lucide-react";
@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useWallet } from "@/hooks/useWallet";
 import { getToolIconUrl } from "@/data/toolIconMap";
+import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { ReactNode } from "react";
 
 interface ToolLandscapeCardProps {
@@ -49,6 +50,7 @@ export const ToolLandscapeCard = ({
   const { user } = useAuth();
   const { creditCost, costInr } = useToolPricing(toolId);
   const { total: walletTotal } = useWallet();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const aiIcon = iconUrl || getToolIconUrl(toolId, category);
 
@@ -67,7 +69,14 @@ export const ToolLandscapeCard = ({
     return { rating, reviews: reviews.toFixed(1), version: `v${major}.${minor}`, gradients: grads };
   }, [toolId]);
 
+  const requiresLogin = creditCost > 0;
+
   const handleStart = () => {
+    // Browsing/viewing is always free. Only paid runs require login.
+    if (requiresLogin && !user) {
+      setLoginOpen(true);
+      return;
+    }
     if (isLive) navigate(`/tool/${toolId}`);
     else navigate(`/tool-preview/${toolId}`, { state: { name, description, isLive } });
   };
@@ -186,17 +195,19 @@ export const ToolLandscapeCard = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate("/auth");
+                  setLoginOpen(true);
                 }}
                 className="text-cyan-500 hover:underline font-medium"
               >
                 Sign in
               </button>{" "}
-              to start using
+              when you're ready to run
             </>
           )}
         </p>
       </div>
+
+      <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/tool/${toolId}`} />
     </div>
   );
 };
