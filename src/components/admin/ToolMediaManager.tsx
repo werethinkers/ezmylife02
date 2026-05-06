@@ -125,11 +125,16 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           </div>
           <div className="flex flex-col gap-1">
             <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && openCropFromFile("icon", e.target.files[0])} />
               <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
                 <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : (iconUrl ? "Replace" : "Upload")}</span>
               </Button>
             </label>
+            {iconUrl && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openCropFromUrl("icon", iconUrl)}>
+                <Crop className="h-3 w-3 mr-1" />Adjust
+              </Button>
+            )}
             <div className="inline-flex rounded-md border overflow-hidden text-xs">
               <button type="button" onClick={() => updateIconFit("cover")} className={`px-2 py-1 ${iconFit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
               <button type="button" onClick={() => updateIconFit("contain")} className={`px-2 py-1 ${iconFit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
