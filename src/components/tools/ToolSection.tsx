@@ -60,13 +60,13 @@ export const ToolSection = ({ title, emoji, children }: ToolSectionProps) => {
       </div>
 
       <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex gap-5">
+        <div className="flex gap-5 items-stretch">
           {children.map((child, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[100%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%]"
+              className="flex-shrink-0 w-[100%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%] flex"
             >
-              {child}
+              <div className="w-full">{child}</div>
             </div>
           ))}
         </div>
