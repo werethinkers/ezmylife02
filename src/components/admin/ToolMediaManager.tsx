@@ -11,6 +11,7 @@ interface CatalogRow {
   id: string;
   name: string;
   icon_url: string | null;
+  icon_fit: "cover" | "contain" | null;
   preview_image_url: string | null;
   preview_image_fit: "cover" | "contain" | null;
   rating: number | null;
