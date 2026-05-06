@@ -146,7 +146,7 @@ export const ToolMediaManager = () => {
     setLoading(true);
     const { data } = await supabase
       .from("tools_catalog")
-      .select("id, name, icon_url, preview_image_url, rating, review_count")
+      .select("id, name, icon_url, preview_image_url, preview_image_fit, rating, review_count")
       .order("name");
     setRows((data as CatalogRow[]) ?? []);
     setLoading(false);
