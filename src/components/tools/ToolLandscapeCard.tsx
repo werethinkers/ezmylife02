@@ -47,6 +47,9 @@ export const ToolLandscapeCard = ({
   category,
   isLive,
   iconUrl,
+  previewImageUrl,
+  rating: ratingProp,
+  reviewCount: reviewCountProp,
   icon,
   onPreview,
 }: ToolLandscapeCardProps) => {
