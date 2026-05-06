@@ -161,6 +161,7 @@ const AdminDashboard = () => {
     ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
     { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
     ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
+    ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
     { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
     { id: "archived-events" as const, label: "Archived Events", icon: Archive },
     { id: "meet-nudge" as const, label: "Meet Nudge", icon: Handshake },
