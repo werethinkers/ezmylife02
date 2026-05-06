@@ -60,6 +60,7 @@ export const ImageCropDialog = ({ open, onOpenChange, imageSrc, aspect, title = 
               crop={crop}
               zoom={zoom}
               aspect={aspect}
+              minZoom={0.1}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onComplete}
@@ -68,8 +69,8 @@ export const ImageCropDialog = ({ open, onOpenChange, imageSrc, aspect, title = 
         </div>
         <div className="space-y-2 pt-2">
           <label className="text-sm text-muted-foreground">Zoom</label>
-          <Slider value={[zoom]} min={1} max={4} step={0.01} onValueChange={(v) => setZoom(v[0])} />
-          <p className="text-xs text-muted-foreground">Drag the image to reposition. Use the slider to zoom.</p>
+          <Slider value={[zoom]} min={0.1} max={4} step={0.01} onValueChange={(v) => setZoom(v[0])} />
+          <p className="text-xs text-muted-foreground">Drag the image to reposition. Use the slider to zoom in or out.</p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
