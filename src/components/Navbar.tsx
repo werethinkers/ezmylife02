@@ -32,16 +32,10 @@ export const Navbar = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/tools", label: "Tools" },
+    { to: "/ai-apps", label: "AI Apps" },
     { to: "/credits", label: "Credits" },
     { to: "/about", label: "About" },
-    { to: "/contact", label: "Contact" },
-    ...(user
-      ? [
-          { to: "/get-extension", label: "Get Extension" },
-          { to: "/bulk/jobs", label: "Bulk Jobs" },
-        ]
-      : []),
+    ...(user ? [{ to: "/get-extension", label: "Get Extension" }] : []),
   ];
 
   return (
