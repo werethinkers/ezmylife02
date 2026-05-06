@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Image as ImageIcon, Save } from "lucide-react";
+import { Loader2, Image as ImageIcon, Save, Crop } from "lucide-react";
+import ImageCropDialog from "./ImageCropDialog";
 
 interface CatalogRow {
   id: string;
@@ -48,15 +49,17 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
     onChanged();
   };
 
-  const handleUpload = async (kind: "icon" | "preview", file: File) => {
+  const [cropState, setCropState] = useState<{ kind: "icon" | "preview"; src: string } | null>(null);
+
+  const handleUpload = async (kind: "icon" | "preview", blob: Blob, filename = "image.jpg") => {
     setBusy(kind);
     try {
+      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
       const url = await uploadFile(tool.id, file, kind);
       const patch: any = kind === "icon" ? { icon_url: url } : { preview_image_url: url };
       const { error } = await supabase.from("tools_catalog").update(patch).eq("id", tool.id);
       if (error) throw error;
       if (kind === "icon") setIconUrl(url); else setPreviewUrl(url);
-      // Also keep tool_media in sync for the preview image (used elsewhere)
       if (kind === "preview") {
         await supabase.from("tool_media").delete().eq("tool_id", tool.id).eq("kind", "image");
         await supabase.from("tool_media").insert({ tool_id: tool.id, kind: "image", url, sort_order: 0 });
@@ -67,6 +70,24 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
     } finally {
       setBusy(null);
+    }
+  };
+
+  const openCropFromFile = (kind: "icon" | "preview", file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setCropState({ kind, src: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
+  const openCropFromUrl = async (kind: "icon" | "preview", url: string) => {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => setCropState({ kind, src: reader.result as string });
+      reader.readAsDataURL(blob);
+    } catch {
+      toast({ title: "Cannot load image", description: "Re-upload to crop.", variant: "destructive" });
     }
   };
 
@@ -104,11 +125,16 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           </div>
           <div className="flex flex-col gap-1">
             <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("icon", e.target.files[0])} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && openCropFromFile("icon", e.target.files[0])} />
               <Button size="sm" variant="outline" asChild disabled={busy === "icon"}>
                 <span>{busy === "icon" ? <Loader2 className="h-3 w-3 animate-spin" /> : (iconUrl ? "Replace" : "Upload")}</span>
               </Button>
             </label>
+            {iconUrl && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openCropFromUrl("icon", iconUrl)}>
+                <Crop className="h-3 w-3 mr-1" />Adjust
+              </Button>
+            )}
             <div className="inline-flex rounded-md border overflow-hidden text-xs">
               <button type="button" onClick={() => updateIconFit("cover")} className={`px-2 py-1 ${iconFit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
               <button type="button" onClick={() => updateIconFit("contain")} className={`px-2 py-1 ${iconFit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
@@ -123,11 +149,16 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           </div>
           <div className="flex flex-col gap-1">
             <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload("preview", e.target.files[0])} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && openCropFromFile("preview", e.target.files[0])} />
               <Button size="sm" variant="outline" asChild disabled={busy === "preview"}>
                 <span>{busy === "preview" ? <Loader2 className="h-3 w-3 animate-spin" /> : (previewUrl ? "Replace" : "Upload")}</span>
               </Button>
             </label>
+            {previewUrl && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openCropFromUrl("preview", previewUrl)}>
+                <Crop className="h-3 w-3 mr-1" />Adjust
+              </Button>
+            )}
             <div className="inline-flex rounded-md border overflow-hidden text-xs">
               <button type="button" onClick={() => updateFit("cover")} className={`px-2 py-1 ${fit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
               <button type="button" onClick={() => updateFit("contain")} className={`px-2 py-1 ${fit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
@@ -147,6 +178,18 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
           Save
         </Button>
       </TableCell>
+      <td className="hidden">
+        <ImageCropDialog
+          open={!!cropState}
+          onOpenChange={(v) => !v && setCropState(null)}
+          imageSrc={cropState?.src ?? null}
+          aspect={cropState?.kind === "icon" ? 1 : 4 / 3}
+          title={cropState?.kind === "icon" ? "Adjust icon" : "Adjust preview image"}
+          onCropped={async (blob) => {
+            if (cropState) await handleUpload(cropState.kind, blob, `${cropState.kind}.jpg`);
+          }}
+        />
+      </td>
     </TableRow>
   );
 };
