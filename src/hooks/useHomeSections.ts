@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useToolsCatalog, type CatalogTool } from "./useToolsCatalog";
+import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { tools as staticTools } from "@/data/tools";
 
 export interface HomeTool {
