@@ -64,7 +64,7 @@ export const ToolSection = ({ title, emoji, children }: ToolSectionProps) => {
           {children.map((child, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[88%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%]"
+              className="flex-shrink-0 w-[100%] sm:w-[58%] md:w-[46%] lg:w-[38%] xl:w-[30%]"
             >
               {child}
             </div>
