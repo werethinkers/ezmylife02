@@ -221,6 +221,7 @@ export const ToolLandscapeCard = ({
       </div>
 
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/tool/${toolId}`} />
+      <LoginPromptDialog open={favLoginOpen} onOpenChange={setFavLoginOpen} />
     </div>
   );
 };
