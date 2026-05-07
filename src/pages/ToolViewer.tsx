@@ -128,6 +128,7 @@ const ToolViewer = () => {
   const toolTitle = tool?.title || catalogInfo?.name || toolId || "Tool";
   const toolDescription = tool?.description || catalogInfo?.description || "";
   const toolCategory = tool?.category || catalogInfo?.category || "";
+  const { iconUrl: resolvedIconUrl } = useToolMedia(toolId, toolCategory);
 
   // Error state - truly not found
   if (error) {
@@ -148,7 +149,7 @@ const ToolViewer = () => {
 
   // Tool exists in catalog but has no implementation yet - show preview page
   if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
-    const iconUrl = useToolMedia(toolId, toolCategory).iconUrl;
+    const iconUrl = resolvedIconUrl;
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
