@@ -8,7 +8,7 @@ import { startRun, completeRun } from "@/lib/credits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import SEOHead from "@/components/SEOHead";
+import { SEOHead } from "@/components/SEOHead";
 
 const TOOL_ID = "product-360";
 
