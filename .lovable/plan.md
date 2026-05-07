@@ -1,86 +1,77 @@
-# ProductVision 360 — Native Tool
+# Cleaner & Consistent UI Pass
 
-A full Product Studio that generates ~6 catalog-grade product angles from a single uploaded image, then offers a background studio (presets / solid / custom + logo placement) and ZIP/individual downloads.
+Four scoped changes — all front-end / presentation only. No business logic, RLS, or pricing changes.
 
-## Route & access
-- Path: `/tools/productvision-360` (under `<ProtectedRoute>`)
-- Lazy-loaded page `src/pages/ProductVision360.tsx`
-- Wrapped in our `<Navbar>` and themed with semantic tokens (no dark/light toggle)
+## 1. Consistent app icons & preview images everywhere
 
-## Pricing
-- Catalog id: `productvision-360`
-- `tool_pricing.credit_cost = 50` (flat, per run, regardless of angle count)
-- Charging via existing `start_tool_run` / `complete_tool_run` flow:
-  - On "Generate" → `startRun("productvision-360")`. If `insufficient` → open `BuyCreditsDialog`, abort.
-  - Run angle generation loop.
-  - If ≥1 angle succeeds → `completeRun(runId, true)` (debits 50).
-  - If 0 angles → `completeRun(runId, false)` (no charge).
+**Problem**: `EnhancedToolCard`, `ToolLandscapeCard`, `ToolCard`, the search results in `Home`, `Tools`, and admin lists all derive icon/preview URLs slightly differently. Some pass `iconUrl`, some don't, some fall back to gradient placeholders, some only use `getToolIconUrl`.
 
-## Backend (edge function)
-New edge function `supabase/functions/productvision-angles/index.ts`:
-- Validates JWT in code (`verify_jwt = false` default).
-- Body: `{ imageBase64, mimeType, angles[] }`.
-- Calls the documented public endpoint:
-  `POST https://vmhyxhvxgiuwrskfvlsr.supabase.co/functions/v1/public-generate-angles`
-  with headers:
-  - `apikey`: hard-coded public anon key from `PUBLIC_API.md`
-  - `x-gemini-key`: rotates through `GEMINI_API_KEY_1..4` from secrets (existing AI fallback strategy). On 401/429/upstream failure, tries the next key.
-- Returns the upstream JSON `{ success, count, images[], failed[] }` to the client.
-- CORS headers on every response.
+**Fix** — single source of truth helper `src/lib/toolMedia.ts`:
+```ts
+resolveToolMedia(toolId, catalogTool?) → { iconUrl, previewImageUrl, iconFit, previewFit }
+```
+Order of precedence: catalog `icon_url` / `preview_image_url` → `getToolIconUrl(id, category)` AI map → gradient placeholder. Same call used by:
+- `EnhancedToolCard` (Tools page, search results)
+- `ToolLandscapeCard` (Home sections, AI Apps sections)
+- `ToolCard` (legacy)
+- `ToolQuickPreview`
+- `Home` Top Picks tile (currently shows only a Sparkles icon — will show the real icon)
+- Admin `ToolManagement` row thumbnails
 
-No new secrets required (Gemini keys already exist).
+This guarantees the same logo and preview render in Home, AI Apps, Tool Viewer header, Quick Preview modal, and Admin.
 
-## Frontend page (`src/pages/ProductVision360.tsx`)
-States: `START → GENERATING → STUDIO`.
+## 2. Home search → real card layout
 
-Components under `src/components/productvision360/`:
-- `FileUpload.tsx` — drag/drop + click, single product image, client-side resize if >5 MB to stay under the 6 MB edge function payload cap, JPEG/PNG.
-- `AnglesView.tsx` — grid of generated angles with status (pending/done/failed), "Regenerate failed" button (re-invokes only failed angles, free — no extra credit charge inside the same run).
-- `BackgroundStudioView.tsx` + `BackgroundSelector.tsx` + `BackgroundCompositor.tsx`:
-  - Presets: 9 izzhaar PNGs in `src/assets/productvision360-backgrounds/` (re-add as imports).
-  - Solid color picker.
-  - Custom upload.
-  - Optional logo upload + drag-to-position via `PlacementControls.tsx` and `utils/logoCompositor.ts`.
-  - Background removal of the white BG via `utils/backgroundRemover.ts` (luminance threshold → transparent PNG, runs client-side in canvas).
-- `DownloadsView.tsx`:
-  - Download single angle as PNG.
-  - Download all as ZIP (uses already-installed `jszip` + `file-saver`).
-  - "360 spin frames" pack (just bundles angles in spin order).
-- `ResultsViewer.tsx` — tabbed switcher (Angles / Background Studio / Downloads).
+**Problem**: Home's search bar just navigates to `/ai-apps?q=…` with no in-page results, which doesn't match the AI Apps page (which renders `EnhancedToolCard` grid).
 
-Default angle preset: `["Front", "Front-Right", "Right", "Back", "Left", "Front-Left"]`. User can toggle additional angles (`Top`, `Bottom`, `Intelligent Detail Close-Up`) via checkboxes before generation.
+**Fix** in `src/pages/Home.tsx`:
+- Keep navigating to `/ai-apps?q=…` on submit (Enter / button) so deep-link still works.
+- Add a live-results panel under the search bar when `search.length > 0`: same `EnhancedToolCard` grid component used by `Tools.tsx` search, rendered inside Home, with the same empty state.
+- Hide the hero / categories / featured sections while a query is active (mirror of Tools.tsx behaviour) so the experience is identical on both pages.
 
-## Catalog entry
-Insert into `tools_catalog` (data insert, not migration):
-- `id`: `productvision-360`
-- `name`: "ProductVision 360"
-- `description`: "Generate catalog-ready product angles, swap backgrounds, and download a 360° spin pack — all from a single product photo."
-- `category`: "AI Image Generation"
-- `dedicated_route`: `/tools/productvision-360`
-- `is_live`: true, `is_free`: false, `source`: "featured"
+Read `?q=` from URL on AI Apps page (already supported via `searchQuery` state — just initialize from `useSearchParams`) so a Home → AI Apps jump preserves the query.
 
-Insert into `tool_pricing`:
-- `tool_id`: `productvision-360`, `credit_cost`: 50, `cost_inr`: 22 (matches doc estimate, not used for credit math since credit_cost set explicitly).
+## 3. Replace "Favourite Apps" with "Recent Apps"
 
-## Routing
-Edit `src/App.tsx`:
-- Add `const ProductVision360 = lazy(() => import("./pages/ProductVision360"))`.
-- Add route:
-  ```tsx
-  <Route path="/tools/productvision-360" element={
-    <ProtectedRoute><ProductVision360 /></ProtectedRoute>
-  } />
-  ```
+**Data source**: existing `activity_logs` rows with `action_type='tool_usage'` already log `tool_id` + `tool_name` per user (see `ToolViewer.tsx`). No schema change needed.
 
-## Theming
-Use semantic tokens only (`bg-background`, `text-foreground`, `border-border`, `bg-card`, etc.). Match dark glassmorphism aesthetic (Space Grotesk already global). Framer Motion transitions on tab switches and grid items.
+**New hook** `src/hooks/useRecentTools.ts`:
+- For signed-in user, query `activity_logs` filtered by `user_id` and `action_type='tool_usage'`, ordered desc, distinct on `tool_id`, limit 8.
+- Join against `useToolsCatalog` to get full card props.
+- Returns `[]` for anon users (section hides, like favourites does today).
 
-## Out of scope
-- Bulk mode (can be added later — same edge function, looped per file with one charge per file).
-- Persistent project save/load (results stay in component state for the session).
-- No changes to other tools, navbar, or design system.
+**UI changes**:
+- `src/pages/Tools.tsx`: replace the `favoriteTools` block with `recentTools` and rename section title to "Recent Apps" with 🕒 emoji. Remove `useFavorites` import there.
+- Keep the Favourite heart on `ToolLandscapeCard` working (DB table stays — just no dedicated section). If you'd rather fully remove favourites UI, say so and I'll strip the hearts too.
 
-## Files added/edited
-- **New**: `src/pages/ProductVision360.tsx`, `src/components/productvision360/*` (~10 files), `src/assets/productvision360-backgrounds/*.png` (9), `supabase/functions/productvision-angles/index.ts`
-- **Edited**: `src/App.tsx`
-- **Data**: insert rows into `tools_catalog` and `tool_pricing`
+## 4. Declutter Admin tab bar
+
+Currently 18 flat pill-buttons wrap across 3+ rows. Group into 5 logical sections shown as a sidebar (desktop) / accordion (mobile):
+
+```text
+Overview        → Analytics, Visitors, Activity Logs
+People          → Users, Credits
+Tools           → Tool Management, Tool Usage, Tool Media, Home Sections, Tool Requests
+Growth          → UTM Links, Coupons, Enterprise Leads
+Modules         → Meet Nudge, Virasat, Archived Events
+System          → API Keys
+```
+
+Implementation in `src/pages/AdminDashboard.tsx`:
+- Replace the flat `tabs` array with a grouped structure.
+- Use existing `ui/sidebar` (desktop ≥md, sticky left rail with section headers + icon+label items) and a `Select` dropdown on mobile.
+- Stat cards stay at the top but trim to 3 most-relevant (Total Users, Credits Sold, Today's Logins) — drop "Activity Logs count" which is just `logs.length` of last 200.
+- Remove duplicate icon imports no longer needed.
+
+Result: visible options reduced to one column with clear grouping; no tab is removed, just organized.
+
+## Files touched
+- new: `src/lib/toolMedia.ts`, `src/hooks/useRecentTools.ts`
+- edit: `src/pages/Home.tsx`, `src/pages/Tools.tsx`, `src/pages/AdminDashboard.tsx`
+- edit: `src/components/tools/EnhancedToolCard.tsx`, `src/components/tools/ToolLandscapeCard.tsx`, `src/components/ToolCard.tsx`, `src/components/tools/ToolQuickPreview.tsx`
+- edit: `src/components/admin/ToolManagement.tsx` (use shared media helper for thumbnails)
+
+## Out of scope (confirm if you want them)
+- Removing the Favourites heart button entirely from cards.
+- Changing tool pricing, RLS, or any backend.
+- Restyling individual admin sub-pages (only the tab navigation is decluttered).
