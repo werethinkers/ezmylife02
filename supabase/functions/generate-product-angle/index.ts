@@ -24,7 +24,7 @@ async function callGemini(key: string, model: string, body: unknown) {
   });
 }
 
-const GEMINI_MODELS = ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image"];
+const GEMINI_MODELS = ["gemini-2.5-flash-image", "gemini-3.1-flash-image-preview"];
 
 async function callLovable(prompt: string, imageBase64: string, mimeType: string) {
   if (!LOVABLE_API_KEY) return null;
