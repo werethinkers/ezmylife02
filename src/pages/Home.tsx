@@ -49,8 +49,23 @@ const Home = () => {
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = search.trim();
-    navigate(q ? `/ai-apps?q=${encodeURIComponent(q)}` : "/ai-apps");
+    if (q) navigate(`/ai-apps?q=${encodeURIComponent(q)}`);
   };
+
+  const liveQuery = search.trim().toLowerCase();
+  const isSearching = liveQuery.length > 0;
+
+  const searchResults = useMemo(() => {
+    if (!isSearching) return [];
+    return catalog
+      .filter((t) => t.is_live)
+      .filter((t) =>
+        t.name.toLowerCase().includes(liveQuery) ||
+        t.description.toLowerCase().includes(liveQuery) ||
+        t.category.toLowerCase().includes(liveQuery)
+      )
+      .slice(0, 24);
+  }, [catalog, liveQuery, isSearching]);
 
   const categories = useMemo(() => {
     const map = new Map<string, number>();
