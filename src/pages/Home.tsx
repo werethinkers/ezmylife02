@@ -21,6 +21,7 @@ import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
+import { resolveToolMedia } from "@/lib/toolMedia";
 import logo from "@/assets/logo.png";
 
 const CATEGORY_ICONS: Record<string, typeof MessageSquare> = {
