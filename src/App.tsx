@@ -46,7 +46,7 @@ const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 const Virasat = lazy(() => import("./pages/Virasat"));
 const BulkJobs = lazy(() => import("./pages/BulkJobs"));
 const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
-const Product360 = lazy(() => import("./pages/Product360"));
+
 
 
 
