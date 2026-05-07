@@ -1,77 +1,80 @@
-# Cleaner & Consistent UI Pass
+## 1. Sitewide AI Chatbot (right side, every page, no signup)
 
-Four scoped changes — all front-end / presentation only. No business logic, RLS, or pricing changes.
+**New component** `src/components/SmartAssistantChatbot.tsx` — replaces the current `ToolsChatbot` (which only sits on `/ai-apps`). Mounted globally in `src/App.tsx` so it appears on every route. Hidden on `/tool-viewer/*` and `/auth*` routes to avoid covering tool UI.
 
-## 1. Consistent app icons & preview images everywhere
+**Visual style** — "a little flashy":
 
-**Problem**: `EnhancedToolCard`, `ToolLandscapeCard`, `ToolCard`, the search results in `Home`, `Tools`, and admin lists all derive icon/preview URLs slightly differently. Some pass `iconUrl`, some don't, some fall back to gradient placeholders, some only use `getToolIconUrl`.
+- Floating orb button bottom-right (right-6, bottom-6) with animated gradient ring, pulse glow, sparkles icon. Mobile-safe.
+- Open panel: 380px wide × 560px tall, glass dark card, gradient border, Framer Motion slide-in from right, animated typing dots.
+- Header chip: "EZYOURLIFE Assistant · always free".
 
-**Fix** — single source of truth helper `src/lib/toolMedia.ts`:
-```ts
-resolveToolMedia(toolId, catalogTool?) → { iconUrl, previewImageUrl, iconFit, previewFit }
-```
-Order of precedence: catalog `icon_url` / `preview_image_url` → `getToolIconUrl(id, category)` AI map → gradient placeholder. Same call used by:
-- `EnhancedToolCard` (Tools page, search results)
-- `ToolLandscapeCard` (Home sections, AI Apps sections)
-- `ToolCard` (legacy)
-- `ToolQuickPreview`
-- `Home` Top Picks tile (currently shows only a Sparkles icon — will show the real icon)
-- Admin `ToolManagement` row thumbnails
+**Conversation flow** (handled in one Edge Function, streaming):
 
-This guarantees the same logo and preview render in Home, AI Apps, Tool Viewer header, Quick Preview modal, and Admin.
+1. Greets and asks the user to describe their problem/use case.
+2. Uses `tools_catalog` (live tools) as the source of truth — suggests up to 3 matching apps with deep links to `/tool-preview/:id`.
+3. If nothing matches → assistant says "We don't have this yet — want our team to build it for you in 24–48 hrs?" and asks for **name, email, phone (optional), short description**.
+4. On submit, frontend calls `submit-tool-request` Edge Function which:
+  - Inserts a row into existing `tool_requests` table (no auth required — public insert policy added if missing).
+  - Calls `send-transactional-email` with template `tool-request-received` to the user.
+  - Notifies admins (insert into `activity_logs`).
+5. Bottom of every assistant turn: a small "Need a custom enterprise app? → Contact us" link → `/credits#enterprise` (existing enterprise contact dialog anchor).
 
-## 2. Home search → real card layout
+**Backend**:
 
-**Problem**: Home's search bar just navigates to `/ai-apps?q=…` with no in-page results, which doesn't match the AI Apps page (which renders `EnhancedToolCard` grid).
+- New edge function `supabase/functions/smart-assistant/index.ts` — streams via Lovable AI Gateway (`google/gemini-3-flash-preview`), system prompt built from live `tools_catalog` rows (id, name, description, category) so suggestions stay accurate, supports tool-calling for `suggest_tools` and `capture_lead` structured outputs.
+- New edge function `supabase/functions/submit-tool-request/index.ts` — public (verify_jwt false), zod validation, inserts into `tool_requests`, fires the transactional email.
+- New transactional template `supabase/functions/_shared/transactional-email-templates/tool-request-received.tsx` — branded EZYOURLIFE confirmation: "Your request is registered. Our team will build/update the app within 24–48 hours."
 
-**Fix** in `src/pages/Home.tsx`:
-- Keep navigating to `/ai-apps?q=…` on submit (Enter / button) so deep-link still works.
-- Add a live-results panel under the search bar when `search.length > 0`: same `EnhancedToolCard` grid component used by `Tools.tsx` search, rendered inside Home, with the same empty state.
-- Hide the hero / categories / featured sections while a query is active (mirror of Tools.tsx behaviour) so the experience is identical on both pages.
+**Email prerequisite**: `notify.thingmonkey.com` is pending DNS. Functions and templates will be deployed; the user will be told emails start flowing once DNS verifies (monitor in Cloud → Emails). Also need to call `setup_email_infra` + `scaffold_transactional_email` before deploying the new template.
 
-Read `?q=` from URL on AI Apps page (already supported via `searchQuery` state — just initialize from `useSearchParams`) so a Home → AI Apps jump preserves the query.
+**Old chatbot**: remove `<ToolsChatbot />` mount from `src/pages/Tools.tsx` (replaced by global one).
 
-## 3. Replace "Favourite Apps" with "Recent Apps"
+## 2. Home page — "Simple. Credit-Based. Hassle-Free." steps rewrite
 
-**Data source**: existing `activity_logs` rows with `action_type='tool_usage'` already log `tool_id` + `tool_name` per user (see `ToolViewer.tsx`). No schema change needed.
+In `src/pages/Home.tsx` (lines ~317–346) replace the 3 pricing-flavored steps with a clean 3-step user journey:
 
-**New hook** `src/hooks/useRecentTools.ts`:
-- For signed-in user, query `activity_logs` filtered by `user_id` and `action_type='tool_usage'`, ordered desc, distinct on `tool_id`, limit 8.
-- Join against `useToolsCatalog` to get full card props.
-- Returns `[]` for anon users (section hides, like favourites does today).
+1. **Choose an app** — browse 200+ live AI apps. Icon: `LayoutGrid`.
+2. **Use your credits** — pay-as-you-go, from ₹10. Icon: `Wallet`.
+3. **Start using the app** — instant results. Icon: `Sparkles`/`Zap`.
 
-**UI changes**:
-- `src/pages/Tools.tsx`: replace the `favoriteTools` block with `recentTools` and rename section title to "Recent Apps" with 🕒 emoji. Remove `useFavorites` import there.
-- Keep the Favourite heart on `ToolLandscapeCard` working (DB table stays — just no dedicated section). If you'd rather fully remove favourites UI, say so and I'll strip the hearts too.
+Same card visual treatment, middle card highlighted.
 
-## 4. Declutter Admin tab bar
+## 3. Home page — "Popular Credit Packs" → buyable scroller
 
-Currently 18 flat pill-buttons wrap across 3+ rows. Group into 5 logical sections shown as a sidebar (desktop) / accordion (mobile):
+Replace the static `<ul>` list (lines ~347–368) with a horizontal scroll-snap row of all six `CREDIT_PACKS`, each pack a compact card showing:
 
-```text
-Overview        → Analytics, Visitors, Activity Logs
-People          → Users, Credits
-Tools           → Tool Management, Tool Usage, Tool Media, Home Sections, Tool Requests
-Growth          → UTM Links, Coupons, Enterprise Leads
-Modules         → Meet Nudge, Virasat, Archived Events
-System          → API Keys
-```
+- Pack name (Starter/Mini/Pro/Popular/Better value/Best value)
+- ₹ price (large), credits count
+- Badge if present
+- "Buy now" button
 
-Implementation in `src/pages/AdminDashboard.tsx`:
-- Replace the flat `tabs` array with a grouped structure.
-- Use existing `ui/sidebar` (desktop ≥md, sticky left rail with section headers + icon+label items) and a `Select` dropdown on mobile.
-- Stat cards stay at the top but trim to 3 most-relevant (Total Users, Credits Sold, Today's Logins) — drop "Activity Logs count" which is just `logs.length` of last 200.
-- Remove duplicate icon imports no longer needed.
+Clicking **Buy now** opens the existing `BuyCreditsDialog` pre-selected to that pack (extend `BuyCreditsDialog` with optional `defaultPackId` prop and an `autoStart` flag — when true, immediately calls `buy(defaultPackId)` after the dialog mounts and the user is logged in; if not logged in it falls through to `LoginPromptDialog` as today).
 
-Result: visible options reduced to one column with clear grouping; no tab is removed, just organized.
+Layout: `overflow-x-auto snap-x snap-mandatory flex gap-3 pb-2`, each card `min-w-[180px] snap-start`. Keep "View All Packs" button beneath the scroller.
 
-## Files touched
-- new: `src/lib/toolMedia.ts`, `src/hooks/useRecentTools.ts`
-- edit: `src/pages/Home.tsx`, `src/pages/Tools.tsx`, `src/pages/AdminDashboard.tsx`
-- edit: `src/components/tools/EnhancedToolCard.tsx`, `src/components/tools/ToolLandscapeCard.tsx`, `src/components/ToolCard.tsx`, `src/components/tools/ToolQuickPreview.tsx`
-- edit: `src/components/admin/ToolManagement.tsx` (use shared media helper for thumbnails)
+## Files
 
-## Out of scope (confirm if you want them)
-- Removing the Favourites heart button entirely from cards.
-- Changing tool pricing, RLS, or any backend.
-- Restyling individual admin sub-pages (only the tab navigation is decluttered).
+**Created**
+
+- `src/components/SmartAssistantChatbot.tsx`
+- `supabase/functions/smart-assistant/index.ts`
+- `supabase/functions/submit-tool-request/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/tool-request-received.tsx`
+
+**Edited**
+
+- `src/App.tsx` (mount global chatbot)
+- `src/pages/Home.tsx` (steps rewrite + buyable pack scroller)
+- `src/pages/Tools.tsx` (remove old `<ToolsChatbot />`)
+- `src/components/wallet/BuyCreditsDialog.tsx` (add `defaultPackId` + `autoStart` props)
+- `supabase/functions/_shared/transactional-email-templates/registry.ts` (register new template)
+
+**Migration**
+
+- Ensure `tool_requests` allows public anon insert (RLS policy) so unauthenticated chat users can submit.
+
+## Out of scope
+
+- Changing existing favorites/recents, admin layout, or any other page.
+- Building enterprise contact form anew — link to existing `/credits` enterprise dialog.
+- Removing/refactoring `ToolsChatbot.tsx` source file (left in repo, just unmounted) to keep diff small.
