@@ -10,7 +10,7 @@ import { ToolSection } from "@/components/tools/ToolSection";
 import { ToolLandscapeCard } from "@/components/tools/ToolLandscapeCard";
 import { ExploreMoreTools } from "@/components/tools/ExploreMoreTools";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
-import { ToolsChatbot } from "@/components/ToolsChatbot";
+
 import { expandedTools } from "@/data/expandedTools";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
