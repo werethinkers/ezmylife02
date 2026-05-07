@@ -410,6 +410,8 @@ const Home = () => {
 
         <BulkPromoSection />
         <RequestToolSection />
+        </>
+        )}
       </main>
 
       <SEOFooter />
