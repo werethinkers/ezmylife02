@@ -15,14 +15,16 @@ const GEMINI_KEYS = [
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-async function callGemini(key: string, body: unknown) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${key}`;
+async function callGemini(key: string, model: string, body: unknown) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }
+
+const GEMINI_MODELS = ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image"];
 
 async function callLovable(prompt: string, imageBase64: string, mimeType: string) {
   if (!LOVABLE_API_KEY) return null;
