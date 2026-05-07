@@ -107,6 +107,46 @@ const Home = () => {
           />
         </form>
 
+        {isSearching ? (
+          <section className="mb-16">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+              <h2 className="text-xl font-semibold">
+                Search results for "{search}"
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({searchResults.length} found)
+                </span>
+              </h2>
+              <button
+                onClick={() => setSearch("")}
+                className="text-sm text-primary hover:underline"
+              >
+                Clear search
+              </button>
+            </div>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {searchResults.map((t, i) => (
+                  <EnhancedToolCard
+                    key={t.id}
+                    id={t.id}
+                    toolId={t.id}
+                    name={t.name}
+                    description={t.description}
+                    category={t.category}
+                    isLive={t.is_live}
+                    isFree={!!t.is_free}
+                    iconUrl={t.icon_url ?? null}
+                    icon={<Sparkles className="h-8 w-8" />}
+                    index={i}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ToolsEmptyState onClearFilters={() => setSearch("")} hasActiveFilters={true} />
+            )}
+          </section>
+        ) : (
+        <>
         {/* Hero split: left copy, right credits card */}
         <section className="grid lg:grid-cols-2 gap-8 items-stretch mb-16">
           <motion.div
