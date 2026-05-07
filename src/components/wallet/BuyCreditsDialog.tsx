@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Zap, Loader2, Check } from "lucide-react";
@@ -16,14 +16,16 @@ interface Props {
   required?: number;
   balance?: number;
   onPurchased?: () => void;
+  defaultPackId?: string;
+  autoStart?: boolean;
 }
 
-export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurchased }: Props) => {
+export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurchased, defaultPackId, autoStart }: Props) => {
   const { user } = useAuth();
   const refreshWallet = useRefreshWallet();
   const [busy, setBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string>(() => {
-    // Default: smallest pack with enough credits, else most popular
+    if (defaultPackId && CREDIT_PACKS.some((p) => p.id === defaultPackId)) return defaultPackId;
     if (required) {
       const fit = CREDIT_PACKS.find((p) => p.credits >= required);
       if (fit) return fit.id;
@@ -31,6 +33,10 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
     return CREDIT_PACKS.find((p) => p.badge === "Popular")?.id ?? "p250";
   });
   const [loginOpen, setLoginOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && defaultPackId) setSelected(defaultPackId);
+  }, [open, defaultPackId]);
 
   const buy = async (packId: string) => {
     if (!user) { setLoginOpen(true); return; }
