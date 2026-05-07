@@ -8,7 +8,7 @@ import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, Clock, Sparkles 
 import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { logActivity } from "@/lib/activityLogger";
-import { getToolIconUrl } from "@/data/toolIconMap";
+import { useToolMedia } from "@/hooks/useToolMedia";
 import logo from "@/assets/logo.png";
 
 interface CatalogTool {
@@ -128,6 +128,7 @@ const ToolViewer = () => {
   const toolTitle = tool?.title || catalogInfo?.name || toolId || "Tool";
   const toolDescription = tool?.description || catalogInfo?.description || "";
   const toolCategory = tool?.category || catalogInfo?.category || "";
+  const { iconUrl: resolvedIconUrl } = useToolMedia(toolId, toolCategory);
 
   // Error state - truly not found
   if (error) {
@@ -148,7 +149,7 @@ const ToolViewer = () => {
 
   // Tool exists in catalog but has no implementation yet - show preview page
   if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
-    const iconUrl = toolId ? getToolIconUrl(toolId, toolCategory) : null;
+    const iconUrl = resolvedIconUrl;
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
