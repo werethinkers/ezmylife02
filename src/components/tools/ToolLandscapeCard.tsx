@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useWallet } from "@/hooks/useWallet";
 import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
-import { resolveToolMedia } from "@/lib/toolMedia";
+import { useToolMedia } from "@/hooks/useToolMedia";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { ReactNode } from "react";
 
@@ -66,7 +66,12 @@ export const ToolLandscapeCard = ({
   const { toggle: toggleFav, loginOpen: favLoginOpen, setLoginOpen: setFavLoginOpen } = useToggleFavorite();
   const isFav = favorites.has(toolId);
 
-  const { iconUrl: aiIcon } = resolveToolMedia(toolId, category, iconUrl ? { icon_url: iconUrl } : null);
+  // Always resolve from the catalog so identical tools share identical art
+  const media = useToolMedia(toolId, category);
+  const aiIcon = media.iconUrl ?? iconUrl ?? null;
+  const resolvedPreview = media.previewImageUrl ?? previewImageUrl ?? null;
+  const resolvedPreviewFit = media.previewFit ?? previewImageFit;
+  const resolvedIconFit = media.iconFit ?? iconFit;
 
   const { rating, reviews, version } = useMemo(() => {
     const h = hash(toolId);

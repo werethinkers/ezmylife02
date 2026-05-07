@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getToolTypeConfig } from "@/data/toolTypes";
-import { resolveToolMedia } from "@/lib/toolMedia";
+import { useToolMedia } from "@/hooks/useToolMedia";
 import { FloatingMediaPreview } from "@/components/tools/FloatingMediaPreview";
 
 interface EnhancedToolCardProps {
@@ -53,8 +53,9 @@ export const EnhancedToolCard = ({
   const toolTypeConfig = getToolTypeConfig(displayName);
   const ToolTypeIcon = toolTypeConfig?.icon;
   
-  // Custom icon URL takes precedence over AI-generated
-  const { iconUrl: aiIconUrl } = resolveToolMedia(displayId, displayCategory, iconUrl ? { icon_url: iconUrl } : null);
+  // Always resolve from the catalog so the SAME tool shows the SAME icon everywhere
+  const media = useToolMedia(displayId, displayCategory);
+  const aiIconUrl = media.iconUrl ?? iconUrl ?? null;
 
   const handleClick = () => {
     if (isLive) {
