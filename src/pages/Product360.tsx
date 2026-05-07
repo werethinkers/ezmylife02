@@ -62,7 +62,7 @@ const Product360 = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead title="Product 360 Studio – EZYOURLIFE" description="Generate catalog-grade product photos from a single image. AI-powered angle generation, background studio, and bulk downloads." />
+      <SEOHead title="Product 360 Studio – EZYOURLIFE" description="Generate catalog-grade product photos from a single image. AI-powered angle generation, background studio, and bulk downloads." path="/tools/Product-360" />
       <Navbar />
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         {appState !== AppState.START && (
