@@ -153,25 +153,58 @@ const AdminDashboard = () => {
     return totalB - totalA;
   });
 
-  const tabs = [
-    { id: "analytics" as const, label: "Analytics", icon: LineChart },
-    { id: "visitors" as const, label: "Visitors", icon: Footprints },
-    { id: "logs" as const, label: "Activity Logs", icon: Activity },
-    { id: "users" as const, label: "Users", icon: Users },
-    ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
-    { id: "tool-usage" as const, label: "Tool Usage", icon: BarChart3 },
-    ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
-    ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
-    { id: "tool-requests" as const, label: "Tool Requests", icon: MessageSquarePlus },
-    { id: "archived-events" as const, label: "Archived Events", icon: Archive },
-    { id: "meet-nudge" as const, label: "Meet Nudge", icon: Handshake },
-    { id: "virasat" as const, label: "Virasat", icon: BookHeart },
-    ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
-    ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
-    ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
-    { id: "enterprise" as const, label: "Enterprise Leads", icon: Building2 },
-    ...(!isViewOnly ? [{ id: "api-keys" as const, label: "API Keys", icon: KeyRound }] : []),
+  const groups: { label: string; tabs: { id: typeof activeTab; label: string; icon: typeof Activity }[] }[] = [
+    {
+      label: "Overview",
+      tabs: [
+        { id: "analytics", label: "Analytics", icon: LineChart },
+        { id: "visitors", label: "Visitors", icon: Footprints },
+        { id: "logs", label: "Activity Logs", icon: Activity },
+      ],
+    },
+    {
+      label: "People",
+      tabs: [
+        { id: "users", label: "Users", icon: Users },
+        ...(!isViewOnly ? [{ id: "credits" as const, label: "Credits", icon: Zap }] : []),
+      ],
+    },
+    {
+      label: "Tools",
+      tabs: [
+        ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
+        { id: "tool-usage", label: "Tool Usage", icon: BarChart3 },
+        ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
+        ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
+        { id: "tool-requests", label: "Tool Requests", icon: MessageSquarePlus },
+      ],
+    },
+    {
+      label: "Growth",
+      tabs: [
+        ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
+        ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
+        { id: "enterprise", label: "Enterprise Leads", icon: Building2 },
+      ],
+    },
+    {
+      label: "Modules",
+      tabs: [
+        { id: "meet-nudge", label: "Meet Nudge", icon: Handshake },
+        { id: "virasat", label: "Virasat", icon: BookHeart },
+        { id: "archived-events", label: "Archived Events", icon: Archive },
+      ],
+    },
+    ...(!isViewOnly
+      ? [{
+          label: "System",
+          tabs: [{ id: "api-keys" as const, label: "API Keys", icon: KeyRound }],
+        }]
+      : []),
   ];
+
+  const allTabs = groups.flatMap((g) => g.tabs);
+  const activeTabMeta = allTabs.find((t) => t.id === activeTab) ?? allTabs[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,10 +213,9 @@ const AdminDashboard = () => {
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
         {isViewOnly && <p className="text-sm text-muted-foreground mb-6">View-only access</p>}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
             { label: "Total Users", value: stats.totalUsers, icon: Users },
-            { label: "Activity Logs", value: stats.totalLogs, icon: Activity },
             { label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
             { label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
           ].map(s => (
@@ -199,20 +231,56 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === t.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
+        <div className="grid md:grid-cols-[220px_1fr] gap-6">
+          {/* Mobile: section dropdown */}
+          <div className="md:hidden">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as typeof activeTab)}
+              className="w-full h-11 px-3 rounded-lg border border-border bg-background text-sm"
             >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          ))}
-        </div>
+              {groups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.tabs.map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop sidebar */}
+          <nav className="hidden md:block sticky top-4 h-fit space-y-5 pr-2 border-r border-border/40">
+            {groups.map((g) => (
+              <div key={g.label}>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 px-2">
+                  {g.label}
+                </p>
+                <div className="space-y-0.5">
+                  {g.tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveTab(t.id)}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors ${
+                        activeTab === t.id
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <t.icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/40">
+              <activeTabMeta.icon className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">{activeTabMeta.label}</h2>
+            </div>
 
         {activeTab === "logs" && (
           <ActivityArchive logs={logs} profiles={profiles} />
