@@ -20,6 +20,7 @@ import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
+import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
 import { resolveToolMedia } from "@/lib/toolMedia";
 import logo from "@/assets/logo.png";
@@ -46,6 +47,7 @@ const Home = () => {
   const { data: catalog = [] } = useToolsCatalog();
   const { hot, featured } = useHomeSections();
   const [search, setSearch] = useState("");
+  const [buyPackId, setBuyPackId] = useState<string | null>(null);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,51 +320,51 @@ const Home = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">Simple. Credit-Based. Hassle-Free.</h2>
-              <p className="text-sm text-muted-foreground mb-6">Real prices, real packs. No subscriptions, no surprises.</p>
+              <p className="text-sm text-muted-foreground mb-6">Three steps. No subscription. Just credits.</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(() => {
-                  const starter = CREDIT_PACKS[0];
-                  const popular = CREDIT_PACKS.find((p) => p.badge === "Popular") ?? CREDIT_PACKS[3];
-                  const best = CREDIT_PACKS.find((p) => p.badge === "Best value") ?? CREDIT_PACKS[CREDIT_PACKS.length - 1];
-                  const steps = [
-                    { n: 1, t: "Start small", v: `₹${starter.inr}`, sub: `${starter.credits} credits`, s: "Try AI apps with our smallest pack.", Icon: Wallet },
-                    { n: 2, t: "Most popular", v: `₹${popular.inr}`, sub: `${popular.credits} credits`, s: "What most users pick — great value.", Icon: LayoutGrid, highlight: true },
-                    { n: 3, t: "Best value", v: `₹${best.inr}`, sub: `${best.credits} credits`, s: "Lowest cost per credit. Stock up.", Icon: Zap },
-                  ];
-                  return steps.map((s) => (
-                    <div key={s.n} className={`rounded-2xl bg-background/60 border p-5 text-center ${s.highlight ? "border-primary/50 shadow-lg shadow-primary/10" : "border-border/50"}`}>
-                      <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
-                        <s.Icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="text-xs font-semibold text-primary mb-1">Step {s.n}</div>
-                      <p className="font-bold text-sm mb-1">{s.t}</p>
-                      <p className="text-2xl font-bold tabular-nums">{s.v}</p>
-                      <p className="text-xs font-medium text-primary mb-1">{s.sub}</p>
-                      <p className="text-xs text-muted-foreground leading-snug">{s.s}</p>
+                {[
+                  { n: 1, t: "Choose an app", s: "Browse 200+ live AI apps for any task.", Icon: LayoutGrid },
+                  { n: 2, t: "Use your credits", s: "Pay-as-you-go from ₹10. No subscriptions.", Icon: Wallet, highlight: true },
+                  { n: 3, t: "Start using the app", s: "Instant results — no signup hurdles.", Icon: Sparkles },
+                ].map((s) => (
+                  <div key={s.n} className={`rounded-2xl bg-background/60 border p-5 text-center ${s.highlight ? "border-primary/50 shadow-lg shadow-primary/10" : "border-border/50"}`}>
+                    <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
+                      <s.Icon className="h-6 w-6 text-primary" />
                     </div>
-                  ));
-                })()}
+                    <div className="text-xs font-semibold text-primary mb-1">Step {s.n}</div>
+                    <p className="font-bold text-base mb-1">{s.t}</p>
+                    <p className="text-xs text-muted-foreground leading-snug">{s.s}</p>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/70 p-5">
-              <h3 className="font-bold mb-4">Popular Credit Packs</h3>
-              <ul className="space-y-3">
-                {popularPacks.map((p, idx) => (
-                  <li key={p.id} className="flex items-center justify-between gap-3 py-2 border-b border-border/40 last:border-0">
-                    <div>
-                      <p className="font-semibold text-sm">
-                        {idx === 0 ? "Starter" : idx === 1 ? "Pro" : "Ultimate"}
-                        {idx === 1 && (
-                          <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary">Best Value</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{p.credits.toLocaleString()} credits</p>
-                    </div>
-                    <span className="font-bold tabular-nums">₹{p.inr}</span>
-                  </li>
+              <h3 className="font-bold mb-1">Popular Credit Packs</h3>
+              <p className="text-xs text-muted-foreground mb-3">Tap Buy now to checkout instantly.</p>
+              <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1">
+                {CREDIT_PACKS.map((p) => (
+                  <div
+                    key={p.id}
+                    className={`relative snap-start min-w-[170px] rounded-xl border p-3 flex flex-col bg-card/60 ${p.badge === "Popular" ? "border-primary/60 shadow-md shadow-primary/10" : "border-border/50"}`}
+                  >
+                    {p.badge && (
+                      <span className="absolute -top-2 right-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
+                        {p.badge}
+                      </span>
+                    )}
+                    <p className="text-2xl font-bold tabular-nums">₹{p.inr}</p>
+                    <p className="text-xs text-muted-foreground mb-3">{p.credits.toLocaleString()} credits</p>
+                    <Button
+                      size="sm"
+                      className="mt-auto w-full"
+                      onClick={() => setBuyPackId(p.id)}
+                    >
+                      Buy now
+                    </Button>
+                  </div>
                 ))}
-              </ul>
-              <Button asChild variant="outline" className="w-full mt-4">
+              </div>
+              <Button asChild variant="outline" className="w-full mt-3">
                 <Link to="/credits">View All Packs</Link>
               </Button>
             </div>
@@ -423,6 +425,12 @@ const Home = () => {
       </main>
 
       <SEOFooter />
+      <BuyCreditsDialog
+        open={!!buyPackId}
+        onOpenChange={(v) => !v && setBuyPackId(null)}
+        defaultPackId={buyPackId ?? undefined}
+        autoStart
+      />
     </div>
   );
 };
