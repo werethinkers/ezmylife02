@@ -243,7 +243,7 @@ const Tools = () => {
       </main>
 
       <ToolQuickPreview open={previewOpen} onOpenChange={setPreviewOpen} tool={previewTool} />
-      <ToolsChatbot />
+      
       <SEOFooter />
     </div>
   );
