@@ -239,14 +239,6 @@ const AnimatedRoutes = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/tools/Product-360"
-              element={
-                <ProtectedRoute>
-                  <Product360 />
-                </ProtectedRoute>
-              }
-            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
