@@ -157,7 +157,7 @@ const Tools = () => {
       />
       <Navbar />
 
-      <ToolsHero searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <ToolsHero searchQuery={searchQuery} onSearchChange={handleSearchChange} />
 
       <main className="container mx-auto px-4 py-10">
         <AnimatePresence mode="wait">
@@ -177,7 +177,7 @@ const Tools = () => {
                   </span>
                 </h2>
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="text-sm text-primary hover:underline"
                 >
                   Clear search
@@ -203,7 +203,7 @@ const Tools = () => {
                 </div>
               ) : (
                 <ToolsEmptyState
-                  onClearFilters={() => setSearchQuery("")}
+                  onClearFilters={() => handleSearchChange("")}
                   hasActiveFilters={true}
                 />
               )}
