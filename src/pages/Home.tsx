@@ -379,22 +379,29 @@ const Home = () => {
               <Link to="/ai-apps" className="text-sm text-primary hover:underline">View more →</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {topPicks.map((t) => (
-                <Link
-                  key={t.id}
-                  to={`/tool-preview/${t.id}`}
-                  className="rounded-2xl border border-border/50 bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all flex gap-3"
-                >
-                  <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
-                    <p className="text-xs text-primary mt-1 font-medium">View app →</p>
-                  </div>
-                </Link>
-              ))}
+              {topPicks.map((t) => {
+                const { iconUrl } = resolveToolMedia(t.id, t.category, t.iconUrl ? { icon_url: t.iconUrl } : null);
+                return (
+                  <Link
+                    key={t.id}
+                    to={`/tool-preview/${t.id}`}
+                    className="rounded-2xl border border-border/50 bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all flex gap-3"
+                  >
+                    <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center overflow-hidden">
+                      {iconUrl ? (
+                        <img src={iconUrl} alt={t.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <Sparkles className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm truncate">{t.name}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
+                      <p className="text-xs text-primary mt-1 font-medium">View app →</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
