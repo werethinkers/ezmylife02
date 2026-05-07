@@ -59,3 +59,9 @@ verify_jwt = false
 
 [functions.bulk-tool-media]
 verify_jwt = false
+
+[functions.smart-assistant]
+verify_jwt = false
+
+[functions.submit-tool-request]
+verify_jwt = false
