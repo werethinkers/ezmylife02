@@ -59,6 +59,7 @@ serve(async (req) => {
     ].filter((k): k is string => !!k);
     if (!keys.length) throw new Error("no_gemini_keys");
 
+    let lastBody = "";
     let lastErr = "no_attempts";
     for (const k of keys) {
       const upstream = await fetch(PUBLIC_ENDPOINT, {
@@ -71,20 +72,39 @@ serve(async (req) => {
         body: JSON.stringify({ imageBase64, mimeType, angles }),
       });
       const text = await upstream.text();
-      // If upstream rejected the key (401/429), try next key
+      lastBody = text;
+
       if (upstream.status === 401 || upstream.status === 429) {
         lastErr = `${upstream.status}: ${text.slice(0, 200)}`;
         continue;
       }
-      // Forward whatever upstream returned (success or otherwise)
+
+      // Upstream returns 200 with success=false even when Gemini rate-limits / rejects the key.
+      // Detect that case and rotate to the next key.
+      try {
+        const parsed = JSON.parse(text);
+        const failed = Array.isArray(parsed?.failed) ? parsed.failed : [];
+        const hasSuccess = Array.isArray(parsed?.images) && parsed.images.length > 0;
+        const allKeyErr = failed.length > 0 && failed.every((f: { error?: string }) => {
+          const e = String(f?.error ?? "");
+          return /429|quota|RESOURCE_EXHAUSTED|API key|invalid|401|PERMISSION_DENIED/i.test(e);
+        });
+        if (!hasSuccess && allKeyErr) {
+          lastErr = `key_rejected: ${String(failed[0]?.error ?? "").slice(0, 200)}`;
+          continue;
+        }
+      } catch { /* fall through and forward as-is */ }
+
       return new Response(text, {
         status: upstream.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ error: "all_keys_failed", detail: lastErr }), {
-      status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // All keys exhausted — forward the last body so client sees the actual Gemini error
+    return new Response(
+      lastBody || JSON.stringify({ success: false, images: [], failed: [{ error: lastErr }] }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
