@@ -16,6 +16,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useHomeSections } from "@/hooks/useHomeSections";
 import { ToolLandscapeCard } from "@/components/tools/ToolLandscapeCard";
+import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
+import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
