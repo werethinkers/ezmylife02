@@ -20,6 +20,7 @@ import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
+import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
 import { resolveToolMedia } from "@/lib/toolMedia";
 import logo from "@/assets/logo.png";
@@ -46,6 +47,7 @@ const Home = () => {
   const { data: catalog = [] } = useToolsCatalog();
   const { hot, featured } = useHomeSections();
   const [search, setSearch] = useState("");
+  const [buyPackId, setBuyPackId] = useState<string | null>(null);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
