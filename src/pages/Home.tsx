@@ -16,9 +16,12 @@ import { useWallet } from "@/hooks/useWallet";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useHomeSections } from "@/hooks/useHomeSections";
 import { ToolLandscapeCard } from "@/components/tools/ToolLandscapeCard";
+import { EnhancedToolCard } from "@/components/tools/EnhancedToolCard";
+import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import RequestToolSection from "@/components/RequestToolSection";
 import { BulkPromoSection } from "@/components/home/BulkPromoSection";
+import { resolveToolMedia } from "@/lib/toolMedia";
 import logo from "@/assets/logo.png";
 
 const CATEGORY_ICONS: Record<string, typeof MessageSquare> = {
@@ -47,8 +50,23 @@ const Home = () => {
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = search.trim();
-    navigate(q ? `/ai-apps?q=${encodeURIComponent(q)}` : "/ai-apps");
+    if (q) navigate(`/ai-apps?q=${encodeURIComponent(q)}`);
   };
+
+  const liveQuery = search.trim().toLowerCase();
+  const isSearching = liveQuery.length > 0;
+
+  const searchResults = useMemo(() => {
+    if (!isSearching) return [];
+    return catalog
+      .filter((t) => t.is_live)
+      .filter((t) =>
+        t.name.toLowerCase().includes(liveQuery) ||
+        t.description.toLowerCase().includes(liveQuery) ||
+        t.category.toLowerCase().includes(liveQuery)
+      )
+      .slice(0, 24);
+  }, [catalog, liveQuery, isSearching]);
 
   const categories = useMemo(() => {
     const map = new Map<string, number>();
@@ -90,6 +108,46 @@ const Home = () => {
           />
         </form>
 
+        {isSearching ? (
+          <section className="mb-16">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+              <h2 className="text-xl font-semibold">
+                Search results for "{search}"
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({searchResults.length} found)
+                </span>
+              </h2>
+              <button
+                onClick={() => setSearch("")}
+                className="text-sm text-primary hover:underline"
+              >
+                Clear search
+              </button>
+            </div>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {searchResults.map((t, i) => (
+                  <EnhancedToolCard
+                    key={t.id}
+                    id={t.id}
+                    toolId={t.id}
+                    name={t.name}
+                    description={t.description}
+                    category={t.category}
+                    isLive={t.is_live}
+                    isFree={!!t.is_free}
+                    iconUrl={t.icon_url ?? null}
+                    icon={<Sparkles className="h-8 w-8" />}
+                    index={i}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ToolsEmptyState onClearFilters={() => setSearch("")} hasActiveFilters={true} />
+            )}
+          </section>
+        ) : (
+        <>
         {/* Hero split: left copy, right credits card */}
         <section className="grid lg:grid-cols-2 gap-8 items-stretch mb-16">
           <motion.div
@@ -322,22 +380,29 @@ const Home = () => {
               <Link to="/ai-apps" className="text-sm text-primary hover:underline">View more →</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {topPicks.map((t) => (
-                <Link
-                  key={t.id}
-                  to={`/tool-preview/${t.id}`}
-                  className="rounded-2xl border border-border/50 bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all flex gap-3"
-                >
-                  <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
-                    <p className="text-xs text-primary mt-1 font-medium">View app →</p>
-                  </div>
-                </Link>
-              ))}
+              {topPicks.map((t) => {
+                const { iconUrl } = resolveToolMedia(t.id, t.category, t.iconUrl ? { icon_url: t.iconUrl } : null);
+                return (
+                  <Link
+                    key={t.id}
+                    to={`/tool-preview/${t.id}`}
+                    className="rounded-2xl border border-border/50 bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all flex gap-3"
+                  >
+                    <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center overflow-hidden">
+                      {iconUrl ? (
+                        <img src={iconUrl} alt={t.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <Sparkles className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm truncate">{t.name}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
+                      <p className="text-xs text-primary mt-1 font-medium">View app →</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
@@ -353,6 +418,8 @@ const Home = () => {
 
         <BulkPromoSection />
         <RequestToolSection />
+        </>
+        )}
       </main>
 
       <SEOFooter />

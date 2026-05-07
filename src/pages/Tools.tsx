@@ -12,8 +12,9 @@ import { ExploreMoreTools } from "@/components/tools/ExploreMoreTools";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { expandedTools } from "@/data/expandedTools";
-import { useFavorites } from "@/hooks/useFavorites";
+import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
@@ -31,18 +32,23 @@ interface PreviewTool {
 }
 
 const Tools = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
 
   const { data: catalogTools = [] } = useToolsCatalog();
   const { hot, trending, featured, mostUsed } = useHomeSections();
   const { user } = useAuth();
-  const { favorites } = useFavorites();
-  const favoriteTools = useMemo(
-    () => catalogTools.filter((t) => t.is_live && favorites.has(t.id)),
-    [catalogTools, favorites]
-  );
+  const { recent: recentTools } = useRecentTools();
+
+  // Keep ?q= in URL synced
+  const handleSearchChange = useCallback((q: string) => {
+    setSearchQuery(q);
+    const next = new URLSearchParams(searchParams);
+    if (q) next.set("q", q); else next.delete("q");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const catalogById = useMemo(() => {
     const m = new Map<string, typeof catalogTools[number]>();
@@ -151,7 +157,7 @@ const Tools = () => {
       />
       <Navbar />
 
-      <ToolsHero searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <ToolsHero searchQuery={searchQuery} onSearchChange={handleSearchChange} />
 
       <main className="container mx-auto px-4 py-10">
         <AnimatePresence mode="wait">
@@ -171,7 +177,7 @@ const Tools = () => {
                   </span>
                 </h2>
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="text-sm text-primary hover:underline"
                 >
                   Clear search
@@ -197,7 +203,7 @@ const Tools = () => {
                 </div>
               ) : (
                 <ToolsEmptyState
-                  onClearFilters={() => setSearchQuery("")}
+                  onClearFilters={() => handleSearchChange("")}
                   hasActiveFilters={true}
                 />
               )}
@@ -210,9 +216,9 @@ const Tools = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              {user && favoriteTools.length > 0 && (
-                <ToolSection title="Favourite Apps" emoji="❤️" direction="ltr">
-                  {favoriteTools.map((t) => renderCard({
+              {user && recentTools.length > 0 && (
+                <ToolSection title="Recent Apps" emoji="🕒" direction="ltr">
+                  {recentTools.map((t) => renderCard({
                     id: t.id, name: t.name, description: t.description,
                     category: t.category, isLive: t.is_live, iconUrl: t.icon_url,
                   }))}

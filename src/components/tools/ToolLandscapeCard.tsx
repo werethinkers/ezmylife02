@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useWallet } from "@/hooks/useWallet";
 import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
-import { getToolIconUrl } from "@/data/toolIconMap";
+import { resolveToolMedia } from "@/lib/toolMedia";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { ReactNode } from "react";
 
@@ -66,7 +66,7 @@ export const ToolLandscapeCard = ({
   const { toggle: toggleFav, loginOpen: favLoginOpen, setLoginOpen: setFavLoginOpen } = useToggleFavorite();
   const isFav = favorites.has(toolId);
 
-  const aiIcon = iconUrl || getToolIconUrl(toolId, category);
+  const { iconUrl: aiIcon } = resolveToolMedia(toolId, category, iconUrl ? { icon_url: iconUrl } : null);
 
   const { rating, reviews, version } = useMemo(() => {
     const h = hash(toolId);
