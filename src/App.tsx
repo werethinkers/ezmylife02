@@ -241,6 +241,14 @@ const AnimatedRoutes = () => {
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route
+              path="/tools/productvision-360"
+              element={
+                <ProtectedRoute>
+                  <ProductVision360 />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
