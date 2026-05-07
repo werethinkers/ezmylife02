@@ -7,15 +7,112 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+interface DbKey { id: string; key_value: string; failure_count: number }
+
+function getEnvFallbackKeys(): string[] {
+  const keys: string[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const k = Deno.env.get(`GEMINI_API_KEY_${i}`);
+    if (k) keys.push(k);
+  }
+  return keys;
+}
+
+async function fetchDbKeys(sb: ReturnType<typeof createClient>): Promise<DbKey[]> {
+  try {
+    const { data, error } = await sb
+      .from("gemini_api_keys")
+      .select("id,key_value,failure_count")
+      .eq("is_active", true)
+      .order("failure_count", { ascending: true })
+      .order("last_used_at", { ascending: true, nullsFirst: true });
+    if (error) return [];
+    return (data as DbKey[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function recordKeySuccess(sb: ReturnType<typeof createClient>, id: string) {
+  try {
+    await sb.from("gemini_api_keys").update({ last_used_at: new Date().toISOString(), failure_count: 0 }).eq("id", id);
+  } catch (_) { /* ignore */ }
+}
+
+async function recordKeyFailure(sb: ReturnType<typeof createClient>, id: string, currentCount: number) {
+  try {
+    const newCount = currentCount + 1;
+    await sb.from("gemini_api_keys").update({ failure_count: newCount, is_active: newCount < 5 }).eq("id", id);
+  } catch (_) { /* ignore */ }
+}
+
+/** Convert Gemini SSE stream into OpenAI-style chat.completions delta SSE. */
+function geminiSseToOpenAiSse(geminiBody: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buf = "";
+
+  return new ReadableStream({
+    async start(controller) {
+      const reader = geminiBody.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buf.indexOf("\n")) !== -1) {
+            let line = buf.slice(0, idx);
+            buf = buf.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const json = line.slice(6).trim();
+            if (!json) continue;
+            try {
+              const parsed = JSON.parse(json);
+              const text = parsed?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
+              if (text) {
+                const chunk = { choices: [{ delta: { content: text } }] };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+              }
+            } catch {
+              // ignore partial
+            }
+          }
+        }
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+      } catch (e) {
+        console.error("gemini stream transform error:", e);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}
+
+async function streamFromGemini(apiKey: string, system: string, messages: { role: string; content: string }[]): Promise<Response> {
+  const contents = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig: { temperature: 0.8 },
+    }),
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    // Build live tool catalog snippet
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -48,38 +145,54 @@ LIVE APP CATALOG (${tools?.length ?? 0} apps):
 ${catalogList}
 `;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: system }, ...messages],
-        stream: true,
-      }),
-    });
-
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("AI gateway error", resp.status, t);
-      const status = resp.status === 429 ? 429 : resp.status === 402 ? 402 : 500;
-      const msg =
-        status === 429
-          ? "Too many requests, please slow down."
-          : status === 402
-          ? "AI credits exhausted. Please top up the workspace."
-          : "AI gateway error";
-      return new Response(JSON.stringify({ error: msg }), {
-        status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // 1. Try Lovable AI Gateway first
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (LOVABLE_API_KEY) {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [{ role: "system", content: system }, ...messages],
+          stream: true,
+        }),
       });
+      if (resp.ok) {
+        return new Response(resp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      }
+      console.warn(`Lovable AI returned ${resp.status}, falling back to Gemini keys…`);
     }
 
-    return new Response(resp.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    // 2. Try DB-backed Gemini keys
+    const dbKeys = await fetchDbKeys(supabase);
+    for (const k of dbKeys) {
+      const res = await streamFromGemini(k.key_value, system, messages);
+      if (res.ok && res.body) {
+        recordKeySuccess(supabase, k.id);
+        return new Response(geminiSseToOpenAiSse(res.body), {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
+      await recordKeyFailure(supabase, k.id, k.failure_count);
+      console.warn(`DB key ${k.id.slice(0, 8)} returned ${res.status}`);
+    }
+
+    // 3. Env GEMINI_API_KEY_1..10
+    const envKeys = getEnvFallbackKeys();
+    for (let i = 0; i < envKeys.length; i++) {
+      const res = await streamFromGemini(envKeys[i], system, messages);
+      if (res.ok && res.body) {
+        return new Response(geminiSseToOpenAiSse(res.body), {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
+      console.warn(`Env Gemini key ${i + 1} returned ${res.status}`);
+    }
+
+    return new Response(
+      JSON.stringify({ error: "All AI providers are temporarily unavailable. Please try again shortly." }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("smart-assistant error", e);
     return new Response(
