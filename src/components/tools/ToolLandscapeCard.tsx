@@ -124,7 +124,7 @@ export const ToolLandscapeCard = ({
       <div className="flex items-start gap-4 mb-3 pr-10 h-20">
         <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
           {aiIcon ? (
-            <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", iconFit === "contain" ? "object-contain p-2" : "object-cover")} />
+            <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", resolvedIconFit === "contain" ? "object-contain p-2" : "object-cover")} />
           ) : (
             <div className="text-primary">{icon}</div>
           )}
@@ -147,11 +147,14 @@ export const ToolLandscapeCard = ({
           onClick={(e) => { e.stopPropagation(); onPreview?.(); }}
           className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center group bg-gradient-to-br from-violet-500 via-fuchsia-500 to-purple-600"
         >
-          {previewImageUrl ? (
+          {resolvedPreview ? (
             <img
-              src={previewImageUrl}
+              src={resolvedPreview}
               alt={`${name} preview`}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              className={cn(
+                "absolute inset-0 w-full h-full group-hover:scale-[1.03] transition-transform duration-500",
+                resolvedPreviewFit === "contain" ? "object-contain" : "object-cover",
+              )}
               loading="lazy"
             />
           ) : (
