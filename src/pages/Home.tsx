@@ -425,6 +425,12 @@ const Home = () => {
       </main>
 
       <SEOFooter />
+      <BuyCreditsDialog
+        open={!!buyPackId}
+        onOpenChange={(v) => !v && setBuyPackId(null)}
+        defaultPackId={buyPackId ?? undefined}
+        autoStart
+      />
     </div>
   );
 };
