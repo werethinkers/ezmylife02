@@ -1,74 +1,66 @@
-## Goal
+# Integrate Product 360 as a native tool
 
-All tool cards on `/ai-apps` should be visually identical in size, and preview images must display fully (no cropping) regardless of source aspect ratio. Achieve this by standardizing image output at the admin end and adjusting card layout.
+Mounts the source app from project **Remix of product 360 final** as a native tool at `/tools/Product-360` inside EZYOURLIFE — sharing this project's auth, navbar, credits, and Supabase backend. No iframe.
 
-## Approach
+## What the tool does
+Upload a product photo → Gemini 2.5 Flash Image generates ~10 catalog-grade angles (front, sides, back, top, bottom, close-up) on a clean white background, removes white bg → transparent, then offers a Background Studio (preset/solid/custom + logo placement) and Downloads (zip / individual / 360 spin frames). Bulk mode supported.
 
-### 1. Fixed image dimensions enforced at admin upload
+## Pricing
+**Flat 50 credits** charged once per generation session (one upload = one charge), regardless of how many angles succeed/fail. Bulk mode charges 50 credits per uploaded product image.
 
-In `src/components/admin/ImageCropDialog.tsx` and `ToolMediaManager.tsx`:
+Implementation: insert row in `tool_pricing` with `tool_id = 'product-360'`, `credit_cost = 50`. Wrap the generation entry point with `start_tool_run` (debits on success via `complete_tool_run`). If `start_tool_run` returns `insufficient`, show the existing "Buy credits" dialog and abort.
 
-- **Preview image**: always export at exactly **1200 × 900 px** (4:3), JPEG quality 0.92, with the cropped content **letterboxed** onto a generated background (blurred copy of the same image + soft gradient) so the entire user-selected area is visible without cropping the canvas.
-- **Icon**: always export at exactly **512 × 512 px** (1:1), same letterbox treatment when "Fit" is chosen, edge-to-edge when "Fill".
-- Update the cropper so the selected region is *rendered into* the fixed canvas at the chosen zoom/position. This guarantees every uploaded asset arrives at identical dimensions.
-- Keep the existing "Fill / Fit" toggle but make it a hint baked into the export (Fit = padded; Fill = cover). The frontend then never has to choose — it always shows the image edge-to-edge.
+## Files to copy from project 5 → this project
 
-### 2. Uniform card container
+Namespaced under `src/components/product360/` and `src/pages/Product360.tsx`.
 
-In `src/components/tools/ToolLandscapeCard.tsx`:
+**Pages**
+- `src/pages/Index.tsx` → `src/pages/Product360.tsx` (wrap with our `Navbar`, drop project's theme toggle/Header + `ApiKeySelector` flow — server keys handle that)
 
-- Lock the card to a fixed structure with consistent fixed heights for each section:
-  - Header (icon + title): fixed `h-24`
-  - Description: fixed `h-10` (clamp 2 lines, reserved space even if 1 line)
-  - Preview image box: fixed `aspect-[4/3]` (matches the 1200×900 export)
-  - Credits panel: fixed `h-24`
-  - CTA button: fixed `h-14`
-  - Helper text: fixed `h-5`
-- Wrap the whole card with `h-full flex flex-col` so the parent grid in `Tools.tsx` enforces equal-height rows.
-- Inside the preview box, render the image with `object-cover w-full h-full` — since admin now guarantees 4:3 letterboxed output, this displays the full image with no crop and no empty bars at the card level.
+**Components → `src/components/product360/`**
+- `Header.tsx` (stripped of theme toggle), `FileUpload.tsx`, `Dashboard.tsx`, `BulkUpload.tsx`, `BackgroundCompositor.tsx`, `BackgroundSelector.tsx`, `LogoPlacementEditor.tsx`, `PlacementControls.tsx`, `ResultsViewer.tsx`, `NavLink.tsx`, `tabs/AnglesView.tsx`, `tabs/BackgroundStudioView.tsx`, `tabs/DownloadsView.tsx`, `icons/*` (or replace with lucide-react)
+- **Skip**: `ApiKeySelector.tsx`
 
-### 3. Grid alignment
+**Services / utils / constants / types → `src/components/product360/`**
+- `services/geminiService.ts`, `utils/backgroundRemover.ts`, `utils/frameExtractor.ts`, `utils/logoCompositor.ts`, `constants.ts`, `types.ts`
 
-In `src/pages/Tools.tsx`:
+**Assets**
+- `src/assets/backgrounds/*.png` (9 izzhaar presets) → `src/assets/product360-backgrounds/`
 
-- Ensure the grid uses `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch` and each child wrapper passes `h-full` so cards stretch uniformly.
+**Edge function**
+- `supabase/functions/generate-product-angle/index.ts` copied as-is. Update to use our **AI fallback strategy**: rotate through `GEMINI_API_KEY_1/2/3/4` already in secrets, then fall back to `LOVABLE_API_KEY` via the AI Gateway. Validate JWT in code.
 
-### 4. Migration of existing images
+## Wiring into EZYOURLIFE
 
-- Existing uploads remain as-is; admin can click **Adjust** on any tool to re-export at the new fixed dimensions. No DB schema change required.
-- The `preview_image_fit` / `icon_fit` columns become legacy hints (kept for backward compatibility, ignored once an image is re-exported because it's already canvas-perfect).
+1. **Route** (`src/App.tsx`): lazy import + add
+   ```
+   <Route path="/tools/Product-360" element={<ProtectedRoute><Product360 /></ProtectedRoute>} />
+   ```
 
-## Technical Details
+2. **Catalog entry** via migration — upsert `tools_catalog`:
+   - `id`: `product-360`
+   - `name`: "Product 360 Studio"
+   - `category`: "AI Image Generation"
+   - `dedicated_route`: `/tools/Product-360`
+   - `is_live`: true, `is_free`: false
 
-```
-ImageCropDialog
-  ├─ Cropper (react-easy-crop) — user selects region, zoom 0.1–4
-  └─ getCroppedBlob(targetW, targetH, mode):
-       1. Create offscreen canvas at targetW × targetH
-       2. If mode === "fit": draw blurred fullsize image as background,
-          then draw user-selected region centered, scaled to fit
-          inside canvas without cropping (letterbox)
-       3. If mode === "fill": draw user-selected region scaled to cover
-       4. Export as JPEG 0.92
+3. **Pricing entry** via migration — insert into `tool_pricing`:
+   - `tool_id`: `product-360`, `credit_cost`: 50
 
-ToolLandscapeCard structure (fixed heights):
-  <div class="h-full flex flex-col rounded-3xl ...">
-    <header class="h-24 ...">icon + title</header>
-    <p class="h-10 line-clamp-2">description</p>
-    <div class="aspect-[4/3] ..."><img class="w-full h-full object-cover"/></div>
-    <div class="mt-auto">
-      <div class="h-24">credits panel</div>
-      <button class="h-14">CTA</button>
-      <p class="h-5">helper</p>
-    </div>
-  </div>
-```
+4. **Credit charging flow** (in `Product360.tsx`):
+   - On "Generate" click → `supabase.rpc('start_tool_run', { _uid, _tool_id: 'product-360' })`
+   - If `ok=false, reason='insufficient'` → open `BuyCreditsDialog`, stop.
+   - Run the existing angle generation loop.
+   - On finish (any angle succeeded) → `complete_tool_run(..., _success: true)` (debits 50).
+   - On total failure (zero angles) → `complete_tool_run(..., _success: false)` (no charge).
+   - Bulk mode: same flow per product image.
 
-## Files to change
+5. **Theme**: drop local dark/light toggle. Replace `bg-gray-100 dark:bg-gray-900` etc. with semantic tokens (`bg-background`, `text-foreground`).
 
-- `src/components/admin/ImageCropDialog.tsx` — fixed-canvas export with letterbox option
-- `src/components/admin/ToolMediaManager.tsx` — pass target dimensions + fit mode to dialog
-- `src/components/tools/ToolLandscapeCard.tsx` — fixed section heights, simplified image rendering
-- `src/pages/Tools.tsx` — verify `items-stretch` + `h-full` on grid items
+6. **Auth**: existing `@/integrations/supabase/client` works as-is.
 
-No database or backend changes needed.
+## Dependencies
+Already present: `jszip`, `file-saver`, `@radix-ui/*`, `lucide-react`, `sonner`, `@supabase/supabase-js`. **No new packages.**
+
+## Out of scope
+Existing tools, navbar, design system, credits infra — unchanged. Source project is read-only.
