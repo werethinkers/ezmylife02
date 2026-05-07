@@ -46,6 +46,8 @@ const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 const Virasat = lazy(() => import("./pages/Virasat"));
 const BulkJobs = lazy(() => import("./pages/BulkJobs"));
 const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
+const Product360 = lazy(() => import("./pages/Product360"));
+
 
 
 const queryClient = new QueryClient();
@@ -234,6 +236,14 @@ const AnimatedRoutes = () => {
               element={
                 <ProtectedRoute>
                   <BulkJobDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tools/Product-360"
+              element={
+                <ProtectedRoute>
+                  <Product360 />
                 </ProtectedRoute>
               }
             />
