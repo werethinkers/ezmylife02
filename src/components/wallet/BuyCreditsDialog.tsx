@@ -38,6 +38,13 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
     if (open && defaultPackId) setSelected(defaultPackId);
   }, [open, defaultPackId]);
 
+  useEffect(() => {
+    if (open && autoStart && defaultPackId && user && !busy) {
+      buy(defaultPackId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoStart, defaultPackId, user]);
+
   const buy = async (packId: string) => {
     if (!user) { setLoginOpen(true); return; }
     const pack = CREDIT_PACKS.find((p) => p.id === packId);
