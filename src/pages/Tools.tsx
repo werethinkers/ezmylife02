@@ -12,8 +12,9 @@ import { ExploreMoreTools } from "@/components/tools/ExploreMoreTools";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { ToolsChatbot } from "@/components/ToolsChatbot";
 import { expandedTools } from "@/data/expandedTools";
-import { useFavorites } from "@/hooks/useFavorites";
+import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
@@ -31,18 +32,23 @@ interface PreviewTool {
 }
 
 const Tools = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTool, setPreviewTool] = useState<PreviewTool | null>(null);
 
   const { data: catalogTools = [] } = useToolsCatalog();
   const { hot, trending, featured, mostUsed } = useHomeSections();
   const { user } = useAuth();
-  const { favorites } = useFavorites();
-  const favoriteTools = useMemo(
-    () => catalogTools.filter((t) => t.is_live && favorites.has(t.id)),
-    [catalogTools, favorites]
-  );
+  const { recent: recentTools } = useRecentTools();
+
+  // Keep ?q= in URL synced
+  const handleSearchChange = useCallback((q: string) => {
+    setSearchQuery(q);
+    const next = new URLSearchParams(searchParams);
+    if (q) next.set("q", q); else next.delete("q");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const catalogById = useMemo(() => {
     const m = new Map<string, typeof catalogTools[number]>();
