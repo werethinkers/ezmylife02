@@ -15,14 +15,16 @@ const GEMINI_KEYS = [
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-async function callGemini(key: string, body: unknown) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
+async function callGemini(key: string, model: string, body: unknown) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }
+
+const GEMINI_MODELS = ["gemini-2.5-flash-image", "gemini-3.1-flash-image-preview"];
 
 async function callLovable(prompt: string, imageBase64: string, mimeType: string) {
   if (!LOVABLE_API_KEY) return null;
@@ -69,32 +71,39 @@ serve(async (req) => {
 
     let lastError = "No keys configured";
 
-    // Try each Gemini key in rotation
-    for (const key of GEMINI_KEYS) {
-      try {
-        const response = await callGemini(key, requestBody);
-        if (response.status === 429 || response.status === 403) {
-          lastError = `Key returned ${response.status}, trying next`;
-          continue;
+    // Try each Gemini key/model combination
+    outer: for (const model of GEMINI_MODELS) {
+      for (const key of GEMINI_KEYS) {
+        try {
+          const response = await callGemini(key, model, requestBody);
+          if (response.status === 404) {
+            const errText = await response.text();
+            console.error(`Model ${model} not found:`, errText);
+            continue outer; // try next model
+          }
+          if (response.status === 429 || response.status === 403) {
+            lastError = `Key returned ${response.status}, trying next`;
+            continue;
+          }
+          if (!response.ok) {
+            lastError = `Gemini API ${response.status}`;
+            const errText = await response.text();
+            console.error("Gemini error:", response.status, errText);
+            continue;
+          }
+          const data = await response.json();
+          const parts = data.candidates?.[0]?.content?.parts;
+          const imagePart = parts?.find((p: any) => p.inlineData);
+          if (!imagePart) { lastError = "No image in response"; continue; }
+          return new Response(JSON.stringify({
+            angle,
+            base64: imagePart.inlineData.data,
+            mimeType: imagePart.inlineData.mimeType || "image/png",
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        } catch (e) {
+          lastError = e instanceof Error ? e.message : String(e);
+          console.error("Gemini key failed:", lastError);
         }
-        if (!response.ok) {
-          lastError = `Gemini API ${response.status}`;
-          const errText = await response.text();
-          console.error("Gemini error:", response.status, errText);
-          continue;
-        }
-        const data = await response.json();
-        const parts = data.candidates?.[0]?.content?.parts;
-        const imagePart = parts?.find((p: any) => p.inlineData);
-        if (!imagePart) { lastError = "No image in response"; continue; }
-        return new Response(JSON.stringify({
-          angle,
-          base64: imagePart.inlineData.data,
-          mimeType: imagePart.inlineData.mimeType || "image/png",
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch (e) {
-        lastError = e instanceof Error ? e.message : String(e);
-        console.error("Gemini key failed:", lastError);
       }
     }
 
