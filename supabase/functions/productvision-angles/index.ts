@@ -52,6 +52,7 @@ serve(async (req) => {
 
     // Rotate Gemini keys on auth/rate-limit failures
     const keys = [
+      Deno.env.get("GEMINI_API_KEY_5"),
       Deno.env.get("GEMINI_API_KEY_1"),
       Deno.env.get("GEMINI_API_KEY_2"),
       Deno.env.get("GEMINI_API_KEY_3"),
