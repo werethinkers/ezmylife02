@@ -25,7 +25,7 @@ export function useToolPricing(toolId: string | undefined) {
     staleTime: 5 * 60 * 1000,
   });
   return {
-    creditCost: q.data?.credit_cost ?? 1,
+    creditCost: Math.max(1, q.data?.credit_cost ?? 1),
     costInr: q.data?.cost_inr ?? 0,
     isLoading: q.isLoading,
   };

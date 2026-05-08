@@ -49,7 +49,7 @@ export const CreditsAdmin = () => {
 
   const save = async (toolId: string) => {
     const v = edits[toolId];
-    if (v == null || v < 0) return;
+    if (v == null || v < 1) return;
     setSavingId(toolId);
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("admin-tool-pricing", {
@@ -125,7 +125,7 @@ export const CreditsAdmin = () => {
                     <TableCell className="text-sm">{catalog[p.tool_id] || "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.tool_id}</TableCell>
                     <TableCell>
-                      <Input type="number" min={0} value={v}
+                      <Input type="number" min={1} value={v}
                         onChange={(e) => setEdits((s) => ({ ...s, [p.tool_id]: Number(e.target.value) }))}
                       />
                     </TableCell>

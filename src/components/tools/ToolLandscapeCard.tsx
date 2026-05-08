@@ -59,7 +59,7 @@ export const ToolLandscapeCard = ({
 }: ToolLandscapeCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { creditCost, costInr } = useToolPricing(toolId);
+  const { creditCost } = useToolPricing(toolId);
   const { total: walletTotal } = useWallet();
   const [loginOpen, setLoginOpen] = useState(false);
   const { favorites } = useFavorites();
@@ -94,8 +94,6 @@ export const ToolLandscapeCard = ({
     if (isLive) navigate(`/tool/${toolId}`);
     else navigate(`/tool-preview/${toolId}`, { state: { name, description, isLive } });
   };
-
-  const inrValue = (costInr || creditCost * 0.45).toFixed(2);
 
   return (
     <div
@@ -184,7 +182,7 @@ export const ToolLandscapeCard = ({
             <p className="font-bold text-base">
               {creditCost} CREDIT{creditCost === 1 ? "" : "S"} for 1 Generation
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">(Approx. ₹{inrValue} value)</p>
+            
           </div>
         </div>
 
