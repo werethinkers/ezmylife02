@@ -181,8 +181,6 @@ const Credits = () => {
         {/* Packs */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CREDIT_PACKS.map((pack) => {
-            const cpr = pack.credits / pack.inr;
-            const savePct = Math.round(((cpr / BASELINE_CREDITS_PER_RUPEE) - 1) * 100);
             return (
               <motion.div
                 key={pack.id}
