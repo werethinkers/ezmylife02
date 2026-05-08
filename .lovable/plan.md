@@ -1,80 +1,28 @@
-## 1. Sitewide AI Chatbot (right side, every page, no signup)
+## Goal
+Make the credit cost shown on every tool card match exactly what admins set, drop the rupee estimate from the card, and floor every tool's credit cost to a minimum of 1.
 
-**New component** `src/components/SmartAssistantChatbot.tsx` — replaces the current `ToolsChatbot` (which only sits on `/ai-apps`). Mounted globally in `src/App.tsx` so it appears on every route. Hidden on `/tool-viewer/*` and `/auth*` routes to avoid covering tool UI.
+## Changes
 
-**Visual style** — "a little flashy":
+### 1. Backfill: bump all 0-credit tools to 1 credit (DB migration)
+A query confirmed 53 of 117 rows in `tool_pricing` are at `credit_cost = 0`. One-time SQL update:
+```sql
+UPDATE public.tool_pricing
+SET credit_cost = 1, cost_inr = 0.30, updated_at = now()
+WHERE credit_cost < 1;
+```
 
-- Floating orb button bottom-right (right-6, bottom-6) with animated gradient ring, pulse glow, sparkles icon. Mobile-safe.
-- Open panel: 380px wide × 560px tall, glass dark card, gradient border, Framer Motion slide-in from right, animated typing dots.
-- Header chip: "EZYOURLIFE Assistant · always free".
+### 2. Enforce minimum-of-1 going forward
+- **`supabase/functions/admin-tool-pricing/index.ts`** — in the `set_credits` action, replace `Math.max(0, ...)` with `Math.max(1, ...)` so admins can never save 0.
+- **`src/components/admin/CreditsAdmin.tsx`** — set `<Input min={1}>` and block save if value < 1, so the admin UI matches.
+- **`src/hooks/useToolPricing.ts`** — clamp the returned `creditCost` to `Math.max(1, value)` as a defensive client-side floor (covers cached rows or any tool with no pricing row).
 
-**Conversation flow** (handled in one Edge Function, streaming):
+### 3. Remove rupee estimate from tool cards
+- **`src/components/tools/ToolLandscapeCard.tsx`** — delete the `(Approx. ₹{inrValue} value)` line (line 187) and the now-unused `inrValue` / `costInr` calculation. The credit count stays.
+- Quick scan for any other component showing `costInr`/`₹` next to credits — none found in tool cards (only `CreditsAdmin` admin panel and `BulkDropzone` which is a separate flow; leave those alone unless asked).
 
-1. Greets and asks the user to describe their problem/use case.
-2. Uses `tools_catalog` (live tools) as the source of truth — suggests up to 3 matching apps with deep links to `/tool-preview/:id`.
-3. If nothing matches → assistant says "We don't have this yet — want our team to build it for you in 24–48 hrs?" and asks for **name, email, phone (optional), short description**.
-4. On submit, frontend calls `submit-tool-request` Edge Function which:
-  - Inserts a row into existing `tool_requests` table (no auth required — public insert policy added if missing).
-  - Calls `send-transactional-email` with template `tool-request-received` to the user.
-  - Notifies admins (insert into `activity_logs`).
-5. Bottom of every assistant turn: a small "Need a custom enterprise app? → Contact us" link → `/credits#enterprise` (existing enterprise contact dialog anchor).
-
-**Backend**:
-
-- New edge function `supabase/functions/smart-assistant/index.ts` — streams via Lovable AI Gateway (`google/gemini-3-flash-preview`), system prompt built from live `tools_catalog` rows (id, name, description, category) so suggestions stay accurate, supports tool-calling for `suggest_tools` and `capture_lead` structured outputs.
-- New edge function `supabase/functions/submit-tool-request/index.ts` — public (verify_jwt false), zod validation, inserts into `tool_requests`, fires the transactional email.
-- New transactional template `supabase/functions/_shared/transactional-email-templates/tool-request-received.tsx` — branded EZYOURLIFE confirmation: "Your request is registered. Our team will build/update the app within 24–48 hours."
-
-**Email prerequisite**: `notify.thingmonkey.com` is pending DNS. Functions and templates will be deployed; the user will be told emails start flowing once DNS verifies (monitor in Cloud → Emails). Also need to call `setup_email_infra` + `scaffold_transactional_email` before deploying the new template.
-
-**Old chatbot**: remove `<ToolsChatbot />` mount from `src/pages/Tools.tsx` (replaced by global one).
-
-## 2. Home page — "Simple. Credit-Based. Hassle-Free." steps rewrite
-
-In `src/pages/Home.tsx` (lines ~317–346) replace the 3 pricing-flavored steps with a clean 3-step user journey:
-
-1. **Choose an app** — browse 200+ live AI apps. Icon: `LayoutGrid`.
-2. **Use your credits** — pay-as-you-go, from ₹10. Icon: `Wallet`.
-3. **Start using the app** — instant results. Icon: `Sparkles`/`Zap`.
-
-Same card visual treatment, middle card highlighted.
-
-## 3. Home page — "Popular Credit Packs" → buyable scroller
-
-Replace the static `<ul>` list (lines ~347–368) with a horizontal scroll-snap row of all six `CREDIT_PACKS`, each pack a compact card showing:
-
-- Pack name (Starter/Mini/Pro/Popular/Better value/Best value)
-- ₹ price (large), credits count
-- Badge if present
-- "Buy now" button
-
-Clicking **Buy now** opens the existing `BuyCreditsDialog` pre-selected to that pack (extend `BuyCreditsDialog` with optional `defaultPackId` prop and an `autoStart` flag — when true, immediately calls `buy(defaultPackId)` after the dialog mounts and the user is logged in; if not logged in it falls through to `LoginPromptDialog` as today).
-
-Layout: `overflow-x-auto snap-x snap-mandatory flex gap-3 pb-2`, each card `min-w-[180px] snap-start`. Keep "View All Packs" button beneath the scroller.
-
-## Files
-
-**Created**
-
-- `src/components/SmartAssistantChatbot.tsx`
-- `supabase/functions/smart-assistant/index.ts`
-- `supabase/functions/submit-tool-request/index.ts`
-- `supabase/functions/_shared/transactional-email-templates/tool-request-received.tsx`
-
-**Edited**
-
-- `src/App.tsx` (mount global chatbot)
-- `src/pages/Home.tsx` (steps rewrite + buyable pack scroller)
-- `src/pages/Tools.tsx` (remove old `<ToolsChatbot />`)
-- `src/components/wallet/BuyCreditsDialog.tsx` (add `defaultPackId` + `autoStart` props)
-- `supabase/functions/_shared/transactional-email-templates/registry.ts` (register new template)
-
-**Migration**
-
-- Ensure `tool_requests` allows public anon insert (RLS policy) so unauthenticated chat users can submit.
+### 4. Verify "same as admin sets"
+The card already pulls live from `tool_pricing` via `useToolPricing` — same source the admin writes to. After the floor + cache invalidation (5 min `staleTime`), the displayed credits will exactly match the admin tab. No legacy hard-coded numbers remain in tool cards.
 
 ## Out of scope
-
-- Changing existing favorites/recents, admin layout, or any other page.
-- Building enterprise contact form anew — link to existing `/credits` enterprise dialog.
-- Removing/refactoring `ToolsChatbot.tsx` source file (left in repo, just unmounted) to keep diff small.
+- The "Approx ₹ value" line in admin pricing tables and bulk uploader (admin tooling, not the user-facing tool cards).
+- Tools that have no `tool_pricing` row at all — these already default to 1 credit via the hook, so they're fine after the clamp.

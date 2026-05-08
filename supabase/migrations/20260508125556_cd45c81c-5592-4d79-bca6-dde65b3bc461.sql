@@ -1,0 +1,1 @@
+UPDATE public.tool_pricing SET credit_cost = 1, cost_inr = 0.30, updated_at = now() WHERE credit_cost < 1;
