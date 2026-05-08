@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
-import { CREDIT_PACKS, BASELINE_CREDITS_PER_RUPEE } from "@/data/creditPacks";
+import { CREDIT_PACKS } from "@/data/creditPacks";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { Zap, Loader2, ChevronDown, Check, Sparkles, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
@@ -181,8 +181,6 @@ const Credits = () => {
         {/* Packs */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CREDIT_PACKS.map((pack) => {
-            const cpr = pack.credits / pack.inr;
-            const savePct = Math.round(((cpr / BASELINE_CREDITS_PER_RUPEE) - 1) * 100);
             return (
               <motion.div
                 key={pack.id}
@@ -195,19 +193,19 @@ const Credits = () => {
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold">₹{pack.inr}</span>
                 </div>
-                <div className="text-lg mt-1 flex items-center gap-1">
-                  <Zap className="h-4 w-4 text-primary" />
-                  <span className="font-medium tabular-nums">{pack.credits}</span> credits
-                </div>
-                <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2">
-                  <span className="line-through text-muted-foreground/60">₹1 = 1 credit</span>
-                  <span className="text-foreground">
-                    ₹1 = <span className="font-semibold text-primary">{cpr.toFixed(2)}</span> credits
-                  </span>
-                  {cpr > 1 && (
-                    <span className="text-emerald-500">· save {Math.round((cpr - 1) * 100)}%</span>
-                  )}
+                <p className="text-base mt-2 line-through text-muted-foreground/70">
+                  ₹{pack.inr} = {pack.inr} credits
                 </p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <Zap className="h-6 w-6 text-primary" />
+                  <span className="text-2xl font-bold text-primary tabular-nums">{pack.credits}</span>
+                  <span className="text-base text-foreground">credits</span>
+                </div>
+                {pack.credits > pack.inr && (
+                  <p className="text-xs text-emerald-500 font-medium mt-1">
+                    You save {Math.round(((pack.credits - pack.inr) / pack.inr) * 100)}%
+                  </p>
+                )}
                 <Button
                   className="w-full mt-4"
                   onClick={() => buyPack(pack.id)}

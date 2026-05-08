@@ -1,29 +1,27 @@
-## Changes to `src/pages/Credits.tsx`
+## Update each credit pack card in `src/pages/Credits.tsx`
 
-**1. Update hero subtitle (line 150)**
-Replace:
-> "Pay only for what you use, starting at ₹10. Free credits reset every month — paid credits never expire."
+Reframe the pricing display so the **₹1 = 1 credit baseline** is the anchor (struck through), and the actual discounted credits stand out.
 
-With:
-> "Pay only for successful runs, starting at ₹10. Free credits reset every month — paid credits never expire."
-
-**2. Update per-pack pricing line**
-
-Currently each pack shows:
-> "For ₹1 you get **{cpr}** credits · save {savePct}%"
-
-Change it to anchor the baseline at **₹1 = 1 credit** (struck through) then show the discounted real rate:
+### New layout per pack card
 
 ```
-₹1 = 1 credit  →  ₹1 = {cpr.toFixed(2)} credits · save {savePctVsOne}%
+₹10                                        [Popular]
+─────────────────────────────────
+~~₹10 = 10 credits~~        ← large, strikethrough, muted
+⚡ 15 credits               ← XL, bold, primary color
+You save 50%                ← emerald, small
+─────────────────────────────────
+[ Buy ]
 ```
 
-- Strikethrough: `₹1 = 1 credit` (using `<span className="line-through text-muted-foreground/60">`)
-- Highlighted: `₹1 = {cpr} credits` in foreground/primary
-- `savePctVsOne = Math.round((cpr - 1) * 100)` (percentage extra credits vs the 1:1 baseline) — shown only when > 0, in emerald
-
-This keeps the existing discount logic visually but reframes the anchor as ₹1 = 1 credit so the value is immediately obvious.
+### Specifics
+- Replace the current "For ₹1 you get X credits · save Y%" line.
+- Big strikethrough line: `₹{pack.inr} = {pack.inr} credits` — `text-lg`, `line-through`, `text-muted-foreground`.
+- Headline credits: `⚡ {pack.credits} credits` — `text-2xl font-bold text-primary`.
+- Savings: `Save {Math.round(((pack.credits - pack.inr) / pack.inr) * 100)}%` in emerald, only when `pack.credits > pack.inr`.
+- Keep the top-right "Popular" / "Best value" badges and Buy button as-is.
+- Remove now-unused `BASELINE_CREDITS_PER_RUPEE` import if no longer referenced.
 
 ### Out of scope
-- No changes to `CREDIT_PACKS` data, payment flow, wallet, or trust badges.
-- No changes to other pages.
+- No data changes to `CREDIT_PACKS`.
+- No changes to payment flow, wallet, hero subtitle, or trust badges.
