@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
-import { CREDIT_PACKS, BASELINE_CREDITS_PER_RUPEE } from "@/data/creditPacks";
+import { CREDIT_PACKS } from "@/data/creditPacks";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { Zap, Loader2, ChevronDown, Check, Sparkles, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
