@@ -148,7 +148,7 @@ const Credits = () => {
           <Badge variant="secondary" className="mb-3"><Sparkles className="h-3 w-3 mr-1" /> No subscriptions</Badge>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Just credits.</h1>
           <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Pay only for what you use, starting at ₹10. Free credits reset every month — paid credits never expire.
+            Pay only for successful runs, starting at ₹10. Free credits reset every month — paid credits never expire.
           </p>
         </motion.section>
 
@@ -199,9 +199,13 @@ const Credits = () => {
                   <Zap className="h-4 w-4 text-primary" />
                   <span className="font-medium tabular-nums">{pack.credits}</span> credits
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  For ₹1 you get <span className="font-medium text-foreground">{cpr.toFixed(2)}</span> credits{savePct > 0 && (
-                    <span className="text-emerald-500"> · save {savePct}%</span>
+                <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2">
+                  <span className="line-through text-muted-foreground/60">₹1 = 1 credit</span>
+                  <span className="text-foreground">
+                    ₹1 = <span className="font-semibold text-primary">{cpr.toFixed(2)}</span> credits
+                  </span>
+                  {cpr > 1 && (
+                    <span className="text-emerald-500">· save {Math.round((cpr - 1) * 100)}%</span>
                   )}
                 </p>
                 <Button
