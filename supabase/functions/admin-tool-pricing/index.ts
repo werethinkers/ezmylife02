@@ -45,7 +45,7 @@ serve(async (req) => {
     if (action === "set_credits") {
       const { tool_id, credit_cost } = body;
       if (!tool_id || credit_cost == null) throw new Error("tool_id and credit_cost required");
-      const cc = Math.max(0, Math.floor(Number(credit_cost)));
+      const cc = Math.max(1, Math.floor(Number(credit_cost)));
       const { data, error } = await supabase
         .from("tool_pricing")
         .upsert({ tool_id, credit_cost: cc, cost_inr: cc * 0.30, updated_by: ud.user.id }, { onConflict: "tool_id" })
