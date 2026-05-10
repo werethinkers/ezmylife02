@@ -234,7 +234,7 @@ export default function Virasat() {
     if (inputMode === "voice") {
       startNarration(FIRST_QUESTION);
     }
-  }, [saveSession, inputMode]);
+  }, [saveSession, inputMode, startNarration]);
 
   const resumeInterview = useCallback(async () => {
     if (!user) return;
