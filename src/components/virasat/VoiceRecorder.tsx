@@ -140,9 +140,11 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
       analyserRef.current = analyser;
 
       // MediaRecorder for audio capture
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
+      const mime = MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
       const mr = new MediaRecorder(stream, { mimeType: mime });
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
