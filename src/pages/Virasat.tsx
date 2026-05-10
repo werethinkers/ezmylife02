@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks, Mic, Pencil } from "lucide-react";
+import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks, Mic, Pencil, Play, Pause, RefreshCw, Languages, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
@@ -15,10 +15,11 @@ import {
   refineResponse,
   generateBook,
   generateSpeech,
+  translateToHindi,
   type Message,
   type BookStyle,
 } from "@/components/virasat/services/virasatService";
-import { playPCMAudio } from "@/components/virasat/lib/audio";
+import { createPCMController, type AudioController } from "@/components/virasat/lib/audio";
 import VoiceRecorder from "@/components/virasat/VoiceRecorder";
 import WrittenInput from "@/components/virasat/WrittenInput";
 import MediaAttacher, { type AttachedMedia } from "@/components/virasat/MediaAttacher";
