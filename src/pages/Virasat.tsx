@@ -549,7 +549,49 @@ export default function Virasat() {
                       className="flex flex-col items-start max-w-[85%] mr-auto"
                     >
                       <div className="p-6 bg-white border border-[hsl(25_40%_45%/0.1)] rounded-2xl rounded-tl-none shadow-md">
-                        <p className="text-xl font-serif leading-relaxed italic">{currentQuestion}</p>
+                        <p className="text-xl font-serif leading-relaxed italic">
+                          {showHindi && hindiText ? hindiText : currentQuestion}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={togglePlayPause}
+                          disabled={narrationState === "loading"}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(25_40%_45%)] text-white text-xs font-medium hover:bg-[hsl(25_40%_40%)] transition-colors shadow-sm disabled:opacity-60"
+                          aria-label={narrationState === "playing" ? "Pause narration" : "Play narration"}
+                        >
+                          {narrationState === "loading" ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : narrationState === "playing" ? (
+                            <Pause size={14} />
+                          ) : (
+                            <Play size={14} />
+                          )}
+                          {narrationState === "playing" ? "Ruko" : narrationState === "paused" ? "Aage" : "Suno"}
+                        </button>
+                        <button
+                          onClick={repeatNarration}
+                          disabled={narrationState === "loading"}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] text-xs font-medium hover:bg-[hsl(25_40%_45%/0.05)] transition-colors disabled:opacity-60"
+                          aria-label="Repeat question"
+                        >
+                          <RefreshCw size={14} />
+                          Phir se
+                        </button>
+                        <button
+                          onClick={toggleHindi}
+                          disabled={hindiLoading}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors disabled:opacity-60",
+                            showHindi
+                              ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.08)] text-[hsl(25_40%_45%)]"
+                              : "border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] hover:bg-[hsl(25_40%_45%/0.05)]"
+                          )}
+                          aria-label="Toggle Hindi script"
+                        >
+                          {hindiLoading ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
+                          {showHindi ? "Hinglish" : "हिन्दी"}
+                        </button>
                       </div>
                     </motion.div>
                   )}
