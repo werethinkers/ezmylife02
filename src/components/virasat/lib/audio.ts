@@ -2,10 +2,20 @@
  * Utility to play raw PCM audio data returned by Gemini TTS.
  * Gemini TTS returns 16-bit Linear PCM, Mono, 24kHz.
  */
-export async function playPCMAudio(base64Data: string): Promise<void> {
-  if (!base64Data) return;
 
-  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+export interface AudioController {
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
+  stop: () => void;
+  ended: Promise<void>;
+}
+
+export function createPCMController(base64Data: string): AudioController | null {
+  if (!base64Data) return null;
+
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   const audioContext = new AudioCtx({ sampleRate: 24000 });
 
   const binaryString = atob(base64Data);
@@ -22,11 +32,37 @@ export async function playPCMAudio(base64Data: string): Promise<void> {
   source.buffer = audioBuffer;
   source.connect(audioContext.destination);
 
-  return new Promise<void>((resolve) => {
+  let stopped = false;
+  const ended = new Promise<void>((resolve) => {
     source.onended = () => {
-      audioContext.close();
+      if (!stopped) {
+        audioContext.close().catch(() => { /* ignore */ });
+      }
       resolve();
     };
-    source.start();
   });
+
+  source.start();
+
+  return {
+    pause: async () => {
+      try { await audioContext.suspend(); } catch { /* ignore */ }
+    },
+    resume: async () => {
+      try { await audioContext.resume(); } catch { /* ignore */ }
+    },
+    stop: () => {
+      stopped = true;
+      try { source.stop(); } catch { /* ignore */ }
+      audioContext.close().catch(() => { /* ignore */ });
+    },
+    ended,
+  };
+}
+
+/** Backward-compatible fire-and-forget playback. */
+export async function playPCMAudio(base64Data: string): Promise<void> {
+  const ctrl = createPCMController(base64Data);
+  if (!ctrl) return;
+  await ctrl.ended;
 }
