@@ -1148,9 +1148,11 @@ export type Database = {
           duration_seconds: number | null
           id: string
           media_type: string
+          mp4_storage_path: string | null
           question_index: number | null
           session_id: string
           storage_path: string
+          transcode_status: string | null
           user_id: string
         }
         Insert: {
@@ -1160,9 +1162,11 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           media_type: string
+          mp4_storage_path?: string | null
           question_index?: number | null
           session_id: string
           storage_path: string
+          transcode_status?: string | null
           user_id: string
         }
         Update: {
@@ -1172,9 +1176,11 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           media_type?: string
+          mp4_storage_path?: string | null
           question_index?: number | null
           session_id?: string
           storage_path?: string
+          transcode_status?: string | null
           user_id?: string
         }
         Relationships: [

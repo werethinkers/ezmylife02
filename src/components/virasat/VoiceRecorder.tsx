@@ -140,9 +140,11 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
       analyserRef.current = analyser;
 
       // MediaRecorder for audio capture
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
+      const mime = MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
       const mr = new MediaRecorder(stream, { mimeType: mime });
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
@@ -213,27 +215,69 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
     setState("processing");
 
     let audioPath: string | undefined;
+    let mediaRowId: string | undefined;
+    const blob = audioBlobRef.current;
+    const isNativeMp4 = !!blob && (blob.type.includes("mp4") || blob.type.includes("m4a"));
+
     // Best-effort upload of the audio clip if we have a session
-    if (audioBlobRef.current && sessionId && user) {
+    if (blob && sessionId && user) {
       try {
-        const path = `${user.id}/${sessionId}/voice-${crypto.randomUUID()}.webm`;
+        const ext = isNativeMp4 ? "mp4" : "webm";
+        const path = `${user.id}/${sessionId}/voice-${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("virasat-media")
-          .upload(path, audioBlobRef.current, { contentType: "audio/webm" });
+          .upload(path, blob, { contentType: blob.type || (isNativeMp4 ? "audio/mp4" : "audio/webm") });
         if (!upErr) {
           audioPath = path;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase as any).from("virasat_media").insert({
+          const { data: row } = await (supabase as any).from("virasat_media").insert({
             session_id: sessionId,
             user_id: user.id,
             media_type: "audio",
             storage_path: path,
             duration_seconds: duration,
-          });
+            mp4_storage_path: isNativeMp4 ? path : null,
+            transcode_status: isNativeMp4 ? "done" : "pending",
+          }).select("id").single();
+          mediaRowId = row?.id;
         }
       } catch (e) {
         console.error("Audio upload failed (continuing):", e);
       }
+    }
+
+    // Fire-and-forget: transcode webm -> mp4 in background after we hand off the transcript.
+    if (blob && !isNativeMp4 && audioPath && mediaRowId && user && sessionId) {
+      const rowId = mediaRowId;
+      (async () => {
+        try {
+          const { transcodeWebmToMp4 } = await import("./lib/audioTranscode");
+          const mp4Blob = await transcodeWebmToMp4(blob);
+          if (!mp4Blob) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any).from("virasat_media").update({ transcode_status: "failed" }).eq("id", rowId);
+            return;
+          }
+          const mp4Path = `${user.id}/${sessionId}/voice-${crypto.randomUUID()}.mp4`;
+          const { error: upErr } = await supabase.storage
+            .from("virasat-media")
+            .upload(mp4Path, mp4Blob, { contentType: "audio/mp4" });
+          if (upErr) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any).from("virasat_media").update({ transcode_status: "failed" }).eq("id", rowId);
+            return;
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from("virasat_media").update({
+            mp4_storage_path: mp4Path,
+            transcode_status: "done",
+          }).eq("id", rowId);
+        } catch (e) {
+          console.warn("[VoiceRecorder] background mp4 transcode failed:", e);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from("virasat_media").update({ transcode_status: "failed" }).eq("id", rowId);
+        }
+      })();
     }
 
     onTranscript(finalText, audioPath);

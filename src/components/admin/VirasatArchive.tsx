@@ -38,9 +38,12 @@ interface MediaItem {
   chapter: string | null;
   media_type: "image" | "video" | "audio";
   storage_path: string;
+  mp4_storage_path?: string | null;
+  transcode_status?: string | null;
   caption: string | null;
   created_at: string;
   signed_url?: string;
+  is_mp4?: boolean;
 }
 
 export default function VirasatArchive() {
@@ -104,21 +107,32 @@ export default function VirasatArchive() {
     const items = (media as MediaItem[]) || [];
     const withUrls = await Promise.all(
       items.map(async (m) => {
+        const preferMp4 = !!(m.media_type === "audio" && m.mp4_storage_path);
+        const path = preferMp4 ? (m.mp4_storage_path as string) : m.storage_path;
         const { data: signed } = await supabase.storage
           .from("virasat-media")
-          .createSignedUrl(m.storage_path, 60 * 60 * 24);
-        return { ...m, signed_url: signed?.signedUrl };
+          .createSignedUrl(path, 60 * 60 * 24);
+        return { ...m, signed_url: signed?.signedUrl, is_mp4: preferMp4 };
       }),
     );
     setSelectedMedia(withUrls);
 
-    // Per-turn audio (history audio_path)
+    // Build webm-path -> mp4-path map for transcript audio playback
+    const mp4ByWebm: Record<string, string> = {};
+    for (const m of items) {
+      if (m.media_type === "audio" && m.mp4_storage_path) {
+        mp4ByWebm[m.storage_path] = m.mp4_storage_path;
+      }
+    }
+
+    // Per-turn audio (history audio_path) — prefer mp4 when available
     const audioMap: Record<string, string> = {};
     for (const turn of s.history || []) {
       if (turn.audio_path) {
+        const path = mp4ByWebm[turn.audio_path] || turn.audio_path;
         const { data: signed } = await supabase.storage
           .from("virasat-media")
-          .createSignedUrl(turn.audio_path, 60 * 60 * 24);
+          .createSignedUrl(path, 60 * 60 * 24);
         if (signed?.signedUrl) audioMap[turn.audio_path] = signed.signedUrl;
       }
     }
@@ -249,9 +263,17 @@ export default function VirasatArchive() {
                         <video src={m.signed_url} controls className="w-full h-32 object-cover" />
                       )}
                       {m.media_type === "audio" && m.signed_url && (
-                        <div className="p-3">
-                          <Mic className="h-6 w-6 text-primary mb-2" />
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Mic className="h-6 w-6 text-primary" />
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.is_mp4 ? "bg-emerald-500/15 text-emerald-700" : m.transcode_status === "pending" ? "bg-amber-500/15 text-amber-700" : "bg-muted text-muted-foreground"}`}>
+                              {m.is_mp4 ? "MP4" : m.transcode_status === "pending" ? "WEBM · converting" : "WEBM"}
+                            </span>
+                          </div>
                           <audio src={m.signed_url} controls className="w-full h-8" />
+                          <a href={m.signed_url} download={`voice-${m.id}.${m.is_mp4 ? "mp4" : "webm"}`} className="text-xs text-primary hover:underline">
+                            Download
+                          </a>
                         </div>
                       )}
                       <div className="px-2 py-1 flex items-center gap-1 text-xs text-muted-foreground">
