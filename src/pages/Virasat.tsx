@@ -50,6 +50,106 @@ export default function Virasat() {
   const [prefetchedNextAudio, setPrefetchedNextAudio] = useState<string | null>(null);
   const [attachedMedia, setAttachedMedia] = useState<AttachedMedia[]>([]);
 
+  // Narration controls
+  type NarrationState = "idle" | "loading" | "playing" | "paused";
+  const [narrationState, setNarrationState] = useState<NarrationState>("idle");
+  const audioCtrlRef = useRef<AudioController | null>(null);
+  const audioCacheRef = useRef<Map<string, string>>(new Map()); // question text -> base64 PCM
+
+  // Hindi (Devanagari) display
+  const [showHindi, setShowHindi] = useState(false);
+  const [hindiText, setHindiText] = useState<string>("");
+  const [hindiLoading, setHindiLoading] = useState(false);
+  const hindiCacheRef = useRef<Map<string, string>>(new Map());
+
+  const stopNarration = useCallback(() => {
+    if (audioCtrlRef.current) {
+      audioCtrlRef.current.stop();
+      audioCtrlRef.current = null;
+    }
+    setNarrationState("idle");
+  }, []);
+
+  const startNarration = useCallback(async (text: string, prefetched?: string | null) => {
+    if (!text.trim()) return;
+    if (audioCtrlRef.current) {
+      audioCtrlRef.current.stop();
+      audioCtrlRef.current = null;
+    }
+    setNarrationState("loading");
+    let audio = audioCacheRef.current.get(text) || prefetched || null;
+    if (!audio) {
+      audio = await generateSpeech(text);
+      if (audio) audioCacheRef.current.set(text, audio);
+    } else {
+      audioCacheRef.current.set(text, audio);
+    }
+    if (!audio) {
+      setNarrationState("idle");
+      toast.error("Awaaz banane mein dikkat aayi.");
+      return;
+    }
+    const ctrl = createPCMController(audio);
+    if (!ctrl) { setNarrationState("idle"); return; }
+    audioCtrlRef.current = ctrl;
+    setNarrationState("playing");
+    ctrl.ended.then(() => {
+      if (audioCtrlRef.current === ctrl) {
+        audioCtrlRef.current = null;
+        setNarrationState("idle");
+      }
+    });
+  }, []);
+
+  const togglePlayPause = useCallback(async () => {
+    if (narrationState === "playing" && audioCtrlRef.current) {
+      await audioCtrlRef.current.pause();
+      setNarrationState("paused");
+    } else if (narrationState === "paused" && audioCtrlRef.current) {
+      await audioCtrlRef.current.resume();
+      setNarrationState("playing");
+    } else {
+      await startNarration(currentQuestion);
+    }
+  }, [narrationState, startNarration, currentQuestion]);
+
+  const repeatNarration = useCallback(async () => {
+    await startNarration(currentQuestion);
+  }, [startNarration, currentQuestion]);
+
+  // Reset Hindi view when question changes
+  useEffect(() => {
+    setShowHindi(false);
+    setHindiText("");
+  }, [currentQuestion]);
+
+  // Stop audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioCtrlRef.current) audioCtrlRef.current.stop();
+    };
+  }, []);
+
+  const toggleHindi = useCallback(async () => {
+    if (showHindi) { setShowHindi(false); return; }
+    if (!currentQuestion.trim()) return;
+    const cached = hindiCacheRef.current.get(currentQuestion);
+    if (cached) {
+      setHindiText(cached);
+      setShowHindi(true);
+      return;
+    }
+    setHindiLoading(true);
+    try {
+      const out = await translateToHindi(currentQuestion);
+      hindiCacheRef.current.set(currentQuestion, out);
+      setHindiText(out);
+      setShowHindi(true);
+    } finally {
+      setHindiLoading(false);
+    }
+  }, [showHindi, currentQuestion]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
