@@ -107,21 +107,32 @@ export default function VirasatArchive() {
     const items = (media as MediaItem[]) || [];
     const withUrls = await Promise.all(
       items.map(async (m) => {
+        const preferMp4 = !!(m.media_type === "audio" && m.mp4_storage_path);
+        const path = preferMp4 ? (m.mp4_storage_path as string) : m.storage_path;
         const { data: signed } = await supabase.storage
           .from("virasat-media")
-          .createSignedUrl(m.storage_path, 60 * 60 * 24);
-        return { ...m, signed_url: signed?.signedUrl };
+          .createSignedUrl(path, 60 * 60 * 24);
+        return { ...m, signed_url: signed?.signedUrl, is_mp4: preferMp4 };
       }),
     );
     setSelectedMedia(withUrls);
 
-    // Per-turn audio (history audio_path)
+    // Build webm-path -> mp4-path map for transcript audio playback
+    const mp4ByWebm: Record<string, string> = {};
+    for (const m of items) {
+      if (m.media_type === "audio" && m.mp4_storage_path) {
+        mp4ByWebm[m.storage_path] = m.mp4_storage_path;
+      }
+    }
+
+    // Per-turn audio (history audio_path) — prefer mp4 when available
     const audioMap: Record<string, string> = {};
     for (const turn of s.history || []) {
       if (turn.audio_path) {
+        const path = mp4ByWebm[turn.audio_path] || turn.audio_path;
         const { data: signed } = await supabase.storage
           .from("virasat-media")
-          .createSignedUrl(turn.audio_path, 60 * 60 * 24);
+          .createSignedUrl(path, 60 * 60 * 24);
         if (signed?.signedUrl) audioMap[turn.audio_path] = signed.signedUrl;
       }
     }
