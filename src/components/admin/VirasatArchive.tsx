@@ -263,9 +263,17 @@ export default function VirasatArchive() {
                         <video src={m.signed_url} controls className="w-full h-32 object-cover" />
                       )}
                       {m.media_type === "audio" && m.signed_url && (
-                        <div className="p-3">
-                          <Mic className="h-6 w-6 text-primary mb-2" />
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Mic className="h-6 w-6 text-primary" />
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.is_mp4 ? "bg-emerald-500/15 text-emerald-700" : m.transcode_status === "pending" ? "bg-amber-500/15 text-amber-700" : "bg-muted text-muted-foreground"}`}>
+                              {m.is_mp4 ? "MP4" : m.transcode_status === "pending" ? "WEBM · converting" : "WEBM"}
+                            </span>
+                          </div>
                           <audio src={m.signed_url} controls className="w-full h-8" />
+                          <a href={m.signed_url} download={`voice-${m.id}.${m.is_mp4 ? "mp4" : "webm"}`} className="text-xs text-primary hover:underline">
+                            Download
+                          </a>
                         </div>
                       )}
                       <div className="px-2 py-1 flex items-center gap-1 text-xs text-muted-foreground">
