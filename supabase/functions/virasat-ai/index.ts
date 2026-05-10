@@ -286,6 +286,21 @@ serve(async (req) => {
       );
       return new Response(JSON.stringify({ text: result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (action === "translate") {
+      const text = String(body.text || "");
+      if (!text.trim()) {
+        return new Response(JSON.stringify({ text: "" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const contents = [{ role: "user", parts: [{ text: `Convert the following Romanized Hindi (Hinglish) text into proper Devanagari Hindi script. Output ONLY the Devanagari text, no explanations, no romanization, no quotes.\n\nText:\n${text}` }] }];
+      const result = await withKeyRotation<string>(async (apiKey) => {
+        const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, "You are an expert Hindi transliterator. Convert Romanized Hindi to Devanagari script accurately and naturally.");
+        if (!resp.ok) return { ok: false, status: resp.status };
+        const data = await resp.json();
+        const out = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("").trim() || text;
+        return { ok: true, result: out, status: 200 };
+      });
+      return new Response(JSON.stringify({ text: result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     if (action === "tts") {
       const result = await tts(String(body.text || ""));
       return new Response(JSON.stringify({ audio: result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
