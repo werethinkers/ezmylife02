@@ -358,6 +358,7 @@ export default function Virasat() {
   const goToReview = () => setMode("review");
 
   const resetApp = () => {
+    stopNarration();
     setMode("welcome");
     setHistory([]);
     setCurrentQuestion("");
