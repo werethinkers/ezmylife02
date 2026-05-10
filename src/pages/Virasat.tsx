@@ -343,10 +343,8 @@ export default function Virasat() {
         });
 
         if (inputMode === "voice") {
-          let audioToPlay = prefetchedNextAudio;
-          if (!audioToPlay) audioToPlay = await generateSpeech(nextQ);
           setPrefetchedNextAudio(null);
-          if (audioToPlay) playPCMAudio(audioToPlay).catch(() => { /* ignore */ });
+          startNarration(nextQ, prefetchedNextAudio);
         }
       } catch (e) {
         console.error(e);
