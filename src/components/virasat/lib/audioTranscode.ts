@@ -56,7 +56,9 @@ export async function transcodeWebmToMp4(blob: Blob): Promise<Blob | null> {
     try { await ff.deleteFile(inName); } catch { /* ignore */ }
     try { await ff.deleteFile(outName); } catch { /* ignore */ }
     // out is Uint8Array
-    return new Blob([out as Uint8Array], { type: "audio/mp4" });
+    const u8 = out as Uint8Array;
+    const ab = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+    return new Blob([ab], { type: "audio/mp4" });
   } catch (e) {
     console.warn("[audioTranscode] webm->mp4 failed:", e);
     return null;
