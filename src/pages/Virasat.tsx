@@ -352,7 +352,7 @@ export default function Virasat() {
         setIsProcessing(false);
       }
     },
-    [history, currentQuestion, questionCount, prefetchedNextAudio, attachedMedia, inputMode, saveSession]
+    [history, currentQuestion, questionCount, prefetchedNextAudio, attachedMedia, inputMode, saveSession, startNarration]
   );
 
   const goToReview = () => setMode("review");
