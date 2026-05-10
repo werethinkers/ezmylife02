@@ -232,8 +232,7 @@ export default function Virasat() {
       questionCount: 0,
     });
     if (inputMode === "voice") {
-      const audio = await generateSpeech(FIRST_QUESTION);
-      if (audio) playPCMAudio(audio).catch(() => { /* ignore */ });
+      startNarration(FIRST_QUESTION);
     }
   }, [saveSession, inputMode]);
 
