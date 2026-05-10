@@ -38,9 +38,12 @@ interface MediaItem {
   chapter: string | null;
   media_type: "image" | "video" | "audio";
   storage_path: string;
+  mp4_storage_path?: string | null;
+  transcode_status?: string | null;
   caption: string | null;
   created_at: string;
   signed_url?: string;
+  is_mp4?: boolean;
 }
 
 export default function VirasatArchive() {
