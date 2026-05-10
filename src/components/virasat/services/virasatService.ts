@@ -61,3 +61,13 @@ export async function generateSpeech(text: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function translateToHindi(text: string): Promise<string> {
+  try {
+    const data = await call<{ text: string }>("translate", { text });
+    return data.text || text;
+  } catch (e) {
+    console.error("Translate failed:", e);
+    return text;
+  }
+}

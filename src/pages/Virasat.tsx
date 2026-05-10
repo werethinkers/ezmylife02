@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks, Mic, Pencil } from "lucide-react";
+import { BookOpen, Heart, Sparkles, ArrowRight, RotateCcw, ListChecks, Mic, Pencil, Play, Pause, RefreshCw, Languages, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
@@ -15,10 +15,11 @@ import {
   refineResponse,
   generateBook,
   generateSpeech,
+  translateToHindi,
   type Message,
   type BookStyle,
 } from "@/components/virasat/services/virasatService";
-import { playPCMAudio } from "@/components/virasat/lib/audio";
+import { createPCMController, type AudioController } from "@/components/virasat/lib/audio";
 import VoiceRecorder from "@/components/virasat/VoiceRecorder";
 import WrittenInput from "@/components/virasat/WrittenInput";
 import MediaAttacher, { type AttachedMedia } from "@/components/virasat/MediaAttacher";
@@ -48,6 +49,106 @@ export default function Virasat() {
   const [hasResume, setHasResume] = useState(false);
   const [prefetchedNextAudio, setPrefetchedNextAudio] = useState<string | null>(null);
   const [attachedMedia, setAttachedMedia] = useState<AttachedMedia[]>([]);
+
+  // Narration controls
+  type NarrationState = "idle" | "loading" | "playing" | "paused";
+  const [narrationState, setNarrationState] = useState<NarrationState>("idle");
+  const audioCtrlRef = useRef<AudioController | null>(null);
+  const audioCacheRef = useRef<Map<string, string>>(new Map()); // question text -> base64 PCM
+
+  // Hindi (Devanagari) display
+  const [showHindi, setShowHindi] = useState(false);
+  const [hindiText, setHindiText] = useState<string>("");
+  const [hindiLoading, setHindiLoading] = useState(false);
+  const hindiCacheRef = useRef<Map<string, string>>(new Map());
+
+  const stopNarration = useCallback(() => {
+    if (audioCtrlRef.current) {
+      audioCtrlRef.current.stop();
+      audioCtrlRef.current = null;
+    }
+    setNarrationState("idle");
+  }, []);
+
+  const startNarration = useCallback(async (text: string, prefetched?: string | null) => {
+    if (!text.trim()) return;
+    if (audioCtrlRef.current) {
+      audioCtrlRef.current.stop();
+      audioCtrlRef.current = null;
+    }
+    setNarrationState("loading");
+    let audio = audioCacheRef.current.get(text) || prefetched || null;
+    if (!audio) {
+      audio = await generateSpeech(text);
+      if (audio) audioCacheRef.current.set(text, audio);
+    } else {
+      audioCacheRef.current.set(text, audio);
+    }
+    if (!audio) {
+      setNarrationState("idle");
+      toast.error("Awaaz banane mein dikkat aayi.");
+      return;
+    }
+    const ctrl = createPCMController(audio);
+    if (!ctrl) { setNarrationState("idle"); return; }
+    audioCtrlRef.current = ctrl;
+    setNarrationState("playing");
+    ctrl.ended.then(() => {
+      if (audioCtrlRef.current === ctrl) {
+        audioCtrlRef.current = null;
+        setNarrationState("idle");
+      }
+    });
+  }, []);
+
+  const togglePlayPause = useCallback(async () => {
+    if (narrationState === "playing" && audioCtrlRef.current) {
+      await audioCtrlRef.current.pause();
+      setNarrationState("paused");
+    } else if (narrationState === "paused" && audioCtrlRef.current) {
+      await audioCtrlRef.current.resume();
+      setNarrationState("playing");
+    } else {
+      await startNarration(currentQuestion);
+    }
+  }, [narrationState, startNarration, currentQuestion]);
+
+  const repeatNarration = useCallback(async () => {
+    await startNarration(currentQuestion);
+  }, [startNarration, currentQuestion]);
+
+  // Reset Hindi view when question changes
+  useEffect(() => {
+    setShowHindi(false);
+    setHindiText("");
+  }, [currentQuestion]);
+
+  // Stop audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioCtrlRef.current) audioCtrlRef.current.stop();
+    };
+  }, []);
+
+  const toggleHindi = useCallback(async () => {
+    if (showHindi) { setShowHindi(false); return; }
+    if (!currentQuestion.trim()) return;
+    const cached = hindiCacheRef.current.get(currentQuestion);
+    if (cached) {
+      setHindiText(cached);
+      setShowHindi(true);
+      return;
+    }
+    setHindiLoading(true);
+    try {
+      const out = await translateToHindi(currentQuestion);
+      hindiCacheRef.current.set(currentQuestion, out);
+      setHindiText(out);
+      setShowHindi(true);
+    } finally {
+      setHindiLoading(false);
+    }
+  }, [showHindi, currentQuestion]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -131,10 +232,9 @@ export default function Virasat() {
       questionCount: 0,
     });
     if (inputMode === "voice") {
-      const audio = await generateSpeech(FIRST_QUESTION);
-      if (audio) playPCMAudio(audio).catch(() => { /* ignore */ });
+      startNarration(FIRST_QUESTION);
     }
-  }, [saveSession, inputMode]);
+  }, [saveSession, inputMode, startNarration]);
 
   const resumeInterview = useCallback(async () => {
     if (!user) return;
@@ -243,10 +343,8 @@ export default function Virasat() {
         });
 
         if (inputMode === "voice") {
-          let audioToPlay = prefetchedNextAudio;
-          if (!audioToPlay) audioToPlay = await generateSpeech(nextQ);
           setPrefetchedNextAudio(null);
-          if (audioToPlay) playPCMAudio(audioToPlay).catch(() => { /* ignore */ });
+          startNarration(nextQ, prefetchedNextAudio);
         }
       } catch (e) {
         console.error(e);
@@ -254,12 +352,13 @@ export default function Virasat() {
         setIsProcessing(false);
       }
     },
-    [history, currentQuestion, questionCount, prefetchedNextAudio, attachedMedia, inputMode, saveSession]
+    [history, currentQuestion, questionCount, prefetchedNextAudio, attachedMedia, inputMode, saveSession, startNarration]
   );
 
   const goToReview = () => setMode("review");
 
   const resetApp = () => {
+    stopNarration();
     setMode("welcome");
     setHistory([]);
     setCurrentQuestion("");
@@ -450,7 +549,49 @@ export default function Virasat() {
                       className="flex flex-col items-start max-w-[85%] mr-auto"
                     >
                       <div className="p-6 bg-white border border-[hsl(25_40%_45%/0.1)] rounded-2xl rounded-tl-none shadow-md">
-                        <p className="text-xl font-serif leading-relaxed italic">{currentQuestion}</p>
+                        <p className="text-xl font-serif leading-relaxed italic">
+                          {showHindi && hindiText ? hindiText : currentQuestion}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={togglePlayPause}
+                          disabled={narrationState === "loading"}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(25_40%_45%)] text-white text-xs font-medium hover:bg-[hsl(25_40%_40%)] transition-colors shadow-sm disabled:opacity-60"
+                          aria-label={narrationState === "playing" ? "Pause narration" : "Play narration"}
+                        >
+                          {narrationState === "loading" ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : narrationState === "playing" ? (
+                            <Pause size={14} />
+                          ) : (
+                            <Play size={14} />
+                          )}
+                          {narrationState === "playing" ? "Ruko" : narrationState === "paused" ? "Aage" : "Suno"}
+                        </button>
+                        <button
+                          onClick={repeatNarration}
+                          disabled={narrationState === "loading"}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] text-xs font-medium hover:bg-[hsl(25_40%_45%/0.05)] transition-colors disabled:opacity-60"
+                          aria-label="Repeat question"
+                        >
+                          <RefreshCw size={14} />
+                          Phir se
+                        </button>
+                        <button
+                          onClick={toggleHindi}
+                          disabled={hindiLoading}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors disabled:opacity-60",
+                            showHindi
+                              ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.08)] text-[hsl(25_40%_45%)]"
+                              : "border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] hover:bg-[hsl(25_40%_45%/0.05)]"
+                          )}
+                          aria-label="Toggle Hindi script"
+                        >
+                          {hindiLoading ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
+                          {showHindi ? "Hinglish" : "हिन्दी"}
+                        </button>
                       </div>
                     </motion.div>
                   )}
