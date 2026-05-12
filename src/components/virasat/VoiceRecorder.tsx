@@ -32,6 +32,8 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
   const [editableTranscript, setEditableTranscript] = useState("");
 
   const recognitionRef = useRef<any>(null);
+  const isRecordingRef = useRef(false);
+  const sttUnsupportedRef = useRef(false);
   const transcriptRef = useRef("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -50,13 +52,15 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
     if (typeof window === "undefined") return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      setError("Aapka browser voice support nahi karta. Likhne ka option istemal karein.");
+      sttUnsupportedRef.current = true;
+      setError("Aapke phone ka browser live transcript support nahi karta. Aap audio record kar sakte hain ya likh sakte hain.");
       return;
     }
     const r = new SR();
     r.continuous = true;
     r.interimResults = true;
     r.lang = "hi-IN";
+    r.maxAlternatives = 1;
 
     r.onresult = (event: any) => {
       let finalT = transcriptRef.current;
@@ -72,15 +76,32 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
     };
     r.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
-      if (event.error === "not-allowed") setError("Mic access nahi mila.");
-      else if (event.error !== "no-speech" && event.error !== "aborted") setError("Voice mein dikkat — phir koshish karein.");
-    };
-    r.onend = () => {
-      // Auto-restart if still recording (some browsers cut off)
-      if (state === "recording") {
-        try { r.start(); } catch { /* ignore */ }
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setError("Mic access nahi mila. Settings mein permission den.");
+        isRecordingRef.current = false;
+      } else if (event.error === "network") {
+        setError("Internet dikkat — voice text ke liye net chahiye.");
+      } else if (event.error !== "no-speech" && event.error !== "aborted") {
+        // Don't surface every transient error on mobile; just log and let onend restart
+        console.warn("[STT] transient error:", event.error);
       }
     };
+    r.onend = () => {
+      // Mobile browsers (esp. Android Chrome) end recognition every ~10s of silence.
+      // Auto-restart while we're still actively recording.
+      if (isRecordingRef.current) {
+        const tryRestart = (attempt = 0) => {
+          try { r.start(); } catch (e: any) {
+            if (attempt < 3 && /InvalidStateError|already started/i.test(String(e?.name || e?.message || ""))) {
+              setTimeout(() => tryRestart(attempt + 1), 250);
+            }
+          }
+        };
+        tryRestart();
+      }
+    };
+    r.onnomatch = () => { /* keep engine alive on Android */ };
+    r.onaudiostart = () => { /* no-op */ };
     recognitionRef.current = r;
 
     return () => {
@@ -157,8 +178,21 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
       mr.start();
       mediaRecorderRef.current = mr;
 
-      // Start recognition
-      try { recognitionRef.current?.start(); } catch { /* may already be started */ }
+      // Mark recording BEFORE starting recognition so onend's auto-restart sees it.
+      isRecordingRef.current = true;
+
+      // Start recognition with retry — Android Chrome can throw InvalidStateError
+      // if a previous session hasn't fully released yet.
+      const startStt = (attempt = 0) => {
+        const rec = recognitionRef.current;
+        if (!rec) return;
+        try { rec.start(); } catch (e: any) {
+          if (attempt < 3 && /InvalidStateError|already started/i.test(String(e?.name || e?.message || ""))) {
+            setTimeout(() => startStt(attempt + 1), 250);
+          }
+        }
+      };
+      startStt();
 
       setState("recording");
       startTimeRef.current = Date.now();
@@ -174,6 +208,7 @@ export default function VoiceRecorder({ onTranscript, isProcessing, sessionId, o
   }, [drawWaveform]);
 
   const stopRecording = useCallback(() => {
+    isRecordingRef.current = false;
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     try { mediaRecorderRef.current?.stop(); } catch { /* ignore */ }
     streamRef.current?.getTracks().forEach((t) => t.stop());
