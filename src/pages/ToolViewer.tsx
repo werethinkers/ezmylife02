@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { tools, getToolUrl } from "@/data/tools";
 import { supabase } from "@/integrations/supabase/client";
