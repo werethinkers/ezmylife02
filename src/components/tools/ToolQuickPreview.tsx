@@ -64,17 +64,10 @@ export const ToolQuickPreview = ({ open, onOpenChange, tool }: ToolQuickPreviewP
           <div className="p-6">
             <DialogHeader className="text-left space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
-                {tool.isLive ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Live
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Coming Soon
-                  </Badge>
-                )}
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Live
+                </Badge>
                 {(tool.department || tool.category) && (
                   <Badge variant="secondary">
                     {tool.department || tool.category}
@@ -103,26 +96,17 @@ export const ToolQuickPreview = ({ open, onOpenChange, tool }: ToolQuickPreviewP
               <Button 
                 onClick={handleOpenTool}
                 className="flex-1 gap-2"
-                disabled={!tool.isLive}
               >
-                {tool.isLive ? (
-                  <>
-                    Open Tool
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                ) : (
-                  "Coming Soon"
-                )}
+                Open Tool
+                <ArrowRight className="h-4 w-4" />
               </Button>
-              {tool.isLive && (
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => window.open(`/tool/${toolId}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => window.open(`/tool/${toolId}`, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

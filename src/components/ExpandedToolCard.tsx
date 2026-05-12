@@ -40,16 +40,9 @@ export const ExpandedToolCard = ({
         <Badge variant="secondary" className="text-xs">
           {department}
         </Badge>
-        {isLive ? (
-          <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-            Live
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
-            <Clock className="h-3 w-3 mr-1" />
-            Coming Soon
-          </Badge>
-        )}
+        <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+          Live
+        </Badge>
       </div>
       
       <CardHeader className="pb-4 relative z-10">
@@ -74,7 +67,7 @@ export const ExpandedToolCard = ({
           className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300"
         >
           <span className="flex items-center justify-center gap-2">
-            {isLive ? "Open Tool" : "Learn More"}
+            Open Tool
             <ArrowRight className="h-4 w-4" />
           </span>
         </Button>

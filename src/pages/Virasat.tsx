@@ -553,44 +553,52 @@ export default function Virasat() {
                           {showHindi && hindiText ? hindiText : currentQuestion}
                         </p>
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button
                           onClick={togglePlayPause}
                           disabled={narrationState === "loading"}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(25_40%_45%)] text-white text-xs font-medium hover:bg-[hsl(25_40%_40%)] transition-colors shadow-sm disabled:opacity-60"
+                          className="group relative flex items-center gap-3 pl-3 pr-5 py-3 rounded-full bg-[hsl(25_40%_45%)] text-white font-semibold hover:bg-[hsl(25_40%_40%)] transition-all shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                           aria-label={narrationState === "playing" ? "Pause narration" : "Play narration"}
                         >
-                          {narrationState === "loading" ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : narrationState === "playing" ? (
-                            <Pause size={14} />
-                          ) : (
-                            <Play size={14} />
-                          )}
-                          {narrationState === "playing" ? "Ruko" : narrationState === "paused" ? "Aage" : "Suno"}
+                          <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm">
+                            {narrationState === "loading" ? (
+                              <Loader2 size={26} className="animate-spin" />
+                            ) : narrationState === "playing" ? (
+                              <Pause size={26} fill="currentColor" />
+                            ) : (
+                              <Play size={26} fill="currentColor" className="ml-0.5" />
+                            )}
+                          </span>
+                          <span className="text-base">
+                            {narrationState === "playing" ? "Ruko" : narrationState === "paused" ? "Aage suno" : "Suno"}
+                          </span>
                         </button>
                         <button
                           onClick={repeatNarration}
                           disabled={narrationState === "loading"}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] text-xs font-medium hover:bg-[hsl(25_40%_45%/0.05)] transition-colors disabled:opacity-60"
+                          className="flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full border-2 border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] font-semibold hover:bg-[hsl(25_40%_45%/0.06)] hover:border-[hsl(25_40%_45%/0.5)] transition-colors disabled:opacity-60"
                           aria-label="Repeat question"
                         >
-                          <RefreshCw size={14} />
-                          Phir se
+                          <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[hsl(25_40%_45%/0.08)]">
+                            <RefreshCw size={18} />
+                          </span>
+                          <span className="text-sm">Phir se</span>
                         </button>
                         <button
                           onClick={toggleHindi}
                           disabled={hindiLoading}
                           className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors disabled:opacity-60",
+                            "flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full border-2 font-semibold transition-colors disabled:opacity-60",
                             showHindi
-                              ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.08)] text-[hsl(25_40%_45%)]"
-                              : "border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] hover:bg-[hsl(25_40%_45%/0.05)]"
+                              ? "border-[hsl(25_40%_45%)] bg-[hsl(25_40%_45%/0.1)] text-[hsl(25_40%_45%)]"
+                              : "border-[hsl(25_40%_45%/0.3)] text-[hsl(25_40%_45%)] hover:bg-[hsl(25_40%_45%/0.06)] hover:border-[hsl(25_40%_45%/0.5)]"
                           )}
                           aria-label="Toggle Hindi script"
                         >
-                          {hindiLoading ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
-                          {showHindi ? "Hinglish" : "हिन्दी"}
+                          <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[hsl(25_40%_45%/0.08)]">
+                            {hindiLoading ? <Loader2 size={18} className="animate-spin" /> : <Languages size={18} />}
+                          </span>
+                          <span className="text-sm">{showHindi ? "Hinglish" : "हिन्दी"}</span>
                         </button>
                       </div>
                     </motion.div>

@@ -1,53 +1,56 @@
-## Goal
+## Plan
 
-Persist every Storyteller voice answer in Virasat as a true `.mp4` (AAC) file in the `virasat-media` bucket so admins can play/download it from the Virasat Archive — while keeping the original `.webm` as a guaranteed-playable fallback.
+Four scoped changes — all UI/presentation, no schema or business-logic touchups.
 
-## Approach
+### 1. Bigger Play/Pause (and Repeat) buttons in Virasat
 
-Use **best-effort transcoding** in the browser:
-1. Always upload the original webm (zero risk of data loss).
-2. After upload, lazily load `ffmpeg.wasm` and convert the same blob to `audio/mp4` (AAC). Upload the mp4 alongside, link it to the same `virasat_media` row.
-3. Admin Archive prefers `.mp4` URL when present, falls back to webm.
+`src/pages/Virasat.tsx` (interview question card, ~lines 556–595):
 
-If transcode fails (old browser, OOM, ffmpeg load error), we silently keep just the webm — user flow is never blocked.
+- Replace the small pill buttons with prominent circular controls: a 64px primary Play/Pause button (filled, brand color, soft glow) flanked by 44px Repeat and Hindi buttons.
+- Increase icon sizes (Play/Pause → 28, others → 18).
+- Stack the label below the icon on the main button so the action stays readable.
+- Keep current handlers (`togglePlayPause`, `repeatNarration`, `toggleHindi`) and loading/disabled states unchanged.
 
-## Changes
+### 2. Speech-to-text on phones
 
-### 1. Database (migration)
-Add two nullable columns to `virasat_media`:
-- `mp4_storage_path text` — path of the converted mp4 in the same bucket
-- `transcode_status text` — `pending` | `done` | `failed` (default `pending`)
+`src/components/virasat/VoiceRecorder.tsx`:
 
-No RLS changes needed (existing admin SELECT + user ALL policies cover them).
+Two real bugs cause STT to silently die on mobile:
 
-### 2. New helper `src/components/virasat/lib/audioTranscode.ts`
-- `transcodeWebmToMp4(blob: Blob): Promise<Blob | null>` 
-- Lazy-imports `@ffmpeg/ffmpeg` + `@ffmpeg/util` from a CDN ESM URL (no npm install needed; same pattern as the project's other CDN libs per `mem://technical/external-libraries-cdn`).
-- Single shared FFmpeg instance, loaded on first call.
-- Runs `-i in.webm -c:a aac -b:a 128k out.mp4`, returns the mp4 Blob.
-- Catches all errors, returns `null` on failure.
+a. **Stale `state` in `recognition.onend`** (line 80). `state` is captured at recognition setup and is always `"idle"` there, so the auto-restart never fires on Android Chrome (which ends recognition every ~10s of silence). Fix by tracking recording with a ref (`isRecordingRef`) set in `startRecording`/`stopRecording` and reading it inside `onend`.
 
-### 3. `src/components/virasat/VoiceRecorder.tsx`
-In `useThis()`, after the existing webm upload + `virasat_media` insert succeeds:
-- Fire-and-forget `transcodeWebmToMp4(audioBlobRef.current)` in the background (doesn't block `onTranscript`).
-- On success: upload mp4 to `${user.id}/${sessionId}/voice-<uuid>.mp4`, then `update` the same `virasat_media` row with `mp4_storage_path` + `transcode_status: 'done'`.
-- On failure: `update` row with `transcode_status: 'failed'`.
+b. **Recognition started before MediaRecorder grabs the mic**, plus no graceful fallback when the browser lacks `SpeechRecognition` (iOS Safari). Changes:
+- Detect support up front; if missing on a touch device, show a clear message and surface the "Likhne par jaayein" button automatically (no error toast loop).
+- Wrap `recognition.start()` in try/catch and re-attempt once after 250 ms if it throws `InvalidStateError` (common on Android when a previous session hasn't fully released).
+- On `onend`, only restart while `isRecordingRef.current === true`; clear the ref in `stopRecording` so it stops cleanly.
+- Add an `onnomatch`/`audiostart` no-op to keep the engine alive on some Android builds.
 
-User experience is unchanged — the conversion happens silently after the answer is submitted.
+c. Audio capture itself already works — only the live transcript was failing. The recorded blob is still uploaded and can be transcribed server-side later if needed (out of scope).
 
-### 4. `src/components/admin/VirasatArchive.tsx`
-- Extend `MediaItem` with `mp4_storage_path`, `transcode_status`.
-- When generating signed URLs for audio items, prefer `mp4_storage_path` if present; otherwise use `storage_path`.
-- Show a tiny "MP4" / "WEBM" badge next to each audio entry so admin knows the format.
-- Add a small "Download" link next to the audio player using the signed URL.
-- Same logic applies to the per-turn `audio_path` map in the transcript view: extend the lookup to fetch the mp4 path from `virasat_media` joined by `storage_path` match (one query, mapping webm path → mp4 path).
+### 3. Remove all Coming Soon apps
+
+Goal: nothing labelled "Coming Soon" appears anywhere in the product.
+
+- **Routing**: remove `/coming-soon` route and the lazy `ComingSoon` import from `src/App.tsx`. Delete `src/pages/ComingSoon.tsx`.
+- **Tool lists**: in `src/pages/Tools.tsx`, drop tools where `is_live === false` from the database fetch and from the static `tools` filter (already filtered for cards but still counted — tighten so they don't appear in counts, search, or category groupings).
+- **Cards**: in `src/components/ToolCard.tsx`, `src/components/ExpandedToolCard.tsx`, and `src/components/tools/ToolQuickPreview.tsx`, remove the "Coming Soon" badge branch and the disabled state — these components will only ever receive live tools after the filter above.
+- **Tool data**: `src/data/tools.tsx` and `src/data/expandedTools.tsx` — leave the data alone (other code still imports the types) but ensure consumers filter by `isLive`/`is_live` everywhere they render.
+- **Other refs**: `src/pages/ToolViewer.tsx`, `src/pages/ToolPreview.tsx`, `src/pages/MobileShortcuts.tsx` — replace any "Coming Soon" preview branch with a simple "Not available" or 404 redirect to `/tools` (since the user's intent is to hide them entirely).
+- Update memory: revise `mem://features/tool-catalog/coming-soon-page-flow-v2` to reflect that the Coming Soon page has been removed.
+
+### 4. Book-style PDF (no distorted indentation)
+
+Current `src/components/virasat/lib/pdfExport.ts` rasterises the entire scrollable book with `html2canvas` then slices at fixed page heights, which cuts paragraphs mid-line and loses indentation.
+
+Rewrite to a **section-based renderer**:
+
+- Mark book sections in `src/components/virasat/BookView.tsx` by wrapping each `h1`, `h2`, `p`, `hr`, and the media grid in a `data-pdf-section` div via the `ReactMarkdown` `components` map (use a small wrapper component for each).
+- In `pdfExport.ts`, iterate every `[data-pdf-section]` element, render it individually with `html2canvas` (scale 2, white book background), and place it onto an A4 jsPDF page with proper margins (15 mm) and a 4 mm gap between sections. If the next section overflows the remaining page height, call `pdf.addPage()` first.
+- Pre-render an A4-width offscreen clone (`width: 794px`, padding to mimic book margins, same serif typography, drop-cap on first paragraph) so indentation, drop caps, and chapter headings render exactly like the on-screen book — not the responsive layout that html2canvas was sampling.
+- Keep the existing `<video>` → poster substitution, but apply it only inside the cloned offscreen node so the live DOM is untouched.
+- Resulting PDF: each chapter starts cleanly, paragraphs keep their first-line drop cap and indent, no mid-line cuts.
 
 ### Out of scope
-- Re-transcoding existing webm recordings already in storage (only new recordings get mp4).
-- Saving AI narration TTS as mp4 (user confirmed: only user voice answers).
-- Server-side conversion / edge function (chose client-side per your selection).
-
-### Technical notes
-- ffmpeg.wasm core is ~25MB; loaded only the first time a user finishes recording, then cached for the session.
-- Conversion of a typical 30-second answer takes 2–4s on desktop, 5–10s on mobile.
-- iOS Safari already records to `audio/mp4` natively — for those clips we'll detect the mime and skip transcoding (just upload as `.mp4` directly and mark `transcode_status: 'done'`).
+- Server-side STT fallback for iOS Safari.
+- Re-transcoding existing webm recordings.
+- Reworking the book's typography itself (only the export pipeline changes).
