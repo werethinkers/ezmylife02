@@ -147,37 +147,9 @@ const ToolViewer = () => {
     );
   }
 
-  // Tool exists in catalog but has no implementation yet - show preview page
+  // Tool exists in catalog but has no implementation yet — redirect to catalog.
   if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
-    const iconUrl = resolvedIconUrl;
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 px-4">
-          {iconUrl ? (
-            <img src={iconUrl} alt={toolTitle} className="h-24 w-24 object-contain rounded-2xl" />
-          ) : (
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-              <Sparkles className="h-12 w-12 text-primary" />
-            </div>
-          )}
-          <div className="text-center max-w-lg">
-            <h1 className="text-3xl font-bold text-foreground mb-2">{toolTitle}</h1>
-            <Badge className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/30">
-              <Clock className="h-3 w-3 mr-1" />
-              Coming Soon
-            </Badge>
-            <p className="text-muted-foreground leading-relaxed">{toolDescription}</p>
-            {toolCategory && (
-              <Badge variant="secondary" className="mt-3">{toolCategory}</Badge>
-            )}
-          </div>
-          <Button onClick={() => navigate("/ai-apps")} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Tools
-          </Button>
-        </div>
-      </div>
-    );
+    return <Navigate to="/ai-apps" replace />;
   }
 
   const renderContent = () => {

@@ -33,7 +33,7 @@ const CreditsSuccess = lazy(() => import("./pages/CreditsSuccess"));
 const CreditsHistory = lazy(() => import("./pages/CreditsHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
-const ComingSoon = lazy(() => import("./pages/ComingSoon"));
+
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminBulkQA = lazy(() => import("./pages/AdminBulkQA"));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
@@ -127,14 +127,7 @@ const AnimatedRoutes = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
-            <Route
-              path="/coming-soon"
-              element={
-                <ProtectedRoute>
-                  <ComingSoon />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/coming-soon" element={<Navigate to="/ai-apps" replace />} />
             <Route
               path="/profile"
               element={
