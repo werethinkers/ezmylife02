@@ -177,34 +177,44 @@ export default function BookView({ content, childName, fatherName, sessionId, me
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
-                  <h1 className="text-4xl md:text-6xl text-center mb-12 text-[hsl(25_40%_45%)] border-b border-[hsl(25_40%_45%/0.2)] pb-8">{children}</h1>
+                  <div data-pdf-section>
+                    <h1 className="text-4xl md:text-6xl text-center mb-12 text-[hsl(25_40%_45%)] border-b border-[hsl(25_40%_45%/0.2)] pb-8">{children}</h1>
+                  </div>
                 ),
                 h2: ({ children }) => {
                   const text = String(children);
                   const id = slugify(text);
                   return (
-                    <h2 id={id} className="text-2xl md:text-3xl mt-12 mb-6 text-[hsl(25_40%_45%/0.8)] italic scroll-mt-24">
-                      {children}
-                    </h2>
+                    <div data-pdf-section>
+                      <h2 id={id} className="text-2xl md:text-3xl mt-12 mb-6 text-[hsl(25_40%_45%/0.8)] italic scroll-mt-24">
+                        {children}
+                      </h2>
+                    </div>
                   );
                 },
                 p: ({ children }) => (
-                  <p className="text-lg md:text-xl leading-relaxed mb-6 first-letter:text-4xl first-letter:font-bold first-letter:mr-1 first-letter:float-left">
-                    {children}
-                  </p>
+                  <div data-pdf-section>
+                    <p className="text-lg md:text-xl leading-relaxed mb-6 first-letter:text-4xl first-letter:font-bold first-letter:mr-1 first-letter:float-left">
+                      {children}
+                    </p>
+                  </div>
                 ),
-                hr: () => <hr className="my-12 border-[hsl(25_40%_45%/0.1)]" />,
+                hr: () => (
+                  <div data-pdf-section>
+                    <hr className="my-12 border-[hsl(25_40%_45%/0.1)]" />
+                  </div>
+                ),
               }}
             >
               {content}
             </ReactMarkdown>
 
             {visualMedia.length > 0 && (
-              <div className="mt-16 pt-8 border-t border-[hsl(25_40%_45%/0.2)]">
+              <div data-pdf-section className="mt-16 pt-8 border-t border-[hsl(25_40%_45%/0.2)]">
                 <h2 className="text-2xl md:text-3xl mb-6 text-[hsl(25_40%_45%/0.8)] italic">Yaadon ki tasveerein</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pdf-media-grid">
                   {visualMedia.map((m) => (
-                    <div key={m.id} className="rounded-lg overflow-hidden border border-[hsl(25_40%_45%/0.15)] shadow-sm bg-white">
+                    <figure key={m.id} className="rounded-lg overflow-hidden border border-[hsl(25_40%_45%/0.15)] shadow-sm bg-white">
                       {m.type === "image" && m.signed_url && (
                         <img src={m.signed_url} alt={m.caption || ""} className="w-full h-auto object-cover" crossOrigin="anonymous" />
                       )}
@@ -212,16 +222,16 @@ export default function BookView({ content, childName, fatherName, sessionId, me
                         <video src={m.signed_url} controls className="w-full h-auto" />
                       )}
                       {m.caption && (
-                        <p className="text-xs text-[hsl(25_15%_55%)] italic p-2 text-center">{m.caption}</p>
+                        <figcaption className="text-xs text-[hsl(25_15%_55%)] italic p-2 text-center">{m.caption}</figcaption>
                       )}
-                    </div>
+                    </figure>
                   ))}
                 </div>
               </div>
             )}
 
             {audioMedia.length > 0 && (
-              <div className="mt-12 pt-6 border-t border-[hsl(25_40%_45%/0.2)]">
+              <div data-pdf-section className="mt-12 pt-6 border-t border-[hsl(25_40%_45%/0.2)]">
                 <h2 className="text-2xl md:text-3xl mb-6 text-[hsl(25_40%_45%/0.8)] italic">Aapki awaaz mein</h2>
                 <div className="space-y-3">
                   {audioMedia.map((m) => (
