@@ -110,8 +110,8 @@ export async function exportElementToPdf(
   // Wait for fonts + images to settle
   await new Promise((r) => setTimeout(r, 60));
   try {
-    // @ts-expect-error - document.fonts may not be typed everywhere
-    if (document.fonts?.ready) await document.fonts.ready;
+    const fonts = (document as unknown as { fonts?: { ready?: Promise<unknown> } }).fonts;
+    if (fonts?.ready) await fonts.ready;
   } catch { /* ignore */ }
   await Promise.all(
     Array.from(stage.querySelectorAll("img")).map(
