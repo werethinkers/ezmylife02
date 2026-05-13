@@ -245,6 +245,110 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
   );
 };
 
+const BulkArtPanel = ({ rows, onDone }: { rows: CatalogRow[]; onDone: () => void }) => {
+  const { toast } = useToast();
+  const [running, setRunning] = useState(false);
+  const [force, setForce] = useState(false);
+  const [doIcons, setDoIcons] = useState(true);
+  const [doPreviews, setDoPreviews] = useState(true);
+  const [progress, setProgress] = useState<{ done: number; total: number; current?: string }>({ done: 0, total: 0 });
+  const [errors, setErrors] = useState<{ name: string; kind: string; error: string }[]>([]);
+
+  const missingIcons = rows.filter((r) => !r.icon_url).length;
+  const missingPreviews = rows.filter((r) => !r.preview_image_url).length;
+
+  const run = async () => {
+    if (!doIcons && !doPreviews) return;
+    setRunning(true);
+    setErrors([]);
+    setProgress({ done: 0, total: 0 });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/bulk-generate-tool-art`;
+      const kinds: string[] = [];
+      if (doIcons) kinds.push("icon");
+      if (doPreviews) kinds.push("preview");
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ mode: force ? "all" : "missing", kinds, force, limit: 300 }),
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      const reader = resp.body!.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      const errs: { name: string; kind: string; error: string }[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n"); buf = lines.pop() ?? "";
+        for (const ln of lines) {
+          if (!ln.trim()) continue;
+          let ev: any;
+          try { ev = JSON.parse(ln); } catch { continue; }
+          if (ev.type === "start") setProgress({ done: 0, total: ev.total });
+          else if (ev.type === "tick") setProgress((p) => ({ ...p, done: ev.done, total: ev.total }));
+          else if (ev.type === "progress") {
+            setProgress((p) => ({ ...p, current: `${ev.name} (${ev.kind}) — ${ev.status}` }));
+            if (ev.status === "error") errs.push({ name: ev.name, kind: ev.kind, error: ev.error });
+          }
+        }
+      }
+      setErrors(errs);
+      toast({ title: "Generation complete", description: `${errs.length === 0 ? "All done." : `${errs.length} errors — see list.`}` });
+      onDone();
+    } catch (e: any) {
+      toast({ title: "Bulk generation failed", description: String(e).slice(0, 200), variant: "destructive" });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4 mb-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h3 className="font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Auto-generate art with AI</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Uses Gemini 2.5 Flash Image (cheapest, fastest) with your stored keys. Preview images are styled like Startup Analyser so visitors instantly understand each tool.
+          </p>
+          <p className="text-xs mt-2">
+            <span className="font-medium">{missingIcons}</span> tools missing icon · <span className="font-medium">{missingPreviews}</span> tools missing preview
+          </p>
+        </div>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2"><Switch id="bk-i" checked={doIcons} onCheckedChange={setDoIcons} /><Label htmlFor="bk-i">Icons</Label></div>
+          <div className="flex items-center gap-2"><Switch id="bk-p" checked={doPreviews} onCheckedChange={setDoPreviews} /><Label htmlFor="bk-p">Previews</Label></div>
+          <div className="flex items-center gap-2"><Switch id="bk-f" checked={force} onCheckedChange={setForce} /><Label htmlFor="bk-f" className="text-destructive">Regenerate all (overwrite)</Label></div>
+          <Button onClick={run} disabled={running || (!doIcons && !doPreviews)}>
+            {running ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate {force ? "ALL" : "missing"}</>}
+          </Button>
+        </div>
+      </div>
+      {(running || progress.total > 0) && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>{progress.current ?? "Starting…"}</span>
+            <span>{progress.done} / {progress.total}</span>
+          </div>
+          <div className="h-2 rounded-full bg-background overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
+      {errors.length > 0 && (
+        <div className="mt-3 max-h-40 overflow-y-auto text-xs">
+          <p className="font-medium text-destructive mb-1">Errors:</p>
+          {errors.map((e, i) => (
+            <div key={i} className="text-destructive/80 truncate">• {e.name} ({e.kind}): {e.error}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ToolMediaManager = () => {
   const [rows, setRows] = useState<CatalogRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,6 +379,7 @@ export const ToolMediaManager = () => {
         <Input placeholder="Filter by name or id..." value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-sm mt-3" />
       </CardHeader>
       <CardContent>
+        {!loading && <BulkArtPanel rows={rows} onDone={load} />}
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : (
@@ -301,5 +406,3 @@ export const ToolMediaManager = () => {
     </Card>
   );
 };
-
-export default ToolMediaManager;
