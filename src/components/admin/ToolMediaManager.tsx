@@ -81,6 +81,46 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
     reader.readAsDataURL(file);
   };
 
+  const autoGenerate = async (kind: "icon" | "preview") => {
+    setBusy(kind);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/bulk-generate-tool-art`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ mode: "selected", tool_ids: [tool.id], kinds: [kind], force: true }),
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      // Drain stream
+      const reader = resp.body!.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n"); buf = lines.pop() ?? "";
+        for (const ln of lines) {
+          if (!ln.trim()) continue;
+          const ev = JSON.parse(ln);
+          if (ev.type === "progress" && ev.status === "ok" && ev.url) {
+            if (ev.kind === "icon") setIconUrl(ev.url); else setPreviewUrl(ev.url);
+          } else if (ev.type === "progress" && ev.status === "error") {
+            throw new Error(ev.error);
+          }
+        }
+      }
+      toast({ title: "Generated", description: `${kind === "icon" ? "Icon" : "Preview"} created with AI.` });
+      onChanged();
+    } catch (e: any) {
+      toast({ title: "AI generation failed", description: String(e).slice(0, 200), variant: "destructive" });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+
   const openCropFromUrl = async (kind: "icon" | "preview", url: string) => {
     try {
       const res = await fetch(url, { mode: "cors" });
