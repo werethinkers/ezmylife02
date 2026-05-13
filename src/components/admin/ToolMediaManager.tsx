@@ -204,6 +204,9 @@ const ToolRow = ({ tool, onChanged }: { tool: CatalogRow; onChanged: () => void 
                 <Crop className="h-3 w-3 mr-1" />Adjust
               </Button>
             )}
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-primary" onClick={() => autoGenerate("preview")} disabled={busy === "preview"}>
+              <Sparkles className="h-3 w-3 mr-1" />AI
+            </Button>
             <div className="inline-flex rounded-md border overflow-hidden text-xs">
               <button type="button" onClick={() => updateFit("cover")} className={`px-2 py-1 ${fit === "cover" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fill</button>
               <button type="button" onClick={() => updateFit("contain")} className={`px-2 py-1 ${fit === "contain" ? "bg-primary text-primary-foreground" : "bg-background"}`}>Fit</button>
