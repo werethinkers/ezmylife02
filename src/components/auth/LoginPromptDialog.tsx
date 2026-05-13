@@ -2,15 +2,18 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LogIn, UserPlus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** Where to send the user back after auth. Defaults to current location. */
   returnTo?: string;
+  /** When true, prevents Esc / outside-click dismissal and hides the close button. */
+  persistent?: boolean;
 }
 
-export const LoginPromptDialog = ({ open, onOpenChange, returnTo }: Props) => {
+export const LoginPromptDialog = ({ open, onOpenChange, returnTo, persistent }: Props) => {
   const handleClick = () => {
     try {
       const path = returnTo ?? window.location.pathname + window.location.search;
@@ -19,7 +22,11 @@ export const LoginPromptDialog = ({ open, onOpenChange, returnTo }: Props) => {
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent
+        className={cn("max-w-sm", persistent && "[&>button.absolute]:hidden")}
+        onInteractOutside={(e) => { if (persistent) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (persistent) e.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle>Sign in to continue</DialogTitle>
           <DialogDescription>
