@@ -406,3 +406,4 @@ export const ToolMediaManager = () => {
     </Card>
   );
 };
+export default ToolMediaManager;
