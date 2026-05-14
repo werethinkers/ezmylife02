@@ -44,18 +44,60 @@ export const CreditsAdmin = () => {
   const [granting, setGranting] = useState(false);
   const [recent, setRecent] = useState<LedgerRow[]>([]);
 
+  // User credits & purchases overview
+  const [userSummaries, setUserSummaries] = useState<UserCreditSummary[]>([]);
+  const [userFilter, setUserFilter] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"spent" | "bought" | "balance" | "recent">("spent");
+
   const load = async () => {
     setLoading(true);
-    const [{ data: pr }, { data: cat }, { data: led }] = await Promise.all([
+    const [{ data: pr }, { data: cat }, { data: led }, { data: wallets }, { data: purchases }, { data: profs }] = await Promise.all([
       supabase.from("tool_pricing").select("tool_id, cost_inr, credit_cost").order("tool_id"),
       supabase.from("tools_catalog").select("id, name"),
       supabase.from("credit_ledger").select("*").eq("reason", "admin_adjust").order("created_at", { ascending: false }).limit(20),
+      supabase.from("credit_wallets").select("user_id, free_balance, paid_balance"),
+      supabase.from("credit_purchases").select("id, user_id, pack_id, credits, inr_amount, status, paid_at, created_at, razorpay_payment_id").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, email, display_name, full_name"),
     ]);
     setPricing((pr || []) as Pricing[]);
     const map: Record<string, string> = {};
     (cat as CatalogRow[] | null)?.forEach((c) => { map[c.id] = c.name; });
     setCatalog(map);
     setRecent((led || []) as LedgerRow[]);
+
+    // Build per-user summary
+    const profMap = new Map<string, Profile>();
+    (profs as Profile[] | null)?.forEach((p) => profMap.set(p.id, p));
+    const walletMap = new Map<string, WalletRow>();
+    (wallets as WalletRow[] | null)?.forEach((w) => walletMap.set(w.user_id, w));
+    const byUser = new Map<string, PurchaseRow[]>();
+    (purchases as PurchaseRow[] | null)?.forEach((p) => {
+      const arr = byUser.get(p.user_id) ?? [];
+      arr.push(p);
+      byUser.set(p.user_id, arr);
+    });
+    const userIds = new Set<string>([...walletMap.keys(), ...byUser.keys()]);
+    const summaries: UserCreditSummary[] = [];
+    userIds.forEach((uid) => {
+      const w = walletMap.get(uid);
+      const ps = byUser.get(uid) ?? [];
+      const paidPs = ps.filter((p) => p.status === "paid");
+      const prof = profMap.get(uid);
+      summaries.push({
+        user_id: uid,
+        email: prof?.email ?? "—",
+        name: prof?.full_name || prof?.display_name || "—",
+        free_balance: w?.free_balance ?? 0,
+        paid_balance: w?.paid_balance ?? 0,
+        total_credits_bought: paidPs.reduce((s, p) => s + (p.credits || 0), 0),
+        total_inr_spent: paidPs.reduce((s, p) => s + (p.inr_amount || 0), 0),
+        purchase_count: paidPs.length,
+        last_purchase_at: paidPs[0]?.paid_at ?? paidPs[0]?.created_at ?? null,
+        purchases: ps,
+      });
+    });
+    setUserSummaries(summaries);
     setLoading(false);
   };
 
