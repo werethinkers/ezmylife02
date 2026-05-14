@@ -204,9 +204,14 @@ Deno.serve(async (req) => {
           if (already && !force) continue;
           try {
             send({ type: "progress", tool_id: t.id, name: t.name, kind, status: "generating" });
-            const prompt = kind === "icon"
-              ? iconPrompt(t.name, t.description ?? "", t.category ?? "AI tool")
-              : previewPrompt(t.name, t.description ?? "", t.category ?? "AI tool");
+            let prompt: string;
+            if (kind === "icon") {
+              prompt = iconPrompt(t.name, t.description ?? "", t.category ?? "AI tool");
+            } else {
+              const inputAction = deriveInputAction(t.name, t.description ?? "", t.category ?? "");
+              const features = await deriveFeatures(t.name, t.description ?? "", t.category ?? "AI tool");
+              prompt = previewPrompt(t.name, t.description ?? "", t.category ?? "AI tool", inputAction, features);
+            }
             const { bytes, mime } = await callGemini(prompt);
             const ext = mime.includes("jpeg") ? "jpg" : "png";
             const path = `${t.id}/auto-${kind}-${Date.now()}.${ext}`;
