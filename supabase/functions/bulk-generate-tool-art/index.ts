@@ -12,13 +12,90 @@ const GEMINI_KEYS = [1, 2, 3, 4, 5]
   .filter((v): v is string => !!v);
 
 const MODEL = "gemini-2.5-flash-image";
+const TEXT_MODEL = "gemini-2.5-flash";
 
 function iconPrompt(name: string, description: string, category: string) {
   return `Minimalist flat app icon representing "${name}" — ${description}. Category: ${category}. Single bold centered glyph or symbol that intuitively conveys the tool's purpose. Vibrant gradient (deep indigo to violet to electric magenta) on a clean dark navy background. Soft inner glow, subtle depth, rounded square iOS-style composition. Premium, polished, modern SaaS feel. NO text, NO words, NO letters, NO numbers, NO logos. Centered, square 1:1.`;
 }
 
-function previewPrompt(name: string, description: string, category: string) {
-  return `A premium editorial hero illustration that instantly shows what "${name}" does: ${description}. Category: ${category}. Style: modern flat illustration with depth and dimension, dark glassmorphism background (deep navy + indigo with subtle grid), vibrant violet, electric blue, and magenta gradient accents, soft volumetric lighting, abstract floating UI elements (cards, charts, sparkles, arrows, document fragments) that visually communicate the ${category} workflow. A first-time visitor should understand what this tool does within one second of looking. Premium SaaS hero aesthetic, cinematic, polished. NO text, NO words, NO letters, NO logos, NO readable strings in any UI element. 16:9 widescreen, balanced composition.`;
+// Pick a short, human "input action" label from the tool metadata.
+function deriveInputAction(name: string, description: string, category: string): string {
+  const t = `${name} ${description} ${category}`.toLowerCase();
+  if (/(signature)/.test(t)) return "Write Your Signature";
+  if (/(record|voice|audio|podcast|story|narrat)/.test(t)) return "Record Your Voice";
+  if (/(prompt|chat|copy|caption|hashtag|script|content|writ|blog|email|generat)/.test(t) && !/image|photo|video/.test(t)) return "Enter Any Prompt";
+  if (/(pitch ?deck|slide|presentation|deck)/.test(t)) return "Upload Pitch Deck";
+  if (/(resume|cv)/.test(t)) return "Upload Your Resume";
+  if (/(invoice|receipt|bill)/.test(t)) return "Enter Your Details";
+  if (/(pdf|document|contract|agreement)/.test(t)) return "Upload Document";
+  if (/(video)/.test(t)) return "Upload Your Video";
+  if (/(image|photo|picture|logo|background|passport|thumbnail|watermark|crop|resize|compress|blur|grayscale|pixel|merge|split|color)/.test(t)) return "Upload Your Image";
+  if (/(calculator|calc|estimat|tax|salary|grade|profit|expense)/.test(t)) return "Enter Your Numbers";
+  if (/(plan|schedul|tracker|study|exam|assignment|lesson)/.test(t)) return "Enter Your Plan";
+  return "Open the Tool";
+}
+
+// Ask Gemini text model for ~6 short feature labels for the right grid.
+async function deriveFeatures(name: string, description: string, category: string): Promise<string[]> {
+  if (GEMINI_KEYS.length === 0) return defaultFeatures(category);
+  const prompt = `Tool: "${name}". Purpose: ${description}. Category: ${category}.
+Return EXACTLY 6 short labels (1-2 words each, Title Case) that describe either the OUTPUTS the user gets, the FEATURES, or common USE CASES of this tool. They will appear as small icon-card labels in a product explainer image.
+Respond as a JSON array of 6 strings ONLY. No prose. Example: ["Industry Analysis","Market Size","SWOT","Competitors","Risks","Use Cases"]`;
+  for (let attempt = 0; attempt < Math.min(3, GEMINI_KEYS.length); attempt++) {
+    const key = GEMINI_KEYS[attempt % GEMINI_KEYS.length];
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+        }),
+      });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const arr = JSON.parse(txt);
+      if (Array.isArray(arr) && arr.length >= 4) {
+        return arr.slice(0, 6).map((s: unknown) => String(s).slice(0, 22));
+      }
+    } catch { /* fallthrough */ }
+  }
+  return defaultFeatures(category);
+}
+
+function defaultFeatures(category: string): string[] {
+  return ["Fast Output", "High Quality", "Easy to Use", "Instant Result", "AI Powered", category || "Pro Tool"];
+}
+
+function previewPrompt(name: string, description: string, category: string, inputAction: string, features: string[]) {
+  const featureList = features.map((f, i) => `  ${i + 1}. "${f}"`).join("\n");
+  return `Create a clean, premium product-explainer illustration for an AI tool. The image will be shown to first-time visitors so they instantly understand WHAT they put in and WHAT they get out.
+
+LAYOUT — STRICT, EXACTLY THIS COMPOSITION:
+- Pure white / very light gray background (#FAFAFB). Generous whitespace and soft rounded corners (radius ~16px) everywhere.
+- LEFT panel (~35% width): ONE single rounded card with a DASHED violet border (color #7C3AED, ~2px). Inside, centered: a 2-line label reading "${inputAction}" (in clean sans-serif, violet #7C3AED, semi-bold), and below it ONE large violet line-icon (~64px, stroke ~2.5px) that visually represents that input action (e.g. upload arrow ⬆, microphone, pencil, image frame, document).
+- RIGHT panel (~65% width): A short heading at top in dark gray #1F2937 such as "What You Get" or "Save & Use Anywhere" describing the OUTPUT/value. Below the heading, a clean grid of 6 small white rounded cards (2 rows × 3 columns or 3 rows × 2 columns) with subtle shadow. Each card contains: one violet line-icon at top (centered, ~40px) and one short Title-Case label below (max 2 words, dark gray #1F2937, sans-serif).
+
+USE EXACTLY THESE 6 LABELS for the right-side cards, IN THIS ORDER:
+${featureList}
+
+EVERY label MUST be spelled correctly and readable — no gibberish, no random letters, no fake words. Pick an icon for each card that matches its label meaning.
+
+STYLE:
+- Flat vector line-icons only. Single accent color violet #7C3AED for ALL icons and dashed border.
+- No photographs, no 3D renders, no people, no gradients on icons.
+- Clean modern sans-serif typography. Center labels under each icon.
+- Soft shadows, lots of whitespace, premium SaaS explainer aesthetic (think Notion / Linear / Stripe explainer cards).
+
+CONTEXT (do not put this text in the image, only use it to choose the icons):
+Tool name: "${name}". Purpose: ${description}. Category: ${category}.
+
+STRICT RULES:
+- Do NOT include the tool name "${name}" anywhere in the image.
+- Do NOT include any company logos, brand marks, or watermarks.
+- Do NOT include paragraphs of text or readable mockup screens — ONLY the labels listed above.
+- 16:9 aspect ratio, high resolution, sharp edges.`;
 }
 
 async function callGemini(prompt: string): Promise<{ bytes: Uint8Array; mime: string }> {
