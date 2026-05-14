@@ -12,6 +12,20 @@ interface Pricing { tool_id: string; cost_inr: number; credit_cost: number }
 interface CatalogRow { id: string; name: string }
 interface Profile { id: string; email: string | null; display_name: string | null; full_name: string | null }
 interface LedgerRow { id: string; user_id: string; delta: number; reason: string; metadata: Record<string, unknown>; created_at: string }
+interface PurchaseRow { id: string; user_id: string; pack_id: string; credits: number; inr_amount: number; status: string; paid_at: string | null; created_at: string; razorpay_payment_id: string | null }
+interface WalletRow { user_id: string; free_balance: number; paid_balance: number }
+interface UserCreditSummary {
+  user_id: string;
+  email: string;
+  name: string;
+  free_balance: number;
+  paid_balance: number;
+  total_credits_bought: number;
+  total_inr_spent: number;
+  purchase_count: number;
+  last_purchase_at: string | null;
+  purchases: PurchaseRow[];
+}
 
 export const CreditsAdmin = () => {
   const { toast } = useToast();
