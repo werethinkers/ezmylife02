@@ -12,6 +12,7 @@ import AllContacts from "@/components/meet-nudge/AllContacts";
 import ContactsAnalytics from "@/components/meet-nudge/ContactsAnalytics";
 import { CalendarDays, Users, Settings, BarChart3, Copy, Share2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ToolBackButton } from "@/components/tools/ToolBackButton";
 
 const MeetNudge = () => {
   const { user } = useAuth();
