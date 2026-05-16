@@ -200,6 +200,53 @@ export const HomeSectionsManager = () => {
     invalidateAll();
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const reorderSections = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = sections.findIndex((s) => s.id === active.id);
+    const newIdx = sections.findIndex((s) => s.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(sections, oldIdx, newIdx);
+    qc.setQueryData(["home-sections"], next.map((s, i) => ({ ...s, display_order: i + 1 })));
+    const updates = await Promise.all(
+      next.map((s, i) =>
+        supabase.from("home_sections").update({ display_order: i + 1 }).eq("id", s.id)
+      )
+    );
+    const err = updates.find((u) => u.error)?.error;
+    if (err) toast({ title: "Reorder failed", description: err.message, variant: "destructive" });
+    invalidateAll();
+  };
+
+  const reorderTools = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!currentId || !over || active.id === over.id) return;
+    const oldIdx = currentOrdered.findIndex((a) => a.tool_id === active.id);
+    const newIdx = currentOrdered.findIndex((a) => a.tool_id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(currentOrdered, oldIdx, newIdx);
+    qc.setQueryData(["section-assignments"], (prev: Assignment[] = []) => {
+      const others = prev.filter((a) => a.section_id !== currentId);
+      const updated = next.map((a, i) => ({ ...a, position: i }));
+      return [...others, ...updated];
+    });
+    const updates = await Promise.all(
+      next.map((a, i) =>
+        supabase.from("tool_section_assignments")
+          .update({ position: i })
+          .eq("tool_id", a.tool_id).eq("section_id", currentId)
+      )
+    );
+    const err = updates.find((u) => u.error)?.error;
+    if (err) toast({ title: "Reorder failed", description: err.message, variant: "destructive" });
+    invalidateAll();
+  };
+
   return (
     <div className="space-y-6">
       <Card>
