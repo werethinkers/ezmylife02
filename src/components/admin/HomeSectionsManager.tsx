@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Search, Plus, Trash2, X } from "lucide-react";
+import { Search, Plus, Trash2, X, ArrowUp, ArrowDown } from "lucide-react";
 
 interface HomeSection {
   id: string;
@@ -18,7 +18,7 @@ interface HomeSection {
   is_active: boolean;
 }
 interface Tool { id: string; name: string; category: string; is_live: boolean }
-interface Assignment { tool_id: string; section_id: string }
+interface Assignment { tool_id: string; section_id: string; position: number }
 
 export const HomeSectionsManager = () => {
   const qc = useQueryClient();
@@ -55,7 +55,7 @@ export const HomeSectionsManager = () => {
   const { data: assignments = [] } = useQuery({
     queryKey: ["section-assignments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("tool_section_assignments").select("tool_id, section_id");
+      const { data, error } = await supabase.from("tool_section_assignments").select("tool_id, section_id, position");
       if (error) throw error;
       return (data ?? []) as Assignment[];
     },
@@ -66,10 +66,15 @@ export const HomeSectionsManager = () => {
     : sections[0];
   const currentId = currentSection?.id;
 
-  const inCurrent = useMemo(() => {
-    if (!currentId) return new Set<string>();
-    return new Set(assignments.filter((a) => a.section_id === currentId).map((a) => a.tool_id));
+  // Ordered list of tool IDs assigned to the current section
+  const currentOrdered = useMemo(() => {
+    if (!currentId) return [] as Assignment[];
+    return assignments
+      .filter((a) => a.section_id === currentId)
+      .sort((a, b) => a.position - b.position);
   }, [assignments, currentId]);
+
+  const inCurrent = useMemo(() => new Set(currentOrdered.map((a) => a.tool_id)), [currentOrdered]);
 
   const countsBySection = useMemo(() => {
     const m = new Map<string, number>();
@@ -101,12 +106,48 @@ export const HomeSectionsManager = () => {
         .eq("section_id", currentId);
       if (error) return toast({ title: "Remove failed", description: error.message, variant: "destructive" });
     } else {
+      const nextPos = currentOrdered.length;
       const { error } = await supabase
         .from("tool_section_assignments")
-        .insert({ tool_id: toolId, section_id: currentId, position: 0 });
+        .insert({ tool_id: toolId, section_id: currentId, position: nextPos });
       if (error) return toast({ title: "Add failed", description: error.message, variant: "destructive" });
     }
     invalidateAll();
+  };
+
+  const moveTool = async (toolId: string, direction: -1 | 1) => {
+    if (!currentId) return;
+    const idx = currentOrdered.findIndex((a) => a.tool_id === toolId);
+    const swapIdx = idx + direction;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= currentOrdered.length) return;
+    const a = currentOrdered[idx];
+    const b = currentOrdered[swapIdx];
+    // Swap positions
+    const updates = await Promise.all([
+      supabase.from("tool_section_assignments")
+        .update({ position: b.position })
+        .eq("tool_id", a.tool_id).eq("section_id", currentId),
+      supabase.from("tool_section_assignments")
+        .update({ position: a.position })
+        .eq("tool_id", b.tool_id).eq("section_id", currentId),
+    ]);
+    const err = updates.find((u) => u.error)?.error;
+    if (err) return toast({ title: "Reorder failed", description: err.message, variant: "destructive" });
+    invalidateAll();
+  };
+
+  const normalizePositions = async () => {
+    if (!currentId) return;
+    // Rewrite positions to 0..n-1 in current order (helps when positions are non-contiguous)
+    await Promise.all(
+      currentOrdered.map((a, i) =>
+        supabase.from("tool_section_assignments")
+          .update({ position: i })
+          .eq("tool_id", a.tool_id).eq("section_id", currentId)
+      )
+    );
+    invalidateAll();
+    toast({ title: "Order normalized" });
   };
 
   const createSection = async () => {
@@ -225,19 +266,57 @@ export const HomeSectionsManager = () => {
               />
             </div>
 
-            {inCurrent.size > 0 && (
+            {currentOrdered.length > 0 && (
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">In this section</p>
-                <div className="flex flex-wrap gap-2">
-                  {tools.filter((t) => inCurrent.has(t.id)).map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => toggleAssignment(t.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/30 text-xs hover:bg-primary/20"
-                    >
-                      {t.name} <X className="h-3 w-3" />
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    In this section · drag-free reorder ({currentOrdered.length})
+                  </p>
+                  <Button size="sm" variant="ghost" onClick={normalizePositions} className="h-7 text-xs">
+                    Normalize order
+                  </Button>
+                </div>
+                <div className="border rounded-lg divide-y">
+                  {currentOrdered.map((a, i) => {
+                    const t = tools.find((tt) => tt.id === a.tool_id);
+                    const name = t?.name ?? a.tool_id;
+                    const cat = t?.category ?? "";
+                    return (
+                      <div key={a.tool_id} className="flex items-center gap-2 p-2.5">
+                        <span className="text-xs font-mono text-muted-foreground w-6 text-right">{i + 1}.</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{name}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{cat} · {a.tool_id}</p>
+                        </div>
+                        <Button
+                          size="icon" variant="ghost"
+                          disabled={i === 0}
+                          onClick={() => moveTool(a.tool_id, -1)}
+                          aria-label="Move up"
+                          className="h-7 w-7"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon" variant="ghost"
+                          disabled={i === currentOrdered.length - 1}
+                          onClick={() => moveTool(a.tool_id, 1)}
+                          aria-label="Move down"
+                          className="h-7 w-7"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon" variant="ghost"
+                          onClick={() => toggleAssignment(a.tool_id)}
+                          aria-label="Remove from section"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
