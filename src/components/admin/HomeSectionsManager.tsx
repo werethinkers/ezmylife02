@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Search, Plus, Trash2, X } from "lucide-react";
+import { Search, Plus, Trash2, X, ArrowUp, ArrowDown } from "lucide-react";
 
 interface HomeSection {
   id: string;
@@ -18,7 +18,7 @@ interface HomeSection {
   is_active: boolean;
 }
 interface Tool { id: string; name: string; category: string; is_live: boolean }
-interface Assignment { tool_id: string; section_id: string }
+interface Assignment { tool_id: string; section_id: string; position: number }
 
 export const HomeSectionsManager = () => {
   const qc = useQueryClient();
@@ -55,7 +55,7 @@ export const HomeSectionsManager = () => {
   const { data: assignments = [] } = useQuery({
     queryKey: ["section-assignments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("tool_section_assignments").select("tool_id, section_id");
+      const { data, error } = await supabase.from("tool_section_assignments").select("tool_id, section_id, position");
       if (error) throw error;
       return (data ?? []) as Assignment[];
     },
@@ -66,10 +66,15 @@ export const HomeSectionsManager = () => {
     : sections[0];
   const currentId = currentSection?.id;
 
-  const inCurrent = useMemo(() => {
-    if (!currentId) return new Set<string>();
-    return new Set(assignments.filter((a) => a.section_id === currentId).map((a) => a.tool_id));
+  // Ordered list of tool IDs assigned to the current section
+  const currentOrdered = useMemo(() => {
+    if (!currentId) return [] as Assignment[];
+    return assignments
+      .filter((a) => a.section_id === currentId)
+      .sort((a, b) => a.position - b.position);
   }, [assignments, currentId]);
+
+  const inCurrent = useMemo(() => new Set(currentOrdered.map((a) => a.tool_id)), [currentOrdered]);
 
   const countsBySection = useMemo(() => {
     const m = new Map<string, number>();
