@@ -32,6 +32,8 @@ const ToolViewer = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [uploadedToolUrl, setUploadedToolUrl] = useState<string | null>(null);
   const [catalogInfo, setCatalogInfo] = useState<CatalogTool | null>(null);
+  const [catalogChecked, setCatalogChecked] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
