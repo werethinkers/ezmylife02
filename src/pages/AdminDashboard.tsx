@@ -61,7 +61,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
