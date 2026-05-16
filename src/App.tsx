@@ -279,7 +279,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AnimatedRoutes />
-          <SmartAssistantChatbot />
+          <Suspense fallback={null}>
+            <SmartAssistantChatbot />
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
