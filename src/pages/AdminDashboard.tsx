@@ -186,6 +186,7 @@ const AdminDashboard = () => {
         ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
         ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
         { id: "enterprise", label: "Enterprise Leads", icon: Building2 },
+        ...(!isViewOnly ? [{ id: "seo-indexing" as const, label: "SEO / Indexing", icon: Globe }] : []),
       ],
     },
     {
