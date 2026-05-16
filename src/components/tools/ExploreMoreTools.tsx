@@ -53,7 +53,7 @@ export const ExploreMoreTools = ({ onPreview }: ExploreMoreToolsProps) => {
     <section className="mt-16">
       <div className="mb-6">
         <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 mb-2">
-          <span>🧭</span> Explore More Tools
+          <span>🧭</span> Explore More AI Apps
         </h2>
         <p className="text-sm text-muted-foreground">
           Browse the full catalog. Filter by category or search to find what you need.
