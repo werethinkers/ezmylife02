@@ -212,7 +212,7 @@ const ToolViewer = () => {
     : undefined;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col">
       <PageSeo
         title={`${seoName} — Free AI ${seoCategory} Tool | EZYOURLIFE`}
         description={seoDesc}
@@ -254,9 +254,15 @@ const ToolViewer = () => {
         </div>
       )}
 
-      <div className={`flex-1 min-h-0 ${isLoading ? 'hidden' : ''}`}>
+      <div className={`h-[calc(100vh-7rem)] min-h-[500px] ${isLoading ? 'hidden' : ''}`}>
         {renderContent()}
       </div>
+
+      <ToolDemoPreview
+        demoInput={catalogInfo?.demo_input}
+        demoOutput={catalogInfo?.demo_output}
+        toolName={toolTitle}
+      />
     </div>
   );
 };
