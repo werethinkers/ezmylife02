@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 
 export interface HomeTool {
@@ -10,12 +12,22 @@ export interface HomeTool {
   iconUrl?: string | null;
 }
 
-export interface HomeSections {
+export interface HomeSection {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  tools: HomeTool[];
+}
+
+export interface HomeSectionsResult {
+  sections: HomeSection[];
+  isLoading: boolean;
+  // Legacy named slots for existing Home.tsx consumers — populated from matching slugs.
   hot: HomeTool[];
   trending: HomeTool[];
   featured: HomeTool[];
   mostUsed: HomeTool[];
-  isLoading: boolean;
 }
 
 const TARGET_PER_SECTION = 12;
@@ -31,7 +43,6 @@ function toHomeTool(t: CatalogTool): HomeTool {
   };
 }
 
-// Deterministic seeded shuffle (mulberry32) so each section gets a stable mix.
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
   let s = seed >>> 0;
@@ -49,44 +60,72 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-const SECTION_SEEDS: Record<string, number> = {
-  hot: 1010,
-  trending: 2020,
-  featured: 3030,
-  most_used: 4040,
-};
+interface SectionRow { id: string; slug: string; title: string; subtitle: string | null; display_order: number; is_active: boolean }
+interface AssignmentRow { tool_id: string; section_id: string; position: number }
 
-/**
- * Admin-curated home sections with deterministic auto-fill.
- * Pinned tools come first, then live tools fill the carousel up to 12.
- * Coming-soon (is_live = false) tools are never included.
- */
-export function useHomeSections(): HomeSections {
-  const { data: catalog = [], isLoading } = useToolsCatalog();
+export function useHomeSections(): HomeSectionsResult {
+  const { data: catalog = [], isLoading: catalogLoading } = useToolsCatalog();
+
+  const { data: sections = [], isLoading: secLoading } = useQuery({
+    queryKey: ["home-sections-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("home_sections")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return (data ?? []) as SectionRow[];
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: assignments = [] } = useQuery({
+    queryKey: ["home-sections-assignments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tool_section_assignments")
+        .select("tool_id, section_id, position");
+      if (error) throw error;
+      return (data ?? []) as AssignmentRow[];
+    },
+    staleTime: 60_000,
+  });
 
   return useMemo(() => {
     const live = catalog.filter((c) => c.is_live);
+    const byId = new Map(live.map((t) => [t.id, t]));
 
-    const build = (section: string): HomeTool[] => {
-      const pinned = live
-        .filter((c) => (c as any).home_section === section)
-        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    const built: HomeSection[] = sections.map((s) => {
+      const pinned = assignments
+        .filter((a) => a.section_id === s.id)
+        .sort((a, b) => a.position - b.position)
+        .map((a) => byId.get(a.tool_id))
+        .filter((t): t is CatalogTool => !!t)
         .map(toHomeTool);
 
-      if (pinned.length >= TARGET_PER_SECTION) return pinned.slice(0, TARGET_PER_SECTION);
+      let tools = pinned;
+      if (tools.length < TARGET_PER_SECTION) {
+        const pinnedIds = new Set(pinned.map((p) => p.id));
+        const pool = live.filter((c) => !pinnedIds.has(c.id));
+        const seed = Array.from(s.slug).reduce((acc, ch) => acc + ch.charCodeAt(0), 0) * 31;
+        tools = [...pinned, ...seededShuffle(pool, seed).map(toHomeTool)].slice(0, TARGET_PER_SECTION);
+      } else {
+        tools = tools.slice(0, TARGET_PER_SECTION);
+      }
 
-      const pinnedIds = new Set(pinned.map((p) => p.id));
-      const pool = live.filter((c) => !pinnedIds.has(c.id));
-      const shuffled = seededShuffle(pool, SECTION_SEEDS[section] ?? 0).map(toHomeTool);
-      return [...pinned, ...shuffled].slice(0, TARGET_PER_SECTION);
-    };
+      return { id: s.id, slug: s.slug, title: s.title, subtitle: s.subtitle, tools };
+    });
+
+    const bySlug = (slug: string) => built.find((b) => b.slug === slug)?.tools ?? [];
 
     return {
-      hot: build("hot"),
-      trending: build("trending"),
-      featured: build("featured"),
-      mostUsed: build("most_used"),
-      isLoading,
+      sections: built,
+      isLoading: catalogLoading || secLoading,
+      hot: bySlug("hot"),
+      trending: bySlug("trending"),
+      featured: bySlug("editors_pick").length ? bySlug("editors_pick") : bySlug("featured"),
+      mostUsed: bySlug("most_used"),
     };
-  }, [catalog, isLoading]);
+  }, [catalog, sections, assignments, catalogLoading, secLoading]);
 }
