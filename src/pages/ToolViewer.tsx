@@ -158,7 +158,7 @@ const ToolViewer = () => {
   }
 
   // Tool exists in catalog but has no implementation yet — redirect to catalog.
-  if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
+  if (catalogChecked && !redirecting && !isNativeTool && !iframeSrc && !uploadedToolUrl && catalogInfo) {
     return <Navigate to="/ai-apps" replace />;
   }
 
