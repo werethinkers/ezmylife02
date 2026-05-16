@@ -88,9 +88,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect, accept
         onChange={handleInputChange}
         accept={acceptedFileTypes}
       />
-      <UploadCloudIcon className="w-10 h-10 text-gray-400 mb-2" />
-      <p className="font-semibold text-gray-700">Click to upload or drag and drop</p>
-      <p className="text-sm text-gray-500">PDF, PPTX, or DOCX (optional)</p>
+      <UploadCloudIcon className="w-10 h-10 text-gray-600 mb-2" />
+      <p className="font-semibold text-gray-800">Click to upload or drag and drop</p>
+      <p className="text-sm text-gray-700">PDF, PPTX, or DOCX (optional)</p>
     </div>
   );
 };

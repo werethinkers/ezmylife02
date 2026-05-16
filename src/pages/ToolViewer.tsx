@@ -203,7 +203,7 @@ const ToolViewer = () => {
             <div className="h-5 w-px bg-border/50" />
             <div className="flex items-center gap-2">
               <img src={logo} alt="ezyourlife" className="h-8 w-auto hidden sm:block" />
-              <span className="hidden sm:block text-muted-foreground/50">/</span>
+              <span className="hidden sm:block text-muted-foreground" aria-hidden="true">/</span>
               <span className="font-medium text-foreground text-sm truncate max-w-[200px]">{toolTitle}</span>
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
                 Live

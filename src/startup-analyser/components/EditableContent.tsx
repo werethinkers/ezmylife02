@@ -79,7 +79,7 @@ export const EditableContent = ({ value, onUpdate, keywords, highlightEnabled, a
             tabIndex={0}
             data-is-editable="true"
         >
-            {value ? highlightText(value, keywords, highlightEnabled) : <span className="text-gray-400 italic">{placeholder}</span>}
+            {value ? highlightText(value, keywords, highlightEnabled) : <span className="text-gray-600 italic">{placeholder}</span>}
         </div>
     );
 };
