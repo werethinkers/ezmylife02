@@ -378,4 +378,127 @@ export const HomeSectionsManager = () => {
   );
 };
 
+interface SortableSectionRowProps {
+  section: HomeSection;
+  isCurrent: boolean;
+  count: number;
+  onSelect: () => void;
+  onRename: (title: string) => void;
+  onToggleActive: (v: boolean) => void;
+  onDelete: () => void;
+}
+
+const SortableSectionRow = ({
+  section: s,
+  isCurrent,
+  count,
+  onSelect,
+  onRename,
+  onToggleActive,
+  onDelete,
+}: SortableSectionRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+        isCurrent ? "border-primary bg-primary/5" : "hover:bg-muted/40"
+      }`}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className="p-1 -ml-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <button
+        onClick={onSelect}
+        className="flex-1 text-left flex items-center gap-3 min-w-0"
+      >
+        <Input
+          value={s.title}
+          onChange={(e) => onRename(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="h-8 max-w-xs"
+        />
+        <span className="text-xs text-muted-foreground truncate">/{s.slug}</span>
+      </button>
+      <Badge variant="outline">{count} tools</Badge>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Active</span>
+        <Switch checked={s.is_active} onCheckedChange={onToggleActive} />
+      </div>
+      <Button size="icon" variant="ghost" onClick={onDelete}>
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
+interface SortableToolRowProps {
+  id: string;
+  index: number;
+  name: string;
+  category: string;
+  isFirst: boolean;
+  isLast: boolean;
+  onUp: () => void;
+  onDown: () => void;
+  onRemove: () => void;
+}
+
+const SortableToolRow = ({
+  id, index, name, category, isFirst, isLast, onUp, onDown, onRemove,
+}: SortableToolRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    background: isDragging ? "hsl(var(--muted))" : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2.5">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className="p-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <span className="text-xs font-mono text-muted-foreground w-6 text-right">{index + 1}.</span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm truncate">{name}</p>
+        <p className="text-[11px] text-muted-foreground truncate">{category} · {id}</p>
+      </div>
+      <Button size="icon" variant="ghost" disabled={isFirst} onClick={onUp} aria-label="Move up" className="h-7 w-7">
+        <ArrowUp className="h-3.5 w-3.5" />
+      </Button>
+      <Button size="icon" variant="ghost" disabled={isLast} onClick={onDown} aria-label="Move down" className="h-7 w-7">
+        <ArrowDown className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        size="icon" variant="ghost" onClick={onRemove}
+        aria-label="Remove from section"
+        className="h-7 w-7 text-destructive hover:text-destructive"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+};
+
 export default HomeSectionsManager;
