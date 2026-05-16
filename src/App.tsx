@@ -10,7 +10,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
-import { SmartAssistantChatbot } from "@/components/SmartAssistantChatbot";
+const SmartAssistantChatbot = lazy(() =>
+  import("@/components/SmartAssistantChatbot").then((m) => ({
+    default: m.SmartAssistantChatbot ?? (m as any).default,
+  }))
+);
 
 // Delay the loading screen so cached/instant chunks don't flash a spinner.
 const DelayedFallback = () => null;
