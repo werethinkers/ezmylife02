@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, Clock, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
+import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
 import { logActivity } from "@/lib/activityLogger";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -19,6 +20,8 @@ interface CatalogTool {
   dedicated_route: string | null;
   has_uploaded_files: boolean;
   is_live: boolean;
+  demo_input: string | null;
+  demo_output: string | null;
 }
 
 const ToolViewer = () => {
@@ -43,7 +46,7 @@ const ToolViewer = () => {
     const checkCatalog = async () => {
       const { data } = await supabase
         .from("tools_catalog")
-        .select("name, description, category, dedicated_route, has_uploaded_files, is_live")
+        .select("name, description, category, dedicated_route, has_uploaded_files, is_live, demo_input, demo_output")
         .eq("id", toolId)
         .single();
 
