@@ -1,49 +1,98 @@
-## Plan: Maximize indexing coverage + broad "AI tool for X" SEO
+# Plan: Admin sections, GSC indexing dashboard, internal links hub
 
-### Part A — Google Search Console indexing
-Google's public Indexing API only accepts JobPosting/BroadcastEvent — for regular HTML pages, **sitemap submission is the official path** (already done with 179 URLs). On top of that:
+Four scopes bundled together. All admin features gated behind the existing `admin` role.
 
-1. **Resubmit sitemap** via the GSC API to force a refresh now that the file is republished.
-2. **List submitted sitemaps + index coverage** to confirm Google picked it up, surface counts (submitted vs indexed) back to you.
-3. **Add an HTML sitemap page** at `/sitemap` (linked from the footer) so crawlers and users have a second discovery path — pure internal links beat sitemap-only for crawl priority.
-4. Note honestly: per-URL "Request Indexing" is rate-limited to ~10/day and only exists in the GSC UI, not the API. Sitemap + internal links is the scalable path.
+---
 
-### Part B — Programmatic SEO so any "AI tool for X" search lands here
+## 1. Multi-section assignment (Hot, Trending, etc.)
 
-Goal: when anyone in the world searches "AI tool for {accounting / wedding planning / podcast editing / anything}", a relevant EZYOURLIFE page ranks.
+**Today**: `tools_catalog.home_section` is a single text column — a tool can only live in one section.
 
-1. **Install `react-helmet-async`** and wrap the app once in `src/main.tsx`. Remove the static `<link rel="canonical">` from `index.html` (each route owns its own).
+**Change**: Replace with a many-to-many join.
 
-2. **Per-tool SEO** on `ToolViewer` (`/ai-apps/:slug`): emit `<Helmet>` with
-   - `<title>{tool.title} — AI tool for {tool.short_use_case} | EZYOURLIFE</title>`
-   - `<meta name="description">` built from tool description + "Free AI {category} tool. Try {tool.title} online, no signup required."
-   - `<meta name="keywords">` including "ai tool for {use_case}", "{category} ai", "free {category} tool", "online {use_case} generator"
-   - Canonical + OG + Twitter tags
-   - `SoftwareApplication` JSON-LD per tool with name, applicationCategory, description, offers, aggregateRating placeholder
+New tables:
+- `home_sections` — admin-editable list. Fields: `slug`, `title`, `subtitle`, `display_order`, `is_active`.
+- `tool_section_assignments` — `(tool_id, section_id, position)`.
 
-3. **Use-case landing pages** at a new route `/ai-tool-for/:query`:
-   - Accepts any free-text slug (e.g. `/ai-tool-for/wedding-planning`, `/ai-tool-for/tax-filing`).
-   - Renders an H1 "AI tools for {humanized query}", H2 "Free {query} AI apps on EZYOURLIFE", plus a filtered grid of matching catalog tools (fuzzy match across `title`, `description`, `category`, `tags`).
-   - When no exact matches: still render meaningful copy (use-case explanation + recommended adjacent tools + Request-a-Tool CTA) so the page is never empty for crawlers.
-   - Helmet emits title/description/canonical/keywords targeting that exact phrase.
+Seed `home_sections` with: Hot, Trending, New, Editor's Pick, Most Used, Staff Pick (admin can rename / add / remove / reorder afterwards).
 
-4. **Industry/sector hub pages** at `/ai-for/:industry` covering high-volume verticals (healthcare, real-estate, education, finance, marketing, legal, ecommerce, hr, sales, design, etc.) — each renders curated tool sets + JSON-LD `CollectionPage` + FAQ.
+Keep the legacy `home_section` column for one release as a fallback, but new UI reads from the join table.
 
-5. **Sitemap update**: extend `scripts/generate-sitemap.ts` (or `public/sitemap.xml`) to include
-   - every `/ai-tool-for/{seed}` for a seeded list of ~200 high-intent phrases ("invoice generator", "study planner", "logo maker", "video script writer", etc.)
-   - every `/ai-for/{industry}` page
+**Admin UI** — extend `src/components/admin/HomeSectionsManager.tsx`:
+- Top half: CRUD list of sections (drag-reorder, rename, toggle active).
+- Bottom half: per-section tool picker (search catalog + multi-select chips) so the same tool can be added to as many sections as wanted.
+- Inside `ToolManagement.tsx`, add a "Sections" multi-select on the tool edit drawer.
 
-6. **Internal linking** — on the homepage and `/ai-apps` add a "Popular searches" footer block linking to the most valuable `/ai-tool-for/...` and `/ai-for/...` pages. This gives Google a crawl path and distributes PageRank.
+**Public UI** — `useHomeSections.ts` already drives rendering; update it to read assignments and render each active section as its own carousel on the Home page.
 
-7. **index.html** keyword + description widen-out to include "AI tool for any task", "AI app for any industry", "find an AI tool for…" without dropping the existing keyword set.
+---
 
-### Part C — Mark fixed + republish
-- Run a final GSC `sitemaps GET` to confirm submission status and report counts.
-- Tell you to publish so the new routes go live; Google will discover them via the updated sitemap on its next crawl.
+## 2. GSC indexing admin dashboard
 
-### Technical notes
-- New files: `src/pages/UseCaseLanding.tsx`, `src/pages/IndustryLanding.tsx`, `src/pages/HtmlSitemap.tsx`, `src/components/seo/PageSeo.tsx` (shared Helmet wrapper).
-- Routing: add three `<Route>`s in `src/App.tsx`.
-- Sitemap: regenerate `public/sitemap.xml` to ~600+ URLs (179 tools + ~200 use-cases + ~30 industries + statics).
-- No DB schema changes. Catalog reads from existing `tools_catalog`.
-- Helmet is client-side, so Googlebot (JS-executing) sees per-route tags. LinkedIn/Slack still see the static `index.html` head — acceptable for non-share-critical landing pages.
+New admin tab "SEO / Indexing" at `/admin` (lazy-loaded `AdminSeoIndexing.tsx`).
+
+**Data model** — new table `gsc_url_status`:
+- `url` (PK), `coverage_state`, `last_crawl_time`, `indexing_state`, `page_fetch_state`, `robots_state`, `last_checked_at`, `inspection_result` (jsonb).
+
+**Edge function** — `gsc-inspect-urls`:
+- Takes `{ urls: string[] }` (max 50/call).
+- For each URL: POST to gateway `/google_search_console/v1/urlInspection/index:inspect` with `{ inspectionUrl, siteUrl: "https://ezyourlife.com/" }`.
+- Upserts row into `gsc_url_status`.
+- Honors GSC quota: 2,000/day, 600/min — function caps at 600/run, throttles with 100ms between calls.
+
+**Dashboard UI**:
+- Top KPIs: total URLs in sitemap, indexed count, not-indexed count, errors, last sync time.
+- Filter tabs: All / Indexed / Discovered-not-indexed / Crawled-not-indexed / Errors / Not checked.
+- Table: URL, status badge, last crawl, last checked, actions.
+- Bulk actions on selected rows:
+  - "Re-inspect" (calls edge function).
+  - "Open in GSC" — deep-links to `https://search.google.com/search-console/inspect?resource_id=https%3A%2F%2Fezyourlife.com%2F&id={encodedUrl}` (1-click manual indexing workflow per your choice).
+- "Sync sitemap → DB" button: parses `public/sitemap.xml`, upserts missing URLs.
+- "Inspect 50 oldest" button for daily manual sweeps.
+
+No cron job — admin presses buttons. Keeps within the official "inspection-only + deep-link" model.
+
+---
+
+## 3. Internal links hub page
+
+New route `/explore` (also linked from footer + Home "Popular searches" block).
+
+Renders:
+- H1 "Explore AI tools by use case and industry".
+- Section 1: 60 top "AI tool for {use case}" links → `/ai-tool-for/{slug}` (from `src/lib/seoData.ts`).
+- Section 2: 30 industry pages → `/ai-for/{industry}`.
+- Section 3: Top categories (existing).
+- Section 4: Featured tools alphabetical.
+
+Pure server-rendered HTML semantics (`<ul>` of `<a>`), `PageSeo` with `CollectionPage` JSON-LD, included in `sitemap.xml`.
+
+Add a compact "Browse by use case →" link block at the bottom of Home and `/ai-apps` for crawl flow.
+
+---
+
+## 4. Sitemap & cross-cutting
+
+- `public/sitemap.xml` regenerated to include `/explore` plus current programmatic URLs.
+- "Sync sitemap → DB" in the SEO dashboard parses the live `sitemap.xml` so the indexing tracker never drifts.
+
+---
+
+## Technical details
+
+**Migrations** (one call, schema only):
+- `home_sections` table + RLS (admins write, anyone read active).
+- `tool_section_assignments` table + RLS.
+- `gsc_url_status` table + RLS (admins only).
+- Seed 6 default sections via the same migration.
+
+**Edge function** `gsc-inspect-urls`:
+- Uses existing `GOOGLE_SEARCH_CONSOLE_API_KEY` + `LOVABLE_API_KEY` via gateway.
+- Validates admin role server-side via JWT.
+- Returns per-URL outcome for UI.
+
+**New / edited files**:
+- New: `src/pages/Explore.tsx`, `src/components/admin/AdminSeoIndexing.tsx`, `supabase/functions/gsc-inspect-urls/index.ts`.
+- Edited: `src/App.tsx` (route for `/explore`), `src/pages/AdminDashboard.tsx` (new tab), `src/components/admin/HomeSectionsManager.tsx`, `src/components/admin/ToolManagement.tsx`, `src/hooks/useHomeSections.ts`, `src/pages/Home.tsx`, `public/sitemap.xml`, `src/components/SEOFooter.tsx` (link to `/explore`).
+
+**Out of scope** (per the constraint above): no auto-indexing cron, no Indexing API misuse — only URL Inspection + GSC deep-links.
