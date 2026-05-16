@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles } from "lucide-react";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import AdminSeoIndexing from "@/components/admin/AdminSeoIndexing";
 import ToolMediaManager from "@/components/admin/ToolMediaManager";
@@ -175,6 +175,7 @@ const AdminDashboard = () => {
       label: "Tools",
       tabs: [
         ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
+        ...(!isViewOnly ? [{ id: "tool-demos" as const, label: "Demo Examples", icon: Sparkles }] : []),
         { id: "tool-usage", label: "Tool Usage", icon: BarChart3 },
         ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
         ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
