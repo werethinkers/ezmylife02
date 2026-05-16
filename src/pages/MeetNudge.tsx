@@ -12,6 +12,7 @@ import AllContacts from "@/components/meet-nudge/AllContacts";
 import ContactsAnalytics from "@/components/meet-nudge/ContactsAnalytics";
 import { CalendarDays, Users, Settings, BarChart3, Copy, Share2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ToolBackButton } from "@/components/tools/ToolBackButton";
 
 const MeetNudge = () => {
   const { user } = useAuth();
@@ -119,7 +120,8 @@ const MeetNudge = () => {
         ]}
       />
       <Navbar />
-      <div className="pt-20 pb-8 px-4 max-w-2xl mx-auto">
+      <ToolBackButton />
+      <div className="pt-4 pb-8 px-4 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-2xl font-bold">Meet Nudge</h1>

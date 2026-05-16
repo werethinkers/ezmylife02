@@ -224,16 +224,16 @@ const Tools = () => {
                   }))}
                 </ToolSection>
               )}
-              <ToolSection title="Hot Tools" emoji="🔥" direction="ltr">
+              <ToolSection title="Hot AI Apps" emoji="🔥" direction="ltr">
                 {hot.map(renderCard)}
               </ToolSection>
-              <ToolSection title="Trending Tools" emoji="📈" direction="rtl">
+              <ToolSection title="Trending AI Apps" emoji="📈" direction="rtl">
                 {trending.map(renderCard)}
               </ToolSection>
               <ToolSection title="Featured AI Apps" emoji="⭐" direction="ltr">
                 {featured.map(renderCard)}
               </ToolSection>
-              <ToolSection title="Most Used Tools" emoji="🏆" direction="rtl">
+              <ToolSection title="Most Used AI Apps" emoji="🏆" direction="rtl">
                 {mostUsed.map(renderCard)}
               </ToolSection>
               <ExploreMoreTools onPreview={handlePreview} />

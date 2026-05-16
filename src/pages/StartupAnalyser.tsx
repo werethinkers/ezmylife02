@@ -1,9 +1,11 @@
 import { SEOHead } from "@/components/SEOHead";
 import StartupAnalyserApp from "@/startup-analyser/StartupAnalyserApp";
+import { ToolBackButton } from "@/components/tools/ToolBackButton";
 
 const StartupAnalyser = () => {
   return (
     <>
+      <ToolBackButton floating />
       <SEOHead
         title="AI Startup Analyser - Analyse Any Startup Instantly"
         description="Use EZYOURLIFE's AI Startup Analyser to get instant competitor analysis, financial projections, team assessment, and investment-ready reports for any startup."

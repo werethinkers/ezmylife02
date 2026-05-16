@@ -1009,7 +1009,7 @@ const SpeedyNotebook: React.FC = () => {
         />
         <header className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 z-20">
              <div className="flex items-center gap-3">
-                 <button onClick={() => navigate('/')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Back to Home">
+                 <button onClick={() => navigate('/ai-apps')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Back to AI Apps">
                      <BackIcon className="w-5 h-5" />
                  </button>
                  <a href="https://www.ezmy.life" target="_blank" rel="noopener noreferrer" className="flex items-center transition-opacity hover:opacity-80">
