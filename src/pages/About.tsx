@@ -8,8 +8,10 @@ import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { useToast } from "@/hooks/use-toast";
-import { Target, Users, Sparkles, Heart, Mail, MessageSquare, Send, Loader2 } from "lucide-react";
+import { Target, Users, Sparkles, Heart, Mail, MessageSquare, Send, Loader2, Rocket, Zap } from "lucide-react";
 import { z } from "zod";
+import founderAbhijay from "@/assets/founder-abhijay.jpg";
+import founderArinjay from "@/assets/founder-arinjay.jpg";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -96,59 +98,94 @@ const About = () => {
         </div>
       </section>
 
-      {/* Mission Section */}
+      {/* Our Story */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-              <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold">Our Story</h2>
-                <div className="space-y-4 text-lg text-muted-foreground">
-                  <p>
-                    EZYOURLIFE was born from a simple observation: powerful digital tools should be accessible to everyone, not just tech experts.
-                  </p>
-                  <p>
-                    We noticed that people were spending hours searching for the right tools, dealing with complicated setups, and juggling multiple subscriptions. There had to be a better way.
-                  </p>
-                  <p>
-                    That's why we created EZYOURLIFE—a single platform where you can access professional digital tools instantly, with no installation, no complexity, just results.
-                  </p>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-background border border-border/50 flex items-center justify-center p-8">
-                  <div className="text-center space-y-4">
-                    <Sparkles className="h-16 w-16 text-primary mx-auto" />
-                    <p className="text-2xl font-bold">Making Digital Simple</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="max-w-3xl mx-auto space-y-6 text-lg text-muted-foreground leading-relaxed">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Our Story</h2>
+            <p>
+              At <span className="font-semibold text-foreground">EZYOURLIFE</span>, we are building an AI-powered AI app marketplace designed to make digital work faster, simpler, and more accessible for everyone.
+            </p>
+            <p>
+              The idea behind EZYOURLIFE comes from a simple belief: AI should not feel complicated. It should feel useful. Today, people use multiple apps for writing, research, productivity, business tasks, automation, and everyday workflows. But most of these apps are scattered, expensive, or difficult to discover.
+            </p>
+            <p>
+              EZYOURLIFE brings practical AI apps into one unified platform where users can discover, use, and even request custom AI apps based on their needs.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Values Section */}
-      <section className="py-20 bg-muted/30">
+      {/* Founders Section */}
+      <section className="py-20 bg-muted/30 border-y border-border/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Our Values</h2>
+            <h2 className="text-3xl md:text-4xl font-bold">Meet the Founders</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              The principles that guide everything we do
+              Two brothers building the future of AI, one app at a time.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Abhijay */}
+            <Card className="border-border/50 overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
+                <img
+                  src={founderAbhijay}
+                  alt="Abhijay Jain, Founder and CEO of EZYOURLIFE"
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-2xl">Abhijay Jain</CardTitle>
+                <CardDescription className="text-base font-medium text-primary">Founder &amp; CEO</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  A Computer Science graduate from VIT Vellore and alumnus of The Daly College, Indore, Abhijay combines technology, startup exposure, and real-world business understanding. Before EZYOURLIFE, he worked with SeaFund, a deeptech venture capital firm, and later served as Vice President – Investments at a Delhi-based investment banking firm.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Arinjay */}
+            <Card className="border-border/50 overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/10 to-primary/10">
+                <img
+                  src={founderArinjay}
+                  alt="Arinjay Jain, Co-Founder of EZYOURLIFE"
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-2xl">Arinjay Jain</CardTitle>
+                <CardDescription className="text-base font-medium text-primary">Co-Founder, Marketing &amp; Growth</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Abhijay's younger brother and co-founder, Arinjay brings a strong young-builder mindset to the company. He started his first venture, ThingMonkey, during his Class 11 summer break, gaining early hands-on experience in e-commerce, customer behaviour, and digital marketing. Recently completed his 12th and now enrolled at Tetr College of Business, he leads marketing and growth at EZYOURLIFE.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* What makes us different */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
             <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
               <CardHeader>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Target className="h-6 w-6 text-primary" />
+                  <Zap className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-xl">Simplicity</CardTitle>
+                <CardTitle className="text-2xl">Speed &amp; Flexibility</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  We believe powerful tools should be simple to use. No steep learning curves, just intuitive design.
+                <p className="text-muted-foreground leading-relaxed">
+                  If an AI app is not available on the platform, our team can build and deploy it within <span className="font-semibold text-foreground">24 to 48 hours</span>. We're also opening the ecosystem for developers and creators to launch their own AI apps on EZYOURLIFE through a revenue-sharing model.
                 </p>
               </CardContent>
             </Card>
@@ -156,41 +193,13 @@ const About = () => {
             <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
               <CardHeader>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Rocket className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-xl">Accessibility</CardTitle>
+                <CardTitle className="text-2xl">Our Vision</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Everyone deserves access to professional tools. We make sure they're available to all.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">Innovation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  We constantly evolve our platform with cutting-edge features and AI capabilities.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Heart className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">User-First</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Every decision we make is centered around making your experience better.
+                <p className="text-muted-foreground leading-relaxed">
+                  To democratize AI for students, professionals, businesses, creators, and anyone who wants to save time and work smarter. We believe the future of AI is not one super app doing everything — it's an ecosystem of focused, task-specific AI apps that unlock productivity in everyday life.
                 </p>
               </CardContent>
             </Card>
