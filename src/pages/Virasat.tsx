@@ -156,9 +156,7 @@ export default function Virasat() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [history, currentQuestion]);
 
-  useEffect(() => {
-    if (!user) navigate("/auth");
-  }, [user, navigate]);
+  // Auth gating handled by ProtectedRoute — no redundant redirect here.
 
   useEffect(() => {
     if (!user) return;
