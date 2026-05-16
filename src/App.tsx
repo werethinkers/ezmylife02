@@ -248,6 +248,7 @@ const AnimatedRoutes = () => {
             />
             <Route path="/ai-tool-for/:query" element={<UseCaseLanding />} />
             <Route path="/ai-for/:industry" element={<IndustryLanding />} />
+            <Route path="/explore" element={<Explore />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
