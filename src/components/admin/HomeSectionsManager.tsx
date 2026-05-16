@@ -106,12 +106,48 @@ export const HomeSectionsManager = () => {
         .eq("section_id", currentId);
       if (error) return toast({ title: "Remove failed", description: error.message, variant: "destructive" });
     } else {
+      const nextPos = currentOrdered.length;
       const { error } = await supabase
         .from("tool_section_assignments")
-        .insert({ tool_id: toolId, section_id: currentId, position: 0 });
+        .insert({ tool_id: toolId, section_id: currentId, position: nextPos });
       if (error) return toast({ title: "Add failed", description: error.message, variant: "destructive" });
     }
     invalidateAll();
+  };
+
+  const moveTool = async (toolId: string, direction: -1 | 1) => {
+    if (!currentId) return;
+    const idx = currentOrdered.findIndex((a) => a.tool_id === toolId);
+    const swapIdx = idx + direction;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= currentOrdered.length) return;
+    const a = currentOrdered[idx];
+    const b = currentOrdered[swapIdx];
+    // Swap positions
+    const updates = await Promise.all([
+      supabase.from("tool_section_assignments")
+        .update({ position: b.position })
+        .eq("tool_id", a.tool_id).eq("section_id", currentId),
+      supabase.from("tool_section_assignments")
+        .update({ position: a.position })
+        .eq("tool_id", b.tool_id).eq("section_id", currentId),
+    ]);
+    const err = updates.find((u) => u.error)?.error;
+    if (err) return toast({ title: "Reorder failed", description: err.message, variant: "destructive" });
+    invalidateAll();
+  };
+
+  const normalizePositions = async () => {
+    if (!currentId) return;
+    // Rewrite positions to 0..n-1 in current order (helps when positions are non-contiguous)
+    await Promise.all(
+      currentOrdered.map((a, i) =>
+        supabase.from("tool_section_assignments")
+          .update({ position: i })
+          .eq("tool_id", a.tool_id).eq("section_id", currentId)
+      )
+    );
+    invalidateAll();
+    toast({ title: "Order normalized" });
   };
 
   const createSection = async () => {
