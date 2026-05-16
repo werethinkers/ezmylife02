@@ -48,6 +48,8 @@ const Virasat = lazy(() => import("./pages/Virasat"));
 const BulkJobs = lazy(() => import("./pages/BulkJobs"));
 const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
 const ProductVision360 = lazy(() => import("./pages/ProductVision360"));
+const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
+const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 
 
 
@@ -243,6 +245,8 @@ const AnimatedRoutes = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/ai-tool-for/:query" element={<UseCaseLanding />} />
+            <Route path="/ai-for/:industry" element={<IndustryLanding />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
