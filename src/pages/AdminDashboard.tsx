@@ -393,6 +393,7 @@ const AdminDashboard = () => {
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
         {activeTab === "tool-media" && !isViewOnly && <ToolMediaManager />}
         {activeTab === "enterprise" && <EnterpriseLeads />}
+        {activeTab === "seo-indexing" && !isViewOnly && <AdminSeoIndexing />}
           </div>
         </div>
       </div>
