@@ -479,8 +479,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-800 truncate">{s.company_name}</p>
-                    {s.company_website && <p className="text-xs text-gray-500 truncate">{s.company_website}</p>}
-                    <p className="text-xs text-gray-400 mt-1">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    {s.company_website && <p className="text-xs text-gray-700 truncate">{s.company_website}</p>}
+                    <p className="text-xs text-gray-600 mt-1">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <button
                     onClick={(e) => deleteSession(s.id, e)}
