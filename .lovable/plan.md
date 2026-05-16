@@ -1,88 +1,54 @@
-## Goal
+## Problem
 
-Add a "**See an example**" panel **below** each app on the Tool Viewer page, showing one demo input and the kind of output the app produces — so the user understands what to expect without disrupting the actual app flow.
+Clicking the Virasat, Startup Analyser, or ProductVision 360 card from `/ai-apps` opens the tool for a split second, then bounces back to `/ai-apps` (or `/auth`).
 
-## Placement (updated per your feedback)
+## Root cause (most likely)
 
-The demo sits **under** the tool, not above. Page structure:
+Two issues compound:
 
-```
-┌────────────────────────────────────────────┐
-│ Navbar + Back / Fullscreen header          │
-├────────────────────────────────────────────┤
-│                                            │
-│        THE ACTUAL APP (iframe / native)    │ ← unchanged, full flow
-│                                            │
-├────────────────────────────────────────────┤
-│ ✨ See an example                    [▾]   │ ← collapsed by default
-│  IF YOU ENTER → "…"                        │
-│  YOU'LL GET   → "…"                        │
-└────────────────────────────────────────────┘
-```
+1. **`ToolViewer.tsx` line 155** has this safety net:
+   ```tsx
+   if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
+     return <Navigate to="/ai-apps" replace />;
+   }
+   ```
+   For tools with a `dedicated_route` (Virasat, Startup Analyser, ProductVision, etc.), the redirect to the dedicated route happens inside an async callback. There is a render between `setCatalogInfo` and the URL actually changing. If `isLoading` has already been flipped to `false` (e.g. because of a re-render path), this guard fires `<Navigate to="/ai-apps" replace />` before the dedicated-route navigation completes — the user gets thrown back.
 
-- Page becomes scrollable below the app (today it's `h-screen`, no scroll). The app still fills the viewport on first paint; the demo is revealed by scrolling.
-- Collapsed by default (the user has to expand it), so it never blocks anyone mid-task.
-- Fullscreen mode hides the demo entirely.
+2. **`Virasat.tsx` lines 159–161** runs:
+   ```tsx
+   useEffect(() => { if (!user) navigate("/auth"); }, [user, navigate]);
+   ```
+   It doesn't gate on `loading` from `useAuth`. While `ProtectedRoute` does check loading, the auth subscription in `AuthContext` is re-firing (3× "Welcome back" toasts visible in the session replay confirms this), which can momentarily make `user` null between events and kick the user out.
 
-## Where the demo content comes from
+   `AuthContext.tsx` line 79 has `useEffect(..., [toast])`. `toast` from `useToast()` is a new reference on every render → the auth listener gets torn down and re-subscribed repeatedly, producing duplicate `SIGNED_IN` events and a brief `user = null` window.
 
-Per-app `demo_input` + `demo_output` stored in `tools_catalog`. You can provide inputs in **two ways** — both supported:
+## Fix
 
-1. **You give me a list** for any app(s) you care about most → I paste them straight into the DB. Best for the 10–20 flagship apps.
-2. **For the rest (~150 apps)**, I batch-generate one example each using your Gemini key. Result is reviewable + editable in the admin tool manager.
+### 1. `src/pages/ToolViewer.tsx`
+- In `checkCatalog`, when `dedicated_route` is set, do **not** rely on the catch-all guard. Skip all subsequent state work and leave `isLoading = true` so nothing renders until the route change lands.
+- Tighten the line-155 guard so it only fires for tools that are genuinely orphaned (no `dedicated_route`, no native impl, no iframe URL, no uploaded files, and is_live=true). Guard it behind a "catalog check finished" flag instead of `!isLoading`.
 
-Either path writes to the same two columns; you can mix and match.
+### 2. `src/contexts/AuthContext.tsx`
+- Remove `toast` from the effect dependency array (use a `toastRef` to call the latest toast without re-subscribing). This stops the listener thrash and the duplicate `SIGNED_IN` toasts.
+- Treat `INITIAL_SESSION` explicitly so a re-subscription never fires the welcome toast again.
 
-## Build plan (3 parts)
+### 3. `src/pages/Virasat.tsx`
+- Change the auth-check effect to also wait for `loading`:
+  ```tsx
+  const { user, loading } = useAuth();
+  useEffect(() => {
+    if (!loading && !user) navigate("/auth");
+  }, [user, loading, navigate]);
+  ```
+- (Optional) Since `ProtectedRoute` already handles this, the effect can simply be removed.
 
-### Part 1 — Database + display + viewer layout
-1. Migration: add `demo_input text` and `demo_output text` to `tools_catalog`.
-2. New `src/components/tools/ToolDemoPreview.tsx` — collapsible card; renders the output as markdown; hides itself if either field is empty.
-3. Update `src/pages/ToolViewer.tsx`:
-   - Change root from `h-screen` to `min-h-screen` and remove `overflow-hidden` so the page can scroll.
-   - Keep the app at viewport height (`h-[calc(100vh-Xpx)]`) so it still feels app-like on load.
-   - Render `<ToolDemoPreview demoInput=… demoOutput=… />` directly below the app container.
-   - Fetch the two new columns in the existing `checkCatalog()` query.
+### 4. Quick sweep
+Apply the same `loading`-gated check (or remove redundant client-side redirects) anywhere else inside protected pages that does `if (!user) navigate(...)` — `StartupAnalyser`, `ProductVision360`, `MeetNudge`, etc.
 
-After this, every app page can show demos — they just appear empty until Part 2 fills them.
+## Verification
 
-### Part 2 — Populate demos
-
-**Track A (your inputs):** You send me a list like
-```
-tool-3 (Profit Calculator): input="Revenue ₹2L, COGS ₹80k, opex ₹40k"
-tool-25 (…): input="…"
-```
-I run a one-shot script that calls Gemini once per provided input to produce the realistic output, then writes both fields to the DB.
-
-**Track B (auto for the rest):** A Node script `scripts/generate-tool-demos.ts`:
-- Pulls remaining live tools where `demo_input IS NULL`.
-- For each, calls Gemini 2.5 Flash with a structured-output prompt:
-  > "App: `<name>` — `<description>`. Return JSON `{input, output}`. Input = a short, believable user query. Output = the kind of answer this app would produce (markdown, 80–250 words)."
-- Rotates across `GEMINI_API_KEY_1..5`, ~1 req/sec, idempotent (skips already-filled rows), local JSON checkpoint so reruns are safe.
-- Writes results back to `tools_catalog`.
-
-Cost: ~$0.10 of Gemini usage for all 165 tools. Zero runtime cost — users see static text.
-
-### Part 3 — Admin edit + regenerate
-In the existing admin tool manager, add a small editor per tool:
-- Two textareas: Demo Input / Demo Output
-- "Regenerate with AI" button → calls a new edge function `regenerate-tool-demo` that runs the same Gemini prompt for one tool and returns the result for you to accept.
-
-Lets you fix or rewrite any auto-generated demo without touching the script.
-
-## Technical notes
-
-- **No change to credit pricing, run logic, or the no-overlay tool-viewer constraint.** The demo lives in our chrome below the app frame — never inside it.
-- **Markdown rendering**: use the existing `react-markdown` setup; lightweight fallback if not present.
-- **Types**: `src/integrations/supabase/types.ts` auto-regenerates after migration; no manual edit.
-- **Performance**: demo fields are tiny text, fetched in the same query that already loads catalog info — no extra round-trip.
-
-## What I'll do once you say go
-
-1. Ship Part 1 (migration + component + viewer scroll layout) — visible immediately, demos empty.
-2. Run Part 2 Track B to auto-fill all 165 — wait ~5 min.
-3. Ship Part 3 admin editor.
-4. Whenever you send me curated inputs (Track A), I'll plug them in and overwrite the auto-generated ones for those apps.
-
-Confirm and I'll begin.
+1. Sign in, open `/ai-apps`, click Virasat → lands on `/virasat` and stays.
+2. Same for Startup Analyser and ProductVision 360.
+3. Reload `/virasat` directly while signed in — no bounce.
+4. Sign out and click Virasat → goes to `/auth` once, no flicker.
+5. Sign in via password → exactly one "Welcome back" toast (not three).

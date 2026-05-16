@@ -29,8 +29,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const toastRef = useRef(toast);
   const isInitialLoad = useRef(true);
   const previousEvent = useRef<string | null>(null);
+
+  // Keep latest toast accessible without re-subscribing the auth listener.
+  useEffect(() => { toastRef.current = toast; }, [toast]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -40,30 +44,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Skip toasts on initial load or during OAuth flow
-        if (isInitialLoad.current) {
+        // Skip toasts on initial load and on INITIAL_SESSION re-emits
+        if (isInitialLoad.current || event === 'INITIAL_SESSION') {
           isInitialLoad.current = false;
           previousEvent.current = event;
           return;
         }
 
-        // Only show signed in toast for password login (not OAuth - that redirects to callback)
-        if (event === 'SIGNED_IN' && previousEvent.current !== 'INITIAL_SESSION') {
-          toast({
+        if (event === 'SIGNED_IN' && previousEvent.current !== 'SIGNED_IN') {
+          toastRef.current({
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
-          // Log login activity
           const provider = session?.user?.app_metadata?.provider || "email";
           logActivity("login", { method: provider, email: session?.user?.email });
         } else if (event === 'SIGNED_OUT' && previousEvent.current === 'SIGNED_IN') {
-          // Only show signed out toast for genuine sign-outs
-          toast({
+          toastRef.current({
             title: "Signed out",
             description: "You've been signed out successfully.",
           });
         }
-        
+
         previousEvent.current = event;
       }
     );
@@ -76,7 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, session, loading }}>

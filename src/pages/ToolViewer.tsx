@@ -32,6 +32,8 @@ const ToolViewer = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [uploadedToolUrl, setUploadedToolUrl] = useState<string | null>(null);
   const [catalogInfo, setCatalogInfo] = useState<CatalogTool | null>(null);
+  const [catalogChecked, setCatalogChecked] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
@@ -48,16 +50,18 @@ const ToolViewer = () => {
         .from("tools_catalog")
         .select("name, description, category, dedicated_route, has_uploaded_files, is_live, demo_input, demo_output")
         .eq("id", toolId)
-        .single();
+        .maybeSingle();
 
       if (data) {
-        setCatalogInfo(data as CatalogTool);
-
-        // Redirect to dedicated route if set
+        // Redirect to dedicated route if set — do this FIRST and don't touch
+        // any other state so the orphan-guard below cannot fire.
         if ((data as any).dedicated_route) {
+          setRedirecting(true);
           navigate((data as any).dedicated_route, { replace: true });
           return;
         }
+
+        setCatalogInfo(data as CatalogTool);
 
         // Load uploaded tool via storage URL
         if ((data as any).has_uploaded_files) {
@@ -67,6 +71,7 @@ const ToolViewer = () => {
           if (publicUrl?.publicUrl) {
             setUploadedToolUrl(publicUrl.publicUrl);
             setIsLoading(false);
+            setCatalogChecked(true);
             return;
           }
         }
@@ -84,6 +89,7 @@ const ToolViewer = () => {
         setError("Tool not found");
         setIsLoading(false);
       }
+      setCatalogChecked(true);
     };
 
     checkCatalog();
@@ -152,7 +158,7 @@ const ToolViewer = () => {
   }
 
   // Tool exists in catalog but has no implementation yet — redirect to catalog.
-  if (!isLoading && !isNativeTool && !iframeSrc && catalogInfo) {
+  if (catalogChecked && !redirecting && !isNativeTool && !iframeSrc && !uploadedToolUrl && catalogInfo) {
     return <Navigate to="/ai-apps" replace />;
   }
 
