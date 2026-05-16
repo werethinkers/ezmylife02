@@ -321,54 +321,35 @@ export const HomeSectionsManager = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    In this section · drag-free reorder ({currentOrdered.length})
+                    In this section · drag to reorder ({currentOrdered.length})
                   </p>
                   <Button size="sm" variant="ghost" onClick={normalizePositions} className="h-7 text-xs">
                     Normalize order
                   </Button>
                 </div>
-                <div className="border rounded-lg divide-y">
-                  {currentOrdered.map((a, i) => {
-                    const t = tools.find((tt) => tt.id === a.tool_id);
-                    const name = t?.name ?? a.tool_id;
-                    const cat = t?.category ?? "";
-                    return (
-                      <div key={a.tool_id} className="flex items-center gap-2 p-2.5">
-                        <span className="text-xs font-mono text-muted-foreground w-6 text-right">{i + 1}.</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{cat} · {a.tool_id}</p>
-                        </div>
-                        <Button
-                          size="icon" variant="ghost"
-                          disabled={i === 0}
-                          onClick={() => moveTool(a.tool_id, -1)}
-                          aria-label="Move up"
-                          className="h-7 w-7"
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon" variant="ghost"
-                          disabled={i === currentOrdered.length - 1}
-                          onClick={() => moveTool(a.tool_id, 1)}
-                          aria-label="Move down"
-                          className="h-7 w-7"
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon" variant="ghost"
-                          onClick={() => toggleAssignment(a.tool_id)}
-                          aria-label="Remove from section"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderTools}>
+                  <SortableContext items={currentOrdered.map((a) => a.tool_id)} strategy={verticalListSortingStrategy}>
+                    <div className="border rounded-lg divide-y">
+                      {currentOrdered.map((a, i) => {
+                        const t = tools.find((tt) => tt.id === a.tool_id);
+                        return (
+                          <SortableToolRow
+                            key={a.tool_id}
+                            id={a.tool_id}
+                            index={i}
+                            name={t?.name ?? a.tool_id}
+                            category={t?.category ?? ""}
+                            isFirst={i === 0}
+                            isLast={i === currentOrdered.length - 1}
+                            onUp={() => moveTool(a.tool_id, -1)}
+                            onDown={() => moveTool(a.tool_id, 1)}
+                            onRemove={() => toggleAssignment(a.tool_id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
 
