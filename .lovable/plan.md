@@ -1,94 +1,30 @@
-## Goal
+## Plan: Resolve remaining SEO findings
 
-1. Make auto-generated **preview images** look exactly like the reference shots you uploaded — a clean **split layout** with "Input" on the left and "Output / What you get" on the right, light background + violet accents, with mini-icons and labels so a first-time visitor instantly understands **what the tool is, what to input, and what they'll get**.
-2. Add a new **Credits & Purchases** section in the admin dashboard showing, per user: current balance, total credits bought, total INR spent, last purchase date, and a drill-down of every purchase.
+Address the three failing findings: Google Search Console setup, Lighthouse performance (LCP), and accessibility contrast.
 
----
+### 1. Google Search Console connection
+- Trigger the connector flow via `standard_connectors--connect` for `google_search_console` so you authorize OAuth inline.
+- After connection, request a META verification token for `https://ezyourlife.com/` and add the `<meta name="google-site-verification" content="...">` tag in `index.html` `<head>`.
+- Republish, then call the verify endpoint and register the site (`PUT /webmasters/v3/sites/...`).
+- Submit `https://ezyourlife.com/sitemap.xml`.
 
-## Part 1 — New preview-image style (matches your uploads)
+### 2. Lighthouse performance (LCP)
+- Inspect the homepage hero (`src/pages/Index.tsx` / hero component) to find the LCP element.
+- If it's an image: add explicit `width`/`height`, remove `loading="lazy"`, add `fetchpriority="high"`, and add `<link rel="preload" as="image" href="..." fetchpriority="high">` to `index.html`.
+- If the LCP is text: ensure any custom `@font-face` rules use `font-display: swap` (and verify Google Fonts links use `&display=swap`).
 
-### Where it changes
-- `supabase/functions/bulk-generate-tool-art/index.ts` — only the **preview** prompt template (icon prompt stays as-is).
+### 3. Accessibility contrast
+- Replace low-contrast `text-gray-400` / `text-muted-foreground/50` usages in light-background contexts with design-system tokens (`text-muted-foreground`, `text-foreground`).
+- Target files identified by ripgrep:
+  - `src/pages/ToolViewer.tsx` — `text-muted-foreground/50` separator → `text-muted-foreground`
+  - `src/startup-analyser/components/PromptSelector.tsx`, `FileUploader.tsx`, `EditableContent.tsx`, `StartupAnalyserApp.tsx` — swap `text-gray-400`/`text-gray-500` for `text-muted-foreground`
+  - `src/components/CategoryBrowser.tsx`, `src/data/toolTypes.tsx` — Developer Tools `text-gray-400` → `text-muted-foreground`
+- Skip strictly dark-mode contexts where contrast is already adequate.
 
-### New preview prompt template
-For each tool we'll build a description-rich prompt that forces Gemini (`gemini-2.5-flash-image`) to render the **exact reference layout**:
+### 4. Mark findings fixed + publish
+- After edits land, call `seo_chat--update_findings` to mark all three findings fixed.
+- Surface the publish dialog so Lighthouse-based findings re-measure against the new published build.
 
-```
-A clean product explainer illustration for an AI tool called "{name}".
-Tool purpose: {description}.
-Category: {category}.
-
-LAYOUT — STRICT:
-- Split composition. LEFT panel (35%): a single dashed-border rounded card labeled with the INPUT action for this tool
-  (e.g. "Upload Your Image", "Enter Any Prompt", "Record Your Story", "Upload Pitch Deck", "Write Your Signature").
-  Inside the card: one large violet line-icon representing that input (upload arrow, microphone, pencil, etc.).
-- RIGHT panel (65%): a heading at top describing the OUTPUT or value
-  (e.g. "What You Get", "Save & Use Anywhere", "Instant Black & White Conversion", "Your Story, Beautifully Preserved").
-  Below the heading: a 2x4 or 2x3 grid of small rounded white cards, each card = one violet line-icon + a 1–2 word label
-  describing a feature, output type, or use case of this tool.
-
-STYLE:
-- Pure white / very light gray background (#FAFAFB).
-- Violet/purple accent color (#7C3AED) for icons, headings, and dashed borders.
-- Soft rounded corners (16px), subtle shadows, generous whitespace, premium SaaS explainer aesthetic.
-- Flat vector line-icons only — no photos, no 3D, no gradients on icons.
-- Typography: clean sans-serif, dark gray text (#1F2937), centered labels under icons.
-- 16:9 aspect ratio, high resolution.
-
-STRICT RULES:
-- Every label MUST be a real readable word (not gibberish letters).
-- No logos of real companies, no brand names, no watermarks.
-- No mockup screens with paragraphs of text — only short labels under icons.
-- Do NOT include the tool name itself in the image.
-```
-
-### Per-tool intelligence
-Before calling Gemini, the function will derive **two short strings** from `tools_catalog`:
-- `inputAction` — picked from a small mapping based on category/keywords in the tool's name+description (e.g. category `image` → "Upload Your Image"; keyword `signature` → "Write Your Signature"; keyword `voice/record` → "Record Your Story"; keyword `prompt` → "Enter Any Prompt"; default → "Open the Tool").
-- `outputFeatures` — a list of 6–8 short feature labels generated by a quick text call to `gemini-2.5-flash` (cheap, ~50 tokens) from the tool description, each ≤2 words.
-
-Both are interpolated into the prompt above so each tool gets a **uniquely meaningful** explainer image instead of generic abstract art.
-
-### Output / cost
-- Still PNG, 16:9, uploaded to `tool-media` bucket, `tools_catalog.preview_image_url` updated.
-- Adds one tiny `gemini-2.5-flash` text call per tool (~₹0.001) before the image call. Keeps "cheapest fast" promise.
-
-### What stays the same
-- Icon prompt, key rotation (`GEMINI_API_KEY_1..5`), 429 retry, NDJSON streaming progress, admin UI in `ToolMediaManager.tsx`, per-row "✨ AI" buttons, "Regenerate all" toggle.
-
----
-
-## Part 2 — Admin: Credits & Purchases per user
-
-### New tab in `src/pages/AdminDashboard.tsx`: **"Credits & Purchases"**
-
-### New component: `src/components/admin/CreditsLedgerAdmin.tsx`
-Top-level table of all users with:
-
-| User (email) | Current balance (free + paid) | Total credits bought | Total ₹ spent | Last purchase | Actions |
-
-- Sortable by any column, searchable by email.
-- Click a row → expands to show that user's full purchase history:
-  - Date · Pack · Credits · ₹ amount · Razorpay payment id · Status (`paid` / `pending` / `failed`).
-- "Adjust credits" button reuses existing `admin_adjust_credits` RPC (already in DB).
-
-### Data source — no schema changes needed
-All data already exists:
-- `credit_wallets` (free_balance, paid_balance per user)
-- `credit_purchases` (pack_id, credits, inr_amount, status, paid_at, razorpay_payment_id, user_id)
-- `profiles` (email, display_name)
-
-### One new admin-only RPC: `admin_get_credits_overview()`
-Returns one row per user joining the three tables above, gated by `has_role(auth.uid(), 'admin')`. Avoids client doing N+1 queries and avoids loosening RLS on `credit_purchases`.
-
-### Where it appears
-New tab "Credits & Purchases" in the existing admin dashboard tab list, visible to `admin` only (moderators see read-only as per existing pattern).
-
----
-
-## Out of scope
-- No change to user-facing credit UI.
-- No change to icon prompt or icon generation flow.
-- No new pricing logic — purely reporting.
-
-Ready to implement on approval.
+### Notes
+- GSC verification requires a republish *between* injecting the meta tag and calling verify — Google fetches the live HTML.
+- No backend/schema changes; frontend + `index.html` + connector only.
