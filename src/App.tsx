@@ -10,7 +10,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
-import { SmartAssistantChatbot } from "@/components/SmartAssistantChatbot";
+const SmartAssistantChatbot = lazy(() =>
+  import("@/components/SmartAssistantChatbot").then((m) => ({
+    default: m.SmartAssistantChatbot ?? (m as any).default,
+  }))
+);
 
 // Delay the loading screen so cached/instant chunks don't flash a spinner.
 const DelayedFallback = () => null;
@@ -55,7 +59,17 @@ const Explore = lazy(() => import("./pages/Explore"));
 
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
 
 const pageVariants = {
   initial: { opacity: 0, y: 4 },
@@ -265,7 +279,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AnimatedRoutes />
-          <SmartAssistantChatbot />
+          <Suspense fallback={null}>
+            <SmartAssistantChatbot />
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

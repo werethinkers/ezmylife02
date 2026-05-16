@@ -15,4 +15,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: "es2020",
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "query": ["@tanstack/react-query"],
+          "motion": ["framer-motion"],
+          "supabase": ["@supabase/supabase-js"],
+          "icons": ["lucide-react"],
+          "charts": ["recharts"],
+        },
+      },
+    },
+  },
 }));
