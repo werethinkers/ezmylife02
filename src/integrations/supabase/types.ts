@@ -353,6 +353,78 @@ export type Database = {
         }
         Relationships: []
       }
+      gsc_url_status: {
+        Row: {
+          coverage_state: string | null
+          created_at: string
+          indexing_state: string | null
+          inspection_result: Json
+          last_checked_at: string | null
+          last_crawl_time: string | null
+          page_fetch_state: string | null
+          robots_state: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          coverage_state?: string | null
+          created_at?: string
+          indexing_state?: string | null
+          inspection_result?: Json
+          last_checked_at?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          robots_state?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          coverage_state?: string | null
+          created_at?: string
+          indexing_state?: string | null
+          inspection_result?: Json
+          last_checked_at?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          robots_state?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      home_sections: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          slug: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          slug: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          slug?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meet_nudge_contacts: {
         Row: {
           business_name: string | null
@@ -926,6 +998,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tool_section_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          section_id: string
+          tool_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          section_id: string
+          tool_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          section_id?: string
+          tool_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_section_assignments_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "home_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_section_assignments_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tool_sessions: {
         Row: {

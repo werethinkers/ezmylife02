@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe } from "lucide-react";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
+import AdminSeoIndexing from "@/components/admin/AdminSeoIndexing";
 import ToolMediaManager from "@/components/admin/ToolMediaManager";
 import EnterpriseLeads from "@/components/admin/EnterpriseLeads";
 import ToolRequests from "@/components/admin/ToolRequests";
@@ -60,7 +61,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -185,6 +186,7 @@ const AdminDashboard = () => {
         ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
         ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
         { id: "enterprise", label: "Enterprise Leads", icon: Building2 },
+        ...(!isViewOnly ? [{ id: "seo-indexing" as const, label: "SEO / Indexing", icon: Globe }] : []),
       ],
     },
     {
@@ -391,6 +393,7 @@ const AdminDashboard = () => {
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
         {activeTab === "tool-media" && !isViewOnly && <ToolMediaManager />}
         {activeTab === "enterprise" && <EnterpriseLeads />}
+        {activeTab === "seo-indexing" && !isViewOnly && <AdminSeoIndexing />}
           </div>
         </div>
       </div>

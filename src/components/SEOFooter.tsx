@@ -33,6 +33,7 @@ const SEOFooter = () => {
             <h4 className="text-sm font-semibold text-foreground">Platform</h4>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li><Link to="/ai-apps" className="hover:text-primary transition-colors">Browse All AI Apps</Link></li>
+              <li><Link to="/explore" className="hover:text-primary transition-colors">Explore by Use Case & Industry</Link></li>
               <li><Link to="/credits" className="hover:text-primary transition-colors">Pricing — Credits</Link></li>
               <li><Link to="/startup-analyser" className="hover:text-primary transition-colors">AI Startup Analyser</Link></li>
               <li><Link to="/notebook" className="hover:text-primary transition-colors">Speedy Notebook</Link></li>

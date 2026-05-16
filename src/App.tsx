@@ -50,6 +50,7 @@ const BulkJobDetail = lazy(() => import("./pages/BulkJobDetail"));
 const ProductVision360 = lazy(() => import("./pages/ProductVision360"));
 const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
+const Explore = lazy(() => import("./pages/Explore"));
 
 
 
@@ -247,6 +248,7 @@ const AnimatedRoutes = () => {
             />
             <Route path="/ai-tool-for/:query" element={<UseCaseLanding />} />
             <Route path="/ai-for/:industry" element={<IndustryLanding />} />
+            <Route path="/explore" element={<Explore />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
