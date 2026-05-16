@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { logActivity } from "@/lib/activityLogger";
 import { useToolMedia } from "@/hooks/useToolMedia";
+import { PageSeo } from "@/components/seo/PageSeo";
 import logo from "@/assets/logo.png";
 
 interface CatalogTool {
@@ -190,8 +191,32 @@ const ToolViewer = () => {
     );
   }
 
+  const seoName = catalogInfo?.name || tool?.title || toolTitle;
+  const seoCategory = catalogInfo?.category || tool?.category || "AI";
+  const seoDesc = (catalogInfo?.description || tool?.description || `${seoName} — free AI ${seoCategory.toLowerCase()} tool on EZYOURLIFE. Run instantly in your browser, pay-as-you-go from ₹10.`).slice(0, 300);
+  const seoKeywords = `${seoName.toLowerCase()}, ai ${seoCategory.toLowerCase()} tool, free ${seoName.toLowerCase()}, online ${seoName.toLowerCase()}, ai tool for ${seoCategory.toLowerCase()}, ${seoName.toLowerCase()} online, best ai ${seoName.toLowerCase()}`;
+  const seoJsonLd = catalogInfo
+    ? {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: seoName,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        description: seoDesc,
+        url: `https://ezyourlife.com/tool/${toolId}`,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+      }
+    : undefined;
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      <PageSeo
+        title={`${seoName} — Free AI ${seoCategory} Tool | EZYOURLIFE`}
+        description={seoDesc}
+        keywords={seoKeywords}
+        path={`/tool/${toolId}`}
+        jsonLd={seoJsonLd}
+      />
       <Navbar />
       <div className="border-b border-border/40 bg-background/95 backdrop-blur-sm z-20 shrink-0">
         <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
