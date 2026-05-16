@@ -1070,6 +1070,8 @@ export type Database = {
           category: string
           created_at: string
           dedicated_route: string | null
+          demo_input: string | null
+          demo_output: string | null
           description: string
           display_order: number
           has_uploaded_files: boolean
@@ -1093,6 +1095,8 @@ export type Database = {
           category: string
           created_at?: string
           dedicated_route?: string | null
+          demo_input?: string | null
+          demo_output?: string | null
           description: string
           display_order?: number
           has_uploaded_files?: boolean
@@ -1116,6 +1120,8 @@ export type Database = {
           category?: string
           created_at?: string
           dedicated_route?: string | null
+          demo_input?: string | null
+          demo_output?: string | null
           description?: string
           display_order?: number
           has_uploaded_files?: boolean
