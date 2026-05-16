@@ -15,17 +15,17 @@ const Explore = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Explore AI tools by use case and industry",
+    name: "Explore AI apps by use case and industry",
     url: "https://ezyourlife.com/explore",
     description:
-      "Browse 200+ live AI tools by use case, industry, and category on EZYOURLIFE — the future's first AI app store.",
+      "Browse 200+ live AI apps by use case, industry, and category on EZYOURLIFE — the future's first AI app store.",
   };
 
   return (
     <div className="min-h-screen bg-background">
       <PageSeo
-        title="Explore AI Tools by Use Case & Industry | EZYOURLIFE"
-        description="Browse every AI tool on EZYOURLIFE by use case, industry, and category. Find the right AI app for any task — pay-as-you-go from ₹10."
+        title="Explore AI Apps by Use Case & Industry | EZYOURLIFE"
+        description="Browse every AI app on EZYOURLIFE by use case, industry, and category. Find the right AI app for any task — pay-as-you-go from ₹10."
         keywords="ai tool for, ai apps directory, ai for industry, browse ai tools, ai tool explorer, ezyourlife"
         path="/explore"
         jsonLd={jsonLd}
@@ -35,7 +35,7 @@ const Explore = () => {
       <main className="container mx-auto px-4 py-12 max-w-6xl">
         <header className="mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Explore AI tools by use case and industry
+            Explore AI apps by use case and industry
           </h1>
           <p className="text-lg text-muted-foreground max-w-3xl">
             An internal hub linking every "AI tool for…" page on EZYOURLIFE. Pick a use case, industry,
@@ -43,11 +43,11 @@ const Explore = () => {
           </p>
         </header>
 
-        <Section title="AI tools by use case" count={TOP_USE_CASES.length}>
-          <LinkList items={TOP_USE_CASES.map((slug) => ({ to: `/ai-tool-for/${slug}`, label: `AI tool for ${humanize(slug)}` }))} />
+        <Section title="AI apps by use case" count={TOP_USE_CASES.length}>
+          <LinkList items={TOP_USE_CASES.map((slug) => ({ to: `/ai-tool-for/${slug}`, label: `AI app for ${humanize(slug)}` }))} />
         </Section>
 
-        <Section title="AI tools by industry" count={TOP_INDUSTRIES.length}>
+        <Section title="AI apps by industry" count={TOP_INDUSTRIES.length}>
           <LinkList items={TOP_INDUSTRIES.map((slug) => ({ to: `/ai-for/${slug}`, label: `AI for ${humanize(slug)}` }))} />
         </Section>
 
@@ -55,7 +55,7 @@ const Explore = () => {
           <LinkList items={categories.map((c) => ({ to: `/ai-apps?category=${encodeURIComponent(c)}`, label: c }))} />
         </Section>
 
-        <Section title={`All ${liveTools.length} live tools`} count={liveTools.length}>
+        <Section title={`All ${liveTools.length} live AI apps`} count={liveTools.length}>
           <LinkList items={liveTools.map((t) => ({ to: `/tool/${t.id}`, label: t.name }))} />
         </Section>
       </main>

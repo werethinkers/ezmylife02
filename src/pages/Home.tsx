@@ -105,7 +105,7 @@ const Home = () => {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search AI apps, tools and more…"
+            placeholder="Search AI apps and more…"
             className="pl-12 h-14 text-base bg-card/60 border-border/60 rounded-2xl shadow-sm"
           />
         </form>
