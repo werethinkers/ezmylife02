@@ -418,7 +418,7 @@ export const CategoryBrowser = ({
 
   return (
     <div className="space-y-12">
-      {/* Browse by Tool Type - NEW SECTION */}
+      {/* Browse by AI App Type - NEW SECTION */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -426,7 +426,7 @@ export const CategoryBrowser = ({
               <Layers className="h-5 w-5 text-violet-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Browse by Tool Type</h2>
+              <h2 className="text-2xl font-bold">Browse by AI App Type</h2>
               <p className="text-sm text-muted-foreground">Find AI Apps by what they do</p>
             </div>
           </div>
@@ -487,7 +487,7 @@ export const CategoryBrowser = ({
                           {type}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {data.examples.length} tools
+                          {data.examples.length} apps
                         </p>
                       </div>
                     </div>
@@ -657,7 +657,7 @@ export const CategoryBrowser = ({
                             onSelectDepartment(dept);
                           }}
                         >
-                          View All {dept} Tools
+                          View All {dept} Apps
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </div>
