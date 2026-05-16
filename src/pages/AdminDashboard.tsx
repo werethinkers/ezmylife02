@@ -23,6 +23,7 @@ import CouponManager from "@/components/admin/CouponManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
 import VisitorsTracker from "@/components/admin/VisitorsTracker";
 import CreditsAdmin from "@/components/admin/CreditsAdmin";
+import ToolDemoEditor from "@/components/admin/ToolDemoEditor";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { format } from "date-fns";
