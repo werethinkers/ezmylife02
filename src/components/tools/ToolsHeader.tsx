@@ -57,15 +57,15 @@ export const ToolsHeader = ({
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-4"
             >
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">AI-Powered Tools</span>
+              <span className="text-sm font-medium text-primary">AI-Powered Apps</span>
             </motion.div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
-              Discover <span className="text-gradient">Tools</span>
+              Discover <span className="text-gradient">AI Apps</span>
             </h1>
             
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Explore our collection of powerful AI Apps designed to solve real problems
+              Explore our collection of powerful AI apps designed to solve real problems
             </p>
           </div>
 
@@ -80,7 +80,7 @@ export const ToolsHeader = ({
               <Badge variant="secondary" className="px-4 py-1.5 gap-2 bg-primary/10 text-primary border-primary/30">
                 <span className="text-primary/70">Showing</span>
                 <span className="font-semibold">{filteredCount}</span>
-                <span className="text-primary/70">of {totalCount.toLocaleString()} tools</span>
+                <span className="text-primary/70">of {totalCount.toLocaleString()} AI apps</span>
               </Badge>
             ) : (
               <>
@@ -106,7 +106,7 @@ export const ToolsHeader = ({
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search tools by name, description, or category..."
+                placeholder="Search AI apps by name, description, or category..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-12 pr-12 h-12 text-base bg-background/80 backdrop-blur-sm border-border/50 focus:border-primary/50 rounded-xl shadow-lg"
