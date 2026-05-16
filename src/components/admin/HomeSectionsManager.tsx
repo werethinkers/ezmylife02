@@ -398,7 +398,7 @@ const SortableSectionRow = ({
   onDelete,
 }: SortableSectionRowProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id });
-  const style: React.CSSProperties = {
+  const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
@@ -462,7 +462,7 @@ const SortableToolRow = ({
   id, index, name, category, isFirst, isLast, onUp, onDown, onRemove,
 }: SortableToolRowProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const style: React.CSSProperties = {
+  const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
