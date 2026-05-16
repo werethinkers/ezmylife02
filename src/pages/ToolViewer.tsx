@@ -50,16 +50,18 @@ const ToolViewer = () => {
         .from("tools_catalog")
         .select("name, description, category, dedicated_route, has_uploaded_files, is_live, demo_input, demo_output")
         .eq("id", toolId)
-        .single();
+        .maybeSingle();
 
       if (data) {
-        setCatalogInfo(data as CatalogTool);
-
-        // Redirect to dedicated route if set
+        // Redirect to dedicated route if set — do this FIRST and don't touch
+        // any other state so the orphan-guard below cannot fire.
         if ((data as any).dedicated_route) {
+          setRedirecting(true);
           navigate((data as any).dedicated_route, { replace: true });
           return;
         }
+
+        setCatalogInfo(data as CatalogTool);
 
         // Load uploaded tool via storage URL
         if ((data as any).has_uploaded_files) {
@@ -69,6 +71,7 @@ const ToolViewer = () => {
           if (publicUrl?.publicUrl) {
             setUploadedToolUrl(publicUrl.publicUrl);
             setIsLoading(false);
+            setCatalogChecked(true);
             return;
           }
         }
@@ -86,6 +89,7 @@ const ToolViewer = () => {
         setError("Tool not found");
         setIsLoading(false);
       }
+      setCatalogChecked(true);
     };
 
     checkCatalog();
