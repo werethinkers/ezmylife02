@@ -257,37 +257,24 @@ export const HomeSectionsManager = () => {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            {sections.map((s) => (
-              <div
-                key={s.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                  currentId === s.id ? "border-primary bg-primary/5" : "hover:bg-muted/40"
-                }`}
-              >
-                <button
-                  onClick={() => setActiveSectionId(s.id)}
-                  className="flex-1 text-left flex items-center gap-3 min-w-0"
-                >
-                  <Input
-                    value={s.title}
-                    onChange={(e) => renameSection(s.id, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="h-8 max-w-xs"
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderSections}>
+            <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              <div className="grid gap-2">
+                {sections.map((s) => (
+                  <SortableSectionRow
+                    key={s.id}
+                    section={s}
+                    isCurrent={currentId === s.id}
+                    count={countsBySection.get(s.id) ?? 0}
+                    onSelect={() => setActiveSectionId(s.id)}
+                    onRename={(title) => renameSection(s.id, title)}
+                    onToggleActive={(v) => toggleActive(s.id, v)}
+                    onDelete={() => deleteSection(s.id)}
                   />
-                  <span className="text-xs text-muted-foreground truncate">/{s.slug}</span>
-                </button>
-                <Badge variant="outline">{countsBySection.get(s.id) ?? 0} tools</Badge>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Active</span>
-                  <Switch checked={s.is_active} onCheckedChange={(v) => toggleActive(s.id, v)} />
-                </div>
-                <Button size="icon" variant="ghost" onClick={() => deleteSection(s.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
 
           <div className="flex gap-2 pt-2 border-t">
             <Input
