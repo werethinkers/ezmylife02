@@ -148,7 +148,7 @@ export const ToolsHeader = ({
                 className={viewMode === "featured" ? "bg-emerald-600 hover:bg-emerald-700 shadow-md" : "hover:bg-secondary"}
               >
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Live Tools
+                Live Apps
               </Button>
               <Button
                 variant={viewMode === "browse" ? "default" : "ghost"}
@@ -166,7 +166,7 @@ export const ToolsHeader = ({
                 className={viewMode === "list" ? "shadow-md" : "hover:bg-secondary"}
               >
                 <List className="h-4 w-4 mr-1.5" />
-                All Tools
+                All Apps
               </Button>
             </div>
             <ToolsExportButton className="ml-3" />
