@@ -126,6 +126,7 @@ export default function PromoPage() {
         title={page.seo_title ?? `${page.hero_title ?? "AI App"} — EZYOURLIFE`}
         description={page.seo_description ?? page.hero_subtitle ?? ""}
         image={page.og_image_url ?? page.hero_image_url ?? undefined}
+        path={`/promo/${page.slug}`}
         noindex
       />
       <Navbar />
