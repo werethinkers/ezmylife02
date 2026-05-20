@@ -74,7 +74,7 @@ export default function PromoPage() {
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
-      setPage(data as PromoPage | null);
+      setPage((data as unknown) as PromoPage | null);
       setLoading(false);
     })();
   }, [slug]);
