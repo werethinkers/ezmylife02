@@ -918,6 +918,107 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_promo_pages: {
+        Row: {
+          created_at: string
+          cta_label: string | null
+          cta_sublabel: string | null
+          features: Json
+          final_cta_subtitle: string | null
+          final_cta_title: string | null
+          footer_badges: Json
+          hero_chips: Json
+          hero_eyebrow: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          hero_title_accent: string | null
+          how_it_works: Json
+          id: string
+          is_published: boolean
+          og_image_url: string | null
+          rating: number | null
+          reviews_count: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          social_proof: string | null
+          stats: Json
+          testimonials: Json
+          tool_id: string
+          trust_logos: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string | null
+          cta_sublabel?: string | null
+          features?: Json
+          final_cta_subtitle?: string | null
+          final_cta_title?: string | null
+          footer_badges?: Json
+          hero_chips?: Json
+          hero_eyebrow?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          hero_title_accent?: string | null
+          how_it_works?: Json
+          id?: string
+          is_published?: boolean
+          og_image_url?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          social_proof?: string | null
+          stats?: Json
+          testimonials?: Json
+          tool_id: string
+          trust_logos?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string | null
+          cta_sublabel?: string | null
+          features?: Json
+          final_cta_subtitle?: string | null
+          final_cta_title?: string | null
+          footer_badges?: Json
+          hero_chips?: Json
+          hero_eyebrow?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          hero_title_accent?: string | null
+          how_it_works?: Json
+          id?: string
+          is_published?: boolean
+          og_image_url?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          social_proof?: string | null
+          stats?: Json
+          testimonials?: Json
+          tool_id?: string
+          trust_logos?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_promo_pages_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: true
+            referencedRelation: "tools_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tool_requests: {
         Row: {
           admin_notes: string | null
