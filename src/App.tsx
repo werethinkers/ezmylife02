@@ -55,6 +55,7 @@ const ProductVision360 = lazy(() => import("./pages/ProductVision360"));
 const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
+const PromoPage = lazy(() => import("./pages/PromoPage"));
 
 
 
