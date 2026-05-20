@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Pencil, ExternalLink, Copy, Sparkles, Trash2, Rocket } from "lucide-react";
+import { Loader2, Plus, Pencil, ExternalLink, Copy, Sparkles, Trash2, Rocket, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ToolRow { id: string; name: string; description: string; }
@@ -280,7 +280,7 @@ function PromoEditorDialog({ page, onClose, onSave }: { page: PromoRow; onClose:
               <Field label="Title accent (gradient)"><Input value={draft.hero_title_accent ?? ""} onChange={(e) => upd("hero_title_accent", e.target.value)} /></Field>
             </div>
             <Field label="Subtitle"><Textarea rows={3} value={draft.hero_subtitle ?? ""} onChange={(e) => upd("hero_subtitle", e.target.value)} /></Field>
-            <Field label="Hero image URL"><Input value={draft.hero_image_url ?? ""} onChange={(e) => upd("hero_image_url", e.target.value)} /></Field>
+            <Field label="Hero image"><ImageUploadField value={draft.hero_image_url ?? ""} onChange={(v) => upd("hero_image_url", v)} folder={`promo/${draft.tool_id}/hero`} /></Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="CTA label"><Input value={draft.cta_label ?? ""} onChange={(e) => upd("cta_label", e.target.value)} placeholder="Try AnglePro Now" /></Field>
               <Field label="CTA sublabel (auto if blank)"><Input value={draft.cta_sublabel ?? ""} onChange={(e) => upd("cta_sublabel", e.target.value)} placeholder="1 CREDIT to start" /></Field>
@@ -388,7 +388,7 @@ function PromoEditorDialog({ page, onClose, onSave }: { page: PromoRow; onClose:
             />
             <Field label="SEO title"><Input value={draft.seo_title ?? ""} onChange={(e) => upd("seo_title", e.target.value)} /></Field>
             <Field label="SEO description"><Textarea rows={2} value={draft.seo_description ?? ""} onChange={(e) => upd("seo_description", e.target.value)} /></Field>
-            <Field label="OG image URL"><Input value={draft.og_image_url ?? ""} onChange={(e) => upd("og_image_url", e.target.value)} /></Field>
+            <Field label="OG image"><ImageUploadField value={draft.og_image_url ?? ""} onChange={(v) => upd("og_image_url", v)} folder={`promo/${draft.tool_id}/og`} /></Field>
           </TabsContent>
         </Tabs>
 
@@ -407,6 +407,44 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
     {children}
   </div>
 );
+
+function ImageUploadField({ value, onChange, folder }: { value: string; onChange: (v: string) => void; folder: string }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${folder}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("tool-media").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("tool-media").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Image uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://... or upload" />
+        <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
+          <label className="cursor-pointer">
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            <span className="ml-1">Upload</span>
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          </label>
+        </Button>
+      </div>
+      {value && <img src={value} alt="preview" className="h-24 rounded border border-border object-cover" />}
+    </div>
+  );
+}
 
 const RepeatList = ({ title, rows, onAdd, onRemove, render }: {
   title: string; rows: any[]; onAdd: () => void; onRemove: (i: number) => void;
