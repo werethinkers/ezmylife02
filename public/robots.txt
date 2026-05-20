@@ -4,6 +4,7 @@ Disallow: /admin
 Disallow: /auth/callback
 Disallow: /profile
 Disallow: /tool-preview/
+Disallow: /promo/
 
 Host: https://ezyourlife.com
 Sitemap: https://ezyourlife.com/sitemap.xml

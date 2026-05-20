@@ -55,6 +55,7 @@ const ProductVision360 = lazy(() => import("./pages/ProductVision360"));
 const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
+const PromoPage = lazy(() => import("./pages/PromoPage"));
 
 
 
@@ -251,6 +252,7 @@ const AnimatedRoutes = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/promo/:slug" element={<PromoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"
