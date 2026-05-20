@@ -177,6 +177,7 @@ const AdminDashboard = () => {
       tabs: [
         ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
         ...(!isViewOnly ? [{ id: "tool-demos" as const, label: "Demo Examples", icon: Sparkles }] : []),
+        ...(!isViewOnly ? [{ id: "promo-pages" as const, label: "Promo Pages", icon: Rocket }] : []),
         { id: "tool-usage", label: "Tool Usage", icon: BarChart3 },
         ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
         ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
