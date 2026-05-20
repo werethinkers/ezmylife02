@@ -252,6 +252,7 @@ const AnimatedRoutes = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/promo/:slug" element={<PromoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"
