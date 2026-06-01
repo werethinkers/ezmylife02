@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download } from "lucide-react";
+import DataExport from "@/components/admin/DataExport";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import AdminSeoIndexing from "@/components/admin/AdminSeoIndexing";
 import ToolMediaManager from "@/components/admin/ToolMediaManager";
@@ -63,7 +64,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "tool-demos" | "promo-pages" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "tool-demos" | "promo-pages" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing" | "data-export">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -204,7 +205,10 @@ const AdminDashboard = () => {
     ...(!isViewOnly
       ? [{
           label: "System",
-          tabs: [{ id: "api-keys" as const, label: "API Keys", icon: KeyRound }],
+          tabs: [
+            { id: "api-keys" as const, label: "API Keys", icon: KeyRound },
+            { id: "data-export" as const, label: "Full Export", icon: Download },
+          ],
         }]
       : []),
   ];
@@ -400,6 +404,7 @@ const AdminDashboard = () => {
         {activeTab === "seo-indexing" && !isViewOnly && <AdminSeoIndexing />}
         {activeTab === "tool-demos" && !isViewOnly && <ToolDemoEditor />}
         {activeTab === "promo-pages" && !isViewOnly && <PromoPagesManager />}
+        {activeTab === "data-export" && !isViewOnly && <DataExport />}
           </div>
         </div>
       </div>
