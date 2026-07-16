@@ -5,16 +5,63 @@
 // src/lib/mcp/index.ts
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.23.0";
 
+// src/lib/mcp/tools/help.ts
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.23.0";
+var GUIDE = `# EZYOURLIFE MCP \u2014 Available Tools
+
+You are connected to EZYOURLIFE (https://ezyourlife.com) as a signed-in user. Every action runs as that user: RLS applies, credits deduct from their wallet, and results save to their account.
+
+## Shortcuts (browser extension sync)
+- **save_shortcut(key, value, category?, logic?)** \u2014 create/update a text-expansion shortcut. Auto-syncs to the user's browser extension and Speedy Notebook.
+- **list_shortcuts()** \u2014 list all shortcuts.
+- **delete_shortcut(key)** \u2014 remove a shortcut by key.
+
+Example: user says *"save shortcut sig -> Best, Abhijay"* \u2192 call save_shortcut({ key: "sig", value: "Best, Abhijay" }).
+
+## Speedy Notebook
+- **append_notebook_entry(content, heading?)** \u2014 append a timestamped note to the user's notebook.
+
+## Meet Nudge (networking CRM)
+- **add_meet_nudge_contact(name, email?, phone?, occupation?, business_name?, location?, website?, linkedin_url?, fun_fact?, event_name?)** \u2014 save a person met at an event.
+- **list_meet_nudge_contacts(query?, limit?)** \u2014 search/list saved contacts.
+
+## PromptMaster (AI prompt engineering)
+- **analyze_prompt(prompt, goal?)** \u2014 rewrites/improves a prompt using Gemini. Returns an optimized version with rationale.
+
+## Catalog & user data
+- **list_tools(query?, limit?)** \u2014 browse the 200+ EZYOURLIFE AI app catalog.
+- **get_tool_link(tool_id)** \u2014 get a direct URL to open a tool in the browser (for iframe/UI-only tools that can't run over MCP).
+- **list_my_creations(limit?)** \u2014 recent items the user generated (images, videos, docs).
+- **list_bulk_jobs(limit?)** \u2014 the user's bulk-processing jobs.
+- **get_credit_balance()** \u2014 free + paid credit totals.
+- **submit_tool_request(tool_description, name?, email?)** \u2014 request a new custom tool (24-48h turnaround).
+
+## Not available over MCP
+Startup Analyser and Video Generator are long-running (>60s) and would time out. Suggest the user run them at https://ezyourlife.com directly \u2014 use get_tool_link to hand them the URL.
+
+## Tips
+- Always call tools rather than guessing data. Shortcuts, contacts, and creations are per-user.
+- If a tool needs credits, the user's wallet is charged automatically \u2014 surface the balance from get_credit_balance if they ask.
+`;
+var help_default = defineTool({
+  name: "help",
+  title: "EZYOURLIFE help & tool guide",
+  description: "Returns a full guide to every EZYOURLIFE MCP tool with example usage. Call this first if unsure what's available.",
+  inputSchema: {},
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: () => ({ content: [{ type: "text", text: GUIDE }] })
+});
+
 // src/lib/mcp/tools/get-credit-balance.ts
 import { createClient } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
 function userClient(ctx) {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var get_credit_balance_default = defineTool({
+var get_credit_balance_default = defineTool2({
   name: "get_credit_balance",
   title: "Get EZYOURLIFE credit balance",
   description: "Returns the signed-in user's free + paid credit balance on EZYOURLIFE.",
@@ -36,7 +83,7 @@ var get_credit_balance_default = defineTool({
 
 // src/lib/mcp/tools/list-tools.ts
 import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z } from "npm:zod@^3.23.8";
 function userClient2(ctx) {
   return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
@@ -44,7 +91,7 @@ function userClient2(ctx) {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var list_tools_default = defineTool2({
+var list_tools_default = defineTool3({
   name: "list_tools",
   title: "List EZYOURLIFE AI apps",
   description: "Search or list AI apps in the EZYOURLIFE catalog. Optional query filters by name/description/category.",
@@ -69,16 +116,48 @@ var list_tools_default = defineTool2({
   }
 });
 
-// src/lib/mcp/tools/list-shortcuts.ts
+// src/lib/mcp/tools/get-tool-link.ts
 import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z2 } from "npm:zod@^3.23.8";
 function userClient3(ctx) {
   return createClient3(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var list_shortcuts_default = defineTool3({
+var get_tool_link_default = defineTool4({
+  name: "get_tool_link",
+  title: "Get a direct link to an EZYOURLIFE tool",
+  description: "Returns a direct URL to open a specific EZYOURLIFE AI app in the browser. Use for iframe/UI-only tools that can't run over MCP (e.g. Startup Analyser, Video Generator, Notebook).",
+  inputSchema: { tool_id: z2.string().trim().min(1).describe("Tool ID (from list_tools) or slug.") },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ tool_id }, ctx) => {
+    const sb = userClient3(ctx);
+    const { data, error } = await sb.from("tools_catalog").select("id,name,description,dedicated_route,is_premium,is_free").eq("id", tool_id).maybeSingle();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    if (!data) return { content: [{ type: "text", text: `Tool '${tool_id}' not found. Use list_tools to search.` }], isError: true };
+    const path = data.dedicated_route ?? `/tool/${data.id}`;
+    const url = `https://ezyourlife.com${path}`;
+    return {
+      content: [{ type: "text", text: `${data.name}: ${url}
+
+${data.description ?? ""}` }],
+      structuredContent: { url, tool: data }
+    };
+  }
+});
+
+// src/lib/mcp/tools/list-shortcuts.ts
+import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.23.0";
+function userClient4(ctx) {
+  return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+var list_shortcuts_default = defineTool5({
   name: "list_shortcuts",
   title: "List text-expansion shortcuts",
   description: "List the signed-in user's EZYOURLIFE text-expansion shortcuts (key \u2192 value). These sync to the browser extension and Speedy Notebook.",
@@ -86,7 +165,7 @@ var list_shortcuts_default = defineTool3({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient3(ctx);
+    const sb = userClient4(ctx);
     const { data, error } = await sb.from("notebook_sessions").select("session_shortcuts").eq("user_id", ctx.getUserId()).maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const shortcuts = Array.isArray(data?.session_shortcuts) ? data.session_shortcuts : [];
@@ -98,29 +177,29 @@ var list_shortcuts_default = defineTool3({
 });
 
 // src/lib/mcp/tools/save-shortcut.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z2 } from "npm:zod@^3.23.8";
-function userClient4(ctx) {
-  return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z3 } from "npm:zod@^3.23.8";
+function userClient5(ctx) {
+  return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var save_shortcut_default = defineTool4({
+var save_shortcut_default = defineTool6({
   name: "save_shortcut",
   title: "Save a text-expansion shortcut",
   description: "Create or update an EZYOURLIFE text-expansion shortcut. The `key` (e.g. 'mtg') will expand to `value` in the browser extension and Speedy Notebook.",
   inputSchema: {
-    key: z2.string().trim().min(1).max(64).describe("Shortcut trigger, e.g. 'mtg' or 'sig'."),
-    value: z2.string().trim().min(1).describe("The text this shortcut expands to."),
-    category: z2.string().trim().max(64).optional().describe("Optional category label."),
-    logic: z2.string().trim().max(500).optional().describe("Optional note describing when to use this shortcut.")
+    key: z3.string().trim().min(1).max(64).describe("Shortcut trigger, e.g. 'mtg' or 'sig'."),
+    value: z3.string().trim().min(1).describe("The text this shortcut expands to."),
+    category: z3.string().trim().max(64).optional().describe("Optional category label."),
+    logic: z3.string().trim().max(500).optional().describe("Optional note describing when to use this shortcut.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ key, value, category, logic }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient4(ctx);
+    const sb = userClient5(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("id,session_shortcuts,editor_content").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -148,24 +227,24 @@ var save_shortcut_default = defineTool4({
 });
 
 // src/lib/mcp/tools/delete-shortcut.ts
-import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z3 } from "npm:zod@^3.23.8";
-function userClient5(ctx) {
-  return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z4 } from "npm:zod@^3.23.8";
+function userClient6(ctx) {
+  return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var delete_shortcut_default = defineTool5({
+var delete_shortcut_default = defineTool7({
   name: "delete_shortcut",
   title: "Delete a text-expansion shortcut",
   description: "Remove an EZYOURLIFE text-expansion shortcut by its key.",
-  inputSchema: { key: z3.string().trim().min(1).describe("Shortcut trigger to delete.") },
+  inputSchema: { key: z4.string().trim().min(1).describe("Shortcut trigger to delete.") },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ key }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient5(ctx);
+    const sb = userClient6(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("session_shortcuts,editor_content").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -184,35 +263,35 @@ var delete_shortcut_default = defineTool5({
 });
 
 // src/lib/mcp/tools/add-meet-nudge-contact.ts
-import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z4 } from "npm:zod@^3.23.8";
-function userClient6(ctx) {
-  return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+import { createClient as createClient7 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z5 } from "npm:zod@^3.23.8";
+function userClient7(ctx) {
+  return createClient7(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var add_meet_nudge_contact_default = defineTool6({
+var add_meet_nudge_contact_default = defineTool8({
   name: "add_meet_nudge_contact",
   title: "Add a Meet Nudge contact",
   description: "Add a networking contact to the signed-in user's Meet Nudge CRM on EZYOURLIFE.",
   inputSchema: {
-    name: z4.string().trim().min(1),
-    email: z4.string().trim().email().optional(),
-    phone: z4.string().trim().optional(),
-    occupation: z4.string().trim().optional(),
-    business_name: z4.string().trim().optional(),
-    location: z4.string().trim().optional(),
-    website: z4.string().trim().url().optional(),
-    linkedin_url: z4.string().trim().url().optional(),
-    fun_fact: z4.string().trim().optional(),
-    event_name: z4.string().trim().optional()
+    name: z5.string().trim().min(1),
+    email: z5.string().trim().email().optional(),
+    phone: z5.string().trim().optional(),
+    occupation: z5.string().trim().optional(),
+    business_name: z5.string().trim().optional(),
+    location: z5.string().trim().optional(),
+    website: z5.string().trim().url().optional(),
+    linkedin_url: z5.string().trim().url().optional(),
+    fun_fact: z5.string().trim().optional(),
+    event_name: z5.string().trim().optional()
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient6(ctx);
+    const sb = userClient7(ctx);
     const { data, error } = await sb.from("meet_nudge_contacts").insert({ ...input, host_id: ctx.getUserId() }).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
@@ -223,27 +302,27 @@ var add_meet_nudge_contact_default = defineTool6({
 });
 
 // src/lib/mcp/tools/list-meet-nudge-contacts.ts
-import { createClient as createClient7 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z5 } from "npm:zod@^3.23.8";
-function userClient7(ctx) {
-  return createClient7(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+import { createClient as createClient8 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z6 } from "npm:zod@^3.23.8";
+function userClient8(ctx) {
+  return createClient8(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var list_meet_nudge_contacts_default = defineTool7({
+var list_meet_nudge_contacts_default = defineTool9({
   name: "list_meet_nudge_contacts",
   title: "List Meet Nudge contacts",
   description: "List the signed-in user's Meet Nudge networking contacts. Optional search by name/business/email.",
   inputSchema: {
-    query: z5.string().optional(),
-    limit: z5.number().int().min(1).max(200).optional()
+    query: z6.string().optional(),
+    limit: z6.number().int().min(1).max(200).optional()
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient7(ctx);
+    const sb = userClient8(ctx);
     let q = sb.from("meet_nudge_contacts").select("id,name,email,phone,occupation,business_name,location,event_name,linkedin_url,website,fun_fact,created_at").is("deleted_at", null).order("created_at", { ascending: false }).limit(limit ?? 50);
     if (query && query.trim()) {
       const t = `%${query.trim()}%`;
@@ -259,27 +338,27 @@ var list_meet_nudge_contacts_default = defineTool7({
 });
 
 // src/lib/mcp/tools/append-notebook.ts
-import { createClient as createClient8 } from "npm:@supabase/supabase-js@^2.75.1";
-import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z6 } from "npm:zod@^3.23.8";
-function userClient8(ctx) {
-  return createClient8(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+import { createClient as createClient9 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z7 } from "npm:zod@^3.23.8";
+function userClient9(ctx) {
+  return createClient9(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
-var append_notebook_default = defineTool8({
+var append_notebook_default = defineTool10({
   name: "append_notebook_entry",
   title: "Append to Speedy Notebook",
   description: "Append a note to the signed-in user's Speedy Notebook on EZYOURLIFE. A timestamped heading is added before the content.",
   inputSchema: {
-    content: z6.string().trim().min(1).describe("Note content (HTML or plain text). Appended to the notebook."),
-    heading: z6.string().trim().max(200).optional().describe("Optional short heading for the note.")
+    content: z7.string().trim().min(1).describe("Note content (HTML or plain text). Appended to the notebook."),
+    heading: z7.string().trim().max(200).optional().describe("Optional short heading for the note.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ content, heading }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient8(ctx);
+    const sb = userClient9(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("editor_content,session_shortcuts").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -300,26 +379,176 @@ var append_notebook_default = defineTool8({
   }
 });
 
+// src/lib/mcp/tools/analyze-prompt.ts
+import { defineTool as defineTool11 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z8 } from "npm:zod@^3.23.8";
+var analyze_prompt_default = defineTool11({
+  name: "analyze_prompt",
+  title: "Analyze & improve a prompt (PromptMaster)",
+  description: "Rewrites a user's prompt using EZYOURLIFE PromptMaster (Gemini). Returns an improved version plus rationale. Charges the user's credits per catalog pricing.",
+  inputSchema: {
+    prompt: z8.string().trim().min(1).describe("The prompt to analyze and improve."),
+    goal: z8.string().trim().optional().describe("Optional: what the user wants the improved prompt to achieve.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  handler: async ({ prompt, goal }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const url = `${process.env.SUPABASE_URL}/functions/v1/promptmaster-ai`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${ctx.getToken()}`,
+          apikey: process.env.SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify({ prompt, goal, mode: "improve" })
+      });
+      const text = await res.text();
+      if (!res.ok) return { content: [{ type: "text", text: `PromptMaster error (${res.status}): ${text}` }], isError: true };
+      return { content: [{ type: "text", text }] };
+    } catch (e) {
+      return { content: [{ type: "text", text: `Request failed: ${e?.message ?? e}` }], isError: true };
+    }
+  }
+});
+
+// src/lib/mcp/tools/list-my-creations.ts
+import { createClient as createClient10 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z9 } from "npm:zod@^3.23.8";
+function userClient10(ctx) {
+  return createClient10(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+var list_my_creations_default = defineTool12({
+  name: "list_my_creations",
+  title: "List my AI creations",
+  description: "Recent items the signed-in user has generated on EZYOURLIFE (images, videos, docs, etc.).",
+  inputSchema: {
+    limit: z9.number().int().min(1).max(100).optional(),
+    tool_type: z9.string().optional().describe("Optional filter by tool_type.")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ limit, tool_type }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const sb = userClient10(ctx);
+    let q = sb.from("user_creations").select("id,tool_type,title,prompt,result_url,status,created_at").eq("user_id", ctx.getUserId()).order("created_at", { ascending: false }).limit(limit ?? 25);
+    if (tool_type) q = q.eq("tool_type", tool_type);
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
+      structuredContent: { creations: data ?? [] }
+    };
+  }
+});
+
+// src/lib/mcp/tools/list-bulk-jobs.ts
+import { createClient as createClient11 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z10 } from "npm:zod@^3.23.8";
+function userClient11(ctx) {
+  return createClient11(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+var list_bulk_jobs_default = defineTool13({
+  name: "list_bulk_jobs",
+  title: "List my bulk processing jobs",
+  description: "Recent bulk-mode processing jobs run by the signed-in user on EZYOURLIFE.",
+  inputSchema: { limit: z10.number().int().min(1).max(100).optional() },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const sb = userClient11(ctx);
+    const { data, error } = await sb.from("bulk_jobs").select("id,tool_id,tool_name,status,total_items,completed_items,failed_items,total_credits_charged,output_zip_path,created_at,completed_at").eq("user_id", ctx.getUserId()).order("created_at", { ascending: false }).limit(limit ?? 25);
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
+      structuredContent: { jobs: data ?? [] }
+    };
+  }
+});
+
+// src/lib/mcp/tools/submit-tool-request.ts
+import { createClient as createClient12 } from "npm:@supabase/supabase-js@^2.75.1";
+import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z11 } from "npm:zod@^3.23.8";
+function userClient12(ctx) {
+  return createClient12(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+var submit_tool_request_default = defineTool14({
+  name: "submit_tool_request",
+  title: "Request a new EZYOURLIFE tool",
+  description: "Submits a request for EZYOURLIFE to build a new custom AI tool (typical turnaround 24-48h).",
+  inputSchema: {
+    tool_description: z11.string().trim().min(10).describe("Describe the tool you want built."),
+    name: z11.string().trim().optional(),
+    email: z11.string().trim().email().optional()
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ tool_description, name, email }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const sb = userClient12(ctx);
+    const { data, error } = await sb.from("tool_requests").insert({
+      tool_description,
+      name: name ?? ctx.getUserEmail() ?? "MCP user",
+      email: email ?? ctx.getUserEmail() ?? "",
+      status: "pending"
+    }).select().single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return {
+      content: [{ type: "text", text: `Tool request submitted (id: ${data.id}). The EZYOURLIFE team will follow up within 24-48h.` }],
+      structuredContent: { request: data }
+    };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "vrsadzjyugbusfazdgyi";
 var mcp_default = defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
-  version: "0.1.0",
-  instructions: "EZYOURLIFE tools for the signed-in user. Use `save_shortcut`, `list_shortcuts`, and `delete_shortcut` to manage text-expansion shortcuts that sync to their browser extension. Use `append_notebook_entry` to add notes to Speedy Notebook. Use `add_meet_nudge_contact` / `list_meet_nudge_contacts` for their networking CRM. Use `list_tools` to browse the AI app catalog and `get_credit_balance` to check their wallet.",
+  version: "0.2.0",
+  instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 200+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
+
+**Start by calling \`help\` for the full tool guide with examples.**
+
+Quick reference:
+- Shortcuts (sync to their browser extension): save_shortcut, list_shortcuts, delete_shortcut
+- Notes: append_notebook_entry
+- Networking CRM: add_meet_nudge_contact, list_meet_nudge_contacts
+- Prompt engineering: analyze_prompt (uses Gemini via PromptMaster, charges credits)
+- Catalog & their data: list_tools, get_tool_link, list_my_creations, list_bulk_jobs, get_credit_balance
+- Meta: submit_tool_request (ask the team to build a new tool)
+
+For long-running tools like Startup Analyser or Video Generator that can't run over MCP, use \`get_tool_link\` and send the user to open it on ezyourlife.com.`,
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
   tools: [
+    help_default,
     get_credit_balance_default,
     list_tools_default,
+    get_tool_link_default,
     list_shortcuts_default,
     save_shortcut_default,
     delete_shortcut_default,
+    append_notebook_default,
     add_meet_nudge_contact_default,
     list_meet_nudge_contacts_default,
-    append_notebook_default
+    analyze_prompt_default,
+    list_my_creations_default,
+    list_bulk_jobs_default,
+    submit_tool_request_default
   ]
 });
 
