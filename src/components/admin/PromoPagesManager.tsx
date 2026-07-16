@@ -222,7 +222,43 @@ export default function PromoPagesManager() {
 
   return (
     <div className="space-y-6">
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Bulk PDP generator</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Generate complete promo (PDP) pages for every tool — AI copy + Gemini hero image + published. Uses your Gemini API keys.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => handleBulkGenerate("missing")} disabled={bulkRunning}>
+              {bulkRunning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+              Generate for missing ({toolsWithoutPage.length})
+            </Button>
+            <Button variant="outline" onClick={() => handleBulkGenerate("all")} disabled={bulkRunning}>
+              <Wand2 className="h-4 w-4 mr-1" /> Regenerate ALL ({tools.length})
+            </Button>
+            <Button variant="secondary" onClick={handleExportCSV} disabled={pages.length === 0}>
+              <Download className="h-4 w-4 mr-1" /> Export CSV of links ({pages.length})
+            </Button>
+          </div>
+          {bulkProgress && (
+            <div className="rounded-md border border-border/60 bg-card/60 p-3 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span>Progress: {bulkProgress.done} / {bulkProgress.total}</span>
+                <span className="text-muted-foreground">✓ {bulkProgress.ok} · ✗ {bulkProgress.failed}</span>
+              </div>
+              <div className="h-1.5 w-full rounded bg-muted overflow-hidden">
+                <div className="h-full bg-primary transition-all" style={{ width: `${bulkProgress.total ? (bulkProgress.done / bulkProgress.total) * 100 : 0}%` }} />
+              </div>
+              {bulkProgress.current && <div className="text-muted-foreground truncate">{bulkProgress.current}</div>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Rocket className="h-5 w-5" /> New Promo Page</CardTitle>
         </CardHeader>
