@@ -56,6 +56,7 @@ const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 
 
@@ -253,6 +254,7 @@ const AnimatedRoutes = () => {
               }
             />
             <Route path="/promo/:slug" element={<PromoPage />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"
