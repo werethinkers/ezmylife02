@@ -1,0 +1,261 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://vrsadzjyugbusfazdgyi.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "ezyourlife-mcp",
+      "version": "0.1.0",
+      "title": "EZYOURLIFE"
+    },
+    "tools": [
+      {
+        "name": "get_credit_balance",
+        "title": "Get EZYOURLIFE credit balance",
+        "description": "Returns the signed-in user's free + paid credit balance on EZYOURLIFE.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_tools",
+        "title": "List EZYOURLIFE AI apps",
+        "description": "Search or list AI apps in the EZYOURLIFE catalog. Optional query filters by name/description/category.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Free-text search across name, description, category.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows to return (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_shortcuts",
+        "title": "List text-expansion shortcuts",
+        "description": "List the signed-in user's EZYOURLIFE text-expansion shortcuts (key → value). These sync to the browser extension and Speedy Notebook.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "save_shortcut",
+        "title": "Save a text-expansion shortcut",
+        "description": "Create or update an EZYOURLIFE text-expansion shortcut. The `key` (e.g. 'mtg') will expand to `value` in the browser extension and Speedy Notebook.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Shortcut trigger, e.g. 'mtg' or 'sig'."
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The text this shortcut expands to."
+            },
+            "category": {
+              "description": "Optional category label.",
+              "type": "string",
+              "maxLength": 64
+            },
+            "logic": {
+              "description": "Optional note describing when to use this shortcut.",
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "key",
+            "value"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_shortcut",
+        "title": "Delete a text-expansion shortcut",
+        "description": "Remove an EZYOURLIFE text-expansion shortcut by its key.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Shortcut trigger to delete."
+            }
+          },
+          "required": [
+            "key"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_meet_nudge_contact",
+        "title": "Add a Meet Nudge contact",
+        "description": "Add a networking contact to the signed-in user's Meet Nudge CRM on EZYOURLIFE.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "occupation": {
+              "type": "string"
+            },
+            "business_name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "website": {
+              "type": "string",
+              "format": "uri"
+            },
+            "linkedin_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "fun_fact": {
+              "type": "string"
+            },
+            "event_name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_meet_nudge_contacts",
+        "title": "List Meet Nudge contacts",
+        "description": "List the signed-in user's Meet Nudge networking contacts. Optional search by name/business/email.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "append_notebook_entry",
+        "title": "Append to Speedy Notebook",
+        "description": "Append a note to the signed-in user's Speedy Notebook on EZYOURLIFE. A timestamped heading is added before the content.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Note content (HTML or plain text). Appended to the notebook."
+            },
+            "heading": {
+              "description": "Optional short heading for the note.",
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          "required": [
+            "content"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
