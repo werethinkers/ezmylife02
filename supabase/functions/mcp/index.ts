@@ -37,7 +37,7 @@ var get_credit_balance_default = defineTool({
 // src/lib/mcp/tools/list-tools.ts
 import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z } from "npm:zod@^4.4.3";
+import { z } from "npm:zod@^3.23.8";
 function userClient2(ctx) {
   return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -100,7 +100,7 @@ var list_shortcuts_default = defineTool3({
 // src/lib/mcp/tools/save-shortcut.ts
 import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z2 } from "npm:zod@^4.4.3";
+import { z as z2 } from "npm:zod@^3.23.8";
 function userClient4(ctx) {
   return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -150,7 +150,7 @@ var save_shortcut_default = defineTool4({
 // src/lib/mcp/tools/delete-shortcut.ts
 import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z3 } from "npm:zod@^4.4.3";
+import { z as z3 } from "npm:zod@^3.23.8";
 function userClient5(ctx) {
   return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -186,7 +186,7 @@ var delete_shortcut_default = defineTool5({
 // src/lib/mcp/tools/add-meet-nudge-contact.ts
 import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z4 } from "npm:zod@^4.4.3";
+import { z as z4 } from "npm:zod@^3.23.8";
 function userClient6(ctx) {
   return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -225,7 +225,7 @@ var add_meet_nudge_contact_default = defineTool6({
 // src/lib/mcp/tools/list-meet-nudge-contacts.ts
 import { createClient as createClient7 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z5 } from "npm:zod@^4.4.3";
+import { z as z5 } from "npm:zod@^3.23.8";
 function userClient7(ctx) {
   return createClient7(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -261,7 +261,7 @@ var list_meet_nudge_contacts_default = defineTool7({
 // src/lib/mcp/tools/append-notebook.ts
 import { createClient as createClient8 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z6 } from "npm:zod@^4.4.3";
+import { z as z6 } from "npm:zod@^3.23.8";
 function userClient8(ctx) {
   return createClient8(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },

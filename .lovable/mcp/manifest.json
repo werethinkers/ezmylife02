@@ -42,20 +42,21 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "query": {
-              "description": "Free-text search across name, description, category.",
-              "type": "string"
+              "type": "string",
+              "description": "Free-text search across name, description, category."
             },
             "limit": {
-              "description": "Max rows to return (default 25).",
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "description": "Max rows to return (default 25)."
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -86,7 +87,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "key": {
@@ -101,20 +101,22 @@
               "description": "The text this shortcut expands to."
             },
             "category": {
-              "description": "Optional category label.",
               "type": "string",
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional category label."
             },
             "logic": {
-              "description": "Optional note describing when to use this shortcut.",
               "type": "string",
-              "maxLength": 500
+              "maxLength": 500,
+              "description": "Optional note describing when to use this shortcut."
             }
           },
           "required": [
             "key",
             "value"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -129,7 +131,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "key": {
@@ -140,7 +141,9 @@
           },
           "required": [
             "key"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -155,7 +158,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "name": {
@@ -164,8 +166,7 @@
             },
             "email": {
               "type": "string",
-              "format": "email",
-              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              "format": "email"
             },
             "phone": {
               "type": "string"
@@ -196,7 +197,9 @@
           },
           "required": [
             "name"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -210,7 +213,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "query": {
@@ -221,7 +223,9 @@
               "minimum": 1,
               "maximum": 200
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -236,7 +240,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "content": {
@@ -245,14 +248,16 @@
               "description": "Note content (HTML or plain text). Appended to the notebook."
             },
             "heading": {
-              "description": "Optional short heading for the note.",
               "type": "string",
-              "maxLength": 200
+              "maxLength": 200,
+              "description": "Optional short heading for the note."
             }
           },
           "required": [
             "content"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       }
