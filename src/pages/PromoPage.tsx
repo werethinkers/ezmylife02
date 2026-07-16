@@ -86,7 +86,8 @@ export default function PromoPage() {
     }
   }, [authLoading, user, page, searchParams, navigate]);
 
-  const handleUseIt = () => {
+  const [entering, setEntering] = useState(false);
+  const handleUseIt = async () => {
     if (!page) return;
     if (!user) {
       try {
@@ -95,8 +96,41 @@ export default function PromoPage() {
       setLoginOpen(true);
       return;
     }
-    navigate(`/tool/${page.tool_id}`);
+    if (entering) return;
+    setEntering(true);
+    try {
+      // Immediately deduct credits from the user's wallet before entering the tool.
+      const { data: startData, error: startErr } = await supabase.functions.invoke("tool-charge", {
+        body: { action: "start", tool_id: page.tool_id },
+      });
+      if (startErr) throw startErr;
+      if (!startData?.ok) {
+        if (startData?.reason === "insufficient") {
+          const need = startData?.credits_required ?? creditCost;
+          const bal = startData?.balance ?? 0;
+          const { toast } = await import("sonner");
+          toast.error(`Not enough credits. Need ${need}, you have ${bal}.`);
+          navigate("/pricing");
+          return;
+        }
+        throw new Error(startData?.reason ?? "start_failed");
+      }
+      const runId = startData?.run_id;
+      if (runId && !startData?.free_tool) {
+        // Immediately complete → cuts credits from wallet now.
+        await supabase.functions.invoke("tool-charge", {
+          body: { action: "complete", run_id: runId, success: true },
+        });
+      }
+      navigate(`/tool/${page.tool_id}`);
+    } catch (e: any) {
+      const { toast } = await import("sonner");
+      toast.error(e?.message ?? "Could not enter tool");
+    } finally {
+      setEntering(false);
+    }
   };
+
 
   if (loading) {
     return (
