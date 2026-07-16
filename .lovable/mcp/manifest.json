@@ -12,10 +12,26 @@
   "mcp": {
     "server": {
       "name": "ezyourlife-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "EZYOURLIFE"
     },
     "tools": [
+      {
+        "name": "help",
+        "title": "EZYOURLIFE help & tool guide",
+        "description": "Returns a full guide to every EZYOURLIFE MCP tool with example usage. Call this first if unsure what's available.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
       {
         "name": "get_credit_balance",
         "title": "Get EZYOURLIFE credit balance",
@@ -55,6 +71,32 @@
               "description": "Max rows to return (default 25)."
             }
           },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_tool_link",
+        "title": "Get a direct link to an EZYOURLIFE tool",
+        "description": "Returns a direct URL to open a specific EZYOURLIFE AI app in the browser. Use for iframe/UI-only tools that can't run over MCP (e.g. Startup Analyser, Video Generator, Notebook).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tool_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tool ID (from list_tools) or slug."
+            }
+          },
+          "required": [
+            "tool_id"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
@@ -148,6 +190,38 @@
         "outputSchema": null
       },
       {
+        "name": "append_notebook_entry",
+        "title": "Append to Speedy Notebook",
+        "description": "Append a note to the signed-in user's Speedy Notebook on EZYOURLIFE. A timestamped heading is added before the content.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Note content (HTML or plain text). Appended to the notebook."
+            },
+            "heading": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Optional short heading for the note."
+            }
+          },
+          "required": [
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "add_meet_nudge_contact",
         "title": "Add a Meet Nudge contact",
         "description": "Add a networking contact to the signed-in user's Meet Nudge CRM on EZYOURLIFE.",
@@ -230,9 +304,90 @@
         "outputSchema": null
       },
       {
-        "name": "append_notebook_entry",
-        "title": "Append to Speedy Notebook",
-        "description": "Append a note to the signed-in user's Speedy Notebook on EZYOURLIFE. A timestamped heading is added before the content.",
+        "name": "analyze_prompt",
+        "title": "Analyze & improve a prompt (PromptMaster)",
+        "description": "Rewrites a user's prompt using EZYOURLIFE PromptMaster (Gemini). Returns an improved version plus rationale. Charges the user's credits per catalog pricing.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The prompt to analyze and improve."
+            },
+            "goal": {
+              "type": "string",
+              "description": "Optional: what the user wants the improved prompt to achieve."
+            }
+          },
+          "required": [
+            "prompt"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_creations",
+        "title": "List my AI creations",
+        "description": "Recent items the signed-in user has generated on EZYOURLIFE (images, videos, docs, etc.).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "tool_type": {
+              "type": "string",
+              "description": "Optional filter by tool_type."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_bulk_jobs",
+        "title": "List my bulk processing jobs",
+        "description": "Recent bulk-mode processing jobs run by the signed-in user on EZYOURLIFE.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_tool_request",
+        "title": "Request a new EZYOURLIFE tool",
+        "description": "Submits a request for EZYOURLIFE to build a new custom AI tool (typical turnaround 24-48h).",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -242,19 +397,21 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "content": {
+            "tool_description": {
               "type": "string",
-              "minLength": 1,
-              "description": "Note content (HTML or plain text). Appended to the notebook."
+              "minLength": 10,
+              "description": "Describe the tool you want built."
             },
-            "heading": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
               "type": "string",
-              "maxLength": 200,
-              "description": "Optional short heading for the note."
+              "format": "email"
             }
           },
           "required": [
-            "content"
+            "tool_description"
           ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
