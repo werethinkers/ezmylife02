@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Pencil, ExternalLink, Copy, Sparkles, Trash2, Rocket, Upload } from "lucide-react";
+import { Loader2, Plus, Pencil, ExternalLink, Copy, Sparkles, Trash2, Rocket, Upload, Download, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ToolRow { id: string; name: string; description: string; }
@@ -140,9 +140,85 @@ export default function PromoPagesManager() {
     }
   };
 
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number; ok: number; failed: number; current?: string } | null>(null);
+
+  const handleBulkGenerate = async (mode: "missing" | "all") => {
+    if (mode === "all" && !confirm(`Regenerate promo pages for ALL ${tools.length} tools (this will overwrite existing pages)?`)) return;
+    if (mode === "missing" && toolsWithoutPage.length === 0) { toast.info("Every tool already has a promo page"); return; }
+
+    setBulkRunning(true);
+    setBulkProgress({ done: 0, total: mode === "all" ? tools.length : toolsWithoutPage.length, ok: 0, failed: 0 });
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+
+      const url = `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/bulk-generate-promo-pages`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ mode, publish: true, generate_image: true, force: mode === "all" }),
+      });
+      if (!resp.ok || !resp.body) throw new Error(await resp.text());
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const ln of lines) {
+          if (!ln.trim()) continue;
+          try {
+            const evt = JSON.parse(ln);
+            if (evt.type === "tick") {
+              setBulkProgress({ done: evt.done, total: evt.total, ok: evt.ok, failed: evt.failed });
+            } else if (evt.type === "progress") {
+              setBulkProgress(p => p ? { ...p, current: `${evt.name} · ${evt.status}` } : p);
+            } else if (evt.type === "done") {
+              toast.success(`Generated ${evt.ok} pages · ${evt.failed} failed`);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e.message ?? "Bulk generate failed");
+    } finally {
+      setBulkRunning(false);
+      setTimeout(() => setBulkProgress(null), 2000);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (pages.length === 0) { toast.info("No promo pages to export"); return; }
+    const origin = window.location.origin;
+    const header = ["tool_id", "tool_name", "slug", "status", "url", "updated_at"];
+    const rows = pages.map(p => [
+      p.tool_id,
+      (toolById[p.tool_id]?.name ?? "").replace(/"/g, '""'),
+      p.slug,
+      p.is_published ? "live" : "draft",
+      `${origin}/promo/${p.slug}`,
+      p.updated_at,
+    ]);
+    const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? "")}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `promo-pages-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${pages.length} links`);
+  };
+
   const toolsWithoutPage = tools.filter(t => !pages.some(p => p.tool_id === t.id));
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
 
   return (
     <div className="space-y-6">
