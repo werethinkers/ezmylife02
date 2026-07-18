@@ -141,17 +141,30 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { mode = "missing", force = false, limit = 500, publish = true, generate_image = true } = body as {
-    mode?: "missing" | "all"; force?: boolean; limit?: number; publish?: boolean; generate_image?: boolean;
+  const { mode = "missing", force = false, limit = 500, publish = true, generate_image = true, images_only = false } = body as {
+    mode?: "missing" | "all"; force?: boolean; limit?: number; publish?: boolean; generate_image?: boolean; images_only?: boolean;
   };
 
   const { data: tools } = await supabase.from("tools_catalog").select("id, name, description, category").order("name");
-  const { data: existing } = await supabase.from("tool_promo_pages").select("tool_id, slug");
-  const existingByTool = new Map<string, string>((existing ?? []).map(p => [p.tool_id, p.slug]));
+  const { data: existing } = await supabase.from("tool_promo_pages").select("tool_id, slug, hero_image_url, gallery_images");
+  const existingByTool = new Map<string, any>((existing ?? []).map(p => [p.tool_id, p]));
   const usedSlugs = new Set<string>((existing ?? []).map(p => p.slug));
 
   const all = tools ?? [];
-  const targets = (mode === "missing" ? all.filter(t => !existingByTool.has(t.id)) : all).slice(0, Math.max(1, Math.min(500, limit)));
+  let targets = all;
+  if (images_only) {
+    // Only pages that exist and are missing hero or gallery
+    targets = all.filter(t => {
+      const p = existingByTool.get(t.id);
+      if (!p) return false;
+      const galN = Array.isArray(p.gallery_images) ? p.gallery_images.length : 0;
+      return !p.hero_image_url || galN < 3;
+    });
+  } else if (mode === "missing") {
+    targets = all.filter(t => !existingByTool.has(t.id));
+  }
+  targets = targets.slice(0, Math.max(1, Math.min(500, limit)));
+
 
   const stream = new ReadableStream({
     async start(controller) {
