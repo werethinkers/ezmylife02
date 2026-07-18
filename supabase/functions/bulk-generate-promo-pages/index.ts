@@ -81,6 +81,25 @@ Style: modern SaaS product hero, clean dark navy background (#0B0B1A) with vibra
 STRICT: NO text, NO letters, NO words, NO numbers, NO logos, NO watermarks, NO UI text. 16:9 aspect ratio.`;
 }
 
+function appScreenshotPrompt(name: string, description: string, category: string) {
+  return `Ultra-realistic browser app screenshot mockup of the AI web app "${name}" (${category}) — purpose: ${description}.
+Show a clean modern dark-mode dashboard UI on a MacBook-style browser window: left sidebar with subtle icons, a main panel with the primary input area (upload zone, prompt box or form) representing this tool's workflow, and a right-side settings panel. Purple/magenta accent color, glassmorphism cards, soft shadows, rounded corners, subtle grid background.
+STRICT: use ONLY generic placeholder text and lorem-ipsum-style short labels — NO real brand names, NO readable paragraphs, NO watermarks, NO logos beyond a small abstract mark. 16:9 aspect ratio, sharp focus, product-shot quality.`;
+}
+
+function outputWindowPrompt(name: string, description: string, category: string) {
+  return `Ultra-realistic screenshot of the RESULT / OUTPUT window of the AI web app "${name}" (${category}) — purpose: ${description}.
+Depict the moment AFTER a user has run the tool: a dark-mode results panel showing the generated output relevant to this tool (e.g. generated images grid, chart, structured report, transformed document, code block or exported file preview). Include a small success badge, a download button, and 2–3 result thumbnails or cards. Purple/magenta accents, glassmorphism, soft glow.
+STRICT: NO real brand names, NO readable paragraphs, NO watermarks. 16:9 aspect ratio, sharp focus, product-shot quality.`;
+}
+
+function beforeAfterPrompt(name: string, description: string, category: string) {
+  return `Split before/after comparison visual for the AI web app "${name}" (${category}) — purpose: ${description}.
+Left half: dull, grey, low-effort original ("before"). Right half: vibrant, polished, AI-enhanced version ("after"). Thin vertical divider with a subtle glowing handle in the middle. Dark background, purple/magenta accents, cinematic lighting.
+STRICT: NO text labels, NO watermarks, NO logos. 16:9 aspect ratio.`;
+}
+
+
 function copyPrompt(name: string, description: string, category: string) {
   return `You are writing landing-page copy for an AI app called "${name}" in the "${category}" category. Description: ${description}.
 Return STRICT JSON with EXACTLY this shape:
