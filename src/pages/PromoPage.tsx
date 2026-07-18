@@ -3,12 +3,13 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Loader2, Zap, PlayCircle, Star, Shield, Clock, CreditCard, XCircle, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Zap, PlayCircle, Star, Shield, Clock, CreditCard, XCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+
 
 interface GalleryImage { url: string; caption?: string; kind?: string }
 
@@ -169,15 +170,23 @@ export default function PromoPage() {
   const ctaSublabel = page.cta_sublabel ?? `${creditCost} CREDIT${creditCost === 1 ? "" : "S"} to start`;
   const badges = page.footer_badges?.length ? page.footer_badges : defaultBadges;
 
-  // Build the "See it in action" gallery: preview → gallery_images (screenshot, output, extra).
-  const galleryFromDb = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
-  const galleryUrls = new Set(galleryFromDb.map(g => g.url));
-  const gallery: GalleryImage[] = [
-    ...(catalogPreview && !galleryUrls.has(catalogPreview)
-      ? [{ url: catalogPreview, caption: "Preview", kind: "preview" }]
-      : []),
-    ...galleryFromDb,
-  ].slice(0, 4);
+  // Build an ordered 4-slot carousel: 1) Preview  2) Input (app UI)  3) Output  4) Promotional (hero).
+  const dbGallery: GalleryImage[] = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
+  const findKind = (kinds: string[]) => dbGallery.find(g => kinds.includes((g.kind ?? "").toLowerCase()));
+  const inputImg = findKind(["screenshot", "input", "app", "interface"]);
+  const outputImg = findKind(["output", "result", "results"]);
+  const promoImg = findKind(["promotional", "promo", "hero", "compare"]);
+  const orderedSlots: Array<GalleryImage | null> = [
+    catalogPreview ? { url: catalogPreview, caption: "Preview", kind: "preview" } : null,
+    inputImg ?? null,
+    outputImg ?? null,
+    promoImg ?? (page.hero_image_url ? { url: page.hero_image_url, caption: "Promotional", kind: "promotional" } : null),
+  ];
+  // Fill any remaining nulls with leftover gallery items so we still get up to 4 slides.
+  const used = new Set(orderedSlots.filter(Boolean).map(s => s!.url));
+  const leftovers = dbGallery.filter(g => !used.has(g.url));
+  const slides: GalleryImage[] = orderedSlots.map(s => s ?? leftovers.shift() ?? null).filter(Boolean) as GalleryImage[];
+
 
 
   return (
@@ -253,16 +262,8 @@ export default function PromoPage() {
             )}
           </motion.div>
 
-          {page.hero_image_url && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-4 shadow-2xl shadow-primary/10"
-            >
-              <img src={page.hero_image_url} alt={page.hero_title ?? ""} className="w-full h-auto rounded-xl" />
-            </motion.div>
-          )}
+          <HeroCarousel slides={slides} altBase={page.hero_title ?? "App"} />
+
         </div>
       </section>
 
@@ -284,41 +285,7 @@ export default function PromoPage() {
         </section>
       )}
 
-      {/* GALLERY — See it in action */}
-      {gallery.length > 0 && (
-        <section className="container mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-2">See It in Action</h2>
-            <p className="text-muted-foreground">Preview, in-app screenshots and real output — no surprises.</p>
-          </div>
-          <div className={`grid gap-4 ${gallery.length >= 3 ? "md:grid-cols-2 lg:grid-cols-4" : gallery.length === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
-            {gallery.map((g, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm overflow-hidden shadow-lg shadow-primary/5 hover:shadow-primary/15 transition"
-              >
-                <div className="aspect-video w-full bg-muted/30 overflow-hidden">
-                  <img
-                    src={g.url}
-                    alt={g.caption ?? `${page.hero_title ?? "App"} — image ${i + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {g.caption && (
-                  <div className="px-4 py-3 text-xs text-muted-foreground border-t border-border/40">
-                    {g.caption}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
+
 
 
       {/* FEATURES */}
@@ -465,3 +432,91 @@ export default function PromoPage() {
     </div>
   );
 }
+
+// App Store-style sliding carousel for the hero — auto-advances, dots + arrows, swipe-friendly.
+function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = slides.length;
+
+  useEffect(() => {
+    if (count <= 1 || paused) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % count), 4200);
+    return () => clearInterval(t);
+  }, [count, paused]);
+
+  if (count === 0) return null;
+
+  const go = (next: number) => setIdx(((next % count) + count) % count);
+  const current = slides[idx];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6 }}
+      className="relative"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-3 shadow-2xl shadow-primary/10 overflow-hidden">
+        <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.img
+              key={current.url + idx}
+              src={current.url}
+              alt={current.caption ?? `${altBase} — slide ${idx + 1}`}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            />
+          </AnimatePresence>
+
+          {current.caption && (
+            <div className="absolute left-3 bottom-3 z-10 rounded-full bg-background/70 backdrop-blur px-3 py-1 text-xs font-medium border border-border/60">
+              {current.caption}
+            </div>
+          )}
+
+          {count > 1 && (
+            <>
+              <button
+                aria-label="Previous"
+                onClick={() => go(idx - 1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                aria-label="Next"
+                onClick={() => go(idx + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {count > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => setIdx(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === idx ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
