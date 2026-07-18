@@ -284,6 +284,43 @@ export default function PromoPage() {
         </section>
       )}
 
+      {/* GALLERY — See it in action */}
+      {gallery.length > 0 && (
+        <section className="container mx-auto px-4 py-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-2">See It in Action</h2>
+            <p className="text-muted-foreground">Preview, in-app screenshots and real output — no surprises.</p>
+          </div>
+          <div className={`grid gap-4 ${gallery.length >= 3 ? "md:grid-cols-2 lg:grid-cols-4" : gallery.length === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
+            {gallery.map((g, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm overflow-hidden shadow-lg shadow-primary/5 hover:shadow-primary/15 transition"
+              >
+                <div className="aspect-video w-full bg-muted/30 overflow-hidden">
+                  <img
+                    src={g.url}
+                    alt={g.caption ?? `${page.hero_title ?? "App"} — image ${i + 1}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {g.caption && (
+                  <div className="px-4 py-3 text-xs text-muted-foreground border-t border-border/40">
+                    {g.caption}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
+
       {/* FEATURES */}
       {page.features?.length > 0 && (
         <section className="container mx-auto px-4 py-16">
