@@ -927,6 +927,7 @@ export type Database = {
           final_cta_subtitle: string | null
           final_cta_title: string | null
           footer_badges: Json
+          gallery_images: Json
           hero_chips: Json
           hero_eyebrow: string | null
           hero_image_url: string | null
@@ -957,6 +958,7 @@ export type Database = {
           final_cta_subtitle?: string | null
           final_cta_title?: string | null
           footer_badges?: Json
+          gallery_images?: Json
           hero_chips?: Json
           hero_eyebrow?: string | null
           hero_image_url?: string | null
@@ -987,6 +989,7 @@ export type Database = {
           final_cta_subtitle?: string | null
           final_cta_title?: string | null
           footer_badges?: Json
+          gallery_images?: Json
           hero_chips?: Json
           hero_eyebrow?: string | null
           hero_image_url?: string | null
