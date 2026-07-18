@@ -102,6 +102,7 @@ export default function PromoPagesManager() {
       final_cta_title: p.final_cta_title, final_cta_subtitle: p.final_cta_subtitle,
       footer_badges: p.footer_badges,
       seo_title: p.seo_title, seo_description: p.seo_description, og_image_url: p.og_image_url,
+      gallery_images: p.gallery_images ?? [],
     }).eq("id", p.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Saved");
