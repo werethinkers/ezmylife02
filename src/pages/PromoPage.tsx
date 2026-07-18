@@ -432,3 +432,91 @@ export default function PromoPage() {
     </div>
   );
 }
+
+// App Store-style sliding carousel for the hero — auto-advances, dots + arrows, swipe-friendly.
+function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = slides.length;
+
+  useEffect(() => {
+    if (count <= 1 || paused) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % count), 4200);
+    return () => clearInterval(t);
+  }, [count, paused]);
+
+  if (count === 0) return null;
+
+  const go = (next: number) => setIdx(((next % count) + count) % count);
+  const current = slides[idx];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6 }}
+      className="relative"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-3 shadow-2xl shadow-primary/10 overflow-hidden">
+        <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.img
+              key={current.url + idx}
+              src={current.url}
+              alt={current.caption ?? `${altBase} — slide ${idx + 1}`}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            />
+          </AnimatePresence>
+
+          {current.caption && (
+            <div className="absolute left-3 bottom-3 z-10 rounded-full bg-background/70 backdrop-blur px-3 py-1 text-xs font-medium border border-border/60">
+              {current.caption}
+            </div>
+          )}
+
+          {count > 1 && (
+            <>
+              <button
+                aria-label="Previous"
+                onClick={() => go(idx - 1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                aria-label="Next"
+                onClick={() => go(idx + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {count > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => setIdx(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === idx ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
