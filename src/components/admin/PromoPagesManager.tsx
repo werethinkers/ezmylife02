@@ -145,12 +145,19 @@ export default function PromoPagesManager() {
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number; ok: number; failed: number; current?: string } | null>(null);
 
-  const handleBulkGenerate = async (mode: "missing" | "all") => {
+  const handleBulkGenerate = async (mode: "missing" | "all" | "images_only") => {
+    const imagesOnly = mode === "images_only";
+    const pagesMissingImages = pages.filter(p => !p.hero_image_url || !Array.isArray(p.gallery_images) || (p.gallery_images?.length ?? 0) < 3);
     if (mode === "all" && !confirm(`Regenerate promo pages for ALL ${tools.length} tools (this will overwrite existing pages)?`)) return;
     if (mode === "missing" && toolsWithoutPage.length === 0) { toast.info("Every tool already has a promo page"); return; }
+    if (imagesOnly && pagesMissingImages.length === 0) { toast.info("Every promo page already has all images"); return; }
 
     setBulkRunning(true);
-    setBulkProgress({ done: 0, total: mode === "all" ? tools.length : toolsWithoutPage.length, ok: 0, failed: 0 });
+    setBulkProgress({
+      done: 0,
+      total: imagesOnly ? pagesMissingImages.length : (mode === "all" ? tools.length : toolsWithoutPage.length),
+      ok: 0, failed: 0,
+    });
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
@@ -160,9 +167,16 @@ export default function PromoPagesManager() {
       const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ mode, publish: true, generate_image: true, force: mode === "all" }),
+        body: JSON.stringify({
+          mode: imagesOnly ? "all" : mode,
+          publish: true,
+          generate_image: true,
+          force: mode === "all",
+          images_only: imagesOnly,
+        }),
       });
       if (!resp.ok || !resp.body) throw new Error(await resp.text());
+
       const reader = resp.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
@@ -240,6 +254,11 @@ export default function PromoPagesManager() {
             <Button variant="outline" onClick={() => handleBulkGenerate("all")} disabled={bulkRunning}>
               <Wand2 className="h-4 w-4 mr-1" /> Regenerate ALL ({tools.length})
             </Button>
+            <Button variant="outline" onClick={() => handleBulkGenerate("images_only")} disabled={bulkRunning}>
+              <Sparkles className="h-4 w-4 mr-1" /> Backfill missing images ({pages.filter(p => !p.hero_image_url || !Array.isArray(p.gallery_images) || (p.gallery_images?.length ?? 0) < 3).length})
+            </Button>
+
+
             <Button variant="secondary" onClick={handleExportCSV} disabled={pages.length === 0}>
               <Download className="h-4 w-4 mr-1" /> Export CSV of links ({pages.length})
             </Button>
