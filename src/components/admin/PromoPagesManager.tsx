@@ -412,6 +412,37 @@ function PromoEditorDialog({ page, onClose, onSave }: { page: PromoRow; onClose:
             />
           </TabsContent>
 
+          <TabsContent value="gallery" className="space-y-3 pt-4">
+            <p className="text-xs text-muted-foreground">
+              Up to 4 images. Suggested order: <strong>1)</strong> Preview thumbnail · <strong>2)</strong> App interface screenshot · <strong>3)</strong> Sample output · <strong>4)</strong> Before/after or extra shot. Bulk generator auto-fills 2–4 with Gemini.
+            </p>
+            <RepeatList
+              title="Gallery images"
+              rows={draft.gallery_images ?? []}
+              onAdd={() => {
+                const arr = (draft.gallery_images ?? []) as any[];
+                if (arr.length >= 4) { toast.info("Max 4 images"); return; }
+                upd("gallery_images", [...arr, { url: "", caption: "", kind: "extra" }] as any);
+              }}
+              onRemove={(i) => removeRow("gallery_images", i)}
+              render={(row, i) => (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input value={row.caption ?? ""} placeholder="Caption (e.g. App interface)" onChange={(e) => updArr("gallery_images", i, "caption", e.target.value)} />
+                    <Input value={row.kind ?? ""} placeholder="preview | screenshot | output | compare" onChange={(e) => updArr("gallery_images", i, "kind", e.target.value)} />
+                  </div>
+                  <ImageUploadField
+                    value={row.url ?? ""}
+                    onChange={(v) => updArr("gallery_images", i, "url", v)}
+                    folder={`promo/${draft.tool_id}/gallery`}
+                  />
+                </div>
+              )}
+            />
+          </TabsContent>
+
+
+
           <TabsContent value="trust" className="space-y-3 pt-4">
             <div className="grid grid-cols-3 gap-3">
               <Field label="Rating"><Input type="number" step="0.01" value={draft.rating ?? ""} onChange={(e) => upd("rating", e.target.value ? Number(e.target.value) : null)} /></Field>
