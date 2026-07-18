@@ -262,16 +262,8 @@ export default function PromoPage() {
             )}
           </motion.div>
 
-          {page.hero_image_url && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-4 shadow-2xl shadow-primary/10"
-            >
-              <img src={page.hero_image_url} alt={page.hero_title ?? ""} className="w-full h-auto rounded-xl" />
-            </motion.div>
-          )}
+          <HeroCarousel slides={slides} altBase={page.hero_title ?? "App"} />
+
         </div>
       </section>
 
