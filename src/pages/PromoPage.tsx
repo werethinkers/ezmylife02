@@ -170,15 +170,23 @@ export default function PromoPage() {
   const ctaSublabel = page.cta_sublabel ?? `${creditCost} CREDIT${creditCost === 1 ? "" : "S"} to start`;
   const badges = page.footer_badges?.length ? page.footer_badges : defaultBadges;
 
-  // Build the "See it in action" gallery: preview → gallery_images (screenshot, output, extra).
-  const galleryFromDb = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
-  const galleryUrls = new Set(galleryFromDb.map(g => g.url));
-  const gallery: GalleryImage[] = [
-    ...(catalogPreview && !galleryUrls.has(catalogPreview)
-      ? [{ url: catalogPreview, caption: "Preview", kind: "preview" }]
-      : []),
-    ...galleryFromDb,
-  ].slice(0, 4);
+  // Build an ordered 4-slot carousel: 1) Preview  2) Input (app UI)  3) Output  4) Promotional (hero).
+  const dbGallery: GalleryImage[] = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
+  const findKind = (kinds: string[]) => dbGallery.find(g => kinds.includes((g.kind ?? "").toLowerCase()));
+  const inputImg = findKind(["screenshot", "input", "app", "interface"]);
+  const outputImg = findKind(["output", "result", "results"]);
+  const promoImg = findKind(["promotional", "promo", "hero", "compare"]);
+  const orderedSlots: Array<GalleryImage | null> = [
+    catalogPreview ? { url: catalogPreview, caption: "Preview", kind: "preview" } : null,
+    inputImg ?? null,
+    outputImg ?? null,
+    promoImg ?? (page.hero_image_url ? { url: page.hero_image_url, caption: "Promotional", kind: "promotional" } : null),
+  ];
+  // Fill any remaining nulls with leftover gallery items so we still get up to 4 slides.
+  const used = new Set(orderedSlots.filter(Boolean).map(s => s!.url));
+  const leftovers = dbGallery.filter(g => !used.has(g.url));
+  const slides: GalleryImage[] = orderedSlots.map(s => s ?? leftovers.shift() ?? null).filter(Boolean) as GalleryImage[];
+
 
 
   return (
