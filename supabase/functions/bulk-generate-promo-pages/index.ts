@@ -169,19 +169,41 @@ Deno.serve(async (req) => {
           const draft = await geminiJSON(copyPrompt(name, desc, cat));
 
           let heroUrl: string | null = null;
+          const gallery: Array<{ url: string; caption: string; kind: string }> = [];
+          const uploadImg = async (bytes: Uint8Array, mime: string, tag: string) => {
+            const ext = mime.includes("jpeg") ? "jpg" : "png";
+            const path = `promo/${t.id}/${tag}-${Date.now()}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("tool-media").upload(path, bytes, { contentType: mime, upsert: true });
+            if (upErr) throw upErr;
+            return supabase.storage.from("tool-media").getPublicUrl(path).data.publicUrl;
+          };
+
           if (generate_image) {
             try {
-              send({ type: "progress", tool_id: t.id, name, status: "image" });
-              const { bytes, mime } = await geminiImage(heroImagePrompt(name, desc, cat));
-              const ext = mime.includes("jpeg") ? "jpg" : "png";
-              const path = `promo/${t.id}/hero-${Date.now()}.${ext}`;
-              const { error: upErr } = await supabase.storage.from("tool-media").upload(path, bytes, { contentType: mime, upsert: true });
-              if (upErr) throw upErr;
-              heroUrl = supabase.storage.from("tool-media").getPublicUrl(path).data.publicUrl;
+              send({ type: "progress", tool_id: t.id, name, status: "image_hero" });
+              const hero = await geminiImage(heroImagePrompt(name, desc, cat));
+              heroUrl = await uploadImg(hero.bytes, hero.mime, "hero");
             } catch (e) {
               send({ type: "progress", tool_id: t.id, name, status: "image_failed", error: String(e) });
             }
+            // Gallery: app UI screenshot, output window, before/after
+            const galleryJobs: Array<[string, string, string]> = [
+              ["screenshot", "App interface", appScreenshotPrompt(name, desc, cat)],
+              ["output", "Sample output", outputWindowPrompt(name, desc, cat)],
+              ["compare", "Before / after", beforeAfterPrompt(name, desc, cat)],
+            ];
+            for (const [tag, caption, prompt] of galleryJobs) {
+              try {
+                send({ type: "progress", tool_id: t.id, name, status: `image_${tag}` });
+                const img = await geminiImage(prompt);
+                const url = await uploadImg(img.bytes, img.mime, tag);
+                gallery.push({ url, caption, kind: tag });
+              } catch (e) {
+                send({ type: "progress", tool_id: t.id, name, status: `image_${tag}_failed`, error: String(e) });
+              }
+            }
           }
+
 
           // slug: prefer existing, else unique from name
           let slug = existingByTool.get(t.id) ?? slugify(name) ?? t.id;
