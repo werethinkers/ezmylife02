@@ -362,31 +362,8 @@ export default function PromoPage() {
         </section>
       )}
 
-      {/* TESTIMONIALS */}
-      {page.testimonials?.length > 0 && (
-        <section className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-center mb-10">Loved by Thousands of Users</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {page.testimonials.map((t, i) => (
-              <div key={i} className="rounded-xl border border-border/60 bg-card/60 p-5">
-                <div className="flex items-center gap-1 mb-3 text-yellow-400">
-                  {[...Array(t.rating ?? 5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="text-sm text-foreground/90 mb-4 leading-relaxed">"{t.quote}"</p>
-                <div className="text-xs text-muted-foreground">
-                  – {t.name}{t.role ? `, ${t.role}` : ""}
-                </div>
-              </div>
-            ))}
-            {page.stats?.value && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex flex-col items-center justify-center text-center">
-                <div className="text-3xl font-bold text-primary">{page.stats.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{page.stats.label ?? "Happy Users"}</div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+
+
 
       {/* FINAL CTA */}
       <section className="container mx-auto px-4 py-12">
