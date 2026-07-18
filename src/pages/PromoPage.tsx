@@ -3,12 +3,13 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Loader2, Zap, PlayCircle, Star, Shield, Clock, CreditCard, XCircle, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Zap, PlayCircle, Star, Shield, Clock, CreditCard, XCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+
 
 interface GalleryImage { url: string; caption?: string; kind?: string }
 
