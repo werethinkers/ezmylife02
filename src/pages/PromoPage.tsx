@@ -169,6 +169,17 @@ export default function PromoPage() {
   const ctaSublabel = page.cta_sublabel ?? `${creditCost} CREDIT${creditCost === 1 ? "" : "S"} to start`;
   const badges = page.footer_badges?.length ? page.footer_badges : defaultBadges;
 
+  // Build the "See it in action" gallery: preview → gallery_images (screenshot, output, extra).
+  const galleryFromDb = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
+  const galleryUrls = new Set(galleryFromDb.map(g => g.url));
+  const gallery: GalleryImage[] = [
+    ...(catalogPreview && !galleryUrls.has(catalogPreview)
+      ? [{ url: catalogPreview, caption: "Preview", kind: "preview" }]
+      : []),
+    ...galleryFromDb,
+  ].slice(0, 4);
+
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
