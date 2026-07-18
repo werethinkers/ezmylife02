@@ -1,0 +1,1 @@
+ALTER TABLE public.tool_promo_pages ADD COLUMN IF NOT EXISTS gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb;

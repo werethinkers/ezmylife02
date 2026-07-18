@@ -10,6 +10,8 @@ import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 
+interface GalleryImage { url: string; caption?: string; kind?: string }
+
 interface PromoPage {
   id: string;
   tool_id: string;
@@ -37,7 +39,9 @@ interface PromoPage {
   seo_title: string | null;
   seo_description: string | null;
   og_image_url: string | null;
+  gallery_images: GalleryImage[];
 }
+
 
 const defaultBadges = [
   { icon: "shield", title: "Secure & Private", body: "Your data is safe and encrypted" },
@@ -62,6 +66,7 @@ export default function PromoPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState<PromoPage | null>(null);
+  const [catalogPreview, setCatalogPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const { creditCost } = useToolPricing(page?.tool_id);
@@ -74,10 +79,20 @@ export default function PromoPage() {
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
-      setPage((data as unknown) as PromoPage | null);
+      const p = (data as unknown) as PromoPage | null;
+      setPage(p);
+      if (p?.tool_id) {
+        const { data: c } = await supabase
+          .from("tools_catalog")
+          .select("preview_image_url")
+          .eq("id", p.tool_id)
+          .maybeSingle();
+        setCatalogPreview((c as any)?.preview_image_url ?? null);
+      }
       setLoading(false);
     })();
   }, [slug]);
+
 
   // Auto-launch after login if ?launch=1 is present
   useEffect(() => {
@@ -153,6 +168,17 @@ export default function PromoPage() {
 
   const ctaSublabel = page.cta_sublabel ?? `${creditCost} CREDIT${creditCost === 1 ? "" : "S"} to start`;
   const badges = page.footer_badges?.length ? page.footer_badges : defaultBadges;
+
+  // Build the "See it in action" gallery: preview → gallery_images (screenshot, output, extra).
+  const galleryFromDb = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
+  const galleryUrls = new Set(galleryFromDb.map(g => g.url));
+  const gallery: GalleryImage[] = [
+    ...(catalogPreview && !galleryUrls.has(catalogPreview)
+      ? [{ url: catalogPreview, caption: "Preview", kind: "preview" }]
+      : []),
+    ...galleryFromDb,
+  ].slice(0, 4);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -257,6 +283,43 @@ export default function PromoPage() {
           </div>
         </section>
       )}
+
+      {/* GALLERY — See it in action */}
+      {gallery.length > 0 && (
+        <section className="container mx-auto px-4 py-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-2">See It in Action</h2>
+            <p className="text-muted-foreground">Preview, in-app screenshots and real output — no surprises.</p>
+          </div>
+          <div className={`grid gap-4 ${gallery.length >= 3 ? "md:grid-cols-2 lg:grid-cols-4" : gallery.length === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
+            {gallery.map((g, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm overflow-hidden shadow-lg shadow-primary/5 hover:shadow-primary/15 transition"
+              >
+                <div className="aspect-video w-full bg-muted/30 overflow-hidden">
+                  <img
+                    src={g.url}
+                    alt={g.caption ?? `${page.hero_title ?? "App"} — image ${i + 1}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {g.caption && (
+                  <div className="px-4 py-3 text-xs text-muted-foreground border-t border-border/40">
+                    {g.caption}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
 
       {/* FEATURES */}
       {page.features?.length > 0 && (
