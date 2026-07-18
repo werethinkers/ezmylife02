@@ -254,6 +254,9 @@ export default function PromoPagesManager() {
             <Button variant="outline" onClick={() => handleBulkGenerate("all")} disabled={bulkRunning}>
               <Wand2 className="h-4 w-4 mr-1" /> Regenerate ALL ({tools.length})
             </Button>
+            <Button variant="outline" onClick={() => handleBulkGenerate("images_only")} disabled={bulkRunning}>
+              <Sparkles className="h-4 w-4 mr-1" /> Backfill missing images ({pages.filter(p => !p.hero_image_url || !Array.isArray(p.gallery_images) || (p.gallery_images?.length ?? 0) < 3).length})
+
             <Button variant="secondary" onClick={handleExportCSV} disabled={pages.length === 0}>
               <Download className="h-4 w-4 mr-1" /> Export CSV of links ({pages.length})
             </Button>
