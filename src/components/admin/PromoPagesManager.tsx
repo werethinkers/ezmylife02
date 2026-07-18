@@ -24,6 +24,7 @@ interface PromoRow {
   trust_logos: any; features: any; how_it_works: any; testimonials: any; stats: any;
   final_cta_title: string | null; final_cta_subtitle: string | null; footer_badges: any;
   seo_title: string | null; seo_description: string | null; og_image_url: string | null;
+  gallery_images: any;
   updated_at: string;
 }
 
