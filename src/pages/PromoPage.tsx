@@ -66,6 +66,7 @@ export default function PromoPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState<PromoPage | null>(null);
+  const [catalogPreview, setCatalogPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const { creditCost } = useToolPricing(page?.tool_id);
@@ -78,10 +79,20 @@ export default function PromoPage() {
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
-      setPage((data as unknown) as PromoPage | null);
+      const p = (data as unknown) as PromoPage | null;
+      setPage(p);
+      if (p?.tool_id) {
+        const { data: c } = await supabase
+          .from("tools_catalog")
+          .select("preview_image_url")
+          .eq("id", p.tool_id)
+          .maybeSingle();
+        setCatalogPreview((c as any)?.preview_image_url ?? null);
+      }
       setLoading(false);
     })();
   }, [slug]);
+
 
   // Auto-launch after login if ?launch=1 is present
   useEffect(() => {
