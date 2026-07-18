@@ -244,7 +244,8 @@ Deno.serve(async (req) => {
             seo_description: draft.seo_description ?? desc,
           };
           if (heroUrl) { payload.hero_image_url = heroUrl; payload.og_image_url = heroUrl; }
-          else if (force) { /* keep existing images */ }
+          if (gallery.length > 0) { payload.gallery_images = gallery; }
+
 
           if (existingByTool.has(t.id)) {
             const { error } = await supabase.from("tool_promo_pages").update(payload).eq("tool_id", t.id);
