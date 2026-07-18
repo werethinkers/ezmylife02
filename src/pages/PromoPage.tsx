@@ -10,6 +10,8 @@ import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 
+interface GalleryImage { url: string; caption?: string; kind?: string }
+
 interface PromoPage {
   id: string;
   tool_id: string;
@@ -37,7 +39,9 @@ interface PromoPage {
   seo_title: string | null;
   seo_description: string | null;
   og_image_url: string | null;
+  gallery_images: GalleryImage[];
 }
+
 
 const defaultBadges = [
   { icon: "shield", title: "Secure & Private", body: "Your data is safe and encrypted" },
