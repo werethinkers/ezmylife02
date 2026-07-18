@@ -377,8 +377,9 @@ function PromoEditorDialog({ page, onClose, onSave }: { page: PromoRow; onClose:
         </DialogHeader>
 
         <Tabs defaultValue="hero" className="w-full">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-7 w-full">
             <TabsTrigger value="hero">Hero</TabsTrigger>
+            <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="trust">Trust</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="how">How it works</TabsTrigger>
