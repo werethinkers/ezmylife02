@@ -178,11 +178,8 @@ Deno.serve(async (req) => {
         const desc = t.description ?? "";
         const cat = t.category ?? "AI tool";
         try {
-          send({ type: "progress", tool_id: t.id, name, status: "copy" });
-          const draft = await geminiJSON(copyPrompt(name, desc, cat));
+          const existingPage = existingByTool.get(t.id);
 
-          let heroUrl: string | null = null;
-          const gallery: Array<{ url: string; caption: string; kind: string }> = [];
           const uploadImg = async (bytes: Uint8Array, mime: string, tag: string) => {
             const ext = mime.includes("jpeg") ? "jpg" : "png";
             const path = `promo/${t.id}/${tag}-${Date.now()}.${ext}`;
@@ -190,6 +187,58 @@ Deno.serve(async (req) => {
             if (upErr) throw upErr;
             return supabase.storage.from("tool-media").getPublicUrl(path).data.publicUrl;
           };
+
+          // ---------- IMAGES-ONLY BACKFILL PATH ----------
+          if (images_only) {
+            let heroUrl: string | null = existingPage?.hero_image_url ?? null;
+            const gallery: Array<{ url: string; caption: string; kind: string }> =
+              Array.isArray(existingPage?.gallery_images) ? [...existingPage.gallery_images] : [];
+            const haveKind = (k: string) => gallery.some(g => (g.kind ?? "").toLowerCase() === k);
+
+            if (!heroUrl) {
+              try {
+                send({ type: "progress", tool_id: t.id, name, status: "image_hero" });
+                const hero = await geminiImage(heroImagePrompt(name, desc, cat));
+                heroUrl = await uploadImg(hero.bytes, hero.mime, "hero");
+              } catch (e) {
+                send({ type: "progress", tool_id: t.id, name, status: "image_hero_failed", error: String(e) });
+              }
+            }
+
+            const jobs: Array<[string, string, string]> = [];
+            if (!haveKind("screenshot")) jobs.push(["screenshot", "App interface", appScreenshotPrompt(name, desc, cat)]);
+            if (!haveKind("output")) jobs.push(["output", "Sample output", outputWindowPrompt(name, desc, cat)]);
+            if (!haveKind("compare")) jobs.push(["compare", "Before / after", beforeAfterPrompt(name, desc, cat)]);
+
+            for (const [tag, caption, prompt] of jobs) {
+              try {
+                send({ type: "progress", tool_id: t.id, name, status: `image_${tag}` });
+                const img = await geminiImage(prompt);
+                const url = await uploadImg(img.bytes, img.mime, tag);
+                gallery.push({ url, caption, kind: tag });
+              } catch (e) {
+                send({ type: "progress", tool_id: t.id, name, status: `image_${tag}_failed`, error: String(e) });
+              }
+            }
+
+            const patch: any = { gallery_images: gallery };
+            if (heroUrl) { patch.hero_image_url = heroUrl; patch.og_image_url = existingPage?.og_image_url ?? heroUrl; }
+            const { error } = await supabase.from("tool_promo_pages").update(patch).eq("tool_id", t.id);
+            if (error) throw error;
+
+            ok++;
+            send({ type: "progress", tool_id: t.id, name, status: "ok", gallery: gallery.length, hero: heroUrl });
+            done++;
+            send({ type: "tick", done, total: targets.length, ok, failed });
+            continue;
+          }
+
+          // ---------- FULL COPY + IMAGE PATH ----------
+          send({ type: "progress", tool_id: t.id, name, status: "copy" });
+          const draft = await geminiJSON(copyPrompt(name, desc, cat));
+
+          let heroUrl: string | null = null;
+          const gallery: Array<{ url: string; caption: string; kind: string }> = [];
 
           if (generate_image) {
             try {
@@ -199,7 +248,6 @@ Deno.serve(async (req) => {
             } catch (e) {
               send({ type: "progress", tool_id: t.id, name, status: "image_failed", error: String(e) });
             }
-            // Gallery: app UI screenshot, output window, before/after
             const galleryJobs: Array<[string, string, string]> = [
               ["screenshot", "App interface", appScreenshotPrompt(name, desc, cat)],
               ["output", "Sample output", outputWindowPrompt(name, desc, cat)],
@@ -217,10 +265,8 @@ Deno.serve(async (req) => {
             }
           }
 
-
-          // slug: prefer existing, else unique from name
-          let slug = existingByTool.get(t.id) ?? slugify(name) ?? t.id;
-          if (!existingByTool.has(t.id)) {
+          let slug = existingPage?.slug ?? slugify(name) ?? t.id;
+          if (!existingPage) {
             let s = slug, n = 1;
             while (usedSlugs.has(s)) { n++; s = `${slug}-${n}`; }
             slug = s; usedSlugs.add(slug);
@@ -259,8 +305,7 @@ Deno.serve(async (req) => {
           if (heroUrl) { payload.hero_image_url = heroUrl; payload.og_image_url = heroUrl; }
           if (gallery.length > 0) { payload.gallery_images = gallery; }
 
-
-          if (existingByTool.has(t.id)) {
+          if (existingPage) {
             const { error } = await supabase.from("tool_promo_pages").update(payload).eq("tool_id", t.id);
             if (error) throw error;
           } else {
@@ -281,6 +326,7 @@ Deno.serve(async (req) => {
       controller.close();
     },
   });
+
 
   return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "application/x-ndjson" } });
 });
