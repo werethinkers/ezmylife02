@@ -6,6 +6,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
+import { receiptInBackground } from "../_shared/receipt.ts";
+import { writeSharePage } from "../_shared/sharepage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,11 +98,33 @@ serve(async (req) => {
       if (re) throw new Error(re.message);
       if (!res?.ok) return json({ error: `Could not publish (${res?.reason}).` }, 400);
 
-      await supabase.from("activity_logs").insert({
-        user_id: user.id, action_type: "payment",
-        action_details: { kind: "instant_page", product_id: order.product_id, inr: order.inr_amount, payment_id: razorpay_payment_id },
+      if (!res.noop) {
+        await supabase.from("activity_logs").insert({
+          user_id: user.id, action_type: "payment",
+          action_details: { kind: "instant_page", product_id: order.product_id, inr: order.inr_amount, payment_id: razorpay_payment_id },
+        });
+      }
+      const { data: prod } = await supabase.from("ip_products").select("name").eq("id", order.product_id).maybeSingle();
+      receiptInBackground(supabase, {
+        kind: "page", userId: user.id, email: user.email, name: user.user_metadata?.full_name ?? user.user_metadata?.name,
+        description: `${prod?.name ?? "Digital page"} · ezyourlife.com/p/${res.slug}`, amountInr: order.inr_amount,
+        paymentId: razorpay_payment_id, orderId: razorpay_order_id, link: `https://ezyourlife.com/p/${res.slug}`,
       });
       return json({ published: true, slug: res.slug, page_id: order.page_id });
+    }
+
+    if (action === "share") {
+      // Writes the page's link-preview file (its own title, text and image) and stores its address.
+      const { data: page } = await supabase.from("ip_pages").select("id, owner_id, slug, status, og_image").eq("id", String(body.page_id ?? "")).maybeSingle();
+      if (!page || page.owner_id !== user.id || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
+      const { data: product } = await supabase.from("ip_products").select("family").eq("id", body.product_id ?? "").maybeSingle();
+      const url = await writeSharePage({
+        slug: page.slug, title: String(body.title ?? "").slice(0, 120) || "EZYOURLIFE",
+        description: String(body.description ?? "").slice(0, 300), image: page.og_image,
+        indexable: ["business", "menu", "profile"].includes(product?.family ?? ""),
+      });
+      if (url) await supabase.rpc("ip_set_share_url", { _page_id: page.id, _url: url });
+      return json({ share_url: url });
     }
 
     return json({ error: "Unknown action" }, 400);

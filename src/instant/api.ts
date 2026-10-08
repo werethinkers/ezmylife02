@@ -9,11 +9,11 @@ export interface PageRow {
   id: string; owner_id: string; product_id: string; variant_id: string; title: string; slug: string | null;
   status: "draft" | "pending_payment" | "published" | "unpublished" | "removed";
   content: Content; published_content: Content | null; views: number; published_at: string | null; expires_at: string | null;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; og_image?: string | null; share_url?: string | null;
 }
 export interface ProductRow { id: string; family: string; category: string; name: string; price_inr: number; hosting_days: number; is_active: boolean; is_featured: boolean; sort: number }
 export interface LeadRow { id: string; page_id: string; kind: "lead" | "rsvp" | "order"; name: string; phone: string; message: string | null; context: Record<string, unknown>; status: "new" | "contacted" | "converted" | "closed"; created_at: string }
-export interface PublicPage { slug: string; product_id: string; variant_id: string; content: Content; published_at: string }
+export interface PublicPage { slug: string; product_id: string; variant_id: string; content: Content; published_at: string; og_image?: string | null }
 
 export async function fetchProductRows(): Promise<ProductRow[]> {
   const { data, error } = await db.from("ip_products").select("*").order("sort");
@@ -130,4 +130,9 @@ export async function uploadContentImages(ownerId: string, pageId: string, conte
     return v;
   };
   return (await walk(content)) as Content;
+}
+
+export async function setOgImage(id: string, url: string) {
+  const { error } = await db.from("ip_pages").update({ og_image: url }).eq("id", id);
+  if (error) throw error;
 }

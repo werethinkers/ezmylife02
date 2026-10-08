@@ -4,26 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { getProduct } from "@/instant/catalog";
 import { ProductRenderer } from "@/instant/renderers";
 import { getPublicPage, recordHit } from "@/instant/api";
-import { pageUrlFor, fill } from "@/instant/util";
+import { pageUrlFor } from "@/instant/util";
+import { describe } from "@/instant/meta";
 import { resolveImg } from "@/instant/parts";
-import type { Content, Product } from "@/instant/types";
 
 const MARK = "data-ip-meta";
 function setMeta(attr: "name" | "property", key: string, value: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
   if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); el.setAttribute(MARK, ""); document.head.appendChild(el); }
   el.setAttribute("content", value);
-}
-
-function describe(p: Product, c: Content) {
-  switch (p.family) {
-    case "celebration": return { title: `${fill(p.opts.greeting, c)}${String(fill(p.opts.greeting, c)).includes(c.recipient) ? "" : " " + c.recipient} 🎉`, desc: `${c.sender} made something special for you. Tap to open your surprise.` };
-    case "festival": return { title: `${p.opts.greeting} from ${c.sender}`, desc: String(c.message ?? "").slice(0, 150) };
-    case "event": return { title: `${c.hosts} | ${p.name}`, desc: [c.tagline, c.venue].filter(Boolean).join(" · ") || "You're invited. View the invitation and RSVP." };
-    case "business": return { title: `${c.name}${c.area ? ` | ${c.area}` : ""}${c.city ? `, ${c.city}` : ""}`, desc: String(c.tagline || `${p.opts.noun} in ${c.city ?? ""}`) };
-    case "menu": return { title: `${c.name} | Menu`, desc: String(c.tagline || "See the menu and order on WhatsApp.") };
-    default: return { title: `${c.name}${c.title ? ` | ${c.title}` : ""}`, desc: String(c.about ?? "").slice(0, 150) };
-  }
 }
 
 export default function PublishedPage() {
@@ -51,7 +40,8 @@ export default function PublishedPage() {
     setMeta("name", "theme-color", theme.c.bg);
     setMeta("name", "robots", product.indexable ? "index,follow" : "noindex,nofollow");
     const img = [c.gallery?.[0]?.photo, c.photo, c.cover, c.memories?.[0]?.photo].map((x) => resolveImg(x)).find((x) => x && x.startsWith("http"));
-    if (img) setMeta("property", "og:image", img);
+    const og = page.og_image || img;
+    if (og) setMeta("property", "og:image", og);
     let ld: HTMLScriptElement | null = null;
     if (product.family === "business" || product.family === "menu") {
       ld = document.createElement("script"); ld.type = "application/ld+json"; ld.setAttribute(MARK, "");

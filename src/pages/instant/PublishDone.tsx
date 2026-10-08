@@ -8,6 +8,7 @@ import { getMyPage, type PageRow } from "@/instant/api";
 import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
 import { useConfetti } from "@/instant/parts";
+import { useLinkPreview } from "@/instant/linkPreview";
 
 export default function PublishDone() {
   const { pageId = "" } = useParams();
@@ -34,6 +35,8 @@ export default function PublishDone() {
   const product = page ? getProduct(page.product_id) : undefined;
   const theme = product?.themes.find((t) => t.id === page?.variant_id) ?? product?.themes[0];
   const content = page?.published_content ?? page?.content ?? {};
+  // Every publish or edit lands here, so redraw the link preview from what is live now.
+  const link = useLinkPreview(live ? page : null, product, theme, true);
 
   return (
     <div className="min-h-screen bg-muted/30 relative">
@@ -61,7 +64,7 @@ export default function PublishDone() {
               </div>
             </div>
             <div className="rounded-3xl border bg-background p-6 md:p-8">
-              <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} />
+              <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} link={link} />
             </div>
             <p className="text-center text-sm text-muted-foreground">Need a change? <Link className="underline" to={`/create/${product.id}?page=${page.id}`}>Edit it</Link> any time. Updates are free.</p>
             <Button asChild variant="ghost"><Link to="/create">Make something else</Link></Button>

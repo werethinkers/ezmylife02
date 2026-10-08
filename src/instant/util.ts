@@ -15,8 +15,8 @@ export function waDigits(p: unknown): string {
   return d;
 }
 export const isMobile = (p: unknown) => /^[6-9]\d{9}$/.test(waDigits(p).replace(/^91/, ""));
-export const waTo = (phone: unknown, text: string) => `https://wa.me/${waDigits(phone)}?text=${encodeURIComponent(text)}`;
-export const waShare = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`;
+export const waTo = (phone: unknown, text: string) => `https://api.whatsapp.com/send?phone=${waDigits(phone)}&text=${encodeURIComponent(text)}`;
+export const waShare = (text: string) => `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 export const telHref = (phone: unknown) => `tel:+${waDigits(phone)}`;
 export function fmtPhone(p: unknown) {
   const d = waDigits(p);

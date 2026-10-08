@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
+import { receiptInBackground } from "../_shared/receipt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,6 +72,12 @@ serve(async (req) => {
         },
       });
     }
+
+    receiptInBackground(supabase, {
+      kind: "credits", userId: user.id, email: user.email, name: user.user_metadata?.full_name ?? user.user_metadata?.name,
+      description: `${purchase.credits.toLocaleString("en-IN")} EZYOURLIFE credits`, amountInr: Number(purchase.inr_amount),
+      paymentId: razorpay_payment_id, orderId: razorpay_order_id, link: "https://ezyourlife.com/ai-apps",
+    });
 
     return new Response(JSON.stringify({ success: true, credits: purchase.credits, applied }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,

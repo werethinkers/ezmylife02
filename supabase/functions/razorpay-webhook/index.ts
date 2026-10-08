@@ -4,6 +4,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
+import { receiptInBackground } from "../_shared/receipt.ts";
 
 const HANDLED_EVENTS = new Set(["payment.captured", "payment.authorized", "order.paid"]);
 
@@ -57,6 +58,13 @@ serve(async (req) => {
         _payment_id: payment.id,
       });
       if (perr) throw new Error(perr.message);
+      if (published?.ok) {
+        const { data: prod } = await supabase.from("ip_products").select("name").eq("id", pageOrder.product_id).maybeSingle();
+        receiptInBackground(supabase, {
+          kind: "page", userId: pageOrder.user_id, description: `${prod?.name ?? "Digital page"} · ezyourlife.com/p/${published.slug}`,
+          amountInr: pageOrder.inr_amount, paymentId: payment.id, orderId, link: `https://ezyourlife.com/p/${published.slug}`,
+        });
+      }
       return json({ ok: true, published });
     }
     if (purchase.status === "paid") return json({ ok: true, noop: true });
@@ -88,6 +96,11 @@ serve(async (req) => {
         },
       });
     }
+
+    receiptInBackground(supabase, {
+      kind: "credits", userId: purchase.user_id, description: `${Number(purchase.credits).toLocaleString("en-IN")} EZYOURLIFE credits`,
+      amountInr: Number(purchase.inr_amount), paymentId: payment.id, orderId, link: "https://ezyourlife.com/ai-apps",
+    });
 
     return json({ ok: true, applied });
   } catch (e) {

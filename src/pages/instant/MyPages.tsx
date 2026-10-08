@@ -10,6 +10,7 @@ import { getProduct } from "@/instant/catalog";
 import { deleteDraft, leadCounts, myPages, republish, unpublish, type PageRow } from "@/instant/api";
 import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
+import { useLinkPreview } from "@/instant/linkPreview";
 
 const STATUS: Record<PageRow["status"], [string, string]> = {
   draft: ["Draft", "bg-muted text-muted-foreground"], pending_payment: ["Awaiting payment", "bg-amber-100 text-amber-800"],
@@ -27,6 +28,7 @@ export default function MyPages() {
 
   const sp = sharing ? getProduct(sharing.product_id) : undefined;
   const st = sp?.themes.find((t) => t.id === sharing?.variant_id) ?? sp?.themes[0];
+  const link = useLinkPreview(sharing, sp, st, false);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -81,7 +83,7 @@ export default function MyPages() {
       <Dialog open={!!sharing} onOpenChange={(o) => !o && setSharing(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Share {sharing?.title}</DialogTitle></DialogHeader>
-          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} />}
+          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} link={link} />}
         </DialogContent>
       </Dialog>
     </div>

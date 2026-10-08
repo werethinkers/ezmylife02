@@ -65,6 +65,7 @@ const CreateGallery = lazy(() => import("./pages/instant/CreateGallery"));
 const Builder = lazy(() => import("./pages/instant/Builder"));
 const PublishedPage = lazy(() => import("./pages/instant/PublishedPage"));
 const PublishDone = lazy(() => import("./pages/instant/PublishDone"));
+const ProductPromo = lazy(() => import("./pages/instant/ProductPromo"));
 const MyPages = lazy(() => import("./pages/instant/MyPages"));
 const PageLeads = lazy(() => import("./pages/instant/PageLeads"));
 const AdminInstant = lazy(() => import("./pages/instant/AdminInstant"));
@@ -260,6 +261,7 @@ const AnimatedRoutes = () => {
             <Route path="/create" element={<CreateGallery />} />
             <Route path="/create/done/:pageId" element={<ProtectedRoute><PublishDone /></ProtectedRoute>} />
             <Route path="/create/:productId" element={<Builder />} />
+            <Route path="/make/:productId" element={<ProductPromo />} />
             <Route path="/p/:slug" element={<PublishedPage />} />
             <Route path="/my-pages" element={<ProtectedRoute><MyPages /></ProtectedRoute>} />
             <Route path="/my-pages/:pageId" element={<ProtectedRoute><PageLeads /></ProtectedRoute>} />
@@ -279,9 +281,9 @@ const AnimatedRoutes = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
   );
-  // Published pages and the builder own the whole screen and use fixed action bars, which a
+  // Published pages, product pages and the builder own the whole screen and use fixed action bars, which a
   // transformed ancestor would break, so they render without the page-transition wrapper.
-  if (/^\/(p|create)\//.test(location.pathname)) {
+  if (/^\/(p|create|make)\//.test(location.pathname)) {
     return <Suspense fallback={<DelayedFallback />}>{routes}</Suspense>;
   }
 

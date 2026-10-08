@@ -18,6 +18,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: string; changefreq: string 
   { path: "/promptmaster", priority: "0.8", changefreq: "weekly" },
   { path: "/meet-nudge", priority: "0.75", changefreq: "weekly" },
   { path: "/mobile-shortcuts", priority: "0.6", changefreq: "monthly" },
+  { path: "/create", priority: "0.95", changefreq: "daily" },
 ];
 
 function escapeXml(s: string): string {
@@ -56,6 +57,13 @@ Deno.serve(async () => {
       `<url><loc>${SITE}/tool-preview/${id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
       `<url><loc>${SITE}/tool/${id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.65</priority></url>`
     );
+  }
+
+  // Instant digital products: one promotional page per active product.
+  const { data: products } = await supabase.from("ip_products").select("id, updated_at").eq("is_active", true).order("sort").limit(1000);
+  for (const p of products ?? []) {
+    const lastmod = p.updated_at ? new Date(p.updated_at).toISOString().slice(0, 10) : today;
+    urls.push(`<url><loc>${SITE}/make/${escapeXml(p.id)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

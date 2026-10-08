@@ -8,13 +8,15 @@ import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
-export function ShareKit({ product, theme, content, url, slug }: { product: Product; theme: Theme; content: Content; url: string; slug: string }) {
+/** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
+export function ShareKit({ product, theme, content, url, slug, link }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null }) {
+  const sendUrl = link || url;
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const message = fill(product.share, { ...content, link: url });
+  const message = fill(product.share, { ...content, link: sendUrl });
   const qrCanvas = () => qrRef.current?.querySelector("canvas") ?? null;
 
   useEffect(() => {
@@ -25,8 +27,8 @@ export function ShareKit({ product, theme, content, url, slug }: { product: Prod
   }, [product, theme, content, url, fmt]);
 
   const copy = async () => {
-    try { await navigator.clipboard.writeText(url); toast({ title: "Link copied" }); }
-    catch { toast({ title: "Copy this link", description: url }); }
+    try { await navigator.clipboard.writeText(sendUrl); toast({ title: "Link copied" }); }
+    catch { toast({ title: "Copy this link", description: sendUrl }); }
   };
   const nativeShare = async () => {
     try {
@@ -34,7 +36,7 @@ export function ShareKit({ product, theme, content, url, slug }: { product: Prod
       const blob: Blob | null = await new Promise((r) => cv.toBlob(r, "image/png"));
       const file = blob ? new File([blob], `${slug}.png`, { type: "image/png" }) : null;
       if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: message });
-      else if (navigator.share) await navigator.share({ text: message, url });
+      else if (navigator.share) await navigator.share({ text: message });
       else { await copy(); }
     } catch { /* user closed the share sheet */ }
   };
@@ -53,7 +55,7 @@ export function ShareKit({ product, theme, content, url, slug }: { product: Prod
           <Button variant="outline" className="h-12 rounded-xl" onClick={nativeShare}><Share2 className="h-4 w-4 mr-2" /> More apps</Button>
           <Button variant="outline" className="h-12 rounded-xl" onClick={copy}><Copy className="h-4 w-4 mr-2" /> Copy link</Button>
         </div>
-        <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm break-all font-mono">{url}</div>
+        <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm break-all font-mono">{sendUrl}</div>
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 
