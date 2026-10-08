@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.ip-checkout]
 verify_jwt = false
+
+[functions.receipt-test]
+verify_jwt = false

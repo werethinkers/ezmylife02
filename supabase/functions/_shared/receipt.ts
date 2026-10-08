@@ -164,3 +164,10 @@ export function receiptInBackground(supabase: Supa, r: ReceiptInput) {
   if (rt?.waitUntil) rt.waitUntil(p);
   return p;
 }
+
+/** Sends a sample receipt (no invoice is recorded). Used only for testing mail delivery. */
+export async function sendSampleReceipt(to: string, r: ReceiptInput, no: string) {
+  const pdf = await invoicePdf(no, new Date(), { ...r, email: to });
+  await sendMail(to, `Thank you for your payment · Invoice ${no}`, emailHtml(no, r),
+    `Sample receipt ${no} for ${r.description}, Rs. ${r.amountInr}`, pdf, `${no.replace(/\//g, "-")}.pdf`);
+}
