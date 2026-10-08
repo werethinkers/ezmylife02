@@ -525,11 +525,13 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          og_image: string | null
           owner_id: string
           product_id: string
           published_at: string | null
           published_content: Json | null
           published_variant_id: string | null
+          share_url: string | null
           slug: string | null
           status: string
           title: string
@@ -542,11 +544,13 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          og_image?: string | null
           owner_id: string
           product_id: string
           published_at?: string | null
           published_content?: Json | null
           published_variant_id?: string | null
+          share_url?: string | null
           slug?: string | null
           status?: string
           title?: string
@@ -559,11 +563,13 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          og_image?: string | null
           owner_id?: string
           product_id?: string
           published_at?: string | null
           published_content?: Json | null
           published_variant_id?: string | null
+          share_url?: string | null
           slug?: string | null
           status?: string
           title?: string
@@ -870,6 +876,69 @@ export type Database = {
           },
         ]
       }
+      payment_invoice_counters: {
+        Row: {
+          fy: string
+          last: number
+        }
+        Insert: {
+          fy: string
+          last?: number
+        }
+        Update: {
+          fy?: string
+          last?: number
+        }
+        Relationships: []
+      }
+      payment_invoices: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          customer_name: string | null
+          description: string
+          email: string | null
+          email_error: string | null
+          emailed_at: string | null
+          id: string
+          invoice_no: string
+          kind: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          customer_name?: string | null
+          description: string
+          email?: string | null
+          email_error?: string | null
+          emailed_at?: string | null
+          id?: string
+          invoice_no: string
+          kind: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id: string
+          user_id: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          customer_name?: string | null
+          description?: string
+          email?: string | null
+          email_error?: string | null
+          emailed_at?: string | null
+          id?: string
+          invoice_no?: string
+          kind?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       premium_access: {
         Row: {
           access_type: string
@@ -916,6 +985,7 @@ export type Database = {
           phone_number: string | null
           updated_at: string
           website: string | null
+          whatsapp_updates: boolean
         }
         Insert: {
           auth_provider?: string | null
@@ -932,6 +1002,7 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           website?: string | null
+          whatsapp_updates?: boolean
         }
         Update: {
           auth_provider?: string | null
@@ -948,6 +1019,7 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           website?: string | null
+          whatsapp_updates?: boolean
         }
         Relationships: []
       }
@@ -1660,6 +1732,42 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          phone: string
+          ref: string
+          status: string
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          phone: string
+          ref: string
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          phone?: string
+          ref?: string
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1674,6 +1782,7 @@ export type Database = {
         }
         Returns: Json
       }
+      app_secret: { Args: { _name: string }; Returns: string }
       apply_credit_purchase: {
         Args: { _order_id: string; _payment_id: string; _purchase_id: string }
         Returns: Json
@@ -1741,6 +1850,10 @@ export type Database = {
       ip_page_hit: { Args: { _slug: string }; Returns: undefined }
       ip_publish_page: { Args: { _page_id: string }; Returns: Json }
       ip_republish: { Args: { _page_id: string }; Returns: Json }
+      ip_set_share_url: {
+        Args: { _page_id: string; _url: string }
+        Returns: undefined
+      }
       ip_slugify: { Args: { _s: string }; Returns: string }
       ip_submit_lead: {
         Args: {
@@ -1754,6 +1867,19 @@ export type Database = {
         Returns: Json
       }
       ip_unpublish: { Args: { _page_id: string }; Returns: Json }
+      issue_payment_invoice: {
+        Args: {
+          _amount: number
+          _customer: string
+          _description: string
+          _email: string
+          _kind: string
+          _order_id: string
+          _payment_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       monthly_free_reset: { Args: never; Returns: number }
       start_tool_run: {
         Args: { _tool_id: string; _uid: string }
