@@ -2,24 +2,33 @@
 // every finished AI task, with the result in it.
 //
 // WhatsApp only delivers free-form messages inside the 24-hour window after the customer last
-// wrote to us. Outside it, only approved templates arrive. So each update sends:
-//   1. the matching template, when Wavo reports it APPROVED (always delivered), then
-//   2. the full message (text, plus the image or invoice PDF), which arrives whenever the window is open.
-// With no approved template yet, only step 2 runs.
+// wrote to us; outside it, only Meta-approved templates arrive. So each update:
+//   1. sends its template when Wavo reports it APPROVED (reaches everyone), and
+//   2. sends the free-form version (full text, image, invoice PDF) when there is no approved
+//      template yet, or when the template could not carry everything (a long result).
 //
 // Key: WAVO_API_KEY env, else the WAVO_API_KEY secret in Supabase Vault (read via app_secret).
-// Templates (names, override with env): WAVO_TPL_CREDITS (payment_verification_ezyourlife: name, credits),
-// WAVO_TPL_PAGE (page_live_ezyourlife: name, product, link), WAVO_TPL_TASK (task_ready_ezyourlife: name, app).
+// Templates (created in Wavo; names can be overridden with env):
+//   payment_receipt_ezyourlife  body: name, amount, item, invoice no, payment id · button: invoice link
+//   payment_verification_ezyourlife (older, credits only)  body: name, credits
+//   page_live_ezyourlife        body: name, order no, product · button: page path
+//   task_ready_ezyourlife       body: name, app, request id, result preview · button: app path
+//   task_image_ezyourlife       header: image · body: name, app, request id · button: app path
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const WAVO = (Deno.env.get("WAVO_BASE_URL") ?? "https://api.wavo.digital").replace(/\/$/, "");
 const SITE = "https://ezyourlife.com";
 const TPL = {
+  receipt: Deno.env.get("WAVO_TPL_RECEIPT") ?? "payment_receipt_ezyourlife",
   credits: Deno.env.get("WAVO_TPL_CREDITS") ?? "payment_verification_ezyourlife",
   page: Deno.env.get("WAVO_TPL_PAGE") ?? "page_live_ezyourlife",
   task: Deno.env.get("WAVO_TPL_TASK") ?? "task_ready_ezyourlife",
+  image: Deno.env.get("WAVO_TPL_IMAGE") ?? "task_image_ezyourlife",
 };
+// The receipt template's button is https://<project>.supabase.co/storage/v1/{{1}}.
+const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/`;
+const PREVIEW_MAX = 650; // result preview inside the task template (body limit is 1024 characters)
 const TASK_THROTTLE_MIN = 10; // at most one update per app per user in this many minutes (chat apps)
 
 const sb = (path: string, init: RequestInit = {}) =>
@@ -85,14 +94,24 @@ async function approvedTemplates(): Promise<Map<string, string>> {
 }
 
 /** Template param text: one line, no tabs or runs of spaces (WhatsApp rejects those), capped. */
-const param = (s: unknown, max = 60) => String(s ?? "").replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, " ").trim().slice(0, max) || "-";
+const param = (s: unknown, max = 120) => String(s ?? "").replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, " ").trim().slice(0, max) || "-";
 
-async function sendTemplate(to: string, name: string, params: string[]): Promise<boolean> {
+interface TemplateParts { body: string[]; button?: string | null; image?: string | null }
+/** Sends an approved template; false (nothing sent) when it isn't approved yet. */
+async function sendTemplate(to: string, name: string, parts: TemplateParts): Promise<boolean> {
   const lang = (await approvedTemplates()).get(name);
   if (!lang) return false;
-  await wavoPost({ to, type: "template", template: { name, language: { code: lang }, parameters: params.map((p) => param(p)) } });
+  const components: unknown[] = [];
+  if (parts.image) components.push({ type: "header", parameters: [{ type: "image", image: { link: parts.image } }] });
+  components.push({ type: "body", parameters: parts.body.map((p) => ({ type: "text", text: param(p, PREVIEW_MAX) })) });
+  if (parts.button) components.push({ type: "button", sub_type: "url", index: 0, parameters: [{ type: "text", text: parts.button }] });
+  await wavoPost({ to, type: "template", template: { name, language: { code: lang }, components } });
   return true;
 }
+/** Path after https://ezyourlife.com/ for a template's link button. */
+const sitePath = (link: string | null | undefined) => String(link ?? "").replace(/^https:\/\/(www\.)?ezyourlife\.com\/?/, "") || "ai-apps";
+/** Short, human-friendly request id shown in task templates. */
+const shortRef = (id: string) => "R-" + id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase();
 
 interface Recipient { userId: string; phone: string; first: string }
 
@@ -128,14 +147,14 @@ const mark = (id: string, status: string, error?: string) =>
   sb(`/rest/v1/whatsapp_messages?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status, error: error?.slice(0, 500) ?? null }) }).catch(() => undefined);
 
 /** Uploads bytes to the private wa-media bucket and returns a 7-day link WhatsApp can fetch. */
-async function hostFile(path: string, bytes: Uint8Array, type: string): Promise<string | null> {
+async function hostFile(path: string, bytes: Uint8Array, type: string, days = 7): Promise<string | null> {
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/wa-media/${path}`, {
     method: "POST",
     headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": type, "x-upsert": "true" },
     body: bytes,
   });
   if (!up.ok) return null;
-  const s = await sb(`/storage/v1/object/sign/wa-media/${path}`, { method: "POST", body: JSON.stringify({ expiresIn: 7 * 86400 }) });
+  const s = await sb(`/storage/v1/object/sign/wa-media/${path}`, { method: "POST", body: JSON.stringify({ expiresIn: days * 86400 }) });
   if (!s.ok) return null;
   const { signedURL } = await s.json();
   return signedURL ? `${SUPABASE_URL}/storage/v1${signedURL}` : null;
@@ -191,17 +210,33 @@ export async function whatsappPurchase(u: PurchaseUpdate): Promise<void> {
       `Reply here if you need anything.`,
       `— Abhijay, EZYOURLIFE`,
     ].filter((l) => l !== null);
+    // The invoice is hosted for 30 days; the receipt template's button links to it.
+    let invoiceUrl: string | null = null;
+    const fileName = u.invoiceNo ? `${u.invoiceNo.replace(/\//g, "-")}.pdf` : "";
+    const invoiceLink = async () => {
+      if (invoiceUrl || !u.invoicePdf || !u.invoiceNo) return invoiceUrl;
+      return (invoiceUrl = await hostFile(`${u.userId}/invoices/${fileName}`, u.invoicePdf, "application/pdf", 30));
+    };
+    let templated = false;
     await deliver(id, [
       async () => {
-        if (u.kind === "credits") await sendTemplate(to.phone, TPL.credits, [to.first, String(u.credits ?? "")]);
-        else await sendTemplate(to.phone, TPL.page, [to.first, u.description.split(" · ")[0], u.link ?? SITE]);
+        const inv = await invoiceLink();
+        if (inv && u.invoiceNo && inv.startsWith(STORAGE_BASE)) {
+          templated = await sendTemplate(to.phone, TPL.receipt, {
+            body: [to.first, inr(u.amountInr), u.description, u.invoiceNo, u.paymentId], button: inv.slice(STORAGE_BASE.length),
+          });
+        }
+        if (!templated && u.kind === "credits") templated = await sendTemplate(to.phone, TPL.credits, { body: [to.first, String(u.credits ?? "")] });
       },
-      () => wavoPost({ to: to.phone, type: "text", text: { body: lines.join("\n"), preview_url: true } }),
       async () => {
-        if (!u.invoicePdf || !u.invoiceNo) return;
-        const name = `${u.invoiceNo.replace(/\//g, "-")}.pdf`;
-        const link = await hostFile(`${u.userId}/invoices/${name}`, u.invoicePdf, "application/pdf");
-        if (link) await wavoPost({ to: to.phone, type: "document", document: { link, filename: name, caption: `Invoice ${u.invoiceNo}` } });
+        // A bought page is also a finished order: tell them it's live, with the link.
+        if (u.kind === "page") await sendTemplate(to.phone, TPL.page, { body: [to.first, u.invoiceNo ?? shortRef(u.paymentId), u.description.split(" · ")[0]], button: sitePath(u.link) });
+      },
+      async () => { if (!templated) await wavoPost({ to: to.phone, type: "text", text: { body: lines.join("\n"), preview_url: true } }); },
+      async () => {
+        if (templated) return;
+        const link = await invoiceLink();
+        if (link) await wavoPost({ to: to.phone, type: "document", document: { link, filename: fileName, caption: `Invoice ${u.invoiceNo}` } });
       },
     ]);
   } catch (e) {
@@ -279,18 +314,30 @@ export async function whatsappTaskDone(t: { userId: string; toolId: string; runI
     const { text, image } = typeof t.output === "string" ? { text: t.output, image: null } : extractOutput(t.output);
     const body = text.length > 3200 ? text.slice(0, 3200).replace(/\s+\S*$/, "") + "…\n\n(See the full result in the app.)" : text;
     const message = [`✨ *Your ${name} result is ready*`, body, `Open it: ${link}`].filter(Boolean).join("\n\n");
+    let imageUrl: string | null = null;
+    if (image) {
+      imageUrl = image;
+      if (image.startsWith("data:")) {
+        const f = dataUrlBytes(image);
+        imageUrl = f ? await hostFile(`${t.userId}/results/${t.runId}.${f.type.split("/")[1] || "png"}`, f.bytes, f.type, 30) : null;
+      }
+    }
+    const ref = shortRef(t.runId);
+    const flat = text.replace(/^#{1,6}\s+/gm, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    const preview = flat.length > PREVIEW_MAX ? flat.slice(0, PREVIEW_MAX - 1).replace(/\s+\S*$/, "") + "…" : flat || "Your result is saved in the app.";
+    let imageSent = false, textSent = false;
     await deliver(id, [
-      () => sendTemplate(to.phone, TPL.task, [to.first, name]),
       async () => {
-        if (!image) return;
-        let url: string | null = image;
-        if (image.startsWith("data:")) {
-          const f = dataUrlBytes(image);
-          url = f ? await hostFile(`${t.userId}/results/${t.runId}.${f.type.split("/")[1] || "png"}`, f.bytes, f.type) : null;
-        }
-        if (url) await wavoPost({ to: to.phone, type: "image", image: { link: url, caption: `${name} · ezyourlife.com` } });
+        // Image results: the picture itself in the template header.
+        if (imageUrl) imageSent = await sendTemplate(to.phone, TPL.image, { image: imageUrl, body: [to.first, name, ref], button: sitePath(link) });
       },
-      () => wavoPost({ to: to.phone, type: "text", text: { body: message, preview_url: false } }),
+      async () => {
+        // Text results: the result (or its start) inside the template.
+        if (text || !imageSent) textSent = await sendTemplate(to.phone, TPL.task, { body: [to.first, name, ref, preview], button: sitePath(link) });
+      },
+      // Free-form copies: only what the templates couldn't carry (they arrive inside the 24-hour window).
+      async () => { if (imageUrl && !imageSent) await wavoPost({ to: to.phone, type: "image", image: { link: imageUrl, caption: `${name} · ezyourlife.com` } }); },
+      async () => { if ((!textSent && !imageSent) || flat.length > PREVIEW_MAX) await wavoPost({ to: to.phone, type: "text", text: { body: message, preview_url: false } }); },
     ]);
   } catch (e) {
     console.error("whatsappTaskDone", e);
