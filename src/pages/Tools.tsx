@@ -85,7 +85,7 @@ const Tools = () => {
           description: t.description,
           category: t.category,
           isLive: t.is_live,
-          isFree: !!t.is_free,
+          isFree: false, // no app is free — every use costs at least 1 credit
           icon: <Sparkles className="h-8 w-8" />,
         });
       }

@@ -407,7 +407,7 @@ export default function PromoPage() {
                     {creditCost}
                     <span className="ml-2 text-xl font-semibold text-white/85">credit{creditCost === 1 ? "" : "s"}</span>
                   </p>
-                  <p className="mt-1 text-sm text-white/90">{creditCost > 0 ? `per result from ${name} — opening the app is free` : `${name} is free to use`}</p>
+                  <p className="mt-1 text-sm text-white/90">{`per use of ${name} — failed runs are not charged`}</p>
                   <p className="mt-4 text-sm text-white/90">
                     Credit packs start at ₹{minPack.inr} for {minPack.credits} credits.
                   </p>

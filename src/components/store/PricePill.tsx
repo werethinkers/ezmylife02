@@ -16,7 +16,7 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
   const { total } = useWallet();
   const { costOf } = usePricingMap();
   const cost = costOf(toolId);
-  const free = cost === 0;
+  const free = false; // every app costs at least 1 credit
   const canOpen = free || (!!user && total >= cost);
   const rupees = formatRupees(cost * RUPEES_PER_CREDIT_MAX);
 

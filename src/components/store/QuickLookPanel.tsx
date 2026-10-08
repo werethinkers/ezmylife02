@@ -142,10 +142,10 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
             </div>
             <div className="text-sm">
               <p className="font-semibold">
-                {cost === 0 ? "Free to use" : `${cost} credit${cost === 1 ? "" : "s"} a run`}
+                {`${Math.max(1, cost)} credit${Math.max(1, cost) === 1 ? "" : "s"} a run`}
               </p>
               <p className="text-muted-foreground">
-                {cost === 0
+                {false
                   ? "Runs in your browser — no credits needed"
                   : `${formatRupees(cost * RUPEES_PER_CREDIT_MAX)} at the ₹10 pack · ${formatRupees(cost * RUPEES_PER_CREDIT_MIN)} with bigger packs · failed runs are free`}
               </p>
