@@ -33,7 +33,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("@tanstack")) return "query";
           if (id.includes("framer-motion") || id.includes("motion-dom") || id.includes("motion-utils")) return "motion";
           if (id.includes("@supabase")) return "supabase";
-          if (/node_modules\/(recharts|d3-[a-z-]+|victory-vendor|recharts-scale|decimal\.js-light)\//.test(id)) return "charts";
+          // No manual "charts" chunk: grouping recharts/d3 created a cross-chunk import cycle that threw
+          // "Cannot access 'P' before initialization" at startup and left every page blank. Rollup
+          // already keeps recharts in the lazy chunks of the pages that use it.
           return undefined;
         },
       },
