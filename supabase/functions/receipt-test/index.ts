@@ -3,7 +3,7 @@ Deno.serve(async (req) => {
   const b = await req.json().catch(() => ({}));
   if (b.nonce !== "ezy-test-7f3k2q") return new Response("no", { status: 403 });
   const jobs = [
-    { to: "abhijayjain3@gmail.com", amt: 10, desc: "15 EZYOURLIFE credits", no: "TEST/0001" },
+
     { to: "work.abhijayjain@gmail.com", amt: 5000, desc: "Credit pack · ₹5,000", no: "TEST/0002" },
   ];
   const out = [];

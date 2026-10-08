@@ -34,7 +34,7 @@ async function invoicePdf(no: string, date: Date, r: ReceiptInput): Promise<Uint
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const ink = rgb(0.07, 0.09, 0.15), mute = rgb(0.38, 0.42, 0.5), brand = rgb(0.4, 0.33, 0.95);
-  const t = (s: string, x: number, y: number, size = 10, f = font, c = ink) => page.drawText(s, { x, y, size, font: f, color: c });
+  const t = (s: string, x: number, y: number, size = 10, f = font, c = ink) => page.drawText(s.replace(/₹/g, "Rs. ").replace(/[^\x00-\xFF]/g, ""), { x, y, size, font: f, color: c });
   page.drawRectangle({ x: 0, y: 812, width: 595, height: 30, color: brand });
   t("EZYOURLIFE", 48, 772, 22, bold);
   t("Think It -> Done", 48, 756, 9, font, mute);
