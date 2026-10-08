@@ -71,7 +71,7 @@ export default function PdfMetadata({ toolId }: { toolId: string }) {
           <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[140px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 hover:border-primary/50">
             {loading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <FileUp className="h-7 w-7 text-primary" />}
             <span className="mt-2 font-medium">Choose a PDF</span>
-            <span className="text-xs text-muted-foreground">Metadata is read in your browser — free.</span>
+            <span className="text-xs text-muted-foreground">Metadata is read in your browser.</span>
           </button>
           <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void open(f); e.target.value = ""; }} />
           {meta && (

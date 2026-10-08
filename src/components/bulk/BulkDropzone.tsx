@@ -17,13 +17,16 @@ import { BulkParamsForm } from "./BulkParamsForm";
 import { BULK_PRICE_ID } from "@/apps/prices";
 import { useWallet } from "@/hooks/useWallet";
 import { handleCreditError, emitCreditPrompt } from "@/lib/creditPrompt";
+import { completeRun, startRun } from "@/lib/credits";
 
 interface Props {
   config: BulkToolConfig;
   onClose?: () => void;
+  /** Catalogue id whose price applies per file (defaults to the config's tool). */
+  priceToolId?: string;
 }
 
-export const BulkDropzone = ({ config, onClose }: Props) => {
+export const BulkDropzone = ({ config, onClose, priceToolId }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [files, setFiles] = useState<File[]>([]);
@@ -38,11 +41,11 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   // Server-processed AI tools are charged per file at their bulk price; startup analyses at the
   // analyser's price; browser-only tools at the app's own price (currently not charged).
-  const priceId = config.mode === "client" ? config.toolId : BULK_PRICE_ID[config.toolId] ?? config.toolId;
+  const priceId = config.mode === "client" ? priceToolId ?? config.toolId : BULK_PRICE_ID[config.toolId] ?? config.toolId;
   const { creditCost } = useToolPricing(priceId);
   const { total: balance } = useWallet();
-  const chargesPerFile = config.mode !== "client" || config.toolId === "startup-analyser";
-  const perFile = chargesPerFile ? creditCost : 0;
+  // Every file is charged (minimum 1 credit): AI tools on the server, browser tools here.
+  const perFile = creditCost;
   const totalCredits = files.length * perFile;
 
   const addFiles = (incoming: FileList | File[]) => {
@@ -147,6 +150,18 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       });
       if (insErr) throw insErr;
 
+      if (config.mode === "client" && config.toolId !== "startup-analyser") {
+        // Browser processing costs the app's price per file — charge each file before it runs.
+        for (let i = 0; i < files.length; i++) {
+          const st = await startRun(priceId);
+          if (!st.ok || !st.run_id) {
+            emitCreditPrompt({ kind: "buy", required: (files.length - i) * perFile, balance });
+            throw new Error(i ? `Charged for ${i} files; not enough credits for the rest.` : "Not enough credits");
+          }
+          await completeRun(st.run_id, true);
+        }
+        emitCreditPrompt({ kind: "charged" });
+      }
       if (config.mode === "client") {
         // Process in browser, upload ZIP, mark complete
         toast.success("Processing in your browser...");
@@ -267,7 +282,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           </div>
           <div className="text-muted-foreground">
             Credits required: <span className="font-semibold text-foreground">{totalCredits}</span>
-            <span className="text-xs ml-1">{perFile > 0 ? `(${perFile}/file · failed files are free)` : "(free — runs in your browser)"}</span>
+            <span className="text-xs ml-1">{`(${perFile}/file${config.mode === "client" && config.toolId !== "startup-analyser" ? "" : " · failed files are free"})`}</span>
           </div>
         </div>
       )}

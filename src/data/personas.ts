@@ -41,7 +41,7 @@ export const PERSONAS: Persona[] = [
     emoji: "🎓",
     label: "Students & Researchers",
     blurb: "Read PDFs faster, plan study time and test yourself before exams.",
-    toolIds: ["shastra-multi-pdf-ai-bot", "speedy-notebook", "quiz-maker", "flashcard-maker", "study-planner", "bibliography-generator", "ocr"],
+    toolIds: ["speedy-notebook", "quiz-maker", "flashcard-maker", "study-planner", "bibliography-generator", "ocr"],
     categories: ["For Students", "Research"],
   },
 ];
@@ -85,7 +85,7 @@ export const COLLECTIONS: Collection[] = [
     emoji: "🎓",
     title: "Exam week, sorted",
     subtitle: "Plan the week, read the PDFs, then quiz yourself.",
-    toolIds: ["study-planner", "shastra-multi-pdf-ai-bot", "flashcard-maker", "quiz-maker", "speedy-notebook"],
+    toolIds: ["study-planner", "flashcard-maker", "quiz-maker", "speedy-notebook"],
     personaId: "students",
   },
   {

@@ -19,6 +19,7 @@ const SmartAssistantChatbot = lazy(() =>
 );
 
 const CreditPromptHost = lazy(() => import("@/components/wallet/CreditPromptHost"));
+const DedicatedBulk = lazy(() => import("@/apps/bulk/DedicatedBulk"));
 
 // Delay the loading screen so cached/instant chunks don't flash a spinner.
 const DelayedFallback = () => null;
@@ -318,6 +319,7 @@ const App = () => (
             <Suspense fallback={null}>
               <SmartAssistantChatbot />
               <CreditPromptHost />
+              <DedicatedBulk />
             </Suspense>
           </QuickLookProvider>
         </AuthProvider>

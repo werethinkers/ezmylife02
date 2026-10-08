@@ -1,6 +1,7 @@
 // Manages tool run lifecycle: start (quote + balance check) and complete (debit on success).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ensurePrice } from "../_shared/billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,13 @@ serve(async (req) => {
     if (action === "start") {
       const tool_id = String(body.tool_id || "").trim();
       if (!tool_id) throw new Error("tool_id required");
+      // Every catalogue app costs at least 1 credit per use: create the minimum price for an
+      // app that has none yet (only for real catalogue apps, so ids can't be invented).
+      const { data: priced } = await supabase.from("tool_pricing").select("tool_id").eq("tool_id", tool_id).maybeSingle();
+      if (!priced) {
+        const { data: app } = await supabase.from("tools_catalog").select("id").eq("id", tool_id).maybeSingle();
+        if (app) await ensurePrice(tool_id, 1);
+      }
       const { data, error } = await supabase.rpc("start_tool_run", { _uid: uid, _tool_id: tool_id });
       if (error) throw new Error(error.message);
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });

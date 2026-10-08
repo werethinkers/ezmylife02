@@ -312,52 +312,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ezyourlife.com/tool/jain-audio-stream</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jain-encyclopedia</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jain-ganit</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jain-panchang</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jain-video-stream</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jainbhugol-maps</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/jaingyan-ai</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://ezyourlife.com/tool/join-images</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/kundkund-ebook-bot</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/kundkund-mindmap</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -553,21 +508,6 @@
   </url>
   <url>
     <loc>https://ezyourlife.com/tool/rotate-image</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/shastra-hover-dictionary</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/shastra-multi-pdf-ai-bot</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ezyourlife.com/tool/shastra-pdf-reader</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

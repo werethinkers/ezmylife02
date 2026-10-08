@@ -369,7 +369,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
         {rows.length} {def.itemName}
-        {rows.length === 1 ? "" : "s"} · adding and editing is free; only AI insights use credits.
+        {rows.length === 1 ? "" : "s"} · each use (30 minutes) is one charge at this app's price; AI reports are charged per report.
       </p>
 
       {/* AI insights */}

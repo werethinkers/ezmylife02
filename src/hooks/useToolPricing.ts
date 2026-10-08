@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BROWSER_ONLY, defaultPrice, priceIdFor } from "@/apps/prices";
+import { defaultPrice, priceIdFor } from "@/apps/prices";
 
 export interface ToolPricing {
   tool_id: string;
@@ -14,27 +14,23 @@ async function fetchPricing(priceId: string): Promise<ToolPricing> {
     .select("tool_id, cost_inr, credit_cost")
     .eq("tool_id", priceId)
     .maybeSingle();
-  // No pricing row yet: new engine apps show their default price; anything else is free
-  // (the server charges nothing for an app without a price).
-  return data ?? { tool_id: priceId, cost_inr: 0, credit_cost: defaultPrice(priceId) ?? 0 };
+  // No pricing row yet: the default price (the server creates the row, min 1, on first use).
+  return data ?? { tool_id: priceId, cost_inr: 0, credit_cost: defaultPrice(priceId) ?? 1 };
 }
 
-/**
- * Returns the current credit cost for a given tool (0 = free). Browser-only apps are free;
- * re-priced apps read the price id they are actually charged under.
- */
+/** Returns the credit cost per use (minimum 1); re-priced apps read the id they're charged under. */
 export function useToolPricing(toolId: string | undefined) {
   const priceId = toolId ? priceIdFor(toolId) : undefined;
   const q = useQuery({
     queryKey: ["tool-pricing", priceId],
     queryFn: () => fetchPricing(priceId!),
-    enabled: !!priceId && !BROWSER_ONLY.has(toolId!),
+    enabled: !!priceId,
     staleTime: 5 * 60 * 1000,
   });
-  const free = !!toolId && BROWSER_ONLY.has(toolId);
+  // Every app costs at least 1 credit per use.
   return {
-    creditCost: free ? 0 : Math.max(0, q.data?.credit_cost ?? defaultPrice(priceId ?? "") ?? 0),
-    costInr: free ? 0 : q.data?.cost_inr ?? 0,
-    isLoading: free ? false : q.isLoading,
+    creditCost: Math.max(1, q.data?.credit_cost ?? defaultPrice(priceId ?? "") ?? 1),
+    costInr: q.data?.cost_inr ?? 0,
+    isLoading: q.isLoading,
   };
 }

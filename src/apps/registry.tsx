@@ -715,7 +715,7 @@ export const APPS: Record<string, AppDef> = {
   "cognimap": {
     engine: "doc", credits: p("cognimap"), fileName: "mental-models", cta: "Think it through",
     intro: "Run a decision or problem through six mental models — first principles, inversion, second-order effects and more.",
-    related: ["soul-mirror", "smart-diagram-ai", "kundkund-mindmap", "startup-analyser"],
+    related: ["soul-mirror", "smart-diagram-ai", "startup-analyser"],
     fields: [
       { key: "Decision or problem", label: "Your decision or problem", type: "textarea", rows: 4, required: true, placeholder: "Should I open a second outlet in Vijay Nagar or invest in online delivery first?" },
       { key: "Options", label: "Options you're considering", type: "textarea", rows: 2 },
@@ -729,14 +729,7 @@ export const APPS: Record<string, AppDef> = {
     intro: "A general AI assistant for writing, explaining, planning and everyday questions.",
     welcome: "Ask anything — draft an email, explain a concept, plan a trip, solve a maths problem.",
     suggestions: ["Write a polite payment reminder", "Explain GST input credit simply", "Plan a 3-day Udaipur trip", "Summarise this paragraph:"],
-    related: ["shastra-multi-pdf-ai-bot", "rich-editor", "cognimap"],
-  },
-  "shastra-multi-pdf-ai-bot": {
-    engine: "chat", credits: p("shastra-multi-pdf-ai-bot"), documents: true,
-    intro: "Ask questions across several PDFs at once — answers cite the document and page.",
-    welcome: "Add one or more PDFs on the right, then ask questions. Answers say which document and page they came from.",
-    suggestions: ["Summarise each document in 5 points", "What do these documents say about deadlines?", "Compare the key terms across files"],
-    related: ["shastra-pdf-reader", "pdf-metadata-ai-analyst", "dictionary-extractor-ai", "ocr"],
+    related: ["rich-editor", "cognimap"],
   },
   // ═════════════ VISION ═════════════
   "ocr": {
@@ -787,8 +780,7 @@ export const APPS: Record<string, AppDef> = {
   "tool-22": { engine: "custom", credits: p("tool-22"), intro: "Make a GST-ready purchase order, print or share it, and get the covering email to your supplier.", related: ["tool-25", "tool-26", "tool-20", "tool-1"], component: custom(() => import("./custom/PurchaseOrder")) },
   "wrong-written-words": { engine: "custom", credits: p("wrong-written-words"), intro: "Find and fix spelling and grammar mistakes in English, Hindi and Hinglish — see every change.", related: ["rich-editor", "book-editor", "dictionary-extractor-ai"], component: custom(() => import("./custom/Proofreader")) },
   "storybook-creator": { engine: "custom", credits: p("storybook-creator"), intro: "Write an illustrated story for any age — read it as a book, print it, and illustrate pages with AI.", related: ["sketchflow-ai", "image-creator", "book-editor"], component: custom(() => import("./custom/StoryBook")) },
-  "smart-diagram-ai": { engine: "custom", credits: p("smart-diagram-ai"), intro: "Describe a process, plan or structure and get a clean diagram you can edit and download.", related: ["kundkund-mindmap", "cognimap", "html-editor"], component: custom(() => import("./custom/SmartDiagram")) },
-  "kundkund-mindmap": { engine: "custom", credits: p("kundkund-mindmap"), intro: "Turn any topic or text into a mind map you can expand, edit and export.", related: ["smart-diagram-ai", "cognimap"], component: custom(() => import("./custom/MindMap")) },
+  "smart-diagram-ai": { engine: "custom", credits: p("smart-diagram-ai"), intro: "Describe a process, plan or structure and get a clean diagram you can edit and download.", related: ["cognimap", "html-editor"], component: custom(() => import("./custom/SmartDiagram")) },
   "interactive-videos": { engine: "custom", credits: p("interactive-videos"), intro: "Add quiz checkpoints to any YouTube lesson — the video pauses and asks questions as you watch.", related: ["quiz-maker", "flashcard-maker"], component: custom(() => import("./custom/InteractiveVideo")) },
   "soul-mirror": { engine: "custom", credits: p("soul-mirror"), intro: "A Johari Window: pick words that describe you, invite friends to do the same, and see your open, blind and hidden areas.", related: ["cognimap"], component: custom(() => import("./custom/SoulMirror")) },
   "ai-data-analysis": { engine: "custom", credits: p("ai-data-analysis"), intro: "Upload a CSV and get instant charts, column statistics and an AI-written analysis of what matters.", related: ["tool-2", "tool-25", "auto-text-extractor", "ocr"], component: custom(() => import("./custom/DataAnalysis")) },
@@ -796,11 +788,10 @@ export const APPS: Record<string, AppDef> = {
   "rich-editor": { engine: "custom", credits: p("rich-editor"), intro: "A clean writing editor with formatting, word count, autosave and AI rewrite, translate and continue.", related: ["book-editor", "wrong-written-words", "advance-text-extractor"], component: custom(() => import("./custom/RichEditor")) },
   "book-editor": { engine: "custom", credits: p("book-editor"), intro: "Write a book chapter by chapter — outline, autosave, word goals, AI co-writer and Word export.", related: ["book-editor-html", "rich-editor", "storybook-creator"], component: custom(() => import("./custom/BookEditor")) },
   "book-editor-html": { engine: "custom", credits: p("book-editor-html"), intro: "The book editor with an HTML view — write chapters and export a styled, web-ready book.", related: ["book-editor", "html-editor", "rich-editor"], component: custom(() => import("./custom/BookEditor")) },
-  "shastra-pdf-reader": { engine: "custom", credits: p("shastra-pdf-reader"), intro: "Read PDFs page by page with zoom and search — and ask AI to summarise, explain or translate the page you're on.", related: ["shastra-multi-pdf-ai-bot", "pdf-chart-image-extractor"], component: custom(() => import("./custom/PdfReader")) },
-  "pdf-metadata-ai-analyst": { engine: "custom", credits: p("pdf-metadata-ai-analyst"), intro: "See a PDF's hidden metadata — author, software, dates, pages — and get an AI read of what the document is.", related: ["shastra-pdf-reader", "pdf-profile-extractor", "view-metadata"], component: custom(() => import("./custom/PdfMetadata")) },
+  "pdf-metadata-ai-analyst": { engine: "custom", credits: p("pdf-metadata-ai-analyst"), intro: "See a PDF's hidden metadata — author, software, dates, pages — and get an AI read of what the document is.", related: ["pdf-profile-extractor", "view-metadata"], component: custom(() => import("./custom/PdfMetadata")) },
   "pdf-profile-extractor": { engine: "custom", credits: p("pdf-profile-extractor"), intro: "Pull a structured profile out of resume PDFs — contact, skills, experience, education — and export to CSV.", related: ["tool-29", "tool-28", "meet-nudge"], component: custom(() => import("./custom/ProfileExtractor")) },
   "dictionary-extractor-ai": { engine: "custom", credits: p("dictionary-extractor-ai"), intro: "Build a glossary from any text or PDF — key terms with definitions and examples, ready to export.", related: ["flashcard-maker"], component: custom(() => import("./custom/Glossary")) },
-  "pdf-chart-image-extractor": { engine: "custom", credits: p("pdf-chart-image-extractor"), intro: "Save every page of a PDF as an image, or crop out charts and figures — all in your browser, free.", related: ["shastra-pdf-reader", "ocr", "ai-data-analysis"], component: custom(() => import("./custom/PdfImages")) },
+  "pdf-chart-image-extractor": { engine: "custom", credits: p("pdf-chart-image-extractor"), intro: "Save every page of a PDF as an image, or crop out charts and figures — all in your browser.", related: ["ocr", "ai-data-analysis"], component: custom(() => import("./custom/PdfImages")) },
 };
 
 export const hasEngineApp = (toolId: string) => toolId in APPS;

@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CREDIT_PACKS } from "@/data/creditPacks";
-import { BROWSER_ONLY, defaultPrice, priceIdFor } from "@/apps/prices";
+import { defaultPrice, priceIdFor } from "@/apps/prices";
 
-/** Credit cost for every priced app in one request (apps without a row: their default, else free). */
+/** Credit cost for every priced app in one request (minimum 1 credit per use). */
 export function usePricingMap() {
   const q = useQuery({
     queryKey: ["tool-pricing-all"],
@@ -39,9 +39,8 @@ export function usePricingMap() {
   const map = q.data;
   return {
     costOf: (toolId: string) => {
-      if (BROWSER_ONLY.has(toolId)) return 0;
       const id = priceIdFor(toolId);
-      return map?.get(id) ?? defaultPrice(id) ?? 0;
+      return Math.max(1, map?.get(id) ?? defaultPrice(id) ?? 1);
     },
     isLoading: q.isLoading,
   };

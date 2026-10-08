@@ -111,7 +111,6 @@ export const ROLES: RoleTemplate[] = [
       { toolId: "study-planner", why: "Plan the weeks before the exam" },
       { toolId: "ocr", why: "Photos of notes → text" },
       { toolId: "dictionary-extractor-ai", why: "Key terms from a chapter" },
-      { toolId: "kundkund-mindmap", why: "Mind map of the chapter" },
       { toolId: "flashcard-maker", why: "Flashcards" },
       { toolId: "quiz-maker", why: "Practice quiz" },
       { toolId: "assignment-tracker", why: "Track assignments" },

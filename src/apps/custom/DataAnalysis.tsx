@@ -88,7 +88,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
   };
 
   return (
-    <AppShell toolId={toolId} intro={def.intro} related={def.related} wide steps={["Add a CSV", "Explore charts (free)", "Get the AI analysis"]}>
+    <AppShell toolId={toolId} intro={def.intro} related={def.related} wide steps={["Add a CSV", "Explore charts", "Get the AI analysis"]}>
       {!grid.length ? (
         <div className="grid gap-4 md:grid-cols-2">
           <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 text-center hover:border-primary/50">

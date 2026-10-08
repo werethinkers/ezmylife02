@@ -196,7 +196,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
               </Button>
             )}
           </div>
-          <p className="px-1 text-xs text-muted-foreground">Making the PO is free. Only the AI-written email uses credits.</p>
+          <p className="px-1 text-xs text-muted-foreground">One charge covers 30 minutes of making POs; the AI email is one extra run.</p>
         </aside>
       </div>
     </AppShell>

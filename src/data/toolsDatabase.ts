@@ -69,14 +69,7 @@ export const toolsDatabase: ToolEntry[] = [
   // ========== FEATURED TOOLS (from tools.tsx) ==========
   
   // Popular/Content/Research Tools
-  { id: "jain-audio-stream", name: "Audio Stream", description: "Listen to lectures and music", category: "Popular", toolType: ["Audio Tools", "Research Tools"], source: "featured", isLive: true },
-  { id: "jain-video-stream", name: "Video Stream", description: "Watch educational videos", category: "Popular", toolType: ["Video Tools", "Research Tools"], source: "featured", isLive: true },
-  { id: "jaingyan-ai", name: "Gyan AI", description: "Intelligent AI assistant", category: "AI Agent", toolType: ["AI & Automation", "Research Tools"], source: "featured", isLive: true },
   { id: "advance-ai-bot", name: "Advance AI Bot", description: "Multi-source Q&A", category: "Popular", toolType: ["AI & Automation", "Research Tools"], source: "featured", isLive: true },
-  { id: "shastra-pdf-reader", name: "PDF Reader", description: "Digital PDF reading", category: "Popular", toolType: ["Document Tools", "Research Tools"], source: "featured", isLive: true },
-  { id: "jain-encyclopedia", name: "Encyclopedia", description: "Comprehensive knowledge base", category: "Popular", toolType: ["Research Tools", "Education"], source: "featured", isLive: true },
-  { id: "jain-panchang", name: "Panchang", description: "Festivals and important dates", category: "Content", toolType: ["Research Tools", "Mind & Knowledge"], source: "featured", isLive: true },
-  { id: "shastra-multi-pdf-ai-bot", name: "Multi-PDF AI Bot", description: "Query multiple documents", category: "Popular", toolType: ["AI & Automation", "Document Tools", "Research Tools"], source: "featured", isLive: true },
   { id: "quiz", name: "Quiz", description: "Knowledge testing quizzes", category: "Content", toolType: ["Education", "Research Tools"], source: "featured", isLive: true },
   { id: "image-creator", name: "Image Creator", description: "Create inspiring images", category: "Content", toolType: ["Design Tools", "Content Creation"], source: "featured", isLive: true },
   { id: "storybook-creator", name: "StoryBook Creator", description: "AI-generated stories", category: "Content", toolType: ["Design Tools", "Content Creation", "AI & Automation"], source: "featured", isLive: true },
@@ -89,7 +82,6 @@ export const toolsDatabase: ToolEntry[] = [
   { id: "meet-nudge", name: "Meet Nudge", description: "Collect event contacts via QR forms, card scanning, and WhatsApp follow-up", category: "Networking", toolType: ["Productivity", "Communication", "AI & Automation", "QR & Barcode"], source: "featured", isLive: true },
   { id: "rich-editor", name: "Rich Editor", description: "Text formatting tool", category: "Research", toolType: ["Document Tools", "Text Tools"], source: "featured", isLive: true },
   { id: "pdf-chart-image-extractor", name: "PDF Chart & Image Extractor", description: "Extract from PDFs", category: "Research", toolType: ["Document Tools", "Data Tools"], source: "featured", isLive: true },
-  { id: "shastra-hover-dictionary", name: "Hover Dictionary", description: "Word meanings on hover", category: "Research", toolType: ["Text Tools", "Education", "Research Tools"], source: "featured", isLive: true },
   { id: "html-editor", name: "HTML Editor", description: "Create/edit HTML", category: "Research", toolType: ["Developer Tools", "Document Tools"], source: "featured", isLive: true },
   { id: "wrong-written-words", name: "Wrong Written Words", description: "Correct misspellings", category: "Research", toolType: ["Text Tools", "Writing Tools"], source: "featured", isLive: true },
   { id: "book-editor", name: "Book Editor", description: "Format books and texts", category: "Research", toolType: ["Document Tools", "Research Tools"], source: "featured", isLive: true },
@@ -101,10 +93,6 @@ export const toolsDatabase: ToolEntry[] = [
   { id: "soul-mirror", name: "Soul Mirror - Johari Window", description: "Self-awareness tool", category: "Modern Science", toolType: ["Mind & Knowledge", "Research Tools"], source: "featured", isLive: true },
   { id: "cognimap", name: "Cognimap - Mental Models", description: "Decision-making models", category: "Modern Science", toolType: ["Mind & Knowledge", "Research Tools"], source: "featured", isLive: true },
   { id: "ai-data-analysis", name: "AI Data Analysis", description: "Data visualization", category: "Lab", toolType: ["Analytics Tools", "AI & Automation", "Data Tools"], source: "featured", isLive: true },
-  { id: "kundkund-ebook-bot", name: "E-book & Advance Bot", description: "E-book reader with AI", category: "Lab", toolType: ["AI & Automation", "Document Tools", "Research Tools"], source: "featured", isLive: true },
-  { id: "kundkund-mindmap", name: "MindMap", description: "Visual concept organization", category: "Lab", toolType: ["Mind & Knowledge", "Productivity", "Design Tools"], source: "featured", isLive: true },
-  { id: "jain-ganit", name: "Ganit", description: "Mathematics exploration", category: "Lab", toolType: ["Calculators", "Education", "Mind & Knowledge"], source: "featured", isLive: true },
-  { id: "jainbhugol-maps", name: "Bhugol Maps (Beta)", description: "Interactive maps", category: "Lab", toolType: ["Mind & Knowledge", "Research Tools"], source: "featured", isLive: true },
   { id: "interactive-videos", name: "Interactive Videos (Beta)", description: "Videos with quizzes", category: "Lab", toolType: ["Video Tools", "Education"], source: "featured", isLive: true },
   { id: "smart-diagram-ai", name: "Create Smart Diagram AI", description: "AI diagram generation", category: "Lab", toolType: ["AI & Automation", "Design Tools", "Document Tools"], source: "featured", isLive: true },
   { id: "auto-text-extractor", name: "Auto Text Extractor Agent", description: "Automated text extraction", category: "AI Agent", toolType: ["AI & Automation", "Text Tools", "Document Tools"], source: "featured", isLive: true },

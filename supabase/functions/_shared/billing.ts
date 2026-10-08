@@ -174,8 +174,8 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
     }
 
     const userId = caller.userId;
-    const fallbackPrice = opts.defaultCredits?.(toolId);
-    if (fallbackPrice) await ensurePrice(toolId, fallbackPrice);
+    // No app is free: an app without a price row gets its default (minimum 1 credit) first.
+    await ensurePrice(toolId, opts.defaultCredits?.(toolId) ?? 1);
     let start: StartResult;
     try {
       start = await startRun(userId, toolId);

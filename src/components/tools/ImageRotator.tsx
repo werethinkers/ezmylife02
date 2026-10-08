@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from "react";
-import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -103,7 +102,6 @@ export const ImageRotator = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Image Rotator & Flipper</h1>
-          <div className="flex justify-center pt-2"><BulkModeToggle toolId="image-rotator" /></div>
           <p className="text-muted-foreground">Rotate and flip images with precision</p>
         </div>
 

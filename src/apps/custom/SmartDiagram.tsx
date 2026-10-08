@@ -104,7 +104,7 @@ export default function SmartDiagram({ toolId }: { toolId: string }) {
             <Button className="w-full gap-2" onClick={generate} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Generate diagram</Button>
           </div>
           <div className="rounded-2xl border border-border/60 bg-card p-4">
-            <Label htmlFor="sd-code" className="text-xs">Diagram code (Mermaid) — edit freely, it's free</Label>
+            <Label htmlFor="sd-code" className="text-xs">Diagram code (Mermaid) — edit it directly</Label>
             <Textarea id="sd-code" rows={12} className="mt-1 font-mono text-xs" value={code} onChange={(e) => store.update({ code: e.target.value })} spellCheck={false} />
             {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
           </div>

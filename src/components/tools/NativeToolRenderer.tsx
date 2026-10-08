@@ -2,6 +2,8 @@ import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import AppRenderer from "@/apps/AppRenderer";
 import { hasEngineApp } from "@/apps/registry";
+import { USAGE_GATED } from "@/apps/prices";
+import { UsageGate } from "@/apps/shell/UsageGate";
 
 // Each tool loads only when it is opened (keeps the tool page fast).
 const ImageColorPicker = lazy(() => import("./ImageColorPicker").then((m) => ({ default: m.ImageColorPicker })));
@@ -224,13 +226,20 @@ const Loading = () => (
 );
 
 export const NativeToolRenderer = ({ toolId }: NativeToolRendererProps) => {
-  if (hasEngineApp(toolId)) return <AppRenderer toolId={toolId} />;
+  // Browser-only apps cost the minimum per use (see UsageGate); AI apps charge on the server.
+  if (hasEngineApp(toolId)) return USAGE_GATED.has(toolId) ? <UsageGate toolId={toolId}><AppRenderer toolId={toolId} /></UsageGate> : <AppRenderer toolId={toolId} />;
   const ToolComponent = nativeTools[toolId];
   if (!ToolComponent) return null;
   return (
     <Suspense fallback={<Loading />}>
       <div className="py-3 md:py-6">
-        <ToolComponent />
+        {USAGE_GATED.has(toolId) ? (
+          <UsageGate toolId={toolId}>
+            <ToolComponent />
+          </UsageGate>
+        ) : (
+          <ToolComponent />
+        )}
       </div>
     </Suspense>
   );

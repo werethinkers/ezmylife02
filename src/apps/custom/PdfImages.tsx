@@ -82,7 +82,7 @@ export default function PdfImages({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} wide>
       {!doc ? (
         <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 hover:border-primary/50">
-          <FileUp className="h-8 w-8 text-primary" /><span className="mt-2 font-medium">Open a PDF</span><span className="text-xs text-muted-foreground">Everything happens in your browser. Free, no credits.</span>
+          <FileUp className="h-8 w-8 text-primary" /><span className="mt-2 font-medium">Open a PDF</span><span className="text-xs text-muted-foreground">Everything happens in your browser — your files never leave your device.</span>
         </button>
       ) : (
         <>

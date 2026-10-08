@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from "react";
-import { BulkModeToggle } from "@/components/bulk/BulkModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,7 +141,6 @@ export const ImageResizer = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Image Resizer</h1>
-          <div className="flex justify-center pt-2"><BulkModeToggle toolId="image-resizer" /></div>
           <p className="text-muted-foreground">Resize images to any dimension in pixels, cm, mm, or inches</p>
         </div>
 

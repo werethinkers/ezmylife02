@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
 import { hasEngineApp } from "@/apps/registry";
+import { BulkButton } from "@/apps/bulk/BulkButton";
 import { NextApps } from "@/apps/shell/NextApps";
 import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { logActivity } from "@/lib/activityLogger";
@@ -248,10 +249,13 @@ const ToolViewer = () => {
               </Badge>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+          {toolId && <BulkButton toolId={toolId} />}
           <Button onClick={toggleFullscreen} variant="outline" size="sm" className="gap-2 h-8">
             <Maximize2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline text-xs">Fullscreen</span>
           </Button>
+          </div>
         </div>
       </div>
 

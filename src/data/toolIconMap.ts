@@ -23,14 +23,7 @@ import videoCreatorIcon from "@/assets/tool-icons/video-creator.png";
 // Direct toolId → icon mapping
 const toolIdIconMap: Record<string, string> = {
   // Core tools
-  "jain-audio-stream": audioStreamIcon,
-  "jain-video-stream": videoStreamIcon,
-  "jaingyan-ai": aiBotIcon,
   "advance-ai-bot": aiBotIcon,
-  "shastra-pdf-reader": pdfReaderIcon,
-  "jain-encyclopedia": encyclopediaIcon,
-  "jain-panchang": calendarIcon,
-  "shastra-multi-pdf-ai-bot": pdfReaderIcon,
   "quiz": quizIcon,
   "image-creator": imageCreatorIcon,
   "storybook-creator": storybookIcon,
@@ -42,7 +35,6 @@ const toolIdIconMap: Record<string, string> = {
   "startup-analyser": startupAnalyserIcon,
   "rich-editor": codeEditorIcon,
   "pdf-chart-image-extractor": pdfReaderIcon,
-  "shastra-hover-dictionary": encyclopediaIcon,
   "html-editor": codeEditorIcon,
   "wrong-written-words": textExtractorIcon,
   "book-editor": storybookIcon,
@@ -54,10 +46,6 @@ const toolIdIconMap: Record<string, string> = {
   "soul-mirror": aiBotIcon,
   "cognimap": mindmapIcon,
   "ai-data-analysis": dataAnalysisIcon,
-  "kundkund-ebook-bot": pdfReaderIcon,
-  "kundkund-mindmap": mindmapIcon,
-  "jain-ganit": dataAnalysisIcon,
-  "jainbhugol-maps": encyclopediaIcon,
   "interactive-videos": videoStreamIcon,
   "smart-diagram-ai": mindmapIcon,
   "auto-text-extractor": textExtractorIcon,

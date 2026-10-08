@@ -99,7 +99,7 @@ export default function HtmlEditor({ toolId }: { toolId: string }) {
           </div>
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Editing and previewing are free; each "Ask AI" is one run. The preview runs in a locked sandbox.</p>
+      <p className="mt-2 text-xs text-muted-foreground">One charge covers 30 minutes of editing; each "Ask AI" is one run. The preview runs in a locked sandbox.</p>
     </AppShell>
   );
 }
