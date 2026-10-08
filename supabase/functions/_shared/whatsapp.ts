@@ -313,9 +313,12 @@ export async function whatsappTaskDone(t: { userId: string; toolId: string; runI
     const link = t.link ?? `${SITE}/tool/${t.toolId}`;
     const { text, image } = typeof t.output === "string" ? { text: t.output, image: null } : extractOutput(t.output);
     const body = text.length > 3200 ? text.slice(0, 3200).replace(/\s+\S*$/, "") + "…\n\n(See the full result in the app.)" : text;
-    const message = [`✨ *Your ${name} result is ready*`, body, `Open it: ${link}`].filter(Boolean).join("\n\n");
     let imageUrl: string | null = null;
-    if (image) {
+    // WhatsApp shows only JPEG/PNG pictures; other formats go out as a link in the text.
+    const sendable = (u: string) => /^data:image\/(png|jpe?g);/i.test(u) || (/^https:/.test(u) && !/\.(webp|gif|svg)(\?|$)/i.test(u));
+    const extraLink = image && !sendable(image) && image.startsWith("https:") ? image : null;
+    const message = [`✨ *Your ${name} result is ready*`, body, extraLink ? `Image: ${extraLink}` : "", `Open it: ${link}`].filter(Boolean).join("\n\n");
+    if (image && sendable(image)) {
       imageUrl = image;
       if (image.startsWith("data:")) {
         const f = dataUrlBytes(image);
