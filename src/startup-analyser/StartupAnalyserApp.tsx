@@ -6,7 +6,6 @@ import {
   CurrencyDollarIcon, BookOpenIcon, PencilSquareIcon,
   LightBulbIcon, ScaleIcon,
 } from './components/icons';
-import { Key } from 'lucide-react';
 import type { AnalysisResult, Competitor, ResourceItem, StructuredData } from './types';
 import { CompetitorChart } from './components/CompetitorChart';
 import { prompts } from './constants';
