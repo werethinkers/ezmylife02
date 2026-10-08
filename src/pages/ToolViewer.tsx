@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
 import { hasEngineApp } from "@/apps/registry";
-import { WorkspaceBar } from "@/apps/shell/WorkspaceBar";
+import { NextApps } from "@/apps/shell/NextApps";
+import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { logActivity } from "@/lib/activityLogger";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -166,7 +167,8 @@ const ToolViewer = () => {
 
   const renderContent = () => {
     if (isNativeTool && !uploadedToolUrl) {
-      return <NativeToolRenderer toolId={toolId!} />;
+      // Remembers entries across apps and offers them back in any matching field.
+      return <FieldMemory><NativeToolRenderer toolId={toolId!} /></FieldMemory>;
     }
     return (
       <iframe
@@ -253,7 +255,7 @@ const ToolViewer = () => {
         </div>
       </div>
 
-      {toolId && <WorkspaceBar toolId={toolId} />}
+      {toolId && <NextApps toolId={toolId} />}
 
       {isLoading && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm">

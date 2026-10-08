@@ -11,6 +11,7 @@ import { PageSeo } from "@/components/seo/PageSeo";
 import { getProduct } from "@/instant/catalog";
 import { ProductRenderer } from "@/instant/renderers";
 import { FieldInput } from "@/instant/builder/FieldInput";
+import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
 import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages } from "@/instant/api";
 import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
@@ -200,7 +201,7 @@ function BuilderInner({ product }: { product: Product }) {
             })}
           </ol>
 
-          <div className="rounded-3xl border bg-background p-5 md:p-7 grid gap-5">
+          <FieldMemory className="rounded-3xl border bg-background p-5 md:p-7 grid gap-5">
             <div>
               <h2 className="text-xl font-bold">{s.title}</h2>
               {s.hint && <p className="text-sm text-muted-foreground mt-1">{s.hint}</p>}
@@ -214,7 +215,7 @@ function BuilderInner({ product }: { product: Product }) {
                 <Button className="h-11 rounded-xl" onClick={() => setStep(step + 1)}>Next <ArrowRight className="h-4 w-4 ml-2" /></Button>
               )}
             </div>
-          </div>
+          </FieldMemory>
 
           <div className="flex flex-wrap gap-2 text-sm">
             <Button variant="ghost" size="sm" onClick={() => { setContent(blank(product)); setStep(0); }}><Eraser className="h-4 w-4 mr-2" /> Clear the sample text</Button>

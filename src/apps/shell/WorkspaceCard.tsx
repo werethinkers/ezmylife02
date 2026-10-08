@@ -5,6 +5,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { useFieldMemory } from "./FieldMemory";
+import { MEMORY_INITIAL } from "../lib/memory";
 import { PROFILE_FIELDS, useWorkspace, type WorkspaceProfile } from "../lib/workspace";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +49,8 @@ export function WorkspaceCard({ className, onApply }: { className?: string; onAp
 
 export function WorkspaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const ws = useWorkspace();
+  const memory = useFieldMemory();
+  const savedCount = Object.values(memory.data.kinds ?? {}).reduce((n, l) => n + l.length, 0) + (memory.data.clients ?? []).length;
   const [draft, setDraft] = useState<WorkspaceProfile>(ws.profile);
   return (
     <Dialog
@@ -57,7 +62,7 @@ export function WorkspaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
     >
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Your business profile</DialogTitle>
+          <DialogTitle>Your details</DialogTitle>
           <DialogDescription>
             Used to prefill forms in every EZYOURLIFE app. {ws.signedIn ? "Saved to your account." : "Saved in this browser — sign in to keep it on all your devices."}
           </DialogDescription>
@@ -83,6 +88,16 @@ export function WorkspaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
               />
             </div>
           ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3 sm:col-span-2">
+            <div className="min-w-0">
+              <Label htmlFor="ws-remember" className="text-sm font-medium">Remember what I type</Label>
+              <p className="text-xs text-muted-foreground">Clients, addresses, items and other entries come back as suggestions in every app. {savedCount ? `${savedCount} saved.` : ""} Passwords, card numbers and Aadhaar are never saved.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {savedCount > 0 && <Button type="button" size="sm" variant="ghost" onClick={() => memory.update({ ...MEMORY_INITIAL, enabled: memory.data.enabled })}>Clear saved entries</Button>}
+              <Switch id="ws-remember" checked={memory.data.enabled !== false} onCheckedChange={(v) => memory.update({ enabled: v })} />
+            </div>
+          </div>
           <div className="flex justify-end gap-2 sm:col-span-2">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel

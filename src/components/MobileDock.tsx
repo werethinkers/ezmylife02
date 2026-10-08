@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Compass, LayoutGrid, Wallet, User, Gift, Layers } from "lucide-react";
+import { Compass, LayoutGrid, Wallet, User, Gift, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 
 // Pages where the dock helps people move around. Inside an app (/tool/…) the app owns the screen.
-const DOCK_PATHS = [/^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//, /^\/profile$/, /^\/workspace$/, /^\/create$/];
+const DOCK_PATHS = [/^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//, /^\/profile$/, /^\/create$/];
 
 /** Phone-only bottom dock: Discover · Browse · Workspace · Wallet · Account (or free credits). */
 export function MobileDock() {
@@ -46,7 +46,7 @@ export function MobileDock() {
       >
         {item("/", "Discover", Compass, true)}
         {item("/ai-apps", "Browse", LayoutGrid)}
-        {item("/workspace", "Workspace", Layers)}
+        {item("/create", "Create", Sparkles)}
         {item("/credits", "Wallet", Wallet, false, user ? (total > 999 ? "999+" : String(total)) : undefined)}
         {user ? (
           item("/profile", "Account", User)

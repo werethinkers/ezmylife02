@@ -33,7 +33,6 @@ export const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/ai-apps", label: "AI Apps" },
-    { to: "/workspace", label: "Workspace" },
     { to: "/create", label: "Create" },
     { to: "/credits", label: "Credits" },
     { to: "/about", label: "About" },

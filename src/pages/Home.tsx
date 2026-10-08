@@ -12,6 +12,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { PERSONAS } from "@/data/personas";
+import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
@@ -258,12 +259,17 @@ const Home = () => {
                           <p className="mt-1 text-sm text-muted-foreground">{persona.blurb}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                        <Link
-                          to={`/workspace?role=${({ founders: "founder", ecommerce: "retail", creators: "creator", students: "student" } as Record<string, string>)[persona.id] ?? ""}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                        >
-                          Set up a connected workspace
-                        </Link>
+                        {(() => {
+                          const role = ROLES.find((r) => r.id === ({ founders: "founder", ecommerce: "retail", creators: "creator", students: "student" } as Record<string, string>)[persona.id]);
+                          return role ? (
+                            <Link
+                              to={`/tool/${role.steps[0].toolId}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                            >
+                              Start with the first app
+                            </Link>
+                          ) : null;
+                        })()}
                         <button
                           type="button"
                           onClick={() => setPersonaId(null)}

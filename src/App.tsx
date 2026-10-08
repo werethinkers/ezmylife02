@@ -60,7 +60,6 @@ const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
-const Workspace = lazy(() => import("./pages/Workspace"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const CreateGallery = lazy(() => import("./pages/instant/CreateGallery"));
 const Builder = lazy(() => import("./pages/instant/Builder"));
@@ -125,7 +124,8 @@ const AnimatedRoutes = () => {
               element={<ToolPreview />}
             />
             <Route path="/about" element={<About />} />
-            <Route path="/workspace" element={<Workspace />} />
+            {/* Workspace is built into every app now (next-app suggestions + remembered entries). */}
+            <Route path="/workspace" element={<Navigate to="/ai-apps" replace />} />
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/credits" element={<Credits />} />
             <Route
