@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase, Lock, Key, Eye, EyeOff } from "lucide-react";
+import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase, Lock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 interface ProfileData {
@@ -32,9 +32,6 @@ const Profile = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [geminiApiKey, setGeminiApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [savingApiKey, setSavingApiKey] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     display_name: "", full_name: "", phone_number: "", bio: "", company: "", job_title: "", location: "", website: "",
   });
@@ -59,12 +56,6 @@ const Profile = () => {
           location: data.location || "", website: data.website || "",
         });
       }
-      const { data: secret } = await supabase
-        .from("user_secrets" as never)
-        .select("gemini_api_key")
-        .eq("user_id", user?.id)
-        .maybeSingle();
-      if (secret) setGeminiApiKey((secret as { gemini_api_key?: string | null }).gemini_api_key || "");
     } catch (error) {
       console.error("Error loading profile:", error);
     } finally {
@@ -253,52 +244,6 @@ const Profile = () => {
                   </div>
                   <Button type="submit" disabled={changingPassword}>
                     {changingPassword ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>) : "Update Password"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-          {/* API Key Section */}
-          <div className="mt-8">
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" />Your Gemini API Key</CardTitle>
-                <CardDescription>Add your own Google Gemini API key to use when our default limits are reached. Get one free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google AI Studio</a>.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  setSavingApiKey(true);
-                  try {
-                    const { error } = await supabase.from("user_secrets" as never).upsert({ user_id: user?.id, gemini_api_key: geminiApiKey || null } as never);
-                    if (error) throw error;
-                    toast({ title: "API Key saved", description: "Your Gemini API key has been saved securely." });
-                  } catch {
-                    toast({ title: "Error", description: "Failed to save API key.", variant: "destructive" });
-                  } finally {
-                    setSavingApiKey(false);
-                  }
-                }} className="space-y-4 max-w-md">
-                  <div className="space-y-2">
-                    <Label htmlFor="geminiKey">Gemini API Key</Label>
-                    <div className="relative">
-                      <Input
-                        id="geminiKey"
-                        type={showApiKey ? "text" : "password"}
-                        placeholder="AIza..."
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                        disabled={savingApiKey}
-                        className="pr-10"
-                      />
-                      <button type="button" onClick={() => setShowApiKey(!showApiKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Your key is stored securely and used only for AI features when default limits are reached.</p>
-                  </div>
-                  <Button type="submit" disabled={savingApiKey}>
-                    {savingApiKey ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : "Save API Key"}
                   </Button>
                 </form>
               </CardContent>
