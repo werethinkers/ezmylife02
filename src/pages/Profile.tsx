@@ -39,6 +39,7 @@ const Profile = () => {
 
   // WhatsApp updates (receipts and finished results). The column is newer than the generated types.
   const [waUpdates, setWaUpdates] = useState(true);
+  const [emailUpdates, setEmailUpdates] = useState(true);
 
   useEffect(() => {
     if (user) loadProfile();
@@ -47,16 +48,21 @@ const Profile = () => {
   useEffect(() => {
     if (!user) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any).from("profiles").select("whatsapp_updates").eq("id", user.id).maybeSingle()
-      .then(({ data }: { data: { whatsapp_updates?: boolean } | null }) => { if (data && data.whatsapp_updates === false) setWaUpdates(false); });
+    (supabase as any).from("profiles").select("whatsapp_updates, email_updates").eq("id", user.id).maybeSingle()
+      .then(({ data }: { data: { whatsapp_updates?: boolean; email_updates?: boolean } | null }) => {
+        if (data?.whatsapp_updates === false) setWaUpdates(false);
+        if (data?.email_updates === false) setEmailUpdates(false);
+      });
   }, [user]);
 
-  const toggleWaUpdates = async (on: boolean) => {
-    setWaUpdates(on);
+  const toggleUpdates = async (field: "whatsapp_updates" | "email_updates", on: boolean) => {
+    const set = field === "whatsapp_updates" ? setWaUpdates : setEmailUpdates;
+    const label = field === "whatsapp_updates" ? "WhatsApp" : "Email";
+    set(on);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("profiles").update({ whatsapp_updates: on }).eq("id", user?.id);
-    if (error) { setWaUpdates(!on); toast({ title: "Couldn't save that", variant: "destructive" }); return; }
-    toast({ title: on ? "WhatsApp updates on" : "WhatsApp updates off" });
+    const { error } = await (supabase as any).from("profiles").update({ [field]: on }).eq("id", user?.id);
+    if (error) { set(!on); toast({ title: "Couldn't save that", variant: "destructive" }); return; }
+    toast({ title: `${label} updates ${on ? "on" : "off"}` });
   };
 
   const loadProfile = async () => {
@@ -203,7 +209,14 @@ const Profile = () => {
                       <Label htmlFor="wa-updates" className="font-medium">WhatsApp updates</Label>
                       <p className="text-xs text-muted-foreground mt-0.5">Get your receipts and finished results on WhatsApp at this number.</p>
                     </div>
-                    <Switch id="wa-updates" checked={waUpdates} onCheckedChange={toggleWaUpdates} />
+                    <Switch id="wa-updates" checked={waUpdates} onCheckedChange={(on) => toggleUpdates("whatsapp_updates", on)} />
+                  </div>
+                  <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
+                    <div>
+                      <Label htmlFor="email-updates" className="font-medium">Email updates</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">Get your finished results by email too. Payment receipts are always emailed.</p>
+                    </div>
+                    <Switch id="email-updates" checked={emailUpdates} onCheckedChange={(on) => toggleUpdates("email_updates", on)} />
                   </div>
                 </div>
                 <div className="space-y-2">

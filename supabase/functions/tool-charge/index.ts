@@ -2,7 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { ensurePrice } from "../_shared/billing.ts";
-import { inBackground, whatsappTaskDone } from "../_shared/whatsapp.ts";
+import { inBackground } from "../_shared/whatsapp.ts";
+import { notifyTaskDone } from "../_shared/notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,7 @@ serve(async (req) => {
       if (success && data?.ok && !data.noop) {
         const { data: run } = await supabase.from("tool_runs").select("tool_id").eq("id", run_id).maybeSingle();
         if (run?.tool_id) {
-          inBackground(whatsappTaskDone({
+          inBackground(notifyTaskDone({
             userId: uid, toolId: run.tool_id, runId: run_id,
             output: "Done! Your result has been saved to your device.",
           }));

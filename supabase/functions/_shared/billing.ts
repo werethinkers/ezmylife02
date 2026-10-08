@@ -11,7 +11,8 @@
 // are trusted and not charged again — the caller already charged per item.
 
 import { corsHeaders, json } from "./http.ts";
-import { inBackground, sseText, whatsappTaskDone } from "./whatsapp.ts";
+import { inBackground, sseText } from "./whatsapp.ts";
+import { notifyTaskDone } from "./notify.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -197,8 +198,8 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
     }
     const runId = start.run_id as string;
     const appId = typeof body?.tool_id === "string" && body.tool_id ? body.tool_id : toolId;
-    // After a paid run succeeds, send the result to the customer on WhatsApp (in the background).
-    const notify = (output: unknown) => inBackground(whatsappTaskDone({ userId, toolId: appId, runId, output }));
+    // After a paid run succeeds, send the result to the customer on WhatsApp and email (in the background).
+    const notify = (output: unknown) => inBackground(notifyTaskDone({ userId, toolId: appId, runId, output }));
 
     let res: Response;
     try {

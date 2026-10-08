@@ -111,7 +111,7 @@ async function sendTemplate(to: string, name: string, parts: TemplateParts): Pro
 /** Path after https://ezyourlife.com/ for a template's link button. */
 const sitePath = (link: string | null | undefined) => String(link ?? "").replace(/^https:\/\/(www\.)?ezyourlife\.com\/?/, "") || "ai-apps";
 /** Short, human-friendly request id shown in task templates. */
-const shortRef = (id: string) => "R-" + id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase();
+export const shortRef = (id: string) => "R-" + id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase();
 
 interface Recipient { userId: string; phone: string; first: string }
 
@@ -147,7 +147,7 @@ const mark = (id: string, status: string, error?: string) =>
   sb(`/rest/v1/whatsapp_messages?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status, error: error?.slice(0, 500) ?? null }) }).catch(() => undefined);
 
 /** Uploads bytes to the private wa-media bucket and returns a 7-day link WhatsApp can fetch. */
-async function hostFile(path: string, bytes: Uint8Array, type: string, days = 7): Promise<string | null> {
+export async function hostFile(path: string, bytes: Uint8Array, type: string, days = 7): Promise<string | null> {
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/wa-media/${path}`, {
     method: "POST",
     headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": type, "x-upsert": "true" },
@@ -159,7 +159,7 @@ async function hostFile(path: string, bytes: Uint8Array, type: string, days = 7)
   const { signedURL } = await s.json();
   return signedURL ? `${SUPABASE_URL}/storage/v1${signedURL}` : null;
 }
-function dataUrlBytes(u: string): { bytes: Uint8Array; type: string } | null {
+export function dataUrlBytes(u: string): { bytes: Uint8Array; type: string } | null {
   const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(u);
   if (!m) return null;
   const bin = atob(m[2]);
@@ -285,7 +285,7 @@ export function sseText(raw: string): string {
 }
 
 let appNames: Map<string, string> | null = null;
-async function appName(toolId: string): Promise<string> {
+export async function appName(toolId: string): Promise<string> {
   if (!appNames) {
     appNames = new Map();
     try {

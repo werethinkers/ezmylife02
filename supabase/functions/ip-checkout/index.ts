@@ -8,7 +8,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
 import { receiptInBackground } from "../_shared/receipt.ts";
 import { writeSharePage } from "../_shared/sharepage.ts";
-import { inBackground, whatsappTaskDone } from "../_shared/whatsapp.ts";
+import { inBackground } from "../_shared/whatsapp.ts";
+import { notifyTaskDone } from "../_shared/notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,7 +50,7 @@ serve(async (req) => {
         const { data: pub, error: perr } = await supabase.rpc("ip_publish_page", { _page_id: page.id });
         if (perr || !pub?.ok) throw new Error(perr?.message ?? pub?.reason ?? "Publish failed");
         const link = `https://ezyourlife.com/p/${pub.slug}`;
-        inBackground(whatsappTaskDone({
+        inBackground(notifyTaskDone({
           userId: user.id, toolId: `page-${product.id}`, runId: `page-${page.id}`, name: product.name, link, throttle: false,
           output: `🎉 Your ${product.name.toLowerCase()} is live. Share this link on WhatsApp:\n${link}`,
         }));
@@ -118,6 +119,20 @@ serve(async (req) => {
         phone: settled.payment?.contact,
       });
       return json({ published: true, slug: res.slug, page_id: order.page_id });
+    }
+
+    if (action === "updated") {
+      // The owner republished an edit: confirm the live page on WhatsApp and email.
+      const { data: page } = await supabase.from("ip_pages").select("id, owner_id, slug, status, product_id, updated_at").eq("id", String(body.page_id ?? "")).maybeSingle();
+      if (!page || page.owner_id !== user.id || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
+      const { data: prod } = await supabase.from("ip_products").select("name").eq("id", page.product_id).maybeSingle();
+      const name = prod?.name ?? "page";
+      const link = `https://ezyourlife.com/p/${page.slug}`;
+      inBackground(notifyTaskDone({
+        userId: user.id, toolId: `page-${page.product_id}`, runId: `page-${page.id}-${new Date(page.updated_at).getTime()}`, name, link,
+        output: `Your changes to your ${name.toLowerCase()} are live. The link stays the same:\n${link}`,
+      }));
+      return json({ ok: true });
     }
 
     if (action === "share") {

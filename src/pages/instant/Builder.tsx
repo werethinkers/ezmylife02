@@ -115,6 +115,7 @@ function BuilderInner({ product }: { product: Product }) {
         setBusy("Updating your live page…");
         const r = await republish(id);
         if (!r.ok) throw new Error("Couldn't update the live page.");
+        checkout({ action: "updated", page_id: id }).catch(() => undefined); // WhatsApp + email confirmation
         toast({ title: "Live page updated" });
         navigate(`/create/done/${id}`); return;
       }

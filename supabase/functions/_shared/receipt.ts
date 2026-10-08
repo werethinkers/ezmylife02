@@ -6,9 +6,9 @@
 // Secrets: SMTP_PASS (an App Password for SMTP_USER). Optional: SMTP_USER (default
 // ceo@ezyourlife.com), SMTP_HOST (smtp.gmail.com), SMTP_PORT (465), INVOICE_SELLER_ADDRESS,
 // INVOICE_GSTIN. If RESEND_API_KEY is set instead, Resend is used.
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import { whatsappPurchase } from "./whatsapp.ts";
+import { sendMail } from "./mailer.ts";
 // deno-lint-ignore no-explicit-any
 type Supa = any;
 
@@ -27,7 +27,6 @@ export interface ReceiptInput {
 }
 
 const SELLER = "EZYOURLIFE";
-const FROM = () => Deno.env.get("SMTP_USER") ?? "ceo@ezyourlife.com";
 const money = (n: number) => "Rs. " + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -96,38 +95,6 @@ ${r.link ? `<p style="margin:22px 0 0"><a href="${esc(r.link)}" style="display:i
 </td></tr></table></body></html>`;
 }
 
-async function sendMail(to: string, subject: string, html: string, text: string, pdf: Uint8Array, fileName: string) {
-  const resend = Deno.env.get("RESEND_API_KEY");
-  if (resend) {
-    let bin = ""; pdf.forEach((b) => (bin += String.fromCharCode(b)));
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `EZYOURLIFE <${FROM()}>`, to: [to], reply_to: FROM(), subject, html, text, attachments: [{ filename: fileName, content: btoa(bin) }] }),
-    });
-    if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
-    return;
-  }
-  const pass = Deno.env.get("SMTP_PASS");
-  if (!pass) throw new Error("Email not configured: add the SMTP_PASS secret (Google App Password for ceo@ezyourlife.com)");
-  const client = new SMTPClient({
-    connection: {
-      hostname: Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com",
-      port: Number(Deno.env.get("SMTP_PORT") ?? 465),
-      tls: true,
-      auth: { username: FROM(), password: pass },
-    },
-  });
-  try {
-    await client.send({
-      from: `EZYOURLIFE <${FROM()}>`, to, replyTo: FROM(), subject, content: text, html,
-      attachments: [{ filename: fileName, content: pdf, encoding: "binary", contentType: "application/pdf" }],
-    });
-  } finally {
-    await client.close();
-  }
-}
-
 /** Records the invoice, emails it with a thank-you, and sends the same on WhatsApp.
  *  Safe to call more than once per payment: each channel sends once. */
 export async function sendPaymentReceipt(supabase: Supa, r: ReceiptInput): Promise<void> {
@@ -152,7 +119,7 @@ export async function sendPaymentReceipt(supabase: Supa, r: ReceiptInput): Promi
       const subject = `Thank you for your payment · Invoice ${no}`;
       const text = `Thank you${name ? ", " + name.split(" ")[0] : ""}! Your payment of Rs. ${r.amountInr} for ${r.description} went through.\nInvoice: ${no}\nPayment ID: ${r.paymentId}\n${r.link ? r.link + "\n" : ""}\nReply to this email if you need anything.\nAbhijay Jain, Founder & CEO, EZYOURLIFE`;
       try {
-        await sendMail(email, subject, emailHtml(no, { ...r, name }), text, pdf, `${no.replace(/\//g, "-")}.pdf`);
+        await sendMail(email, subject, emailHtml(no, { ...r, name }), text, [{ filename: `${no.replace(/\//g, "-")}.pdf`, content: pdf, contentType: "application/pdf" }]);
         await supabase.from("payment_invoices").update({ emailed_at: new Date().toISOString(), email_error: null }).eq("id", inv.id);
       } catch (e) {
         console.error("receipt email failed", e);
@@ -181,5 +148,5 @@ export function receiptInBackground(supabase: Supa, r: ReceiptInput) {
 export async function sendSampleReceipt(to: string, r: ReceiptInput, no: string) {
   const pdf = await invoicePdf(no, new Date(), { ...r, email: to });
   await sendMail(to, `Thank you for your payment · Invoice ${no}`, emailHtml(no, r),
-    `Sample receipt ${no} for ${r.description}, Rs. ${r.amountInr}`, pdf, `${no.replace(/\//g, "-")}.pdf`);
+    `Sample receipt ${no} for ${r.description}, Rs. ${r.amountInr}`, [{ filename: `${no.replace(/\//g, "-")}.pdf`, content: pdf, contentType: "application/pdf" }]);
 }
