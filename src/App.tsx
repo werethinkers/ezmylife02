@@ -62,6 +62,13 @@ const Explore = lazy(() => import("./pages/Explore"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const CreateGallery = lazy(() => import("./pages/instant/CreateGallery"));
+const Builder = lazy(() => import("./pages/instant/Builder"));
+const PublishedPage = lazy(() => import("./pages/instant/PublishedPage"));
+const PublishDone = lazy(() => import("./pages/instant/PublishDone"));
+const MyPages = lazy(() => import("./pages/instant/MyPages"));
+const PageLeads = lazy(() => import("./pages/instant/PageLeads"));
+const AdminInstant = lazy(() => import("./pages/instant/AdminInstant"));
 
 
 
@@ -100,18 +107,7 @@ const pageVariants = {
 const AnimatedRoutes = () => {
   const location = useLocation();
   usePageTracking();
-
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        variants={pageVariants}
-        className="will-change-transform"
-      >
-        <Suspense fallback={<DelayedFallback />}>
+  const routes = (
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/ai-apps" element={<Tools />} />
@@ -261,6 +257,13 @@ const AnimatedRoutes = () => {
             />
             <Route path="/promo/:slug" element={<PromoPage />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/create" element={<CreateGallery />} />
+            <Route path="/create/done/:pageId" element={<ProtectedRoute><PublishDone /></ProtectedRoute>} />
+            <Route path="/create/:productId" element={<Builder />} />
+            <Route path="/p/:slug" element={<PublishedPage />} />
+            <Route path="/my-pages" element={<ProtectedRoute><MyPages /></ProtectedRoute>} />
+            <Route path="/my-pages/:pageId" element={<ProtectedRoute><PageLeads /></ProtectedRoute>} />
+            <Route path="/admin/instant" element={<ProtectedRoute><AdminInstant /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"
@@ -275,6 +278,25 @@ const AnimatedRoutes = () => {
             <Route path="/explore" element={<Explore />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+  );
+  // Published pages and the builder own the whole screen and use fixed action bars, which a
+  // transformed ancestor would break, so they render without the page-transition wrapper.
+  if (/^\/(p|create)\//.test(location.pathname)) {
+    return <Suspense fallback={<DelayedFallback />}>{routes}</Suspense>;
+  }
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={pageVariants}
+        className="will-change-transform"
+      >
+        <Suspense fallback={<DelayedFallback />}>
+          {routes}
         </Suspense>
       </motion.div>
     </AnimatePresence>

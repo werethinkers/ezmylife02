@@ -5,7 +5,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 
 // Pages where the dock helps people move around. Inside an app (/tool/…) the app owns the screen.
-const DOCK_PATHS = [/^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//, /^\/profile$/, /^\/workspace$/];
+const DOCK_PATHS = [/^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//, /^\/profile$/, /^\/workspace$/, /^\/create$/];
 
 /** Phone-only bottom dock: Discover · Browse · Workspace · Wallet · Account (or free credits). */
 export function MobileDock() {

@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Zap } from "lucide-react";
+import { Menu, X, User, LogOut, Zap, LayoutTemplate } from "lucide-react";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +34,7 @@ export const Navbar = () => {
     { to: "/", label: "Home" },
     { to: "/ai-apps", label: "AI Apps" },
     { to: "/workspace", label: "Workspace" },
+    { to: "/create", label: "Create" },
     { to: "/credits", label: "Credits" },
     { to: "/about", label: "About" },
     ...(user ? [{ to: "/get-extension", label: "Get Extension" }] : []),
@@ -105,6 +106,12 @@ export const Navbar = () => {
                     <Link to="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-pages" className="cursor-pointer">
+                      <LayoutTemplate className="mr-2 h-4 w-4" />
+                      My Pages
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

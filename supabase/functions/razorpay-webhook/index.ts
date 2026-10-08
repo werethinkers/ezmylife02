@@ -39,8 +39,26 @@ serve(async (req) => {
     const { data: purchase, error: pe } = await supabase
       .from("credit_purchases").select("*").eq("razorpay_order_id", orderId).maybeSingle();
     if (pe) throw new Error(pe.message);
-    // Not a credit purchase (another product on the same Razorpay account): ack so it isn't retried.
-    if (!purchase) return json({ ignored: "unknown order" });
+    if (!purchase) {
+      // Instant Digital Products page order: publish the page once the payment is confirmed.
+      const { data: pageOrder, error: oe } = await supabase
+        .from("ip_orders").select("*").eq("razorpay_order_id", orderId).maybeSingle();
+      if (oe) throw new Error(oe.message);
+      // Neither a credit purchase nor a page order: ack so it isn't retried.
+      if (!pageOrder) return json({ ignored: "unknown order" });
+      if (pageOrder.status === "paid") return json({ ok: true, noop: true });
+      const settledPage = await settlePayment(payment.id, pageOrder, keyId, keySecret);
+      if (!settledPage.ok) {
+        console.error("razorpay-webhook: page payment rejected", { orderId, paymentId: payment.id, reason: settledPage.reason });
+        return json({ ok: false, reason: settledPage.reason });
+      }
+      const { data: published, error: perr } = await supabase.rpc("ip_mark_order_paid", {
+        _razorpay_order_id: orderId,
+        _payment_id: payment.id,
+      });
+      if (perr) throw new Error(perr.message);
+      return json({ ok: true, published });
+    }
     if (purchase.status === "paid") return json({ ok: true, noop: true });
 
     const settled = await settlePayment(payment.id, purchase, keyId, keySecret);

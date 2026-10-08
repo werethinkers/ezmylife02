@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.ai-app]
 verify_jwt = false
+
+[functions.ip-checkout]
+verify_jwt = false

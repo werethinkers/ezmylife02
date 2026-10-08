@@ -14,7 +14,7 @@ interface Message {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-assistant`;
-const HIDE_PREFIXES = ["/tool/", "/auth", "/admin", "/bulk/"];
+const HIDE_PREFIXES = ["/tool/", "/auth", "/admin", "/bulk/", "/p/", "/create", "/my-pages"];
 
 // Hides the lead-capture block the assistant appends; the rest is rendered as safe Markdown.
 const visibleText = (text: string) => text.replace(/<<<LEAD>>>[\s\S]*?<<<END>>>/g, "").trim();

@@ -1,0 +1,133 @@
+import { supabase } from "@/integrations/supabase/client";
+import type { Content } from "./types";
+
+// The ip_* tables are newer than the generated Supabase types, so they are accessed untyped here.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
+export interface PageRow {
+  id: string; owner_id: string; product_id: string; variant_id: string; title: string; slug: string | null;
+  status: "draft" | "pending_payment" | "published" | "unpublished" | "removed";
+  content: Content; published_content: Content | null; views: number; published_at: string | null; expires_at: string | null;
+  created_at: string; updated_at: string;
+}
+export interface ProductRow { id: string; family: string; category: string; name: string; price_inr: number; hosting_days: number; is_active: boolean; is_featured: boolean; sort: number }
+export interface LeadRow { id: string; page_id: string; kind: "lead" | "rsvp" | "order"; name: string; phone: string; message: string | null; context: Record<string, unknown>; status: "new" | "contacted" | "converted" | "closed"; created_at: string }
+export interface PublicPage { slug: string; product_id: string; variant_id: string; content: Content; published_at: string }
+
+export async function fetchProductRows(): Promise<ProductRow[]> {
+  const { data, error } = await db.from("ip_products").select("*").order("sort");
+  if (error) throw error;
+  return data ?? [];
+}
+export async function updateProductRow(id: string, patch: Partial<ProductRow>) {
+  const { error } = await db.from("ip_products").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function getPublicPage(slug: string): Promise<PublicPage | null> {
+  const { data, error } = await db.rpc("ip_get_public_page", { _slug: slug });
+  if (error) throw error;
+  return data ?? null;
+}
+export function recordHit(slug: string) {
+  try {
+    const k = "ip-hit-" + slug;
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, "1");
+  } catch { /* storage blocked: count anyway */ }
+  db.rpc("ip_page_hit", { _slug: slug }).then(() => undefined, () => undefined);
+}
+export async function submitLead(slug: string, kind: "lead" | "rsvp" | "order", name: string, phone: string, message: string, context: Record<string, unknown>) {
+  const { data, error } = await db.rpc("ip_submit_lead", { _slug: slug, _kind: kind, _name: name, _phone: phone, _message: message, _context: context });
+  if (error) throw error;
+  return data as { ok: boolean; reason?: string };
+}
+
+export async function myPages(): Promise<PageRow[]> {
+  const { data, error } = await db.from("ip_pages").select("*").order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+export async function getMyPage(id: string): Promise<PageRow | null> {
+  const { data, error } = await db.from("ip_pages").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+export async function createPage(ownerId: string, productId: string, variantId: string, title: string, content: Content): Promise<PageRow> {
+  const { data, error } = await db.from("ip_pages").insert({ owner_id: ownerId, product_id: productId, variant_id: variantId, title, content }).select().single();
+  if (error) throw error;
+  return data;
+}
+export async function savePage(id: string, variantId: string, title: string, content: Content) {
+  const { error } = await db.from("ip_pages").update({ variant_id: variantId, title, content }).eq("id", id);
+  if (error) throw error;
+}
+export async function deleteDraft(id: string) {
+  const { error } = await db.from("ip_pages").delete().eq("id", id);
+  if (error) throw error;
+}
+export async function republish(id: string) {
+  const { data, error } = await db.rpc("ip_republish", { _page_id: id });
+  if (error) throw error;
+  return data as { ok: boolean; slug?: string; reason?: string };
+}
+export async function unpublish(id: string) {
+  const { data, error } = await db.rpc("ip_unpublish", { _page_id: id });
+  if (error) throw error;
+  return data as { ok: boolean };
+}
+export async function leadsFor(pageId: string): Promise<LeadRow[]> {
+  const { data, error } = await db.from("ip_leads").select("*").eq("page_id", pageId).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+export async function leadCounts(): Promise<Record<string, number>> {
+  const { data, error } = await db.from("ip_leads").select("page_id,status");
+  if (error) throw error;
+  const out: Record<string, number> = {};
+  (data ?? []).forEach((r: { page_id: string; status: string }) => { if (r.status === "new") out[r.page_id] = (out[r.page_id] ?? 0) + 1; });
+  return out;
+}
+export async function setLeadStatus(id: string, status: LeadRow["status"]) {
+  const { error } = await db.from("ip_leads").update({ status }).eq("id", id);
+  if (error) throw error;
+}
+
+async function token() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+export async function checkout(body: Record<string, unknown>) {
+  const t = await token();
+  if (!t) throw new Error("Sign in to publish.");
+  const { data, error } = await supabase.functions.invoke("ip-checkout", { body, headers: { Authorization: `Bearer ${t}` } });
+  if (data?.error) throw new Error(data.error);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/** Uploads a data-URL image to the owner's folder in page-media and returns its public URL. */
+export async function uploadDataUrl(ownerId: string, pageId: string, dataUrl: string): Promise<string> {
+  const blob = await (await fetch(dataUrl)).blob();
+  const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+  const path = `${ownerId}/${pageId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("page-media").upload(path, blob, { contentType: blob.type, cacheControl: "31536000", upsert: false });
+  if (error) throw error;
+  return supabase.storage.from("page-media").getPublicUrl(path).data.publicUrl;
+}
+
+/** Walks content and replaces every data: image with an uploaded URL. */
+export async function uploadContentImages(ownerId: string, pageId: string, content: Content): Promise<Content> {
+  const walk = async (v: unknown): Promise<unknown> => {
+    if (typeof v === "string" && v.startsWith("data:image/")) return uploadDataUrl(ownerId, pageId, v);
+    if (Array.isArray(v)) return Promise.all(v.map(walk));
+    if (v && typeof v === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, x] of Object.entries(v)) out[k] = await walk(x);
+      return out;
+    }
+    return v;
+  };
+  return (await walk(content)) as Content;
+}
