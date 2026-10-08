@@ -425,6 +425,204 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_leads: {
+        Row: {
+          context: Json
+          created_at: string
+          id: string
+          kind: string
+          message: string | null
+          name: string
+          owner_id: string
+          page_id: string
+          phone: string
+          status: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+          name: string
+          owner_id: string
+          page_id: string
+          phone: string
+          status?: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+          name?: string
+          owner_id?: string
+          page_id?: string
+          phone?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_leads_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ip_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ip_orders: {
+        Row: {
+          created_at: string
+          id: string
+          inr_amount: number
+          page_id: string
+          paid_at: string | null
+          product_id: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inr_amount: number
+          page_id: string
+          paid_at?: string | null
+          product_id: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inr_amount?: number
+          page_id?: string
+          paid_at?: string | null
+          product_id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_orders_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ip_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ip_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          expires_at: string | null
+          id: string
+          owner_id: string
+          product_id: string
+          published_at: string | null
+          published_content: Json | null
+          published_variant_id: string | null
+          slug: string | null
+          status: string
+          title: string
+          updated_at: string
+          variant_id: string
+          views: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          owner_id: string
+          product_id: string
+          published_at?: string | null
+          published_content?: Json | null
+          published_variant_id?: string | null
+          slug?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          variant_id: string
+          views?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          owner_id?: string
+          product_id?: string
+          published_at?: string | null
+          published_content?: Json | null
+          published_variant_id?: string | null
+          slug?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          variant_id?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_pages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ip_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ip_products: {
+        Row: {
+          category: string
+          family: string
+          hosting_days: number
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          price_inr: number
+          share_overrides: Json
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          family: string
+          hosting_days?: number
+          id: string
+          is_active?: boolean
+          is_featured?: boolean
+          name: string
+          price_inr: number
+          share_overrides?: Json
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          family?: string
+          hosting_days?: number
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name?: string
+          price_inr?: number
+          share_overrides?: Json
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meet_nudge_contacts: {
         Row: {
           business_name: string | null
@@ -1535,6 +1733,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      ip_get_public_page: { Args: { _slug: string }; Returns: Json }
+      ip_mark_order_paid: {
+        Args: { _payment_id: string; _razorpay_order_id: string }
+        Returns: Json
+      }
+      ip_page_hit: { Args: { _slug: string }; Returns: undefined }
+      ip_publish_page: { Args: { _page_id: string }; Returns: Json }
+      ip_republish: { Args: { _page_id: string }; Returns: Json }
+      ip_slugify: { Args: { _s: string }; Returns: string }
+      ip_submit_lead: {
+        Args: {
+          _context: Json
+          _kind: string
+          _message: string
+          _name: string
+          _phone: string
+          _slug: string
+        }
+        Returns: Json
+      }
+      ip_unpublish: { Args: { _page_id: string }; Returns: Json }
       monthly_free_reset: { Args: never; Returns: number }
       start_tool_run: {
         Args: { _tool_id: string; _uid: string }
