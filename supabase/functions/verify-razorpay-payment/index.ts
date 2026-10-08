@@ -1,25 +1,25 @@
-// Verifies Razorpay signature and credits the purchase to the user's wallet.
+// Verifies a Razorpay checkout response and credits the purchase to the user's wallet.
+// The razorpay-webhook function credits the same purchase idempotently if this call never happens.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`${orderId}|${paymentId}`));
-  const hex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
-  return hex === signature;
-}
+const reject = (error: string, status = 400) =>
+  new Response(JSON.stringify({ error }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" }, status,
+  });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const keyId = Deno.env.get("RAZORPAY_KEY_ID");
     const secret = Deno.env.get("RAZORPAY_KEY_SECRET");
-    if (!secret) throw new Error("Razorpay not configured");
+    if (!keyId || !secret) throw new Error("Razorpay not configured");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -34,32 +34,43 @@ serve(async (req) => {
     const user = ud.user;
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, purchase_id } = await req.json();
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !purchase_id) {
-      throw new Error("Missing parameters");
+    if (
+      typeof razorpay_order_id !== "string" || typeof razorpay_payment_id !== "string" ||
+      typeof razorpay_signature !== "string" || typeof purchase_id !== "string"
+    ) {
+      return reject("Missing parameters");
     }
 
-    const valid = await verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, secret);
-    if (!valid) {
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
-      });
-    }
+    const valid = await verifyHmac(secret, `${razorpay_order_id}|${razorpay_payment_id}`, razorpay_signature);
+    if (!valid) return reject("Invalid signature");
 
     const { data: purchase } = await supabase
       .from("credit_purchases").select("*").eq("id", purchase_id).maybeSingle();
-    if (!purchase || purchase.user_id !== user.id) throw new Error("Purchase not found");
+    if (!purchase || purchase.user_id !== user.id) return reject("Purchase not found", 404);
+    // The signature only proves the order/payment pair is genuine; it must also be THIS purchase's order.
+    if (purchase.razorpay_order_id !== razorpay_order_id) return reject("Order does not match purchase");
+
+    const settled = await settlePayment(razorpay_payment_id, purchase, keyId, secret);
+    if (!settled.ok) return reject(`Payment not valid: ${settled.reason}`);
 
     const { data: applied, error: aerr } = await supabase.rpc("apply_credit_purchase", {
-      _purchase_id: purchase_id,
+      _purchase_id: purchase.id,
+      _order_id: razorpay_order_id,
       _payment_id: razorpay_payment_id,
     });
     if (aerr) throw new Error(aerr.message);
+    if (!applied?.ok) return reject(`Could not apply purchase: ${applied?.reason ?? "unknown"}`, 409);
 
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      action_type: "credit_purchase",
-      action_details: { pack_id: purchase.pack_id, credits: purchase.credits, inr: purchase.inr_amount, payment_id: razorpay_payment_id },
-    });
+    if (!applied.noop) {
+      await supabase.from("activity_logs").insert({
+        user_id: user.id,
+        action_type: "payment",
+        action_details: {
+          kind: "credit_purchase", source: "client_verify", pack_id: purchase.pack_id,
+          credits: purchase.credits, inr: purchase.inr_amount, payment_id: razorpay_payment_id,
+        },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true, credits: purchase.credits, applied }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
