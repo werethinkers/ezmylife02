@@ -1,5 +1,5 @@
-// ProductVision 360 — server proxy that calls the public-generate-angles API
-// using our rotating GEMINI_API_KEY_1..4 secrets. Validates the caller's JWT.
+// ProductVision 360 — generates product angles in-house with Gemini image model
+// using our rotating GEMINI_API_KEY secrets. Validates the caller's JWT.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
 
@@ -13,10 +13,55 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PUBLIC_ENDPOINT =
-  "https://vmhyxhvxgiuwrskfvlsr.supabase.co/functions/v1/public-generate-angles";
-const PUBLIC_ANON =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtaHl4aHZ4Z2l1d3Jza2Z2bHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MDYzNDEsImV4cCI6MjA5MzE4MjM0MX0.fFwKYAh0rMVqO-0SBKYBsZN8kxsnWFvxkovqGdxN2ao";
+const IMAGE_MODEL = "gemini-2.5-flash-image";
+
+const ANGLE_HINTS: Record<string, string> = {
+  "Front": "straight-on front view, camera facing the product directly",
+  "Front-Right": "three-quarter view from the front-right (45 degrees)",
+  "Right": "pure right side profile view (90 degrees)",
+  "Back-Right": "three-quarter view from the back-right (135 degrees)",
+  "Back": "straight-on rear view (180 degrees)",
+  "Back-Left": "three-quarter view from the back-left (225 degrees)",
+  "Left": "pure left side profile view (270 degrees)",
+  "Front-Left": "three-quarter view from the front-left (315 degrees)",
+  "Top": "top-down overhead view looking straight down",
+  "Bottom": "view from directly underneath showing the base",
+  "Intelligent Detail Close-Up": "macro close-up of the product's most distinctive detail, texture or feature",
+};
+
+function anglePrompt(angle: string) {
+  return `You are a professional e-commerce product photographer. Using the attached photo, render the SAME exact product (identical shape, colors, materials, logos, text and proportions) from this camera angle: ${ANGLE_HINTS[angle] ?? angle}. Pure white seamless studio background, soft even lighting, subtle natural shadow, product centered and fully in frame, photorealistic catalog quality. Do not add props, text, or watermarks. Output only the image.`;
+}
+
+type AngleResult = { ok: true; mimeType: string; base64: string } | { ok: false; error: string; keyError: boolean };
+
+async function generateAngle(key: string, imageBase64: string, mimeType: string, angle: string): Promise<AngleResult> {
+  try {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [
+          { inlineData: { mimeType, data: imageBase64 } },
+          { text: anglePrompt(angle) },
+        ] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      }),
+    });
+    const text = await resp.text();
+    if (!resp.ok) {
+      const keyError = [400, 401, 403, 429].includes(resp.status) && /429|quota|RESOURCE_EXHAUSTED|API key|PERMISSION_DENIED|UNAUTHENTICATED/i.test(text);
+      return { ok: false, error: `${resp.status}: ${text.slice(0, 200)}`, keyError: keyError || resp.status === 429 };
+    }
+    const json = JSON.parse(text);
+    const parts = json?.candidates?.[0]?.content?.parts ?? [];
+    const img = parts.find((p: any) => p?.inlineData?.data);
+    if (!img) return { ok: false, error: "No image returned for this angle.", keyError: false };
+    return { ok: true, mimeType: img.inlineData.mimeType || "image/png", base64: img.inlineData.data };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e), keyError: false };
+  }
+}
 
 const VALID_ANGLES = new Set([
   "Front", "Front-Right", "Right", "Back-Right", "Back", "Back-Left",
@@ -92,63 +137,35 @@ serve(async (req) => {
     ].filter((k): k is string => !!k);
     if (!keys.length) throw new Error("no_gemini_keys");
 
-    let lastBody = "";
-    let lastErr = "no_attempts";
-    for (const k of keys) {
-      const upstream = await fetch(PUBLIC_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": PUBLIC_ANON,
-          "x-gemini-key": k,
-        },
-        body: JSON.stringify({ imageBase64, mimeType, angles }),
-      });
-      const text = await upstream.text();
-      lastBody = text;
-
-      if (upstream.status === 401 || upstream.status === 429) {
-        lastErr = `${upstream.status}: ${text.slice(0, 200)}`;
-        continue;
+    // Generate each angle in-house, rotating keys when one is rate-limited or rejected.
+    let keyIdx = 0;
+    const runAngle = async (angle: string) => {
+      let last: AngleResult = { ok: false, error: "no_attempts", keyError: false };
+      for (let tries = 0; tries < keys.length; tries++) {
+        const k = keys[(keyIdx + tries) % keys.length];
+        last = await generateAngle(k, imageBase64, mimeType, angle);
+        if (last.ok || !last.keyError) return last;
       }
+      keyIdx = (keyIdx + 1) % keys.length;
+      return last;
+    };
 
-      // Upstream returns 200 with success=false even when Gemini rate-limits / rejects the key.
-      // Detect that case and rotate to the next key.
-      try {
-        const parsed = JSON.parse(text);
-        const failed = Array.isArray(parsed?.failed) ? parsed.failed : [];
-        const hasSuccess = Array.isArray(parsed?.images) && parsed.images.length > 0;
-        const allKeyErr = failed.length > 0 && failed.every((f: { error?: string }) => {
-          const e = String(f?.error ?? "");
-          return /429|quota|RESOURCE_EXHAUSTED|API key|invalid|401|PERMISSION_DENIED/i.test(e);
-        });
-        if (!hasSuccess && allKeyErr) {
-          lastErr = `key_rejected: ${String(failed[0]?.error ?? "").slice(0, 200)}`;
-          continue;
-        }
-      } catch { /* fall through and forward as-is */ }
-
-      // Charge only for the angles that actually came back.
-      let payload = text;
-      try {
-        const parsed = JSON.parse(text);
-        const made = Math.min(angles.length, Array.isArray(parsed?.images) ? parsed.images.length : 0);
-        if (upstream.ok && made > 0) {
-          parsed.credits_charged = await chargeForImages(made);
-          parsed.credits_per_angle = perAngle;
-          payload = JSON.stringify(parsed);
-        }
-      } catch { /* forward as-is */ }
-      return new Response(payload, {
-        status: upstream.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const images: Array<{ angle: string; mimeType: string; base64: string }> = [];
+    const failed: Array<{ angle: string; error: string }> = [];
+    const CONCURRENCY = 3;
+    for (let i = 0; i < angles.length; i += CONCURRENCY) {
+      const batch = angles.slice(i, i + CONCURRENCY);
+      const out = await Promise.all(batch.map(runAngle));
+      out.forEach((r, j) => {
+        if (r.ok) images.push({ angle: batch[j], mimeType: r.mimeType, base64: r.base64 });
+        else failed.push({ angle: batch[j], error: r.error });
       });
     }
-    // All keys exhausted — forward the last body so client sees the actual Gemini error
-    return new Response(
-      lastBody || JSON.stringify({ success: false, images: [], failed: [{ error: lastErr }] }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+
+    const credits_charged = images.length ? await chargeForImages(images.length) : 0;
+    return new Response(JSON.stringify({
+      success: images.length > 0, images, failed, credits_charged, credits_per_angle: perAngle,
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
