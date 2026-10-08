@@ -1,18 +1,15 @@
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
-// Every request is signed-in-checked and, for paid actions, charged on the server.
-// - Full analysis: "startup-analyser-flash" (Gemini 2.5 Flash, 10 credits; own key → 2.5 Pro, free).
+// Every request is signed-in-checked and charged on the server.
+// - Full analysis: "startup-analyser-flash" (Gemini 2.5 Flash, 10 credits).
 // - Follow-up chat question: "startup-analyser-chat" (Gemini 2.5 Flash, 1 credit).
-// - Requests made with the visitor's own Gemini key are free: they never fall back to our keys.
+// All AI calls use the platform's own rotating keys — users never supply a key.
 const serve = (handler: (req: Request) => Promise<Response>) =>
   stdServe(
     billed(
       {
-        tool: (b) => {
-          if (typeof b?.userApiKey === "string" && b.userApiKey.trim().length > 20) return null;
-          return b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser-flash";
-        },
+        tool: (b) => (b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser-flash"),
         defaultCredits: (id) => (id === "startup-analyser-chat" ? 1 : id === "startup-analyser-flash" ? 10 : undefined),
       },
       (req) => handler(req),
@@ -67,27 +64,13 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function callAIWithFallback(
   messages: { role: string; content: string }[],
   model: string,
-  stream: boolean,
-  userApiKey?: string | null
+  stream: boolean
 ): Promise<Response> {
   let saw402 = false;
   let saw429 = false;
   let saw400 = false;
 
-  // 1. The visitor's own key: free for them, so it never falls back to the app's keys.
-  if (userApiKey) {
-    const geminiModel = model.replace("google/", "");
-    const res = await callGeminiDirect(userApiKey, messages, geminiModel, stream);
-    if (res.ok) return res;
-    throw new AIProviderError(
-      res.status === 429 ? 429 : 400,
-      res.status === 429
-        ? "Your own Gemini key is rate-limited. Wait a minute, or remove it in Profile to use credits instead."
-        : `Your own Gemini key was rejected (${res.status}). Check it in Profile, or remove it to use credits instead.`,
-    );
-  }
-
-  // 2. Try Lovable AI gateway
+  // 1. Try Lovable AI gateway
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (LOVABLE_API_KEY) {
     try {
@@ -261,7 +244,7 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages, userApiKey } = await req.json();
+    const { companyName, companyWebsite, pitchDeckText, action, reportContext, chatMessages } = await req.json();
 
     // Chat action
     if (action === "chat") {
@@ -275,8 +258,7 @@ serve(async (req) => {
       const response = await callAIWithFallback(
         [{ role: "system", content: systemPrompt }, ...history],
         "google/gemini-2.5-flash",
-        true,
-        userApiKey
+        true
       );
 
       return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
@@ -292,11 +274,9 @@ serve(async (req) => {
         { role: "system", content: "You are a world-class venture capital analyst. Generate exhaustive, detailed investment analysis reports. Always respond with the exact structure requested." },
         { role: "user", content: analysisPrompt },
       ],
-      // Gemini 2.5 Flash keeps a full report within the 1–10 credit range (2.5 Pro costs ~₹8–11 a
-      // report). People who add their own Gemini key still get 2.5 Pro (and pay nothing to us).
-      userApiKey ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
-      true,
-      userApiKey
+      // Gemini 2.5 Flash keeps a full report within the 1–10 credit range.
+      "google/gemini-2.5-flash",
+      true
     );
 
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
