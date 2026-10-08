@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { ensurePrice } from "../_shared/billing.ts";
+import { APP_SPECS } from "../_shared/appSpecs.ts";
 import { inBackground } from "../_shared/whatsapp.ts";
 import { notifyTaskDone } from "../_shared/notify.ts";
 
@@ -35,7 +36,7 @@ serve(async (req) => {
       const { data: priced } = await supabase.from("tool_pricing").select("tool_id").eq("tool_id", tool_id).maybeSingle();
       if (!priced) {
         const { data: app } = await supabase.from("tools_catalog").select("id").eq("id", tool_id).maybeSingle();
-        if (app) await ensurePrice(tool_id, 1);
+        if (app) await ensurePrice(tool_id, APP_SPECS[tool_id]?.credits ?? 1); // same price the app's AI step uses
       }
       const { data, error } = await supabase.rpc("start_tool_run", { _uid: uid, _tool_id: tool_id });
       if (error) throw new Error(error.message);

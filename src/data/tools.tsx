@@ -18,7 +18,7 @@ const toolUrls: Record<string, string> = {
   // Existing ezyourlife tools
   
   // ToolFK - AI ID Photo Generator
-  "ai-id-photo-generator": "https://www.toolfk.com/tools/online-idphotos.html",
+  // ai-id-photo-generator now runs in-house (Passport Photo Maker).
   
   // Pi7 tools removed — all 67 tools now run in-house via NativeToolRenderer.
   // (kept this map for any remaining 3rd-party iframes)

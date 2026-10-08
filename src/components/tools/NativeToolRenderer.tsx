@@ -91,6 +91,7 @@ const nativeTools: Record<string, React.ComponentType> = {
   
   // Passport & ID Photos
   "passport-photo-maker": PassportPhotoMaker,
+  "ai-id-photo-generator": PassportPhotoMaker,
   "ssc-photo-resize": PassportPhotoMaker,
   "pan-card-resize": PassportPhotoMaker,
   "upsc-photo-resize": PassportPhotoMaker,

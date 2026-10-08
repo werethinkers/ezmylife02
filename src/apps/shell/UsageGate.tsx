@@ -83,7 +83,7 @@ export function UsageGate({ toolId, children }: { toolId: string; children: Reac
                   {reason === "login" ? "Sign in to use this app" : reason === "credits" ? `This app uses ${creditCost} credit${creditCost === 1 ? "" : "s"} per use` : "Couldn't start the app"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {reason === "login" ? "It's free to sign up and you get 50 credits." : reason === "credits" ? "Top up to continue — one charge covers 30 minutes of use." : "Please try again."}
+                  {reason === "login" ? "It's free to sign up and you get 100 free credits." : reason === "credits" ? "Top up to continue — one charge covers 30 minutes of use." : "Please try again."}
                 </p>
                 <div className="mt-4 flex justify-center gap-2">
                   {reason === "login" ? (

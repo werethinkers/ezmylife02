@@ -1,11 +1,11 @@
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 
 /**
- * How many apps are live, rounded down to the nearest 5 ("165+").
+ * How many apps are live, rounded down to the nearest 5 ("150+").
  * Static copy (index.html, llms.txt, MCP text) uses APP_COUNT_FALLBACK; update it
  * when the catalogue grows. React pages use the live hook so they never overstate.
  */
-export const APP_COUNT_FALLBACK = "165+";
+export const APP_COUNT_FALLBACK = "150+";
 
 export function useAppCountLabel(): string {
   const { data = [] } = useToolsCatalog();

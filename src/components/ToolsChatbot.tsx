@@ -96,7 +96,7 @@ export const ToolsChatbot = () => {
     } catch (error) {
       const info = await functionError(error);
       if (info?.status === 401) {
-        setMessages(prev => [...prev, { role: "assistant", content: "Please [sign in](/auth) to chat with me — it's free and you get 50 credits to start." }]);
+        setMessages(prev => [...prev, { role: "assistant", content: "Please [sign in](/auth) to chat with me — it's free and you get 100 free credits to start." }]);
         return;
       }
       console.error("Chat error:", error);

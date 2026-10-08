@@ -4,6 +4,14 @@
 // pricing row. Every app costs at least 1 credit per use.
 export const DEFAULT_PRICES: Record<string, number> = {
   "tool-10": 2,
+  "tool-6": 2,
+  "tool-28": 1,
+  "quiz-maker": 1,
+  "quiz": 1,
+  "lesson-planner": 1,
+  "flashcard-maker": 1,
+  "study-planner": 1,
+  "exam-scheduler": 1,
   "tool-12": 2,
   "tool-18": 2,
   "tool-29": 2,
@@ -89,7 +97,7 @@ export const BULK_PRICE_ID: Record<string, string> = {
 /** Jain study apps removed from the store at the owner's request (hidden from the catalogue). */
 export const REMOVED_APPS = new Set<string>(["jain-video-stream", "jain-audio-stream", "jain-encyclopedia", "jain-ganit", "jain-panchang", "jainbhugol-maps", "jaingyan-ai", "shastra-hover-dictionary", "kundkund-ebook-bot", "kundkund-mindmap", "shastra-multi-pdf-ai-bot", "shastra-pdf-reader"]);
 
-export const BROWSER_ONLY = new Set<string>(["pdf-chart-image-extractor","add-logo-image","add-name-dob-photo","add-text-image","ai-face-generator","ai-photo-enhancer","assignment-tracker","beautify-image","bibliography-generator","black-white","blemish-remover","blur-background","blur-face","blur-image","bulk-image-resizer","censor-photo","check-dpi","circle-crop","convert-dpi","edit-metadata","exam-scheduler","flashcard-maker","flip-image","freehand-crop","generate-signature","grade-calculator","grayscale-image","image-color-picker","increase-image-quality","increase-image-size-kb","instagram-grid","instagram-resize","join-images","lesson-planner","merge-photo-signature","motion-blur","pan-card-resize","passport-photo-maker","picture-pixel-art","pixelate-face","pixelate-image","psc-photo-resize","quiz","quiz-maker","reduce-image-size-kb","remove-background","remove-metadata","remove-object-photo","resize-2x2-inch","resize-35x45mm","resize-3x4-inch","resize-4x6-inch","resize-600x600","resize-a4","resize-image-3.5x4.5","resize-image-cm","resize-image-inch","resize-image-mm","resize-image-pixel","resize-sign-6x2","resize-signature","resize-signature-50x20","retouch-image","rotate-image","split-image","square-crop","ssc-photo-resize","study-planner","super-resolution","tool-1","tool-2","tool-28","tool-3","tool-30","tool-4","tool-6","unblur-face","unblur-image","upsc-photo-resize","upscale-image-ai","view-metadata","watermark-images","whatsapp-dp","youtube-banner","zoom-out-image"]);
+export const BROWSER_ONLY = new Set<string>(["pdf-chart-image-extractor","add-logo-image","add-name-dob-photo","add-text-image","ai-face-generator","ai-photo-enhancer","assignment-tracker","beautify-image","bibliography-generator","black-white","blemish-remover","blur-background","blur-face","blur-image","bulk-image-resizer","censor-photo","check-dpi","circle-crop","convert-dpi","edit-metadata","exam-scheduler","flashcard-maker","flip-image","freehand-crop","generate-signature","grade-calculator","grayscale-image","image-color-picker","increase-image-quality","increase-image-size-kb","instagram-grid","instagram-resize","join-images","lesson-planner","merge-photo-signature","motion-blur","pan-card-resize","passport-photo-maker","ai-id-photo-generator","picture-pixel-art","pixelate-face","pixelate-image","psc-photo-resize","quiz","quiz-maker","reduce-image-size-kb","remove-background","remove-metadata","remove-object-photo","resize-2x2-inch","resize-35x45mm","resize-3x4-inch","resize-4x6-inch","resize-600x600","resize-a4","resize-image-3.5x4.5","resize-image-cm","resize-image-inch","resize-image-mm","resize-image-pixel","resize-sign-6x2","resize-signature","resize-signature-50x20","retouch-image","rotate-image","split-image","square-crop","ssc-photo-resize","study-planner","super-resolution","tool-1","tool-2","tool-28","tool-3","tool-30","tool-4","tool-6","unblur-face","unblur-image","upsc-photo-resize","upscale-image-ai","view-metadata","watermark-images","whatsapp-dp","youtube-banner","zoom-out-image"]);
 
 /**
  * Apps whose runs are charged under a newer price id (re-priced to cost; the server creates
