@@ -9,7 +9,7 @@ import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } fro
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
 /** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
-export function ShareKit({ product, theme, content, url, slug, link }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null }) {
+export function ShareKit({ product, theme, content, url, slug, link, preparing }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean }) {
   const sendUrl = link || url;
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
@@ -56,6 +56,8 @@ export function ShareKit({ product, theme, content, url, slug, link }: { product
           <Button variant="outline" className="h-12 rounded-xl" onClick={copy}><Copy className="h-4 w-4 mr-2" /> Copy link</Button>
         </div>
         <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm break-all font-mono">{sendUrl}</div>
+        {preparing && <p className="text-xs text-muted-foreground flex items-center gap-2"><span className="h-3 w-3 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin" aria-hidden="true" /> Setting up your WhatsApp link preview (about a minute). You can share now; the link updates when it's ready.</p>}
+        {!preparing && link && <p className="text-xs text-muted-foreground">This link shows your own picture and title when shared on WhatsApp.</p>}
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 

@@ -21,17 +21,42 @@ export async function refreshLinkPreview(page: PageRow, product: Product, theme:
   return (r?.share_url as string | null) ?? null;
 }
 
-/** Runs refreshLinkPreview once for a page (always, or only while it has no share link yet). */
-export function useLinkPreview(page: PageRow | null, product: Product | undefined, theme: Theme | undefined, always: boolean): string | null {
+/**
+ * GitHub Pages takes about a minute to put a new share page online, and WhatsApp remembers a link's
+ * preview from the first time it reads it. So a brand-new share link is only handed out once it
+ * answers; until then the page's own link is used. Gives up waiting after two minutes.
+ */
+async function waitUntilLive(url: string, stop: () => boolean): Promise<void> {
+  const until = Date.now() + 120_000;
+  while (Date.now() < until && !stop()) {
+    try { if ((await fetch(url, { cache: "no-store" })).ok) return; } catch { /* not reachable yet */ }
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+}
+
+/** Runs refreshLinkPreview once for a page (always, or only while it has no share link yet).
+ *  link: the share link to send (null until ready); preparing: a preview is being set up. */
+export function useLinkPreview(page: PageRow | null, product: Product | undefined, theme: Theme | undefined, always: boolean) {
   const [link, setLink] = useState<string | null>(page?.share_url ?? null);
+  const [preparing, setPreparing] = useState(false);
   const done = useRef<string | null>(null);
   const live = page?.status === "published" && !!page.slug;
   useEffect(() => {
+    let stopped = false;
     setLink(page?.share_url ?? null);
     if (!page || !live || !product || !theme || done.current === page.id) return;
     if (!always && page.share_url) return;
     done.current = page.id;
-    refreshLinkPreview(page, product, theme).then((u) => { if (u) setLink(u); }, (e) => console.warn("link preview", e));
+    const hadLink = !!page.share_url; // an existing share link keeps working while it is refreshed
+    if (!hadLink) setPreparing(true);
+    refreshLinkPreview(page, product, theme)
+      .then(async (u) => {
+        if (!u) return;
+        if (!hadLink) await waitUntilLive(u, () => stopped);
+        if (!stopped) setLink(u);
+      }, (e) => console.warn("link preview", e))
+      .finally(() => { if (!stopped) setPreparing(false); });
+    return () => { stopped = true; done.current = null; };
   }, [page, live, product, theme, always]);
-  return link;
+  return { link, preparing };
 }

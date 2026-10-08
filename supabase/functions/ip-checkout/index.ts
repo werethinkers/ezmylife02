@@ -135,6 +135,32 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "share_todo" || action === "share_admin") {
+      // Admin backfill for cards and websites published before link previews existed. The admin's
+      // browser draws each page's preview card (share_todo lists them), then share_admin writes it.
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (!isAdmin) return json({ error: "Admins only." }, 403);
+      if (action === "share_todo") {
+        const { data: pages, count } = await supabase.from("ip_pages")
+          .select("id, slug, product_id, published_variant_id, published_content", { count: "exact" })
+          .eq("status", "published").is("share_url", null).not("slug", "is", null).limit(50);
+        return json({ pages: pages ?? [], remaining: count ?? 0 });
+      }
+      const { data: page } = await supabase.from("ip_pages").select("id, slug, status, product_id").eq("id", String(body.page_id ?? "")).maybeSingle();
+      if (!page || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
+      const image = typeof body.image === "string" && /^https:\/\//.test(body.image) ? body.image : null;
+      const { data: product } = await supabase.from("ip_products").select("family").eq("id", page.product_id).maybeSingle();
+      if (image) await supabase.from("ip_pages").update({ og_image: image }).eq("id", page.id);
+      const url = await writeSharePage({
+        slug: page.slug, title: String(body.title ?? "").slice(0, 120) || "EZYOURLIFE",
+        description: String(body.description ?? "").slice(0, 300), image,
+        indexable: ["business", "menu", "profile"].includes(product?.family ?? ""),
+      });
+      if (!url) return json({ error: "Add the GITHUB_SHARE_TOKEN secret first." }, 400);
+      await supabase.rpc("ip_set_share_url", { _page_id: page.id, _url: url });
+      return json({ share_url: url });
+    }
+
     if (action === "share") {
       // Writes the page's link-preview file (its own title, text and image) and stores its address.
       const { data: page } = await supabase.from("ip_pages").select("id, owner_id, slug, status, og_image").eq("id", String(body.page_id ?? "")).maybeSingle();
@@ -155,3 +181,4 @@ serve(async (req) => {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
+

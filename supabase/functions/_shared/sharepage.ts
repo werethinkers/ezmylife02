@@ -47,21 +47,43 @@ export function shareHtml(m: ShareMeta): string {
 </head><body><p>Opening <a href="${esc(target)}">${t}</a>…</p></body></html>`;
 }
 
+const ghHeaders = (token: string) => ({ Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "User-Agent": "ezyourlife-share" });
+const b64 = (text: string) => { const bytes = new TextEncoder().encode(text); let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b))); return btoa(bin); };
+
+/** Creates or replaces one file in the share repo. create-only skips files that already exist. */
+async function putFile(token: string, path: string, content: string, message: string, createOnly = false) {
+  const api = `https://api.github.com/repos/${repo()}/contents/${path}`;
+  const cur = await fetch(api, { headers: ghHeaders(token) });
+  if (cur.ok && createOnly) return;
+  const sha = cur.ok ? (await cur.json()).sha : undefined;
+  const res = await fetch(api, {
+    method: "PUT", headers: { ...ghHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, content: b64(content), ...(sha ? { sha } : {}) }),
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 200)}`);
+}
+
+// The share site's own files, written once: its domain, a home page that opens ezyourlife.com, and a
+// 404 page that forwards any link whose share page isn't built yet to the same page on ezyourlife.com.
+let siteReady = false;
+async function ensureSiteFiles(token: string) {
+  if (siteReady) return;
+  const host = new URL(shareBase()).host;
+  const forward = (title: string, script: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title><meta property="og:title" content="EZYOURLIFE"><meta property="og:image" content="${DEFAULT_IMAGE}"><meta name="robots" content="noindex">
+<script>${script}</script></head><body><p><a href="https://ezyourlife.com">Open EZYOURLIFE</a></p></body></html>`;
+  await putFile(token, "CNAME", host + "\n", "Share site domain", true);
+  await putFile(token, ".nojekyll", "", "Serve files as they are", true);
+  await putFile(token, "index.html", forward("EZYOURLIFE", `location.replace("https://ezyourlife.com")`), "Share site home", true);
+  await putFile(token, "404.html", forward("Opening…", `location.replace("https://ezyourlife.com" + location.pathname.replace(/\\/+$/, "") + location.search)`), "Forward unknown links", true);
+  siteReady = true;
+}
+
 /** Writes (or updates) one share page. Returns its public URL, or null when not configured. */
 export async function writeSharePage(m: ShareMeta): Promise<string | null> {
   const token = Deno.env.get("GITHUB_SHARE_TOKEN");
   if (!token) return null;
-  const path = `${m.path ?? `p/${m.slug}`}/index.html`;
-  const api = `https://api.github.com/repos/${repo()}/contents/${path}`;
-  const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "User-Agent": "ezyourlife-share" };
-  const cur = await fetch(api, { headers });
-  const sha = cur.ok ? (await cur.json()).sha : undefined;
-  const bytes = new TextEncoder().encode(shareHtml(m));
-  let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b)));
-  const res = await fetch(api, {
-    method: "PUT", headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({ message: `Share page: ${m.path ?? m.slug}`, content: btoa(bin), ...(sha ? { sha } : {}) }),
-  });
-  if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  await ensureSiteFiles(token).catch((e) => console.warn("share site files", e));
+  await putFile(token, `${m.path ?? `p/${m.slug}`}/index.html`, shareHtml(m), `Share page: ${m.path ?? m.slug}`);
   return `${shareBase()}/${m.path ?? `p/${m.slug}`}/`;
 }

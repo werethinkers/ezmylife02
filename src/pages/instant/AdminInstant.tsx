@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CATALOG, CATEGORIES } from "@/instant/catalog";
-import { fetchProductRows, updateProductRow, type ProductRow } from "@/instant/api";
+import { CATALOG, CATEGORIES, getProduct } from "@/instant/catalog";
+import { checkout, fetchProductRows, updateProductRow, uploadDataUrl, type ProductRow } from "@/instant/api";
+
+import { drawShareCard } from "@/instant/shareImage";
+import { describe } from "@/instant/meta";
+import { pageUrlFor } from "@/instant/util";
+import type { Content } from "@/instant/types";
 
 /** Admin: price, availability and featuring for every Instant Digital Product. */
 export default function AdminInstant() {
@@ -28,6 +33,39 @@ export default function AdminInstant() {
     catch (e) { toast({ title: "Couldn't save", description: e instanceof Error ? e.message : "", variant: "destructive" }); }
   };
 
+  // Link previews for pages published before previews existed (or that never got one).
+  const [backfill, setBackfill] = useState<string | null>(null);
+  const runBackfill = async () => {
+    if (!user) return;
+    let made = 0;
+    const failures: string[] = [];
+    try {
+      const todo = await checkout({ action: "share_todo" });
+      const pages = (todo.pages ?? []) as { id: string; slug: string; product_id: string; published_variant_id: string; published_content: Content }[];
+      for (const pg of pages) {
+        setBackfill(`Creating link previews… ${made + failures.length + 1} of ${pages.length}`);
+        const product = getProduct(pg.product_id);
+        const theme = product?.themes.find((t) => t.id === pg.published_variant_id) ?? product?.themes[0];
+        if (!product || !theme) { failures.push(`${pg.slug}: unknown product`); continue; }
+        try {
+          // The same designed 1200×630 card new pages get, drawn from the live content.
+          const content = pg.published_content ?? {};
+          const cv = await drawShareCard(product, theme, content, pageUrlFor(pg.slug), "Link preview");
+          const image = await uploadDataUrl(user.id, pg.id, cv.toDataURL("image/jpeg", 0.86));
+          const { title, desc } = describe(product, content);
+          await checkout({ action: "share_admin", page_id: pg.id, image, title, description: desc });
+          made++;
+        } catch (e) {
+          failures.push(`${pg.slug}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+      const left = Math.max(0, (todo.remaining ?? 0) - made);
+      setBackfill(`Done: ${made} link previews created.${failures.length ? ` ${failures.length} failed: ${failures.slice(0, 3).join("; ")}.` : ""}${left ? ` ${left} more left, run it again.` : ""}`);
+    } catch (e) {
+      setBackfill(`Stopped: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
   if (allowed === false) return <div className="min-h-screen grid place-items-center"><p>Admins only.</p></div>;
   const s = q.trim().toLowerCase();
   return (
@@ -36,6 +74,13 @@ export default function AdminInstant() {
       <main className="container mx-auto px-4 py-8 max-w-5xl pb-24">
         <h1 className="font-display text-3xl font-bold">Instant products</h1>
         <p className="text-muted-foreground mb-4">{CATALOG.length} products. Prices are in rupees and apply to new orders immediately.</p>
+        <div className="rounded-2xl border bg-background p-4 mb-6 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[220px]">
+            <p className="font-semibold">WhatsApp link previews</p>
+            <p className="text-sm text-muted-foreground">{backfill ?? "Give every live card and website its own preview on share.ezyourlife.com. New pages get one automatically."}</p>
+          </div>
+          <Button variant="outline" onClick={runBackfill} disabled={!!backfill && backfill.startsWith("Creating")}>Create missing previews</Button>
+        </div>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" className="max-w-sm mb-6" aria-label="Search products" />
         {CATEGORIES.map((cat) => {
           const items = CATALOG.filter((p) => p.category === cat.id && (!s || p.name.toLowerCase().includes(s)));
