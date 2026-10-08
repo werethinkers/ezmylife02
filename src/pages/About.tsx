@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { motion, MotionConfig } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +9,24 @@ import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { useToast } from "@/hooks/use-toast";
-import { Target, Users, Sparkles, Heart, Mail, MessageSquare, Send, Loader2, Rocket, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  Search,
+  MousePointerClick,
+  Wand2,
+  Rocket,
+  Target,
+  Users,
+  Mail,
+  Clock,
+  Send,
+} from "lucide-react";
 import { z } from "zod";
 import founderAbhijay from "@/assets/founder-abhijay.jpg";
 import founderArinjay from "@/assets/founder-arinjay.jpg";
+
+const SUPPORT_EMAIL = "support@ezyourlife.com";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -19,9 +34,68 @@ const contactSchema = z.object({
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(1000),
 });
 
+const fadeUp = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+const STATS = [
+  { value: "200+", label: "AI apps live today" },
+  { value: "2,000+", label: "Launching within a year" },
+  { value: "100%", label: "Browser-based, no installs" },
+  { value: "24/7", label: "Available anytime, anywhere" },
+];
+
+const STEPS = [
+  {
+    icon: Search,
+    title: "Discover",
+    text: "Find the right AI app by task, industry or use case, all in one catalogue.",
+  },
+  {
+    icon: MousePointerClick,
+    title: "Use",
+    text: "Open it in your browser and get the task done. Nothing to install.",
+  },
+  {
+    icon: Wand2,
+    title: "Request",
+    text: "Can't find what you need? Ask for a custom AI app and we'll build it.",
+  },
+];
+
+const FOUNDERS = [
+  {
+    name: "Abhijay Jain",
+    role: "Founder & CEO",
+    photo: founderAbhijay,
+    alt: "Abhijay Jain, Founder and CEO of EZYOURLIFE",
+    tags: ["Computer Science, VIT Vellore", "The Daly College, Indore", "SeaFund", "VP – Investments"],
+    bio: "A Computer Science graduate from VIT Vellore and alumnus of The Daly College, Indore, Abhijay combines technology, startup exposure, and real-world business understanding. Before EZYOURLIFE, he worked with SeaFund, a deeptech venture capital firm, and later served as Vice President – Investments at a Delhi-based investment banking firm.",
+  },
+  {
+    name: "Arinjay Jain",
+    role: "Co-Founder, Marketing & Growth",
+    photo: founderArinjay,
+    alt: "Arinjay Jain, Co-Founder of EZYOURLIFE",
+    tags: ["Founded ThingMonkey", "Tetr College of Business", "Marketing & Growth"],
+    bio: "Abhijay's younger brother and co-founder, Arinjay brings a strong young-builder mindset to the company. He started his first venture, ThingMonkey, during his Class 11 summer break, gaining early hands-on experience in e-commerce, customer behaviour, and digital marketing. Recently completed his 12th and now enrolled at Tetr College of Business, he leads marketing and growth at EZYOURLIFE.",
+  },
+];
+
+const Eyebrow = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+  <span
+    className={`inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary ${className}`}
+  >
+    <span className="h-px w-6 bg-current opacity-60" />
+    {children}
+  </span>
+);
+
 const About = () => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
   useEffect(() => {
@@ -30,309 +104,433 @@ const About = () => {
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // No backend inbox exists for this form, so hand the message to the visitor's
+  // email app instead of pretending it was sent.
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      contactSchema.parse(formData);
-      await new Promise((r) => setTimeout(r, 800));
-      toast({ title: "Message sent!", description: "We'll get back to you soon." });
-      setFormData({ name: "", email: "", message: "" });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast({ title: "Validation error", description: error.errors[0].message, variant: "destructive" });
-      }
-    } finally {
-      setIsSubmitting(false);
+    const parsed = contactSchema.safeParse(formData);
+    if (!parsed.success) {
+      toast({ title: "Please check the form", description: parsed.error.errors[0].message, variant: "destructive" });
+      return;
     }
+    const { name, email, message } = parsed.data;
+    const subject = `Website enquiry from ${name}`;
+    const body = `${message}\n\n—\n${name}\n${email}`;
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    toast({ title: "Opening your email app", description: `Your message is ready to send to ${SUPPORT_EMAIL}.` });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <SEOHead
-        title="About EZYOURLIFE - The World's First AI App Store | Our Mission"
-        description="What is EZYOURLIFE? Learn about the world's first AI App Store — 200+ live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Discover the ezyourlife mission and values."
-        path="/about"
-        keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story"
-        jsonLd={[
-          {
-            "@context": "https://schema.org",
-            "@type": "AboutPage",
-            name: "About EZYOURLIFE",
-            description: "Learn about EZYOURLIFE, the world's first AI App Store — 200+ live AI Apps today and 2,000+ launching within a year.",
-            url: "https://ezyourlife.com/about",
-            mainEntity: {
-              "@type": "Organization",
-              name: "EZYOURLIFE",
-              url: "https://ezyourlife.com",
-              logo: { "@type": "ImageObject", url: "https://ezyourlife.com/favicon.png" },
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-background">
+        <SEOHead
+          title="About EZYOURLIFE - The Future's First AI App Store | Our Mission"
+          description="What is EZYOURLIFE? Learn about the Future's First AI App Store — 200+ live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Meet the founders and discover the ezyourlife mission."
+          path="/about"
+          keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story, ezyourlife founders"
+          jsonLd={[
+            {
+              "@context": "https://schema.org",
+              "@type": "AboutPage",
+              name: "About EZYOURLIFE",
+              description:
+                "Learn about EZYOURLIFE, the Future's First AI App Store — 200+ live AI Apps today and 2,000+ launching within a year.",
+              url: "https://ezyourlife.com/about",
+              mainEntity: {
+                "@type": "Organization",
+                name: "EZYOURLIFE",
+                url: "https://ezyourlife.com",
+                logo: { "@type": "ImageObject", url: "https://ezyourlife.com/favicon.png" },
+                founder: [
+                  { "@type": "Person", name: "Abhijay Jain", jobTitle: "Founder & CEO" },
+                  { "@type": "Person", name: "Arinjay Jain", jobTitle: "Co-Founder, Marketing & Growth" },
+                ],
+              },
             },
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
-              { "@type": "ListItem", position: 2, name: "About", item: "https://ezyourlife.com/about" },
-            ],
-          },
-        ]}
-      />
-      <Navbar />
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://ezyourlife.com" },
+                { "@type": "ListItem", position: 2, name: "About", item: "https://ezyourlife.com/about" },
+              ],
+            },
+          ]}
+        />
+        <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border/40">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background" />
-        <div className="relative container mx-auto px-4 py-20 md:py-28">
-          <div className="mx-auto max-w-4xl text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              About{" "}
-              <span className="bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                EZYOURLIFE
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We're on a mission to make digital tools accessible, simple, and powerful for everyone.
-            </p>
-          </div>
-        </div>
-      </section>
+        {/* ───────── Hero ───────── */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-mesh" aria-hidden />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.7)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.7)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"
+          />
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[42rem] max-w-full -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
 
-      {/* Our Story */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto space-y-6 text-lg text-muted-foreground leading-relaxed">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Our Story</h2>
-            <p>
-              At <span className="font-semibold text-foreground">EZYOURLIFE</span>, we are building an AI-powered AI app marketplace designed to make digital work faster, simpler, and more accessible for everyone.
-            </p>
-            <p>
-              The idea behind EZYOURLIFE comes from a simple belief: AI should not feel complicated. It should feel useful. Today, people use multiple apps for writing, research, productivity, business tasks, automation, and everyday workflows. But most of these apps are scattered, expensive, or difficult to discover.
-            </p>
-            <p>
-              EZYOURLIFE brings practical AI apps into one unified platform where users can discover, use, and even request custom AI apps based on their needs.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Founders Section */}
-      <section className="py-20 bg-muted/30 border-y border-border/40">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Meet the Founders</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Two brothers building the future of AI, one app at a time.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Abhijay */}
-            <Card className="border-border/50 overflow-hidden hover:shadow-xl transition-all duration-300">
-              <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
-                <img
-                  src={founderAbhijay}
-                  alt="Abhijay Jain, Founder and CEO of EZYOURLIFE"
-                  className="w-full h-full object-cover object-top"
-                  loading="lazy"
-                />
+          <div className="relative container mx-auto px-4 pt-16 pb-16 md:pt-28 md:pb-24">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mx-auto max-w-4xl text-center"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">About EZYOURLIFE</span>
               </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Abhijay Jain</CardTitle>
-                <CardDescription className="text-base font-medium text-primary">Founder &amp; CEO</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  A Computer Science graduate from VIT Vellore and alumnus of The Daly College, Indore, Abhijay combines technology, startup exposure, and real-world business understanding. Before EZYOURLIFE, he worked with SeaFund, a deeptech venture capital firm, and later served as Vice President – Investments at a Delhi-based investment banking firm.
-                </p>
-              </CardContent>
-            </Card>
 
-            {/* Arinjay */}
-            <Card className="border-border/50 overflow-hidden hover:shadow-xl transition-all duration-300">
-              <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/10 to-primary/10">
-                <img
-                  src={founderArinjay}
-                  alt="Arinjay Jain, Co-Founder of EZYOURLIFE"
-                  className="w-full h-full object-cover object-top"
-                  loading="lazy"
-                />
+              <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-7xl">
+                AI shouldn't feel complicated.
+                <br />
+                <span className="text-gradient">It should feel useful.</span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+                EZYOURLIFE is the Future's First AI App Store: practical, task-specific AI apps in one place,
+                ready to use in your browser.
+              </p>
+
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild size="lg" className="group h-12 rounded-xl px-6 shadow-lg">
+                  <Link to="/ai-apps">
+                    Explore AI Apps
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-xl bg-background/60 px-6 backdrop-blur">
+                  <a href="#contact">Talk to us</a>
+                </Button>
               </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Arinjay Jain</CardTitle>
-                <CardDescription className="text-base font-medium text-primary">Co-Founder, Marketing &amp; Growth</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  Abhijay's younger brother and co-founder, Arinjay brings a strong young-builder mindset to the company. He started his first venture, ThingMonkey, during his Class 11 summer break, gaining early hands-on experience in e-commerce, customer behaviour, and digital marketing. Recently completed his 12th and now enrolled at Tetr College of Business, he leads marketing and growth at EZYOURLIFE.
-                </p>
-              </CardContent>
-            </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="mx-auto mt-14 max-w-5xl overflow-hidden rounded-3xl border border-border/60 shadow-lg md:mt-20"
+            >
+              <dl className="grid grid-cols-2 gap-px bg-border/60 md:grid-cols-4">
+                {STATS.map((s) => (
+                  <div key={s.label} className="flex flex-col-reverse justify-end gap-1 bg-background/85 p-5 text-center backdrop-blur md:p-7">
+                    <dt className="text-xs leading-snug text-muted-foreground sm:text-sm">{s.label}</dt>
+                    <dd className="font-display text-3xl font-bold tracking-tight md:text-5xl">
+                      <span className="text-gradient">{s.value}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* What makes us different */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Zap className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Speed &amp; Flexibility</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  If an AI app is not available on the platform, our team can build and deploy it within <span className="font-semibold text-foreground">24 to 48 hours</span>. We're also opening the ecosystem for developers and creators to launch their own AI apps on EZYOURLIFE through a revenue-sharing model.
-                </p>
-              </CardContent>
-            </Card>
+        {/* ───────── Story ───────── */}
+        <section className="py-20 md:py-28">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-12 lg:gap-16">
+              <motion.div {...fadeUp} className="self-start lg:sticky lg:top-28 lg:col-span-5">
+                <Eyebrow>Our story</Eyebrow>
+                <h2 className="mt-4 text-3xl font-bold leading-tight md:text-5xl">
+                  From scattered tools to <span className="text-gradient">one marketplace.</span>
+                </h2>
+              </motion.div>
 
-            <Card className="border-border/50 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4">
-                  <Rocket className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Our Vision</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  To democratize AI for students, professionals, businesses, creators, and anyone who wants to save time and work smarter. We believe the future of AI is not one super app doing everything — it's an ecosystem of focused, task-specific AI apps that unlock productivity in everyday life.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+              <div className="space-y-10 lg:col-span-7">
+                <motion.div {...fadeUp} className="space-y-5 text-lg leading-relaxed text-muted-foreground">
+                  <p>
+                    At <span className="font-semibold text-foreground">EZYOURLIFE</span>, we are building an AI-powered
+                    AI app marketplace designed to make digital work faster, simpler, and more accessible for everyone.
+                  </p>
+                  <p>
+                    The idea comes from a simple belief: AI should not feel complicated. It should feel useful. Today,
+                    people use multiple apps for writing, research, productivity, business tasks, automation, and
+                    everyday workflows. But most of these apps are scattered, expensive, or difficult to discover.
+                  </p>
+                  <p>
+                    EZYOURLIFE brings practical AI apps into one unified platform where you can discover, use, and even
+                    request custom AI apps based on your needs.
+                  </p>
+                </motion.div>
 
-      {/* Stats Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center">
-              <div className="space-y-2">
-                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  200+
-                </div>
-                <p className="text-lg font-semibold">Live Now</p>
-                <p className="text-sm text-muted-foreground">
-                  AI Apps you can use today
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  2,000+
-                </div>
-                <p className="text-lg font-semibold">Coming Year 1</p>
-                <p className="text-sm text-muted-foreground">
-                  Launching within a year
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  100%
-                </div>
-                <p className="text-lg font-semibold">Browser-Based</p>
-                <p className="text-sm text-muted-foreground">
-                  No downloads or installations
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-                  24/7
-                </div>
-                <p className="text-lg font-semibold">Always Available</p>
-                <p className="text-sm text-muted-foreground">
-                  Access anytime, anywhere
-                </p>
+                <ol className="grid gap-4 sm:grid-cols-3">
+                  {STEPS.map((step, i) => (
+                    <motion.li
+                      key={step.title}
+                      {...fadeUp}
+                      transition={{ ...fadeUp.transition, delay: i * 0.08 }}
+                      className="relative rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
+                    >
+                      <span className="absolute right-4 top-4 font-display text-sm font-semibold text-muted-foreground/60">
+                        0{i + 1}
+                      </span>
+                      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                        <step.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-semibold">{step.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+                    </motion.li>
+                  ))}
+                </ol>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Contact Section (merged from /contact) */}
-      <section id="contact" className="py-20 bg-muted/30 border-t border-border/40 scroll-mt-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 space-y-3">
-            <h2 className="text-3xl md:text-4xl font-bold">Get in Touch</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Have questions or feedback? We'd love to hear from you.
-            </p>
-          </div>
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
-            <div className="space-y-6">
-              <Card className="border-border/50">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Email Us</CardTitle>
-                      <CardDescription>support@ezyourlife.com</CardDescription>
+        {/* ───────── Founders ───────── */}
+        <section className="border-y border-border/40 bg-muted/30 py-20 md:py-28">
+          <div className="container mx-auto px-4">
+            <motion.div {...fadeUp} className="mx-auto mb-14 max-w-2xl text-center">
+              <Eyebrow>The team</Eyebrow>
+              <h2 className="mt-4 text-3xl font-bold md:text-5xl">Meet the Founders</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Two brothers building the future of AI, one app at a time.
+              </p>
+            </motion.div>
+
+            <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+              {FOUNDERS.map((f, i) => (
+                <motion.article
+                  key={f.name}
+                  {...fadeUp}
+                  transition={{ ...fadeUp.transition, delay: i * 0.1 }}
+                  className="group overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm transition-shadow duration-300 hover:shadow-xl"
+                >
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    <img
+                      src={f.photo}
+                      alt={f.alt}
+                      loading="lazy"
+                      className="h-full w-full object-cover object-top transition-transform duration-700 motion-safe:group-hover:scale-[1.03]"
+                    />
+                    <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/15 mix-blend-multiply" />
+                    <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-6">
+                      <span className="inline-block rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
+                        {f.role}
+                      </span>
+                      <h3 className="mt-2 text-2xl font-bold text-white md:text-3xl">{f.name}</h3>
                     </div>
                   </div>
-                </CardHeader>
-              </Card>
-              <Card className="border-border/50">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-                      <MessageSquare className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Quick Response</CardTitle>
-                      <CardDescription>We typically reply within 24 hours</CardDescription>
-                    </div>
+
+                  <div className="space-y-4 p-6">
+                    <ul className="flex flex-wrap gap-2" aria-label={`${f.name} highlights`}>
+                      {f.tags.map((t) => (
+                        <li
+                          key={t}
+                          className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-foreground/80"
+                        >
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="leading-relaxed text-muted-foreground">{f.bio}</p>
                   </div>
-                </CardHeader>
-              </Card>
+                </motion.article>
+              ))}
             </div>
-            <Card className="border-border/50 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl">Send us a message</CardTitle>
-                <CardDescription>We'll get back to you as soon as possible.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" type="text" placeholder="Your name" value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required disabled={isSubmitting} maxLength={100} />
+          </div>
+        </section>
+
+        {/* ───────── What makes us different ───────── */}
+        <section className="py-20 md:py-28">
+          <div className="container mx-auto px-4">
+            <motion.div {...fadeUp} className="mx-auto mb-14 max-w-2xl text-center">
+              <Eyebrow>Why EZYOURLIFE</Eyebrow>
+              <h2 className="mt-4 text-3xl font-bold md:text-5xl">Built different, on purpose.</h2>
+            </motion.div>
+
+            <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+              {/* Vision */}
+              <motion.div
+                {...fadeUp}
+                className="relative overflow-hidden rounded-3xl bg-gradient-hero p-8 text-white shadow-xl md:col-span-2 md:p-10"
+              >
+                <div aria-hidden className="absolute inset-0 bg-black/10" />
+                <div aria-hidden className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
+                <div className="relative">
+                  <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/25 bg-white/15 backdrop-blur">
+                    <Rocket className="h-6 w-6" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="you@example.com" value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required disabled={isSubmitting} maxLength={255} />
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">Our vision</p>
+                  <p className="mt-3 font-display text-2xl font-semibold leading-snug md:text-3xl">
+                    To democratize AI for students, professionals, businesses, creators, and anyone who wants to save
+                    time and work smarter.
+                  </p>
+                  <p className="mt-5 max-w-2xl leading-relaxed text-white/90">
+                    We believe the future of AI is not one super app doing everything. It's an ecosystem of focused,
+                    task-specific AI apps that unlock productivity in everyday life.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Speed */}
+              <motion.div
+                {...fadeUp}
+                transition={{ ...fadeUp.transition, delay: 0.08 }}
+                className="flex flex-col rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+              >
+                <Clock className="h-6 w-6 text-primary" />
+                <p className="mt-6 font-display text-5xl font-bold tracking-tight md:mt-auto md:pt-6">
+                  <span className="text-gradient">24–48</span>
+                  <span className="ml-1 text-2xl text-muted-foreground">hrs</span>
+                </p>
+                <h3 className="mt-3 text-lg font-semibold">From request to live app</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  If an AI app isn't on the platform yet, our team can build and deploy it within 24 to 48 hours.
+                </p>
+              </motion.div>
+
+              {/* Purpose-built */}
+              <motion.div
+                {...fadeUp}
+                className="rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+              >
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">One app, one job</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Each app is built to finish a specific task. No prompt-writing, just structured output you can use.
+                </p>
+              </motion.div>
+
+              {/* Creators */}
+              <motion.div
+                {...fadeUp}
+                transition={{ ...fadeUp.transition, delay: 0.08 }}
+                className="rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+              >
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">Open to creators</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  We're opening the ecosystem so developers and creators can launch their own AI apps on EZYOURLIFE
+                  through a revenue-sharing model.
+                </p>
+              </motion.div>
+
+              {/* CTA */}
+              <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }}>
+                <Link
+                  to="/ai-apps"
+                  className="group flex h-full flex-col justify-between rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-8 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Sparkles className="h-6 w-6 text-primary" />
+                  <div className="mt-10">
+                    <h3 className="text-2xl font-bold leading-tight">Explore 200+ live AI apps</h3>
+                    <span className="mt-3 inline-flex items-center text-sm font-semibold text-primary">
+                      Browse the store
+                      <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── Contact ───────── */}
+        <section id="contact" className="scroll-mt-20 pb-20 md:pb-28">
+          <div className="container mx-auto px-4">
+            <motion.div
+              {...fadeUp}
+              className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] border border-border/60 bg-card shadow-xl lg:grid-cols-5"
+            >
+              <div className="relative overflow-hidden bg-gradient-hero p-8 text-white md:p-10 lg:col-span-2">
+                <div aria-hidden className="absolute inset-0 bg-black/15" />
+                <div aria-hidden className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+                <div className="relative flex h-full flex-col">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">Get in touch</p>
+                  <h2 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">Let's build something useful.</h2>
+                  <p className="mt-4 leading-relaxed text-white/90">
+                    Questions, feedback, or an AI app you wish existed? Tell us.
+                  </p>
+
+                  <div className="mt-8 space-y-4 lg:mt-auto lg:pt-10">
+                    <a
+                      href={`mailto:${SUPPORT_EMAIL}`}
+                      className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      <Mail className="h-5 w-5 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-xs text-white/80">Email us</span>
+                        <span className="block truncate font-medium">{SUPPORT_EMAIL}</span>
+                      </span>
+                    </a>
+                    <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur">
+                      <Clock className="h-5 w-5 shrink-0" />
+                      <span>
+                        <span className="block text-xs text-white/80">Quick response</span>
+                        <span className="block font-medium">We typically reply within 24 hours</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 md:p-10 lg:col-span-3">
+                <h3 className="text-2xl font-bold">Send us a message</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  This opens your email app with your message ready to send.
+                </p>
+                <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Your name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        maxLength={100}
+                        className="h-11 rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                        maxLength={255}
+                        className="h-11 rounded-xl"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" placeholder="Tell us how we can help..." value={formData.message}
+                    <Textarea
+                      id="message"
+                      placeholder="Tell us how we can help..."
+                      value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      required disabled={isSubmitting} className="min-h-[150px]" maxLength={1000} />
-                    <p className="text-xs text-muted-foreground">{formData.message.length}/1000 characters</p>
+                      required
+                      className="min-h-[160px] rounded-xl"
+                      maxLength={1000}
+                    />
+                    <p className="text-right text-xs text-muted-foreground">{formData.message.length}/1000</p>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
-                    ) : (
-                      <><Send className="mr-2 h-4 w-4" /> Send Message</>
-                    )}
+                  <Button type="submit" size="lg" className="group h-12 w-full rounded-xl">
+                    <Send className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    Send Message
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <SEOFooter />
-    </div>
+        <SEOFooter />
+      </div>
+    </MotionConfig>
   );
 };
 
