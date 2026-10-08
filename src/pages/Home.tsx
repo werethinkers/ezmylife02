@@ -92,7 +92,7 @@ const Home = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="EZYOURLIFE - The Future's First AI App Store | 200+ AI Apps"
-        description="EZYOURLIFE is the world's first AI App Store with 200+ live AI apps today (2,000+ launching within a year). Pay-as-you-go, no subscriptions."
+        description="EZYOURLIFE is the Future's First AI App Store with 200+ live AI apps today (2,000+ launching within a year). Pay-as-you-go, no subscriptions."
         path="/"
         keywords="ezyourlife, ai apps, ai app store, pay as you go ai, free ai apps"
       />
@@ -165,7 +165,7 @@ const Home = () => {
             <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[1.05]">
               Find the right AI apps.<br />
               Simplify life.<br />
-              <span className="bg-gradient-to-r from-primary via-primary/80 to-accent-foreground bg-clip-text text-transparent">
+              <span className="text-gradient">
                 Spend smarter.
               </span>
             </h1>
@@ -187,7 +187,6 @@ const Home = () => {
               {[
                 { v: "200+", l: "AI Apps" },
                 { v: "₹10", l: "Min Pack" },
-                { v: "4.8★", l: "Avg Rating" },
               ].map((s) => (
                 <div key={s.l} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/40 border border-border/50">
                   <span className="text-lg font-bold text-foreground">{s.v}</span>
@@ -318,14 +317,14 @@ const Home = () => {
         {/* How it works + Credit packs */}
         <section id="how-it-works" className="mb-16 rounded-3xl border border-border/60 bg-card/50 p-6 md:p-10">
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 min-w-0">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">Simple. Credit-Based. Hassle-Free.</h2>
               <p className="text-sm text-muted-foreground mb-6">Three steps. No subscription. Just credits.</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   { n: 1, t: "Choose an app", s: "Browse 200+ live AI apps for any task.", Icon: LayoutGrid },
                   { n: 2, t: "Use your credits", s: "Pay-as-you-go from ₹10. No subscriptions.", Icon: Wallet, highlight: true },
-                  { n: 3, t: "Start using the app", s: "Instant results — no signup hurdles.", Icon: Sparkles },
+                  { n: 3, t: "Get your result", s: "Open the app in your browser and get the output.", Icon: Sparkles },
                 ].map((s) => (
                   <div key={s.n} className={`rounded-2xl bg-background/60 border p-5 text-center ${s.highlight ? "border-primary/50 shadow-lg shadow-primary/10" : "border-border/50"}`}>
                     <div className="h-12 w-12 mx-auto rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-3">
@@ -338,7 +337,7 @@ const Home = () => {
                 ))}
               </div>
             </div>
-            <div className="rounded-2xl border border-border/60 bg-background/70 p-5">
+            <div className="min-w-0 rounded-2xl border border-border/60 bg-background/70 p-5">
               <h3 className="font-bold mb-1">Popular Credit Packs</h3>
               <p className="text-xs text-muted-foreground mb-3">Tap Buy now to checkout instantly.</p>
               <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1">
@@ -377,7 +376,7 @@ const Home = () => {
             <div className="flex items-end justify-between mb-5">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold">Top Picks for You</h2>
-                <p className="text-sm text-muted-foreground">Curated AI apps based on what users love.</p>
+                <p className="text-sm text-muted-foreground">Hand-picked apps to get you started.</p>
               </div>
               <Link to="/ai-apps" className="text-sm text-primary hover:underline">View more →</Link>
             </div>
@@ -413,8 +412,8 @@ const Home = () => {
         <section className="mb-12 rounded-2xl border border-border/50 bg-muted/40 p-6 flex items-center gap-3">
           <ShieldCheck className="h-8 w-8 text-primary flex-shrink-0" />
           <div>
-            <p className="font-semibold">Secure payments · 24/7 support · Your data is always protected.</p>
-            <p className="text-xs text-muted-foreground">Pay-as-you-go credits — no subscriptions, ever.</p>
+            <p className="font-semibold">Secure payments via Razorpay · Help at support@ezyourlife.com</p>
+            <p className="text-xs text-muted-foreground">Pay-as-you-go credits — pay only for what you use.</p>
           </div>
         </section>
 

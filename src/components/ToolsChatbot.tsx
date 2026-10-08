@@ -141,7 +141,7 @@ export const ToolsChatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 z-50 w-[350px] md:w-[400px] shadow-2xl border-border/50 animate-in slide-in-from-bottom-4 duration-300">
+        <Card className="fixed bottom-24 right-4 z-50 w-[calc(100vw-2rem)] sm:right-6 sm:w-[350px] md:w-[400px] shadow-2xl border-border/50 animate-in slide-in-from-bottom-4 duration-300">
           <CardHeader className="border-b border-border/50 bg-muted/30 py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Bot className="h-5 w-5 text-primary" />

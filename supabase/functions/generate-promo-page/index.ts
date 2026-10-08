@@ -46,15 +46,13 @@ Return STRICT JSON with this shape:
   "hero_subtitle": "2 sentence pitch.",
   "hero_chips": [{"label":"..."}, ...4],
   "cta_label": "Try ${tool.name} Now",
-  "rating": 4.93, "reviews_count": 8700, "social_proof": "Loved by ...",
   "features": [{"title":"...","body":"..."}, ...4],
   "how_it_works": [{"title":"Upload","body":"..."},{"title":"Process","body":"..."},{"title":"Get Results","body":"..."}],
-  "testimonials": [{"name":"...","role":"...","quote":"...","rating":5}, ...3],
-  "stats": {"value":"50,000+","label":"Happy Users"},
-  "final_cta_title":"Ready to ...?","final_cta_subtitle":"Join thousands...",
+  "final_cta_title":"Ready to ...?","final_cta_subtitle":"One sentence on what the user gets.",
   "seo_title":"${tool.name} — EZYOURLIFE",
   "seo_description":"..."
 }
+Rules: describe only what the description says the app does. Never invent ratings, review counts, user numbers, statistics, customer names, testimonials, awards or claims like "loved by" or "trusted by".
 Return only the JSON object.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -83,22 +81,18 @@ Return only the JSON object.`;
       hero_chips: draft.hero_chips ?? [],
       cta_label: draft.cta_label ?? `Try ${tool.name} Now`,
       cta_sublabel: null,
-      rating: draft.rating ?? null,
-      reviews_count: draft.reviews_count ?? null,
-      social_proof: draft.social_proof ?? null,
+      // Social proof must come from real customers, never from the model.
+      rating: null,
+      reviews_count: null,
+      social_proof: null,
       trust_logos: [],
       features: draft.features ?? [],
       how_it_works: draft.how_it_works ?? [],
-      testimonials: draft.testimonials ?? [],
-      stats: draft.stats ?? {},
+      testimonials: [],
+      stats: {},
       final_cta_title: draft.final_cta_title ?? null,
       final_cta_subtitle: draft.final_cta_subtitle ?? null,
-      footer_badges: [
-        { icon: "shield", title: "Secure & Private", body: "Your data is safe and encrypted" },
-        { icon: "clock", title: "24/7 Support", body: "We're here to help you anytime" },
-        { icon: "credit", title: "Credit System", body: "Pay only for what you use" },
-        { icon: "x", title: "Cancel Anytime", body: "No subscriptions. No hidden fees." },
-      ],
+      footer_badges: [],
       seo_title: draft.seo_title ?? null,
       seo_description: draft.seo_description ?? null,
     };

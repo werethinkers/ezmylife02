@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, PlayCircle, Heart } from "lucide-react";
@@ -21,16 +21,11 @@ interface ToolLandscapeCardProps {
   previewImageUrl?: string | null;
   previewImageFit?: "cover" | "contain";
   iconFit?: "cover" | "contain";
+  /** Accepted for compatibility; ratings stay hidden until real review data exists. */
   rating?: number | null;
   reviewCount?: number | null;
   icon?: ReactNode;
   onPreview?: () => void;
-}
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
 }
 
 const GRADIENTS = [
@@ -52,8 +47,6 @@ export const ToolLandscapeCard = ({
   previewImageUrl,
   previewImageFit = "cover",
   iconFit = "cover",
-  rating: ratingProp,
-  reviewCount: reviewCountProp,
   icon,
   onPreview,
 }: ToolLandscapeCardProps) => {
@@ -72,22 +65,6 @@ export const ToolLandscapeCard = ({
   const resolvedPreview = media.previewImageUrl ?? previewImageUrl ?? null;
   const resolvedPreviewFit = media.previewFit ?? previewImageFit;
   const resolvedIconFit = media.iconFit ?? iconFit;
-
-  const { rating, reviews, version } = useMemo(() => {
-    const h = hash(toolId);
-    const fallbackRating = (4 + ((h % 60) / 100));
-    const fallbackReviews = (((h >> 3) % 90) + 10) * 100; // ~1000-9900
-    const major = ((h >> 5) % 5) + 1;
-    const minor = ((h >> 7) % 9) + 1;
-    const r = ratingProp ?? fallbackRating;
-    const rc = reviewCountProp ?? fallbackReviews;
-    const reviewsLabel = rc >= 1000 ? `${(rc / 1000).toFixed(1)}k` : `${rc}`;
-    return {
-      rating: r.toFixed(2),
-      reviews: reviewsLabel,
-      version: `v${major}.${minor}`,
-    };
-  }, [toolId, ratingProp, reviewCountProp]);
 
   const handleStart = () => {
     // Always let users enter the tool — login is requested at generate-time.
@@ -119,8 +96,8 @@ export const ToolLandscapeCard = ({
       </button>
 
       {/* Header — fixed height */}
-      <div className="flex items-start gap-4 mb-3 pr-10 h-20">
-        <div className="flex-shrink-0 h-20 w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
+      <div className="flex items-start gap-3 sm:gap-4 mb-3 pr-10 h-16 sm:h-20">
+        <div className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
           {aiIcon ? (
             <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", resolvedIconFit === "contain" ? "object-contain p-2" : "object-cover")} />
           ) : (
@@ -128,9 +105,9 @@ export const ToolLandscapeCard = ({
           )}
         </div>
         <div className="min-w-0 flex-1 pt-1">
-          <h3 className="text-2xl font-bold text-foreground leading-tight truncate">{name}</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground leading-tight truncate">{name}</h3>
           <p className="text-sm text-muted-foreground mt-1 truncate">
-            {version} · {category || "AI App"}
+            {category || "AI App"}
           </p>
         </div>
       </div>

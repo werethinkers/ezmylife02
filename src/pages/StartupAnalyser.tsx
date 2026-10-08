@@ -1,8 +1,24 @@
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
+import { ensureStartupLibs } from "@/lib/startupLibs";
 import StartupAnalyserApp from "@/startup-analyser/StartupAnalyserApp";
 import { ToolBackButton } from "@/components/tools/ToolBackButton";
 
 const StartupAnalyser = () => {
+  const [libsReady, setLibsReady] = useState(false);
+  const [libsError, setLibsError] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    ensureStartupLibs()
+      .then(() => alive && setLibsReady(true))
+      .catch(() => alive && setLibsError(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <>
       <ToolBackButton floating />
@@ -33,7 +49,22 @@ const StartupAnalyser = () => {
           },
         ]}
       />
-      <StartupAnalyserApp />
+      {libsReady ? (
+        <StartupAnalyserApp />
+      ) : (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4 text-center">
+          {libsError ? (
+            <>
+              <p className="font-semibold">The Startup Analyser couldn't load.</p>
+              <button type="button" className="text-sm font-medium text-primary underline" onClick={() => window.location.reload()}>
+                Try again
+              </button>
+            </>
+          ) : (
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading Startup Analyser" />
+          )}
+        </div>
+      )}
     </>
   );
 };

@@ -1,123 +1,158 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import {
+  Loader2,
+  Zap,
+  ShieldCheck,
+  Globe,
+  Wallet,
+  Mail,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  MousePointerClick,
+  Upload,
+  Download,
+  Sparkles,
+  Check,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Loader2, Zap, PlayCircle, Star, Shield, Clock, CreditCard, XCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useToolPricing } from "@/hooks/useToolPricing";
+import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
+import { resolveToolMedia } from "@/lib/toolMedia";
+import { CREDIT_PACKS } from "@/data/creditPacks";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import SEOFooter from "@/components/SEOFooter";
 
+/*
+ * Promo (landing) page for an AI app, at /promo/:slug.
+ *
+ * Every live app gets a page automatically:
+ *  - If an admin has published a curated page in `tool_promo_pages`, its copy is used.
+ *  - Otherwise the page is built from the public `tools_catalog` entry, so no app is left
+ *    without one and new apps get a page the moment they go live.
+ *
+ * Ratings, review counts, "loved by" lines and testimonials stored on promo rows were
+ * AI-generated, not collected from customers, so they are deliberately never rendered.
+ */
 
-interface GalleryImage { url: string; caption?: string; kind?: string }
+interface GalleryImage {
+  url: string;
+  caption?: string;
+  kind?: string;
+}
 
-interface PromoPage {
-  id: string;
+interface PromoRow {
   tool_id: string;
   slug: string;
-  is_published: boolean;
   hero_eyebrow: string | null;
   hero_title: string | null;
   hero_title_accent: string | null;
   hero_subtitle: string | null;
   hero_image_url: string | null;
-  hero_chips: Array<{ label: string; icon?: string }>;
+  hero_chips: Array<{ label: string }> | null;
   cta_label: string | null;
-  cta_sublabel: string | null;
-  rating: number | null;
-  reviews_count: number | null;
-  social_proof: string | null;
-  trust_logos: Array<{ name: string; url?: string }>;
-  features: Array<{ icon?: string; title: string; body: string }>;
-  how_it_works: Array<{ step?: number; title: string; body: string; icon?: string }>;
-  testimonials: Array<{ name: string; role?: string; quote: string; rating?: number; avatar?: string }>;
-  stats: { value?: string; label?: string };
+  features: Array<{ title: string; body: string }> | null;
+  how_it_works: Array<{ title: string; body: string }> | null;
   final_cta_title: string | null;
   final_cta_subtitle: string | null;
-  footer_badges: Array<{ icon?: string; title: string; body: string }>;
+  trust_logos: Array<{ name: string; url?: string }> | null;
   seo_title: string | null;
   seo_description: string | null;
   og_image_url: string | null;
-  gallery_images: GalleryImage[];
+  gallery_images: GalleryImage[] | null;
 }
 
+interface Step {
+  title: string;
+  body: string;
+}
 
-const defaultBadges = [
-  { icon: "shield", title: "Secure & Private", body: "Your data is safe and encrypted" },
-  { icon: "clock", title: "24/7 Support", body: "We're here to help you anytime" },
-  { icon: "credit", title: "Credit System", body: "Pay only for what you use" },
-  { icon: "x", title: "Cancel Anytime", body: "No subscriptions. No hidden fees." },
+const promoSlug = (name: string) =>
+  name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+const STEP_ICONS = [MousePointerClick, Upload, Download];
+
+const GUARANTEES = [
+  { Icon: Wallet, title: "Pay per use", body: "Buy credits from ₹10. No lock-in." },
+  { Icon: Globe, title: "Nothing to install", body: "Runs right in your browser." },
+  { Icon: ShieldCheck, title: "Secure checkout", body: "Payments handled by Razorpay." },
+  { Icon: Mail, title: "Need help?", body: "Write to support@ezyourlife.com" },
 ];
 
-const BadgeIcon = ({ name }: { name?: string }) => {
-  const cls = "h-5 w-5 text-primary";
-  switch (name) {
-    case "clock": return <Clock className={cls} />;
-    case "credit": return <CreditCard className={cls} />;
-    case "x": return <XCircle className={cls} />;
-    default: return <Shield className={cls} />;
-  }
-};
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-60px" },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+} as const;
 
 export default function PromoPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug = "" } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
-  const [page, setPage] = useState<PromoPage | null>(null);
-  const [catalogPreview, setCatalogPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const { creditCost } = useToolPricing(page?.tool_id);
+  const { data: catalog = [], isLoading: catalogLoading } = useToolsCatalog();
 
+  const [row, setRow] = useState<PromoRow | null>(null);
+  const [rowLoaded, setRowLoaded] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [entering, setEntering] = useState(false);
+  const howRef = useRef<HTMLElement | null>(null);
+
+  // Curated page, if an admin has published one (RLS only returns published rows to visitors).
   useEffect(() => {
-    if (!slug) return;
+    let cancelled = false;
+    setRowLoaded(false);
     (async () => {
-      const { data } = await supabase
-        .from("tool_promo_pages")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-      const p = (data as unknown) as PromoPage | null;
-      setPage(p);
-      if (p?.tool_id) {
-        const { data: c } = await supabase
-          .from("tools_catalog")
-          .select("preview_image_url")
-          .eq("id", p.tool_id)
-          .maybeSingle();
-        setCatalogPreview((c as any)?.preview_image_url ?? null);
-      }
-      setLoading(false);
+      const { data } = await supabase.from("tool_promo_pages").select("*").eq("slug", slug).maybeSingle();
+      if (cancelled) return;
+      setRow((data as unknown as PromoRow) ?? null);
+      setRowLoaded(true);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
+  const tool: CatalogTool | undefined = useMemo(() => {
+    if (row) return catalog.find((t) => t.id === row.tool_id);
+    return catalog.find((t) => t.is_live && (promoSlug(t.name) === slug || t.id === slug));
+  }, [row, catalog, slug]);
 
-  // Auto-launch after login if ?launch=1 is present
+  const toolId = row?.tool_id ?? tool?.id;
+  const pageSlug = row?.slug ?? slug;
+  const { creditCost } = useToolPricing(toolId);
+  const creditLabel = `${creditCost} credit${creditCost === 1 ? "" : "s"}`;
+
+  // Auto-launch after login if ?launch=1 is present.
   useEffect(() => {
-    if (!authLoading && user && page && searchParams.get("launch") === "1") {
-      navigate(`/tool/${page.tool_id}`, { replace: true });
+    if (!authLoading && user && toolId && searchParams.get("launch") === "1") {
+      navigate(`/tool/${toolId}`, { replace: true });
     }
-  }, [authLoading, user, page, searchParams, navigate]);
+  }, [authLoading, user, toolId, searchParams, navigate]);
 
-  const [entering, setEntering] = useState(false);
   const handleUseIt = async () => {
-    if (!page) return;
+    if (!toolId) return;
     if (!user) {
       try {
-        localStorage.setItem("auth_redirect_to", `/promo/${page.slug}?launch=1`);
-      } catch { /* ignore */ }
+        localStorage.setItem("auth_redirect_to", `/promo/${pageSlug}?launch=1`);
+      } catch {
+        /* storage unavailable */
+      }
       setLoginOpen(true);
       return;
     }
     if (entering) return;
     setEntering(true);
     try {
-      // Immediately deduct credits from the user's wallet before entering the tool.
       const { data: startData, error: startErr } = await supabase.functions.invoke("tool-charge", {
-        body: { action: "start", tool_id: page.tool_id },
+        body: { action: "start", tool_id: toolId },
       });
       if (startErr) throw startErr;
       if (!startData?.ok) {
@@ -126,334 +161,467 @@ export default function PromoPage() {
           const bal = startData?.balance ?? 0;
           const { toast } = await import("sonner");
           toast.error(`Not enough credits. Need ${need}, you have ${bal}.`);
-          navigate("/pricing");
+          navigate("/credits");
           return;
         }
         throw new Error(startData?.reason ?? "start_failed");
       }
       const runId = startData?.run_id;
       if (runId && !startData?.free_tool) {
-        // Immediately complete → cuts credits from wallet now.
         await supabase.functions.invoke("tool-charge", {
           body: { action: "complete", run_id: runId, success: true },
         });
       }
-      navigate(`/tool/${page.tool_id}`);
-    } catch (e: any) {
+      navigate(`/tool/${toolId}`);
+    } catch (e: unknown) {
       const { toast } = await import("sonner");
-      toast.error(e?.message ?? "Could not enter tool");
+      toast.error(e instanceof Error ? e.message : "Could not open the app");
     } finally {
       setEntering(false);
     }
   };
 
-
-  if (loading) {
+  if (!rowLoaded || (catalogLoading && !row)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading" />
       </div>
     );
   }
 
-  if (!page) {
+  if (!row && !tool) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Page not found</h1>
-          <Button onClick={() => navigate("/")}>Go home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const ctaSublabel = page.cta_sublabel ?? `${creditCost} CREDIT${creditCost === 1 ? "" : "S"} to start`;
-  const badges = page.footer_badges?.length ? page.footer_badges : defaultBadges;
-
-  // Build an ordered 4-slot carousel: 1) Preview  2) Input (app UI)  3) Output  4) Promotional (hero).
-  const dbGallery: GalleryImage[] = Array.isArray(page.gallery_images) ? page.gallery_images.filter(g => g?.url) : [];
-  const findKind = (kinds: string[]) => dbGallery.find(g => kinds.includes((g.kind ?? "").toLowerCase()));
-  const inputImg = findKind(["screenshot", "input", "app", "interface"]);
-  const outputImg = findKind(["output", "result", "results"]);
-  const promoImg = findKind(["promotional", "promo", "hero", "compare"]);
-  const orderedSlots: Array<GalleryImage | null> = [
-    catalogPreview ? { url: catalogPreview, caption: "Preview", kind: "preview" } : null,
-    inputImg ?? null,
-    outputImg ?? null,
-    promoImg ?? (page.hero_image_url ? { url: page.hero_image_url, caption: "Promotional", kind: "promotional" } : null),
-  ];
-  // Fill any remaining nulls with leftover gallery items so we still get up to 4 slides.
-  const used = new Set(orderedSlots.filter(Boolean).map(s => s!.url));
-  const leftovers = dbGallery.filter(g => !used.has(g.url));
-  const slides: GalleryImage[] = orderedSlots.map(s => s ?? leftovers.shift() ?? null).filter(Boolean) as GalleryImage[];
-
-
-
-  return (
-    <div className="min-h-screen bg-background">
-      <SEOHead
-        title={page.seo_title ?? `${page.hero_title ?? "AI App"} — EZYOURLIFE`}
-        description={page.seo_description ?? page.hero_subtitle ?? ""}
-        image={page.og_image_url ?? page.hero_image_url ?? undefined}
-        path={`/promo/${page.slug}`}
-        noindex
-      />
-      <Navbar />
-
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
-        <div className="container mx-auto px-4 py-12 lg:py-20 grid lg:grid-cols-2 gap-12 items-center relative">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            {page.hero_eyebrow && (
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-5">
-                {page.hero_eyebrow}
-              </span>
-            )}
-            <h1 className="text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-4">
-              {page.hero_title}{" "}
-              {page.hero_title_accent && (
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {page.hero_title_accent}
-                </span>
-              )}
-            </h1>
-            {page.hero_subtitle && (
-              <p className="text-lg text-muted-foreground mb-6 max-w-xl whitespace-pre-line">
-                {page.hero_subtitle}
-              </p>
-            )}
-            {page.hero_chips?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-7">
-                {page.hero_chips.map((c, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-full text-xs border border-border/60 bg-card/60 backdrop-blur">
-                    {c.label}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                size="lg"
-                onClick={handleUseIt}
-                className="h-14 px-7 text-base bg-gradient-to-r from-primary to-accent hover:opacity-95 shadow-lg shadow-primary/30"
-              >
-                <Zap className="h-5 w-5 mr-2" />
-                <div className="text-left leading-tight">
-                  <div className="font-semibold">{page.cta_label ?? "Try Now"}</div>
-                  <div className="text-[11px] opacity-90">{ctaSublabel}</div>
-                </div>
-              </Button>
-              <Button variant="outline" size="lg" className="h-14 px-5" onClick={() => navigate(`/tool/${page.tool_id}`)}>
-                <PlayCircle className="h-5 w-5 mr-2" /> Watch Demo
-              </Button>
-            </div>
-            {(page.rating || page.social_proof) && (
-              <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
-                {page.rating != null && (
-                  <span className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <strong className="text-foreground">{page.rating}</strong>
-                    {page.reviews_count ? <span>({page.reviews_count.toLocaleString()}+ reviews)</span> : null}
-                  </span>
-                )}
-                {page.social_proof && <span>· {page.social_proof}</span>}
-              </div>
-            )}
-          </motion.div>
-
-          <HeroCarousel slides={slides} altBase={page.hero_title ?? "App"} />
-
-        </div>
-      </section>
-
-      {/* TRUST LOGOS */}
-      {page.trust_logos?.length > 0 && (
-        <section className="container mx-auto px-4 py-6">
-          <div className="rounded-2xl border border-border/60 bg-card/40 p-6">
-            <p className="text-center text-sm text-muted-foreground mb-4">Trusted by online sellers and brands worldwide</p>
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-80">
-              {page.trust_logos.map((l, i) =>
-                l.url ? (
-                  <img key={i} src={l.url} alt={l.name} className="h-7 object-contain" />
-                ) : (
-                  <span key={i} className="font-semibold text-muted-foreground">{l.name}</span>
-                )
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-
-
-
-      {/* FEATURES */}
-      {page.features?.length > 0 && (
-        <section className="container mx-auto px-4 py-16">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-3">Why You'll Love It</h2>
-            <p className="text-muted-foreground">Save time, reduce costs, and unlock new capabilities effortlessly.</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {page.features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="rounded-xl border border-border/60 bg-card/60 p-6 hover:shadow-lg hover:shadow-primary/10 transition"
-              >
-                <div className="h-11 w-11 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-                  <Zap className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* HOW IT WORKS + side CTA */}
-      {page.how_it_works?.length > 0 && (
-        <section className="container mx-auto px-4 py-10">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-border/60 bg-card/60 p-8">
-              <h2 className="text-2xl font-bold mb-6">
-                How It <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Works</span>
-              </h2>
-              <div className="grid grid-cols-3 gap-4">
-                {page.how_it_works.slice(0, 3).map((s, i) => (
-                  <div key={i} className="text-center">
-                    <div className="mx-auto h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold mb-3">
-                      {s.step ?? i + 1}
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">{s.title}</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{s.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/60 bg-card/60 p-8">
-              <h3 className="text-2xl font-bold mb-3">Start Creating Now</h3>
-              <p className="text-sm text-muted-foreground mb-4">Minimum Credit to Start</p>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">{creditCost} CREDIT{creditCost === 1 ? "" : "S"}</div>
-                  <div className="text-sm text-muted-foreground">for 1 Generation</div>
-                </div>
-              </div>
-              <Button
-                size="lg"
-                onClick={handleUseIt}
-                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:opacity-95"
-              >
-                START USING · {creditCost} CREDIT{creditCost === 1 ? "" : "S"}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-
-
-
-      {/* FINAL CTA */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/60 to-accent/10 p-8 flex flex-col md:flex-row items-center justify-between gap-5">
-          <div>
-            <h3 className="text-2xl font-bold mb-1">{page.final_cta_title ?? "Ready to get started?"}</h3>
-            <p className="text-sm text-muted-foreground">{page.final_cta_subtitle ?? "Join thousands using this AI app every day."}</p>
-          </div>
-          <Button
-            size="lg"
-            onClick={handleUseIt}
-            className="h-14 px-7 bg-gradient-to-r from-primary to-accent shadow-lg shadow-primary/30"
-          >
-            <Zap className="h-5 w-5 mr-2" />
-            <div className="text-left leading-tight">
-              <div className="font-semibold">{page.cta_label ?? "Try Now"}</div>
-              <div className="text-[11px] opacity-90">{ctaSublabel}</div>
-            </div>
+      <div className="min-h-screen bg-background">
+        <SEOHead title="App not found — EZYOURLIFE" description="This app page could not be found." path={`/promo/${slug}`} noindex />
+        <Navbar />
+        <div className="container mx-auto flex flex-col items-center px-4 py-24 text-center">
+          <h1 className="text-3xl font-bold">We couldn't find that app</h1>
+          <p className="mt-3 max-w-md text-muted-foreground">It may have been renamed. Browse the store to find it.</p>
+          <Button asChild className="mt-6 rounded-xl">
+            <Link to="/ai-apps">Browse AI apps</Link>
           </Button>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* FOOTER BADGES */}
-      <section className="container mx-auto px-4 pb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {badges.map((b, i) => (
-            <div key={i} className="flex items-start gap-3 p-4">
-              <BadgeIcon name={b.icon} />
-              <div>
-                <div className="font-semibold text-sm">{b.title}</div>
-                <div className="text-xs text-muted-foreground">{b.body}</div>
+  const name = tool?.name ?? row?.hero_title ?? "AI App";
+  const category = tool?.category ?? "";
+  const media = resolveToolMedia(toolId ?? "", category, tool ?? null);
+
+  const title = row?.hero_title ?? name;
+  const titleAccent = row?.hero_title_accent ?? null;
+  const subtitle = row?.hero_subtitle ?? tool?.description ?? "";
+  const eyebrow = row?.hero_eyebrow ?? category;
+  const chips = (row?.hero_chips ?? []).map((c) => c?.label).filter(Boolean) as string[];
+  const ctaLabel = row?.cta_label ?? `Try ${name}`;
+  const features = (row?.features ?? []).filter((f) => f?.title);
+  const steps: Step[] =
+    row?.how_it_works && row.how_it_works.length >= 3
+      ? row.how_it_works.slice(0, 3)
+      : [
+          { title: "Open the app", body: `Sign in and open ${name} in your browser. Nothing to install.` },
+          { title: "Add your input", body: "Type your details or upload your file." },
+          { title: "Get your result", body: "Review it, then copy or download the output." },
+        ];
+  const trustLogos = (row?.trust_logos ?? []).filter((l) => l?.name);
+
+  // Gallery: catalog preview → app UI → output → promotional, then any leftovers (max 4).
+  const gallery = (row?.gallery_images ?? []).filter((g) => g?.url);
+  const byKind = (kinds: string[]) => gallery.find((g) => kinds.includes((g.kind ?? "").toLowerCase()));
+  const ordered: Array<GalleryImage | null> = [
+    media.previewImageUrl ? { url: media.previewImageUrl, caption: "Preview" } : null,
+    byKind(["screenshot", "input", "app", "interface"]) ?? null,
+    byKind(["output", "result", "results"]) ?? null,
+    byKind(["promotional", "promo", "hero", "compare"]) ??
+      (row?.hero_image_url ? { url: row.hero_image_url, caption: "In action" } : null),
+  ];
+  const used = new Set(ordered.filter(Boolean).map((s) => s!.url));
+  const leftovers = gallery.filter((g) => !used.has(g.url));
+  const slides = ordered.map((s) => s ?? leftovers.shift() ?? null).filter(Boolean).slice(0, 4) as GalleryImage[];
+
+  const related = catalog
+    .filter((t) => t.is_live && t.category === category && t.id !== toolId)
+    .slice(0, 4);
+
+  const minPack = CREDIT_PACKS[0];
+  const scrollToHow = () => howRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const tryButton = (className = "") => (
+    <Button
+      size="lg"
+      onClick={handleUseIt}
+      disabled={entering}
+      className={`group h-auto min-h-12 rounded-xl px-6 py-3 text-base shadow-lg shadow-primary/25 ${className}`}
+    >
+      {entering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+      <span className="text-left leading-tight">
+        <span className="block font-semibold">{ctaLabel}</span>
+        <span className="block text-xs font-normal opacity-90">{creditLabel} to start</span>
+      </span>
+    </Button>
+  );
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-background">
+        <SEOHead
+          title={row?.seo_title ?? `${name} — AI app on EZYOURLIFE`}
+          description={row?.seo_description ?? subtitle.slice(0, 160)}
+          image={row?.og_image_url ?? row?.hero_image_url ?? media.previewImageUrl ?? undefined}
+          path={`/promo/${pageSlug}`}
+          noindex
+        />
+        <Navbar />
+
+        {/* ───────── Hero ───────── */}
+        <section className="relative overflow-hidden border-b border-border/40">
+          <div aria-hidden className="absolute inset-0 bg-mesh" />
+          <div className="relative container mx-auto grid items-center gap-10 px-4 py-10 md:py-16 lg:grid-cols-2 lg:gap-14 lg:py-20">
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="min-w-0">
+              <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <Link to="/ai-apps" className="hover:text-foreground">AI Apps</Link>
+                {category && (
+                  <>
+                    <span aria-hidden>/</span>
+                    <Link to={`/ai-apps?category=${encodeURIComponent(category)}`} className="hover:text-foreground">
+                      {category}
+                    </Link>
+                  </>
+                )}
+              </nav>
+
+              {eyebrow && (
+                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {eyebrow}
+                </span>
+              )}
+
+              <h1 className="text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl">
+                {title}
+                {titleAccent && (
+                  <>
+                    {" "}
+                    <span className="text-gradient">{titleAccent}</span>
+                  </>
+                )}
+              </h1>
+
+              {subtitle && (
+                <p className="mt-4 max-w-xl whitespace-pre-line text-base leading-relaxed text-muted-foreground md:text-lg">
+                  {subtitle}
+                </p>
+              )}
+
+              {chips.length > 0 && (
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {chips.slice(0, 6).map((c) => (
+                    <li key={c} className="rounded-full border border-border/60 bg-card/70 px-3 py-1.5 text-xs font-medium backdrop-blur">
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                {tryButton("w-full sm:w-auto")}
+                <Button variant="outline" size="lg" className="h-12 rounded-xl px-5" onClick={scrollToHow}>
+                  See how it works
+                </Button>
+              </div>
+
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                {["Pay per use", "Runs in your browser", "Secure checkout"].map((t) => (
+                  <li key={t} className="flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-primary" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="min-w-0">
+              {slides.length > 0 ? (
+                <HeroCarousel slides={slides} altBase={name} />
+              ) : (
+                <IconHero name={name} iconUrl={media.iconUrl} category={category} />
+              )}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ───────── Trust logos (only when real logos are added in admin) ───────── */}
+        {trustLogos.length > 0 && (
+          <section className="container mx-auto px-4 pt-10">
+            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Used by</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-80">
+              {trustLogos.map((l) =>
+                l.url ? (
+                  <img key={l.name} src={l.url} alt={l.name} className="h-7 object-contain" loading="lazy" />
+                ) : (
+                  <span key={l.name} className="font-semibold text-muted-foreground">{l.name}</span>
+                ),
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ───────── Features (curated pages) ───────── */}
+        {features.length > 0 && (
+          <section className="container mx-auto px-4 py-16 md:py-20">
+            <motion.div {...fadeUp} className="mx-auto mb-10 max-w-2xl text-center">
+              <h2 className="text-2xl font-bold md:text-4xl">What you get</h2>
+            </motion.div>
+            <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {features.slice(0, 8).map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  {...fadeUp}
+                  transition={{ ...fadeUp.transition, delay: (i % 4) * 0.05 }}
+                  className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm"
+                >
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold">{f.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ───────── How it works + price ───────── */}
+        <section
+          ref={howRef}
+          id="how-it-works"
+          className={`scroll-mt-20 ${features.length > 0 ? "pb-16 md:pb-20" : "py-16 md:py-20"}`}
+        >
+          <div className="container mx-auto px-4">
+            <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-3">
+              <motion.div {...fadeUp} className="min-w-0 rounded-3xl border border-border/60 bg-card p-6 shadow-sm md:p-8 lg:col-span-2">
+                <h2 className="text-2xl font-bold md:text-3xl">
+                  How it <span className="text-gradient">works</span>
+                </h2>
+                <ol className="mt-6 grid gap-5 sm:grid-cols-3">
+                  {steps.map((s, i) => {
+                    const Icon = STEP_ICONS[i] ?? Sparkles;
+                    return (
+                      <li key={s.title} className="flex gap-4 sm:flex-col sm:gap-3">
+                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+                          <Icon className="h-5 w-5" />
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-[11px] font-bold text-foreground">
+                            {i + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{s.title}</h3>
+                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </motion.div>
+
+              <motion.div
+                {...fadeUp}
+                transition={{ ...fadeUp.transition, delay: 0.08 }}
+                className="relative flex min-w-0 flex-col overflow-hidden rounded-3xl bg-gradient-hero p-6 text-white shadow-xl md:p-8"
+              >
+                <div aria-hidden className="absolute inset-0 bg-black/10" />
+                <div aria-hidden className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/15 blur-3xl" />
+                <div className="relative flex h-full flex-col">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">Price</p>
+                  <p className="mt-3 font-display text-5xl font-bold tracking-tight">
+                    {creditCost}
+                    <span className="ml-2 text-xl font-semibold text-white/85">credit{creditCost === 1 ? "" : "s"}</span>
+                  </p>
+                  <p className="mt-1 text-sm text-white/90">to start using {name}</p>
+                  <p className="mt-4 text-sm text-white/90">
+                    Credit packs start at ₹{minPack.inr} for {minPack.credits} credits.
+                  </p>
+                  <div className="mt-6 space-y-2 lg:mt-auto lg:pt-6">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={handleUseIt}
+                      disabled={entering}
+                      className="h-12 w-full rounded-xl font-semibold"
+                    >
+                      Start now
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="h-12 w-full rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                    >
+                      <Link to="/credits">See credit packs</Link>
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── Related apps ───────── */}
+        {related.length > 0 && (
+          <section className="border-t border-border/40 bg-muted/30 py-16 md:py-20">
+            <div className="container mx-auto px-4">
+              <div className="mx-auto max-w-6xl">
+                <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                  <h2 className="text-2xl font-bold md:text-3xl">More {category} apps</h2>
+                  <Link
+                    to={`/ai-apps?category=${encodeURIComponent(category)}`}
+                    className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
+                  >
+                    View all <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {related.map((t) => {
+                    const m = resolveToolMedia(t.id, t.category, t);
+                    return (
+                      <Link
+                        key={t.id}
+                        to={`/promo/${promoSlug(t.name)}`}
+                        className="group flex gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/15 to-accent/15">
+                          {m.iconUrl ? (
+                            <img src={m.iconUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          ) : (
+                            <Sparkles className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{t.name}</p>
+                          <p className="line-clamp-2 text-xs text-muted-foreground">{t.description}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
+        )}
 
-      <LoginPromptDialog
-        open={loginOpen}
-        onOpenChange={setLoginOpen}
-        returnTo={`/promo/${page.slug}?launch=1`}
-      />
+        {/* ───────── Final CTA + guarantees ───────── */}
+        <section className="py-16 md:py-20">
+          <div className="container mx-auto px-4">
+            <motion.div
+              {...fadeUp}
+              className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-accent/10 p-6 md:flex-row md:items-center md:p-10"
+            >
+              <div className="min-w-0">
+                <h2 className="text-2xl font-bold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
+                <p className="mt-2 text-muted-foreground">
+                  {row?.final_cta_subtitle ?? `Pay only when you use it: ${creditLabel} to start.`}
+                </p>
+              </div>
+              {tryButton("w-full md:w-auto")}
+            </motion.div>
+
+            <ul className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {GUARANTEES.map(({ Icon, title: t, body }) => (
+                <li key={t} className="flex items-start gap-3 rounded-2xl p-2">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{t}</p>
+                    <p className="text-sm text-muted-foreground">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <SEOFooter />
+
+        <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/promo/${pageSlug}?launch=1`} />
+      </div>
+    </MotionConfig>
+  );
+}
+
+// Shown when an app has no screenshots yet: its icon on a branded card.
+function IconHero({ name, iconUrl, category }: { name: string; iconUrl: string | null; category: string }) {
+  return (
+    <div className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden rounded-3xl bg-gradient-hero p-8 shadow-2xl shadow-primary/20">
+      <div aria-hidden className="absolute inset-0 bg-black/10" />
+      <div aria-hidden className="absolute -left-10 -top-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+      <div aria-hidden className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+      <div className="relative flex h-full flex-col items-center justify-center text-center text-white">
+        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/15 shadow-xl backdrop-blur md:h-36 md:w-36">
+          {iconUrl ? (
+            <img src={iconUrl} alt={`${name} icon`} className="h-full w-full object-cover" />
+          ) : (
+            <Sparkles className="h-14 w-14" />
+          )}
+        </div>
+        <p className="mt-6 font-display text-2xl font-bold md:text-3xl">{name}</p>
+        {category && <p className="mt-1 text-sm text-white/85">{category}</p>}
+      </div>
     </div>
   );
 }
 
-// App Store-style sliding carousel for the hero — auto-advances, dots + arrows, swipe-friendly.
+// App Store-style carousel: auto-advances, arrows, dots and swipe.
 function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const touchX = useRef<number | null>(null);
   const count = slides.length;
 
   useEffect(() => {
     if (count <= 1 || paused) return;
-    const t = setInterval(() => setIdx(i => (i + 1) % count), 4200);
+    const t = setInterval(() => setIdx((i) => (i + 1) % count), 4500);
     return () => clearInterval(t);
   }, [count, paused]);
-
-  if (count === 0) return null;
 
   const go = (next: number) => setIdx(((next % count) + count) % count);
   const current = slides[idx];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6 }}
+    <div
       className="relative"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0].clientX;
+        setPaused(true);
+      }}
+      onTouchEnd={(e) => {
+        if (touchX.current == null) return;
+        const dx = e.changedTouches[0].clientX - touchX.current;
+        if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+        touchX.current = null;
+      }}
     >
-      <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-3 shadow-2xl shadow-primary/10 overflow-hidden">
-        <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/30">
+      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-2.5 shadow-2xl shadow-primary/10 backdrop-blur-sm">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted/40">
           <AnimatePresence mode="wait" initial={false}>
             <motion.img
               key={current.url + idx}
               src={current.url}
-              alt={current.caption ?? `${altBase} — slide ${idx + 1}`}
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover"
-              initial={{ opacity: 0, x: 40 }}
+              alt={current.caption ? `${altBase} — ${current.caption}` : `${altBase} — image ${idx + 1}`}
+              className="absolute inset-0 h-full w-full object-cover"
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
           </AnimatePresence>
 
           {current.caption && (
-            <div className="absolute left-3 bottom-3 z-10 rounded-full bg-background/70 backdrop-blur px-3 py-1 text-xs font-medium border border-border/60">
+            <div className="absolute bottom-3 left-3 z-10 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur">
               {current.caption}
             </div>
           )}
@@ -461,39 +629,46 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
           {count > 1 && (
             <>
               <button
-                aria-label="Previous"
+                type="button"
+                aria-label="Previous image"
                 onClick={() => go(idx - 1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+                className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 backdrop-blur transition hover:bg-background"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
               <button
-                aria-label="Next"
+                type="button"
+                aria-label="Next image"
                 onClick={() => go(idx + 1)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 backdrop-blur transition hover:bg-background"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </button>
             </>
           )}
         </div>
 
         {count > 1 && (
-          <div className="flex items-center justify-center gap-1.5 mt-3">
-            {slides.map((_, i) => (
+          <div className="mt-2.5 flex items-center justify-center gap-1">
+            {slides.map((s, i) => (
               <button
-                key={i}
-                aria-label={`Go to slide ${i + 1}`}
+                key={s.url + i}
+                type="button"
+                aria-label={`Show image ${i + 1}`}
+                aria-current={i === idx}
                 onClick={() => setIdx(i)}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === idx ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
-                }`}
-              />
+                className="flex h-6 items-center px-1"
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all ${
+                    i === idx ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
-

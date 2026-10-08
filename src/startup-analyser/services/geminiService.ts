@@ -1,4 +1,5 @@
 import type { AnalysisResult, StructuredData } from '../types';
+import { ensureStartupLibs } from '@/lib/startupLibs';
 
 const ANALYSER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/startup-analyser`;
 
@@ -156,6 +157,7 @@ export async function streamChatMessage(
  * Extract text from a PDF file using pdf.js (loaded via CDN).
  */
 export async function extractPdfText(file: File): Promise<string> {
+  await ensureStartupLibs();
   const pdfjsLib = (window as any).pdfjsLib;
   if (!pdfjsLib) throw new Error("PDF.js not loaded");
 
