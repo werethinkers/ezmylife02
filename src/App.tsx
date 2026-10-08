@@ -18,6 +18,8 @@ const SmartAssistantChatbot = lazy(() =>
   }))
 );
 
+const CreditPromptHost = lazy(() => import("@/components/wallet/CreditPromptHost"));
+
 // Delay the loading screen so cached/instant chunks don't flash a spinner.
 const DelayedFallback = () => null;
 
@@ -58,6 +60,7 @@ const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+const Workspace = lazy(() => import("./pages/Workspace"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 
@@ -126,6 +129,7 @@ const AnimatedRoutes = () => {
               element={<ToolPreview />}
             />
             <Route path="/about" element={<About />} />
+            <Route path="/workspace" element={<Workspace />} />
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/credits" element={<Credits />} />
             <Route
@@ -289,6 +293,7 @@ const App = () => (
             <MobileDock />
             <Suspense fallback={null}>
               <SmartAssistantChatbot />
+              <CreditPromptHost />
             </Suspense>
           </QuickLookProvider>
         </AuthProvider>

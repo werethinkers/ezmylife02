@@ -22,7 +22,12 @@ export default defineTool({
           Authorization: `Bearer ${ctx.getToken()}`,
           apikey: process.env.SUPABASE_PUBLISHABLE_KEY!,
         },
-        body: JSON.stringify({ prompt, goal, mode: "improve" }),
+        // PromptMaster's "magic_write" action returns improved versions of a draft (1 run = its catalog price).
+        body: JSON.stringify({
+          action: "magic_write",
+          format: "text",
+          keywords: goal ? `${prompt}\n\nGoal: ${goal}` : prompt,
+        }),
       });
       const text = await res.text();
       if (!res.ok) return { content: [{ type: "text", text: `PromptMaster error (${res.status}): ${text}` }], isError: true };

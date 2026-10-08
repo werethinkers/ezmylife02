@@ -102,7 +102,6 @@ export default function PromoPage() {
   const [row, setRow] = useState<PromoRow | null>(null);
   const [rowLoaded, setRowLoaded] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [entering, setEntering] = useState(false);
   const howRef = useRef<HTMLElement | null>(null);
 
   // Curated page, if an admin has published one (RLS only returns published rows to visitors).
@@ -148,37 +147,8 @@ export default function PromoPage() {
       setLoginOpen(true);
       return;
     }
-    if (entering) return;
-    setEntering(true);
-    try {
-      const { data: startData, error: startErr } = await supabase.functions.invoke("tool-charge", {
-        body: { action: "start", tool_id: toolId },
-      });
-      if (startErr) throw startErr;
-      if (!startData?.ok) {
-        if (startData?.reason === "insufficient") {
-          const need = startData?.credits_required ?? creditCost;
-          const bal = startData?.balance ?? 0;
-          const { toast } = await import("sonner");
-          toast.error(`Not enough credits. Need ${need}, you have ${bal}.`);
-          navigate("/credits");
-          return;
-        }
-        throw new Error(startData?.reason ?? "start_failed");
-      }
-      const runId = startData?.run_id;
-      if (runId && !startData?.free_tool) {
-        await supabase.functions.invoke("tool-charge", {
-          body: { action: "complete", run_id: runId, success: true },
-        });
-      }
-      navigate(`/tool/${toolId}`);
-    } catch (e: unknown) {
-      const { toast } = await import("sonner");
-      toast.error(e instanceof Error ? e.message : "Could not open the app");
-    } finally {
-      setEntering(false);
-    }
+    // Opening an app is free; credits are only used when the app produces a result.
+    navigate(`/tool/${toolId}`);
   };
 
   if (!rowLoaded || (catalogLoading && !row)) {
@@ -251,13 +221,12 @@ export default function PromoPage() {
     <Button
       size="lg"
       onClick={handleUseIt}
-      disabled={entering}
       className={`group h-auto min-h-12 rounded-xl px-6 py-3 text-base shadow-lg shadow-primary/25 ${className}`}
     >
-      {entering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+      <Zap className="mr-2 h-5 w-5" />
       <span className="text-left leading-tight">
         <span className="block font-semibold">{ctaLabel}</span>
-        <span className="block text-xs font-normal opacity-90">{creditLabel} to start</span>
+        <span className="block text-xs font-normal opacity-90">{creditCost > 0 ? `${creditLabel} per result` : "Free to use"}</span>
       </span>
     </Button>
   );
@@ -438,7 +407,7 @@ export default function PromoPage() {
                     {creditCost}
                     <span className="ml-2 text-xl font-semibold text-white/85">credit{creditCost === 1 ? "" : "s"}</span>
                   </p>
-                  <p className="mt-1 text-sm text-white/90">to start using {name}</p>
+                  <p className="mt-1 text-sm text-white/90">{creditCost > 0 ? `per result from ${name} — opening the app is free` : `${name} is free to use`}</p>
                   <p className="mt-4 text-sm text-white/90">
                     Credit packs start at ₹{minPack.inr} for {minPack.credits} credits.
                   </p>
@@ -447,7 +416,6 @@ export default function PromoPage() {
                       size="lg"
                       variant="secondary"
                       onClick={handleUseIt}
-                      disabled={entering}
                       className="h-12 w-full rounded-xl font-semibold"
                     >
                       Start now
@@ -521,7 +489,7 @@ export default function PromoPage() {
               <div className="min-w-0">
                 <h2 className="text-2xl font-bold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
                 <p className="mt-2 text-muted-foreground">
-                  {row?.final_cta_subtitle ?? `Pay only when you use it: ${creditLabel} to start.`}
+                  {row?.final_cta_subtitle ?? (creditCost > 0 ? `Pay only for results: ${creditLabel} each. Failed runs are never charged.` : "Free to use.")}
                 </p>
               </div>
               {tryButton("w-full md:w-auto")}

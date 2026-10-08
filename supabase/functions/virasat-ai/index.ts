@@ -1,4 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  // The keepsake book is the charged result ("virasat"). Interview helpers (next question, tidy-up,
+  // Hindi script, reading a question aloud) are free but size-capped below.
+  stdServe(billed({ tool: (b) => (b?.action === "book" ? "virasat" : null) }, (req) => handler(req)));
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -237,7 +244,8 @@ WRITING STYLE & FIDELITY:
 `;
   const contents = [{ role: "user", parts: [{ text: `Conversation History:\n${history.map((m) => `${m.role}: ${m.text}`).join("\n")}\n\nTask: Generate a complete personal keepsake in '${style}' style for ${childAddress}.` }] }];
   return await withKeyRotation<string>(async (apiKey) => {
-    const resp = await callGeminiText(apiKey, "gemini-2.5-pro", contents, sys);
+    // Gemini 2.5 Flash keeps a full keepsake within the app's 1–10 credit range (2.5 Pro costs ~₹10+ per book).
+    const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, sys);
     if (!resp.ok) return { ok: false, status: resp.status };
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "Error generating book.";
@@ -267,6 +275,14 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const action = body?.action as string;
+    // Size caps keep the free interview helpers cheap and stop them being used as a general chatbot.
+    const cleanHistory = (h: unknown): Message[] =>
+      (Array.isArray(h) ? h : [])
+        .filter((m: { role?: string; text?: unknown }) => (m?.role === "user" || m?.role === "model") && typeof m.text === "string")
+        .slice(-80)
+        .map((m: Message) => ({ ...m, text: m.text.slice(0, 3000) }));
+    body.history = cleanHistory(body.history);
+    if (typeof body.text === "string") body.text = body.text.slice(0, action === "tts" ? 600 : 3000);
 
     if (action === "nextQuestion") {
       const result = await getNextQuestion(body.history || []);

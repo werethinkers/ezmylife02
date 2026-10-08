@@ -1,4 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(billed({ tool: "speedy-notebook" }, (req) => handler(req)));
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -97,7 +102,9 @@ serve(async (req) => {
   }
 
   try {
-    const { action, prompt, config } = await req.json();
+    const { action, prompt: rawPrompt, config } = await req.json();
+    // One request = one credit, so keep the prompt to a sensible size.
+    const prompt = String(rawPrompt ?? "").slice(0, 12000);
     
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     const model = 'google/gemini-2.5-flash';

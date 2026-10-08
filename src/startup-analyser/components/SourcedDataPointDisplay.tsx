@@ -80,7 +80,9 @@ export const SourcedDataPointDisplay: React.FC<{ point: SourcedDataPoint; onUpda
     const convertMarkdownToHtml = (markdownText: string) => {
         if (!markdownText) return { __html: '' };
         
-        const highlightedText = highlightMarkdownWithMarks(markdownText, keywords, highlightEnabled);
+        // Escape any HTML in the AI text first so only Markdown formatting and highlights render.
+        const escaped = markdownText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const highlightedText = highlightMarkdownWithMarks(escaped, keywords, highlightEnabled);
 
         if (!window.showdown) {
             return { __html: highlightedText.replace(/\n/g, '<br />') };

@@ -2,6 +2,7 @@
 // upload it to the tool-media storage bucket, and insert a tool_media row.
 // Idempotent per tool_id — skips if media already exists.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { identify, isAdmin } from "../_shared/billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,13 @@ function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; contentType: stri
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    // Admins only: this writes catalogue images and spends AI credits.
+    const caller = await identify(req);
+    if (!caller || (!caller.internal && !(await isAdmin(caller.userId)))) {
+      return new Response(JSON.stringify({ error: "admin only" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { tool_id, name, description, category, force } = await req.json();
     if (!tool_id || !name) {
       return new Response(JSON.stringify({ error: "tool_id and name required" }), {

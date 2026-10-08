@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Markdown } from "@/components/common/Markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -15,19 +16,8 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-assistant`;
 const HIDE_PREFIXES = ["/tool/", "/auth", "/admin", "/bulk/"];
 
-const renderMarkdown = (text: string) => {
-  // Strip lead block from displayed text
-  const visible = text.replace(/<<<LEAD>>>[\s\S]*?<<<END>>>/g, "").trim();
-  // Links: [label](url)
-  const linked = visible
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" class="text-primary underline underline-offset-2 hover:text-primary/80">$1</a>',
-    )
-    .replace(/\n/g, "<br/>");
-  return linked;
-};
+// Hides the lead-capture block the assistant appends; the rest is rendered as safe Markdown.
+const visibleText = (text: string) => text.replace(/<<<LEAD>>>[\s\S]*?<<<END>>>/g, "").trim();
 
 const extractLead = (text: string) => {
   const m = text.match(/<<<LEAD>>>([\s\S]*?)<<<END>>>/);
@@ -212,8 +202,13 @@ export const SmartAssistantChatbot = () => {
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted/70"
                       }`}
-                      dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
-                    />
+                    >
+                      {m.role === "user" ? (
+                        <span className="whitespace-pre-wrap">{m.content}</span>
+                      ) : (
+                        <Markdown className="text-sm prose-p:my-1">{visibleText(m.content)}</Markdown>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {busy && messages[messages.length - 1]?.role === "user" && (

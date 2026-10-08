@@ -20,6 +20,7 @@ import {
   History
 } from "lucide-react";
 import { toast } from "sonner";
+import { streamFunction, functionError } from "@/lib/credits";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -123,24 +124,21 @@ export function PersonalizedTools() {
   }, [messages]);
 
   const streamResponse = async (profile: Partial<UserProfile>, conversationType: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/personalized-tools`;
-    
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ userProfile: profile, conversationType }),
-      });
-
-      if (!resp.ok) {
-        if (resp.status === 429 || resp.status === 402) {
+      let resp: Response;
+      try {
+        resp = await streamFunction("personalized-tools", { userProfile: profile, conversationType });
+      } catch (e) {
+        const info = await functionError(e);
+        if (info?.status === 401) {
+          toast.error("Please sign in to get personalised recommendations (free).");
+          return "";
+        }
+        if (info?.status === 429 || info?.status === 402) {
           toast.error("Service is busy. Please try again in a moment.");
           return "";
         }
-        throw new Error("Failed to get response");
+        throw e;
       }
 
       if (!resp.body) throw new Error("No response body");

@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CREDIT_PACKS } from "@/data/creditPacks";
+import { defaultPrice } from "@/apps/prices";
 
-/** Credit cost for every priced app in one request (apps without a row cost 1 credit). */
+/** Credit cost for every priced app in one request (apps without a row: their default, else free). */
 export function usePricingMap() {
   const q = useQuery({
     queryKey: ["tool-pricing-all"],
@@ -11,13 +12,33 @@ export function usePricingMap() {
       if (error) throw error;
       const map = new Map<string, number>();
       for (const row of data ?? []) map.set(row.tool_id, Math.max(1, row.credit_cost ?? 1));
+      try {
+        localStorage.setItem("ez.prices.v1", JSON.stringify({ at: Date.now(), rows: [...map] }));
+      } catch {
+        /* ignore */
+      }
       return map;
+    },
+    initialData: () => {
+      try {
+        const c = JSON.parse(localStorage.getItem("ez.prices.v1") ?? "null");
+        return c ? new Map<string, number>(c.rows) : undefined;
+      } catch {
+        return undefined;
+      }
+    },
+    initialDataUpdatedAt: () => {
+      try {
+        return JSON.parse(localStorage.getItem("ez.prices.v1") ?? "null")?.at;
+      } catch {
+        return undefined;
+      }
     },
     staleTime: 10 * 60 * 1000,
   });
   const map = q.data;
   return {
-    costOf: (toolId: string) => map?.get(toolId) ?? 1,
+    costOf: (toolId: string) => map?.get(toolId) ?? defaultPrice(toolId) ?? 0,
     isLoading: q.isLoading,
   };
 }

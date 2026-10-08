@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { startRun, completeRun } from "@/lib/credits";
+import { callFunction, functionError } from "@/lib/credits";
 import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
+import { useToolPricing } from "@/hooks/useToolPricing";
 import { FileUpload, fileToPayload } from "@/components/productvision360/FileUpload";
 import { AnglesGrid } from "@/components/productvision360/AnglesGrid";
 import { BackgroundStudio } from "@/components/productvision360/BackgroundStudio";
@@ -29,8 +30,12 @@ const ProductVision360 = () => {
   const [selectedAngles, setSelectedAngles] = useState<AngleName[]>(DEFAULT_ANGLES);
   const [results, setResults] = useState<AngleResult[]>([]);
   const [buyOpen, setBuyOpen] = useState(false);
-  const [need, setNeed] = useState({ required: 50, balance: 0 });
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [need, setNeed] = useState({ required: 0, balance: 0 });
   const refreshWallet = useRefreshWallet();
+  // Charged per angle that is actually generated (the server creates the price row on first use).
+  const { creditCost: anglePrice } = useToolPricing("productvision-angle");
+  const perAngle = anglePrice > 0 ? anglePrice : 12;
 
   const toggleAngle = (a: AngleName) => {
     setSelectedAngles((prev) =>
@@ -44,34 +49,18 @@ const ProductVision360 = () => {
   };
 
   const runGeneration = async (file: File) => {
-    const start = await startRun("productvision-360");
-    if (!start.ok || !start.run_id) {
-      if (start.reason === "insufficient") {
-        setNeed({ required: start.credits_required ?? 50, balance: start.balance ?? 0 });
-        setBuyOpen(true);
-      }
-      return;
-    }
-    const runId = start.run_id;
-
     setPhase("generating");
-    const initial: AngleResult[] = selectedAngles.map((a) => ({ angle: a, status: "pending" }));
-    setResults(initial);
+    setResults(selectedAngles.map((a) => ({ angle: a, status: "pending" })));
 
     try {
       const { base64, mimeType } = await fileToPayload(file);
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await supabase.functions.invoke("productvision-angles", {
-        body: { imageBase64: base64, mimeType, angles: selectedAngles },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-
-      if (resp.error) throw new Error(resp.error.message || "generation_failed");
-      const data = resp.data as {
+      // The server checks the balance for every angle, then charges only for angles that come back.
+      const data = await callFunction<{
         success: boolean;
         images: Array<{ angle: AngleName; mimeType: string; base64: string }>;
         failed: Array<{ angle: AngleName; error: string }>;
-      };
+        credits_charged?: number;
+      }>("productvision-angles", { imageBase64: base64, mimeType, angles: selectedAngles });
 
       const next: AngleResult[] = selectedAngles.map((a) => {
         const img = data.images?.find((i) => i.angle === a);
@@ -85,25 +74,35 @@ const ProductVision360 = () => {
       // Compute transparent versions in parallel
       await Promise.all(next.map(async (r) => {
         if (r.status === "done" && r.url) {
-          try { r.transparentUrl = await removeWhiteBackground(r.url); } catch {}
+          try { r.transparentUrl = await removeWhiteBackground(r.url); } catch { /* keep the original */ }
         }
       }));
 
       setResults(next);
       const successCount = next.filter((r) => r.status === "done").length;
+      refreshWallet();
       if (successCount === 0) {
-        await completeRun(runId, false, "all_failed");
         toast.error("All angles failed. You were not charged.");
-      } else {
-        await completeRun(runId, true);
-        refreshWallet();
-        toast.success(`${successCount}/${next.length} angles generated · 50 credits charged`);
+        setPhase("start");
+        return;
       }
+      const charged = data.credits_charged ?? successCount * perAngle;
+      toast.success(`${successCount}/${next.length} angles generated · ${charged} credits used${successCount < next.length ? " (failed angles are free)" : ""}`);
       setPhase("done");
     } catch (e) {
-      await completeRun(runId, false, e instanceof Error ? e.message : String(e));
-      toast.error("Generation failed. You were not charged.");
+      const info = await functionError(e);
       setPhase("start");
+      setResults([]);
+      if (info?.status === 402) {
+        setNeed({ required: info.data?.credits_required ?? perAngle * selectedAngles.length, balance: info.data?.balance ?? 0 });
+        setBuyOpen(true);
+        return;
+      }
+      if (info?.status === 401) {
+        setLoginOpen(true);
+        return;
+      }
+      toast.error("Generation failed. You were not charged.");
     }
   };
 
@@ -131,7 +130,7 @@ const ProductVision360 = () => {
             Catalog-grade product angles in one click
           </h1>
           <p className="mt-3 text-muted-foreground max-w-2xl">
-            Upload a single product photo. We'll generate a clean, multi-angle product set, swap backgrounds, and let you download a ready-to-publish pack. Flat <span className="text-foreground font-medium">50 credits</span> per run.
+            Upload a single product photo. We'll generate a clean, multi-angle product set, swap backgrounds, and let you download a ready-to-publish pack. <span className="text-foreground font-medium">{perAngle} credits per angle</span> generated — angles that fail are free.
           </p>
         </motion.div>
 
@@ -155,7 +154,7 @@ const ProductVision360 = () => {
                 })}
               </div>
               <p className="text-xs text-muted-foreground">
-                {selectedAngles.length} angle{selectedAngles.length === 1 ? "" : "s"} selected · ~10–15s per angle
+                {selectedAngles.length} angle{selectedAngles.length === 1 ? "" : "s"} selected · up to {selectedAngles.length * perAngle} credits · ~10–15s per angle
               </p>
             </Card>
             <FileUpload onFile={handleFile} disabled={!selectedAngles.length} />
@@ -219,6 +218,7 @@ const ProductVision360 = () => {
           required={need.required}
           balance={need.balance}
         />
+        <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} />
       </main>
     </div>
   );

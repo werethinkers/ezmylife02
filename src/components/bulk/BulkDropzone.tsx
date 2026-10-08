@@ -14,6 +14,9 @@ import { defaultBulkParams, type BulkToolConfig } from "@/data/bulkTools";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { runClientImageBatch } from "@/lib/bulkClientImageOps";
 import { BulkParamsForm } from "./BulkParamsForm";
+import { BULK_PRICE_ID } from "@/apps/prices";
+import { useWallet } from "@/hooks/useWallet";
+import { handleCreditError, emitCreditPrompt } from "@/lib/creditPrompt";
 
 interface Props {
   config: BulkToolConfig;
@@ -33,8 +36,14 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
   const perFileFields = config.perFileFields || [];
 
   const totalSizeMb = files.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
-  const { creditCost } = useToolPricing(config.toolId);
-  const totalCredits = files.length * Math.max(1, creditCost);
+  // Server-processed AI tools are charged per file at their bulk price; startup analyses at the
+  // analyser's price; browser-only tools at the app's own price (currently not charged).
+  const priceId = config.mode === "client" ? config.toolId : BULK_PRICE_ID[config.toolId] ?? config.toolId;
+  const { creditCost } = useToolPricing(priceId);
+  const { total: balance } = useWallet();
+  const chargesPerFile = config.mode !== "client" || config.toolId === "startup-analyser";
+  const perFile = chargesPerFile ? creditCost : 0;
+  const totalCredits = files.length * perFile;
 
   const addFiles = (incoming: FileList | File[]) => {
     const arr = Array.from(incoming);
@@ -101,6 +110,10 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
       toast.error("Fill all required fields per file");
       return;
     }
+    if (totalCredits > balance) {
+      emitCreditPrompt({ kind: "buy", required: totalCredits, balance });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -154,7 +167,10 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
         const { error: fnErr } = await supabase.functions.invoke("bulk-run", {
           body: { job_id: jobId, tool_id: config.toolId, input_manifest: inputManifest, params, per_file_meta: perFileMeta },
         });
-        if (fnErr) throw fnErr;
+        if (fnErr) {
+          if (await handleCreditError(fnErr)) return;
+          throw fnErr;
+        }
         toast.success("Bulk job started");
         navigate(`/bulk/jobs/${jobId}`);
       }
@@ -251,7 +267,7 @@ export const BulkDropzone = ({ config, onClose }: Props) => {
           </div>
           <div className="text-muted-foreground">
             Credits required: <span className="font-semibold text-foreground">{totalCredits}</span>
-            <span className="text-xs ml-1">({Math.max(1, creditCost)}/file)</span>
+            <span className="text-xs ml-1">{perFile > 0 ? `(${perFile}/file · failed files are free)` : "(free — runs in your browser)"}</span>
           </div>
         </div>
       )}

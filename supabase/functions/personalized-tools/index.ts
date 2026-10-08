@@ -1,4 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(billed({ tool: () => null }, (req) => handler(req)));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

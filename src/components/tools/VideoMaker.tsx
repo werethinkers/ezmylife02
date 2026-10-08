@@ -303,7 +303,7 @@ const VideoMaker = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Video className="h-5 w-5" />
-            AI Video Maker
+            AI Video Keyframe Maker
           </CardTitle>
           {user && (
             <Button
@@ -317,6 +317,9 @@ const VideoMaker = () => {
           )}
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Creates one cinematic keyframe image (the opening shot) for your video — use it as a thumbnail, storyboard frame or starting image in a video editor. It does not render a moving video yet.
+          </p>
           {!showHistory ? (
             <>
               <div className="space-y-2">
@@ -439,7 +442,7 @@ const VideoMaker = () => {
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Generate Video
+                    Generate keyframe
                     <CreditCostBadge toolId="video-maker" className="ml-2" />
                   </>
                 )}

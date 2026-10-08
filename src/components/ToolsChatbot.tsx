@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Markdown } from "@/components/common/Markdown";
+import { streamFunction, functionError } from "@/lib/credits";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
-
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tools-chat`;
 
 export const ToolsChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,20 +29,7 @@ export const ToolsChatbot = () => {
   }, [messages]);
 
   const streamChat = async (userMessages: Message[]) => {
-    const resp = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ messages: userMessages }),
-    });
-
-    if (!resp.ok) {
-      const errorData = await resp.json().catch(() => ({}));
-      throw new Error(errorData.error || "Failed to get response");
-    }
-
+    const resp = await streamFunction("tools-chat", { messages: userMessages.slice(-10) });
     if (!resp.body) throw new Error("No response body");
 
     const reader = resp.body.getReader();
@@ -107,6 +94,11 @@ export const ToolsChatbot = () => {
       const conversationHistory = [...messages.filter(m => m.role !== "assistant" || messages.indexOf(m) !== 0), userMsg];
       await streamChat(conversationHistory);
     } catch (error) {
+      const info = await functionError(error);
+      if (info?.status === 401) {
+        setMessages(prev => [...prev, { role: "assistant", content: "Please [sign in](/auth) to chat with me — it's free and you get 50 credits to start." }]);
+        return;
+      }
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
       setMessages(prev => [...prev, { 
@@ -116,13 +108,6 @@ export const ToolsChatbot = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Format markdown-like content
-  const formatContent = (content: string) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>');
   };
 
   return (
@@ -171,10 +156,11 @@ export const ToolsChatbot = () => {
                         : "bg-muted"
                     }`}
                   >
-                    <div 
-                      className="whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: formatContent(message.content) }}
-                    />
+                    {message.role === "user" ? (
+                      <span className="whitespace-pre-wrap">{message.content}</span>
+                    ) : (
+                      <Markdown className="text-sm prose-p:my-1">{message.content}</Markdown>
+                    )}
                   </div>
                   {message.role === "user" && (
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">

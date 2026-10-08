@@ -16,7 +16,8 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
   const { total } = useWallet();
   const { costOf } = usePricingMap();
   const cost = costOf(toolId);
-  const canOpen = !!user && total >= cost;
+  const free = cost === 0;
+  const canOpen = free || (!!user && total >= cost);
   const rupees = formatRupees(cost * RUPEES_PER_CREDIT_MAX);
 
   const open = (e: React.MouseEvent) => {
@@ -30,7 +31,7 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
         <button
           type="button"
           onClick={open}
-          aria-label={canOpen ? "Open app" : `Open app, costs ${cost} credit${cost === 1 ? "" : "s"}`}
+          aria-label={free ? "Open free app" : canOpen ? "Open app" : `Open app, costs ${cost} credit${cost === 1 ? "" : "s"}`}
           className={cn(
             "inline-flex shrink-0 items-center justify-center gap-1 rounded-full font-bold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             size === "md" ? "h-9 min-w-[76px] px-4 text-sm" : "h-8 min-w-[64px] px-3 text-xs",
@@ -40,7 +41,9 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
             className,
           )}
         >
-          {canOpen ? (
+          {free ? (
+            <>Free</>
+          ) : canOpen ? (
             <>
               Open <ArrowUpRight className="h-3.5 w-3.5" />
             </>
@@ -50,7 +53,7 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">
-        {cost} credit{cost === 1 ? "" : "s"} a run · about {rupees} at the ₹10 pack
+        {free ? "Free to use — no credits needed" : <>{cost} credit{cost === 1 ? "" : "s"} a run · about {rupees} at the ₹10 pack</>}
       </TooltipContent>
     </Tooltip>
   );

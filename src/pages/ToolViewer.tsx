@@ -8,6 +8,8 @@ import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, Clock, Sparkles 
 import { Badge } from "@/components/ui/badge";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
+import { hasEngineApp } from "@/apps/registry";
+import { WorkspaceBar } from "@/apps/shell/WorkspaceBar";
 import { logActivity } from "@/lib/activityLogger";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -251,6 +253,8 @@ const ToolViewer = () => {
         </div>
       </div>
 
+      {toolId && <WorkspaceBar toolId={toolId} />}
+
       {isLoading && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
@@ -260,15 +264,15 @@ const ToolViewer = () => {
         </div>
       )}
 
-      <div className={`h-[calc(100vh-7rem)] min-h-[500px] ${isLoading ? 'hidden' : ''}`}>
+      <div className={`${isNativeTool && !uploadedToolUrl ? "min-h-[calc(100vh-7rem)] pb-24 md:pb-8" : "h-[calc(100vh-7rem)] min-h-[500px]"} ${isLoading ? "hidden" : ""}`}>
         {renderContent()}
       </div>
 
-      <ToolDemoPreview
+      {!hasEngineApp(toolId ?? "") && <ToolDemoPreview
         demoInput={catalogInfo?.demo_input}
         demoOutput={catalogInfo?.demo_output}
         toolName={toolTitle}
-      />
+      />}
     </div>
   );
 };

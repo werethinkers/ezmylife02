@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { defaultPrice } from "@/apps/prices";
 
 export interface ToolPricing {
   tool_id: string;
@@ -13,10 +14,12 @@ async function fetchPricing(toolId: string): Promise<ToolPricing> {
     .select("tool_id, cost_inr, credit_cost")
     .eq("tool_id", toolId)
     .maybeSingle();
-  return data ?? { tool_id: toolId, cost_inr: 0, credit_cost: 1 };
+  // No pricing row yet: new engine apps show their default price; anything else is free
+  // (the server charges nothing for an app without a price).
+  return data ?? { tool_id: toolId, cost_inr: 0, credit_cost: defaultPrice(toolId) ?? 0 };
 }
 
-/** Returns the current credit cost for a given tool. Always at least 1. */
+/** Returns the current credit cost for a given tool (0 = free). */
 export function useToolPricing(toolId: string | undefined) {
   const q = useQuery({
     queryKey: ["tool-pricing", toolId],
@@ -25,7 +28,7 @@ export function useToolPricing(toolId: string | undefined) {
     staleTime: 5 * 60 * 1000,
   });
   return {
-    creditCost: Math.max(1, q.data?.credit_cost ?? 1),
+    creditCost: Math.max(0, q.data?.credit_cost ?? defaultPrice(toolId ?? "") ?? 0),
     costInr: q.data?.cost_inr ?? 0,
     isLoading: q.isLoading,
   };

@@ -1,369 +1,300 @@
-// Bulk processing dispatcher.
-// Runs each item by calling Gemini (via Lovable AI Gateway, with fallback to
-// rotating Gemini keys) for AI image tools, or by calling the existing
-// per-item edge functions where appropriate. Builds a ZIP and uploads it.
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// Bulk Mode processor.
+//
+// Safe by design:
+//  • The caller must be the signed-in owner of the job (or this function continuing itself).
+//  • Tool, files and settings are read from the saved job row, never from the request,
+//    and every file must live in the owner's own job folder.
+//  • Each item is charged on the server when it succeeds; failed items cost nothing.
+//  • Work runs in time-boxed chunks and continues itself, so large batches don't time out.
+//  • Each item's output is stored as it finishes; the ZIP is assembled at the end.
 import JSZip from "https://esm.sh/jszip@3.10.1";
+import { corsHeaders, json } from "../_shared/http.ts";
+import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+import { image } from "../_shared/llm.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const CHUNK_MS = 100_000;
+const IMAGE_MODEL = "google/gemini-2.5-flash-image"; // ~$0.039/image (cheaper than the 3.1 preview model)
 
 interface ManifestItem {
   filename: string;
   storage_path: string;
   size: number;
 }
-
-// ---------- Gemini key fallback ----------
-function envGeminiKeys(): string[] {
-  const keys: string[] = [];
-  for (let i = 1; i <= 10; i++) {
-    const k = Deno.env.get(`GEMINI_API_KEY_${i}`);
-    if (k) keys.push(k);
-  }
-  return keys;
+interface OutputRow {
+  input_filename: string;
+  output_filename?: string;
+  output_path?: string;
+  status: "ok" | "error";
+  error?: string;
+  csv?: string;
+}
+interface Job {
+  id: string;
+  user_id: string;
+  tool_id: string;
+  status: string;
+  input_manifest: ManifestItem[];
+  outputs: OutputRow[];
+  // deno-lint-ignore no-explicit-any
+  params: Record<string, any> | null;
+  completed_items: number;
+  failed_items: number;
 }
 
-async function dbGeminiKeys(sb: any): Promise<string[]> {
-  try {
-    const { data } = await sb
-      .from("gemini_api_keys")
-      .select("key_value")
-      .eq("is_active", true)
-      .order("failure_count", { ascending: true });
-    return (data || []).map((r: any) => r.key_value);
-  } catch { return []; }
+// Which price each bulk tool is charged at. AI image edits are priced at cost (12 credits).
+const PRICE_TOOL: Record<string, { tool: string; credits: number }> = {
+  "background-remover": { tool: "bulk-ai-background", credits: 12 },
+  "passport-photo-maker": { tool: "bulk-ai-passport", credits: 12 },
+  "image-beautify": { tool: "bulk-ai-beautify", credits: 12 },
+  "business-card-scanner": { tool: "meet-nudge", credits: 2 },
+};
+
+const svc = { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` };
+
+async function loadJob(id: string): Promise<Job | null> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/bulk_jobs?id=eq.${encodeURIComponent(id)}&select=*`, { headers: svc });
+  if (!r.ok) return null;
+  const rows = (await r.json()) as Job[];
+  return rows[0] ?? null;
 }
 
-// ---------- Image editing (returns PNG blob) ----------
+async function patchJob(id: string, patch: Record<string, unknown>) {
+  await fetch(`${SUPABASE_URL}/rest/v1/bulk_jobs?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { ...svc, "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
+  });
+}
+
+async function download(bucket: string, path: string): Promise<Blob> {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers: svc });
+  if (!r.ok) throw new Error(`download failed (${r.status})`);
+  return await r.blob();
+}
+
+async function upload(bucket: string, path: string, data: Blob | Uint8Array, contentType: string) {
+  const payload: Blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: contentType });
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "POST",
+    headers: { ...svc, "Content-Type": contentType, "x-upsert": "true" },
+    body: payload,
+  });
+  if (!r.ok) throw new Error(`upload failed (${r.status})`);
+}
+
 async function blobToDataUrl(b: Blob): Promise<string> {
   const buf = new Uint8Array(await b.arrayBuffer());
   let bin = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < buf.length; i += chunk) {
-    bin += String.fromCharCode(...buf.subarray(i, i + chunk));
-  }
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
   return `data:${b.type || "image/png"};base64,${btoa(bin)}`;
 }
 
-function base64ToBlob(b64: string, mime = "image/png"): Blob {
+function dataUrlToBlob(url: string): Blob {
+  const [meta, b64] = url.split(",");
+  const mime = meta.match(/data:([^;]+)/)?.[1] ?? "image/png";
   const bin = atob(b64);
   const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return new Blob([arr], { type: mime });
 }
 
-/** Try Lovable AI Gateway first, then rotate Gemini API keys. Returns image blob or throws. */
-async function editImageWithGemini(
-  inputBlob: Blob,
-  prompt: string,
-  sb: any,
-): Promise<Blob> {
-  const dataUrl = await blobToDataUrl(inputBlob);
+const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
-  // 1) Lovable AI Gateway
-  if (LOVABLE_API_KEY) {
-    try {
-      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-3.1-flash-image-preview",
-          modalities: ["image", "text"],
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: prompt },
-                { type: "image_url", image_url: { url: dataUrl } },
-              ],
-            },
-          ],
-        }),
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const imgs = data?.choices?.[0]?.message?.images;
-        const url = imgs?.[0]?.image_url?.url;
-        if (url?.startsWith("data:")) {
-          const [meta, b64] = url.split(",");
-          const mime = meta.match(/data:([^;]+)/)?.[1] || "image/png";
-          return base64ToBlob(b64, mime);
-        }
-      } else {
-        console.warn("Lovable AI image edit failed:", r.status);
-      }
-    } catch (e) {
-      console.warn("Lovable AI image edit error:", e);
-    }
+// deno-lint-ignore no-explicit-any
+function prompts(tool: string, p: Record<string, any>): string {
+  if (tool === "background-remover") {
+    const bg = p.background ?? "transparent";
+    if (bg === "white") return "Remove the background and replace it with solid pure white (#ffffff). Keep the subject exactly unchanged with clean edges.";
+    if (bg === "black") return "Remove the background and replace it with solid pure black (#000000). Keep the subject exactly unchanged with clean edges.";
+    if (bg === "custom") return `Remove the background and replace it with solid ${String(p.background_hex ?? "#ffffff").slice(0, 9)}. Keep the subject exactly unchanged.`;
+    return "Remove the background completely and output the subject on a fully transparent background (PNG). Keep the subject sharp with clean edges.";
   }
-
-  // 2) Gemini direct keys
-  const keys = Array.from(new Set([...(await dbGeminiKeys(sb)), ...envGeminiKeys()]));
-  for (const k of keys) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${k}`;
-      const buf = new Uint8Array(await inputBlob.arrayBuffer());
-      let bin = "";
-      const chunk = 0x8000;
-      for (let i = 0; i < buf.length; i += chunk) bin += String.fromCharCode(...buf.subarray(i, i + chunk));
-      const inlineData = { mimeType: inputBlob.type || "image/png", data: btoa(bin) };
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }, { inlineData }] }],
-        }),
-      });
-      if (!r.ok) {
-        console.warn("Gemini image direct failed:", r.status);
-        continue;
-      }
-      const data = await r.json();
-      const parts = data?.candidates?.[0]?.content?.parts || [];
-      const imgPart = parts.find((p: any) => p.inlineData?.data);
-      if (imgPart) return base64ToBlob(imgPart.inlineData.data, imgPart.inlineData.mimeType || "image/png");
-    } catch (e) {
-      console.warn("Gemini direct error:", e);
-    }
+  if (tool === "passport-photo-maker") {
+    const sizes: Record<string, string> = { india_35x45: "India passport (35x45 mm)", us_2x2: "US passport (2x2 inch)", schengen_35x45: "Schengen passport (35x45 mm)", uk_35x45: "UK passport (35x45 mm)" };
+    const bg: Record<string, string> = { white: "pure white", light_blue: "light blue", red: "red", grey: "neutral grey" };
+    return `Convert this photo into a professional ${sizes[p.size_preset] ?? "passport standard"} photo: head and top of shoulders centred, neutral expression, even lighting, ${bg[p.background] ?? "pure white"} background. Do not change the person's facial features.`;
   }
-  throw new Error("All image AI providers failed");
-}
-
-// ---------- Per-tool prompt builders ----------
-function backgroundRemoverPrompt(params: Record<string, any>): string {
-  const bg = params.background || "transparent";
-  if (bg === "transparent") {
-    return "Remove the background from this image completely. Output a PNG with a fully transparent background. Preserve the subject sharply with clean edges. Do not change the subject.";
-  }
-  if (bg === "white") return "Remove the background and replace with a solid pure white (#ffffff) background. Keep the subject unchanged.";
-  if (bg === "black") return "Remove the background and replace with a solid pure black (#000000) background. Keep the subject unchanged.";
-  if (bg === "custom") {
-    const hex = params.background_hex || "#ffffff";
-    return `Remove the background and replace with a solid ${hex} background. Keep the subject unchanged.`;
-  }
-  return "Remove the background.";
-}
-
-function passportPhotoPrompt(params: Record<string, any>): string {
-  const sizes: Record<string, string> = {
-    india_35x45: "India passport (35x45 mm)",
-    us_2x2: "US passport (2x2 inch)",
-    schengen_35x45: "Schengen passport (35x45 mm)",
-    uk_35x45: "UK passport (35x45 mm)",
-  };
-  const bg: Record<string, string> = {
-    white: "pure white", light_blue: "light blue", red: "red", grey: "neutral grey",
-  };
-  const size = sizes[params.size_preset] || "passport standard";
-  const bgColor = bg[params.background] || "pure white";
-  return `Convert this photo into a professional ${size} passport photo. Crop tightly so head and top of shoulders are centered, neutral expression, eyes facing camera, even lighting. Replace the background with a solid ${bgColor} background. Output a clean, print-ready image.`;
-}
-
-function beautifyPrompt(params: Record<string, any>): string {
   const styles: Record<string, string> = {
-    natural: "natural, subtle skin/lighting enhancement, preserve identity",
-    studio: "professional studio portrait look, soft key light, clean background",
-    cinematic: "cinematic color grading, soft contrast, filmic mood",
-    vivid: "vivid colors, punchy contrast, sharper details",
+    natural: "natural, subtle skin and lighting enhancement",
+    studio: "professional studio portrait look with soft key light",
+    cinematic: "cinematic colour grading with soft contrast",
+    vivid: "vivid colours, punchy contrast and sharper details",
   };
-  const style = styles[params.style] || styles.natural;
-  const strength = params.strength || 6;
-  return `Enhance this image with a ${style}. Strength ${strength}/10. Preserve the subject's identity, do not change facial features.`;
+  return `Enhance this image with a ${styles[p.style] ?? styles.natural}, strength ${Number(p.strength) || 6}/10. Preserve the subject's identity; do not change facial features.`;
 }
 
-// ---------- Per-item processor ----------
-async function processItem(
-  toolId: string,
-  fileBlob: Blob,
-  filename: string,
-  authHeader: string,
-  params: Record<string, any>,
-  sb: any,
-  userId: string,
-): Promise<{ outBlob?: Blob; outName?: string; csvRow?: string; error?: string }> {
-  try {
-    if (toolId === "background-remover") {
-      const out = await editImageWithGemini(fileBlob, backgroundRemoverPrompt(params), sb);
-      return { outBlob: out, outName: filename.replace(/\.[^.]+$/, ".png") };
-    }
-    if (toolId === "passport-photo-maker") {
-      const out = await editImageWithGemini(fileBlob, passportPhotoPrompt(params), sb);
-      return { outBlob: out, outName: filename.replace(/\.[^.]+$/, "-passport.png") };
-    }
-    if (toolId === "image-beautify") {
-      const out = await editImageWithGemini(fileBlob, beautifyPrompt(params), sb);
-      return { outBlob: out, outName: filename.replace(/\.[^.]+$/, "-beautified.png") };
-    }
+async function processItem(job: Job, item: ManifestItem, index: number): Promise<OutputRow> {
+  const params = job.params ?? {};
+  const blob = await download("bulk-inputs", item.storage_path);
 
-    if (toolId === "business-card-scanner") {
-      const dataUrl = await blobToDataUrl(fileBlob);
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/scan-business-card`, {
+  if (job.tool_id === "business-card-scanner") {
+    // Internal call with the service key: scan-business-card does not charge again.
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/scan-business-card`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...svc },
+      body: JSON.stringify({ images: [await blobToDataUrl(blob)] }),
+    });
+    if (!r.ok) throw new Error(`scan failed (${r.status})`);
+    const c = ((await r.json())?.contact ?? {}) as Record<string, string>;
+    if (params.auto_save_contacts !== false && c.name) {
+      await fetch(`${SUPABASE_URL}/rest/v1/meet_nudge_contacts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: authHeader },
-        body: JSON.stringify({ images: [dataUrl] }),
-      });
-      if (!r.ok) return { error: `scan failed (${r.status})` };
-      const data = await r.json();
-      const c = data?.contact || {};
-      // Auto-save contact
-      if (params.auto_save_contacts !== false && c.name) {
-        try {
-          await sb.from("meet_nudge_contacts").insert({
-            host_id: userId,
-            name: c.name,
-            email: c.email || null,
-            phone: c.phone || null,
-            business_name: c.business_name || null,
-            occupation: c.occupation || null,
-            website: c.website || null,
-            linkedin_url: c.linkedin_url || null,
-            location: c.location || null,
-            event_name: params.tag || null,
-          });
-        } catch (e) { console.warn("contact insert failed:", e); }
-      }
-      const csvRow = `"${filename}","${c.name || ""}","${c.email || ""}","${c.phone || ""}","${c.business_name || ""}","${c.occupation || ""}","${params.tag || ""}"`;
-      return { csvRow };
+        headers: { ...svc, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({
+          host_id: job.user_id,
+          name: c.name,
+          email: c.email || null,
+          phone: c.phone || null,
+          business_name: c.business_name || null,
+          occupation: c.occupation || null,
+          website: c.website || null,
+          linkedin_url: c.linkedin_url || null,
+          location: c.location || null,
+          event_name: params.tag || null,
+        }),
+      }).catch(() => undefined);
     }
-
-    return { error: `Unsupported tool: ${toolId}` };
-  } catch (e) {
-    return { error: (e as Error).message };
+    const csv = [item.filename, c.name, c.email, c.phone, c.business_name, c.occupation, params.tag].map(csvCell).join(",");
+    return { input_filename: item.filename, output_filename: "contacts.csv", status: "ok", csv };
   }
+
+  if (!["background-remover", "passport-photo-maker", "image-beautify"].includes(job.tool_id)) {
+    throw new Error(`Bulk mode is not available for ${job.tool_id}`);
+  }
+  const out = await image(prompts(job.tool_id, params), [await blobToDataUrl(blob)], IMAGE_MODEL);
+  const suffix = job.tool_id === "passport-photo-maker" ? "-passport" : job.tool_id === "image-beautify" ? "-enhanced" : "";
+  const outName = `${String(index + 1).padStart(3, "0")}-${item.filename.replace(/\.[^.]+$/, "")}${suffix}.png`;
+  const outPath = `${job.user_id}/${job.id}/items/${outName}`;
+  await upload("bulk-outputs", outPath, dataUrlToBlob(out), "image/png");
+  return { input_filename: item.filename, output_filename: outName, output_path: outPath, status: "ok" };
 }
 
-async function processJob(jobId: string, toolId: string, manifest: ManifestItem[], authHeader: string, params: Record<string, any>) {
-  const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
-  await sb.from("bulk_jobs").update({ status: "running" }).eq("id", jobId);
-  const { data: jobRow } = await sb.from("bulk_jobs").select("user_id").eq("id", jobId).maybeSingle();
-  const userId = jobRow?.user_id;
-
+async function finalise(job: Job, outputs: OutputRow[]) {
   const zip = new JSZip();
-  const outputs: any[] = [];
-  let completed = 0;
-  let failed = 0;
-  const csvRows: string[] = [];
-
-  if (toolId === "business-card-scanner") {
-    csvRows.push("source_file,name,email,phone,business,occupation,tag");
-  }
-
-  let totalCharged = 0;
-  for (const item of manifest) {
-    let runId: string | null = null;
-    try {
-      // Per-item credit start
-      if (userId) {
-        const { data: startRes } = await sb.rpc("start_tool_run", { _uid: userId, _tool_id: toolId });
-        if (startRes && startRes.ok === false) {
-          outputs.push({ input_filename: item.filename, status: "error", error: "insufficient_credits" });
-          failed++;
-          await sb.from("bulk_jobs").update({ completed_items: completed, failed_items: failed, outputs }).eq("id", jobId);
-          continue;
-        }
-        runId = startRes?.run_id || null;
+  for (const o of outputs) {
+    if (o.status === "ok" && o.output_path) {
+      try {
+        zip.file(o.output_filename!, new Uint8Array(await (await download("bulk-outputs", o.output_path)).arrayBuffer()));
+      } catch (e) {
+        console.warn("zip add failed", e);
       }
-
-      const { data: blob, error: dlErr } = await sb.storage
-        .from("bulk-inputs")
-        .download(item.storage_path);
-      if (dlErr || !blob) throw new Error("download failed");
-
-      const result = await processItem(toolId, blob, item.filename, authHeader, params, sb, userId);
-      if (result.error && !result.outBlob) {
-        outputs.push({ input_filename: item.filename, status: "error", error: result.error });
-        failed++;
-        if (runId && userId) await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: false, _error: result.error });
-      } else {
-        if (result.outBlob && result.outName) {
-          zip.file(result.outName, await result.outBlob.arrayBuffer());
-        }
-        if (result.csvRow) csvRows.push(result.csvRow);
-        outputs.push({
-          input_filename: item.filename,
-          output_filename: result.outName || "contacts.csv",
-          status: "ok",
-        });
-        completed++;
-        if (runId && userId) {
-          const { data: done } = await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: true });
-          if (done?.charged) totalCharged += done.charged;
-        }
-      }
-    } catch (e) {
-      outputs.push({ input_filename: item.filename, status: "error", error: (e as Error).message });
-      failed++;
-      if (runId && userId) await sb.rpc("complete_tool_run", { _uid: userId, _run_id: runId, _success: false, _error: (e as Error).message });
     }
-
-    await sb
-      .from("bulk_jobs")
-      .update({ completed_items: completed, failed_items: failed, outputs, total_credits_charged: totalCharged })
-      .eq("id", jobId);
   }
-
-  if (csvRows.length > 1) zip.file("contacts.csv", csvRows.join("\n"));
-
-  const manifestCsv = ["input,output,status,error"]
-    .concat(
-      outputs.map(
-        (o) => `"${o.input_filename}","${o.output_filename ?? ""}",${o.status},"${o.error ?? ""}"`
-      )
-    )
-    .join("\n");
-  zip.file("manifest.csv", manifestCsv);
-
-  const zipBuf = await zip.generateAsync({ type: "uint8array" });
-  const zipPath = `${userId}/${jobId}.zip`;
-  await sb.storage.from("bulk-outputs").upload(zipPath, zipBuf, {
-    cacheControl: "3600",
-    upsert: true,
-    contentType: "application/zip",
+  const csvRows = outputs.filter((o) => o.csv).map((o) => o.csv!);
+  if (csvRows.length) zip.file("contacts.csv", ["source_file,name,email,phone,business,occupation,tag", ...csvRows].join("\n"));
+  zip.file(
+    "manifest.csv",
+    ["input,output,status,error", ...outputs.map((o) => [o.input_filename, o.output_filename ?? "", o.status, o.error ?? ""].map(csvCell).join(","))].join("\n"),
+  );
+  const zipPath = `${job.user_id}/${job.id}.zip`;
+  await upload("bulk-outputs", zipPath, await zip.generateAsync({ type: "uint8array" }), "application/zip");
+  const failed = outputs.filter((o) => o.status === "error").length;
+  await patchJob(job.id, {
+    status: failed === outputs.length ? "failed" : failed > 0 ? "partial" : "completed",
+    output_zip_path: zipPath,
+    completed_at: new Date().toISOString(),
   });
+}
 
-  await sb
-    .from("bulk_jobs")
-    .update({
-      status: failed === manifest.length ? "failed" : failed > 0 ? "partial" : "completed",
-      output_zip_path: zipPath,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("id", jobId);
+async function runChunk(jobId: string) {
+  const job = await loadJob(jobId);
+  if (!job) return;
+  const items = Array.isArray(job.input_manifest) ? job.input_manifest : [];
+  const outputs: OutputRow[] = Array.isArray(job.outputs) ? [...job.outputs] : [];
+  const price = PRICE_TOOL[job.tool_id];
+  if (price) await ensurePrice(price.tool, price.credits);
+  const started = Date.now();
+  let totalCharged = Number((job as unknown as { total_credits_charged?: number }).total_credits_charged ?? 0);
+
+  for (let i = outputs.length; i < items.length; i++) {
+    if (Date.now() - started > CHUNK_MS) {
+      // Hand the rest to a fresh invocation so long batches never hit the time limit.
+      await fetch(`${SUPABASE_URL}/functions/v1/bulk-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...svc },
+        body: JSON.stringify({ job_id: job.id, continue: true }),
+      }).catch((e) => console.error("continue failed", e));
+      return;
+    }
+    const item = items[i];
+    let row: OutputRow;
+    if (!item?.storage_path?.startsWith(`${job.user_id}/${job.id}/`)) {
+      row = { input_filename: item?.filename ?? `item ${i + 1}`, status: "error", error: "file not in this job's folder" };
+    } else if (!price) {
+      row = { input_filename: item.filename, status: "error", error: "Bulk mode is not available for this app" };
+    } else {
+      const start = await startRun(job.user_id, price.tool).catch(() => null);
+      if (!start?.ok || !start.run_id) {
+        row = { input_filename: item.filename, status: "error", error: start ? "insufficient_credits" : "billing_unavailable" };
+      } else {
+        try {
+          row = await processItem(job, item, i);
+          const done = await finishRun(job.user_id, start.run_id, true);
+          totalCharged += done?.charged ?? 0;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          await finishRun(job.user_id, start.run_id, false, msg).catch(() => undefined);
+          row = { input_filename: item.filename, status: "error", error: msg };
+        }
+      }
+    }
+    outputs.push(row);
+    await patchJob(job.id, {
+      outputs,
+      completed_items: outputs.filter((o) => o.status === "ok").length,
+      failed_items: outputs.filter((o) => o.status === "error").length,
+      total_credits_charged: totalCharged,
+    });
+  }
+  await finalise(job, outputs);
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
   try {
-    const { job_id, tool_id, input_manifest, params } = await req.json();
-    if (!job_id || !tool_id || !Array.isArray(input_manifest)) {
-      return new Response(JSON.stringify({ error: "missing fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const caller = await identify(req);
+    if (!caller) return json({ error: "sign_in_required" }, 401);
+    const { job_id } = (await req.json().catch(() => ({}))) as { job_id?: string };
+    if (!job_id) return json({ error: "job_id required" }, 400);
+
+    const job = await loadJob(job_id);
+    if (!job) return json({ error: "job not found" }, 404);
+    if (!caller.internal) {
+      if (job.user_id !== caller.userId) return json({ error: "not your job" }, 403);
+      if (job.status !== "queued") return json({ error: "job already started" }, 409);
+      const price = PRICE_TOOL[job.tool_id];
+      if (!price) return json({ error: "Bulk mode is not available for this app" }, 400);
+      // Check up front that the whole batch is affordable, so nobody starts a batch that stops halfway.
+      await ensurePrice(price.tool, price.credits);
+      const each = (await priceOf(price.tool)) ?? price.credits;
+      const count = Array.isArray(job.input_manifest) ? job.input_manifest.length : 0;
+      const balance = await walletBalance(caller.userId as string);
+      if (balance < each * count) {
+        await patchJob(job.id, {
+          status: "failed",
+          error_message: `Not enough credits: ${count} files need ${each * count}, you have ${balance}. Nothing was charged.`,
+        });
+        return json(
+          {
+            error: "insufficient_credits",
+            credits_required: each * count,
+            balance,
+            message: `${count} files need ${each * count} credits (${each} each). You have ${balance}.`,
+          },
+          402,
+        );
+      }
+      await patchJob(job.id, { status: "running" });
     }
-
-    const authHeader = req.headers.get("Authorization") || "";
-
-    // @ts-ignore EdgeRuntime
-    EdgeRuntime.waitUntil(processJob(job_id, tool_id, input_manifest, authHeader, params || {}));
-
-    return new Response(JSON.stringify({ ok: true, job_id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // @ts-ignore EdgeRuntime is provided by the Supabase runtime
+    EdgeRuntime.waitUntil(runChunk(job.id).catch(async (e: unknown) => {
+      console.error("bulk chunk failed", e);
+      await patchJob(job.id, { status: "failed", error_message: e instanceof Error ? e.message : String(e) });
+    }));
+    return json({ ok: true, job_id: job.id });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });

@@ -3,9 +3,9 @@
 // page, blocking first paint site-wide; now they load only when the analyser needs them.
 
 const SCRIPTS = [
-  "https://cdn.jsdelivr.net/npm/chart.js",
+  "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js",
-  "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js",
+  "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
 ];
 const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -48,4 +48,41 @@ export function ensureStartupLibs(): Promise<void> {
       });
   }
   return pending;
+}
+
+const PDF_JS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const MERMAID = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+let pdfPending: Promise<void> | null = null;
+let mermaidPending: Promise<void> | null = null;
+
+/** Loads only PDF.js (for apps that read PDFs). */
+export function ensurePdfJs(): Promise<void> {
+  if (!pdfPending) {
+    pdfPending = loadScript(PDF_JS)
+      .then(() => {
+        const w = window as unknown as { pdfjsLib?: { GlobalWorkerOptions: { workerSrc: string } } };
+        if (w.pdfjsLib) w.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+      })
+      .catch((err) => {
+        pdfPending = null;
+        throw err;
+      });
+  }
+  return pdfPending;
+}
+
+/** Loads only Mermaid (for diagram apps); strict security so diagram text can't run scripts. */
+export function ensureMermaid(): Promise<void> {
+  if (!mermaidPending) {
+    mermaidPending = loadScript(MERMAID)
+      .then(() => {
+        const w = window as unknown as { mermaid?: { initialize: (cfg: Record<string, unknown>) => void } };
+        w.mermaid?.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "strict" });
+      })
+      .catch((err) => {
+        mermaidPending = null;
+        throw err;
+      });
+  }
+  return mermaidPending;
 }

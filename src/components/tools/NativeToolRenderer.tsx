@@ -1,48 +1,56 @@
-import { ImageColorPicker } from "./ImageColorPicker";
-import { ImageResizer } from "./ImageResizer";
-import { ImageCropper } from "./ImageCropper";
-import { BackgroundRemover } from "./BackgroundRemover";
-import { ImageWatermark } from "./ImageWatermark";
-import { PassportPhotoMaker } from "./PassportPhotoMaker";
-import { SignatureGenerator } from "./SignatureGenerator";
-import { ImageRotator } from "./ImageRotator";
-import { ImageCompressor } from "./ImageCompressor";
-import { ImageMerger } from "./ImageMerger";
-import { ImageBlur } from "./ImageBlur";
-import { ImagePixelate } from "./ImagePixelate";
-import { ImageGrayscale } from "./ImageGrayscale";
-import { ImageBeautify } from "./ImageBeautify";
-import { ImageTextOverlay } from "./ImageTextOverlay";
-import { DpiConverter } from "./DpiConverter";
-import { MetadataViewer } from "./MetadataViewer";
-import { ImageSplitter } from "./ImageSplitter";
-import { AddLogoToImage } from "./AddLogoToImage";
-import { InvoiceGenerator } from "./InvoiceGenerator";
-import { ExpenseTracker } from "./ExpenseTracker";
-import { ContractDrafter } from "./ContractDrafter";
-import { SalaryCalculator } from "./SalaryCalculator";
-import { TaxEstimator } from "./TaxEstimator";
-import { JobPostGenerator } from "./JobPostGenerator";
-import { ProfitCalculator } from "./ProfitCalculator";
-import { QuizMaker } from "./QuizMaker";
-import { LessonPlanner } from "./LessonPlanner";
-import { GradeCalculator } from "./GradeCalculator";
-import { StudyPlanner } from "./StudyPlanner";
-import { FlashcardMaker } from "./FlashcardMaker";
-import { AssignmentTracker } from "./AssignmentTracker";
-import { BibliographyGenerator } from "./BibliographyGenerator";
-import { ExamScheduler } from "./ExamScheduler";
-import { SocialPostGenerator } from "./SocialPostGenerator";
-import { CaptionGenerator } from "./CaptionGenerator";
-import { HashtagGenerator } from "./HashtagGenerator";
-import { ContentIdeaGenerator } from "./ContentIdeaGenerator";
-import { VideoScriptWriter } from "./VideoScriptWriter";
-import { ContentWorkflow } from "./ContentWorkflow";
-import ThumbnailMaker from "./ThumbnailMaker";
-import VideoMaker from "./VideoMaker";
+import { Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
+import AppRenderer from "@/apps/AppRenderer";
+import { hasEngineApp } from "@/apps/registry";
+
+// Each tool loads only when it is opened (keeps the tool page fast).
+const ImageColorPicker = lazy(() => import("./ImageColorPicker").then((m) => ({ default: m.ImageColorPicker })));
+const ImageResizer = lazy(() => import("./ImageResizer").then((m) => ({ default: m.ImageResizer })));
+const ImageCropper = lazy(() => import("./ImageCropper").then((m) => ({ default: m.ImageCropper })));
+const BackgroundRemover = lazy(() => import("./BackgroundRemover").then((m) => ({ default: m.BackgroundRemover })));
+const ImageWatermark = lazy(() => import("./ImageWatermark").then((m) => ({ default: m.ImageWatermark })));
+const PassportPhotoMaker = lazy(() => import("./PassportPhotoMaker").then((m) => ({ default: m.PassportPhotoMaker })));
+const SignatureGenerator = lazy(() => import("./SignatureGenerator").then((m) => ({ default: m.SignatureGenerator })));
+const ImageRotator = lazy(() => import("./ImageRotator").then((m) => ({ default: m.ImageRotator })));
+const ImageCompressor = lazy(() => import("./ImageCompressor").then((m) => ({ default: m.ImageCompressor })));
+const ImageMerger = lazy(() => import("./ImageMerger").then((m) => ({ default: m.ImageMerger })));
+const ImageBlur = lazy(() => import("./ImageBlur").then((m) => ({ default: m.ImageBlur })));
+const ImagePixelate = lazy(() => import("./ImagePixelate").then((m) => ({ default: m.ImagePixelate })));
+const ImageGrayscale = lazy(() => import("./ImageGrayscale").then((m) => ({ default: m.ImageGrayscale })));
+const ImageBeautify = lazy(() => import("./ImageBeautify").then((m) => ({ default: m.ImageBeautify })));
+const ImageTextOverlay = lazy(() => import("./ImageTextOverlay").then((m) => ({ default: m.ImageTextOverlay })));
+const DpiConverter = lazy(() => import("./DpiConverter").then((m) => ({ default: m.DpiConverter })));
+const MetadataViewer = lazy(() => import("./MetadataViewer").then((m) => ({ default: m.MetadataViewer })));
+const ImageSplitter = lazy(() => import("./ImageSplitter").then((m) => ({ default: m.ImageSplitter })));
+const AddLogoToImage = lazy(() => import("./AddLogoToImage").then((m) => ({ default: m.AddLogoToImage })));
+const InvoiceGenerator = lazy(() => import("./InvoiceGenerator").then((m) => ({ default: m.InvoiceGenerator })));
+const ExpenseTracker = lazy(() => import("./ExpenseTracker").then((m) => ({ default: m.ExpenseTracker })));
+const ContractDrafter = lazy(() => import("./ContractDrafter").then((m) => ({ default: m.ContractDrafter })));
+const SalaryCalculator = lazy(() => import("./SalaryCalculator").then((m) => ({ default: m.SalaryCalculator })));
+const TaxEstimator = lazy(() => import("./TaxEstimator").then((m) => ({ default: m.TaxEstimator })));
+const JobPostGenerator = lazy(() => import("./JobPostGenerator").then((m) => ({ default: m.JobPostGenerator })));
+const ProfitCalculator = lazy(() => import("./ProfitCalculator").then((m) => ({ default: m.ProfitCalculator })));
+const QuizMaker = lazy(() => import("./QuizMaker").then((m) => ({ default: m.QuizMaker })));
+const LessonPlanner = lazy(() => import("./LessonPlanner").then((m) => ({ default: m.LessonPlanner })));
+const GradeCalculator = lazy(() => import("./GradeCalculator").then((m) => ({ default: m.GradeCalculator })));
+const StudyPlanner = lazy(() => import("./StudyPlanner").then((m) => ({ default: m.StudyPlanner })));
+const FlashcardMaker = lazy(() => import("./FlashcardMaker").then((m) => ({ default: m.FlashcardMaker })));
+const AssignmentTracker = lazy(() => import("./AssignmentTracker").then((m) => ({ default: m.AssignmentTracker })));
+const BibliographyGenerator = lazy(() => import("./BibliographyGenerator").then((m) => ({ default: m.BibliographyGenerator })));
+const ExamScheduler = lazy(() => import("./ExamScheduler").then((m) => ({ default: m.ExamScheduler })));
+const SocialPostGenerator = lazy(() => import("./SocialPostGenerator").then((m) => ({ default: m.SocialPostGenerator })));
+const CaptionGenerator = lazy(() => import("./CaptionGenerator").then((m) => ({ default: m.CaptionGenerator })));
+const HashtagGenerator = lazy(() => import("./HashtagGenerator").then((m) => ({ default: m.HashtagGenerator })));
+const ContentIdeaGenerator = lazy(() => import("./ContentIdeaGenerator").then((m) => ({ default: m.ContentIdeaGenerator })));
+const VideoScriptWriter = lazy(() => import("./VideoScriptWriter").then((m) => ({ default: m.VideoScriptWriter })));
+const ContentWorkflow = lazy(() => import("./ContentWorkflow").then((m) => ({ default: m.ContentWorkflow })));
+const ThumbnailMaker = lazy(() => import("./ThumbnailMaker"));
+const VideoMaker = lazy(() => import("./VideoMaker"));
 
 // Map of tool IDs to native components
 const nativeTools: Record<string, React.ComponentType> = {
+  // (tool-22 Supplier Order and tool-20 Stock Audit used to point at the salary calculator and
+  //  job-post generator by mistake; they are now real apps in src/apps.)
   // Color & Basic
   "image-color-picker": ImageColorPicker,
   
@@ -167,10 +175,10 @@ const nativeTools: Record<string, React.ComponentType> = {
   
   // HR & Staffing
   "salary-calculator": SalaryCalculator,
-  "tool-22": SalaryCalculator,
+  "tool-30": SalaryCalculator,
   "hiring-job-post": JobPostGenerator,
   "job-post-generator": JobPostGenerator,
-  "tool-20": JobPostGenerator,
+  "tool-28": JobPostGenerator,
 
   // ===== EDUCATION TOOLS =====
   "quiz-maker": QuizMaker,
@@ -209,17 +217,24 @@ interface NativeToolRendererProps {
   toolId: string;
 }
 
+const Loading = () => (
+  <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
+    <Loader2 className="h-6 w-6 animate-spin" aria-label="Loading app" />
+  </div>
+);
+
 export const NativeToolRenderer = ({ toolId }: NativeToolRendererProps) => {
+  if (hasEngineApp(toolId)) return <AppRenderer toolId={toolId} />;
   const ToolComponent = nativeTools[toolId];
-  
-  if (!ToolComponent) {
-    return null;
-  }
-  
-  return <ToolComponent />;
+  if (!ToolComponent) return null;
+  return (
+    <Suspense fallback={<Loading />}>
+      <div className="py-3 md:py-6">
+        <ToolComponent />
+      </div>
+    </Suspense>
+  );
 };
 
 // Check if a tool has a native implementation
-export const hasNativeImplementation = (toolId: string): boolean => {
-  return toolId in nativeTools;
-};
+export const hasNativeImplementation = (toolId: string): boolean => toolId in nativeTools || hasEngineApp(toolId);

@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Trash2, Download, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { useWriteBack } from "@/apps/lib/context";
+import { ContextBanner } from "@/apps/shell/ContextBanner";
+import { useAppStore } from "@/apps/lib/store";
 
 interface Expense {
   id: number;
@@ -33,13 +36,21 @@ const categories = [
 const paymentMethods = ["Cash", "UPI", "Bank Transfer", "Credit Card", "Debit Card", "Cheque"];
 
 export const ExpenseTracker = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  // Expenses are saved (to your account when signed in) instead of vanishing on refresh.
+  const saved = useAppStore<{ expenses: Expense[]; budget: string; savedAt?: number }>("tool-2", { expenses: [], budget: "" });
+  const expenses = saved.data.expenses ?? [];
+  const setExpenses = (e: Expense[]) => saved.update({ expenses: e });
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [budget, setBudget] = useState("");
+  const budget = saved.data.budget ?? "";
+  const setBudget = (b: string) => saved.update({ budget: b });
+
+  // This month's total flows to the Tax Estimator and Profit Calculator.
+  const month = new Date().toISOString().slice(0, 7);
+  useWriteBack(expenses, (list) => ({ money: { monthlyExpenses: list.filter((e) => e.date.startsWith(month)).reduce((s, e) => s + e.amount, 0) } }));
 
   const addExpense = () => {
     if (!date || !description || !category || !amount) {
@@ -114,6 +125,7 @@ export const ExpenseTracker = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <ContextBanner show={["client", "money"]} />
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">

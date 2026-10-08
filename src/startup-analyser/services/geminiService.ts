@@ -1,7 +1,6 @@
 import type { AnalysisResult, StructuredData } from '../types';
 import { ensureStartupLibs } from '@/lib/startupLibs';
-
-const ANALYSER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/startup-analyser`;
+import { streamFunction } from '@/lib/credits';
 
 /**
  * Calls the startup-analyser edge function with streaming to generate a comprehensive analysis.
@@ -26,22 +25,8 @@ export async function generateComprehensiveAnalysis(
     body.userApiKey = userApiKey;
   }
 
-  const resp = await fetch(ANALYSER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    if (resp.status === 429) throw new Error("Rate limit exceeded. Please try again later.");
-    if (resp.status === 402) throw new Error("Usage limit reached. Please add credits.");
-    throw new Error(err.error || "Analysis failed");
-  }
-
+  // Signed-in call; the server checks and charges credits (401 / 402 are handled by useCredits).
+  const resp = await streamFunction("startup-analyser", body);
   if (!resp.body) throw new Error("No response body");
 
   onProgress('25');
@@ -99,25 +84,12 @@ export async function streamChatMessage(
   onDone: () => void,
   userApiKey?: string | null
 ): Promise<void> {
-  const resp = await fetch(ANALYSER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify({
-      action: "chat",
-      reportContext,
-      chatMessages: messages,
-      ...(userApiKey ? { userApiKey } : {}),
-    }),
+  const resp = await streamFunction("startup-analyser", {
+    action: "chat",
+    reportContext,
+    chatMessages: messages,
+    ...(userApiKey ? { userApiKey } : {}),
   });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || "Chat failed");
-  }
-
   if (!resp.body) throw new Error("No response body");
 
   const reader = resp.body.getReader();

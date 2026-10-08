@@ -1,4 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(billed({
+  // Each content type is its own app. Every AI step of the Content Workflow is charged as one
+  // "content-workflow" run, so no step can be used as a free generator. Unknown types are refused.
+  tool: (b) => (({
+    "social-post": "social-post-generator",
+    "captions": "caption-generator",
+    "hashtags": "hashtag-generator",
+    "content-ideas": "content-idea-generator",
+    "video-script": "video-script-writer",
+    "workflow-idea": "content-workflow",
+    "workflow-content": "content-workflow",
+    "workflow-hashtags": "content-workflow",
+    "workflow-caption": "content-workflow",
+  }) as Record<string, string>)[b?.type] ?? "content-generator-unknown",
+}, (req) => handler(req)));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +35,16 @@ serve(async (req) => {
   }
 
   try {
-    const { type, ...params } = await req.json();
+    const { type, ...raw } = await req.json();
+    // Keep every input to a sensible size so one request cannot run up a large AI bill.
+    // deno-lint-ignore no-explicit-any
+    const params: Record<string, any> = {};
+    for (const [k, v] of Object.entries(raw ?? {})) {
+      if (typeof v === "string") params[k] = v.slice(0, 4000);
+      else if (Array.isArray(v)) params[k] = v.slice(0, 30).map((x) => (typeof x === "string" ? x.slice(0, 200) : x));
+      else if (typeof v === "number") params[k] = Math.max(1, Math.min(k === "count" ? 30 : 5000, v));
+      else params[k] = v;
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {

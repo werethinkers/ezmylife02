@@ -26,18 +26,39 @@ export interface CatalogTool {
 async function fetchToolsCatalog(): Promise<CatalogTool[]> {
   const { data, error } = await supabase
     .from("tools_catalog")
-    .select("*")
+    // Only the columns the store needs — the long demo texts are fetched by the app page itself.
+    .select("id,name,description,category,tool_types,source,is_live,is_free,display_order,icon_url,rating,review_count,preview_image_url,preview_image_fit,icon_fit,home_section,dedicated_route,created_at,updated_at")
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data as CatalogTool[]) ?? [];
+  const list = (data as unknown as CatalogTool[]) ?? [];
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
+  } catch {
+    /* storage full / blocked */
+  }
+  return list;
+}
+
+// Last catalog seen in this browser: pages render instantly on repeat visits while a fresh
+// copy loads in the background.
+const CACHE_KEY = "ez.catalog.v2";
+function cachedCatalog(): { at: number; list: CatalogTool[] } | undefined {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function useToolsCatalog() {
   return useQuery({
     queryKey: ["tools-catalog"],
     queryFn: fetchToolsCatalog,
-    staleTime: 5 * 60 * 1000, // 5 min cache
+    initialData: () => cachedCatalog()?.list,
+    initialDataUpdatedAt: () => cachedCatalog()?.at,
+    staleTime: 10 * 60 * 1000, // 10 min cache
     gcTime: 30 * 60 * 1000,
   });
 }

@@ -23,7 +23,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
   const [scanning, setScanning] = useState(false);
   const [extracted, setExtracted] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { charge, dialogProps, loginDialogProps } = useCredits("business-card-scanner");
+  const { charge, dialogProps, loginDialogProps } = useCredits("meet-nudge");
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -107,7 +107,7 @@ export default function BusinessCardScanner({ userId, eventId, eventName, onSave
         </div>
       )}
       <Button onClick={scan} disabled={scanning || images.length === 0} className="w-full">
-        {scanning ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : <>Scan & Extract <CreditCostBadge toolId="business-card-scanner" className="ml-2" /></>}
+        {scanning ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : <>Scan & Extract <CreditCostBadge toolId="meet-nudge" className="ml-2" /></>}
       </Button>
       <div className="flex justify-center pt-1">
         <BulkModeToggle toolId="business-card-scanner" />

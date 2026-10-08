@@ -1,4 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+// - Full analysis: "startup-analyser" (Gemini 2.5 Pro, long report).
+// - Follow-up chat question: "startup-analyser-chat" (Gemini 2.5 Flash, 1 credit).
+// - Requests made with the visitor's own Gemini key are free: they never fall back to our keys.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(
+    billed(
+      {
+        tool: (b) => {
+          if (typeof b?.userApiKey === "string" && b.userApiKey.trim().length > 20) return null;
+          return b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser";
+        },
+        defaultCredits: (id) => (id === "startup-analyser-chat" ? 1 : undefined),
+      },
+      (req) => handler(req),
+    ),
+  );
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -55,15 +74,17 @@ async function callAIWithFallback(
   let saw429 = false;
   let saw400 = false;
 
-  // 1. If user provided their own key, try it first
+  // 1. The visitor's own key: free for them, so it never falls back to the app's keys.
   if (userApiKey) {
     const geminiModel = model.replace("google/", "");
     const res = await callGeminiDirect(userApiKey, messages, geminiModel, stream);
     if (res.ok) return res;
-    if (res.status === 402) saw402 = true;
-    if (res.status === 429) saw429 = true;
-    if (res.status === 400) saw400 = true;
-    console.warn(`User API key failed with ${res.status}, falling back...`);
+    throw new AIProviderError(
+      res.status === 429 ? 429 : 400,
+      res.status === 429
+        ? "Your own Gemini key is rate-limited. Wait a minute, or remove it in Profile to use credits instead."
+        : `Your own Gemini key was rejected (${res.status}). Check it in Profile, or remove it to use credits instead.`,
+    );
   }
 
   // 2. Try Lovable AI gateway
@@ -218,10 +239,11 @@ async function callGeminiDirect(
         }
       }
       await writer.write(encoder.encode("data: [DONE]\n\n"));
-    } catch (e) {
-      console.error("Stream transform error:", e);
-    } finally {
       await writer.close();
+    } catch (e) {
+      // Surface the break so the visitor is not charged for a cut-off answer.
+      console.error("Stream transform error:", e);
+      await writer.abort(e).catch(() => undefined);
     }
   })();
 
@@ -243,10 +265,15 @@ serve(async (req) => {
 
     // Chat action
     if (action === "chat") {
-      const systemPrompt = `You are an expert AI investment analyst assistant. The user has received an analysis report for a startup. Answer follow-up questions based on this context:\n\n${(reportContext || "").substring(0, 4000)}\n\nBe concise and helpful.`;
+      const systemPrompt = `You are an expert AI investment analyst assistant. The user has received an analysis report for a startup. Answer follow-up questions based on this context:\n\n${String(reportContext || "").substring(0, 12000)}\n\nBe concise and helpful. If the report does not cover something, say so rather than guessing.`;
+      const history = (Array.isArray(chatMessages) ? chatMessages : [])
+        .filter((m: { role?: string; content?: unknown }) => (m?.role === "user" || m?.role === "assistant") && typeof m.content === "string")
+        .slice(-10)
+        .map((m: { role: string; content: string }) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+      if (!history.length) throw new AIProviderError(400, "Ask a question first.");
 
       const response = await callAIWithFallback(
-        [{ role: "system", content: systemPrompt }, ...(chatMessages || [])],
+        [{ role: "system", content: systemPrompt }, ...history],
         "google/gemini-2.5-flash",
         true,
         userApiKey
@@ -258,7 +285,7 @@ serve(async (req) => {
     // Main analysis action
     if (!companyName) throw new Error("Company name is required");
 
-    const analysisPrompt = getAnalysisPrompt(companyName, companyWebsite || "", pitchDeckText || "");
+    const analysisPrompt = getAnalysisPrompt(String(companyName).slice(0, 200), String(companyWebsite || "").slice(0, 300), String(pitchDeckText || "").slice(0, 30000));
 
     const response = await callAIWithFallback(
       [

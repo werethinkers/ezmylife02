@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Calculator, IndianRupee, Percent, FileText, TrendingDown } from "lucide-react";
+import { usePrefill, useWriteBack } from "@/apps/lib/context";
+import { ContextBanner } from "@/apps/shell/ContextBanner";
 
 const gstRates = [
   { value: "0", label: "0% (Exempt)" },
@@ -41,6 +43,19 @@ export const TaxEstimator = () => {
   const [monthlyPurchases, setMonthlyPurchases] = useState<number>(0);
   const [salesGstRate, setSalesGstRate] = useState<string>("18");
   const [purchaseGstRate, setPurchaseGstRate] = useState<string>("18");
+
+  // Workspace: the last invoice and this month's sales / expenses fill the calculators.
+  usePrefill((ctx) => {
+    const inv = ctx.lastInvoice;
+    if (inv?.subtotal) {
+      setGstAmount((v) => v || Math.round(inv.subtotal! * 100) / 100);
+      setTdsAmount((v) => v || Math.round(inv.subtotal! * 100) / 100);
+    }
+    const sales = ctx.money?.monthlyRevenue || inv?.subtotal;
+    if (sales) setMonthlySales((v) => v || Math.round(sales));
+    if (ctx.money?.monthlyExpenses) setMonthlyPurchases((v) => v || Math.round(ctx.money!.monthlyExpenses!));
+  });
+  useWriteBack(monthlySales, (v) => (v > 0 ? { money: { monthlyRevenue: v } } : null));
 
   // GST Calculations
   const calculateGST = () => {
@@ -87,6 +102,7 @@ export const TaxEstimator = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <ContextBanner show={["client", "invoice", "money"]} />
       <Card className="border-primary/20 bg-card/50 backdrop-blur">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

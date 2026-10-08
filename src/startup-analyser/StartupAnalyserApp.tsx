@@ -153,6 +153,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
   const { user } = useAuth();
   const { toast } = useToast();
   const { charge: chargeAnalysis, dialogProps: analysisDialog, loginDialogProps: analysisLogin } = useCredits('startup-analyser');
+  const { handleError: handleChatError, dialogProps: chatDialog, loginDialogProps: chatLogin } = useCredits('startup-analyser-chat');
   const [step, setStep] = useState<AppStep>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -288,7 +289,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
             element.textContent = definition;
             await window.mermaid.run({ nodes: [element] });
           } catch (e: any) {
-            element.innerHTML = `<div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-left"><p class="font-bold">Diagram Rendering Failed</p><details class="text-xs mt-2"><summary>Show Code</summary><pre class="mt-2 font-mono bg-red-100 p-2 rounded whitespace-pre-wrap">${definition}</pre></details></div>`;
+            element.innerHTML = `<div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-left"><p class="font-bold">Diagram Rendering Failed</p><details class="text-xs mt-2"><summary>Show Code</summary><pre class="mt-2 font-mono bg-red-100 p-2 rounded whitespace-pre-wrap">${definition.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></details></div>`;
             element.setAttribute('data-processed', 'true');
           }
         }
@@ -348,8 +349,9 @@ export default function StartupAnalyserApp(): React.ReactNode {
     setCurrentSessionId(null);
 
     try {
-      const result = await chargeAnalysis(async () =>
-        generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey),
+      const result = await chargeAnalysis(
+        async () => generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey),
+        { free: !!userApiKey },
       );
       if (!result) { setStep('input'); return; }
       setAnalysisResult(result);
@@ -421,10 +423,14 @@ export default function StartupAnalyserApp(): React.ReactNode {
         () => setIsChatting(false),
         userApiKey
       );
-    } catch {
+    } catch (err) {
+      const handled = await handleChatError(err);
       setChatHistory(prev => {
         const newHistory = [...prev];
-        newHistory[newHistory.length - 1] = { role: 'assistant', content: "Sorry, I encountered an error. Please try again." };
+        newHistory[newHistory.length - 1] = {
+          role: 'assistant',
+          content: handled ? "Sign in or add credits to ask follow-up questions (1 credit each)." : (err instanceof Error && err.message ? err.message : "Sorry, I encountered an error. Please try again."),
+        };
         return newHistory;
       });
       setIsChatting(false);
@@ -798,6 +804,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
       </main>
       <BuyCreditsDialog {...analysisDialog} />
       <LoginPromptDialog {...analysisLogin} />
+      <BuyCreditsDialog {...chatDialog} />
+      <LoginPromptDialog {...chatLogin} />
     </div>
   );
 }

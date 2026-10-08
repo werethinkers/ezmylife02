@@ -1,4 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(billed({ tool: "promptmaster-ai" }, (req) => handler(req)));
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -71,7 +76,12 @@ serve(async (req) => {
   }
 
   try {
-    const { action, context, selections, format, keywords } = await req.json();
+    const body = await req.json();
+    const action = body?.action;
+    const format = typeof body?.format === "string" ? body.format.slice(0, 20) : undefined;
+    const context = String(body?.context ?? "").slice(0, 4000);
+    const keywords = String(body?.keywords ?? "").slice(0, 4000);
+    const selections = (Array.isArray(body?.selections) ? body.selections : []).slice(0, 40).map((x: unknown) => String(x).slice(0, 100));
 
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
 
@@ -108,13 +118,12 @@ Instruction: ${instruction}
 Provide a title for each.
 
 RESPOND WITH ONLY a JSON array of objects with "title" and "prompt" keys. No other text.`;
-    } else if (action === 'analyze_image') {
-      prompt = "STRICT OUTPUT RULE: Return ONLY keywords. NO introductory phrases. Format: [Visual Keywords] | [Audio Keywords]. No sentences. Raw data only.";
     } else {
+      // (The old "analyze_image" action sent no image to the model and was not used by the app.)
       throw new Error('Unknown action: ' + action);
     }
 
-    const jsonMode = action !== 'analyze_image';
+    const jsonMode = true;
 
     // 1. Try Lovable AI first
     if (apiKey) {

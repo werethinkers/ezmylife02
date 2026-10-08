@@ -22,6 +22,8 @@ import {
     BotIcon, SendIcon, QuestionMarkCircleIcon, FileImportIcon, CheckIcon, MagicWandIcon
 } from '@/components/notebook/icons';
 import { supabase } from '@/integrations/supabase/client';
+import { handleCreditError, emitCreditPrompt } from '@/lib/creditPrompt';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
@@ -112,12 +114,23 @@ const createLinkifiedFragment = (text: string): DocumentFragment => {
 };
 
 // Helper to call notebook-ai edge function
+// Each AI action is one charged "speedy-notebook" run on the server; sign-in / top-up dialogs
+// are opened by the shared credit prompt.
 const callNotebookAI = async (prompt: string, config?: { responseMimeType?: string }) => {
-    const { data } = await supabase.functions.invoke('notebook-ai', {
+    const { data, error } = await supabase.functions.invoke('notebook-ai', {
         body: { action: 'generate', prompt, config },
     });
+    if (error) {
+        if (await handleCreditError(error)) throw new NotebookCreditsError();
+        throw error;
+    }
+    emitCreditPrompt({ kind: 'charged' });
     return data?.text || '';
 };
+
+class NotebookCreditsError extends Error {
+    constructor() { super('credits'); }
+}
 
 // Toolbar Component
 interface EditorToolbarProps {
@@ -424,8 +437,10 @@ const ShortcutGeneratorModal: React.FC<{
                  }
              }
         } catch (e) {
-            console.error(e);
-            alert("Failed to generate shortcuts.");
+            if (!(e instanceof NotebookCreditsError)) {
+                console.error(e);
+                toast.error("Failed to generate shortcuts.");
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -932,8 +947,12 @@ const SpeedyNotebook: React.FC = () => {
              }
         }
     } catch (e) {
-        console.error(e);
-        setAiSuggestions(["Error processing request."]);
+        if (e instanceof NotebookCreditsError) {
+            setAiSuggestions(["Sign in or add credits to use AI tools in the notebook."]);
+        } else {
+            console.error(e);
+            setAiSuggestions(["Error processing request."]);
+        }
     } finally {
         setIsAiLoading(false);
     }
@@ -962,7 +981,7 @@ const SpeedyNotebook: React.FC = () => {
             dictationRecognition.current = recognition;
             setIsDictating(true);
         } else {
-            alert("Speech Recognition is not supported.");
+            toast.error("Voice typing is not supported in this browser. Try Chrome or Edge.");
         }
     }
   };

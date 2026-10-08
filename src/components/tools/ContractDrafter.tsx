@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, FileCheck, Copy, Building2, User } from "lucide-react";
+import { usePrefill, useWriteBack } from "@/apps/lib/context";
+import { ContextBanner } from "@/apps/shell/ContextBanner";
 
 const contractTypes = [
   { value: "service", label: "Service Agreement" },
@@ -30,6 +32,24 @@ export const ContractDrafter = () => {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [additionalTerms, setAdditionalTerms] = useState("");
   const [generatedContract, setGeneratedContract] = useState("");
+
+  // Workspace: you are Party A, the current client is Party B; the engagement fee and service
+  // carry over (or the last invoice total).
+  usePrefill((ctx, p) => {
+    setPartyAName((v) => v || p.businessName || "");
+    setPartyAAddress((v) => v || [p.address, p.city].filter(Boolean).join(", "));
+    setPartyBName((v) => v || ctx.client?.name || "");
+    setPartyBAddress((v) => v || ctx.client?.address || "");
+    setScopeOfWork((v) => v || ctx.engagement?.service || "");
+    const fee = ctx.engagement?.fee || (ctx.lastInvoice?.total ? String(Math.round(ctx.lastInvoice.total)) : "");
+    setPaymentAmount((v) => v || fee);
+    if (ctx.engagement?.start) setStartDate((v) => v || ctx.engagement!.start!);
+    if (ctx.engagement?.end) setEndDate((v) => v || ctx.engagement!.end!);
+  });
+  useWriteBack({ partyBName, partyBAddress, scopeOfWork, paymentAmount }, (v) => ({
+    ...(v.partyBName ? { client: { name: v.partyBName, address: v.partyBAddress } } : {}),
+    ...(v.scopeOfWork || v.paymentAmount ? { engagement: { service: v.scopeOfWork, fee: v.paymentAmount } } : {}),
+  }));
 
   const generateContract = () => {
     if (!contractType || !partyAName || !partyBName) {
@@ -408,6 +428,7 @@ Date: ________________                     Date: ________________`;
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <ContextBanner show={["client", "invoice"]} />
       <Card className="border-primary/20 bg-card/50 backdrop-blur">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

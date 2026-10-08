@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { handleCreditError, emitCreditPrompt } from '@/lib/creditPrompt';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -510,7 +511,11 @@ const PromptMaster: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('promptmaster-ai', {
         body: { action: 'brainstorm', context: context || 'Modern professional communication', selections: flatSelections, format: activeFormat },
       });
-      if (error) throw error;
+      if (error) {
+        if (await handleCreditError(error)) return;
+        throw error;
+      }
+      emitCreditPrompt({ kind: 'charged' });
       const text = data?.text || '[]';
       try {
         const parsed = JSON.parse(text);
@@ -533,7 +538,11 @@ const PromptMaster: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('promptmaster-ai', {
         body: { action: 'magic_write', keywords: context, format: activeFormat },
       });
-      if (error) throw error;
+      if (error) {
+        if (await handleCreditError(error)) return;
+        throw error;
+      }
+      emitCreditPrompt({ kind: 'charged' });
       const text = data?.text || '[]';
       try {
         const parsed = JSON.parse(text);

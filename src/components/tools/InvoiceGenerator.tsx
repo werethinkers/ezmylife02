@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Trash2, Download, FileText, Calculator } from "lucide-react";
+import { usePrefill, useWriteBack } from "@/apps/lib/context";
+import { ContextBanner } from "@/apps/shell/ContextBanner";
 
 interface InvoiceItem {
   id: number;
@@ -30,6 +32,30 @@ export const InvoiceGenerator = () => {
   ]);
   const [notes, setNotes] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Workspace: your business details and the current client fill in automatically, and the
+  // client + invoice totals flow on to Expense Tracker, Tax Estimator, Profit Calculator and
+  // the Contract Drafter.
+  usePrefill((ctx, p) => {
+    setCompanyName((v) => v || p.businessName || "");
+    setCompanyAddress((v) => v || [p.address, p.city].filter(Boolean).join(", "));
+    setCompanyGST((v) => v || p.gstin || "");
+    setClientName((v) => v || ctx.client?.name || "");
+    setClientAddress((v) => v || ctx.client?.address || "");
+    setClientGST((v) => v || ctx.client?.gstin || "");
+    if (ctx.engagement?.service && ctx.engagement.fee)
+      setItems((it) => (it.length === 1 && !it[0].description ? [{ ...it[0], description: ctx.engagement!.service!, rate: parseFloat(ctx.engagement!.fee!) || 0 }] : it));
+  });
+  useWriteBack({ clientName, clientAddress, clientGST, invoiceNumber, items }, (v) => {
+    const subtotal = v.items.reduce((s, i) => s + i.quantity * i.rate, 0);
+    const gst = v.items.reduce((s, i) => s + (i.quantity * i.rate * i.gstRate) / 100, 0);
+    return {
+      ...(v.clientName ? { client: { name: v.clientName, address: v.clientAddress, gstin: v.clientGST } } : {}),
+      ...(subtotal > 0
+        ? { lastInvoice: { number: v.invoiceNumber, subtotal, gst, total: subtotal + gst, items: v.items.filter((i) => i.description).map((i) => ({ description: i.description, quantity: i.quantity, rate: i.rate })) } }
+        : {}),
+    };
+  });
 
   const addItem = () => {
     setItems([...items, { id: Date.now(), description: "", quantity: 1, rate: 0, gstRate: 18 }]);
@@ -180,6 +206,7 @@ export const InvoiceGenerator = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <ContextBanner show={["client"]} />
       <Card className="border-primary/20 bg-card/50 backdrop-blur">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

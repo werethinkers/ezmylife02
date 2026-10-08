@@ -93,7 +93,7 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{tool.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {cost} credit{cost === 1 ? "" : "s"} · about {formatRupees(cost * RUPEES_PER_CREDIT_MAX)} a run
+                    {cost === 0 ? "Free to use" : <>{cost} credit{cost === 1 ? "" : "s"} · about {formatRupees(cost * RUPEES_PER_CREDIT_MAX)} a run</>}
                   </p>
                 </div>
               </div>

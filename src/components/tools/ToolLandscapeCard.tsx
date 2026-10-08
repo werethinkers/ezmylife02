@@ -155,9 +155,9 @@ export const ToolLandscapeCard = ({
             <Zap className="h-5 w-5 text-foreground" />
           </div>
           <div className="text-sm leading-tight">
-            <p className="text-muted-foreground text-xs">Minimum Credit to Start:</p>
+            <p className="text-muted-foreground text-xs">Price per result:</p>
             <p className="font-bold text-base">
-              {creditCost} CREDIT{creditCost === 1 ? "" : "S"} for 1 Generation
+              {creditCost === 0 ? "FREE to use" : <>{creditCost} CREDIT{creditCost === 1 ? "" : "S"} for 1 Generation</>}
             </p>
             
           </div>
@@ -167,7 +167,7 @@ export const ToolLandscapeCard = ({
           onClick={handleStart}
           className="w-full h-14 text-base font-bold bg-gradient-to-r from-violet-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white border-0 shadow-lg rounded-full"
         >
-          START USING · {creditCost} CREDIT{creditCost === 1 ? "" : "S"}
+          START USING · {creditCost === 0 ? "FREE" : <>{creditCost} CREDIT{creditCost === 1 ? "" : "S"}</>}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground mt-3">

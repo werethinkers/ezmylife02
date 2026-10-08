@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 
 type WorkflowStep = "idea" | "content" | "hashtags" | "caption" | "publish";
 
@@ -41,6 +45,8 @@ const steps = [
 ];
 
 export const ContentWorkflow = () => {
+  // Each AI step (idea, content, hashtags, caption) is one charged run; failed steps are free.
+  const { charge, dialogProps, loginDialogProps } = useCredits("content-workflow");
   const [currentStep, setCurrentStep] = useState<WorkflowStep>("idea");
   const [niche, setNiche] = useState("");
   const [platform, setPlatform] = useState("instagram");
@@ -60,17 +66,19 @@ export const ContentWorkflow = () => {
 
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "workflow-idea",
-          niche,
-          platform,
-        },
+      const data = await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "workflow-idea",
+            niche,
+            platform,
+          },
+        });
+        if (response.error) throw response.error;
+        return response.data;
       });
-
-      if (response.error) throw response.error;
-      setGeneratedContent(prev => ({ ...prev, idea: response.data.idea }));
-      toast.success("Idea generated!");
+      if (!data) return;
+      setGeneratedContent(prev => ({ ...prev, idea: data.idea }));
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to generate idea");
@@ -88,18 +96,20 @@ export const ContentWorkflow = () => {
 
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "workflow-content",
-          idea,
-          platform,
-          format: generatedContent.idea?.format || "post",
-        },
+      const data = await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "workflow-content",
+            idea,
+            platform,
+            format: generatedContent.idea?.format || "post",
+          },
+        });
+        if (response.error) throw response.error;
+        return response.data;
       });
-
-      if (response.error) throw response.error;
-      setGeneratedContent(prev => ({ ...prev, content: response.data.content }));
-      toast.success("Content created!");
+      if (!data) return;
+      setGeneratedContent(prev => ({ ...prev, content: data.content }));
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to generate content");
@@ -113,18 +123,20 @@ export const ContentWorkflow = () => {
     
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "workflow-hashtags",
-          topic,
-          platform,
-          count: 20,
-        },
+      const data = await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "workflow-hashtags",
+            topic,
+            platform,
+            count: 20,
+          },
+        });
+        if (response.error) throw response.error;
+        return response.data;
       });
-
-      if (response.error) throw response.error;
-      setGeneratedContent(prev => ({ ...prev, hashtags: response.data.hashtags }));
-      toast.success("Hashtags generated!");
+      if (!data) return;
+      setGeneratedContent(prev => ({ ...prev, hashtags: data.hashtags }));
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to generate hashtags");
@@ -139,19 +151,21 @@ export const ContentWorkflow = () => {
     
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke("content-generator", {
-        body: {
-          type: "workflow-caption",
-          content,
-          idea,
-          platform,
-          hashtags: generatedContent.hashtags,
-        },
+      const data = await charge(async () => {
+        const response = await supabase.functions.invoke("content-generator", {
+          body: {
+            type: "workflow-caption",
+            content,
+            idea,
+            platform,
+            hashtags: generatedContent.hashtags,
+          },
+        });
+        if (response.error) throw response.error;
+        return response.data;
       });
-
-      if (response.error) throw response.error;
-      setGeneratedContent(prev => ({ ...prev, caption: response.data.caption }));
-      toast.success("Caption created!");
+      if (!data) return;
+      setGeneratedContent(prev => ({ ...prev, caption: data.caption }));
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to generate caption");
@@ -247,8 +261,11 @@ export const ContentWorkflow = () => {
                 <Lightbulb className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">Step 1: Generate Your Idea</h3>
               </div>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Each AI step below uses <CreditCostBadge toolId="content-workflow" className="mx-0.5 align-middle" />. You can also type your own idea and skip steps.
+              </p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Niche</label>
                   <Input
@@ -534,6 +551,8 @@ export const ContentWorkflow = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...dialogProps} />
+      <LoginPromptDialog {...loginDialogProps} />
     </div>
   );
 };

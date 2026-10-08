@@ -1,7 +1,12 @@
 // ProductVision 360 — server proxy that calls the public-generate-angles API
 // using our rotating GEMINI_API_KEY_1..4 secrets. Validates the caller's JWT.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+
+// Each generated angle is one AI image (~₹3.4 at list price), so it is charged per successful
+// angle on the server. Failed angles cost nothing.
+const ANGLE_TOOL = "productvision-angle";
+const DEFAULT_ANGLE_CREDITS = 12;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,28 +32,55 @@ serve(async (req) => {
       });
     }
 
-    // Validate JWT
-    const auth = req.headers.get("Authorization");
-    if (!auth) throw new Error("missing_auth");
-    const supa = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } },
-    );
-    const { data: ud, error: ue } = await supa.auth.getUser(auth.replace("Bearer ", ""));
-    if (ue || !ud.user) throw new Error("auth_failed");
+    // Signed-in users only (the public anon key is rejected).
+    const caller = await identify(req);
+    if (!caller?.userId) {
+      return new Response(JSON.stringify({ error: "sign_in_required", message: "Please sign in to use this app." }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const ud = { user: { id: caller.userId } };
 
     const body = await req.json().catch(() => ({}));
     const imageBase64 = String(body.imageBase64 || "");
     const mimeType = String(body.mimeType || "image/png");
-    const angles = Array.isArray(body.angles) && body.angles.length
+    const requested: string[] = Array.isArray(body.angles) && body.angles.length
       ? body.angles.filter((a: unknown) => typeof a === "string" && VALID_ANGLES.has(a as string))
       : ["Front", "Front-Right", "Right", "Back", "Left", "Front-Left"];
-    if (!imageBase64) {
-      return new Response(JSON.stringify({ error: "imageBase64 required" }), {
+    const angles = Array.from(new Set(requested));
+    if (!imageBase64 || imageBase64.length > 14_000_000) {
+      return new Response(JSON.stringify({ error: "Upload one product photo under 10 MB." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (!angles.length) {
+      return new Response(JSON.stringify({ error: "Pick at least one angle." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Make sure the caller can afford every requested angle before spending anything.
+    await ensurePrice(ANGLE_TOOL, DEFAULT_ANGLE_CREDITS);
+    const perAngle = (await priceOf(ANGLE_TOOL)) ?? DEFAULT_ANGLE_CREDITS;
+    const balance = await walletBalance(ud.user.id);
+    if (balance < perAngle * angles.length) {
+      return new Response(JSON.stringify({
+        error: "insufficient_credits",
+        credits_required: perAngle * angles.length,
+        balance,
+        message: `${angles.length} angles need ${perAngle * angles.length} credits (${perAngle} each). You have ${balance}.`,
+      }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const chargeForImages = async (count: number): Promise<number> => {
+      let charged = 0;
+      for (let i = 0; i < count; i++) {
+        const start = await startRun(ud.user.id, ANGLE_TOOL);
+        if (!start.ok || !start.run_id) break;
+        const done = await finishRun(ud.user.id, start.run_id, true);
+        charged += done?.charged ?? 0;
+      }
+      return charged;
+    };
 
     // Rotate Gemini keys on auth/rate-limit failures
     const keys = [
@@ -96,7 +128,18 @@ serve(async (req) => {
         }
       } catch { /* fall through and forward as-is */ }
 
-      return new Response(text, {
+      // Charge only for the angles that actually came back.
+      let payload = text;
+      try {
+        const parsed = JSON.parse(text);
+        const made = Math.min(angles.length, Array.isArray(parsed?.images) ? parsed.images.length : 0);
+        if (upstream.ok && made > 0) {
+          parsed.credits_charged = await chargeForImages(made);
+          parsed.credits_per_angle = perAngle;
+          payload = JSON.stringify(parsed);
+        }
+      } catch { /* forward as-is */ }
+      return new Response(payload, {
         status: upstream.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -1,4 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
+import { billed } from "../_shared/billing.ts";
+
+// Every request is signed-in-checked and, for paid actions, charged on the server.
+const serve = (handler: (req: Request) => Promise<Response>) =>
+  stdServe(billed({ tool: () => null }, (req) => handler(req)));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,7 +146,11 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages: rawMessages } = await req.json();
+    // Cap what one request can send so the free assistant cannot be used for unlimited long prompts.
+    const messages = (Array.isArray(rawMessages) ? rawMessages : [])
+      .slice(-10)
+      .map((m: { role?: string; content?: unknown }) => ({ role: m?.role === "assistant" ? "assistant" : "user", content: String(m?.content ?? "").slice(0, 2000) }));
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {

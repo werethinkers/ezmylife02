@@ -8,6 +8,10 @@ import { supabase as supabaseClient } from "@/integrations/supabase/client";
 const supabase = supabaseClient as unknown as { from: (table: string) => any };
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useCredits } from "@/hooks/useCredits";
+import { BuyCreditsDialog } from "@/components/wallet/BuyCreditsDialog";
+import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { SEOHead } from "@/components/SEOHead";
 import { cn } from "@/lib/utils";
 import {
@@ -32,6 +36,8 @@ const FIRST_QUESTION =
   "Aap bas aaram se baat kariye. Main aapse dheere dheere sawal puchunga, aur hum milke aapki kahani sanjoyenge — aapke bachche ke liye.\n\nSabse pehle, mujhe apne bachpan ke baare mein bataiye. Koi aisi yaad jo aapke dil ke bahut kareeb ho?";
 
 export default function Virasat() {
+  // Only the finished keepsake book is charged; the interview itself is free.
+  const { charge: chargeBook, dialogProps: bookDialog, loginDialogProps: bookLogin } = useCredits("virasat");
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -277,11 +283,17 @@ export default function Virasat() {
           caption: m.caption || undefined,
         }));
 
-        const book = await generateBook(finalHistory, style, {
-          childName,
-          fatherName,
-          media: mediaSummaries,
-        });
+        const book = await chargeBook(() =>
+          generateBook(finalHistory, style, {
+            childName,
+            fatherName,
+            media: mediaSummaries,
+          }),
+        );
+        if (!book) {
+          setMode("review");
+          return;
+        }
         setBookContent(book);
         setMode("book");
         await saveSession({
@@ -304,7 +316,7 @@ export default function Virasat() {
         setIsProcessing(false);
       }
     },
-    [saveSession, sessionId, childName, fatherName]
+    [saveSession, sessionId, childName, fatherName, chargeBook]
   );
 
   const handleTranscript = useCallback(
@@ -695,6 +707,7 @@ export default function Virasat() {
                   >
                     <Sparkles size={18} />
                     Meri kitaab banaiye
+                    <CreditCostBadge toolId="virasat" className="border-white/40 bg-white/15 text-white" />
                   </button>
                 </div>
               </motion.div>
@@ -741,6 +754,8 @@ export default function Virasat() {
           Made with Love for Indian Families
         </footer>
       </div>
+      <BuyCreditsDialog {...bookDialog} />
+      <LoginPromptDialog {...bookLogin} />
     </>
   );
 }

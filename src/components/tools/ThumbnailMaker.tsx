@@ -11,6 +11,10 @@ import { Loader2, Image, Download, Trash2, History, Sparkles, CheckCircle, Circl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCredits } from '@/hooks/useCredits';
+import { callFunction } from '@/lib/credits';
+import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 
 interface Creation {
   id: string;
@@ -31,6 +35,7 @@ interface ProgressStep {
 
 const ThumbnailMaker = () => {
   const { user } = useAuth();
+  const { charge, dialogProps, loginDialogProps } = useCredits('thumbnail-maker');
   const [prompt, setPrompt] = useState('');
   const [title, setTitle] = useState('');
   const [style, setStyle] = useState('vibrant');
@@ -108,16 +113,10 @@ const ThumbnailMaker = () => {
     let creationId: string | null = null;
 
     try {
-      // Step 1: Validate
-      updateStep('validate', 'active', 'Checking your input...');
-      setProgress(10);
-      await new Promise(resolve => setTimeout(resolve, 400));
-      updateStep('validate', 'completed', 'Input validated');
+      updateStep('validate', 'completed', 'Input checked');
 
-      // Step 2: Save to database
       updateStep('save', 'active', 'Creating entry in your library...');
-      setProgress(20);
-
+      setProgress(15);
       const { data: creation, error: createError } = await supabase
         .from('user_creations')
         .insert({
@@ -135,40 +134,30 @@ const ThumbnailMaker = () => {
       creationId = creation.id;
       updateStep('save', 'completed', 'Saved to library');
 
-      // Step 3: Enhance prompt
-      updateStep('enhance', 'active', 'Optimizing for best results...');
+      const enhancedPrompt = `A professional, eye-catching YouTube video thumbnail. ${title ? `Large, legible headline text: "${title}". ` : ''}Description: ${prompt}. Bold contrast, clear focal point, readable at small sizes.`;
+      updateStep('enhance', 'completed', 'Prompt prepared');
+
+      // The server checks the balance, generates the image and deducts credits only on success.
+      updateStep('generate', 'active', 'AI is creating your thumbnail (10–30 s)...');
       setProgress(35);
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      const enhancedPrompt = `Create a professional, eye-catching YouTube video thumbnail. Style: ${style}. Aspect ratio: ${aspectRatio}. Description: ${prompt}. Make it vibrant, attention-grabbing, and suitable for social media.`;
-      updateStep('enhance', 'completed', 'Prompt enhanced');
-
-      // Step 4: Generate thumbnail
-      updateStep('generate', 'active', 'AI is creating your thumbnail...');
-      setProgress(50);
-
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image',
-          messages: [
-            {
-              role: 'user',
-              content: enhancedPrompt
-            }
-          ],
-          modalities: ['image', 'text']
-        })
-      });
-
+      const data = await charge(() =>
+        callFunction<{ ok: boolean; image?: string }>('ai-app', {
+          tool_id: 'thumbnail-maker',
+          prompt: enhancedPrompt,
+          style,
+          aspect: aspectRatio,
+        }),
+      );
+      if (!data) {
+        // Sign-in or buy-credits dialog is open; nothing was charged.
+        setProgressSteps(initialSteps);
+        setProgress(0);
+        await supabase.from('user_creations').delete().eq('id', creation.id);
+        creationId = null;
+        return;
+      }
       setProgress(75);
-
-      const data = await response.json();
-      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const imageUrl = data.image;
 
       updateStep('generate', 'completed', 'Thumbnail generated');
 
@@ -192,7 +181,6 @@ const ThumbnailMaker = () => {
         // Step 6: Complete
         updateStep('complete', 'active', 'Wrapping up...');
         setProgress(95);
-        await new Promise(resolve => setTimeout(resolve, 400));
         updateStep('complete', 'completed', 'All done!');
         setProgress(100);
 
@@ -217,7 +205,7 @@ const ThumbnailMaker = () => {
           .eq('id', creationId);
       }
 
-      toast.error('Failed to generate thumbnail. Please try again.');
+      toast.error(error instanceof Error && error.message ? error.message : 'Failed to generate thumbnail. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -494,6 +482,8 @@ const ThumbnailMaker = () => {
           )}
         </CardContent>
       </Card>
+      <BuyCreditsDialog {...dialogProps} />
+      <LoginPromptDialog {...loginDialogProps} />
     </div>
   );
 };
