@@ -62,7 +62,7 @@ serve(async (req) => {
         const { data: prod } = await supabase.from("ip_products").select("name").eq("id", pageOrder.product_id).maybeSingle();
         receiptInBackground(supabase, {
           kind: "page", userId: pageOrder.user_id, description: `${prod?.name ?? "Digital page"} · ezyourlife.com/p/${published.slug}`,
-          amountInr: pageOrder.inr_amount, paymentId: payment.id, orderId, link: `https://ezyourlife.com/p/${published.slug}`,
+          amountInr: pageOrder.inr_amount, paymentId: payment.id, orderId, link: `https://ezyourlife.com/p/${published.slug}`, phone: payment.contact,
         });
       }
       return json({ ok: true, published });
@@ -100,6 +100,7 @@ serve(async (req) => {
     receiptInBackground(supabase, {
       kind: "credits", userId: purchase.user_id, description: `${Number(purchase.credits).toLocaleString("en-IN")} EZYOURLIFE credits`,
       amountInr: Number(purchase.inr_amount), paymentId: payment.id, orderId, link: "https://ezyourlife.com/ai-apps",
+      credits: Number(purchase.credits), phone: payment.contact,
     });
 
     return json({ ok: true, applied });

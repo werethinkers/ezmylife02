@@ -11,6 +11,7 @@ import JSZip from "https://esm.sh/jszip@3.10.1";
 import { corsHeaders, json } from "../_shared/http.ts";
 import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
 import { image } from "../_shared/llm.ts";
+import { whatsappTaskDone } from "../_shared/whatsapp.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -196,6 +197,13 @@ async function finalise(job: Job, outputs: OutputRow[]) {
     output_zip_path: zipPath,
     completed_at: new Date().toISOString(),
   });
+  if (failed < outputs.length) {
+    const ok = outputs.length - failed;
+    await whatsappTaskDone({
+      userId: job.user_id, toolId: job.tool_id, runId: `bulk-${job.id}`, link: `https://ezyourlife.com/bulk/jobs/${job.id}`, throttle: false,
+      output: `Your bulk job is done: ${ok} of ${outputs.length} files processed${failed ? ` (${failed} could not be processed and were not charged)` : ""}. Download them all as one ZIP from the link below.`,
+    });
+  }
 }
 
 async function runChunk(jobId: string) {

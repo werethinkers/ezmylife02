@@ -8,6 +8,7 @@
 // INVOICE_GSTIN. If RESEND_API_KEY is set instead, Resend is used.
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import { whatsappPurchase } from "./whatsapp.ts";
 // deno-lint-ignore no-explicit-any
 type Supa = any;
 
@@ -21,6 +22,8 @@ export interface ReceiptInput {
   paymentId: string;
   orderId?: string | null;
   link?: string | null;        // where to find what they bought
+  phone?: string | null;       // number entered at Razorpay checkout (for WhatsApp)
+  credits?: number | null;     // credit packs: how many credits
 }
 
 const SELLER = "EZYOURLIFE";
@@ -125,10 +128,12 @@ async function sendMail(to: string, subject: string, html: string, text: string,
   }
 }
 
-/** Records the invoice and emails it with a thank-you. Safe to call more than once per payment. */
+/** Records the invoice, emails it with a thank-you, and sends the same on WhatsApp.
+ *  Safe to call more than once per payment: each channel sends once. */
 export async function sendPaymentReceipt(supabase: Supa, r: ReceiptInput): Promise<void> {
+  let no: string | null = null, pdf: Uint8Array | null = null, name = r.name;
   try {
-    let email = r.email, name = r.name;
+    let email = r.email;
     if (!email || !name) {
       const { data } = await supabase.auth.admin.getUserById(r.userId);
       email = email || data?.user?.email;
@@ -139,21 +144,28 @@ export async function sendPaymentReceipt(supabase: Supa, r: ReceiptInput): Promi
       _description: r.description, _amount: r.amountInr, _payment_id: r.paymentId, _order_id: r.orderId ?? null,
     });
     if (error) throw new Error(error.message);
-    if (!inv || inv.emailed || !email) return; // already sent, or no address to send to
-    const no = inv.invoice_no as string;
-    const pdf = await invoicePdf(no, new Date(inv.created_at), { ...r, email, name });
-    const subject = `Thank you for your payment · Invoice ${no}`;
-    const text = `Thank you${name ? ", " + name.split(" ")[0] : ""}! Your payment of Rs. ${r.amountInr} for ${r.description} went through.\nInvoice: ${no}\nPayment ID: ${r.paymentId}\n${r.link ? r.link + "\n" : ""}\nReply to this email if you need anything.\nAbhijay Jain, Founder & CEO, EZYOURLIFE`;
-    try {
-      await sendMail(email, subject, emailHtml(no, { ...r, name }), text, pdf, `${no.replace(/\//g, "-")}.pdf`);
-      await supabase.from("payment_invoices").update({ emailed_at: new Date().toISOString(), email_error: null }).eq("id", inv.id);
-    } catch (e) {
-      console.error("receipt email failed", e);
-      await supabase.from("payment_invoices").update({ email_error: String(e instanceof Error ? e.message : e).slice(0, 500) }).eq("id", inv.id);
+    if (inv) {
+      no = inv.invoice_no as string;
+      pdf = await invoicePdf(no, new Date(inv.created_at), { ...r, email, name });
+    }
+    if (inv && no && pdf && !inv.emailed && email) { // not yet emailed, and we have an address
+      const subject = `Thank you for your payment · Invoice ${no}`;
+      const text = `Thank you${name ? ", " + name.split(" ")[0] : ""}! Your payment of Rs. ${r.amountInr} for ${r.description} went through.\nInvoice: ${no}\nPayment ID: ${r.paymentId}\n${r.link ? r.link + "\n" : ""}\nReply to this email if you need anything.\nAbhijay Jain, Founder & CEO, EZYOURLIFE`;
+      try {
+        await sendMail(email, subject, emailHtml(no, { ...r, name }), text, pdf, `${no.replace(/\//g, "-")}.pdf`);
+        await supabase.from("payment_invoices").update({ emailed_at: new Date().toISOString(), email_error: null }).eq("id", inv.id);
+      } catch (e) {
+        console.error("receipt email failed", e);
+        await supabase.from("payment_invoices").update({ email_error: String(e instanceof Error ? e.message : e).slice(0, 500) }).eq("id", inv.id);
+      }
     }
   } catch (e) {
     console.error("sendPaymentReceipt", e);
   }
+  await whatsappPurchase({
+    kind: r.kind, userId: r.userId, paymentId: r.paymentId, description: r.description, amountInr: r.amountInr,
+    invoiceNo: no, invoicePdf: pdf, link: r.link, credits: r.credits, phone: r.phone, name,
+  });
 }
 
 /** Runs the receipt after the response is sent, so the customer isn't kept waiting. */

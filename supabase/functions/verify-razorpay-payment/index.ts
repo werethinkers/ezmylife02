@@ -77,6 +77,7 @@ serve(async (req) => {
       kind: "credits", userId: user.id, email: user.email, name: user.user_metadata?.full_name ?? user.user_metadata?.name,
       description: `${purchase.credits.toLocaleString("en-IN")} EZYOURLIFE credits`, amountInr: Number(purchase.inr_amount),
       paymentId: razorpay_payment_id, orderId: razorpay_order_id, link: "https://ezyourlife.com/ai-apps",
+      credits: Number(purchase.credits), phone: settled.payment?.contact,
     });
 
     return new Response(JSON.stringify({ success: true, credits: purchase.credits, applied }), {

@@ -11,6 +11,7 @@
 // are trusted and not charged again — the caller already charged per item.
 
 import { corsHeaders, json } from "./http.ts";
+import { inBackground, sseText, whatsappTaskDone } from "./whatsapp.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -195,6 +196,9 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
       );
     }
     const runId = start.run_id as string;
+    const appId = typeof body?.tool_id === "string" && body.tool_id ? body.tool_id : toolId;
+    // After a paid run succeeds, send the result to the customer on WhatsApp (in the background).
+    const notify = (output: unknown) => inBackground(whatsappTaskDone({ userId, toolId: appId, runId, output }));
 
     let res: Response;
     try {
@@ -217,7 +221,11 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
     // if the AI provider breaks off mid-stream, nothing is charged.
     if (res.body && (res.headers.get("content-type") ?? "").includes("text/event-stream")) {
       headers.set("x-credits-charged", "pending");
-      return new Response(settleWhenStreamEnds(res.body, (ok, err) => finishRun(userId, runId, ok, err)), {
+      return new Response(settleWhenStreamEnds(res.body, async (ok, err, raw) => {
+        const r = await finishRun(userId, runId, ok, err);
+        if (ok && raw) notify(sseText(raw));
+        return r;
+      }), {
         status: res.status,
         headers,
       });
@@ -231,6 +239,9 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
       console.error("billing finish failed", e);
     }
     headers.set("x-credits-charged", String(charged));
+    if ((res.headers.get("content-type") ?? "").includes("application/json")) {
+      inBackground(res.clone().json().then(notify, () => undefined));
+    }
     return new Response(res.body, { status: res.status, headers });
   };
 }
@@ -238,14 +249,16 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
 /** Passes a stream through and calls settle() exactly once when it ends. */
 export function settleWhenStreamEnds(
   body: ReadableStream<Uint8Array>,
-  settle: (success: boolean, error?: string) => Promise<unknown>,
+  settle: (success: boolean, error?: string, raw?: string) => Promise<unknown>,
 ): ReadableStream<Uint8Array> {
   const reader = body.getReader();
+  const dec = new TextDecoder();
+  let raw = ""; // what was streamed (capped), so the finished answer can be sent on WhatsApp
   let settled = false;
   const once = (ok: boolean, err?: string) => {
     if (settled) return Promise.resolve();
     settled = true;
-    const p = settle(ok, err).catch((e) => console.error("billing finish failed", e));
+    const p = settle(ok, err, raw).catch((e) => console.error("billing finish failed", e));
     // Keep the worker alive long enough to record the charge after the response closes.
     // deno-lint-ignore no-explicit-any
     (globalThis as any).EdgeRuntime?.waitUntil?.(p);
@@ -260,6 +273,7 @@ export function settleWhenStreamEnds(
           ctrl.close();
           return;
         }
+        if (raw.length < 400_000) raw += dec.decode(value, { stream: true });
         ctrl.enqueue(value);
       } catch (e) {
         await once(false, e instanceof Error ? e.message : String(e));

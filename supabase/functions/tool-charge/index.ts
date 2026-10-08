@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { ensurePrice } from "../_shared/billing.ts";
+import { inBackground, whatsappTaskDone } from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,6 +50,16 @@ serve(async (req) => {
         _uid: uid, _run_id: run_id, _success: success, _error: errorText,
       });
       if (error) throw new Error(error.message);
+      // Browser-only apps (editors, converters): the result stays on the device, so the update just confirms it.
+      if (success && data?.ok && !data.noop) {
+        const { data: run } = await supabase.from("tool_runs").select("tool_id").eq("id", run_id).maybeSingle();
+        if (run?.tool_id) {
+          inBackground(whatsappTaskDone({
+            userId: uid, toolId: run.tool_id, runId: run_id,
+            output: "Done! Your result has been saved to your device.",
+          }));
+        }
+      }
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
     }
 

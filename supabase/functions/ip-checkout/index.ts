@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
 import { receiptInBackground } from "../_shared/receipt.ts";
 import { writeSharePage } from "../_shared/sharepage.ts";
+import { inBackground, whatsappTaskDone } from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +48,11 @@ serve(async (req) => {
         await supabase.from("ip_orders").insert({ user_id: user.id, page_id: page.id, product_id: product.id, inr_amount: 0, status: "free", paid_at: new Date().toISOString() });
         const { data: pub, error: perr } = await supabase.rpc("ip_publish_page", { _page_id: page.id });
         if (perr || !pub?.ok) throw new Error(perr?.message ?? pub?.reason ?? "Publish failed");
+        const link = `https://ezyourlife.com/p/${pub.slug}`;
+        inBackground(whatsappTaskDone({
+          userId: user.id, toolId: `page-${product.id}`, runId: `page-${page.id}`, name: product.name, link, throttle: false,
+          output: `🎉 Your ${product.name.toLowerCase()} is live. Share this link on WhatsApp:\n${link}`,
+        }));
         return json({ published: true, slug: pub.slug });
       }
 
@@ -109,6 +115,7 @@ serve(async (req) => {
         kind: "page", userId: user.id, email: user.email, name: user.user_metadata?.full_name ?? user.user_metadata?.name,
         description: `${prod?.name ?? "Digital page"} · ezyourlife.com/p/${res.slug}`, amountInr: order.inr_amount,
         paymentId: razorpay_payment_id, orderId: razorpay_order_id, link: `https://ezyourlife.com/p/${res.slug}`,
+        phone: settled.payment?.contact,
       });
       return json({ published: true, slug: res.slug, page_id: order.page_id });
     }

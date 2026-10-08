@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase, Lock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
@@ -36,9 +37,27 @@ const Profile = () => {
     display_name: "", full_name: "", phone_number: "", bio: "", company: "", job_title: "", location: "", website: "",
   });
 
+  // WhatsApp updates (receipts and finished results). The column is newer than the generated types.
+  const [waUpdates, setWaUpdates] = useState(true);
+
   useEffect(() => {
     if (user) loadProfile();
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("profiles").select("whatsapp_updates").eq("id", user.id).maybeSingle()
+      .then(({ data }: { data: { whatsapp_updates?: boolean } | null }) => { if (data && data.whatsapp_updates === false) setWaUpdates(false); });
+  }, [user]);
+
+  const toggleWaUpdates = async (on: boolean) => {
+    setWaUpdates(on);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("profiles").update({ whatsapp_updates: on }).eq("id", user?.id);
+    if (error) { setWaUpdates(!on); toast({ title: "Couldn't save that", variant: "destructive" }); return; }
+    toast({ title: on ? "WhatsApp updates on" : "WhatsApp updates off" });
+  };
 
   const loadProfile = async () => {
     try {
@@ -179,6 +198,13 @@ const Profile = () => {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-4 w-4" />Phone Number</Label>
                   <Input id="phone" type="tel" placeholder="+91 98765 43210" value={profile.phone_number} onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })} disabled={saving} />
+                  <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
+                    <div>
+                      <Label htmlFor="wa-updates" className="font-medium">WhatsApp updates</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">Get your receipts and finished results on WhatsApp at this number.</p>
+                    </div>
+                    <Switch id="wa-updates" checked={waUpdates} onCheckedChange={toggleWaUpdates} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
