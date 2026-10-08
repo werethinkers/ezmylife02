@@ -281,6 +281,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_notifications: {
+        Row: {
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          kind: string
+          ref: string
+          status: string
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          kind: string
+          ref: string
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          ref?: string
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       enterprise_inquiries: {
         Row: {
           company: string | null
@@ -978,6 +1014,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          email_updates: boolean
           full_name: string | null
           id: string
           job_title: string | null
@@ -995,6 +1032,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          email_updates?: boolean
           full_name?: string | null
           id: string
           job_title?: string | null
@@ -1012,6 +1050,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          email_updates?: boolean
           full_name?: string | null
           id?: string
           job_title?: string | null
