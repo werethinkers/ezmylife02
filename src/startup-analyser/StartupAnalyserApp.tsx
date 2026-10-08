@@ -159,7 +159,6 @@ export default function StartupAnalyserApp(): React.ReactNode {
   const [error, setError] = useState<string | null>(null);
   const [progressMessage, setProgressMessage] = useState<string>('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [userApiKey, setUserApiKey] = useState<string | null>(null);
 
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
@@ -186,14 +185,9 @@ export default function StartupAnalyserApp(): React.ReactNode {
     return [...new Set([...business, ...technical])].filter(k => k && k.length > 1).sort((a, b) => b.length - a.length);
   }, [analysisResult?.structuredData?.keywords]);
 
-  // Load saved sessions and user API key on mount
+  // Load saved sessions on mount
   useEffect(() => {
-    if (user) {
-      loadSavedSessions();
-      // Load user's Gemini API key from profile
-      supabase.from('user_secrets' as never).select('gemini_api_key').eq('user_id', user.id).maybeSingle()
-        .then(({ data }) => { const k = (data as { gemini_api_key?: string | null } | null)?.gemini_api_key; if (k) setUserApiKey(k); });
-    }
+    if (user) loadSavedSessions();
   }, [user]);
 
   const loadSavedSessions = async () => {
@@ -350,8 +344,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
 
     try {
       const result = await chargeAnalysis(
-        async () => generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText, userApiKey),
-        { free: !!userApiKey },
+        async () => generateComprehensiveAnalysis(companyName, companyWebsite, setProgressMessage, pitchDeckText),
       );
       if (!result) { setStep('input'); return; }
       setAnalysisResult(result);
@@ -379,7 +372,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
     } finally {
       setProgressMessage('');
     }
-  }, [companyName, companyWebsite, pitchDeckText, user, userApiKey]);
+  }, [companyName, companyWebsite, pitchDeckText, user]);
 
   const handleStartOver = () => {
     setStep('input');
@@ -420,8 +413,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
             return newHistory;
           });
         },
-        () => setIsChatting(false),
-        userApiKey
+        () => setIsChatting(false)
       );
     } catch (err) {
       const handled = await handleChatError(err);
@@ -532,15 +524,6 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 {isExtractingPdf && <p className="text-sm text-blue-600 mt-1 animate-pulse">Extracting text from PDF...</p>}
                 {pitchDeckText && !isExtractingPdf && <p className="text-sm text-green-600 mt-1">✓ PDF text extracted ({Math.round(pitchDeckText.length / 1000)}k chars)</p>}
               </div>
-              {!userApiKey && user && (
-                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-                  <Key className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    Add your own <a href="/profile" className="font-semibold underline hover:text-amber-900">Gemini API key in Profile</a> to use your personal quota and avoid shared rate limits.
-                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="ml-1 underline hover:text-amber-900">Get one free →</a>
-                  </span>
-                </div>
-              )}
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex justify-center pt-1">
                 <BulkModeToggle toolId="startup-analyser" />
