@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.submit-tool-request]
 verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false

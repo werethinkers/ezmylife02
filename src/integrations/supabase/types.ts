@@ -1477,7 +1477,7 @@ export type Database = {
         Returns: Json
       }
       apply_credit_purchase: {
-        Args: { _payment_id: string; _purchase_id: string }
+        Args: { _order_id: string; _payment_id: string; _purchase_id: string }
         Returns: Json
       }
       complete_tool_run: {
