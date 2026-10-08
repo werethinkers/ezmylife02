@@ -189,18 +189,10 @@ function safeFilename(s: string): string {
   return (s || "report").replace(/[^a-z0-9-_]+/gi, "_").slice(0, 60);
 }
 
-async function loadUserApiKey(userId: string): Promise<string | null> {
-  try {
-    const { data } = await supabase.from("user_secrets" as never).select("gemini_api_key").eq("user_id", userId).maybeSingle();
-    return (data as { gemini_api_key?: string | null } | null)?.gemini_api_key || null;
-  } catch { return null; }
-}
-
 async function runStartupAnalyserBatch(args: RunArgs, zip: JSZip, outputs: any[]) {
   const { jobId, userId, files, perFileMeta = [], params = {} } = args;
   let completed = 0;
   let failed = 0;
-  const userApiKey = await loadUserApiKey(userId);
 
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
@@ -209,7 +201,7 @@ async function runStartupAnalyserBatch(args: RunArgs, zip: JSZip, outputs: any[]
     const website = (meta.company_website || "").trim();
     try {
       const pitchText = await extractPdfText(f);
-      const result = await generateComprehensiveAnalysis(name, website, () => {}, pitchText, userApiKey);
+      const result = await generateComprehensiveAnalysis(name, website, () => {}, pitchText);
       const md = result.markdownReport || JSON.stringify(result.structuredData, null, 2);
       const focus = params.focus ? `\n\n_Focus: ${params.focus} · Stage: ${params.stage || "n/a"}_\n` : "";
       const out = `# ${name}\n_Website: ${website || "n/a"}_${focus}\n\n${md}`;

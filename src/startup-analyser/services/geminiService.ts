@@ -9,8 +9,7 @@ export async function generateComprehensiveAnalysis(
   companyName: string,
   companyWebsite: string,
   onProgress: (message: string) => void,
-  pitchDeckText?: string | null,
-  userApiKey?: string | null
+  pitchDeckText?: string | null
 ): Promise<AnalysisResult> {
   onProgress('10');
 
@@ -20,9 +19,6 @@ export async function generateComprehensiveAnalysis(
   };
   if (pitchDeckText) {
     body.pitchDeckText = pitchDeckText.substring(0, 30000);
-  }
-  if (userApiKey) {
-    body.userApiKey = userApiKey;
   }
 
   // Signed-in call; the server checks and charges credits (401 / 402 are handled by useCredits).
@@ -81,14 +77,12 @@ export async function streamChatMessage(
   reportContext: string,
   messages: { role: string; content: string }[],
   onDelta: (text: string) => void,
-  onDone: () => void,
-  userApiKey?: string | null
+  onDone: () => void
 ): Promise<void> {
   const resp = await streamFunction("startup-analyser", {
     action: "chat",
     reportContext,
     chatMessages: messages,
-    ...(userApiKey ? { userApiKey } : {}),
   });
   if (!resp.body) throw new Error("No response body");
 
