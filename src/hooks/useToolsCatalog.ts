@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { REMOVED_APPS } from "@/apps/prices";
 
 export interface CatalogTool {
   id: string;
@@ -31,7 +32,7 @@ async function fetchToolsCatalog(): Promise<CatalogTool[]> {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  const list = (data as unknown as CatalogTool[]) ?? [];
+  const list = ((data as unknown as CatalogTool[]) ?? []).filter((t) => !REMOVED_APPS.has(t.id));
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
   } catch {
@@ -42,7 +43,7 @@ async function fetchToolsCatalog(): Promise<CatalogTool[]> {
 
 // Last catalog seen in this browser: pages render instantly on repeat visits while a fresh
 // copy loads in the background.
-const CACHE_KEY = "ez.catalog.v2";
+const CACHE_KEY = "ez.catalog.v3";
 function cachedCatalog(): { at: number; list: CatalogTool[] } | undefined {
   try {
     const raw = localStorage.getItem(CACHE_KEY);

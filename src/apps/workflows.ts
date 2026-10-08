@@ -142,19 +142,6 @@ export const ROLES: RoleTemplate[] = [
       { toolId: "content-workflow", why: "The whole flow for the next post" },
     ],
   },
-  {
-    id: "jain", emoji: "🙏", label: "Jain study (Swadhyay)", usesClient: false, usesMoney: false,
-    goal: "Daily timings, reading scriptures with meanings, and asking questions as you learn.",
-    steps: [
-      { toolId: "jain-panchang", why: "Today's sunrise, Navkarsi and tithi" },
-      { toolId: "kundkund-ebook-bot", why: "Study a book with an AI guide" },
-      { toolId: "shastra-hover-dictionary", why: "Meanings of difficult words" },
-      { toolId: "jaingyan-ai", why: "Ask questions" },
-      { toolId: "jain-encyclopedia", why: "Look up a concept" },
-      { toolId: "jainbhugol-maps", why: "Explore Jambudvipa" },
-      { toolId: "jain-audio-stream", why: "Stavan and pravachan playlist" },
-    ],
-  },
 ];
 
 /** Tools that read the shared client / numbers (shown with a "pre-filled" badge). */

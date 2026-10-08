@@ -2,7 +2,7 @@ import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts"
 import { billed } from "../_shared/billing.ts";
 
 // Every request is signed-in-checked and, for paid actions, charged on the server.
-// - Full analysis: "startup-analyser" (Gemini 2.5 Pro, long report).
+// - Full analysis: "startup-analyser-flash" (Gemini 2.5 Flash, 10 credits; own key → 2.5 Pro, free).
 // - Follow-up chat question: "startup-analyser-chat" (Gemini 2.5 Flash, 1 credit).
 // - Requests made with the visitor's own Gemini key are free: they never fall back to our keys.
 const serve = (handler: (req: Request) => Promise<Response>) =>
@@ -11,9 +11,9 @@ const serve = (handler: (req: Request) => Promise<Response>) =>
       {
         tool: (b) => {
           if (typeof b?.userApiKey === "string" && b.userApiKey.trim().length > 20) return null;
-          return b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser";
+          return b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser-flash";
         },
-        defaultCredits: (id) => (id === "startup-analyser-chat" ? 1 : undefined),
+        defaultCredits: (id) => (id === "startup-analyser-chat" ? 1 : id === "startup-analyser-flash" ? 10 : undefined),
       },
       (req) => handler(req),
     ),
@@ -292,7 +292,9 @@ serve(async (req) => {
         { role: "system", content: "You are a world-class venture capital analyst. Generate exhaustive, detailed investment analysis reports. Always respond with the exact structure requested." },
         { role: "user", content: analysisPrompt },
       ],
-      "google/gemini-2.5-pro",
+      // Gemini 2.5 Flash keeps a full report within the 1–10 credit range (2.5 Pro costs ~₹8–11 a
+      // report). People who add their own Gemini key still get 2.5 Pro (and pay nothing to us).
+      userApiKey ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
       true,
       userApiKey
     );

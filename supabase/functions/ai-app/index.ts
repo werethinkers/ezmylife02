@@ -52,9 +52,15 @@ const toolOf = (body: Body | null) => {
 };
 
 Deno.serve(
-  billed({ tool: (b: Body | null) => toolOf(b), defaultCredits: (id) => APP_SPECS[id]?.credits }, async (_req, ctx) => {
+  billed({
+    tool: (b: Body | null) => {
+      const id = toolOf(b);
+      return id ? APP_SPECS[id].chargeId ?? id : null;
+    },
+    defaultCredits: (chargeId) => Object.entries(APP_SPECS).find(([id, s]) => (s.chargeId ?? id) === chargeId)?.[1].credits,
+  }, async (_req, ctx) => {
     const body = (ctx.body ?? {}) as Body;
-    const toolId = ctx.toolId;
+    const toolId = toolOf(body);
     if (!toolId) return json({ error: "unknown_app" }, 400);
     const spec = APP_SPECS[toolId];
 

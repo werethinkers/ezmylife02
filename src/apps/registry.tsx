@@ -723,18 +723,6 @@ export const APPS: Record<string, AppDef> = {
       LANG,
     ],
   },
-  "jain-encyclopedia": {
-    engine: "doc", credits: p("jain-encyclopedia"), fileName: "encyclopedia", cta: "Look it up",
-    intro: "Clear encyclopedia entries on Jain concepts, festivals, texts, places and people — noting where traditions differ.",
-    related: ["jaingyan-ai", "shastra-hover-dictionary", "kundkund-ebook-bot", "jain-panchang"],
-    fields: [
-      { key: "Topic", label: "Topic", required: true, placeholder: "Anekantavada, Paryushan, Samayik, Palitana…" },
-      { key: "Language", label: "Language", type: "select", options: ["English", "Hindi", "Gujarati"], default: "English", half: true },
-      { key: "Level", label: "Level", type: "select", options: ["Beginner", "Student", "Detailed"], default: "Beginner", half: true },
-    ],
-    refineChips: ["Simpler", "More detail", "Translate to Hindi", "Add a short summary for children"],
-  },
-
   // ═════════════ CHAT ═════════════
   "advance-ai-bot": {
     engine: "chat", credits: p("advance-ai-bot"),
@@ -750,22 +738,6 @@ export const APPS: Record<string, AppDef> = {
     suggestions: ["Summarise each document in 5 points", "What do these documents say about deadlines?", "Compare the key terms across files"],
     related: ["shastra-pdf-reader", "pdf-metadata-ai-analyst", "dictionary-extractor-ai", "ocr"],
   },
-  "kundkund-ebook-bot": {
-    engine: "chat", credits: p("kundkund-ebook-bot"), documents: true,
-    documentHint: "Add an e-book or scripture PDF (text-based). Scanned books need OCR first.",
-    intro: "Study an e-book with an AI guide — explanations, summaries and answers grounded in the book's own pages.",
-    welcome: "Add a book PDF, then ask about a chapter, a term or a verse. If something isn't in the book, the assistant says so.",
-    suggestions: ["Summarise chapter 1", "Explain the key terms on page 12", "What does the author say about karma?"],
-    related: ["jaingyan-ai", "shastra-hover-dictionary", "dictionary-extractor-ai", "kundkund-mindmap"],
-  },
-  "jaingyan-ai": {
-    engine: "chat", credits: p("jaingyan-ai"),
-    intro: "A respectful guide to Jain philosophy, practice and history for beginners and students.",
-    welcome: "Ask about Jain concepts, vows, festivals, tirthankaras or practices. Where Digambara and Shvetambara views differ, Gyan AI says so — and it never invents citations.",
-    suggestions: ["What is anekantavada?", "Explain the 9 tattvas simply", "Why is Paryushan observed?", "Difference between Digambara and Shvetambara"],
-    related: ["jain-encyclopedia", "kundkund-ebook-bot", "shastra-hover-dictionary", "jain-panchang"],
-  },
-
   // ═════════════ VISION ═════════════
   "ocr": {
     engine: "vision", credits: p("ocr"), mode: "text", fileName: "ocr-text", cta: "Extract text",
@@ -816,25 +788,19 @@ export const APPS: Record<string, AppDef> = {
   "wrong-written-words": { engine: "custom", credits: p("wrong-written-words"), intro: "Find and fix spelling and grammar mistakes in English, Hindi and Hinglish — see every change.", related: ["rich-editor", "book-editor", "dictionary-extractor-ai"], component: custom(() => import("./custom/Proofreader")) },
   "storybook-creator": { engine: "custom", credits: p("storybook-creator"), intro: "Write an illustrated story for any age — read it as a book, print it, and illustrate pages with AI.", related: ["sketchflow-ai", "image-creator", "book-editor"], component: custom(() => import("./custom/StoryBook")) },
   "smart-diagram-ai": { engine: "custom", credits: p("smart-diagram-ai"), intro: "Describe a process, plan or structure and get a clean diagram you can edit and download.", related: ["kundkund-mindmap", "cognimap", "html-editor"], component: custom(() => import("./custom/SmartDiagram")) },
-  "kundkund-mindmap": { engine: "custom", credits: p("kundkund-mindmap"), intro: "Turn any topic or text into a mind map you can expand, edit and export.", related: ["smart-diagram-ai", "cognimap", "kundkund-ebook-bot"], component: custom(() => import("./custom/MindMap")) },
-  "interactive-videos": { engine: "custom", credits: p("interactive-videos"), intro: "Add quiz checkpoints to any YouTube lesson — the video pauses and asks questions as you watch.", related: ["quiz-maker", "flashcard-maker", "jain-video-stream"], component: custom(() => import("./custom/InteractiveVideo")) },
-  "soul-mirror": { engine: "custom", credits: p("soul-mirror"), intro: "A Johari Window: pick words that describe you, invite friends to do the same, and see your open, blind and hidden areas.", related: ["cognimap", "jaingyan-ai"], component: custom(() => import("./custom/SoulMirror")) },
+  "kundkund-mindmap": { engine: "custom", credits: p("kundkund-mindmap"), intro: "Turn any topic or text into a mind map you can expand, edit and export.", related: ["smart-diagram-ai", "cognimap"], component: custom(() => import("./custom/MindMap")) },
+  "interactive-videos": { engine: "custom", credits: p("interactive-videos"), intro: "Add quiz checkpoints to any YouTube lesson — the video pauses and asks questions as you watch.", related: ["quiz-maker", "flashcard-maker"], component: custom(() => import("./custom/InteractiveVideo")) },
+  "soul-mirror": { engine: "custom", credits: p("soul-mirror"), intro: "A Johari Window: pick words that describe you, invite friends to do the same, and see your open, blind and hidden areas.", related: ["cognimap"], component: custom(() => import("./custom/SoulMirror")) },
   "ai-data-analysis": { engine: "custom", credits: p("ai-data-analysis"), intro: "Upload a CSV and get instant charts, column statistics and an AI-written analysis of what matters.", related: ["tool-2", "tool-25", "auto-text-extractor", "ocr"], component: custom(() => import("./custom/DataAnalysis")) },
   "html-editor": { engine: "custom", credits: p("html-editor"), intro: "Edit HTML, CSS and JavaScript with a live preview — and ask AI to build or change the page for you.", related: ["rich-editor", "smart-diagram-ai", "image-creator"], component: custom(() => import("./custom/HtmlEditor")) },
   "rich-editor": { engine: "custom", credits: p("rich-editor"), intro: "A clean writing editor with formatting, word count, autosave and AI rewrite, translate and continue.", related: ["book-editor", "wrong-written-words", "advance-text-extractor"], component: custom(() => import("./custom/RichEditor")) },
   "book-editor": { engine: "custom", credits: p("book-editor"), intro: "Write a book chapter by chapter — outline, autosave, word goals, AI co-writer and Word export.", related: ["book-editor-html", "rich-editor", "storybook-creator"], component: custom(() => import("./custom/BookEditor")) },
   "book-editor-html": { engine: "custom", credits: p("book-editor-html"), intro: "The book editor with an HTML view — write chapters and export a styled, web-ready book.", related: ["book-editor", "html-editor", "rich-editor"], component: custom(() => import("./custom/BookEditor")) },
-  "shastra-pdf-reader": { engine: "custom", credits: p("shastra-pdf-reader"), intro: "Read PDFs page by page with zoom and search — and ask AI to summarise, explain or translate the page you're on.", related: ["shastra-multi-pdf-ai-bot", "shastra-hover-dictionary", "pdf-chart-image-extractor"], component: custom(() => import("./custom/PdfReader")) },
+  "shastra-pdf-reader": { engine: "custom", credits: p("shastra-pdf-reader"), intro: "Read PDFs page by page with zoom and search — and ask AI to summarise, explain or translate the page you're on.", related: ["shastra-multi-pdf-ai-bot", "pdf-chart-image-extractor"], component: custom(() => import("./custom/PdfReader")) },
   "pdf-metadata-ai-analyst": { engine: "custom", credits: p("pdf-metadata-ai-analyst"), intro: "See a PDF's hidden metadata — author, software, dates, pages — and get an AI read of what the document is.", related: ["shastra-pdf-reader", "pdf-profile-extractor", "view-metadata"], component: custom(() => import("./custom/PdfMetadata")) },
   "pdf-profile-extractor": { engine: "custom", credits: p("pdf-profile-extractor"), intro: "Pull a structured profile out of resume PDFs — contact, skills, experience, education — and export to CSV.", related: ["tool-29", "tool-28", "meet-nudge"], component: custom(() => import("./custom/ProfileExtractor")) },
-  "dictionary-extractor-ai": { engine: "custom", credits: p("dictionary-extractor-ai"), intro: "Build a glossary from any text or PDF — key terms with definitions and examples, ready to export.", related: ["shastra-hover-dictionary", "flashcard-maker", "kundkund-ebook-bot"], component: custom(() => import("./custom/Glossary")) },
-  "shastra-hover-dictionary": { engine: "custom", credits: p("shastra-hover-dictionary"), intro: "Paste a passage and tap any word to see its meaning — built for Sanskrit, Prakrit, Hindi and Jain terms.", related: ["dictionary-extractor-ai", "jaingyan-ai", "jain-encyclopedia"], component: custom(() => import("./custom/HoverDictionary")) },
+  "dictionary-extractor-ai": { engine: "custom", credits: p("dictionary-extractor-ai"), intro: "Build a glossary from any text or PDF — key terms with definitions and examples, ready to export.", related: ["flashcard-maker"], component: custom(() => import("./custom/Glossary")) },
   "pdf-chart-image-extractor": { engine: "custom", credits: p("pdf-chart-image-extractor"), intro: "Save every page of a PDF as an image, or crop out charts and figures — all in your browser, free.", related: ["shastra-pdf-reader", "ocr", "ai-data-analysis"], component: custom(() => import("./custom/PdfImages")) },
-  "jain-panchang": { engine: "custom", credits: p("jain-panchang"), intro: "Daily sunrise, sunset, Navkarsi, Porsi and Chauvihar times for your city, with the moon's tithi — free.", related: ["jaingyan-ai", "jain-encyclopedia", "jain-audio-stream"], component: custom(() => import("./custom/Panchang")) },
-  "jainbhugol-maps": { engine: "custom", credits: p("jainbhugol-maps"), intro: "An interactive map of Jambudvipa from Jain cosmology — tap a region to learn about it, or ask a question.", related: ["jain-ganit", "jaingyan-ai", "jain-encyclopedia"], component: custom(() => import("./custom/Bhugol")) },
-  "jain-ganit": { engine: "custom", credits: p("jain-ganit"), intro: "Convert traditional units of length and time used in Jain texts, and ask a tutor to work through calculations.", related: ["jainbhugol-maps", "jaingyan-ai"], component: custom(() => import("./custom/Ganit")) },
-  "jain-video-stream": { engine: "custom", credits: p("jain-video-stream"), intro: "Your own library of pravachan, bhakti and lesson videos from YouTube — organised in playlists, free.", related: ["jain-audio-stream", "interactive-videos", "jaingyan-ai"], component: custom(() => import("./custom/MediaLibrary")) },
-  "jain-audio-stream": { engine: "custom", credits: p("jain-audio-stream"), intro: "Listen to stavan, bhakti and pravachan audio — add files or links, build playlists, keep your place — free.", related: ["jain-video-stream", "jain-panchang"], component: custom(() => import("./custom/MediaLibrary")) },
 };
 
 export const hasEngineApp = (toolId: string) => toolId in APPS;

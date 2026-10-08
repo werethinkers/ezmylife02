@@ -5,7 +5,7 @@ import { billed } from "../_shared/billing.ts";
 const serve = (handler: (req: Request) => Promise<Response>) =>
   // The keepsake book is the charged result ("virasat"). Interview helpers (next question, tidy-up,
   // Hindi script, reading a question aloud) are free but size-capped below.
-  stdServe(billed({ tool: (b) => (b?.action === "book" ? "virasat" : null) }, (req) => handler(req)));
+  stdServe(billed({ tool: (b) => (b?.action === "book" ? "virasat-book" : null), defaultCredits: () => 10 }, (req) => handler(req)));
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {

@@ -16,6 +16,8 @@ export interface AppSpec {
   maxTokens?: number;
   /** Vision apps: most images per run (keeps a 1–2 credit run within cost). */
   maxImages?: number;
+  /** Price id to charge under, when it differs from the app id (re-priced apps). */
+  chargeId?: string;
   /** Chat apps: how much uploaded document text is sent with each question. */
   maxContext?: number;
 }
@@ -83,7 +85,6 @@ export const APP_SPECS: Record<string, AppSpec> = {
 
   // ───────────── Documents, PDFs & text extraction ─────────────
   "shastra-multi-pdf-ai-bot": { kind: "chat", credits: 2, maxContext: 60_000, system: "You answer questions using the user's uploaded documents. Quote or cite the document name and page when you use it. If the answer is not in the documents, say so clearly before adding general knowledge." },
-  "kundkund-ebook-bot": { kind: "chat", credits: 2, maxContext: 60_000, system: "You help readers study e-books, especially texts on Jain philosophy and literature. Use the uploaded book text first and cite the page. If something is not in the text, say so; never invent scripture, verses or citations." },
   "shastra-pdf-reader": { kind: "doc", credits: 1, model: LITE, system: "You help people read documents faster.", task: "Do what the user asks with the given page text (summarise, explain simply, list key points, translate, or answer their question). Be faithful to the text." },
   "pdf-metadata-ai-analyst": { kind: "doc", credits: 1, model: LITE, system: "You analyse documents and their metadata for business users.", task: "Using the metadata and first-pages text given: identify the document type and purpose, summarise it in 5 bullets, note anything unusual in the metadata (creation/modification dates, producer software, missing author), and list key entities (people, organisations, dates, amounts)." },
   "pdf-profile-extractor": { kind: "json", credits: 2, system: "You extract structured profiles from resumes and profile documents accurately. Never invent data; use empty strings for missing fields.", task: 'Extract the profile. Return JSON: {"name":"","headline":"","email":"","phone":"","location":"","linkedin":"","website":"","summary":"","skills":[],"languages":[],"experience":[{"title":"","company":"","start":"","end":"","highlights":[]}],"education":[{"degree":"","institution":"","year":""}],"certifications":[]}.' },
@@ -93,19 +94,14 @@ export const APP_SPECS: Record<string, AppSpec> = {
   "auto-text-extractor": { kind: "vision", credits: 2, maxImages: 4, system: "You extract fields from business documents accurately. Never guess missing values; use empty strings.", task: 'Identify the document type (invoice, receipt, bill, business card, ID card, form, other) and extract its fields. Return JSON: {"document_type": "...", "fields": [{"label": "...", "value": "..."}], "line_items": [{"description": "", "quantity": "", "rate": "", "amount": ""}]}. Include totals, taxes (GST), dates and IDs when present.' },
 
   // ───────────── Jain knowledge ─────────────
-  "jaingyan-ai": { kind: "chat", credits: 1, system: "You are Gyan AI, a respectful guide to Jain philosophy, practice and history. Explain concepts (e.g. anekantavada, karma theory, the tattvas, vows, festivals) clearly for beginners and students. Mention which tradition (Digambara/Shvetambara) a view belongs to when they differ. Never invent quotations, verse numbers or citations; if you are unsure, say so and suggest consulting a scholar or the original text." },
-  "shastra-hover-dictionary": { kind: "json", credits: 1, model: LITE, system: "You are a dictionary of Sanskrit, Prakrit, Hindi and Jain technical terms.", task: 'For each word given, return JSON: {"entries": [{"word": "...", "script": "Devanagari form if applicable", "meaning": "concise meaning in the requested language", "context": "how it is used in Jain texts, if relevant"}]}. If a word is unknown, give the closest meaning and say it is uncertain.' },
 
-  "jain-encyclopedia": { kind: "doc", credits: 1, system: "You write careful encyclopedia entries on Jain philosophy, history, places, festivals, texts and terms for general readers.", task: "Write an encyclopedia entry for the topic in the requested language: a one-paragraph definition, then sections as relevant (Meaning and etymology, Explanation, In Digambara and Shvetambara traditions — only where they differ, Practice/observance, Related terms). Keep it neutral and factual. Never invent quotations, verse numbers, dates or citations; if something is uncertain or disputed, say so. End with 3–6 related topics as a bullet list." },
-  "jain-ganit": { kind: "chat", credits: 1, system: "You are a patient tutor for Jain mathematics (Karananuyoga): units of length (angul, hasta, dhanush, kos, yojan), units of time (samay, avali, muhurta, palya, sagaropama), large numbers, and the geometry of Jambudvipa as described in Jain texts. Show calculations step by step. When texts or traditions give different values, say so instead of choosing silently. Never invent verse references." },
-  "jainbhugol-maps": { kind: "chat", credits: 1, system: "You explain Jain cosmology (lok, Madhya Lok, Jambudvipa, its kshetras, mountains, rivers, Meru, the dvipas and samudras) to curious beginners in simple language. Mention when Digambara and Shvetambara descriptions differ. Never invent measurements or verse references; if unsure, say so." },
 
   // ───────────── Images (priced at cost) ─────────────
   "image-creator": { kind: "image", credits: 12, system: "" },
   "create-3d-images": { kind: "image", credits: 12, system: "" },
   "sketchflow-ai": { kind: "image", credits: 12, system: "" },
   "storybook-illustration": { kind: "image", credits: 12, system: "" },
-  "thumbnail-maker": { kind: "image", credits: 12, system: "" },
+  "thumbnail-maker": { kind: "image", credits: 12, system: "", chargeId: "thumbnail-maker-img" },
 };
 
 export const COMMON_RULES = "Follow the task exactly. Keep the user's language if they wrote in Hindi or Hinglish unless asked otherwise.";
