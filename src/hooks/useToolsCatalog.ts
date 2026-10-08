@@ -17,6 +17,8 @@ export interface CatalogTool {
   preview_image_url?: string | null;
   preview_image_fit?: "cover" | "contain" | null;
   icon_fit?: "cover" | "contain" | null;
+  /** Admin-set shelf flag, e.g. "hot" for hand-picked apps. */
+  home_section?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import { Zap } from "lucide-react";
+import { useAppCountLabel } from "@/lib/appCount";
 
 interface ToolsHeroProps {
   searchQuery: string;
@@ -13,6 +14,7 @@ interface ToolsHeroProps {
 }
 
 export const ToolsHero = ({ searchQuery, onSearchChange }: ToolsHeroProps) => {
+  const countLabel = useAppCountLabel();
   const { user } = useAuth();
   const { total } = useWallet();
 
@@ -39,7 +41,7 @@ export const ToolsHero = ({ searchQuery, onSearchChange }: ToolsHeroProps) => {
             </h1>
 
             <p className="text-muted-foreground text-base md:text-lg max-w-xl mb-8 mx-auto lg:mx-0">
-              Browse 200+ live AI apps. No signup needed to explore — pay only when you generate.
+              Browse {countLabel} live AI apps. No signup needed to explore — pay only when you generate.
             </p>
 
             <div className="relative max-w-2xl mx-auto lg:mx-0">

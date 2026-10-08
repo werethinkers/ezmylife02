@@ -19,6 +19,7 @@ import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
+import { useAppCountLabel } from "@/lib/appCount";
 
 interface PreviewTool {
   id?: string;
@@ -32,6 +33,7 @@ interface PreviewTool {
 }
 
 const Tools = () => {
+  const countLabel = useAppCountLabel();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -150,8 +152,8 @@ const Tools = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="200+ Live AI Apps (2,000+ Coming Soon) — Browse Without Signup | EZYOURLIFE"
-        description="Browse 200+ live AI apps today (2,000+ launching within a year) — no signup needed. The Future's First AI App Store."
+        title={`${countLabel} Live AI Apps (2,000+ Coming Soon) — Browse Without Signup | EZYOURLIFE`}
+        description={`Browse ${countLabel} live AI apps today (2,000+ launching within a year) — no signup needed. The Future's First AI App Store.`}
         path="/ai-apps"
         keywords="free ai apps, no signup ai apps, ezyourlife ai apps"
       />

@@ -76,7 +76,7 @@ export const SmartAssistantChatbot = () => {
         {
           role: "assistant",
           content:
-            "✅ Got it! Your request is **registered with the EZYOURLIFE team**. We'll build or update the app and email you within **24-48 hours**.\n\nMeanwhile, want to explore [200+ live apps](/ai-apps)?",
+            "✅ Got it! Your request is **registered with the EZYOURLIFE team**. We'll build or update the app and email you within **24-48 hours**.\n\nMeanwhile, want to explore [165+ live apps](/ai-apps)?",
         },
       ]);
     } catch (e: any) {
@@ -163,7 +163,7 @@ export const SmartAssistantChatbot = () => {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-[60] h-16 w-16 rounded-full p-[2px] bg-gradient-to-tr from-primary via-purple-500 to-pink-500 shadow-2xl shadow-primary/40"
+        className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[60] h-14 w-14 md:h-16 md:w-16 rounded-full p-[2px] bg-gradient-to-tr from-primary via-purple-500 to-pink-500 shadow-2xl shadow-primary/40"
         aria-label="Open EZYOURLIFE Assistant"
       >
         <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary via-purple-500 to-pink-500 blur-xl opacity-60 -z-10 animate-pulse" />
@@ -183,7 +183,7 @@ export const SmartAssistantChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-28 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] sm:w-[400px] h-[560px] max-h-[78vh] rounded-3xl p-[1.5px] bg-gradient-to-br from-primary/60 via-purple-500/60 to-pink-500/60 shadow-2xl shadow-primary/30"
+            className="fixed bottom-40 md:bottom-28 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] sm:w-[400px] h-[560px] max-h-[70vh] md:max-h-[78vh] rounded-3xl p-[1.5px] bg-gradient-to-br from-primary/60 via-purple-500/60 to-pink-500/60 shadow-2xl shadow-primary/30"
           >
             <div className="flex h-full flex-col rounded-[22px] bg-card/95 backdrop-blur-xl overflow-hidden">
               {/* Header */}

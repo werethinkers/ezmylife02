@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useAppCountLabel } from "@/lib/appCount";
 
 const SEOFooter = () => {
+  const countLabel = useAppCountLabel();
   return (
     <footer className="border-t border-border/40 bg-muted/30 py-12">
       <div className="container mx-auto px-4">
@@ -9,7 +11,7 @@ const SEOFooter = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-foreground">EZYOURLIFE</h3>
             <p className="text-sm text-muted-foreground">
-              The Future's First AI App Store. 200+ live AI apps today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
+              The Future's First AI App Store. {countLabel} live AI apps today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
             </p>
             <p className="text-xs text-muted-foreground">
               ezyourlife — Making digital AI Apps accessible to everyone.

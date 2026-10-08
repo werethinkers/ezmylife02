@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Sparkles, ArrowRight, Search } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { humanize } from "@/lib/seoData";
+import { useAppCountLabel } from "@/lib/appCount";
 
 interface Tool {
   id: string;
@@ -16,6 +17,7 @@ interface Tool {
 }
 
 const UseCaseLanding = () => {
+  const countLabel = useAppCountLabel();
   const { query = "" } = useParams<{ query: string }>();
   const human = humanize(query);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -102,7 +104,7 @@ const UseCaseLanding = () => {
               <Search className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium mb-2">No exact match yet for "{human}"</p>
               <p className="text-muted-foreground mb-6">
-                We're shipping new AI tools every week. Browse all 200+ live apps or request "{human}" — we'll build it within 24–48 hours.
+                We're shipping new AI tools every week. Browse all {countLabel} live apps or request "{human}" — we'll build it within 24–48 hours.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Button asChild><Link to="/ai-apps">Browse all AI tools</Link></Button>
@@ -130,7 +132,7 @@ const UseCaseLanding = () => {
         <section className="prose prose-invert max-w-none mb-12">
           <h2 className="text-2xl font-semibold mb-4">Why use EZYOURLIFE for {human.toLowerCase()}?</h2>
           <ul className="space-y-2 text-muted-foreground">
-            <li>✓ 200+ live AI tools for {human.toLowerCase()} and adjacent workflows (2,000+ launching within a year).</li>
+            <li>✓ {countLabel} live AI tools for {human.toLowerCase()} and adjacent workflows (2,000+ launching within a year).</li>
             <li>✓ Pay-as-you-go credits from ₹10 — no subscriptions, no monthly lock-in.</li>
             <li>✓ Runs in your browser — nothing to install, no developer setup.</li>
             <li>✓ Powered by Google Gemini 2.5 with a smart fallback so generations don't fail under load.</li>

@@ -3,11 +3,13 @@ import { PageSeo } from "@/components/seo/PageSeo";
 import { Link } from "react-router-dom";
 import { USE_CASE_SEEDS, INDUSTRY_SEEDS, humanize } from "@/lib/seoData";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { useAppCountLabel } from "@/lib/appCount";
 
 const TOP_USE_CASES = USE_CASE_SEEDS.slice(0, 80);
 const TOP_INDUSTRIES = INDUSTRY_SEEDS.slice(0, 50);
 
 const Explore = () => {
+  const countLabel = useAppCountLabel();
   const { data: catalog = [] } = useToolsCatalog();
   const liveTools = catalog.filter((t) => t.is_live).sort((a, b) => a.name.localeCompare(b.name));
   const categories = Array.from(new Set(liveTools.map((t) => t.category))).sort();
@@ -18,7 +20,7 @@ const Explore = () => {
     name: "Explore AI apps by use case and industry",
     url: "https://ezyourlife.com/explore",
     description:
-      "Browse 200+ live AI apps by use case, industry, and category on EZYOURLIFE — the future's first AI app store.",
+      `Browse ${countLabel} live AI apps by use case, industry, and category on EZYOURLIFE — the future's first AI app store.`,
   };
 
   return (

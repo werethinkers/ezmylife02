@@ -15,6 +15,7 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
 import { FunnelStepper } from "@/components/FunnelStepper";
+import { useAppCountLabel } from "@/lib/appCount";
 
 const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -45,6 +46,7 @@ const staggerContainer = {
 };
 
 const Auth = () => {
+  const countLabel = useAppCountLabel();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -168,7 +170,7 @@ const Auth = () => {
           <motion.div variants={fadeInUp} transition={{ duration: 0.5 }} className="text-center space-y-4">
             <motion.img src={logo} alt="EZYOURLIFE" className="h-14 mx-auto" whileHover={{ scale: 1.05, rotate: 2 }} transition={{ duration: 0.3 }} />
             <h1 className="font-display text-2xl font-semibold">Welcome to EZYOURLIFE</h1>
-            <p className="text-muted-foreground">Sign in to access 200+ live AI Apps (2,000+ coming soon)</p>
+            <p className="text-muted-foreground">Sign in to access {countLabel} live AI Apps (2,000+ coming soon)</p>
           </motion.div>
 
           <motion.div variants={fadeInUp} transition={{ duration: 0.5, delay: 0.1 }} className="space-y-3">

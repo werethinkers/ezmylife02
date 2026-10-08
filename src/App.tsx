@@ -10,6 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { QuickLookProvider } from "@/components/store/QuickLook";
+import { MobileDock } from "@/components/MobileDock";
 const SmartAssistantChatbot = lazy(() =>
   import("@/components/SmartAssistantChatbot").then((m) => ({
     default: m.SmartAssistantChatbot ?? (m as any).default,
@@ -282,10 +284,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AnimatedRoutes />
-          <Suspense fallback={null}>
-            <SmartAssistantChatbot />
-          </Suspense>
+          <QuickLookProvider>
+            <AnimatedRoutes />
+            <MobileDock />
+            <Suspense fallback={null}>
+              <SmartAssistantChatbot />
+            </Suspense>
+          </QuickLookProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

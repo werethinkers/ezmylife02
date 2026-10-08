@@ -25,6 +25,7 @@ import {
 import { z } from "zod";
 import founderAbhijay from "@/assets/founder-abhijay.jpg";
 import founderArinjay from "@/assets/founder-arinjay.jpg";
+import { useAppCountLabel } from "@/lib/appCount";
 
 const SUPPORT_EMAIL = "support@ezyourlife.com";
 
@@ -42,7 +43,7 @@ const fadeUp = {
 } as const;
 
 const STATS = [
-  { value: "200+", label: "AI apps live today" },
+  { value: "LIVE_COUNT", label: "AI apps live today" },
   { value: "2,000+", label: "Launching within a year" },
   { value: "100%", label: "Browser-based, no installs" },
   { value: "24/7", label: "Available anytime, anywhere" },
@@ -95,6 +96,7 @@ const Eyebrow = ({ children, className = "" }: { children: ReactNode; className?
 );
 
 const About = () => {
+  const countLabel = useAppCountLabel();
   const { toast } = useToast();
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
@@ -125,7 +127,7 @@ const About = () => {
       <div className="min-h-screen bg-background">
         <SEOHead
           title="About EZYOURLIFE - The Future's First AI App Store | Our Mission"
-          description="What is EZYOURLIFE? Learn about the Future's First AI App Store — 200+ live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Meet the founders and discover the ezyourlife mission."
+          description={`What is EZYOURLIFE? Learn about the Future's First AI App Store — ${countLabel} live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Meet the founders and discover the ezyourlife mission.`}
           path="/about"
           keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story, ezyourlife founders"
           jsonLd={[
@@ -134,7 +136,7 @@ const About = () => {
               "@type": "AboutPage",
               name: "About EZYOURLIFE",
               description:
-                "Learn about EZYOURLIFE, the Future's First AI App Store — 200+ live AI Apps today and 2,000+ launching within a year.",
+                `Learn about EZYOURLIFE, the Future's First AI App Store — ${countLabel} live AI Apps today and 2,000+ launching within a year.`,
               url: "https://ezyourlife.com/about",
               mainEntity: {
                 "@type": "Organization",
@@ -211,7 +213,7 @@ const About = () => {
               className="mx-auto mt-14 max-w-5xl overflow-hidden rounded-3xl border border-border/60 shadow-lg md:mt-20"
             >
               <dl className="grid grid-cols-2 gap-px bg-border/60 md:grid-cols-4">
-                {STATS.map((s) => (
+                {STATS.map((s) => ({ ...s, value: s.value === "LIVE_COUNT" ? countLabel : s.value })).map((s) => (
                   <div key={s.label} className="flex flex-col-reverse justify-end gap-1 bg-background/85 p-5 text-center backdrop-blur md:p-7">
                     <dt className="text-xs leading-snug text-muted-foreground sm:text-sm">{s.label}</dt>
                     <dd className="font-display text-3xl font-bold tracking-tight md:text-5xl">
@@ -418,7 +420,7 @@ const About = () => {
                 >
                   <Sparkles className="h-6 w-6 text-primary" />
                   <div className="mt-10">
-                    <h3 className="text-2xl font-bold leading-tight">Explore 200+ live AI apps</h3>
+                    <h3 className="text-2xl font-bold leading-tight">Explore {countLabel} live AI apps</h3>
                     <span className="mt-3 inline-flex items-center text-sm font-semibold text-primary">
                       Browse the store
                       <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />

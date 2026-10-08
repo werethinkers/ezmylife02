@@ -1,13 +1,13 @@
 # EZYOURLIFE
 
-> The Future's First AI App Store — a simple, pay-as-you-go AI platform with 200+ live AI tools today and 2,000+ launching within a year. No subscriptions, just credits (packs from ₹10).
+> The Future's First AI App Store — a simple, pay-as-you-go AI platform with 165+ live AI tools today and 2,000+ launching within a year. No subscriptions, just credits (packs from ₹10).
 
 EZYOURLIFE is a unified AI app store where users discover, run, and pay only for the AI tools they actually use. Tools cover images, video, writing, productivity, education, marketing, business analysis, and more. Authentication, credits, and a shared workspace let users move seamlessly between tools.
 
 ## Pages
 
 - [Home](/): Landing page with featured tools, categories, and how credits work.
-- [AI Apps catalog](/ai-apps): Browse and search 200+ live AI tools by sector, department, and user type.
+- [AI Apps catalog](/ai-apps): Browse and search 165+ live AI tools by sector, department, and user type.
 - [About](/about): What EZYOURLIFE is, the team, and contact details.
 - [Credits & pricing](/credits): Pay-as-you-go credit packs from ₹10 to ₹1000.
 - [Refund policy](/refund-policy): Terms for credit purchases.

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, ArrowRight } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { humanize } from "@/lib/seoData";
+import { useAppCountLabel } from "@/lib/appCount";
 
 interface Tool {
   id: string;
@@ -16,6 +17,7 @@ interface Tool {
 }
 
 const IndustryLanding = () => {
+  const countLabel = useAppCountLabel();
   const { industry = "" } = useParams<{ industry: string }>();
   const human = humanize(industry);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -79,7 +81,7 @@ const IndustryLanding = () => {
           {!loading && tools.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-lg font-medium mb-4">We're curating AI tools for the {human.toLowerCase()} industry.</p>
-              <Button asChild><Link to="/ai-apps">Browse all 200+ AI tools</Link></Button>
+              <Button asChild><Link to="/ai-apps">Browse all {countLabel} AI tools</Link></Button>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
