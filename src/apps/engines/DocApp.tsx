@@ -129,7 +129,7 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
       <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="space-y-4">
           <form
-            className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5"
+            className="rounded-2xl border-2 border-ink bg-card p-4 sm:p-5"
             onSubmit={(e) => {
               e.preventDefault();
               void generate();
@@ -197,7 +197,7 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
 
         <div id={`${toolId}-output`} className="min-w-0 scroll-mt-24">
           {busy === "generate" ? (
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-6" aria-busy="true" aria-live="polite">
+            <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-6" aria-busy="true" aria-live="polite">
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> Writing — usually 5–20 seconds…
               </p>

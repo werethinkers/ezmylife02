@@ -97,7 +97,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
             <span className="mt-1 text-xs text-muted-foreground">Excel / Google Sheets: File ▸ Download ▸ CSV. Read in your browser.</span>
           </button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) load(await f.text(), f.name); e.target.value = ""; }} />
-          <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <Textarea rows={7} value={paste} onChange={(e) => setPaste(e.target.value)} placeholder={"…or paste CSV here\nMonth,Sales,Expenses\nJan,120000,80000"} aria-label="Paste CSV" />
             <Button className="mt-2 w-full" variant="outline" onClick={() => load(paste, "Pasted data")} disabled={!paste.trim()}><Table2 className="mr-2 h-4 w-4" /> Use pasted data</Button>
           </div>
@@ -110,7 +110,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {stats.slice(0, 8).map((s) => (
-              <div key={s.h} className="rounded-2xl border border-border/60 bg-card p-3">
+              <div key={s.h} className="rounded-2xl border-2 border-ink bg-card p-3">
                 <p className="truncate text-xs font-semibold">{s.h}</p>
                 {s.numeric && "mean" in s ? (
                   <p className="mt-1 text-xs text-muted-foreground">Sum <span className="font-semibold text-foreground">{fmt(s.sum!)}</span><br />Avg {fmt(s.mean!)} · {fmt(s.min!)}–{fmt(s.max!)}</p>
@@ -120,7 +120,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
               </div>
             ))}
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
               <label className="flex items-center gap-1">Group by <select className="h-8 rounded-md border border-input bg-background px-2" value={x} onChange={(e) => setX(+e.target.value)}>{header.map((h, i) => <option key={i} value={i}>{h}</option>)}</select></label>
               <label className="flex items-center gap-1">Sum of <select className="h-8 rounded-md border border-input bg-background px-2" value={yCol} onChange={(e) => setY(+e.target.value)}>{stats.map((s, i) => s.numeric && <option key={i} value={i}>{s.h}</option>)}</select></label>
@@ -138,7 +138,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
               </div>
             ) : <p className="py-10 text-center text-sm text-muted-foreground">No numeric column to chart.</p>}
           </div>
-          <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
+          <div className="overflow-x-auto rounded-2xl border-2 border-ink bg-card">
             <table className="w-full min-w-[600px] text-xs">
               <thead className="bg-muted/40 text-left"><tr>{header.map((h, i) => <th key={i} className="px-2 py-1.5">{h}</th>)}</tr></thead>
               <tbody>{rows.slice(0, 50).map((r, i) => <tr key={i} className="border-t border-border/40">{header.map((_, c) => <td key={c} className="px-2 py-1">{r[c]}</td>)}</tr>)}</tbody>
@@ -146,7 +146,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
             {rows.length > 50 && <p className="p-2 text-center text-xs text-muted-foreground">Showing 50 of {rows.length} rows</p>}
           </div>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
-            <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
+            <div className="space-y-2 rounded-2xl border-2 border-ink bg-card p-4">
               <Textarea rows={3} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Optional: what do you want to know? e.g. Which products are losing money?" aria-label="Question" />
               <Button className="w-full gap-2" onClick={analyse} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Analyse with AI</Button>
               <p className="text-[11px] text-muted-foreground">The AI gets the column summary and the first 40 rows — not your whole file.</p>

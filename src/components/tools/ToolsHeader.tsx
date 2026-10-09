@@ -39,7 +39,7 @@ export const ToolsHeader = ({
     <header className="relative overflow-hidden border-b border-border/40 pt-20 pb-8">
       {/* Background gradient mesh */}
       <div className="absolute inset-0 bg-mesh opacity-50" />
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-sand/50" />
       
       <div className="container mx-auto px-4 relative">
         <motion.div 
@@ -54,7 +54,7 @@ export const ToolsHeader = ({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-4"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-ink bg-sun mb-4"
             >
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">AI-Powered Apps</span>
@@ -136,7 +136,7 @@ export const ToolsHeader = ({
                 variant={viewMode === "personalized" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onViewModeChange("personalized")}
-                className={viewMode === "personalized" ? "bg-gradient-to-r from-primary to-primary/80 shadow-md" : "hover:bg-secondary"}
+                className={viewMode === "personalized" ? "bg-ink shadow-md" : "hover:bg-secondary"}
               >
                 <UserCircle className="h-4 w-4 mr-1.5" />
                 For You

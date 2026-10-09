@@ -129,7 +129,7 @@ export const StudyPlanner = () => {
   const daysUntilExam = getDaysUntilExam();
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen p-4 md:p-8 bg-background">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <Card>

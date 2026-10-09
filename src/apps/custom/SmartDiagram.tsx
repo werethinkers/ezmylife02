@@ -91,7 +91,7 @@ export default function SmartDiagram({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} wide steps={["Describe it", "Generate", "Tweak the code, download"]}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
         <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+          <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
             <div className="space-y-1">
               <Label htmlFor="sd-desc" className="text-xs">Describe the diagram</Label>
               <Textarea id="sd-desc" rows={5} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Hiring process: job post → screening call → interview → trial day → offer; rejected candidates get a polite email" />
@@ -103,7 +103,7 @@ export default function SmartDiagram({ toolId }: { toolId: string }) {
             </div>
             <Button className="w-full gap-2" onClick={generate} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Generate diagram</Button>
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <Label htmlFor="sd-code" className="text-xs">Diagram code (Mermaid) — edit it directly</Label>
             <Textarea id="sd-code" rows={12} className="mt-1 font-mono text-xs" value={code} onChange={(e) => store.update({ code: e.target.value })} spellCheck={false} />
             {err && <p className="mt-2 text-xs text-destructive">{err}</p>}

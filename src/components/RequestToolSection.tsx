@@ -36,7 +36,7 @@ const RequestToolSection = () => {
   };
 
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -44,22 +44,21 @@ const RequestToolSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
-            className="relative rounded-3xl border border-border bg-card overflow-hidden"
+            className="relative overflow-hidden rounded-3xl border-2 border-ink bg-card shadow-block-lg"
           >
             {/* Background accent */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
 
             <div className="relative grid md:grid-cols-2 gap-0">
               {/* Left side - Message */}
-              <div className="p-8 md:p-12 flex flex-col justify-center space-y-6 border-b md:border-b-0 md:border-r border-border">
+              <div className="p-8 md:p-12 flex flex-col justify-center space-y-6 border-b md:border-b-0 md:border-r border-ink border-b-2 md:border-r-2 bg-sky/40">
                 <motion.div
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20"
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-ink bg-sun"
                   whileHover={{ rotate: 10, scale: 1.1 }}
                 >
-                  <Wrench className="h-7 w-7 text-primary" />
+                  <Wrench className="h-7 w-7 text-ink" />
                 </motion.div>
-                <h2 className="font-display text-2xl md:text-3xl font-semibold leading-tight">
-                  Can't find the AI App you need?
+                <h2 className="font-display text-2xl md:text-3xl font-bold leading-tight">
+                  Can't find the app you need?
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Tell us what you're looking for and we'll build it for you within{" "}
@@ -67,7 +66,7 @@ const RequestToolSection = () => {
                 </p>
                 <div className="flex items-center gap-3 pt-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 text-primary" />
+                    <Clock className="h-4 w-4 text-ink" />
                     <span>24–48 hour turnaround</span>
                   </div>
                 </div>
@@ -90,7 +89,7 @@ const RequestToolSection = () => {
                       >
                         <CheckCircle className="h-16 w-16 text-primary" />
                       </motion.div>
-                      <h3 className="text-xl font-semibold">Request Received!</h3>
+                      <h3 className="text-xl font-bold">Request received</h3>
                       <p className="text-muted-foreground text-sm">
                         We'll review your request and get back to you within 24–48 hours.
                       </p>
@@ -117,9 +116,9 @@ const RequestToolSection = () => {
                       className="space-y-4"
                     >
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Your Name</label>
+                        <label className="text-sm font-medium">Your name</label>
                         <Input
-                          placeholder="John Doe"
+                          placeholder="Asha Verma"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           required
@@ -138,9 +137,9 @@ const RequestToolSection = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Describe the AI App you need</label>
+                        <label className="text-sm font-medium">Describe the app you need</label>
                         <Textarea
-                          placeholder="I need an AI App that can..."
+                          placeholder="I need an app that can…"
                           value={toolDescription}
                           onChange={(e) => setToolDescription(e.target.value)}
                           required
@@ -153,7 +152,7 @@ const RequestToolSection = () => {
                           "Submitting..."
                         ) : (
                           <>
-                            Request This AI App
+                            Request this app
                             <Send className="ml-2 h-4 w-4" />
                           </>
                         )}

@@ -46,7 +46,7 @@ export const FunnelStepper = ({ current }: FunnelStepperProps) => {
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all",
                     isCurrent
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      ? "bg-primary text-primary-foreground shadow-md"
                       : isDone
                         ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
                         : "bg-muted/50 text-muted-foreground"

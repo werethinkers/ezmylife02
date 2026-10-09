@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { ArrowRight, Gift, Search, ShieldCheck, X, Zap } from "lucide-react";
+import { ArrowRight, Gift, Globe, LayoutGrid, Mail, Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Navbar } from "@/components/Navbar";
@@ -12,6 +12,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { PERSONAS } from "@/data/personas";
+import { GOALS, categoryInfo } from "@/data/goals";
 import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
@@ -23,14 +24,33 @@ import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { cn } from "@/lib/utils";
 
-const TABS = [
-  { id: "today", label: "Today" },
-  { id: "apps", label: "Apps" },
-  { id: "categories", label: "Categories" },
-  { id: "credits", label: "Credit packs" },
-];
+// Website and card shelves need the design catalogue; load it after the first screen is up.
+const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
 
 const SKIP_CATEGORY_SHELVES = new Set(["Popular", "Lab"]);
+const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
+
+const STEPS = [
+  { t: "Pick what you need", s: "Search, or choose your business type." },
+  { t: "Fill a few details", s: "Examples are filled in so you know what to type." },
+  { t: "Pay only for results", s: "Apps use credits only when they work. Websites and cards are paid once." },
+  { t: "Download or share", s: "Save a PDF, copy it, or send it on WhatsApp." },
+];
+
+function Section({ id, title, line, children, action }: { id?: string; title: string; line?: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <section id={id} className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 md:py-14">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold md:text-[2rem]">{title}</h2>
+          {line && <p className="mt-1.5 max-w-2xl text-[16px] text-muted-foreground">{line}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 const Home = () => {
   const navigate = useNavigate();
@@ -48,21 +68,13 @@ const Home = () => {
 
   const query = search.trim().toLowerCase();
   const results = useMemo(
-    () =>
-      query
-        ? live
-            .filter((t) => `${t.name} ${t.description} ${t.category}`.toLowerCase().includes(query))
-            .slice(0, 24)
-        : [],
+    () => (query ? live.filter((t) => `${t.name} ${t.description} ${t.category}`.toLowerCase().includes(query)).slice(0, 24) : []),
     [live, query],
   );
 
   // Hand-picked by the team (catalog flag set in admin).
   const editorsPicks = useMemo(() => live.filter((t) => t.home_section === "hot"), [live]);
-  const oneCredit = useMemo(
-    () => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14),
-    [live, costOf, editorsPicks],
-  );
+  const oneCredit = useMemo(() => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14), [live, costOf, editorsPicks]);
   const newest = useMemo(() => [...live].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 12), [live]);
 
   const categories = useMemo(() => {
@@ -77,153 +89,122 @@ const Home = () => {
   }, [persona, categories]);
 
   const personaTools = persona ? (persona.toolIds.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[]) : [];
+  const marquee = useMemo(() => live.slice(0, 36).map((t) => t.name), [live]);
+
+  const goalBlocks = useMemo(
+    () => GOALS.map((g) => ({ goal: g, cats: categories.filter(([c]) => categoryInfo(c).goal === g.id) })).filter((b) => b.cats.length > 0),
+    [categories],
+  );
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query) navigate(`/ai-apps?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
-
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-background">
         <SEOHead
           title={`EZYOURLIFE - The Future's First AI App Store | ${countLabel} AI Apps`}
-          description={`Pay only for the AI you use. ${countLabel} specialised AI apps for business, marketing, images, content and study. Packs from ₹10, no monthly fees, 100 free credits to start.`}
+          description={`Business apps, websites and cards for small businesses in India. ${countLabel} AI apps for bills, customers, staff and photos. Pay only for results, packs from ₹10, 100 free credits to start.`}
           path="/"
-          keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, no subscription ai"
+          keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, business website maker, gst invoice app"
         />
         <Navbar />
 
         {/* ───────── Hero ───────── */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="absolute inset-0 bg-mesh" />
-          <div className="relative container mx-auto grid gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12 lg:pb-16">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="min-w-0 lg:col-span-7">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary sm:text-sm">
-                <Zap className="h-4 w-4" />
-                {countLabel} AI apps · one wallet · from ₹10
-              </span>
+        <section className="mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12">
+          <div className="min-w-0 lg:col-span-7">
+            <span className="inline-flex items-center rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] font-bold">For small businesses in India</span>
+            <h1 className="mt-5 text-[2.1rem] font-extrabold leading-[1.06] sm:text-5xl xl:text-[4.1rem]">
+              Run your <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">whole business</span> from{" "}
+              <span className="marker">one place</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+              {countLabel} ready apps for bills, customers, staff and photos, plus websites and cards you make in minutes. Pay only when an app gives you
+              a result. Start with 100 free credits.
+            </p>
 
-              <h1 className="mt-5 text-[2rem] font-bold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
-                Stop paying $20/mo for 10 different AI subscriptions.{" "}
-                <span className="text-gradient">Pay only for what you actually use.</span>
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-                Access {countLabel} specialised AI apps for business, marketing, images, content and study. No monthly fees. Packs start at
-                just ₹10, and you get 100 free credits to start.
-              </p>
-
-              <form onSubmit={onSearch} className="relative mt-7 max-w-2xl" role="search">
+            <form onSubmit={onSearch} className="mt-7 flex max-w-2xl gap-2.5" role="search">
+              <div className="relative min-w-0 flex-1">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="What do you need done? Try “invoice” or “passport photo”"
-                  aria-label="Search AI apps"
-                  className="h-14 rounded-2xl border-border/70 bg-card pl-12 pr-12 text-base shadow-sm"
+                  placeholder="What do you need? GST bill, passport photo…"
+                  aria-label="Search apps"
+                  className="h-14 rounded-2xl pl-12 pr-11 text-base shadow-block-sm"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch("")}
                     aria-label="Clear search"
-                    className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+                    className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-sand"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 )}
-              </form>
-
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">I am a…</p>
-                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden" role="group" aria-label="Show apps for">
-                  {PERSONAS.map((p) => {
-                    const active = p.id === personaId;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => setPersonaId(active ? null : p.id)}
-                        className={cn(
-                          "relative shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          active ? "border-transparent text-primary-foreground" : "border-border/70 bg-card hover:border-primary/40",
-                        )}
-                      >
-                        {active && <motion.span layoutId="persona-pill" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.45 }} />}
-                        <span className="relative">
-                          <span aria-hidden>{p.emoji} </span>
-                          {p.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
+              <Button type="submit" className="h-14 rounded-2xl px-5 text-base">
+                Find
+              </Button>
+            </form>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                {user ? (
-                  <>
-                    <Button asChild size="lg" className="group h-12 rounded-xl px-6 text-base shadow-lg shadow-primary/25">
-                      <Link to="/ai-apps">
-                        Browse all apps <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </Button>
-                    <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-base">
-                      <Link to="/credits">Top up from ₹10</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button asChild size="lg" className="h-12 rounded-xl px-6 text-base shadow-lg shadow-primary/25">
-                      <Link to="/auth?mode=signup">
-                        <Gift className="mr-2 h-4 w-4" /> Get 100 free credits
-                      </Link>
-                    </Button>
-                    <Button asChild size="lg" variant="outline" className="group h-12 rounded-xl px-6 text-base">
-                      <Link to="/ai-apps">
-                        Browse all apps <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-muted-foreground">People search:</span>
+              {POPULAR_SEARCHES.map((q) => (
+                <Link
+                  key={q}
+                  to={`/ai-apps?q=${encodeURIComponent(q)}`}
+                  className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun"
+                >
+                  {q}
+                </Link>
+              ))}
+            </div>
 
-              <ul className="mt-6 grid gap-2.5 text-sm sm:grid-cols-3">
-                {[
-                  { Icon: Zap, t: "UPI & card checkout", s: "Packs from ₹10" },
-                  { Icon: Gift, t: "100 free credits", s: "No card needed" },
-                  { Icon: ShieldCheck, t: "No monthly fees", s: "Pay per use" },
-                ].map(({ Icon, t, s }) => (
-                  <li key={t} className="flex items-center gap-2.5 rounded-2xl border border-border/60 bg-card/70 px-3 py-2.5 backdrop-blur">
-                    <Icon className="h-5 w-5 shrink-0 text-primary" />
-                    <span className="leading-tight">
-                      <span className="block font-semibold">{t}</span>
-                      <span className="block text-xs text-muted-foreground">{s}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
+            <ul className="mt-7 grid gap-2.5 text-sm sm:grid-cols-3">
+              {[
+                { t: "100 free credits", s: "No card needed" },
+                { t: "Pay per result", s: "Packs from ₹10, UPI or card" },
+                { t: "Failed runs are free", s: "Credits only when it works" },
+              ].map(({ t, s }) => (
+                <li key={t} className="rounded-xl border-2 border-ink bg-card px-3 py-2.5">
+                  <span className="block font-bold">{t}</span>
+                  <span className="block text-[13px] text-muted-foreground">{s}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="min-w-0 lg:col-span-5">
-              <HeroPicker catalog={catalog} />
-            </motion.div>
+          <div className="min-w-0 lg:col-span-5">
+            <HeroPicker catalog={catalog} />
           </div>
         </section>
 
+        {/* ───────── Moving strip of app names ───────── */}
+        {marquee.length > 0 && (
+          <div aria-hidden className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-cream">
+            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-display text-lg font-bold motion-reduce:animate-none">
+              {[...marquee, ...marquee].map((n, i) => (
+                <span key={i} className={i % 3 === 0 ? "text-sun" : i % 3 === 1 ? "text-pink" : "text-cream"}>
+                  {n} ✦
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {query ? (
-          <section className="container mx-auto px-4 pb-16" aria-live="polite">
+          <section className="mx-auto max-w-7xl px-4 py-10" aria-live="polite">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-bold">
                 Results for “{search.trim()}” <span className="text-sm font-normal text-muted-foreground">({results.length})</span>
               </h2>
-              <button type="button" onClick={() => setSearch("")} className="text-sm font-semibold text-primary hover:underline">
+              <Button variant="outline" size="sm" onClick={() => setSearch("")}>
                 Clear search
-              </button>
+              </Button>
             </div>
             {results.length ? (
               <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -237,74 +218,164 @@ const Home = () => {
           </section>
         ) : (
           <>
-            {/* ───────── Persona spotlight ───────── */}
-            <AnimatePresence initial={false}>
-              {persona && personaTools.length > 0 && (
-                <motion.section
-                  key={persona.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                  aria-live="polite"
-                >
-                  <div className="container mx-auto px-4 pb-10">
-                    <div className="rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-accent/10 p-5 md:p-7">
+            {/* ───────── Three doors ───────── */}
+            <Section title="What do you want to do today?" line="Three things you can do here. Pick one.">
+              <div className="grid gap-5 md:grid-cols-3">
+                {[
+                  { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
+                  { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
+                  { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
+                ].map((d) => (
+                  <Link key={d.to} to={d.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card">
+                        <d.Icon className="h-5 w-5" aria-hidden />
+                      </span>
+                      <span className="rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">{d.tag}</span>
+                    </div>
+                    <h3 className="text-2xl font-extrabold leading-tight">{d.h}</h3>
+                    <p className="text-[16px] text-ink/85">{d.d}</p>
+                    <span className="mt-auto inline-flex items-center gap-1.5 pt-2 font-bold">
+                      {d.go} <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </Section>
+
+            {/* ───────── How it works ───────── */}
+            <Section title="How it works" line="The same four steps for every app, website and card.">
+              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {STEPS.map((s, i) => (
+                  <li key={s.t} className="block-card flex gap-3 p-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display text-lg font-extrabold">{i + 1}</span>
+                    <span className="min-w-0">
+                      <span className="block font-bold">{s.t}</span>
+                      <span className="block text-sm text-muted-foreground">{s.s}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </Section>
+
+            {/* ───────── Business type ───────── */}
+            <Section
+              title="Pick your business type"
+              line="We show the apps people like you use most."
+              action={
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/explore">All business types</Link>
+                </Button>
+              }
+            >
+              <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show apps for">
+                {PERSONAS.map((p) => {
+                  const active = p.id === personaId;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setPersonaId(active ? null : p.id)}
+                      className={cn(
+                        "shrink-0 rounded-full border-2 border-ink px-4 py-2 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        active ? "bg-ink text-cream" : "bg-card hover:bg-sun",
+                      )}
+                    >
+                      <span aria-hidden>{p.emoji} </span>
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <AnimatePresence initial={false}>
+                {persona && personaTools.length > 0 && (
+                  <motion.div
+                    key={persona.id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                    aria-live="polite"
+                  >
+                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sky/40 p-5 md:p-6">
                       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-xl font-bold md:text-2xl">
+                          <h3 className="text-xl font-bold">
                             <span aria-hidden>{persona.emoji} </span>Picked for {persona.label}
-                          </h2>
-                          <p className="mt-1 text-sm text-muted-foreground">{persona.blurb}</p>
+                          </h3>
+                          <p className="mt-1 text-[15px] text-muted-foreground">{persona.blurb}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                        {(() => {
-                          const role = ROLES.find((r) => r.id === ({ founders: "founder", ecommerce: "retail", creators: "creator", students: "student" } as Record<string, string>)[persona.id]);
-                          return role ? (
-                            <Link
-                              to={`/tool/${role.steps[0].toolId}`}
-                              className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                            >
-                              Start with the first app
-                            </Link>
-                          ) : null;
-                        })()}
-                        <button
-                          type="button"
-                          onClick={() => setPersonaId(null)}
-                          className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm font-medium hover:bg-muted"
-                        >
-                          <X className="h-4 w-4" /> Show everything
-                        </button>
+                          {(() => {
+                            const role = ROLES.find(
+                              (r) => r.id === ({ founders: "founder", ecommerce: "retail", creators: "creator", students: "student" } as Record<string, string>)[persona.id],
+                            );
+                            return role ? (
+                              <Button asChild size="sm">
+                                <Link to={`/tool/${role.steps[0].toolId}`}>Start with the first app</Link>
+                              </Button>
+                            ) : null;
+                          })()}
+                          <Button variant="outline" size="sm" onClick={() => setPersonaId(null)}>
+                            <X className="h-4 w-4" /> Show everything
+                          </Button>
                         </div>
                       </div>
                       <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {personaTools.map((t, i) => (
-                          <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                            <AppRow tool={t} />
-                          </motion.div>
+                        {personaTools.map((t) => (
+                          <AppRow key={t.id} tool={t} />
                         ))}
                       </div>
                     </div>
-                  </div>
-                </motion.section>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Section>
 
-            <SectionTabs />
-
-            {/* ───────── Today ───────── */}
-            <section id="today" className="container mx-auto scroll-mt-32 px-4 pb-14 pt-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{today}</p>
-              <h2 className="mb-5 text-3xl font-bold tracking-tight md:text-4xl">Today</h2>
-              <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={personaId} />
-            </section>
+            {/* ───────── Apps by goal ───────── */}
+            {goalBlocks.length > 0 && (
+              <Section
+                title="Apps by what you need"
+                line="Every app sits under one simple goal."
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/ai-apps">See all apps</Link>
+                  </Button>
+                }
+              >
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {goalBlocks.map(({ goal, cats }) => (
+                    <div key={goal.id} className="block-card p-5" style={{ background: goal.color }}>
+                      <Link to={`/ai-apps?goal=${goal.id}`} className="font-display text-xl font-bold hover:underline">
+                        {goal.name}
+                      </Link>
+                      <p className="mt-1 text-sm text-ink/80">{goal.line}</p>
+                      <ul className="mt-3 space-y-0.5">
+                        {cats.map(([name, n]) => (
+                          <li key={name}>
+                            <Link
+                              to={`/ai-apps?category=${encodeURIComponent(name)}`}
+                              className="-mx-2 flex items-center justify-between rounded-lg px-2 py-1.5 text-[15px] font-semibold hover:bg-card"
+                            >
+                              <span>{name}</span>
+                              <span className="tabular-nums">{n}</span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
 
             {/* ───────── Shelves ───────── */}
-            <section id="apps" className="container mx-auto scroll-mt-32 space-y-12 px-4 pb-14">
+            <div className="mx-auto max-w-7xl space-y-12 px-4 py-10">
               {editorsPicks.length > 0 && (
-                <Shelf title="Editor's picks" subtitle="Hand-picked by the EZYOURLIFE team" seeAllTo="/ai-apps">
+                <Shelf title="Most useful to start" subtitle="Picked by our team" seeAllTo="/ai-apps">
                   {editorsPicks.map((t) => (
                     <AppTile key={t.id} tool={t} />
                   ))}
@@ -314,7 +385,12 @@ const Home = () => {
                 const tools = live.filter((t) => t.category === cat).slice(0, 14);
                 if (tools.length < 3) return null;
                 return (
-                  <Shelf key={cat} title={cat} subtitle={`${live.filter((t) => t.category === cat).length} apps in this category`} seeAllTo={`/ai-apps?category=${encodeURIComponent(cat)}`}>
+                  <Shelf
+                    key={cat}
+                    title={cat}
+                    subtitle={categoryInfo(cat).line || `${live.filter((t) => t.category === cat).length} apps`}
+                    seeAllTo={`/ai-apps?category=${encodeURIComponent(cat)}`}
+                  >
                     {tools.map((t) => (
                       <AppTile key={t.id} tool={t} />
                     ))}
@@ -322,64 +398,50 @@ const Home = () => {
                 );
               })}
               {oneCredit.length > 0 && (
-                <Shelf title="Under ₹1 a run" subtitle="1-credit apps for everyday jobs" seeAllTo="/ai-apps">
+                <Shelf title="Cheapest to run" subtitle="1 credit each time — less than ₹1" seeAllTo="/ai-apps">
                   {oneCredit.map((t) => (
                     <AppTile key={t.id} tool={t} />
                   ))}
                 </Shelf>
               )}
               {newest.length > 0 && (
-                <Shelf title="New arrivals" subtitle="The latest apps added to the store">
+                <Shelf title="New in the store" subtitle="The latest apps we added">
                   {newest.map((t) => (
                     <AppTile key={t.id} tool={t} />
                   ))}
                 </Shelf>
               )}
-            </section>
+            </div>
 
-            {/* ───────── Categories ───────── */}
-            <section id="categories" className="container mx-auto scroll-mt-32 px-4 pb-14">
-              <h2 className="mb-4 text-xl font-bold md:text-2xl">Browse by category</h2>
-              <div className="-mx-4 flex snap-x gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
-                {categories.map(([name, count]) => (
-                  <Link
-                    key={name}
-                    to={`/ai-apps?category=${encodeURIComponent(name)}`}
-                    className="shrink-0 snap-start rounded-2xl border border-border/60 bg-card px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                  >
-                    <span className="block text-sm font-semibold">{name}</span>
-                    <span className="block text-xs text-muted-foreground">{count} app{count === 1 ? "" : "s"}</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
+            {/* ───────── App bundles ───────── */}
+            <Section title="App bundles" line="A few apps that work well together, for one job.">
+              <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={personaId} />
+            </Section>
+
+            {/* ───────── Websites and cards ───────── */}
+            <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
+              <HomeMakeShelves />
+            </Suspense>
 
             {/* ───────── Credits ───────── */}
-            <section id="credits" className="container mx-auto scroll-mt-32 px-4 pb-16">
-              <div className="mx-auto mb-8 max-w-2xl text-center">
-                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  What does <span className="text-gradient">₹10</span> actually get you?
-                </h2>
-                <p className="mt-2 text-muted-foreground">One wallet for every app. Credits never tie you to a plan.</p>
-              </div>
+            <Section id="credits" title="What does ₹10 get you?" line="One wallet for every app. Credits never tie you to a plan, and failed runs are free.">
               <CreditValue catalog={catalog} onBuy={setBuyPackId} />
-            </section>
+            </Section>
 
             <RequestToolSection />
 
             {!user && (
-              <section className="container mx-auto px-4 pb-16">
-                <div className="relative overflow-hidden rounded-[2rem] bg-gradient-hero p-8 text-center text-white shadow-xl shadow-primary/20 md:p-12">
-                  <div aria-hidden className="absolute inset-0 bg-black/10" />
-                  <div className="relative">
-                    <h2 className="text-2xl font-bold md:text-4xl">Your first 100 credits are on us</h2>
-                    <p className="mx-auto mt-2 max-w-lg text-white/90">50 when you sign up and 50 more after your first run. No card needed.</p>
-                    <Button asChild size="lg" variant="secondary" className="mt-6 h-12 rounded-xl px-8 text-base font-semibold">
-                      <Link to="/auth?mode=signup">
-                        <Gift className="mr-2 h-4 w-4" /> Claim free credits
-                      </Link>
-                    </Button>
-                  </div>
+              <section className="mx-auto max-w-7xl px-4 pb-16">
+                <div className="rounded-3xl border-2 border-ink bg-ink p-8 text-center text-cream shadow-block-lg md:p-12">
+                  <h2 className="text-2xl font-extrabold md:text-4xl">
+                    Your first <span className="text-sun">100 credits</span> are on us
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-lg text-cream/85">50 when you sign up and 50 more after your first run. No card needed.</p>
+                  <Button asChild size="lg" className="mt-6 h-12 px-8 text-base">
+                    <Link to="/auth?mode=signup">
+                      <Gift className="h-4 w-4" /> Claim free credits
+                    </Link>
+                  </Button>
                 </div>
               </section>
             )}
@@ -392,60 +454,5 @@ const Home = () => {
     </MotionConfig>
   );
 };
-
-/** Desktop segmented control that jumps between sections and tracks where you are. */
-function SectionTabs() {
-  const [active, setActive] = useState(TABS[0].id);
-  const clicking = useRef(false);
-
-  useEffect(() => {
-    const els = TABS.map((t) => document.getElementById(t.id)).filter(Boolean) as HTMLElement[];
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (clicking.current) return;
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-        else if (els[0] && window.scrollY < els[0].offsetTop - 200) setActive(TABS[0].id);
-      },
-      { rootMargin: "-140px 0px -55% 0px" },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-
-  const go = (id: string) => {
-    setActive(id);
-    clicking.current = true;
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.setTimeout(() => (clicking.current = false), 800);
-  };
-
-  return (
-    <div className="sticky top-16 z-40 hidden py-3 md:block">
-      <div className="container mx-auto flex justify-center px-4">
-        <nav aria-label="Page sections" className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1 shadow-lg shadow-black/5 backdrop-blur-xl">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => go(t.id)}
-              aria-current={active === t.id ? "true" : undefined}
-              className={cn(
-                "relative rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active === t.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {active === t.id && <motion.span layoutId="section-tab" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }} />}
-              <span className="relative">{t.label}</span>
-            </button>
-          ))}
-          <Link to="/ai-apps" className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            All apps
-          </Link>
-        </nav>
-      </div>
-    </div>
-  );
-}
 
 export default Home;

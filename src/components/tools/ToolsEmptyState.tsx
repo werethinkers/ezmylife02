@@ -17,7 +17,7 @@ export const ToolsEmptyState = ({ onClearFilters, hasActiveFilters }: ToolsEmpty
     >
       <div className="relative inline-flex mb-6">
         <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse-glow" />
-        <div className="relative p-6 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 border border-border/50">
+        <div className="relative p-6 rounded-full bg-sand/70 border border-border/50">
           <Search className="h-10 w-10 text-muted-foreground" />
         </div>
       </div>

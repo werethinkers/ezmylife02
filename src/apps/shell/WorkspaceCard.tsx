@@ -18,7 +18,7 @@ export function WorkspaceCard({ className, onApply }: { className?: string; onAp
   const pct = Math.round((ws.filled / ws.total) * 100);
   return (
     <>
-      <div className={cn("rounded-2xl border border-border/60 bg-card p-4", className)}>
+      <div className={cn("rounded-2xl border-2 border-ink bg-card p-4", className)}>
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <Building2 className="h-4 w-4 text-primary" />

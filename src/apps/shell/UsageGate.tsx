@@ -73,7 +73,7 @@ export function UsageGate({ toolId, children }: { toolId: string; children: Reac
       {children}
       {(state === "blocked" || state === "charging") && (
         <div className="absolute inset-0 z-30 flex items-start justify-center bg-background/80 p-6 pt-24 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 text-center shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border-2 border-ink bg-card p-5 text-center shadow-xl">
             {state === "charging" ? (
               <p className="flex items-center justify-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Starting your session…</p>
             ) : (

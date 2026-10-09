@@ -29,7 +29,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} steps={["Paste text", "Check", "Accept the corrected version"]}>
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
+        <div className="rounded-2xl border-2 border-ink bg-card p-4">
           <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={14} placeholder="Paste or type your text — English, हिन्दी or Hinglish…" aria-label="Text to check" maxLength={6000} />
           <div className="mt-3 flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">{words} words · {text.length}/6000</span>
@@ -41,7 +41,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
         <div className="space-y-4">
           {res ? (
             <>
-              <div className="rounded-2xl border border-border/60 bg-card">
+              <div className="rounded-2xl border-2 border-ink bg-card">
                 <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
                   <p className="text-sm font-semibold">Corrected text</p>
                   <div className="flex gap-1">
@@ -53,7 +53,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
                 </div>
                 <p className="whitespace-pre-wrap p-4 text-sm leading-relaxed">{res.corrected}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="rounded-2xl border-2 border-ink bg-card p-4">
                 <p className="text-sm font-semibold">{res.changes.length ? `${res.changes.length} change${res.changes.length === 1 ? "" : "s"}` : "No mistakes found 🎉"}</p>
                 <ul className="mt-2 space-y-2">
                   {res.changes.map((c, i) => (

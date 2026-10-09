@@ -40,7 +40,7 @@ export default function Glossary({ toolId }: { toolId: string }) {
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState}>
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+        <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
           <Textarea rows={12} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a chapter, article or notes…" aria-label="Source text" />
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => fileRef.current?.click()} disabled={reading}>{reading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />} From PDF / text file</Button>
@@ -50,7 +50,7 @@ export default function Glossary({ toolId }: { toolId: string }) {
           </div>
           <p className="text-[11px] text-muted-foreground">Up to ~25,000 characters are read per run.</p>
         </div>
-        <div className="min-w-0 rounded-2xl border border-border/60 bg-card">
+        <div className="min-w-0 rounded-2xl border-2 border-ink bg-card">
           <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
             <p className="text-sm font-semibold">{terms.length ? `${terms.length} terms` : "Glossary"}</p>
             <div className="flex gap-1">

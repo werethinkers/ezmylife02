@@ -308,7 +308,7 @@ const GetExtension: React.FC = () => {
         </div>
 
         {/* Mobile Section */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-4">
+        <div className="p-6 rounded-2xl bg-sand border border-purple-500/20 space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-500/20">
               <Smartphone className="w-6 h-6 text-purple-400" />

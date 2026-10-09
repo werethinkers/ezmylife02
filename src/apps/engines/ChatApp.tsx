@@ -100,7 +100,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
   return (
     <AppShell toolId={toolId} intro={def.intro} steps={def.steps} related={def.related} syncState={store.syncState}>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
-        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
+        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border-2 border-ink bg-card">
           <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5" style={{ maxHeight: "65vh" }} aria-live="polite">
             {!messages.length && (
               <div className="py-6 text-center">
@@ -181,7 +181,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
 
         <aside className="space-y-3">
           {def.documents && (
-            <div className="rounded-2xl border border-border/60 bg-card p-4">
+            <div className="rounded-2xl border-2 border-ink bg-card p-4">
               <p className="text-sm font-semibold">Your documents</p>
               <p className="mt-1 text-xs text-muted-foreground">{def.documentHint ?? "Add PDFs or text files. They are read in your browser and sent only with your questions."}</p>
               <input ref={fileRef} type="file" multiple accept=".pdf,.txt,.md,.csv,application/pdf,text/plain" className="hidden" onChange={(e) => { void addFiles(e.target.files); e.target.value = ""; }} />

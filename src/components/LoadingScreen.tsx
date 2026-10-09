@@ -71,7 +71,7 @@ export const LoadingSpinner = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) =
 
 // Skeleton loader with shimmer
 export const SkeletonCard = () => (
-  <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6">
+  <div className="relative overflow-hidden rounded-xl border-2 border-ink bg-card p-6">
     <div className="space-y-4">
       <div className="h-4 w-2/3 rounded-lg bg-muted animate-pulse" />
       <div className="h-3 w-full rounded-lg bg-muted animate-pulse" />

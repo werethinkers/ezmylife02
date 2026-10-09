@@ -113,7 +113,7 @@ export default function InteractiveVideo({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} steps={["Paste a YouTube link", "Generate checkpoints", "Watch & answer"]}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
         <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+          <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
             <div className="space-y-1"><Label htmlFor="iv-url" className="text-xs">YouTube link *</Label><Input id="iv-url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://youtu.be/…" /></div>
             <div className="space-y-1"><Label htmlFor="iv-topic" className="text-xs">What the video teaches</Label><Input id="iv-topic" value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} placeholder="Photosynthesis for class 7" /></div>
             <div className="space-y-1"><Label htmlFor="iv-tr" className="text-xs">Transcript (best results — YouTube ▸ … ▸ Show transcript)</Label><Textarea id="iv-tr" rows={4} value={form.transcript} onChange={(e) => setForm({ ...form, transcript: e.target.value })} placeholder="0:00 Today we will learn…" /></div>
@@ -124,7 +124,7 @@ export default function InteractiveVideo({ toolId }: { toolId: string }) {
             <Button className="w-full gap-2" onClick={create} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Create interactive lesson</Button>
           </div>
           {(store.data.lessons ?? []).length > 0 && (
-            <div className="rounded-2xl border border-border/60 bg-card p-3">
+            <div className="rounded-2xl border-2 border-ink bg-card p-3">
               <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your lessons</p>
               {(store.data.lessons ?? []).map((l) => (
                 <button key={l.id} type="button" className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-muted" onClick={() => setLesson({ ...l })}>
@@ -162,7 +162,7 @@ export default function InteractiveVideo({ toolId }: { toolId: string }) {
             )}
           </div>
           {lesson && (
-            <div className="rounded-2xl border border-border/60 bg-card p-4">
+            <div className="rounded-2xl border-2 border-ink bg-card p-4">
               <p className="text-sm font-semibold">{lesson.checkpoints.length} checkpoints · score {correct}/{Object.keys(score).length}</p>
               <ol className="mt-2 space-y-1 text-sm">
                 {lesson.checkpoints.map((c, i) => (

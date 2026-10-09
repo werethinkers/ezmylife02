@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Unbounded', 'Hind', 'system-ui', 'sans-serif'],
+        body: ['Hind', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        sans: ['Hind', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -61,11 +62,32 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        ink: "hsl(var(--ink))",
+        cream: "hsl(var(--cream))",
+        sand: "hsl(var(--sand))",
+        pink: "hsl(var(--pink))",
+        sun: "hsl(var(--sun))",
+        teal: "hsl(var(--teal))",
+        sky: "hsl(var(--sky))",
+        lime: "hsl(var(--lime))",
+        coral: "hsl(var(--coral))",
         gold: {
           DEFAULT: "hsl(45 100% 50%)",
           light: "hsl(45 100% 65%)",
           dark: "hsl(35 100% 45%)",
         },
+      },
+      boxShadow: {
+        // Every shadow is a hard offset "block" shadow in ink, so older components match the new style.
+        sm: "2px 2px 0 0 hsl(0 0% 7%)",
+        DEFAULT: "3px 3px 0 0 hsl(0 0% 7%)",
+        md: "3px 3px 0 0 hsl(0 0% 7%)",
+        lg: "5px 5px 0 0 hsl(0 0% 7%)",
+        xl: "7px 7px 0 0 hsl(0 0% 7%)",
+        "2xl": "7px 7px 0 0 hsl(0 0% 7%)",
+        "block-sm": "var(--shadow-block-sm)",
+        block: "var(--shadow-block)",
+        "block-lg": "var(--shadow-block-lg)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -85,11 +107,16 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 3s ease-in-out infinite",
+        marquee: "marquee 70s linear infinite",
       },
     },
   },

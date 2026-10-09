@@ -44,11 +44,10 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card p-5 shadow-xl shadow-primary/10 md:p-6">
-      <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/15 blur-3xl" />
+    <div className="relative overflow-hidden rounded-3xl border-2 border-ink bg-card p-5 shadow-block-lg md:p-6">
       <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Try it in 3 taps</p>
-        <p className="mt-1 text-lg font-bold">1. What do you need done?</p>
+        <p className="inline-flex rounded-full border-2 border-ink bg-sun px-2.5 py-0.5 text-xs font-bold">Try it in 3 taps</p>
+        <p className="mt-3 text-lg font-bold">1. What do you need done?</p>
         <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Pick a task">
           {tasks.map((t) => (
             <button
@@ -58,10 +57,8 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
               aria-checked={picked === t.toolId}
               onClick={() => setPicked(t.toolId)}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                picked === t.toolId
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border/70 bg-background hover:border-primary/40",
+                "rounded-full border-2 border-ink px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                picked === t.toolId ? "bg-ink text-cream" : "bg-card hover:bg-sun",
               )}
             >
               {t.label}
@@ -80,20 +77,20 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
               onClick={() => openQuickLook(tool.id)}
-              className="mt-3 w-full overflow-hidden rounded-2xl border border-border/60 bg-background text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-3 w-full overflow-hidden rounded-2xl border-2 border-ink bg-background text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={`${tool.name}, quick look`}
             >
               {media.previewImageUrl && (
-                <div className="aspect-[16/8] w-full overflow-hidden bg-muted">
+                <div className="aspect-[16/8] w-full overflow-hidden border-b-2 border-ink bg-sand">
                   <img src={media.previewImageUrl} alt="" className="h-full w-full object-cover" />
                 </div>
               )}
               <div className="flex items-center gap-3 p-3">
                 <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{tool.name}</p>
+                  <p className="truncate font-bold">{tool.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {cost === 0 ? "Free to use" : <>{cost} credit{cost === 1 ? "" : "s"} · about {formatRupees(cost * RUPEES_PER_CREDIT_MAX)} a run</>}
+                    {cost === 0 ? "Free to use" : <>{cost} credit{cost === 1 ? "" : "s"} each time · about {formatRupees(cost * RUPEES_PER_CREDIT_MAX)}</>}
                   </p>
                 </div>
               </div>
@@ -102,7 +99,7 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
         </AnimatePresence>
 
         <p className="mt-5 text-lg font-bold">3. {user ? "Open it" : "Claim free credits and open it"}</p>
-        <Button size="lg" onClick={go} className="group mt-3 h-12 w-full rounded-xl text-base font-semibold">
+        <Button size="lg" onClick={go} className="group mt-3 h-12 w-full text-base">
           {user ? (
             <>
               Open {tool?.name ?? "app"}

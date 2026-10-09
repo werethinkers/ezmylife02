@@ -72,7 +72,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
     <AppShell toolId={toolId} intro={def.intro} steps={def.steps} related={def.related}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <form
-          className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 sm:p-5"
+          className="space-y-4 rounded-2xl border-2 border-ink bg-card p-4 sm:p-5"
           onSubmit={(e) => {
             e.preventDefault();
             void generate();

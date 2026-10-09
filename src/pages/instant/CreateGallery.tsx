@@ -11,6 +11,7 @@ import { useProducts, type Listed } from "@/instant/useProducts";
 import { inr } from "@/instant/util";
 import type { CategoryId } from "@/instant/types";
 import { cn } from "@/lib/utils";
+import { CARD_CATEGORIES, WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
 type Sort = "recommended" | "price-asc" | "price-desc" | "name";
 const PRICES = [
@@ -26,8 +27,11 @@ const SORTS: { id: Sort; name: string }[] = [
 
 const chip = (on: boolean) => cn("shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors", on ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-muted");
 
-export default function CreateGallery() {
-  const { list } = useProducts();
+export default function CreateGallery({ kind }: { kind?: "websites" | "cards" }) {
+  const { list: all } = useProducts();
+  const allowed = kind === "websites" ? WEBSITE_CATEGORIES : kind === "cards" ? CARD_CATEGORIES : null;
+  const list = allowed ? all.filter((l) => (allowed as readonly string[]).includes(l.product.category)) : all;
+  const CATS = allowed ? CATEGORIES.filter((c) => (allowed as readonly string[]).includes(c.id)) : CATEGORIES;
   const [params, setParams] = useSearchParams();
   const cat = (params.get("cat") as CategoryId | null) ?? "all";
   const group = params.get("type") ?? "all";
@@ -59,7 +63,7 @@ export default function CreateGallery() {
 
   // Unsorted views keep the shelves (category, then type); a sort shows one flat, ordered grid.
   const shelves = sort !== "recommended" ? [{ key: "sorted", title: SORTS.find((x) => x.id === sort)!.name, blurb: "", items: shown }]
-    : cat === "all" ? CATEGORIES.map((c) => ({ key: c.id, title: c.name, blurb: c.blurb, items: shown.filter((l) => l.product.category === c.id) }))
+    : cat === "all" ? CATS.map((c) => ({ key: c.id, title: c.name, blurb: c.blurb, items: shown.filter((l) => l.product.category === c.id) }))
     : GROUPS[cat].filter((g) => group === "all" || g.id === group).map((g) => ({ key: g.id, title: g.name, blurb: "", items: shown.filter((l) => groupOf(l.product.id) === g.id) }));
 
   return (
@@ -89,7 +93,7 @@ export default function CreateGallery() {
 
       <nav className="sticky top-16 z-30 bg-background/95 backdrop-blur border-y" aria-label="Filters">
         <div className="container mx-auto px-4 flex gap-2 overflow-x-auto py-3" role="group" aria-label="Category">
-          {[{ id: "all" as const, name: "All" }, ...CATEGORIES].map((c) => (
+          {[{ id: "all" as const, name: "All" }, ...CATS].map((c) => (
             <button key={c.id} type="button" onClick={() => set({ cat: c.id, type: null })} aria-pressed={cat === c.id} className={chip(cat === c.id)}>{c.name}</button>
           ))}
         </div>

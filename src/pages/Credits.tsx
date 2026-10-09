@@ -154,7 +154,7 @@ const Credits = () => {
 
         {/* Wallet snapshot or sign-in CTA */}
         {user ? (
-          <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+          <Card className="mb-8 border-primary/30 bg-sand/50">
             <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Your wallet</p>

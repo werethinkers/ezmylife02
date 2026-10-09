@@ -48,11 +48,11 @@ export function Shelf({
       <div className="mb-4 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-[15px] text-muted-foreground">{subtitle}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {seeAllTo && (
-            <Link to={seeAllTo} className="text-sm font-semibold text-primary hover:underline">
+            <Link to={seeAllTo} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun">
               See all
             </Link>
           )}
@@ -62,7 +62,7 @@ export function Shelf({
               aria-label={`Scroll ${title} left`}
               onClick={() => page(-1)}
               disabled={edge.start}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-card transition hover:bg-muted disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun disabled:opacity-30"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -71,7 +71,7 @@ export function Shelf({
               aria-label={`Scroll ${title} right`}
               onClick={() => page(1)}
               disabled={edge.end}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-card transition hover:bg-muted disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun disabled:opacity-30"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -81,7 +81,7 @@ export function Shelf({
       <div
         ref={rail}
         onScroll={update}
-        className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-0 md:px-0"
+        className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-1 md:px-1"
       >
         {children}
       </div>

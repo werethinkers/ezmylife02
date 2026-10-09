@@ -10,12 +10,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
-import { usePricingMap, RUPEES_PER_CREDIT_MAX, RUPEES_PER_CREDIT_MIN, formatRupees } from "@/hooks/usePricingMap";
+import { usePricingMap, RUPEES_PER_CREDIT_MAX, formatRupees } from "@/hooks/usePricingMap";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { PERSONAS } from "@/data/personas";
 import { AppIcon } from "./AppIcon";
 import { PricePill } from "./PricePill";
 import { cn } from "@/lib/utils";
+import { GiveGet } from "@/components/brand/GiveGet";
+import { categoryInfo, goalOf, KIND_TEXT } from "@/data/goals";
+import { appIntroOf, appKindOf } from "@/data/appKind";
 
 /*
  * Quick Look: tap any app to see its screenshots, price and an Open button in a sheet
@@ -90,8 +93,8 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
         <div className="flex items-start gap-4">
           <AppIcon toolId={toolId} category={tool.category} name={tool.name} size="lg" />
           <div className="min-w-0 flex-1 pr-6">
-            <Title className="text-xl font-bold leading-tight">{tool.name}</Title>
-            <Desc className="mt-0.5 text-sm text-muted-foreground">{tool.category}</Desc>
+            <Title className="font-display text-xl font-bold leading-tight">{tool.name}</Title>
+            <Desc className="mt-1 text-sm text-muted-foreground">{goalOf(tool.category).name} · {tool.category}</Desc>
             <div className="mt-3">
               <PricePill toolId={toolId} size="md" />
             </div>
@@ -108,7 +111,7 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
               alt={`${tool.name} screenshot ${i + 1}`}
               loading="lazy"
               className={cn(
-                "aspect-[4/3] shrink-0 snap-start rounded-2xl border border-border/60 bg-muted object-cover",
+                "aspect-[4/3] shrink-0 snap-start rounded-2xl border-2 border-ink bg-sand object-cover",
                 gallery.length === 1 ? "w-full" : "w-[82%]",
               )}
             />
@@ -118,16 +121,23 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
 
       <div className="space-y-5 p-5 sm:p-6">
         <section>
-          <h3 className="text-sm font-semibold">What it does</h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{tool.description}</p>
+          <h3 className="text-sm font-bold">What it does</h3>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{appIntroOf(toolId) ?? tool.description}</p>
+        </section>
+
+        <GiveGet give={categoryInfo(tool.category).give} get={categoryInfo(tool.category).get} time={null} />
+
+        <section className="border-l-[6px] border-ink pl-3">
+          <p className="text-[15px] font-bold">{KIND_TEXT[appKindOf(toolId, tool.category)].title}</p>
+          <p className="text-sm text-muted-foreground">{KIND_TEXT[appKindOf(toolId, tool.category)].line}</p>
         </section>
 
         {personas.length > 0 && (
           <section>
-            <h3 className="text-sm font-semibold">Good for</h3>
+            <h3 className="text-sm font-bold">Good for</h3>
             <ul className="mt-2 flex flex-wrap gap-2">
               {personas.map((p) => (
-                <li key={p.id} className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs font-medium">
+                <li key={p.id} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-semibold">
                   {p.emoji} {p.label}
                 </li>
               ))}
@@ -135,32 +145,30 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
           </section>
         )}
 
-        <section className="rounded-2xl border border-border/60 bg-muted/40 p-4">
+        <section className="rounded-2xl border-2 border-ink bg-sand p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <Zap className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-sun">
+              <Zap className="h-5 w-5 text-ink" />
             </div>
             <div className="text-sm">
               <p className="font-semibold">
-                {`${Math.max(1, cost)} credit${Math.max(1, cost) === 1 ? "" : "s"} a run`}
+                {`${Math.max(1, cost)} credit${Math.max(1, cost) === 1 ? "" : "s"} each time you get a result`}
               </p>
               <p className="text-muted-foreground">
-                {false
-                  ? "Runs in your browser — no credits needed"
-                  : `${formatRupees(cost * RUPEES_PER_CREDIT_MAX)} at the ₹10 pack · ${formatRupees(cost * RUPEES_PER_CREDIT_MIN)} with bigger packs · failed runs are free`}
+                {`About ${formatRupees(cost * RUPEES_PER_CREDIT_MAX)} with the ₹10 pack, less with bigger packs. If it fails, you are not charged.`}
               </p>
             </div>
           </div>
         </section>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="lg" className="h-12 flex-1 rounded-xl" onClick={openApp}>
-            Open app <ArrowRight className="ml-2 h-4 w-4" />
+          <Button size="lg" className="h-12 flex-1" onClick={openApp}>
+            Open the app <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button
             size="lg"
             variant="outline"
-            className="h-12 rounded-xl"
+            className="h-12"
             onClick={() => toggle(toolId, isFav)}
             aria-pressed={isFav}
           >
@@ -171,9 +179,9 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
         <Link
           to={`/promo/${slugOf(tool.name)}`}
           onClick={onClose}
-          className="block text-center text-sm font-medium text-primary hover:underline"
+          className="block text-center text-sm font-bold text-primary underline decoration-2 underline-offset-4"
         >
-          See the full app page
+          See how it works
         </Link>
       </div>
 

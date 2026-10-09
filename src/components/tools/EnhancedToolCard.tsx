@@ -77,7 +77,7 @@ export const EnhancedToolCard = ({
         className={cn(
           "group relative overflow-hidden transition-all duration-500",
           "bg-card/80 backdrop-blur-sm border-border/50",
-          "hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10",
+          "hover:-translate-y-2 hover:shadow-2xl hover:",
           "cursor-pointer",
           !isLive && "opacity-80"
         )}
@@ -87,7 +87,7 @@ export const EnhancedToolCard = ({
       >
         {displayId && <FloatingMediaPreview toolId={displayId} visible={hover} />}
         {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-sand/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         {/* Shimmer effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -99,9 +99,9 @@ export const EnhancedToolCard = ({
           <div className="flex items-start justify-between mb-4">
             <div className={cn(
               "rounded-xl transition-all duration-500",
-              "bg-gradient-to-br from-primary/10 to-accent/10",
+              "bg-sand/70",
               "border border-primary/20",
-              "group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20",
+              "group-hover:scale-110 group-hover:shadow-lg group-hover:",
               aiIconUrl ? "p-1.5" : "p-3"
             )}>
               {aiIconUrl ? (

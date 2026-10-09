@@ -21,7 +21,7 @@ export const ToolsHero = ({ searchQuery, onSearchChange }: ToolsHeroProps) => {
   return (
     <header className="relative overflow-hidden border-b border-border/40 pt-20 pb-12">
       <div className="absolute inset-0 bg-mesh opacity-50" />
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-sand/50" />
 
       <div className="container mx-auto px-4 relative">
         <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-center">
@@ -31,7 +31,7 @@ export const ToolsHero = ({ searchQuery, onSearchChange }: ToolsHeroProps) => {
             transition={{ duration: 0.5 }}
             className="text-center lg:text-left"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-5">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-ink bg-sun mb-5">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">AI-Powered Apps</span>
             </div>
@@ -73,7 +73,7 @@ export const ToolsHero = ({ searchQuery, onSearchChange }: ToolsHeroProps) => {
             className="hidden lg:block"
           >
             {user ? (
-              <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-lg">
+              <div className="rounded-2xl border-2 border-ink bg-card p-6 shadow-lg">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Your wallet</p>
                 <div className="flex items-center gap-3 mt-2 mb-4">
                   <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">

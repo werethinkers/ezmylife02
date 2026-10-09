@@ -164,7 +164,7 @@ const CreditsHistory = () => {
           </div>
         </div>
 
-        <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <Card className="mb-6 border-primary/20 bg-sand/50">
           <CardContent className="p-5 flex flex-wrap items-center gap-6">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Current balance</p>

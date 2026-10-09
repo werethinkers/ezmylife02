@@ -135,7 +135,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} steps={["Add supplier & items", "Print or save the PO", "Send with the AI email"]}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border/60 bg-card p-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-2xl border-2 border-ink bg-card p-4 sm:grid-cols-2">
             {([
               ["number", "PO number"], ["date", "PO date", "date"], ["supplier", "Supplier name *"], ["supplierGstin", "Supplier GSTIN"],
               ["supplierAddress", "Supplier address"], ["deliveryDate", "Deliver by", "date"], ["deliverTo", "Deliver to"], ["terms", "Payment terms"],
@@ -146,7 +146,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
               </div>
             ))}
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <p className="mb-2 text-sm font-semibold">Items</p>
             <RowsEditor columns={COLS} rows={po.items} onChange={(items) => setPo((p) => ({ ...p, items }))} />
             <div className="mt-3 flex flex-wrap justify-end gap-x-6 gap-y-1 text-sm tabular-nums">
@@ -171,7 +171,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
         </div>
         <aside className="space-y-4">
           <WorkspaceCard />
-          <div className="rounded-2xl border border-border/60 bg-card p-3">
+          <div className="rounded-2xl border-2 border-ink bg-card p-3">
             <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saved orders</p>
             {orders.length ? (
               <ul className="mt-2 space-y-1">

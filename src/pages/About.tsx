@@ -177,7 +177,7 @@ const About = () => {
               transition={{ duration: 0.6 }}
               className="mx-auto max-w-4xl text-center"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5">
+              <div className="inline-flex items-center gap-2 rounded-full border-2 border-ink bg-sun px-3 py-1.5">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-primary">About EZYOURLIFE</span>
               </div>
@@ -260,12 +260,12 @@ const About = () => {
                       key={step.title}
                       {...fadeUp}
                       transition={{ ...fadeUp.transition, delay: i * 0.08 }}
-                      className="relative rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
+                      className="relative rounded-2xl border-2 border-ink bg-card p-5 shadow-sm"
                     >
                       <span className="absolute right-4 top-4 font-display text-sm font-semibold text-muted-foreground/60">
                         0{i + 1}
                       </span>
-                      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-sun">
                         <step.icon className="h-5 w-5 text-primary" />
                       </div>
                       <h3 className="text-lg font-semibold">{step.title}</h3>
@@ -295,7 +295,7 @@ const About = () => {
                   key={f.name}
                   {...fadeUp}
                   transition={{ ...fadeUp.transition, delay: i * 0.1 }}
-                  className="group overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm transition-shadow duration-300 hover:shadow-xl"
+                  className="group overflow-hidden rounded-2xl border-2 border-ink bg-card shadow-sm transition-shadow duration-300 hover:shadow-xl"
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     <img
@@ -304,7 +304,7 @@ const About = () => {
                       loading="lazy"
                       className="h-full w-full object-cover object-top transition-transform duration-700 motion-safe:group-hover:scale-[1.03]"
                     />
-                    <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/15 mix-blend-multiply" />
+                    <div aria-hidden className="absolute inset-0 bg-sand/50 mix-blend-multiply" />
                     <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-6">
                       <span className="inline-block rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
@@ -369,7 +369,7 @@ const About = () => {
               <motion.div
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: 0.08 }}
-                className="flex flex-col rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+                className="flex flex-col rounded-2xl border-2 border-ink bg-card p-8 shadow-sm"
               >
                 <Clock className="h-6 w-6 text-primary" />
                 <p className="mt-6 font-display text-5xl font-bold tracking-tight md:mt-auto md:pt-6">
@@ -385,9 +385,9 @@ const About = () => {
               {/* Purpose-built */}
               <motion.div
                 {...fadeUp}
-                className="rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+                className="rounded-2xl border-2 border-ink bg-card p-8 shadow-sm"
               >
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-sun">
                   <Target className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold">One app, one job</h3>
@@ -400,9 +400,9 @@ const About = () => {
               <motion.div
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: 0.08 }}
-                className="rounded-3xl border border-border/60 bg-card p-8 shadow-sm"
+                className="rounded-2xl border-2 border-ink bg-card p-8 shadow-sm"
               >
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-sun">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold">Open to creators</h3>
@@ -416,7 +416,7 @@ const About = () => {
               <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }}>
                 <Link
                   to="/ai-apps"
-                  className="group flex h-full flex-col justify-between rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-8 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group flex h-full flex-col justify-between rounded-3xl border border-primary/25 bg-card p-8 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Sparkles className="h-6 w-6 text-primary" />
                   <div className="mt-10">
@@ -437,7 +437,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <motion.div
               {...fadeUp}
-              className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] border border-border/60 bg-card shadow-xl lg:grid-cols-5"
+              className="mx-auto grid max-w-6xl overflow-hidden rounded-2xl border-2 border-ink bg-card shadow-xl lg:grid-cols-5"
             >
               <div className="relative overflow-hidden bg-gradient-hero p-8 text-white md:p-10 lg:col-span-2">
                 <div aria-hidden className="absolute inset-0 bg-black/15" />

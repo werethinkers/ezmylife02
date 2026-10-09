@@ -53,12 +53,12 @@ export default function HtmlEditor({ toolId }: { toolId: string }) {
 
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} wide>
-      <form className="mb-4 flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-3 sm:flex-row" onSubmit={(e) => { e.preventDefault(); void ai(); }}>
+      <form className="mb-4 flex flex-col gap-2 rounded-2xl border-2 border-ink bg-card p-3 sm:flex-row" onSubmit={(e) => { e.preventDefault(); void ai(); }}>
         <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="e.g. Make a landing page for my bakery with a menu and WhatsApp order button" aria-label="Instruction for AI" />
         <Button type="submit" disabled={busy} className="gap-1.5 sm:w-auto">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Ask AI</Button>
       </form>
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
+        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border-2 border-ink bg-card">
           <div className="flex items-center justify-between border-b border-border/50 p-2">
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
               <TabsList><TabsTrigger value="html">HTML</TabsTrigger><TabsTrigger value="css">CSS</TabsTrigger><TabsTrigger value="js">JS</TabsTrigger></TabsList>
@@ -86,7 +86,7 @@ export default function HtmlEditor({ toolId }: { toolId: string }) {
             }}
           />
         </div>
-        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
+        <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border-2 border-ink bg-card">
           <div className="flex items-center justify-between border-b border-border/50 p-2 text-xs text-muted-foreground">
             Live preview
             <div className="flex gap-1">

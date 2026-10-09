@@ -58,7 +58,7 @@ export const Downloads = ({ results }: Props) => {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {done.map((r) => (
-          <div key={r.angle} className="rounded-lg border border-border bg-card/50 backdrop-blur p-3 space-y-2">
+          <div key={r.angle} className="rounded-lg border-2 border-ink bg-card backdrop-blur p-3 space-y-2">
             <img src={r.url} alt={r.angle} className="aspect-square w-full object-contain bg-muted/30 rounded" />
             <p className="text-xs font-medium">{r.angle}</p>
             <div className="flex gap-1">

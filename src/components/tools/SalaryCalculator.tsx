@@ -184,7 +184,7 @@ export const SalaryCalculator = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-sand/70 border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-primary mb-1">
               <IndianRupee className="h-4 w-4" />

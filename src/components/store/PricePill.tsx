@@ -7,8 +7,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { usePricingMap, RUPEES_PER_CREDIT_MAX, formatRupees } from "@/hooks/usePricingMap";
 
 /**
- * App Store-style action pill: "1 CR" (with the rupee cost on hover), or "OPEN"
- * when the visitor is signed in and already has enough credits.
+ * Price pill: "1 credit" (with the rupee cost on hover), or "Open" when the visitor is signed
+ * in and already has enough credits.
  */
 export function PricePill({ toolId, className, size = "sm" }: { toolId: string; className?: string; size?: "sm" | "md" }) {
   const navigate = useNavigate();
@@ -33,11 +33,9 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
           onClick={open}
           aria-label={free ? "Open free app" : canOpen ? "Open app" : `Open app, costs ${cost} credit${cost === 1 ? "" : "s"}`}
           className={cn(
-            "inline-flex shrink-0 items-center justify-center gap-1 rounded-full font-bold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            size === "md" ? "h-9 min-w-[76px] px-4 text-sm" : "h-8 min-w-[64px] px-3 text-xs",
-            canOpen
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "bg-primary/10 text-primary hover:bg-primary/20",
+            "inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border-2 border-ink font-bold transition-[transform,background-color] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            size === "md" ? "h-9 min-w-[84px] px-4 text-sm" : "h-8 min-w-[70px] px-2.5 text-xs",
+            canOpen ? "bg-pink text-ink" : "bg-sand text-ink hover:bg-sun",
             className,
           )}
         >
@@ -48,12 +46,12 @@ export function PricePill({ toolId, className, size = "sm" }: { toolId: string; 
               Open <ArrowUpRight className="h-3.5 w-3.5" />
             </>
           ) : (
-            <>{cost} CR</>
+            <>{cost} credit{cost === 1 ? "" : "s"}</>
           )}
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">
-        {free ? "Free to use — no credits needed" : <>{cost} credit{cost === 1 ? "" : "s"} a run · about {rupees} at the ₹10 pack</>}
+        {free ? "Free to use — no credits needed" : <>{cost} credit{cost === 1 ? "" : "s"} each time it gives you a result · about {rupees}</>}
       </TooltipContent>
     </Tooltip>
   );

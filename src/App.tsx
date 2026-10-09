@@ -272,6 +272,8 @@ const AnimatedRoutes = () => {
             <Route path="/promo/:slug" element={<PromoPage />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/create" element={<CreateGallery />} />
+            <Route path="/websites" element={<CreateGallery kind="websites" />} />
+            <Route path="/cards" element={<CreateGallery kind="cards" />} />
             <Route path="/create/done/:pageId" element={<ProtectedRoute><PublishDone /></ProtectedRoute>} />
             <Route path="/create/:productId" element={<Builder />} />
             <Route path="/make/:productId" element={<ProductPromo />} />

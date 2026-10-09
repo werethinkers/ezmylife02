@@ -18,8 +18,8 @@ export const WalletBadge = () => {
         <motion.button
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/15 transition"
-          aria-label="Credit wallet"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-ink bg-lime px-3 text-sm font-bold text-ink shadow-[2px_2px_0_0_hsl(var(--ink))] transition-transform hover:-translate-y-px"
+          aria-label={`Your credits: ${total}`}
         >
           <Zap className="h-3.5 w-3.5" />
           <span className="tabular-nums">{isLoading ? "—" : total}</span>
@@ -28,15 +28,15 @@ export const WalletBadge = () => {
       <PopoverContent align="end" className="w-72">
         <div className="space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Credit balance</p>
-            <p className="text-3xl font-semibold tabular-nums">{total}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Your credits</p>
+            <p className="font-display text-3xl font-bold tabular-nums">{total}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-md bg-muted/50 px-3 py-2">
+            <div className="rounded-lg border-2 border-ink bg-sand px-3 py-2">
               <p className="text-xs text-muted-foreground">Free</p>
               <p className="font-medium tabular-nums">{free}</p>
             </div>
-            <div className="rounded-md bg-muted/50 px-3 py-2">
+            <div className="rounded-lg border-2 border-ink bg-sand px-3 py-2">
               <p className="text-xs text-muted-foreground">Paid</p>
               <p className="font-medium tabular-nums">{paid}</p>
             </div>

@@ -221,7 +221,7 @@ export default function PromoPage() {
     <Button
       size="lg"
       onClick={handleUseIt}
-      className={`group h-auto min-h-12 rounded-xl px-6 py-3 text-base shadow-lg shadow-primary/25 ${className}`}
+      className={`group h-auto min-h-12 rounded-xl px-6 py-3 text-base shadow-lg ${className}`}
     >
       <Zap className="mr-2 h-5 w-5" />
       <span className="text-left leading-tight">
@@ -261,7 +261,7 @@ export default function PromoPage() {
               </nav>
 
               {eyebrow && (
-                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-sun px-3 py-1 text-xs font-semibold text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   {eyebrow}
                 </span>
@@ -286,7 +286,7 @@ export default function PromoPage() {
               {chips.length > 0 && (
                 <ul className="mt-5 flex flex-wrap gap-2">
                   {chips.slice(0, 6).map((c) => (
-                    <li key={c} className="rounded-full border border-border/60 bg-card/70 px-3 py-1.5 text-xs font-medium backdrop-blur">
+                    <li key={c} className="rounded-full border-2 border-ink bg-card px-3 py-1.5 text-xs font-medium backdrop-blur">
                       {c}
                     </li>
                   ))}
@@ -348,9 +348,9 @@ export default function PromoPage() {
                   key={f.title}
                   {...fadeUp}
                   transition={{ ...fadeUp.transition, delay: (i % 4) * 0.05 }}
-                  className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm"
+                  className="rounded-2xl border-2 border-ink bg-card p-6 shadow-sm"
                 >
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-sun">
                     <Zap className="h-5 w-5 text-primary" />
                   </div>
                   <h3 className="font-semibold">{f.title}</h3>
@@ -369,7 +369,7 @@ export default function PromoPage() {
         >
           <div className="container mx-auto px-4">
             <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-3">
-              <motion.div {...fadeUp} className="min-w-0 rounded-3xl border border-border/60 bg-card p-6 shadow-sm md:p-8 lg:col-span-2">
+              <motion.div {...fadeUp} className="min-w-0 rounded-2xl border-2 border-ink bg-card p-6 shadow-sm md:p-8 lg:col-span-2">
                 <h2 className="text-2xl font-bold md:text-3xl">
                   How it <span className="text-gradient">works</span>
                 </h2>
@@ -378,7 +378,7 @@ export default function PromoPage() {
                     const Icon = STEP_ICONS[i] ?? Sparkles;
                     return (
                       <li key={s.title} className="flex gap-4 sm:flex-col sm:gap-3">
-                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
                           <Icon className="h-5 w-5" />
                           <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-[11px] font-bold text-foreground">
                             {i + 1}
@@ -457,9 +457,9 @@ export default function PromoPage() {
                       <Link
                         key={t.id}
                         to={`/promo/${promoSlug(t.name)}`}
-                        className="group flex gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="group flex gap-3 rounded-2xl border-2 border-ink bg-card p-4 transition-all hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/15 to-accent/15">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-sand">
                           {m.iconUrl ? (
                             <img src={m.iconUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                           ) : (
@@ -484,7 +484,7 @@ export default function PromoPage() {
           <div className="container mx-auto px-4">
             <motion.div
               {...fadeUp}
-              className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-accent/10 p-6 md:flex-row md:items-center md:p-10"
+              className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 rounded-3xl border border-primary/20 bg-card p-6 md:flex-row md:items-center md:p-10"
             >
               <div className="min-w-0">
                 <h2 className="text-2xl font-bold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
@@ -498,7 +498,7 @@ export default function PromoPage() {
             <ul className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {GUARANTEES.map(({ Icon, title: t, body }) => (
                 <li key={t} className="flex items-start gap-3 rounded-2xl p-2">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-sun">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -522,12 +522,12 @@ export default function PromoPage() {
 // Shown when an app has no screenshots yet: its icon on a branded card.
 function IconHero({ name, iconUrl, category }: { name: string; iconUrl: string | null; category: string }) {
   return (
-    <div className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden rounded-3xl bg-gradient-hero p-8 shadow-2xl shadow-primary/20">
+    <div className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden rounded-3xl bg-gradient-hero p-8 shadow-2xl">
       <div aria-hidden className="absolute inset-0 bg-black/10" />
       <div aria-hidden className="absolute -left-10 -top-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
       <div aria-hidden className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
       <div className="relative flex h-full flex-col items-center justify-center text-center text-white">
-        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/15 shadow-xl backdrop-blur md:h-36 md:w-36">
+        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/30 bg-white/15 shadow-xl backdrop-blur md:h-36 md:w-36">
           {iconUrl ? (
             <img src={iconUrl} alt={`${name} icon`} className="h-full w-full object-cover" />
           ) : (
@@ -573,7 +573,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
         touchX.current = null;
       }}
     >
-      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-2.5 shadow-2xl shadow-primary/10 backdrop-blur-sm">
+      <div className="overflow-hidden rounded-2xl border-2 border-ink bg-card p-2.5 shadow-2xl backdrop-blur-sm">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted/40">
           <AnimatePresence mode="wait" initial={false}>
             <motion.img

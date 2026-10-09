@@ -45,7 +45,7 @@ export const ToolCard = ({ title, description, category, icon, toolId, videoLink
 
   return (
     <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card border-border/50">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-sand/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="absolute top-4 right-4 flex gap-2 z-10">
         <Badge variant="outline" className="text-xs font-semibold bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
@@ -68,7 +68,7 @@ export const ToolCard = ({ title, description, category, icon, toolId, videoLink
       </div>
       
       <CardHeader className="pb-4 relative z-10">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 text-primary border border-primary/20 group-hover:scale-110 transition-transform duration-300">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sand/70 text-primary border border-primary/20 group-hover:scale-110 transition-transform duration-300">
           {icon}
         </div>
         <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">

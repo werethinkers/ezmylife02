@@ -164,7 +164,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
       {summary.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
           {summary.map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-3">
+            <div key={s.label} className="rounded-2xl border-2 border-ink bg-card p-3">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
               <p
                 className={cn(
@@ -183,7 +183,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
 
       {/* Entry form */}
       <form
-        className="rounded-2xl border border-border/60 bg-card p-4"
+        className="rounded-2xl border-2 border-ink bg-card p-4"
         onSubmit={(e) => {
           e.preventDefault();
           save();
@@ -304,7 +304,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
       </div>
 
       {/* Table */}
-      <div className="mt-3 overflow-x-auto rounded-2xl border border-border/60 bg-card">
+      <div className="mt-3 overflow-x-auto rounded-2xl border-2 border-ink bg-card">
         {shown.length ? (
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
@@ -374,7 +374,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
 
       {/* AI insights */}
       <section className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
-        <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+        <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
           <p className="text-sm font-semibold">{def.aiLabel}</p>
           <p className="text-xs text-muted-foreground">The AI reads your rows (and the settings below) and writes a short, practical report.</p>
           {def.settings && def.settings.length > 0 && (
@@ -397,7 +397,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
         </div>
         <div className="min-w-0">
           {busy === "ai" ? (
-            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-border/60 bg-card text-sm text-muted-foreground">
+            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-ink bg-card text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Reading your data…
             </div>
           ) : store.data.insights ? (

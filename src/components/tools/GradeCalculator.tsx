@@ -105,7 +105,7 @@ export const GradeCalculator = () => {
   const cgpa = calculateCGPA();
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen p-4 md:p-8 bg-background">
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>
@@ -141,7 +141,7 @@ export const GradeCalculator = () => {
 
         {/* Results Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+          <Card className="bg-sand/70">
             <CardContent className="pt-6">
               <div className="text-center">
                 <TrendingUp className="h-8 w-8 mx-auto text-primary mb-2" />

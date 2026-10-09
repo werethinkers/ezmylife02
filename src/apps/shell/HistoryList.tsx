@@ -38,7 +38,7 @@ export function HistoryList({
 }) {
   if (!items.length) return null;
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-3">
+    <div className="rounded-2xl border-2 border-ink bg-card p-3">
       <p className="flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         <Clock className="h-3.5 w-3.5" /> Recent
       </p>

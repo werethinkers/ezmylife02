@@ -238,7 +238,7 @@ export default function PromoPagesManager() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+      <Card className="border-primary/30 bg-sand/70">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Bulk PDP generator</CardTitle>
         </CardHeader>
@@ -264,7 +264,7 @@ export default function PromoPagesManager() {
             </Button>
           </div>
           {bulkProgress && (
-            <div className="rounded-md border border-border/60 bg-card/60 p-3 text-xs space-y-1">
+            <div className="rounded-md border-2 border-ink bg-card p-3 text-xs space-y-1">
               <div className="flex justify-between">
                 <span>Progress: {bulkProgress.done} / {bulkProgress.total}</span>
                 <span className="text-muted-foreground">✓ {bulkProgress.ok} · ✗ {bulkProgress.failed}</span>

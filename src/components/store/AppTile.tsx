@@ -1,14 +1,17 @@
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { useToolMedia } from "@/hooks/useToolMedia";
+import { categoryInfo, goalOf } from "@/data/goals";
 import { AppIcon } from "./AppIcon";
 import { PricePill } from "./PricePill";
 import { useQuickLook } from "./QuickLook";
 import { cn } from "@/lib/utils";
 
-/** Large shelf card: preview image, squircle icon, name, category and price pill. */
+/** Large shelf card: preview, icon, name, what you get, and the price pill. */
 export function AppTile({ tool, className }: { tool: CatalogTool; className?: string }) {
   const { openQuickLook } = useQuickLook();
   const media = useToolMedia(tool.id, tool.category);
+  const goal = goalOf(tool.category);
+  const info = categoryInfo(tool.category);
   return (
     <div
       role="button"
@@ -22,28 +25,29 @@ export function AppTile({ tool, className }: { tool: CatalogTool; className?: st
       }}
       aria-label={`${tool.name}, quick look`}
       className={cn(
-        "group w-[78%] shrink-0 snap-start cursor-pointer rounded-[1.75rem] border border-border/60 bg-card p-3 shadow-sm transition-all hover:border-primary/30 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[46%] lg:w-[31%] xl:w-[23.5%]",
+        "block-card block-lift group w-[78%] shrink-0 snap-start cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[46%] lg:w-[31%] xl:w-[23.5%]",
         className,
       )}
     >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-primary/15 to-accent/15">
-        {media.previewImageUrl && (
+      <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-ink" style={{ background: goal.color }}>
+        {media.previewImageUrl ? (
           <img
             src={media.previewImageUrl}
             alt=""
             loading="lazy"
-            className={cn(
-              "h-full w-full transition-transform duration-500 motion-safe:group-hover:scale-[1.03]",
-              media.previewFit === "contain" ? "object-contain" : "object-cover",
-            )}
+            className={cn("h-full w-full", media.previewFit === "contain" ? "object-contain" : "object-cover")}
           />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="lg" className="shadow-block-sm" />
+          </div>
         )}
+        <span className="absolute left-2.5 top-2.5 rounded-full border-2 border-ink bg-card px-2 py-0.5 text-[11px] font-bold">{goal.name}</span>
       </div>
-      <div className="flex items-center gap-3 px-1 pb-1 pt-3">
-        <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="sm" />
+      <div className="flex items-start gap-3 p-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold leading-tight">{tool.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{tool.category}</p>
+          <p className="truncate font-bold leading-tight">{tool.name}</p>
+          <p className="mt-0.5 line-clamp-1 text-[13px] text-muted-foreground">You get {info.get}</p>
         </div>
         <PricePill toolId={tool.id} />
       </div>
@@ -51,9 +55,10 @@ export function AppTile({ tool, className }: { tool: CatalogTool; className?: st
   );
 }
 
-/** Compact row: icon, name, category, price pill. Optional rank number on the left. */
+/** Compact row: icon, name, what you get, price pill. Optional rank number on the left. */
 export function AppRow({ tool, rank, className }: { tool: CatalogTool; rank?: number; className?: string }) {
   const { openQuickLook } = useQuickLook();
+  const info = categoryInfo(tool.category);
   return (
     <div
       role="button"
@@ -67,19 +72,17 @@ export function AppRow({ tool, rank, className }: { tool: CatalogTool; rank?: nu
       }}
       aria-label={`${tool.name}, quick look`}
       className={cn(
-        "flex cursor-pointer items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex cursor-pointer items-center gap-3 rounded-xl border-2 border-transparent p-2 transition-colors hover:border-ink hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >
       {rank != null && (
-        <span className="w-7 shrink-0 text-center font-display text-lg font-bold tabular-nums text-muted-foreground">
-          {String(rank).padStart(2, "0")}
-        </span>
+        <span className="w-7 shrink-0 text-center font-display text-lg font-bold tabular-nums text-muted-foreground">{String(rank).padStart(2, "0")}</span>
       )}
       <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="sm" />
-      <div className="min-w-0 flex-1 border-b border-border/50 py-2">
-        <p className="truncate text-sm font-semibold">{tool.name}</p>
-        <p className="truncate text-xs text-muted-foreground">{tool.category}</p>
+      <div className="min-w-0 flex-1 py-1">
+        <p className="truncate text-[15px] font-bold">{tool.name}</p>
+        <p className="truncate text-[13px] text-muted-foreground">You get {info.get}</p>
       </div>
       <PricePill toolId={tool.id} />
     </div>

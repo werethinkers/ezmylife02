@@ -59,10 +59,10 @@ export function TodaySection({
       {...fadeUp}
       transition={{ ...fadeUp.transition, delay: i * 0.05 }}
       onClick={() => setOpenCollection(c)}
-      className={`group flex w-[82%] shrink-0 snap-start flex-col justify-between rounded-[1.75rem] border border-border/60 bg-card p-5 text-left shadow-sm transition-all hover:border-primary/30 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[46%] lg:w-auto lg:min-w-0 ${extraClass}`}
+      className={`group flex w-[82%] shrink-0 snap-start flex-col justify-between rounded-2xl border-2 border-ink bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[46%] lg:w-auto lg:min-w-0 ${extraClass}`}
     >
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Collection</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">App bundle</p>
         <h3 className="mt-2 text-lg font-bold leading-snug">
           <span aria-hidden>{c.emoji} </span>
           {c.title}
@@ -75,7 +75,7 @@ export function TodaySection({
             <AppIcon key={t.id} toolId={t.id} category={t.category} name={t.name} size="sm" className="ring-2 ring-card" />
           ))}
         </div>
-        <span className="inline-flex items-center text-sm font-semibold text-primary">
+        <span className="inline-flex items-center rounded-full border-2 border-ink bg-sun px-2.5 py-0.5 text-sm font-bold">
           {c.tools.length} apps <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </span>
       </div>
@@ -100,7 +100,7 @@ export function TodaySection({
           type="button"
           {...fadeUp}
           onClick={() => setOpenCollection(c)}
-          className="group hidden w-full items-center justify-between gap-4 rounded-[1.75rem] border border-border/60 bg-card p-5 text-left shadow-sm transition-all hover:border-primary/30 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
+          className="group hidden w-full items-center justify-between gap-4 rounded-2xl border-2 border-ink bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
         >
           <div className="min-w-0">
             <h3 className="text-lg font-bold">
@@ -141,7 +141,7 @@ function AppOfTheDay({ tool }: { tool: CatalogTool }) {
         }
       }}
       aria-label={`App of the day: ${tool.name}`}
-      className="group relative min-h-[420px] cursor-pointer overflow-hidden rounded-[1.75rem] bg-gradient-hero text-white shadow-xl shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:col-span-2"
+      className="group relative min-h-[420px] cursor-pointer overflow-hidden rounded-2xl bg-gradient-hero text-white shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:col-span-2"
     >
       {media.previewImageUrl && (
         <img

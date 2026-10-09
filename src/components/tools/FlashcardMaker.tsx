@@ -117,7 +117,7 @@ export const FlashcardMaker = () => {
     const currentCard = studyCards[currentIndex];
     
     return (
-      <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen p-4 md:p-8 bg-background">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -246,7 +246,7 @@ export const FlashcardMaker = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen p-4 md:p-8 bg-background">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <Card>

@@ -23,7 +23,7 @@ export function NextApps({ toolId }: { toolId: string }) {
   const carry = CONTEXT_AWARE.has(toolId);
 
   return (
-    <aside className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-accent/5" aria-label="Apps you may need next">
+    <aside className="border-b border-border/40 bg-sand/50" aria-label="Apps you may need next">
       <div className="container mx-auto px-4 py-2.5">
         <div className="flex items-center gap-2 text-xs">
           <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -49,7 +49,7 @@ export function NextApps({ toolId }: { toolId: string }) {
             const t = catalog.find((x) => x.id === s.id);
             if (!t) return null;
             return (
-              <Link key={s.id} to={`/tool/${s.id}`} className="group flex w-[15.5rem] shrink-0 snap-start items-center gap-2.5 rounded-xl border border-border/60 bg-card px-2.5 py-2 transition-colors hover:border-primary/50">
+              <Link key={s.id} to={`/tool/${s.id}`} className="group flex w-[15.5rem] shrink-0 snap-start items-center gap-2.5 rounded-xl border-2 border-ink bg-card px-2.5 py-2 transition-colors hover:border-primary/50">
                 <AppIcon toolId={t.id} category={t.category} name={t.name} size="sm" className="h-9 w-9" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold group-hover:text-primary">{t.name}</span>

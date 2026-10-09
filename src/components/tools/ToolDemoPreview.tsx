@@ -24,7 +24,7 @@ export const ToolDemoPreview = ({ demoInput, demoOutput, toolName }: ToolDemoPre
           aria-expanded={open}
         >
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-sand flex items-center justify-center">
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
             <div className="text-left">
@@ -54,7 +54,7 @@ export const ToolDemoPreview = ({ demoInput, demoOutput, toolName }: ToolDemoPre
             >
               <div className="grid md:grid-cols-2 gap-4 pt-4 pb-2">
                 {/* Input */}
-                <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-4">
+                <div className="rounded-xl border-2 border-ink bg-card backdrop-blur-sm p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
                       If you enter
@@ -66,7 +66,7 @@ export const ToolDemoPreview = ({ demoInput, demoOutput, toolName }: ToolDemoPre
                 </div>
 
                 {/* Output */}
-                <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-4 relative">
+                <div className="rounded-xl border border-primary/30 bg-sand/70 p-4 relative">
                   <div className="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-background border border-border items-center justify-center">
                     <ArrowRight className="h-3 w-3 text-primary" />
                   </div>

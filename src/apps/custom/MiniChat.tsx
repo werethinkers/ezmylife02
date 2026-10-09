@@ -20,7 +20,7 @@ export function MiniChat({ toolId, title, suggestions, contextNote }: { toolId: 
     if (!out) setQ(text);
   };
   return (
-    <div className="flex flex-col rounded-2xl border border-border/60 bg-card">
+    <div className="flex flex-col rounded-2xl border-2 border-ink bg-card">
       <p className="border-b border-border/50 px-4 py-2.5 text-sm font-semibold">{title}</p>
       <div className="max-h-[50vh] min-h-[160px] space-y-3 overflow-y-auto p-4 text-sm" aria-live="polite">
         {!msgs.length && <div className="flex flex-wrap gap-1.5">{suggestions.map((s) => <button key={s} type="button" onClick={() => ask(s)} className="rounded-full border border-border/70 px-2.5 py-1 text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground">{s}</button>)}</div>}

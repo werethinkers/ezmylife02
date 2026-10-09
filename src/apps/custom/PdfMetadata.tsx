@@ -75,7 +75,7 @@ export default function PdfMetadata({ toolId }: { toolId: string }) {
           </button>
           <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void open(f); e.target.value = ""; }} />
           {meta && (
-            <div className="rounded-2xl border border-border/60 bg-card p-4">
+            <div className="rounded-2xl border-2 border-ink bg-card p-4">
               <table className="w-full text-sm">
                 <tbody>{Object.entries(meta).map(([k, v]) => <tr key={k} className="border-b border-border/40 last:border-0"><td className="w-2/5 py-1.5 pr-2 text-muted-foreground">{k}</td><td className="break-all py-1.5">{v || <span className="text-muted-foreground">—</span>}</td></tr>)}</tbody>
               </table>

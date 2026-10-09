@@ -1,71 +1,94 @@
 import { Link } from "react-router-dom";
 import { useAppCountLabel } from "@/lib/appCount";
+import { GOALS } from "@/data/goals";
+import { Logo } from "@/components/brand/Logo";
 
+const MAKE_LINKS = [
+  { to: "/websites?cat=business", label: "Business websites" },
+  { to: "/websites?cat=menus", label: "Menus and catalogues" },
+  { to: "/websites?cat=profiles", label: "Visiting cards and resumes" },
+  { to: "/cards?cat=events", label: "Invitations" },
+  { to: "/cards?cat=festivals", label: "Festival wishes" },
+  { to: "/cards?cat=celebrations", label: "Birthdays and celebrations" },
+];
+
+const SPECIAL_LINKS = [
+  { to: "/startup-analyser", label: "Startup Analyser" },
+  { to: "/meet-nudge", label: "Meet Nudge — save people you meet" },
+  { to: "/notebook", label: "Speedy Notebook" },
+  { to: "/promptmaster", label: "Prompt Master" },
+  { to: "/google-business", label: "Google Business kit" },
+];
+
+const COMPANY_LINKS = [
+  { to: "/about", label: "About us" },
+  { to: "/about#contact", label: "Talk to us" },
+  { to: "/credits", label: "Prices and credits" },
+  { to: "/refund-policy", label: "Refund policy" },
+  { to: "/get-extension", label: "Browser add-on" },
+  { to: "/mobile-shortcuts", label: "Add to your phone" },
+  { to: "/explore", label: "Find apps by business" },
+];
+
+/** Site footer: every section in plain words, on an ink background. */
 const SEOFooter = () => {
   const countLabel = useAppCountLabel();
+  const col = "space-y-3";
+  const head = "font-display text-sm font-bold uppercase tracking-wider text-sun";
+  const link = "block py-0.5 text-[15px] text-cream/85 transition-colors hover:text-pink";
   return (
-    <footer className="border-t border-border/40 bg-muted/30 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Brand */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-bold text-foreground">EZYOURLIFE</h3>
-            <p className="text-sm text-muted-foreground">
-              The Future's First AI App Store. {countLabel} live AI apps today, 2,000+ launching within a year — for productivity, content creation, business automation and education.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              ezyourlife — Making digital AI Apps accessible to everyone.
-            </p>
-          </div>
-
-          {/* AI App Categories */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">AI App Categories</h4>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Image Apps — Background Remover, Compressor</Link></li>
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Business Apps — Invoice, Contract, Tax</Link></li>
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Content Creator — Captions, Social Posts</Link></li>
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Education Apps — Quiz, Flashcards, Planner</Link></li>
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">AI Productivity — Notebook, Prompt Master</Link></li>
+    <footer className="mt-10 border-t-2 border-ink bg-ink text-cream">
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
+          <div className={col}>
+            <h3 className={head}>Business apps</h3>
+            <ul>
+              {GOALS.filter((g) => g.id !== "more").map((g) => (
+                <li key={g.id}>
+                  <Link to={`/ai-apps?goal=${g.id}`} className={link}>{g.name}</Link>
+                </li>
+              ))}
+              <li><Link to="/ai-apps" className={link}>All {countLabel} apps</Link></li>
             </ul>
           </div>
-
-          {/* Platform */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Platform</h4>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li><Link to="/ai-apps" className="hover:text-primary transition-colors">Browse All AI Apps</Link></li>
-              <li><Link to="/explore" className="hover:text-primary transition-colors">Explore by Use Case & Industry</Link></li>
-              <li><Link to="/credits" className="hover:text-primary transition-colors">Pricing — Credits</Link></li>
-              <li><Link to="/startup-analyser" className="hover:text-primary transition-colors">AI Startup Analyser</Link></li>
-              <li><Link to="/notebook" className="hover:text-primary transition-colors">Speedy Notebook</Link></li>
-              <li><Link to="/promptmaster" className="hover:text-primary transition-colors">Prompt Master</Link></li>
-              <li><Link to="/meet-nudge" className="hover:text-primary transition-colors">Meet Nudge — Business Card Scanner</Link></li>
+          <div className={col}>
+            <h3 className={head}>Websites and cards</h3>
+            <ul>
+              {MAKE_LINKS.map((l) => (
+                <li key={l.to}><Link to={l.to} className={link}>{l.label}</Link></li>
+              ))}
             </ul>
           </div>
-
-          {/* Company */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Company</h4>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li><Link to="/about" className="hover:text-primary transition-colors">About EZYOURLIFE</Link></li>
-              <li><Link to="/about#contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
-              <li><Link to="/get-extension" className="hover:text-primary transition-colors">Browser Extension</Link></li>
-              <li><Link to="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</Link></li>
+          <div className={col}>
+            <h3 className={head}>Special apps</h3>
+            <ul>
+              {SPECIAL_LINKS.map((l) => (
+                <li key={l.to}><Link to={l.to} className={link}>{l.label}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div className={col}>
+            <h3 className={head}>Company</h3>
+            <ul>
+              {COMPANY_LINKS.map((l) => (
+                <li key={l.to}><Link to={l.to} className={link}>{l.label}</Link></li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-border/40 pt-6 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
-            © 2026 <span className="font-semibold text-foreground">EZYOURLIFE</span> — The Future's First AI App Store
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Best free AI apps online • Pay-as-you-go AI apps for productivity • AI app store for business & education • ezyourlife.com
+        <div className="mt-12 flex flex-col gap-4 border-t border-cream/20 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex rounded-xl bg-cream px-3 py-2">
+            <Logo />
+          </div>
+          <p className="max-w-xl text-sm text-cream/70">
+            The Future's First AI App Store. Business apps, websites and cards for small businesses in India — pay only for what you use. © 2026 EZYOURLIFE.
           </p>
         </div>
       </div>
+      <p aria-hidden className="select-none overflow-hidden whitespace-nowrap px-4 pb-4 font-display text-[clamp(44px,12vw,168px)] font-extrabold leading-none tracking-tight text-cream/[0.07]">
+        EZYOURLIFE
+      </p>
     </footer>
   );
 };

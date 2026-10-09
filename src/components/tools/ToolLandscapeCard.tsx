@@ -97,7 +97,7 @@ export const ToolLandscapeCard = ({
 
       {/* Header — fixed height */}
       <div className="flex items-start gap-3 sm:gap-4 mb-3 pr-10 h-16 sm:h-20">
-        <div className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
+        <div className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-primary/30 flex items-center justify-center shadow-lg overflow-hidden">
           {aiIcon ? (
             <img src={aiIcon} alt={name} className={cn("h-full w-full rounded-xl", resolvedIconFit === "contain" ? "object-contain p-2" : "object-cover")} />
           ) : (

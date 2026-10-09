@@ -69,7 +69,7 @@ export function MarkdownEditor({
   );
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
+    <div className="flex flex-col overflow-hidden rounded-2xl border-2 border-ink bg-card">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border/50 p-1.5">
         {tool("Bold", Bold, () => wrap("**"))}
         {tool("Italic", Italic, () => wrap("*"))}

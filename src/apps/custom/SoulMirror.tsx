@@ -67,7 +67,7 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
     const reply = friendPicks.length ? enc({ n: friendName || "A friend", p: friendPicks }) : "";
     return (
       <AppShell toolId={toolId} intro={`${forName} asked you to pick ${PICK} words that describe them. It takes one minute — no sign-in needed.`}>
-        <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+        <div className="space-y-4 rounded-2xl border-2 border-ink bg-card p-5">
           <Input value={friendName} onChange={(e) => setFriendName(e.target.value)} placeholder="Your name (optional)" className="max-w-xs" aria-label="Your name" />
           <p className="text-sm font-medium">Pick {PICK} words that describe {forName} ({friendPicks.length}/{PICK})</p>
           <WordGrid picked={friendPicks} onToggle={(i) => setFriendPicks((x) => toggle(x, i))} />
@@ -106,12 +106,12 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} steps={["Pick your 6 words", "Share the link with friends", "Add their codes, see your window"]}>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+          <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
             <Input value={d.name} onChange={(e) => store.update({ name: e.target.value })} placeholder="Your first name" className="max-w-xs" aria-label="Your name" />
             <p className="text-sm font-medium">1. Pick {PICK} words that describe you ({(d.self ?? []).length}/{PICK})</p>
             <WordGrid picked={d.self ?? []} onToggle={(i) => store.update((x) => ({ self: toggle(x.self ?? [], i) }))} />
           </div>
-          <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+          <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
             <p className="text-sm font-medium">2. Ask friends, family or colleagues</p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" className="gap-1.5" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Can you pick 6 words that describe me? Takes a minute: ${shareLink}`)}`, "_blank", "noopener,noreferrer")}><Share2 className="h-3.5 w-3.5" /> Share on WhatsApp</Button>
@@ -144,7 +144,7 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
           </div>
           <Button className="w-full gap-2" onClick={interpret} disabled={busy || (d.self ?? []).length < 3}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Get my reflection</Button>
           {(d.friends ?? []).length === 0 && <p className="text-center text-xs text-muted-foreground">Works best with answers from 3 or more people.</p>}
-          {d.reading && <div className="rounded-2xl border border-border/60 bg-card p-4"><Markdown>{d.reading}</Markdown></div>}
+          {d.reading && <div className="rounded-2xl border-2 border-ink bg-card p-4"><Markdown>{d.reading}</Markdown></div>}
         </div>
       </div>
     </AppShell>

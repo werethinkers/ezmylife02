@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,203 +11,172 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Zap, LayoutTemplate } from "lucide-react";
+import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass } from "lucide-react";
 import WalletBadge from "@/components/wallet/WalletBadge";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import logo from "@/assets/logo.png";
+import { Logo } from "@/components/brand/Logo";
+import { NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
+import { cn } from "@/lib/utils";
 
-export const Navbar = () => {
+/**
+ * Site header. It stays at the top while you scroll, names every section in plain words and
+ * highlights the one you are in. Pages that belong to a section the URL can't tell (a website or
+ * card design page) pass `section`.
+ */
+export const Navbar = ({ section }: { section?: SectionId | null }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const current = section ?? sectionOf(pathname);
 
   const handleSignOut = async () => {
     await authService.signOut();
     navigate("/");
   };
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
-  };
-
-  const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/ai-apps", label: "AI Apps" },
-    { to: "/create", label: "Create" },
-    { to: "/credits", label: "Credits" },
-    { to: "/about", label: "About" },
-    ...(user ? [{ to: "/get-extension", label: "Get Extension" }] : []),
-  ];
-
   return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <motion.img
-              src={logo}
-              alt="EZYOURLIFE"
-              className="h-8 md:h-10 object-contain"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            />
-          </Link>
+    <header className="sticky top-0 z-50 border-b-2 border-ink bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
+        <Link to="/" className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="EZYOURLIFE home">
+          <Logo />
+        </Link>
 
-           {/* Desktop Navigation */}
-           <div className="hidden md:flex items-center gap-8">
-             {navLinks.map((link, index) => (
-               <motion.div
-                 key={link.to}
-                 initial={{ opacity: 0, y: -10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
-               >
-                 <Link
-                   to={link.to}
-                   className="relative text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                 >
-                   {link.label}
-                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-                 </Link>
-               </motion.div>
-             ))}
-           </div>
-
-          {/* Right Section */}
-          <div className="flex items-center gap-3">
-            {user && <WalletBadge />}
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                          {getInitials(user.email || "U")}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </motion.div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">Manage your account</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/my-pages" className="cursor-pointer">
-                      <LayoutTemplate className="mr-2 h-4 w-4" />
-                      My Pages
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/credits" className="cursor-pointer">
-                      <Zap className="mr-2 h-4 w-4" />
-                      Credits
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-                className="flex items-center gap-3"
+        <nav aria-label="Main" className="ml-2 hidden items-center gap-1 lg:flex">
+          {NAV_SECTIONS.map((s) => {
+            const on = current === s.id;
+            return (
+              <NavLink
+                key={s.id}
+                to={s.to}
+                aria-current={on ? "page" : undefined}
+                className={cn(
+                  "whitespace-nowrap rounded-full border-2 px-3.5 py-1.5 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  on ? "border-ink bg-ink text-cream" : "border-transparent text-ink hover:border-ink hover:bg-card",
+                )}
               >
-                <Button asChild variant="ghost" className="hidden sm:inline-flex">
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button asChild>
-                    <Link to="/auth">Get Started</Link>
-                  </Button>
-                </motion.div>
-              </motion.div>
-            )}
+                {s.label}
+              </NavLink>
+            );
+          })}
+        </nav>
 
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 md:hidden"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              id="mobile-menu"
-              className="md:hidden border-t border-border overflow-hidden"
-            >
-               <div className="py-4 space-y-1">
-                 {navLinks.map((link, index) => (
-                   <motion.div
-                     key={link.to}
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: index * 0.05, duration: 0.3 }}
-                   >
-                     <Link
-                       to={link.to}
-                       className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all"
-                       onClick={() => setMobileMenuOpen(false)}
-                     >
-                       {link.label}
-                     </Link>
-                   </motion.div>
-                 ))}
-                 {!user && (
-                   <motion.div
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: navLinks.length * 0.05, duration: 0.3 }}
-                   >
-                     <Link
-                       to="/auth"
-                       className="block py-3 px-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-all sm:hidden"
-                       onClick={() => setMobileMenuOpen(false)}
-                     >
-                       Sign In
-                     </Link>
-                   </motion.div>
-                 )}
-              </div>
-            </motion.div>
+        <div className="ml-auto flex items-center gap-2">
+          {user && <WalletBadge />}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded-full border-2 border-ink shadow-[2px_2px_0_0_hsl(var(--ink))] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Your account"
+                >
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>{(user.email || "U").charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <div className="px-2 py-2">
+                  <p className="truncate text-sm font-bold">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">Your account</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer"><User className="mr-2 h-4 w-4" /> Profile and saved work</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/my-pages" className="cursor-pointer"><LayoutTemplate className="mr-2 h-4 w-4" /> My websites and cards</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/credits" className="cursor-pointer"><Wallet className="mr-2 h-4 w-4" /> Credits and payments</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link to="/auth">Sign in</Link>
+              </Button>
+              <Button asChild size="sm" className="h-10 px-4">
+                <Link to="/auth?mode=signup">Sign up free</Link>
+              </Button>
+            </>
           )}
-        </AnimatePresence>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 lg:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="site-menu"
+            onClick={() => setOpen((o) => !o)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
-    </motion.nav>
+
+      {open && (
+        <nav id="site-menu" aria-label="Main" className="border-t-2 border-ink bg-background lg:hidden">
+          <ul className="mx-auto grid max-w-7xl grid-cols-2 gap-2 px-4 py-4 sm:grid-cols-3">
+            {NAV_SECTIONS.map((s) => {
+              const on = current === s.id;
+              return (
+                <li key={s.id}>
+                  <Link
+                    to={s.to}
+                    onClick={() => setOpen(false)}
+                    aria-current={on ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl border-2 border-ink px-3 py-2.5 text-[15px] font-semibold shadow-[3px_3px_0_0_hsl(var(--ink))]",
+                      on ? "bg-ink text-cream" : "bg-card",
+                    )}
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-ink" style={{ background: s.color }}>
+                      <s.Icon className="h-4 w-4" aria-hidden />
+                    </span>
+                    {s.label}
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <Link
+                to="/explore"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl border-2 border-ink bg-card px-3 py-2.5 text-[15px] font-semibold shadow-[3px_3px_0_0_hsl(var(--ink))]"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink bg-lime text-ink">
+                  <Compass className="h-4 w-4" aria-hidden />
+                </span>
+                Find by business
+              </Link>
+            </li>
+            {!user && (
+              <li className="sm:hidden">
+                <Link
+                  to="/auth"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl border-2 border-ink bg-card px-3 py-2.5 text-[15px] font-semibold shadow-[3px_3px_0_0_hsl(var(--ink))]"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink bg-card text-ink">
+                    <User className="h-4 w-4" aria-hidden />
+                  </span>
+                  Sign in
+                </Link>
+              </li>
+            )}
+          </ul>
+        </nav>
+      )}
+    </header>
   );
 };

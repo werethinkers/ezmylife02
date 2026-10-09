@@ -159,7 +159,7 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
   "Finance & Accounting": { 
     icon: Calculator, 
     gradient: "from-emerald-500 to-teal-600",
-    glow: "group-hover:shadow-emerald-500/25",
+    glow: "group-hover:",
     color: "text-emerald-500",
     subcategories: ["Billing & Invoicing", "Expense Tracking", "Tax & Compliance", "Profit Analysis", "Debt Recovery", "Budgeting", "Financial Reports", "Payroll", "Banking"]
   },
@@ -173,21 +173,21 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
   "Marketing & Sales": { 
     icon: Megaphone, 
     gradient: "from-pink-500 to-rose-600",
-    glow: "group-hover:shadow-pink-500/25",
+    glow: "group-hover:",
     color: "text-pink-500",
     subcategories: ["Outreach & Campaigns", "Customer Engagement", "Social Media", "Lead Generation", "Promotions & Offers", "SEO Tools", "Email Marketing", "Content Marketing", "Influencer Tools", "Affiliate Marketing"]
   },
   "Operations & Inventory": { 
     icon: Package, 
     gradient: "from-amber-500 to-orange-600",
-    glow: "group-hover:shadow-amber-500/25",
+    glow: "group-hover:",
     color: "text-amber-500",
     subcategories: ["Stock Management", "Supplier Relations", "Quality Control", "Maintenance", "Shift Operations", "Logistics", "Warehouse", "Order Fulfillment", "Asset Tracking"]
   },
   "HR & Staffing": { 
     icon: Users, 
     gradient: "from-violet-500 to-purple-600",
-    glow: "group-hover:shadow-violet-500/25",
+    glow: "group-hover:",
     color: "text-violet-500",
     subcategories: ["Recruitment", "Payroll & Benefits", "Performance", "Scheduling", "Discipline & Compliance", "Training", "Onboarding", "Employee Engagement", "Remote Work", "Workforce Analytics"]
   },
@@ -244,7 +244,7 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
 
 // Tool Types - dynamically built from database
 const toolTypeVisualConfig: Record<string, { icon: LucideIcon; gradient: string; glow: string; color: string; description: string }> = {
-  "Image Tools": { icon: Image, gradient: "from-violet-500 to-purple-600", glow: "group-hover:shadow-violet-500/25", color: "text-violet-500", description: "Edit, enhance, and transform images" },
+  "Image Tools": { icon: Image, gradient: "from-violet-500 to-purple-600", glow: "group-hover:", color: "text-violet-500", description: "Edit, enhance, and transform images" },
   "Document Tools": { icon: FileText, gradient: "from-blue-500 to-cyan-600", glow: "group-hover:shadow-blue-500/25", color: "text-blue-500", description: "Create, convert, and manage documents" },
   "Video Tools": { icon: Video, gradient: "from-red-500 to-orange-600", glow: "group-hover:shadow-red-500/25", color: "text-red-500", description: "Edit and enhance video content" },
   "Audio Tools": { icon: Mic, gradient: "from-green-500 to-emerald-600", glow: "group-hover:shadow-green-500/25", color: "text-green-500", description: "Process and edit audio files" },
@@ -252,15 +252,15 @@ const toolTypeVisualConfig: Record<string, { icon: LucideIcon; gradient: string;
   "Analytics Tools": { icon: BarChart3, gradient: "from-teal-500 to-cyan-600", glow: "group-hover:shadow-teal-500/25", color: "text-teal-500", description: "Track, analyze, and visualize data" },
   "Developer Tools": { icon: Code, gradient: "from-gray-600 to-zinc-700", glow: "group-hover:shadow-gray-500/25", color: "text-gray-400", description: "Tools for developers and tech teams" },
   "Communication": { icon: Mail, gradient: "from-sky-500 to-blue-600", glow: "group-hover:shadow-sky-500/25", color: "text-sky-500", description: "Email, messaging, and outreach tools" },
-  "Security Tools": { icon: Shield, gradient: "from-amber-500 to-yellow-600", glow: "group-hover:shadow-amber-500/25", color: "text-amber-500", description: "Protect and secure your digital assets" },
+  "Security Tools": { icon: Shield, gradient: "from-amber-500 to-yellow-600", glow: "group-hover:", color: "text-amber-500", description: "Protect and secure your digital assets" },
   "Productivity": { icon: Zap, gradient: "from-yellow-500 to-orange-600", glow: "group-hover:shadow-yellow-500/25", color: "text-yellow-500", description: "Boost efficiency and save time" },
   "Text Tools": { icon: Type, gradient: "from-rose-500 to-pink-600", glow: "group-hover:shadow-rose-500/25", color: "text-rose-500", description: "Format, convert, and analyze text" },
   "QR & Barcode": { icon: QrCode, gradient: "from-slate-500 to-gray-600", glow: "group-hover:shadow-slate-500/25", color: "text-slate-500", description: "Generate and scan QR codes & barcodes" },
-  "Calculators": { icon: Calculator, gradient: "from-emerald-500 to-green-600", glow: "group-hover:shadow-emerald-500/25", color: "text-emerald-500", description: "Calculate anything you need" },
+  "Calculators": { icon: Calculator, gradient: "from-emerald-500 to-green-600", glow: "group-hover:", color: "text-emerald-500", description: "Calculate anything you need" },
   "Converters": { icon: RefreshCw, gradient: "from-cyan-500 to-teal-600", glow: "group-hover:shadow-cyan-500/25", color: "text-cyan-500", description: "Convert between formats and units" },
-  "Social Media": { icon: Share2, gradient: "from-pink-500 to-fuchsia-600", glow: "group-hover:shadow-pink-500/25", color: "text-pink-500", description: "Tools for social media management" },
+  "Social Media": { icon: Share2, gradient: "from-pink-500 to-fuchsia-600", glow: "group-hover:", color: "text-pink-500", description: "Tools for social media management" },
   "SEO Tools": { icon: Search, gradient: "from-orange-500 to-red-600", glow: "group-hover:shadow-orange-500/25", color: "text-orange-500", description: "Optimize for search engines" },
-  "File Management": { icon: Database, gradient: "from-purple-500 to-indigo-600", glow: "group-hover:shadow-purple-500/25", color: "text-purple-500", description: "Organize and manage your files" },
+  "File Management": { icon: Database, gradient: "from-purple-500 to-indigo-600", glow: "group-hover:", color: "text-purple-500", description: "Organize and manage your files" },
   "Design Tools": { icon: Paintbrush, gradient: "from-fuchsia-500 to-pink-600", glow: "group-hover:shadow-fuchsia-500/25", color: "text-fuchsia-500", description: "Create stunning visual designs" },
   "Writing Tools": { icon: PenTool, gradient: "from-lime-500 to-green-600", glow: "group-hover:shadow-lime-500/25", color: "text-lime-500", description: "Write better content faster" },
   "Data Tools": { icon: Table, gradient: "from-blue-600 to-indigo-700", glow: "group-hover:shadow-blue-600/25", color: "text-blue-600", description: "Process and analyze data" },
@@ -331,14 +331,14 @@ const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: s
   "Creative & Media": {
     icon: Film,
     gradient: "from-pink-500 to-fuchsia-600",
-    glow: "group-hover:shadow-pink-500/25",
+    glow: "group-hover:",
     color: "text-pink-500",
     sectors: ["Advertising", "Publishing", "Film & TV", "Music Industry", "Photography", "Design Agencies", "Streaming", "Content Creation"]
   },
   "Food & Hospitality": {
     icon: Utensils,
     gradient: "from-amber-500 to-orange-600",
-    glow: "group-hover:shadow-amber-500/25",
+    glow: "group-hover:",
     color: "text-amber-500",
     sectors: ["Restaurants", "Hotels", "Cafes & Bakeries", "Catering", "Food Delivery", "Bars & Nightlife", "Quick Service", "Fine Dining"]
   },
@@ -352,7 +352,7 @@ const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: s
   "Education & Learning": {
     icon: BookOpen,
     gradient: "from-violet-500 to-purple-600",
-    glow: "group-hover:shadow-violet-500/25",
+    glow: "group-hover:",
     color: "text-violet-500",
     sectors: ["K-12 Schools", "Higher Education", "Online Courses", "Coaching Centers", "Vocational Training", "Corporate Training", "Test Prep"]
   },
@@ -544,7 +544,7 @@ export const CategoryBrowser = ({
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/10">
+            <div className="p-2.5 rounded-xl bg-sand border border-primary/10">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>

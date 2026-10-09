@@ -104,7 +104,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
     <AppShell toolId={toolId} intro={def.intro} steps={def.steps} related={def.related} syncState={store.syncState}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="space-y-4">
-          <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -160,11 +160,11 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
         </div>
         <div className="min-w-0">
           {busy ? (
-            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-border/60 bg-card text-sm text-muted-foreground">
+            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-ink bg-card text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Reading your document…
             </div>
           ) : fields ? (
-            <div className="rounded-2xl border border-border/60 bg-card">
+            <div className="rounded-2xl border-2 border-ink bg-card">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-4 py-2.5">
                 <p className="text-sm font-semibold">{fields.document_type ? `Detected: ${fields.document_type}` : "Extracted fields"}</p>
                 <div className="flex gap-1">

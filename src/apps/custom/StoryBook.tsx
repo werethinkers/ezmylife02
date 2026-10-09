@@ -75,7 +75,7 @@ export default function StoryBook({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
         <div className="space-y-4">
-          <form className="space-y-3 rounded-2xl border border-border/60 bg-card p-4" onSubmit={(e) => { e.preventDefault(); void create(); }}>
+          <form className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4" onSubmit={(e) => { e.preventDefault(); void create(); }}>
             <div className="space-y-1"><Label htmlFor="sb-theme" className="text-xs">Story about *</Label><Textarea id="sb-theme" rows={2} value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} placeholder="A little elephant who is afraid of water" /></div>
             <div className="space-y-1"><Label htmlFor="sb-char" className="text-xs">Characters</Label><Input id="sb-char" value={form.characters} onChange={(e) => setForm({ ...form, characters: e.target.value })} placeholder="Gajju the elephant, his friend Mina the parrot" /></div>
             <div className="space-y-1"><Label htmlFor="sb-lesson" className="text-xs">Lesson / value</Label><Input id="sb-lesson" value={form.lesson} onChange={(e) => setForm({ ...form, lesson: e.target.value })} placeholder="Courage, kindness, sharing…" /></div>
@@ -92,7 +92,7 @@ export default function StoryBook({ toolId }: { toolId: string }) {
             <Button type="submit" className="w-full gap-2" disabled={write.busy}>{write.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Write the story</Button>
           </form>
           {(store.data.stories ?? []).length > 0 && (
-            <div className="rounded-2xl border border-border/60 bg-card p-3">
+            <div className="rounded-2xl border-2 border-ink bg-card p-3">
               <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your stories</p>
               <ul className="mt-2 space-y-1">
                 {(store.data.stories ?? []).map((s) => (
@@ -107,7 +107,7 @@ export default function StoryBook({ toolId }: { toolId: string }) {
         </div>
         <div className="min-w-0">
           {write.busy ? (
-            <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-border/60 bg-card text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Writing your story…</div>
+            <div className="flex min-h-[420px] items-center justify-center rounded-2xl border-2 border-ink bg-card text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Writing your story…</div>
           ) : story && cur ? (
             <div className="overflow-hidden rounded-3xl border border-border/60 bg-[hsl(40_60%_97%)] text-stone-800 dark:bg-stone-900 dark:text-stone-100">
               <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5 dark:border-white/10">

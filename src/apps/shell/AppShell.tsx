@@ -53,7 +53,7 @@ export function AppShell({
       {steps && steps.length > 0 && (
         <ol className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1 text-xs text-muted-foreground [scrollbar-width:none]">
           {steps.map((s, i) => (
-            <li key={s} className="flex shrink-0 snap-start items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5">
+            <li key={s} className="flex shrink-0 snap-start items-center gap-2 rounded-full border-2 border-ink bg-card px-3 py-1.5">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{i + 1}</span>
               {s}
             </li>
@@ -98,7 +98,7 @@ export function RelatedApps({ ids, title = "Works well with" }: { ids: string[];
           <Link
             key={t.id}
             to={`/tool/${t.id}`}
-            className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 transition-colors hover:border-primary/50"
+            className="group flex items-center gap-3 rounded-2xl border-2 border-ink bg-card p-3 transition-colors hover:border-primary/50"
           >
             <AppIcon toolId={t.id} category={t.category} name={t.name} size="sm" className="h-10 w-10" />
             <div className="min-w-0">

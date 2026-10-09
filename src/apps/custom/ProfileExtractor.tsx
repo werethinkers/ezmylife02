@@ -86,7 +86,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
           </button>
           <input ref={fileRef} type="file" multiple accept=".pdf,.txt,application/pdf" className="hidden" onChange={(e) => { void process(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
           {queue.length > 0 && (
-            <ul className="space-y-1 rounded-2xl border border-border/60 bg-card p-3 text-xs">
+            <ul className="space-y-1 rounded-2xl border-2 border-ink bg-card p-3 text-xs">
               {queue.map((q, i) => <li key={i} className="flex justify-between gap-2"><span className="truncate">{q.name}</span><span className={q.state === "done" ? "text-emerald-600" : "text-muted-foreground"}>{["reading", "extracting"].includes(q.state) && <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />}{q.state}</span></li>)}
             </ul>
           )}
@@ -96,7 +96,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
             <p className="text-sm font-semibold">{profiles.length} profiles</p>
             <Button size="sm" variant="outline" className="gap-1.5" disabled={!profiles.length} onClick={csv}><Download className="h-3.5 w-3.5" /> Export CSV</Button>
           </div>
-          <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
+          <div className="overflow-x-auto rounded-2xl border-2 border-ink bg-card">
             <table className="w-full min-w-[620px] text-sm">
               <thead className="bg-muted/40 text-left text-xs text-muted-foreground"><tr><th className="p-2">Name</th><th className="p-2">Latest role</th><th className="p-2">Email / phone</th><th className="p-2">Location</th><th /></tr></thead>
               <tbody>
@@ -114,7 +114,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
             </table>
           </div>
           {open && (
-            <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4 text-sm">
+            <div className="space-y-2 rounded-2xl border-2 border-ink bg-card p-4 text-sm">
               <p className="text-base font-semibold">{open.name} <span className="font-normal text-muted-foreground">· {open.headline}</span></p>
               {open.summary && <p className="text-muted-foreground">{open.summary}</p>}
               {open.skills?.length > 0 && <div className="flex flex-wrap gap-1">{open.skills.map((s) => <span key={s} className="rounded-full bg-muted px-2 py-0.5 text-xs">{s}</span>)}</div>}

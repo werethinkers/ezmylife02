@@ -153,15 +153,14 @@ export const SmartAssistantChatbot = () => {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[60] h-14 w-14 md:h-16 md:w-16 rounded-full p-[2px] bg-gradient-to-tr from-primary via-purple-500 to-pink-500 shadow-2xl shadow-primary/40"
+        className="fixed bottom-[84px] right-3 md:bottom-6 md:right-6 z-[60] h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]"
         aria-label="Open EZYOURLIFE Assistant"
       >
-        <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary via-purple-500 to-pink-500 blur-xl opacity-60 -z-10 animate-pulse" />
-        <span className="flex h-full w-full items-center justify-center rounded-full bg-background">
+        <span className="flex h-full w-full items-center justify-center rounded-full">
           {open ? (
             <X className="h-6 w-6 text-foreground" />
           ) : (
-            <Sparkles className="h-6 w-6 text-primary" />
+            <Sparkles className="h-6 w-6 text-ink" />
           )}
         </span>
       </motion.button>
@@ -173,13 +172,13 @@ export const SmartAssistantChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-40 md:bottom-28 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] sm:w-[400px] h-[560px] max-h-[70vh] md:max-h-[78vh] rounded-3xl p-[1.5px] bg-gradient-to-br from-primary/60 via-purple-500/60 to-pink-500/60 shadow-2xl shadow-primary/30"
+            className="fixed bottom-36 md:bottom-24 right-3 sm:right-6 z-[60] w-[calc(100vw-1.5rem)] sm:w-[400px] h-[560px] max-h-[70vh] md:max-h-[78vh] rounded-2xl border-2 border-ink bg-card shadow-[6px_6px_0_0_hsl(var(--ink))]"
           >
-            <div className="flex h-full flex-col rounded-[22px] bg-card/95 backdrop-blur-xl overflow-hidden">
+            <div className="flex h-full flex-col rounded-[14px] bg-card overflow-hidden">
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10">
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                  <Bot className="h-5 w-5 text-white" />
+              <div className="flex items-center gap-3 px-4 py-3 border-b-2 border-ink bg-sun">
+                <div className="h-9 w-9 rounded-xl border-2 border-ink bg-card flex items-center justify-center">
+                  <Bot className="h-5 w-5 text-ink" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-none">EZYOURLIFE Assistant</p>

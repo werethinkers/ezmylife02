@@ -204,7 +204,7 @@ export const ContentWorkflow = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <Card className="border-border/50 bg-gradient-to-r from-primary/10 to-purple-500/10">
+      <Card className="border-border/50 bg-sand">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -504,7 +504,7 @@ export const ContentWorkflow = () => {
                 <h3 className="text-lg font-semibold">Step 5: Publish Your Content</h3>
               </div>
 
-              <div className="p-6 rounded-lg bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20 text-center space-y-4">
+              <div className="p-6 rounded-lg bg-sand border border-primary/20 text-center space-y-4">
                 <CheckCircle2 className="h-12 w-12 mx-auto text-green-500" />
                 <h4 className="text-xl font-semibold">Your Content is Ready!</h4>
                 <p className="text-muted-foreground">
