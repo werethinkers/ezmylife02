@@ -3,6 +3,7 @@ import { getBulkConfig } from "@/data/bulkTools";
 import { APPS } from "../registry";
 import { runApp } from "../lib/api";
 import { dataUrlToBlob, fileText, imageToDataUrl, markdownToHtml, openPdf, pdfPageImage, pdfPageText, toCsv } from "../lib/files";
+import { googleBusinessBulk } from "../google-business/bulk";
 import type { BulkColumn, BulkEnv, BulkResult, BulkSpec, RowsBulk } from "./types";
 import type { AppDef, DocAppDef, FormValues } from "../types";
 
@@ -177,6 +178,7 @@ function poHtml(row: Record<string, string>, env: BulkEnv) {
 const CBSE = (p: number) => (p >= 91 ? "A1" : p >= 81 ? "A2" : p >= 71 ? "B1" : p >= 61 ? "B2" : p >= 51 ? "C1" : p >= 41 ? "C2" : p >= 33 ? "D" : "E");
 
 const CUSTOM: Record<string, BulkSpec> = {
+  "google-business-kit": googleBusinessBulk,
   // Business, browser-only
   "tool-1": {
     mode: "rows", chargeLocal: true,

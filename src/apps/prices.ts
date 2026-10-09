@@ -3,6 +3,7 @@
 // this copy only lets the page show the right price before the app's first run creates its
 // pricing row. Every app costs at least 1 credit per use.
 export const DEFAULT_PRICES: Record<string, number> = {
+  "google-business-kit": 2,
   "tool-10": 2,
   "tool-6": 2,
   "tool-28": 1,

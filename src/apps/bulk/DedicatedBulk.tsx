@@ -9,6 +9,7 @@ const ROUTES: Record<string, string> = {
   "/virasat": "virasat",
   "/startup-analyser": "startup-analyser",
   "/meet-nudge": "meet-nudge",
+  "/google-business": "google-business-kit",
 };
 
 export default function DedicatedBulk() {

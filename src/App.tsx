@@ -52,6 +52,8 @@ const GetExtension = lazy(() => import("./pages/GetExtension"));
 const MobileShortcuts = lazy(() => import("./pages/MobileShortcuts"));
 const StartupAnalyser = lazy(() => import("./pages/StartupAnalyser"));
 const MeetNudge = lazy(() => import("./pages/MeetNudge"));
+const GoogleBusinessApp = lazy(() => import("./apps/google-business/GoogleBusinessApp"));
+const GoogleBusinessReview = lazy(() => import("./apps/google-business/pages/Review"));
 const MeetNudgeGuestForm = lazy(() => import("./pages/MeetNudgeGuestForm"));
 const Virasat = lazy(() => import("./pages/Virasat"));
 const BulkJobs = lazy(() => import("./pages/BulkJobs"));
@@ -232,6 +234,16 @@ const AnimatedRoutes = () => {
               }
             />
             <Route path="/e/:eventSlug" element={<MeetNudgeGuestForm />} />
+            <Route
+              path="/google-business/*"
+              element={
+                <ProtectedRoute>
+                  <GoogleBusinessApp />
+                </ProtectedRoute>
+              }
+            />
+            {/* Public customer review page for Google Business Kit (no sign-in) */}
+            <Route path="/rv" element={<GoogleBusinessReview />} />
             <Route path="/meetnudge/:hostSlug/:eventSlug" element={<MeetNudgeGuestForm />} />
             <Route
               path="/virasat"

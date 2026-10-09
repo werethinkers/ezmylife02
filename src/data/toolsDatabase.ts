@@ -32,6 +32,7 @@ export const toolsDatabase: ToolEntry[] = [
   // Marketing & Sales
   { id: "tool-11", name: "Cold Outreach", description: "Pitch services to new clients", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Writing Tools", "Communication"], source: "business", isLive: true },
   { id: "tool-12", name: "Offer Generator", description: "Create festival discount strategies", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Writing Tools"], source: "business", isLive: true },
+  { id: "google-business-kit", name: "Google Business Kit", description: "Keywords, profile content and reviews for any business", category: "Marketing & Sales", toolType: ["Marketing & Sales", "AI & Automation", "Customer Service"], source: "business", isLive: true },
   { id: "tool-13", name: "Review Replier", description: "Draft replies to Google/Amazon reviews", category: "Marketing & Sales", toolType: ["Marketing & Sales", "AI & Automation", "Communication"], source: "business", isLive: true },
   { id: "tool-14", name: "Customer Follow-up", description: "Schedule polite lead reminders", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Communication", "Productivity"], source: "business", isLive: true },
   { id: "tool-15", name: "Social Media Plan", description: "Create weekly content calendars", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Social Media", "Content Creation"], source: "business", isLive: true },
