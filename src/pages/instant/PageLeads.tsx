@@ -30,7 +30,7 @@ export default function PageLeads() {
     <div className="min-h-screen bg-muted/30">
       <Navbar />
       <main className="container mx-auto px-4 py-8 max-w-3xl pb-24">
-        <Link to="/my-pages" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4"><ArrowLeft className="h-4 w-4" /> My Pages</Link>
+        <Link to="/my-pages" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4"><ArrowLeft className="h-4 w-4" /> My websites and cards</Link>
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="font-display text-3xl font-bold">{prod?.family === "event" ? "RSVPs" : "Leads"}</h1>

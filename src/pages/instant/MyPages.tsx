@@ -31,22 +31,22 @@ export default function MyPages() {
   const { link, preparing } = useLinkPreview(sharing, sp, st, false);
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container mx-auto px-4 py-8 max-w-4xl pb-24">
+      <main className="mx-auto max-w-4xl px-4 py-8 pb-24">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-display text-3xl font-bold">My Pages</h1>
+            <h1 className="font-display text-3xl font-extrabold">My websites and cards</h1>
             <p className="text-muted-foreground">Everything you've made, with views and enquiries.</p>
           </div>
-          <Button asChild className="rounded-xl"><Link to="/create"><Plus className="h-4 w-4 mr-2" /> Create</Link></Button>
+          <Button asChild><Link to="/create"><Plus className="h-4 w-4" /> Make something</Link></Button>
         </div>
         {pages.isLoading && <p className="text-muted-foreground">Loading…</p>}
         {pages.data && pages.data.length === 0 && (
-          <div className="rounded-3xl border bg-background p-10 text-center grid gap-3">
-            <p className="text-lg font-semibold">No pages yet</p>
+          <div className="grid gap-3 rounded-3xl border-2 border-dashed border-ink/60 bg-sand/60 p-10 text-center">
+            <p className="text-lg font-bold">Make your first website or card</p>
             <p className="text-muted-foreground">Make a birthday surprise, an invitation or a website for your business. It's live in minutes.</p>
-            <Button asChild className="justify-self-center rounded-xl"><Link to="/create">Browse products</Link></Button>
+            <div className="flex flex-wrap justify-center gap-2"><Button asChild><Link to="/websites">See website designs</Link></Button><Button asChild variant="outline"><Link to="/cards">See card designs</Link></Button></div>
           </div>
         )}
         <div className="grid gap-3">
@@ -55,11 +55,11 @@ export default function MyPages() {
             const [label, cls] = STATUS[p.status];
             const n = counts.data?.[p.id] ?? 0;
             return (
-              <article key={p.id} className="rounded-2xl border bg-background p-4 md:p-5 grid gap-3">
+              <article key={p.id} className="grid gap-3 rounded-2xl border-2 border-ink bg-card p-4 shadow-block-sm md:p-5">
                 <div className="flex items-start gap-3">
                   <span className="text-3xl" aria-hidden="true">{prod?.glyph ?? "📄"}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold truncate">{p.title || prod?.name}</h2><span className={"text-xs font-semibold px-2 py-0.5 rounded-full " + cls}>{label}</span></div>
+                    <div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-bold">{p.title || prod?.name}</h2><span className={"text-xs font-semibold px-2 py-0.5 rounded-full " + cls}>{label}</span></div>
                     <p className="text-sm text-muted-foreground">{prod?.name}{p.slug ? ` · ${pageUrlFor(p.slug).replace("https://", "")}` : ""}</p>
                     <p className="text-sm text-muted-foreground tabular-nums">{p.views.toLocaleString("en-IN")} views{p.expires_at ? ` · live until ${new Date(p.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}</p>
                   </div>

@@ -9,6 +9,8 @@ import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
 import { useConfetti } from "@/instant/parts";
 import { useLinkPreview } from "@/instant/linkPreview";
+import { FlowSteps } from "@/components/brand/FlowSteps";
+import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
 export default function PublishDone() {
   const { pageId = "" } = useParams();
@@ -39,31 +41,32 @@ export default function PublishDone() {
   const { link, preparing } = useLinkPreview(live ? page : null, product, theme, true);
 
   return (
-    <div className="min-h-screen bg-muted/30 relative">
+    <div className="relative min-h-screen bg-background">
       <canvas ref={ref} className="fixed inset-0 w-full h-full pointer-events-none z-50" aria-hidden="true" />
       <Navbar />
-      <main className="container mx-auto px-4 py-10 max-w-xl grid gap-6 pb-24">
-        {!page && <div className="grid place-items-center py-24"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}
+      <main className="mx-auto grid max-w-xl gap-6 px-4 py-10 pb-24">
+        {product && <FlowSteps flow={(WEBSITE_CATEGORIES as readonly string[]).includes(product.category) ? "website" : "card"} step={live ? 4 : 3} />}
+        {!page && <div className="grid place-items-center py-24"><Loader2 className="h-8 w-8 animate-spin text-ink" /></div>}
         {page && !live && (
-          <div className="rounded-3xl border bg-background p-8 grid gap-3 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <div className="grid gap-3 rounded-3xl border-2 border-ink bg-card p-8 text-center shadow-block">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-ink" />
             <h1 className="text-2xl font-bold">Confirming your payment…</h1>
-            <p className="text-muted-foreground">This usually takes a few seconds. You can leave this page; it will be in My Pages as soon as Razorpay confirms.</p>
-            {tries >= 40 && <p className="text-sm">Still waiting. If money was deducted, it will reflect shortly or be refunded by Razorpay automatically. <Link to="/my-pages" className="underline">Go to My Pages</Link></p>}
+            <p className="text-muted-foreground">This usually takes a few seconds. You can leave this page; it will be in My websites and cards as soon as Razorpay confirms.</p>
+            {tries >= 40 && <p className="text-sm">Still waiting. If money was deducted, it will reflect shortly or be refunded by Razorpay automatically. <Link to="/my-pages" className="underline">Go to My websites and cards</Link></p>}
           </div>
         )}
         {live && product && theme && (
           <>
-            <div className="rounded-3xl border bg-background p-6 md:p-8 grid gap-4 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
-              <h1 className="font-display text-3xl font-bold">It's live!</h1>
-              <p className="text-muted-foreground">Your {product.name.toLowerCase()} is published. Send it now.</p>
+            <div className="grid gap-4 rounded-3xl border-2 border-ink bg-lime p-6 text-center shadow-block-lg md:p-8">
+              <CheckCircle2 className="mx-auto h-12 w-12 text-ink" />
+              <h1 className="font-display text-3xl font-extrabold">It's live</h1>
+              <p className="text-ink/85">Your {product.name.toLowerCase()} is published. Send the link now.</p>
               <div className="grid grid-cols-2 gap-2">
-                <Button asChild variant="outline" className="h-12 rounded-xl"><a href={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Open page</a></Button>
-                <Button asChild variant="outline" className="h-12 rounded-xl"><Link to="/my-pages">My Pages</Link></Button>
+                <Button asChild variant="outline" className="h-12"><a href={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Open page</a></Button>
+                <Button asChild variant="outline" className="h-12"><Link to="/my-pages">My websites and cards</Link></Button>
               </div>
             </div>
-            <div className="rounded-3xl border bg-background p-6 md:p-8">
+            <div className="rounded-3xl border-2 border-ink bg-card p-6 shadow-block md:p-8">
               <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} link={link} preparing={preparing} />
             </div>
             <p className="text-center text-sm text-muted-foreground">Need a change? <Link className="underline" to={`/create/${product.id}?page=${page.id}`}>Edit it</Link> any time. Updates are free.</p>

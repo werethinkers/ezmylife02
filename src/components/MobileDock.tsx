@@ -6,10 +6,11 @@ import { NAV_SECTIONS, sectionOf } from "@/components/brand/nav";
 import { cn } from "@/lib/utils";
 
 // Pages where the tab bar helps people move around. Inside an app (/tool/…) and in the website
-// and card builder (/create/:id) the screen belongs to the task, so the bar steps aside.
+// and card pages (/make/:id, /create/:id) the screen belongs to the task and has its own buy bar,
+// so the tab bar steps aside.
 const DOCK_PATHS = [
   /^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//,
-  /^\/profile$/, /^\/create$/, /^\/websites/, /^\/cards/, /^\/make\//, /^\/my-pages$/, /^\/refund-policy$/,
+  /^\/profile$/, /^\/create$/, /^\/websites/, /^\/cards/, /^\/my-pages$/, /^\/refund-policy$/,
 ];
 
 const TABS = ["home", "apps", "websites", "cards"] as const;

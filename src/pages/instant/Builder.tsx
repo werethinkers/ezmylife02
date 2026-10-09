@@ -17,6 +17,8 @@ import { checkout, createPage, getMyPage, republish, savePage, uploadContentImag
 import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
+import { FlowSteps } from "@/components/brand/FlowSteps";
+import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
 interface Draft { variantId: string; content: Content; pageId?: string }
 const SAMPLE_GUARDED = ["reviews", "rating", "reviews_count", "team"];
@@ -136,7 +138,7 @@ function BuilderInner({ product }: { product: Product }) {
           } catch { /* the webhook will still publish it; the done page waits for it */ }
           navigate(`/create/done/${pid}`);
         },
-        modal: { ondismiss: () => { setBusy(null); toast({ title: "Payment not completed", description: "Your page is saved. Publish it any time from My Pages." }); } },
+        modal: { ondismiss: () => { setBusy(null); toast({ title: "Payment not completed", description: "Your page is saved. Publish it any time from My websites and cards." }); } },
       });
       rzp.on("payment.failed", (r) => toast({ title: "Payment failed", description: r.error?.description || "Try again or use another UPI app.", variant: "destructive" }));
       rzp.open();
@@ -153,36 +155,41 @@ function BuilderInner({ product }: { product: Product }) {
 
   const s = product.steps[step];
   const last = step === product.steps.length - 1;
-  const cta = published ? "Update live page" : price ? `Publish · ${inr(price)}` : "Publish free";
+  const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
+  const cta = published ? "Update live page" : price ? `Pay ${inr(price)} and publish` : "Publish free";
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       <PageSeo title={`Create a ${product.name} | EZYOURLIFE`} description={product.description} path={`/create/${product.id}`} />
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
+      <header className="sticky top-0 z-40 border-b-2 border-ink bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center gap-3">
-          <Link to="/create" className="p-2 -ml-2 rounded-lg hover:bg-muted" aria-label="All products"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to={`/make/${product.id}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun" aria-label="Back to the design"><ArrowLeft className="h-5 w-5" /></Link>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold truncate">{product.glyph} {product.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `Hosted for a year · ${price ? inr(price) : "Free"}`}</p>
+            <p className="truncate font-bold">{product.glyph} {product.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${price ? `${inr(price)}, paid once` : "Free"} · online for a year`}</p>
           </div>
-          <Button className="hidden md:inline-flex h-11 rounded-xl" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
+          <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
         </div>
       </header>
+      <div className="mx-auto max-w-7xl px-4 pt-5">
+        <FlowSteps flow={isSite ? "website" : "card"} step={2} className="max-w-3xl" />
+      </div>
 
-      <div className="container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_420px] gap-8 pb-32 md:pb-10">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-6 pb-32 md:grid-cols-[minmax(0,1fr)_420px] md:pb-10">
         <section className={cn("grid gap-6 content-start min-w-0", tab === "preview" && "hidden md:grid")} aria-label="Edit">
           <div className="grid gap-2">
-            <h1 className="font-display text-2xl md:text-3xl font-bold">{product.name}</h1>
-            <p className="text-muted-foreground">{product.description}</p>
+            <h1 className="font-display text-2xl font-extrabold md:text-3xl">{product.name}</h1>
+            <p className="text-[16px] text-muted-foreground">{product.description}</p>
+            <p className="text-sm font-semibold">Fill the steps on the left. Your {isSite ? "website" : "card"} changes on the right as you type.</p>
           </div>
 
           <div className="grid gap-2">
-            <p className="text-sm font-semibold">Design</p>
+            <p className="text-sm font-bold">Choose a style</p>
             <div className="flex flex-wrap gap-2">
               {product.themes.map((t) => (
                 <button key={t.id} type="button" onClick={() => setVariantId(t.id)} aria-pressed={t.id === theme.id}
-                  className={cn("flex items-center gap-2 rounded-full border pl-1.5 pr-4 py-1.5 text-sm font-medium bg-background", t.id === theme.id && "ring-2 ring-primary border-primary")}>
-                  <span className="h-7 w-7 rounded-full border" style={{ background: `conic-gradient(${t.c.bg} 0 50%, ${t.c.ac} 50% 75%, ${t.c.ac2} 75%)` }} aria-hidden="true" />{t.name}
+                  className={cn("flex items-center gap-2 rounded-full border-2 py-1.5 pl-1.5 pr-4 text-sm font-semibold", t.id === theme.id ? "border-ink bg-sun" : "border-ink/30 bg-card hover:border-ink")}>
+                  <span className="h-7 w-7 rounded-full border-2 border-ink" style={{ background: `conic-gradient(${t.c.bg} 0 50%, ${t.c.ac} 50% 75%, ${t.c.ac2} 75%)` }} aria-hidden="true" />{t.name}
                 </button>
               ))}
             </div>
@@ -194,7 +201,7 @@ function BuilderInner({ product }: { product: Product }) {
               return (
                 <li key={st.title} className="shrink-0">
                   <button type="button" onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
-                    className={cn("flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm bg-background", i === step && "bg-foreground text-background border-foreground", hasErr && "border-destructive text-destructive")}>
+                    className={cn("flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-sm font-semibold", i === step ? "border-ink bg-ink text-cream" : "border-ink/30 bg-card hover:border-ink", hasErr && "border-destructive text-destructive")}>
                     <span className="tabular-nums font-semibold">{i + 1}</span>{st.title}
                   </button>
                 </li>
@@ -202,32 +209,32 @@ function BuilderInner({ product }: { product: Product }) {
             })}
           </ol>
 
-          <FieldMemory className="rounded-3xl border bg-background p-5 md:p-7 grid gap-5">
+          <FieldMemory className="grid gap-5 rounded-3xl border-2 border-ink bg-card p-5 shadow-block md:p-7">
             <div>
               <h2 className="text-xl font-bold">{s.title}</h2>
               {s.hint && <p className="text-sm text-muted-foreground mt-1">{s.hint}</p>}
             </div>
             {s.fields.map((f) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />)}
             <div className="flex items-center justify-between gap-3 pt-2">
-              <Button variant="outline" className="h-11 rounded-xl" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
+              <Button variant="outline" className="h-11" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
               {last ? (
-                <Button className="h-11 rounded-xl" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
+                <Button className="h-11" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
               ) : (
-                <Button className="h-11 rounded-xl" onClick={() => setStep(step + 1)}>Next <ArrowRight className="h-4 w-4 ml-2" /></Button>
+                <Button className="h-11" onClick={() => setStep(step + 1)}>Next step <ArrowRight className="h-4 w-4" /></Button>
               )}
             </div>
           </FieldMemory>
 
           <div className="flex flex-wrap gap-2 text-sm">
-            <Button variant="ghost" size="sm" onClick={() => { setContent(blank(product)); setStep(0); }}><Eraser className="h-4 w-4 mr-2" /> Clear the sample text</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setContent({ ...product.sample }); setErrors({}); }}><RotateCcw className="h-4 w-4 mr-2" /> Restore the sample</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setContent(blank(product)); setStep(0); }}><Eraser className="h-4 w-4" /> Clear the example text</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setContent({ ...product.sample }); setErrors({}); }}><RotateCcw className="h-4 w-4" /> Bring back the example</Button>
             {isAdmin && !published && <Button variant="outline" size="sm" disabled={!!busy} onClick={() => publish(true)}>Publish free (admin test)</Button>}
           </div>
         </section>
 
         <aside className={cn("md:sticky md:top-24 self-start", tab === "edit" && "hidden md:block")} aria-label="Live preview">
-          <p className="hidden md:flex items-center gap-2 text-sm font-semibold mb-3"><Eye className="h-4 w-4" /> Live preview</p>
-          <div className="mx-auto w-full max-w-[400px] rounded-[2.4rem] border-[10px] border-foreground/90 bg-foreground/90 shadow-2xl overflow-hidden">
+          <p className="mb-3 hidden items-center gap-2 text-sm font-bold md:flex"><Eye className="h-4 w-4" /> Live preview · this is what people will see</p>
+          <div className="mx-auto w-full max-w-[400px] overflow-hidden rounded-[2.4rem] border-[10px] border-ink bg-ink shadow-block-lg">
             {/* The transform makes this box the containing block for the page's fixed bars and sheets;
                 it must not scroll itself, or they would scroll away with the content. */}
             <div className="ip-frame relative h-[calc(100svh-220px)] md:h-[720px] overflow-hidden bg-background" style={{ transform: "translateZ(0)", ["--ip-vh" as string]: "640px" }}>
@@ -239,12 +246,12 @@ function BuilderInner({ product }: { product: Product }) {
         </aside>
       </div>
 
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur border-t px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] grid grid-cols-[auto_1fr] gap-3">
-        <div className="grid grid-cols-2 rounded-xl border p-1 bg-muted/40">
-          <button type="button" onClick={() => setTab("edit")} aria-pressed={tab === "edit"} className={cn("flex items-center gap-1.5 px-3 rounded-lg text-sm font-medium", tab === "edit" && "bg-background shadow")}><PencilLine className="h-4 w-4" /> Edit</button>
-          <button type="button" onClick={() => setTab("preview")} aria-pressed={tab === "preview"} className={cn("flex items-center gap-1.5 px-3 rounded-lg text-sm font-medium", tab === "preview" && "bg-background shadow")}><Eye className="h-4 w-4" /> Preview</button>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[auto_1fr] gap-3 border-t-2 border-ink bg-card px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 md:hidden">
+        <div className="grid grid-cols-2 rounded-xl border-2 border-ink bg-sand p-1">
+          <button type="button" onClick={() => setTab("edit")} aria-pressed={tab === "edit"} className={cn("flex items-center gap-1.5 rounded-lg px-3 text-sm font-bold", tab === "edit" && "bg-ink text-cream")}><PencilLine className="h-4 w-4" /> Edit</button>
+          <button type="button" onClick={() => setTab("preview")} aria-pressed={tab === "preview"} className={cn("flex items-center gap-1.5 rounded-lg px-3 text-sm font-bold", tab === "preview" && "bg-ink text-cream")}><Eye className="h-4 w-4" /> Preview</button>
         </div>
-        <Button className="h-12 rounded-xl" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}{busy ? "Working…" : cta}</Button>
+        <Button className="h-12" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}{busy ? "Working…" : cta}</Button>
       </nav>
 
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/create/${product.id}?publish=1`} />
