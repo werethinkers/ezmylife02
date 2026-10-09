@@ -4,17 +4,15 @@ import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
-import { CREDIT_PACKS } from "@/data/creditPacks";
+import { BASELINE_CREDITS_PER_RUPEE, CREDIT_PACKS } from "@/data/creditPacks";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
-import { Zap, Loader2, ChevronDown, Check, Sparkles, ShieldCheck } from "lucide-react";
+import { Zap, Loader2, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 
@@ -133,85 +131,88 @@ const Credits = () => {
   return (
     <>
       <SEOHead
-        title="Credits — Pay-as-you-go AI Apps"
-        description="Top up your EZYOURLIFE wallet. No subscriptions, just credits. Starts at ₹10."
+        title="Prices and credits — pay only for what you use | EZYOURLIFE"
+        description="EZYOURLIFE apps use credits only when they give you a result. Packs from ₹10, no monthly plan, 100 free credits to start."
         path="/credits"
       />
       <Navbar />
-      <main className="container mx-auto px-4 py-10 max-w-5xl">
+      <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
         <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center mb-10"
+          transition={{ duration: 0.35 }}
+          className="rounded-3xl border-2 border-ink bg-sky p-6 shadow-block-lg md:p-10"
         >
-          <Badge variant="secondary" className="mb-3"><Sparkles className="h-3 w-3 mr-1" /> No subscriptions</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Just credits.</h1>
-          <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Pay only for successful runs, starting at ₹10. Free credits reset every month — paid credits never expire.
+          <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">No monthly plan</span>
+          <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">Pay only for what you use</h1>
+          <p className="mt-3 max-w-2xl text-lg text-ink/85">
+            Apps are paid with credits. Buy a pack from ₹10, and an app uses its credits only when it gives you a result. Websites and cards are
+            paid once, on their own page.
           </p>
+          <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              { t: "Every app shows its price", s: "Most apps use 1 credit a result. Bigger jobs show more." },
+              { t: "Credits only when it works", s: "If an app fails, you are not charged." },
+              { t: "Free to start", s: "50 free credits when you sign up, 50 more after your first run." },
+            ].map((x, i) => (
+              <li key={x.t} className="flex gap-3 rounded-2xl border-2 border-ink bg-card p-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display font-extrabold">{i + 1}</span>
+                <span>
+                  <span className="block font-bold">{x.t}</span>
+                  <span className="block text-sm text-muted-foreground">{x.s}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
         </motion.section>
 
-        {/* Wallet snapshot or sign-in CTA */}
+        {/* Wallet snapshot */}
         {user ? (
-          <Card className="mb-8 border-primary/30 bg-sand/50">
-            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your wallet</p>
-                <p className="text-4xl font-semibold tabular-nums flex items-center gap-2">
-                  <Zap className="h-6 w-6 text-primary" />
-                  {walletLoading ? "—" : total}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button asChild variant="outline">
-                  <Link to="/credits/history">Transaction history</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to="/ai-apps">Browse AI apps</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-ink bg-lime p-5 shadow-block">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide">Your credits</p>
+              <p className="flex items-center gap-2 font-display text-4xl font-extrabold tabular-nums">
+                <Zap className="h-6 w-6" />
+                {walletLoading ? "—" : total}
+              </p>
+              <p className="mt-1 text-sm">
+                <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link to="/credits/history">Payments and usage</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/ai-apps">Use an app</Link>
+              </Button>
+            </div>
+          </div>
         ) : null}
 
         {/* Packs */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="mb-5 mt-12 text-2xl font-bold md:text-3xl">Credit packs</h2>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CREDIT_PACKS.map((pack) => {
+            const base = Math.round(pack.inr * BASELINE_CREDITS_PER_RUPEE);
+            const extra = pack.credits - base;
+            const perCredit = pack.inr / pack.credits;
             return (
-              <motion.div
-                key={pack.id}
-                whileHover={{ y: -2 }}
-                className={`relative rounded-xl border bg-card p-5 ${pack.badge ? "border-primary/50" : "border-border"}`}
-              >
+              <motion.div key={pack.id} whileHover={{ y: -2 }} className={`relative rounded-2xl border-2 border-ink p-5 shadow-block ${pack.badge ? "bg-sun" : "bg-card"}`}>
                 {pack.badge && (
-                  <Badge className="absolute -top-2 right-4">{pack.badge}</Badge>
+                  <span className="absolute -top-3 right-4 rounded-full border-2 border-ink bg-pink px-2.5 py-0.5 text-xs font-bold">{pack.badge}</span>
                 )}
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">₹{pack.inr}</span>
-                </div>
-                <p className="text-base mt-2 line-through text-muted-foreground/70">
-                  ₹{pack.inr} = {pack.inr} credits
+                <p className="font-display text-4xl font-extrabold">₹{pack.inr}</p>
+                <p className="mt-2 flex items-center gap-1.5 text-lg">
+                  <Zap className="h-5 w-5" />
+                  <span className="font-bold tabular-nums">{pack.credits}</span> credits
                 </p>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <Zap className="h-6 w-6 text-primary" />
-                  <span className="text-2xl font-bold text-primary tabular-nums">{pack.credits}</span>
-                  <span className="text-base text-foreground">credits</span>
-                </div>
-                {pack.credits > pack.inr && (
-                  <p className="text-xs text-emerald-500 font-medium mt-1">
-                    You save {Math.round(((pack.credits - pack.inr) / pack.inr) * 100)}%
-                  </p>
-                )}
-                <Button
-                  className="w-full mt-4"
-                  onClick={() => buyPack(pack.id)}
-                  disabled={busyPack === pack.id}
-                >
-                  {busyPack === pack.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buy"}
+                <p className="mt-1 text-sm text-ink/75">
+                  About ₹{perCredit.toFixed(2)} a credit
+                  {extra > 0 ? ` · ${extra} more credits than buying ₹10 packs` : ""}
+                </p>
+                <Button className="mt-4 w-full" onClick={() => buyPack(pack.id)} disabled={busyPack === pack.id}>
+                  {busyPack === pack.id ? <Loader2 className="h-4 w-4 animate-spin" /> : `Buy ₹${pack.inr} pack`}
                 </Button>
               </motion.div>
             );
@@ -221,19 +222,14 @@ const Credits = () => {
         {/* Coupon */}
         <Collapsible open={couponOpen} onOpenChange={setCouponOpen} className="mt-6">
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
-              <ChevronDown className={`h-4 w-4 mr-1 transition-transform ${couponOpen ? "rotate-180" : ""}`} />
+            <Button variant="ghost" size="sm">
+              <ChevronDown className={`h-4 w-4 transition-transform ${couponOpen ? "rotate-180" : ""}`} />
               Have a coupon code?
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="mt-2 flex gap-2 max-w-sm">
-              <Input
-                placeholder="Enter coupon"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                disabled={couponBusy}
-              />
+            <div className="mt-2 flex max-w-sm gap-2">
+              <Input placeholder="Enter coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={couponBusy} />
               <Button onClick={handleCoupon} disabled={couponBusy || !couponCode.trim()}>
                 {couponBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
               </Button>
@@ -241,11 +237,23 @@ const Credits = () => {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Websites and cards */}
+        <section className="mt-12 grid gap-5 md:grid-cols-2">
+          <Link to="/websites" className="block-card block-lift bg-teal p-6">
+            <p className="font-display text-xl font-bold">Websites</p>
+            <p className="mt-1 text-ink/85">Paid once per design, online for a year. The price is on each design.</p>
+          </Link>
+          <Link to="/cards" className="block-card block-lift bg-sun p-6">
+            <p className="font-display text-xl font-bold">Cards and invites</p>
+            <p className="mt-1 text-ink/85">Paid once per card. The price is on each design.</p>
+          </Link>
+        </section>
+
         {/* Trust */}
-        <div className="mt-12 grid sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
-          <div className="flex items-start gap-2"><Check className="h-4 w-4 mt-0.5 text-primary" /> No recurring charges, ever.</div>
-          <div className="flex items-start gap-2"><Check className="h-4 w-4 mt-0.5 text-primary" /> Credits deducted only on successful runs.</div>
-          <div className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-primary" /> 50 free on signup + 50 after first action.</div>
+        <div className="mt-10 grid gap-4 text-[15px] sm:grid-cols-3">
+          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> No recurring charges, ever.</div>
+          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Credits are used only when an app works.</div>
+          <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Secure payments with UPI, cards or netbanking.</div>
         </div>
       </main>
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={pendingPack ? `/credits?pack=${pendingPack}` : "/credits"} />

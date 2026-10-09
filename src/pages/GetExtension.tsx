@@ -148,7 +148,7 @@ const GetExtension: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="EZYOURLIFE Browser Extension - Use AI Shortcuts Everywhere"
         description="Download the EZYOURLIFE browser extension for Chrome, Firefox, Brave and Edge. Auto-expand your AI shortcuts on ChatGPT, Gemini, Grok and any website."
@@ -172,9 +172,9 @@ const GetExtension: React.FC = () => {
           },
         ]}
       />
-      <div className="border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-40">
+      <div className="border-b border-ink bg-card backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-card rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
@@ -191,10 +191,10 @@ const GetExtension: React.FC = () => {
             <Zap className="w-4 h-4" />
             Premium Feature
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             Use Your Shortcuts Everywhere
           </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
+          <p className="text-muted-foreground max-w-xl mx-auto">
             Auto-expand your Speedy Notebook & PromptMaster shortcuts on ChatGPT, Gemini, Grok, and any other website.
           </p>
         </div>
@@ -206,24 +206,24 @@ const GetExtension: React.FC = () => {
             { icon: <Globe className="w-5 h-5 text-blue-400" />, title: 'Works Everywhere', desc: 'ChatGPT, Gemini, Grok, Gmail, and more' },
             { icon: <Shield className="w-5 h-5 text-green-400" />, title: 'Synced & Secure', desc: 'Your shortcuts sync privately from your account' },
           ].map((f, i) => (
-            <div key={i} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-2">
+            <div key={i} className="p-4 rounded-xl bg-card border-2 border-ink space-y-2">
               {f.icon}
               <h3 className="font-semibold text-sm">{f.title}</h3>
-              <p className="text-xs text-slate-400">{f.desc}</p>
+              <p className="text-xs text-muted-foreground">{f.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Detected Browser - Primary */}
-        <div className={`p-6 rounded-2xl bg-gradient-to-r ${currentBrowser.color} bg-opacity-10 border border-slate-700/50 relative overflow-hidden`}>
-          <div className="absolute inset-0 bg-slate-900/90" />
+        <div className={`p-6 rounded-2xl bg-sun border-2 border-ink relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-card" />
           <div className="relative space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-white/10">
                 {currentBrowser.icon}
               </div>
               <div>
-                <p className="text-xs text-slate-400">Detected browser</p>
+                <p className="text-xs text-muted-foreground">Detected browser</p>
                 <h3 className="text-xl font-bold">{currentBrowser.name}</h3>
               </div>
               {currentBrowser.supported && (
@@ -241,7 +241,7 @@ const GetExtension: React.FC = () => {
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                className="bg-pink hover:bg-pink text-ink gap-2"
                 disabled={downloading}
                 onClick={() => handleDownload(detectedBrowser)}
               >
@@ -258,7 +258,7 @@ const GetExtension: React.FC = () => {
 
         {/* Other Browsers */}
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-slate-300">Other Browsers</h3>
+          <h3 className="text-lg font-semibold text-ink/80">Other Browsers</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {otherBrowsers.map(([key, browser]) => (
               <OtherBrowserCard
@@ -273,7 +273,7 @@ const GetExtension: React.FC = () => {
         </div>
 
         {/* How It Works */}
-        <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/40 space-y-4">
+        <div className="p-6 rounded-2xl bg-card border-2 border-ink space-y-4">
           <h3 className="text-lg font-semibold">How It Works</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
@@ -287,42 +287,42 @@ const GetExtension: React.FC = () => {
                   {s.step}
                 </div>
                 <h4 className="font-semibold text-sm">{s.title}</h4>
-                <p className="text-xs text-slate-400">{s.desc}</p>
+                <p className="text-xs text-muted-foreground">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Video tutorial placeholder */}
-        <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/40 space-y-4">
+        <div className="p-6 rounded-2xl bg-card border-2 border-ink space-y-4">
           <h3 className="text-lg font-semibold">📺 Video Tutorial</h3>
-          <div className="aspect-video rounded-xl bg-slate-900/80 border border-slate-700/40 flex items-center justify-center">
+          <div className="aspect-video rounded-xl bg-card border-2 border-ink flex items-center justify-center">
             <div className="text-center space-y-2">
               <div className="w-16 h-16 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-3xl">
                 ▶
               </div>
-              <p className="text-sm text-slate-400">Video tutorial coming soon</p>
-              <p className="text-xs text-slate-500">Follow the step-by-step guide above to get started</p>
+              <p className="text-sm text-muted-foreground">Video tutorial coming soon</p>
+              <p className="text-xs text-muted-foreground">Follow the step-by-step guide above to get started</p>
             </div>
           </div>
         </div>
 
         {/* Mobile Section */}
-        <div className="p-6 rounded-2xl bg-sand border border-purple-500/20 space-y-4">
+        <div className="p-6 rounded-2xl bg-sand border-2 border-ink space-y-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
-              <Smartphone className="w-6 h-6 text-purple-400" />
+            <div className="p-2 rounded-lg bg-sun">
+              <Smartphone className="w-6 h-6 text-ink" />
             </div>
             <div>
               <h3 className="text-lg font-semibold">On Mobile?</h3>
-              <p className="text-sm text-slate-400">Extensions don't work on mobile browsers</p>
+              <p className="text-sm text-muted-foreground">Extensions don't work on mobile browsers</p>
             </div>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Use our Clipboard Expander or Bookmarklet to expand shortcuts on your phone — no extension needed.
           </p>
           <Link to="/mobile-shortcuts">
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white gap-2">
+            <Button className="bg-pink hover:bg-pink text-ink gap-2">
               <Smartphone className="w-4 h-4" />
               Open Mobile Shortcuts
             </Button>
@@ -343,15 +343,15 @@ const OtherBrowserCard: React.FC<{
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-xl bg-slate-800/40 border border-slate-700/40 overflow-hidden">
+    <div className="rounded-xl bg-card border-2 border-ink overflow-hidden">
       <button
-        className="p-4 flex items-center gap-3 w-full hover:bg-slate-800/60 transition-colors"
+        className="p-4 flex items-center gap-3 w-full hover:bg-card transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="p-2 rounded-lg bg-slate-700/50">{browser.icon}</div>
+        <div className="p-2 rounded-lg bg-sand">{browser.icon}</div>
         <div className="flex-1 min-w-0 text-left">
           <h4 className="font-medium text-sm">{browser.name}</h4>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {browser.supported ? 'Click to see install steps' : 'Requires extra setup'}
           </p>
         </div>
@@ -362,12 +362,12 @@ const OtherBrowserCard: React.FC<{
         )}
       </button>
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-700/40 pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-ink pt-3">
           <InstallationGuide browserKey={browserKey} browser={browser} />
           {browser.supported && (
             <Button
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+              className="bg-pink hover:bg-pink text-ink gap-2"
               disabled={downloading}
               onClick={(e) => { e.stopPropagation(); onDownload(browserKey); }}
             >

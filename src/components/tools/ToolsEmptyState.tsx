@@ -16,21 +16,20 @@ export const ToolsEmptyState = ({ onClearFilters, hasActiveFilters }: ToolsEmpty
       className="text-center py-20"
     >
       <div className="relative inline-flex mb-6">
-        <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse-glow" />
-        <div className="relative p-6 rounded-full bg-sand/70 border border-border/50">
-          <Search className="h-10 w-10 text-muted-foreground" />
+        <div className="relative rounded-full border-2 border-ink bg-sun p-6">
+          <Search className="h-10 w-10 text-ink" />
         </div>
       </div>
       
-      <h3 className="text-xl font-bold text-foreground mb-2">No tools found</h3>
+      <h3 className="text-xl font-bold text-foreground mb-2">No apps match that</h3>
       <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-        Try adjusting your search or filters to find what you're looking for
+        Try a simpler word, like “bill”, “photo” or “salary”. Or ask us to build the app you need.
       </p>
       
       {hasActiveFilters && (
         <Button variant="outline" onClick={onClearFilters} className="gap-2">
           <Sparkles className="h-4 w-4" />
-          Clear all filters
+          Clear search
         </Button>
       )}
     </motion.div>

@@ -1,5 +1,8 @@
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import SEOFooter from "@/components/SEOFooter";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,14 +12,22 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-gray-600">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 underline hover:text-blue-700">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="mx-auto max-w-3xl px-4 py-16">
+        <div className="rounded-3xl border-2 border-ink bg-sun p-8 text-center shadow-block-lg md:p-12">
+          <p className="font-display text-6xl font-extrabold">404</p>
+          <h1 className="mt-3 text-2xl font-extrabold md:text-3xl">This page doesn't exist</h1>
+          <p className="mx-auto mt-2 max-w-md text-ink/85">The link may be old or mistyped. Here's where you can go instead.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+            <Button asChild><Link to="/">Go to home</Link></Button>
+            <Button asChild variant="outline"><Link to="/ai-apps">Business apps</Link></Button>
+            <Button asChild variant="outline"><Link to="/websites">Websites</Link></Button>
+            <Button asChild variant="outline"><Link to="/cards">Cards</Link></Button>
+          </div>
+        </div>
+      </main>
+      <SEOFooter />
     </div>
   );
 };

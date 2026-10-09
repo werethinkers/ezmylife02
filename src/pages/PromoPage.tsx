@@ -471,7 +471,7 @@ export default function PromoPage() {
         </section>
 
         {/* Phone: keep the main action in reach */}
-        <div className="sticky bottom-[76px] z-30 mx-4 mb-4 flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-card p-2.5 pl-4 shadow-block md:hidden">
+        <div className="sticky bottom-[76px] z-30 mb-4 ml-4 mr-[72px] flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-card p-2.5 pl-4 shadow-block md:hidden">
           <span className="min-w-0 truncate font-bold">{name}</span>
           <Button size="sm" onClick={handleUseIt} className="h-10 shrink-0">
             Try it <ArrowRight className="h-4 w-4" />

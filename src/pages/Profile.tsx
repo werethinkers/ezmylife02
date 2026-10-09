@@ -159,7 +159,7 @@ const Profile = () => {
       <div className="min-h-[calc(100vh-73px)] bg-background py-12 px-4">
         <div className="container mx-auto max-w-3xl">
           <div className="mb-8">
-            <h1 className="font-display text-3xl font-semibold">Profile Settings</h1>
+            <h1 className="font-display text-3xl font-extrabold">Your profile</h1>
             <p className="text-muted-foreground mt-1">Manage your account information</p>
           </div>
 
@@ -189,11 +189,11 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" placeholder="John Doe" value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} disabled={saving} />
+                    <Input id="fullName" placeholder="Asha Verma" value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} disabled={saving} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
-                    <Input id="displayName" placeholder="John" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} disabled={saving} />
+                    <Input id="displayName" placeholder="Asha" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} disabled={saving} />
                   </div>
                 </div>
                 <div className="space-y-2">

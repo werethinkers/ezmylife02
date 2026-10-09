@@ -33,13 +33,13 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ browserKey, brows
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-semibold text-slate-300">Installation Steps:</h4>
+      <h4 className="text-sm font-semibold text-ink/80">Installation Steps:</h4>
       <ol className="space-y-3">
         {browser.manualSteps.map((step, i) => (
           <li key={i} className="space-y-2">
             <button
               onClick={() => setExpandedStep(expandedStep === i ? null : i)}
-              className="flex gap-3 text-sm text-slate-400 w-full text-left hover:text-slate-200 transition-colors group"
+              className="flex gap-3 text-sm text-muted-foreground w-full text-left hover:text-foreground transition-colors group"
             >
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">
                 {i + 1}
@@ -50,7 +50,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ browserKey, brows
               </span>
             </button>
             {expandedStep === i && images[i] && (
-              <div className="ml-9 rounded-lg overflow-hidden border border-slate-700/60 bg-slate-900/50">
+              <div className="ml-9 rounded-lg overflow-hidden border-2 border-ink bg-card">
                 <img
                   src={images[i]}
                   alt={`Step ${i + 1}: ${step}`}
@@ -66,11 +66,11 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ browserKey, brows
       {/* Extension preview */}
       {isPrimary && (
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-ink/80 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-purple-400" />
             Extension Preview
           </h4>
-          <div className="rounded-lg overflow-hidden border border-slate-700/60 bg-slate-900/50 max-w-[280px]">
+          <div className="rounded-lg overflow-hidden border-2 border-ink bg-card max-w-[280px]">
             <img
               src={extensionPreview}
               alt="Extension popup preview showing shortcuts list"

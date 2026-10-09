@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import SEOFooter from "@/components/SEOFooter";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { Link } from "react-router-dom";
 import { USE_CASE_SEEDS, INDUSTRY_SEEDS, humanize } from "@/lib/seoData";
@@ -34,40 +35,38 @@ const Explore = () => {
       />
       <Navbar />
 
-      <main className="container mx-auto px-4 py-12 max-w-6xl">
-        <header className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Explore AI apps by use case and industry
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl">
-            An internal hub linking every "AI tool for…" page on EZYOURLIFE. Pick a use case, industry,
-            category, or jump straight to a specific tool.
+      <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <header className="mb-12 rounded-3xl border-2 border-ink bg-lime p-6 shadow-block-lg md:p-10">
+          <h1 className="text-3xl font-extrabold md:text-5xl">Find apps for your work</h1>
+          <p className="mt-2 max-w-2xl text-lg text-ink/85">
+            Pick your type of business or the job you need done. We show the apps that fit.
           </p>
         </header>
 
-        <Section title="AI apps by use case" count={TOP_USE_CASES.length}>
-          <LinkList items={TOP_USE_CASES.map((slug) => ({ to: `/ai-tool-for/${slug}`, label: `AI app for ${humanize(slug)}` }))} />
+        <Section title="By business type" count={TOP_INDUSTRIES.length}>
+          <LinkList items={TOP_INDUSTRIES.map((slug) => ({ to: `/ai-for/${slug}`, label: humanize(slug) }))} />
         </Section>
 
-        <Section title="AI apps by industry" count={TOP_INDUSTRIES.length}>
-          <LinkList items={TOP_INDUSTRIES.map((slug) => ({ to: `/ai-for/${slug}`, label: `AI for ${humanize(slug)}` }))} />
+        <Section title="By job to do" count={TOP_USE_CASES.length}>
+          <LinkList items={TOP_USE_CASES.map((slug) => ({ to: `/ai-tool-for/${slug}`, label: humanize(slug) }))} />
         </Section>
 
-        <Section title="Browse by category" count={categories.length}>
+        <Section title="By type of app" count={categories.length}>
           <LinkList items={categories.map((c) => ({ to: `/ai-apps?category=${encodeURIComponent(c)}`, label: c }))} />
         </Section>
 
-        <Section title={`All ${liveTools.length} live AI apps`} count={liveTools.length}>
+        <Section title={`All ${liveTools.length} apps`} count={liveTools.length}>
           <LinkList items={liveTools.map((t) => ({ to: `/tool/${t.id}`, label: t.name }))} />
         </Section>
       </main>
+      <SEOFooter />
     </div>
   );
 };
 
 const Section = ({ title, count, children }: { title: string; count: number; children: React.ReactNode }) => (
   <section className="mb-12">
-    <h2 className="text-2xl font-semibold mb-4 flex items-baseline gap-3">
+    <h2 className="mb-4 flex items-baseline gap-3 border-b-2 border-ink pb-3 text-2xl font-bold">
       {title}
       <span className="text-sm font-normal text-muted-foreground">{count}</span>
     </h2>
@@ -76,10 +75,10 @@ const Section = ({ title, count, children }: { title: string; count: number; chi
 );
 
 const LinkList = ({ items }: { items: { to: string; label: string }[] }) => (
-  <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+  <ul className="flex flex-wrap gap-2">
     {items.map((it) => (
       <li key={it.to}>
-        <Link to={it.to} className="text-foreground/80 hover:text-primary hover:underline transition-colors">
+        <Link to={it.to} className="inline-block rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun">
           {it.label}
         </Link>
       </li>
