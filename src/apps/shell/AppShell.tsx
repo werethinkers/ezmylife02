@@ -5,6 +5,8 @@ import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { AppIcon } from "@/components/store/AppIcon";
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { cn } from "@/lib/utils";
+import { GiveGet } from "@/components/brand/GiveGet";
+import { categoryInfo } from "@/data/goals";
 
 /**
  * The common frame for every app built on the shared engines, so all of them look and behave
@@ -39,8 +41,8 @@ export function AppShell({
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <AppIcon toolId={toolId} category={tool?.category} name={name} size="sm" />
           <div className="min-w-0">
-            <h1 className="font-display text-xl font-bold leading-tight tracking-tight sm:text-2xl">{name}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{intro}</p>
+            <h1 className="font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">{name}</h1>
+            <p className="mt-1.5 max-w-2xl text-[16px] text-muted-foreground">{intro}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -50,16 +52,18 @@ export function AppShell({
         </div>
       </header>
 
+      {tool?.category && <GiveGet className="mt-4 max-w-2xl" give={categoryInfo(tool.category).give} get={categoryInfo(tool.category).get} time={null} />}
+
       {steps && steps.length > 0 && (
-        <ol className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1 text-xs text-muted-foreground [scrollbar-width:none]">
+        <ol className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1 text-[13px] font-semibold text-ink no-scrollbar" aria-label="How to use it">
           {steps.map((s, i) => (
             <li key={s} className="flex shrink-0 snap-start items-center gap-2 rounded-full border-2 border-ink bg-card px-3 py-1.5">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{i + 1}</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink bg-sun text-[11px] font-bold">{i + 1}</span>
               {s}
             </li>
           ))}
           <li className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Charged only when it works
+            <ShieldCheck className="h-4 w-4 text-teal" /> Credits only when it works
           </li>
         </ol>
       )}
@@ -91,18 +95,18 @@ export function RelatedApps({ ids, title = "Works well with" }: { ids: string[];
   const apps = ids.map((id) => catalog.find((t) => t.id === id && t.is_live)).filter(Boolean) as typeof catalog;
   if (!apps.length) return null;
   return (
-    <section className="mt-10 border-t border-border/50 pt-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+    <section className="mt-12 border-t-2 border-ink pt-6">
+      <h2 className="font-display text-lg font-bold">{title}</h2>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {apps.map((t) => (
           <Link
             key={t.id}
             to={`/tool/${t.id}`}
-            className="group flex items-center gap-3 rounded-2xl border-2 border-ink bg-card p-3 transition-colors hover:border-primary/50"
+            className="block-card block-lift group flex items-center gap-3 p-3"
           >
             <AppIcon toolId={t.id} category={t.category} name={t.name} size="sm" className="h-10 w-10" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold group-hover:text-primary">{t.name}</p>
+              <p className="truncate text-[15px] font-bold">{t.name}</p>
               <p className="line-clamp-1 text-xs text-muted-foreground">{t.description}</p>
             </div>
           </Link>

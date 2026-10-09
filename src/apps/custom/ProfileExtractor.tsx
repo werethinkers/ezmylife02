@@ -79,7 +79,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} wide steps={["Add resume PDFs", "AI extracts each profile", "Review & export CSV"]}>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
         <div className="space-y-3">
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 hover:border-primary/50">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 hover:border-ink">
             <FileUp className="h-7 w-7 text-primary" />
             <span className="mt-2 font-medium">Add resumes (PDF or text)</span>
             <span className="text-xs text-muted-foreground">Up to 20 at a time · {def.credits} credits per profile</span>
@@ -98,7 +98,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
           </div>
           <div className="overflow-x-auto rounded-2xl border-2 border-ink bg-card">
             <table className="w-full min-w-[620px] text-sm">
-              <thead className="bg-muted/40 text-left text-xs text-muted-foreground"><tr><th className="p-2">Name</th><th className="p-2">Latest role</th><th className="p-2">Email / phone</th><th className="p-2">Location</th><th /></tr></thead>
+              <thead className="border-b-2 border-ink bg-sand text-left text-xs font-bold text-ink"><tr><th className="p-2">Name</th><th className="p-2">Latest role</th><th className="p-2">Email / phone</th><th className="p-2">Location</th><th /></tr></thead>
               <tbody>
                 {profiles.map((p) => (
                   <tr key={p.id} className="cursor-pointer border-t border-border/50 hover:bg-muted/30" onClick={() => setOpenId(p.id === openId ? null : p.id)}>

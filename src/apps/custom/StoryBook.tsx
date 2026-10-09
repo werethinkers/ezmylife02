@@ -83,7 +83,7 @@ export default function StoryBook({ toolId }: { toolId: string }) {
               {([["age", "Age", ["2–4 years", "4–6 years", "6–8 years", "8–12 years"]], ["pages", "Pages", ["4", "6", "8", "10", "12"]], ["language", "Language", ["English", "Hindi", "Hinglish", "Gujarati"]]] as const).map(([k, l, opts]) => (
                 <div key={k} className="space-y-1">
                   <Label htmlFor={`sb-${k}`} className="text-xs">{l}</Label>
-                  <select id={`sb-${k}`} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm" value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })}>
+                  <select id={`sb-${k}`} className="h-10 w-full rounded-xl border-2 border-input bg-card px-2 text-sm" value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })}>
                     {opts.map((o) => <option key={o}>{o}</option>)}
                   </select>
                 </div>
@@ -132,8 +132,8 @@ export default function StoryBook({ toolId }: { toolId: string }) {
               </div>
             </div>
           ) : (
-            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-              <BookOpen className="mb-2 h-8 w-8 text-primary/60" /> Your book opens here. Writing the story is {def.credits} credits; each illustration is optional.
+            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">
+              <BookOpen className="mb-2 h-8 w-8 text-ink" /> Your book opens here. Writing the story is {def.credits} credits; each illustration is optional.
             </div>
           )}
         </div>

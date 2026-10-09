@@ -90,7 +90,7 @@ export function MarkdownEditor({
         <div className="flex flex-wrap items-center gap-1.5">
           {busy && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
           {actions.map((a) => (
-            <button key={a} type="button" disabled={busy || preview} onClick={() => ai(a)} className="rounded-full border border-border/70 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50">
+            <button key={a} type="button" disabled={busy || preview} onClick={() => ai(a)} className="rounded-full border-2 border-ink/30 bg-card px-2.5 py-1 text-xs font-semibold text-ink transition-colors hover:border-ink hover:bg-sun disabled:opacity-50">
               {a}
             </button>
           ))}

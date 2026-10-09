@@ -155,7 +155,7 @@ export function BulkRunner({ toolId, spec, appName }: { toolId: string; spec: Ro
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); setFiles((f) => [...f, ...Array.from(e.dataTransfer.files)].slice(0, max)); }}
-            className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border px-4 py-6 text-center hover:border-primary/50"
+            className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-ink/60 bg-sand/60 px-4 py-6 text-center hover:border-ink"
             disabled={running}
           >
             <Upload className="h-6 w-6 text-primary" />
@@ -182,7 +182,7 @@ export function BulkRunner({ toolId, spec, appName }: { toolId: string; spec: Ro
       {items.length > 0 && (
         <div className="space-y-2">
           <Progress value={pct} className="h-2" />
-          <ul className="max-h-64 space-y-1 overflow-y-auto rounded-xl border border-border/60 p-2 text-sm">
+          <ul className="max-h-64 space-y-1 overflow-y-auto rounded-xl border-2 border-ink p-2 text-sm">
             {items.map((it, i) => (
               <li key={i} className="flex items-center gap-2">
                 {it.status === "running" ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : it.status === "done" ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : it.status === "failed" ? <XCircle className="h-4 w-4 text-destructive" /> : <span className="h-4 w-4 rounded-full border border-border" />}

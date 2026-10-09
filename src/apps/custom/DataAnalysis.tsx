@@ -91,7 +91,7 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related} wide steps={["Add a CSV", "Explore charts", "Get the AI analysis"]}>
       {!grid.length ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 text-center hover:border-primary/50">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center hover:border-ink">
             <FileUp className="h-8 w-8 text-primary" />
             <span className="mt-2 font-medium">Upload a CSV file</span>
             <span className="mt-1 text-xs text-muted-foreground">Excel / Google Sheets: File ▸ Download ▸ CSV. Read in your browser.</span>
@@ -122,8 +122,8 @@ export default function DataAnalysis({ toolId }: { toolId: string }) {
           </div>
           <div className="rounded-2xl border-2 border-ink bg-card p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-              <label className="flex items-center gap-1">Group by <select className="h-8 rounded-md border border-input bg-background px-2" value={x} onChange={(e) => setX(+e.target.value)}>{header.map((h, i) => <option key={i} value={i}>{h}</option>)}</select></label>
-              <label className="flex items-center gap-1">Sum of <select className="h-8 rounded-md border border-input bg-background px-2" value={yCol} onChange={(e) => setY(+e.target.value)}>{stats.map((s, i) => s.numeric && <option key={i} value={i}>{s.h}</option>)}</select></label>
+              <label className="flex items-center gap-1">Group by <select className="h-8 rounded-xl border-2 border-input bg-card px-2" value={x} onChange={(e) => setX(+e.target.value)}>{header.map((h, i) => <option key={i} value={i}>{h}</option>)}</select></label>
+              <label className="flex items-center gap-1">Sum of <select className="h-8 rounded-xl border-2 border-input bg-card px-2" value={yCol} onChange={(e) => setY(+e.target.value)}>{stats.map((s, i) => s.numeric && <option key={i} value={i}>{s.h}</option>)}</select></label>
               <div className="ml-auto flex gap-1">{(["bar", "line"] as const).map((k) => <Button key={k} size="sm" variant={kind === k ? "secondary" : "ghost"} onClick={() => setKind(k)} className="capitalize">{k}</Button>)}</div>
             </div>
             {chartData.length ? (

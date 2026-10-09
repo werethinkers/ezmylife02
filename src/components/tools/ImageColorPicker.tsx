@@ -185,17 +185,17 @@ export const ImageColorPicker = () => {
           <div className="lg:col-span-2 space-y-4">
             {!image ? (
               <Card
-                className="border-2 border-dashed border-border/60 bg-muted/20 p-8 sm:p-12 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all"
+                className="rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 shadow-none p-8 sm:p-12 cursor-pointer hover:border-ink hover:bg-sun/30 transition-all"
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
               >
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="p-4 rounded-full bg-primary/10">
+                  <div className="p-4 rounded-full border-2 border-ink bg-sun">
                     <Upload className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Drop your image here</p>
+                    <p className="font-medium text-foreground">Drop your photo here</p>
                     <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
                   </div>
                   <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP, GIF</p>

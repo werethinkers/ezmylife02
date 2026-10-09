@@ -112,17 +112,17 @@ export const AddLogoToImage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Add Logo to Image</h1>
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Add Logo to Image</h1>
           <p className="text-muted-foreground">Overlay your logo or watermark on images</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <Card
             className={`border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
-              mainImage ? 'border-primary/50' : 'border-muted-foreground/25 hover:border-primary/50'
+              mainImage ? 'border-primary/50' : 'border-muted-foreground/25 hover:border-ink'
             }`}
             onDrop={(e) => handleDrop(e, 'main')}
             onDragOver={handleDragOver}
@@ -150,7 +150,7 @@ export const AddLogoToImage = () => {
 
           <Card
             className={`border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
-              logoImage ? 'border-primary/50' : 'border-muted-foreground/25 hover:border-primary/50'
+              logoImage ? 'border-primary/50' : 'border-muted-foreground/25 hover:border-ink'
             }`}
             onDrop={(e) => handleDrop(e, 'logo')}
             onDragOver={handleDragOver}
@@ -180,7 +180,7 @@ export const AddLogoToImage = () => {
         {mainImage && logoImage && (
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">Preview</h3>
+              <h3 className="font-semibold mb-4">After</h3>
               <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center">
                 <img 
                   src={previewUrl || mainImage} 

@@ -8,6 +8,7 @@ import { AppShell } from "../shell/AppShell";
 import { OutputPanel } from "../shell/OutputPanel";
 import { FieldInput, serializeValues } from "../shell/Fields";
 import { WorkspaceCard } from "../shell/WorkspaceCard";
+import { ResultPlaceholder, StepLabel } from "../shell/StepLabel";
 import { HistoryList, addHistory, type HistoryItem } from "../shell/HistoryList";
 import { useAppStore, uid } from "../lib/store";
 import { useWorkspace, type WorkspaceProfile } from "../lib/workspace";
@@ -129,12 +130,13 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
       <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="space-y-4">
           <form
-            className="rounded-2xl border-2 border-ink bg-card p-4 sm:p-5"
+            className="rounded-2xl border-2 border-ink bg-card p-4 shadow-block sm:p-5"
             onSubmit={(e) => {
               e.preventDefault();
               void generate();
             }}
           >
+            <StepLabel n={2}>Fill in your details</StepLabel>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {def.fields.map((f) => (
                 <FieldInput
@@ -161,7 +163,7 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
                   onClick={() => setValues((v) => ({ ...v, ...def.sample }))}
                   disabled={!!busy}
                 >
-                  <Wand2 className="h-3.5 w-3.5" /> Fill an example
+                  <Wand2 className="h-3.5 w-3.5" /> Fill in an example
                 </Button>
               )}
               <Button
@@ -221,13 +223,9 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
               onEdit={setOutput}
             />
           ) : (
-            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center">
-              <Sparkles className="h-8 w-8 text-primary/60" />
-              <p className="mt-3 text-sm font-medium">Your result appears here</p>
-              <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            <ResultPlaceholder>
                 Fill in what you know — anything you leave out is marked as a [placeholder] for you to complete. Nothing is invented about your business.
-              </p>
-            </div>
+              </ResultPlaceholder>
           )}
         </div>
       </div>

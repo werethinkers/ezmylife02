@@ -85,16 +85,16 @@ export const ImageBlur = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Image Blur</h1>
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Image Blur</h1>
           <p className="text-muted-foreground">Apply blur effects to your images</p>
         </div>
 
         {!image ? (
           <Card
-            className="border-2 border-dashed border-muted-foreground/25 p-12 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            className="rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 shadow-none p-12 text-center cursor-pointer transition-colors hover:border-ink hover:bg-sun/30"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
@@ -107,12 +107,12 @@ export const ImageBlur = () => {
               className="hidden"
             />
             <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-foreground">Drop an image here or click to upload</p>
+            <p className="text-lg font-medium text-foreground">Tap here to add a photo, or drop it in</p>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">Preview</h3>
+              <h3 className="font-semibold mb-4">After</h3>
               <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center">
                 <img 
                   src={previewImage || image} 
@@ -168,7 +168,7 @@ export const ImageBlur = () => {
                     setPreviewImage(null);
                   }}
                 >
-                  Upload New Image
+                  Use a different photo
                 </Button>
               </div>
             </Card>

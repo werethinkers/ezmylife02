@@ -113,7 +113,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
                 e.preventDefault();
                 void add(Array.from(e.dataTransfer.files));
               }}
-              className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border px-4 py-8 text-center transition-colors hover:border-primary/50"
+              className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-ink/60 bg-sand/60 px-4 py-8 text-center transition-colors hover:border-ink"
             >
               {loading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <ImagePlus className="h-7 w-7 text-primary" />}
               <span className="mt-2 text-sm font-medium">Add photos or a PDF</span>
@@ -123,7 +123,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
             {images.length > 0 && (
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {images.map((im, i) => (
-                  <div key={i} className="relative overflow-hidden rounded-lg border border-border/60">
+                  <div key={i} className="relative overflow-hidden rounded-lg border-2 border-ink">
                     <img src={im.url} alt={im.name} className="aspect-[3/4] w-full object-cover" />
                     <button type="button" onClick={() => setImages((x) => x.filter((_, j) => j !== i))} className="absolute right-1 top-1 rounded-full bg-background/90 p-1" aria-label={`Remove ${im.name}`}>
                       <X className="h-3 w-3" />
@@ -217,7 +217,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
           ) : text ? (
             <OutputPanel toolId={toolId} text={text} title={appName} fileName={def.fileName} sendTo={def.related} editable onEdit={setText} />
           ) : (
-            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">
               The extracted text appears here.
             </div>
           )}

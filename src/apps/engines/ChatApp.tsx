@@ -104,7 +104,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
           <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5" style={{ maxHeight: "65vh" }} aria-live="polite">
             {!messages.length && (
               <div className="py-6 text-center">
-                <Bot className="mx-auto h-9 w-9 text-primary/70" />
+                <Bot className="mx-auto h-9 w-9 text-ink" />
                 <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">{def.welcome}</p>
                 <div className="mx-auto mt-4 flex max-w-xl flex-wrap justify-center gap-2">
                   {def.suggestions.map((s) => (
@@ -112,7 +112,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
                       key={s}
                       type="button"
                       onClick={() => send(s)}
-                      className="rounded-full border border-border/70 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                      className="rounded-full border-2 border-ink/30 bg-card px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink hover:bg-sun"
                     >
                       {s}
                     </button>
@@ -123,7 +123,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
             {messages.map((m, i) => (
               <div key={i} className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : ""}`}>
                 {m.role === "assistant" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun">
                     <Bot className="h-3.5 w-3.5 text-primary" />
                   </div>
                 )}
@@ -193,7 +193,7 @@ export default function ChatApp({ toolId, def }: { toolId: string; def: ChatAppD
               )}
               <ul className="mt-3 space-y-1.5">
                 {docs.map((d, i) => (
-                  <li key={i} className="flex items-center gap-2 rounded-lg bg-muted/40 px-2 py-1.5 text-xs">
+                  <li key={i} className="flex items-center gap-2 rounded-lg border-2 border-ink/20 bg-sand px-2 py-1.5 text-xs">
                     <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
                     <span className="min-w-0 flex-1 truncate">{d.name}</span>
                     <span className="text-muted-foreground">{Math.round(d.text.length / 1000)}k</span>

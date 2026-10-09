@@ -200,7 +200,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
               {c.type === "select" || c.type === "rating" ? (
                 <select
                   id={`${toolId}-${c.key}`}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-xl border-2 border-input bg-card px-3 text-sm"
                   value={draft[c.key] ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, [c.key]: e.target.value }))}
                 >
@@ -307,7 +307,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
       <div className="mt-3 overflow-x-auto rounded-2xl border-2 border-ink bg-card">
         {shown.length ? (
           <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+            <thead className="border-b-2 border-ink bg-sand text-left text-xs font-bold text-ink">
               <tr>
                 {def.columns.map((c) => (
                   <th key={c.key} className={cn("px-3 py-2 font-medium", c.minor && "hidden md:table-cell")}>
@@ -411,7 +411,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
               sendTo={def.related}
             />
           ) : (
-            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">
               Your AI report will appear here.
             </div>
           )}

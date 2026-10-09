@@ -126,7 +126,7 @@ export const QuizMaker = () => {
       const percentage = Math.round((score / questions.length) * 100);
       
       return (
-        <div className="min-h-screen p-4 md:p-8 bg-background">
+        <div className="px-4 py-6 md:py-8">
           <Card className="max-w-2xl mx-auto">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Quiz Results</CardTitle>
@@ -180,7 +180,7 @@ export const QuizMaker = () => {
     }
     
     return (
-      <div className="min-h-screen p-4 md:p-8 bg-background">
+      <div className="px-4 py-6 md:py-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -204,7 +204,7 @@ export const QuizMaker = () => {
                     className={`w-full p-4 text-left rounded-lg border transition-all ${
                       selectedAnswers[q.id] === idx 
                         ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:border-primary/50'
+                        : 'border-border hover:border-ink'
                     }`}
                   >
                     <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
@@ -244,7 +244,7 @@ export const QuizMaker = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-background">
+    <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>

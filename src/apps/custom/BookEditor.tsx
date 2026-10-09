@@ -59,7 +59,7 @@ export default function BookEditor({ toolId }: { toolId: string }) {
           <div className="space-y-2 rounded-2xl border-2 border-ink bg-card p-3">
             <Input value={b.title} onChange={(e) => store.update({ title: e.target.value })} className="font-semibold" aria-label="Book title" />
             <Input value={b.author} onChange={(e) => store.update({ author: e.target.value })} placeholder="Author" aria-label="Author" />
-            <textarea value={b.synopsis} onChange={(e) => store.update({ synopsis: e.target.value })} rows={3} placeholder="One-paragraph synopsis (helps the AI stay consistent)" className="w-full rounded-md border border-input bg-background p-2 text-sm" aria-label="Synopsis" />
+            <textarea value={b.synopsis} onChange={(e) => store.update({ synopsis: e.target.value })} rows={3} placeholder="One-paragraph synopsis (helps the AI stay consistent)" className="w-full rounded-xl border-2 border-input bg-card p-2 text-sm" aria-label="Synopsis" />
             <div className="flex items-center gap-2 text-xs">Goal <Input value={b.goal} onChange={(e) => store.update({ goal: e.target.value })} type="number" className="h-7 w-24" aria-label="Word goal" /> words</div>
             {goal > 0 && <><Progress value={Math.min(100, (total / goal) * 100)} className="h-1.5" /><p className="text-[11px] text-muted-foreground">{total.toLocaleString("en-IN")} / {goal.toLocaleString("en-IN")} words</p></>}
           </div>
@@ -109,7 +109,7 @@ export default function BookEditor({ toolId }: { toolId: string }) {
               })
             }
           />
-          {htmlMode && <details className="rounded-2xl border-2 border-ink bg-card p-3"><summary className="cursor-pointer text-sm font-medium">HTML of this chapter</summary><pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-2 text-xs">{markdownToHtml(`## ${active.title}\n\n${active.text}`)}</pre></details>}
+          {htmlMode && <details className="rounded-2xl border-2 border-ink bg-card p-3"><summary className="cursor-pointer text-sm font-medium">HTML of this chapter</summary><pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border-2 border-ink/20 bg-sand p-2 text-xs">{markdownToHtml(`## ${active.title}\n\n${active.text}`)}</pre></details>}
         </div>
       </div>
     </AppShell>

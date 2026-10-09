@@ -78,10 +78,14 @@ export function OutputPanel({
   };
 
   return (
-    <div className={cn("rounded-2xl border-2 border-ink bg-card", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-4 py-2.5">
-        <p className="text-sm font-semibold">{title}</p>
-        <div className="flex flex-wrap items-center gap-1">
+    <div className={cn("overflow-hidden rounded-2xl border-2 border-ink bg-card shadow-block", className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-ink bg-lime px-4 py-2.5">
+        <p className="flex min-w-0 items-center gap-2 text-[15px] font-bold">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun text-xs" aria-hidden>3</span>
+          <span className="truncate">Your result · {title}</span>
+        </p>
+        <div className="flex flex-wrap items-center gap-1" aria-label="Save or share">
+          <span className="mr-1 hidden items-center gap-1.5 text-xs font-bold lg:inline-flex"><span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink bg-card text-[10px]" aria-hidden>4</span>Save or share:</span>
           <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={copy}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
@@ -147,7 +151,7 @@ export function OutputPanel({
       <div className="max-h-[70vh] overflow-y-auto px-4 py-4 sm:px-6">
         {editing && onEdit ? (
           <textarea
-            className="min-h-[50vh] w-full resize-y rounded-lg border border-border bg-background p-3 font-mono text-xs leading-relaxed"
+            className="min-h-[50vh] w-full resize-y rounded-xl border-2 border-ink bg-background p-3 font-mono text-xs leading-relaxed"
             value={text}
             onChange={(e) => onEdit(e.target.value)}
             aria-label="Edit result"
@@ -158,7 +162,7 @@ export function OutputPanel({
       </div>
 
       {onRefine && (
-        <div className="space-y-2 border-t border-border/50 px-4 py-3">
+        <div className="space-y-2 border-t-2 border-ink bg-sand px-4 py-3">
           {refineChips && refineChips.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {refineChips.map((c) => (
@@ -167,7 +171,7 @@ export function OutputPanel({
                   type="button"
                   disabled={refining}
                   onClick={() => refine(c)}
-                  className="rounded-full border border-border/70 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50"
+                  className="rounded-full border-2 border-ink bg-card px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-sun disabled:opacity-50"
                 >
                   {c}
                 </button>
@@ -194,7 +198,7 @@ export function OutputPanel({
               Revise
             </Button>
           </form>
-          <p className="text-[11px] text-muted-foreground">Each revision is one more run at the app's price.</p>
+          <p className="text-xs text-muted-foreground">Each change is one more run at the app's price.</p>
         </div>
       )}
     </div>

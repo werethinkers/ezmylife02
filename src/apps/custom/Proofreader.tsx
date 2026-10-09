@@ -57,7 +57,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
                 <p className="text-sm font-semibold">{res.changes.length ? `${res.changes.length} change${res.changes.length === 1 ? "" : "s"}` : "No mistakes found 🎉"}</p>
                 <ul className="mt-2 space-y-2">
                   {res.changes.map((c, i) => (
-                    <li key={i} className="rounded-lg bg-muted/40 p-2 text-sm">
+                    <li key={i} className="rounded-lg border-2 border-ink/20 bg-sand p-2 text-sm">
                       <span className="text-destructive line-through">{c.original}</span> → <span className="font-medium text-emerald-600 dark:text-emerald-400">{c.fix}</span>
                       {c.reason && <p className="mt-0.5 text-xs text-muted-foreground">{c.reason}</p>}
                     </li>
@@ -66,7 +66,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
               </div>
             </>
           ) : (
-            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">
               Corrections appear here, with the reason for each change.
             </div>
           )}

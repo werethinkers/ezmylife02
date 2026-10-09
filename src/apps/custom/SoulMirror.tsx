@@ -28,7 +28,7 @@ function WordGrid({ picked, onToggle }: { picked: number[]; onToggle: (i: number
       {WORDS.map((w, i) => {
         const on = picked.includes(i);
         return (
-          <button key={w} type="button" aria-pressed={on} onClick={() => onToggle(i)} className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${on ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary/50"}`}>
+          <button key={w} type="button" aria-pressed={on} onClick={() => onToggle(i)} className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${on ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-ink"}`}>
             {w}
           </button>
         );

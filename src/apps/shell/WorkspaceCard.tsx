@@ -88,7 +88,7 @@ export function WorkspaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
               />
             </div>
           ))}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3 sm:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-ink p-3 sm:col-span-2">
             <div className="min-w-0">
               <Label htmlFor="ws-remember" className="text-sm font-medium">Remember what I type</Label>
               <p className="text-xs text-muted-foreground">Clients, addresses, items and other entries come back as suggestions in every app. {savedCount ? `${savedCount} saved.` : ""} Passwords, card numbers and Aadhaar are never saved.</p>

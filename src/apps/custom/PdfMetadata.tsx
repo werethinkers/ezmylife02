@@ -68,7 +68,7 @@ export default function PdfMetadata({ toolId }: { toolId: string }) {
     <AppShell toolId={toolId} intro={def.intro} related={def.related}>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-3">
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[140px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 hover:border-primary/50">
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[140px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 hover:border-ink">
             {loading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <FileUp className="h-7 w-7 text-primary" />}
             <span className="mt-2 font-medium">Choose a PDF</span>
             <span className="text-xs text-muted-foreground">Metadata is read in your browser.</span>

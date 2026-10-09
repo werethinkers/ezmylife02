@@ -11,10 +11,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  MousePointerClick,
-  Upload,
-  Download,
-  Sparkles,
   Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +23,11 @@ import { CREDIT_PACKS } from "@/data/creditPacks";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import { AppIcon } from "@/components/store/AppIcon";
+import { FlowSteps } from "@/components/brand/FlowSteps";
+import { GiveGet } from "@/components/brand/GiveGet";
+import { categoryInfo, goalOf, KIND_TEXT } from "@/data/goals";
+import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import SEOFooter from "@/components/SEOFooter";
 
 /*
@@ -75,8 +76,6 @@ interface Step {
 
 const promoSlug = (name: string) =>
   name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-
-const STEP_ICONS = [MousePointerClick, Upload, Download];
 
 const GUARANTEES = [
   { Icon: Wallet, title: "Pay per use", body: "Buy credits from ₹10. No lock-in." },
@@ -221,15 +220,31 @@ export default function PromoPage() {
     <Button
       size="lg"
       onClick={handleUseIt}
-      className={`group h-auto min-h-12 rounded-xl px-6 py-3 text-base shadow-lg ${className}`}
+      className={`group h-auto min-h-12 px-6 py-2.5 text-base ${className}`}
     >
       <Zap className="mr-2 h-5 w-5" />
       <span className="text-left leading-tight">
         <span className="block font-semibold">{ctaLabel}</span>
-        <span className="block text-xs font-normal opacity-90">{creditCost > 0 ? `${creditLabel} per result` : "Free to use"}</span>
+        <span className="block text-xs font-semibold opacity-80">{creditCost > 0 ? `${creditLabel} per result` : "Free to use"}</span>
       </span>
     </Button>
   );
+
+  const goal = goalOf(category);
+  const info = categoryInfo(category);
+  const kind = KIND_TEXT[appKindOf(toolId, category)];
+  const intro = row?.hero_subtitle ?? appIntroOf(toolId) ?? tool?.description ?? "";
+  const engineSteps = appStepsOf(toolId);
+  const howSteps: Step[] =
+    row?.how_it_works && row.how_it_works.length >= 3
+      ? steps
+      : engineSteps && engineSteps.length >= 3
+        ? engineSteps.slice(0, 3).map((t, i) => ({ title: t, body: [`Give ${info.give}.`, "The app does the work in seconds.", `Get ${info.get}.`][i] }))
+        : [
+            { title: "Open the app", body: `${name} opens in your browser. Nothing to install.` },
+            { title: `Give ${info.give}`, body: "Type it in or upload a file. Examples are filled in for you." },
+            { title: `Get ${info.get}`, body: "Check it, then copy, download or send it on WhatsApp." },
+          ];
 
   return (
     <MotionConfig reducedMotion="user">
@@ -244,77 +259,75 @@ export default function PromoPage() {
         <Navbar />
 
         {/* ───────── Hero ───────── */}
-        <section className="relative overflow-hidden border-b border-border/40">
-          <div aria-hidden className="absolute inset-0 bg-mesh" />
-          <div className="relative container mx-auto grid items-center gap-10 px-4 py-10 md:py-16 lg:grid-cols-2 lg:gap-14 lg:py-20">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="min-w-0">
-              <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                <Link to="/ai-apps" className="hover:text-foreground">AI Apps</Link>
-                {category && (
-                  <>
-                    <span aria-hidden>/</span>
-                    <Link to={`/ai-apps?category=${encodeURIComponent(category)}`} className="hover:text-foreground">
-                      {category}
-                    </Link>
-                  </>
-                )}
-              </nav>
+        <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 md:pt-8">
+          <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <Link to="/ai-apps" className="underline underline-offset-4 hover:text-ink">Business apps</Link>
+            {category && (
+              <>
+                <span aria-hidden>›</span>
+                <Link to={`/ai-apps?goal=${goal.id}`} className="underline underline-offset-4 hover:text-ink">{goal.name}</Link>
+                <span aria-hidden>›</span>
+                <Link to={`/ai-apps?category=${encodeURIComponent(category)}`} className="underline underline-offset-4 hover:text-ink">{category}</Link>
+              </>
+            )}
+          </nav>
+          <FlowSteps flow="app" step={1} className="mb-8 max-w-3xl" />
 
-              {eyebrow && (
-                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-sun px-3 py-1 text-xs font-semibold text-primary">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {eyebrow}
-                </span>
-              )}
+          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="min-w-0 space-y-5">
+              <div className="flex items-center gap-4">
+                <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="shadow-block" />
+                <div className="min-w-0">
+                  <span className="inline-flex rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold" style={{ background: goal.color }}>
+                    {goal.name}
+                  </span>
+                  {eyebrow && eyebrow !== category && <p className="mt-1 text-sm font-semibold text-muted-foreground">{eyebrow}</p>}
+                </div>
+              </div>
 
-              <h1 className="text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl">
+              <h1 className="text-[2rem] font-extrabold leading-[1.08] sm:text-5xl xl:text-[3.4rem]">
                 {title}
                 {titleAccent && (
                   <>
                     {" "}
-                    <span className="text-gradient">{titleAccent}</span>
+                    <span className="marker">{titleAccent}</span>
                   </>
                 )}
               </h1>
 
-              {subtitle && (
-                <p className="mt-4 max-w-xl whitespace-pre-line text-base leading-relaxed text-muted-foreground md:text-lg">
-                  {subtitle}
-                </p>
-              )}
+              {intro && <p className="max-w-xl whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{intro}</p>}
+
+              <GiveGet give={info.give} get={info.get} />
+
+              <div className="border-l-[6px] border-ink pl-3">
+                <p className="font-bold">{kind.title}</p>
+                <p className="text-[15px] text-muted-foreground">{kind.line}</p>
+              </div>
 
               {chips.length > 0 && (
-                <ul className="mt-5 flex flex-wrap gap-2">
+                <ul className="flex flex-wrap gap-2">
                   {chips.slice(0, 6).map((c) => (
-                    <li key={c} className="rounded-full border-2 border-ink bg-card px-3 py-1.5 text-xs font-medium backdrop-blur">
+                    <li key={c} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold">
                       {c}
                     </li>
                   ))}
                 </ul>
               )}
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
                 {tryButton("w-full sm:w-auto")}
-                <Button variant="outline" size="lg" className="h-12 rounded-xl px-5" onClick={scrollToHow}>
-                  See how it works
+                <Button variant="outline" size="lg" className="h-12 px-5" onClick={scrollToHow}>
+                  How it works
                 </Button>
               </div>
-
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                {["Pay per use", "Runs in your browser", "Secure checkout"].map((t) => (
-                  <li key={t} className="flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-primary" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm text-muted-foreground">Opening the app is free. Credits are used only when it gives you a result.</p>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="min-w-0">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.05 }} className="min-w-0">
               {slides.length > 0 ? (
                 <HeroCarousel slides={slides} altBase={name} />
               ) : (
-                <IconHero name={name} iconUrl={media.iconUrl} category={category} />
+                <IconHero name={name} toolId={toolId ?? ""} category={category} color={goal.color} get={info.get} />
               )}
             </motion.div>
           </div>
@@ -322,9 +335,9 @@ export default function PromoPage() {
 
         {/* ───────── Trust logos (only when real logos are added in admin) ───────── */}
         {trustLogos.length > 0 && (
-          <section className="container mx-auto px-4 pt-10">
-            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Used by</p>
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-80">
+          <section className="mx-auto max-w-7xl px-4 pt-4">
+            <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Used by</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
               {trustLogos.map((l) =>
                 l.url ? (
                   <img key={l.name} src={l.url} alt={l.name} className="h-7 object-contain" loading="lazy" />
@@ -338,23 +351,16 @@ export default function PromoPage() {
 
         {/* ───────── Features (curated pages) ───────── */}
         {features.length > 0 && (
-          <section className="container mx-auto px-4 py-16 md:py-20">
-            <motion.div {...fadeUp} className="mx-auto mb-10 max-w-2xl text-center">
-              <h2 className="text-2xl font-bold md:text-4xl">What you get</h2>
-            </motion.div>
-            <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="mx-auto max-w-7xl px-4 py-12 md:py-16">
+            <h2 className="mb-6 text-2xl font-bold md:text-[2rem]">What you get</h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {features.slice(0, 8).map((f, i) => (
-                <motion.div
-                  key={f.title}
-                  {...fadeUp}
-                  transition={{ ...fadeUp.transition, delay: (i % 4) * 0.05 }}
-                  className="rounded-2xl border-2 border-ink bg-card p-6 shadow-sm"
-                >
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-sun">
-                    <Zap className="h-5 w-5 text-primary" />
+                <motion.div key={f.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: (i % 4) * 0.05 }} className="block-card p-5">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-ink" style={{ background: goal.color }}>
+                    <Check className="h-5 w-5" />
                   </div>
-                  <h3 className="font-semibold">{f.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+                  <h3 className="font-body text-[17px] font-bold">{f.title}</h3>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{f.body}</p>
                 </motion.div>
               ))}
             </div>
@@ -362,154 +368,115 @@ export default function PromoPage() {
         )}
 
         {/* ───────── How it works + price ───────── */}
-        <section
-          ref={howRef}
-          id="how-it-works"
-          className={`scroll-mt-20 ${features.length > 0 ? "pb-16 md:pb-20" : "py-16 md:py-20"}`}
-        >
-          <div className="container mx-auto px-4">
-            <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-3">
-              <motion.div {...fadeUp} className="min-w-0 rounded-2xl border-2 border-ink bg-card p-6 shadow-sm md:p-8 lg:col-span-2">
-                <h2 className="text-2xl font-bold md:text-3xl">
-                  How it <span className="text-gradient">works</span>
-                </h2>
-                <ol className="mt-6 grid gap-5 sm:grid-cols-3">
-                  {steps.map((s, i) => {
-                    const Icon = STEP_ICONS[i] ?? Sparkles;
-                    return (
-                      <li key={s.title} className="flex gap-4 sm:flex-col sm:gap-3">
-                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
-                          <Icon className="h-5 w-5" />
-                          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-[11px] font-bold text-foreground">
-                            {i + 1}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{s.title}</h3>
-                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </motion.div>
+        <section ref={howRef} id="how-it-works" className="scroll-mt-20 py-12 md:py-16">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 lg:grid-cols-3">
+            <div className="block-card min-w-0 p-6 md:p-8 lg:col-span-2">
+              <h2 className="text-2xl font-bold md:text-3xl">How it works</h2>
+              <ol className="mt-6 grid gap-5 sm:grid-cols-3">
+                {howSteps.map((s, i) => (
+                  <li key={s.title + i} className="flex gap-4 sm:flex-col sm:gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display text-lg font-extrabold">{i + 1}</span>
+                    <div>
+                      <h3 className="font-body text-[17px] font-bold leading-snug">{s.title}</h3>
+                      <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
 
-              <motion.div
-                {...fadeUp}
-                transition={{ ...fadeUp.transition, delay: 0.08 }}
-                className="relative flex min-w-0 flex-col overflow-hidden rounded-3xl bg-gradient-hero p-6 text-white shadow-xl md:p-8"
-              >
-                <div aria-hidden className="absolute inset-0 bg-black/10" />
-                <div aria-hidden className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/15 blur-3xl" />
-                <div className="relative flex h-full flex-col">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">Price</p>
-                  <p className="mt-3 font-display text-5xl font-bold tracking-tight">
-                    {creditCost}
-                    <span className="ml-2 text-xl font-semibold text-white/85">credit{creditCost === 1 ? "" : "s"}</span>
-                  </p>
-                  <p className="mt-1 text-sm text-white/90">{`per use of ${name} — failed runs are not charged`}</p>
-                  <p className="mt-4 text-sm text-white/90">
-                    Credit packs start at ₹{minPack.inr} for {minPack.credits} credits.
-                  </p>
-                  <div className="mt-6 space-y-2 lg:mt-auto lg:pt-6">
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={handleUseIt}
-                      className="h-12 w-full rounded-xl font-semibold"
-                    >
-                      Start now
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="outline"
-                      className="h-12 w-full rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                    >
-                      <Link to="/credits">See credit packs</Link>
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
+            <div className="flex min-w-0 flex-col rounded-2xl border-2 border-ink bg-ink p-6 text-cream shadow-block md:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-sun">Price</p>
+              <p className="mt-3 font-display text-5xl font-extrabold tracking-tight">
+                {creditCost}
+                <span className="ml-2 text-xl font-bold text-cream/85">credit{creditCost === 1 ? "" : "s"}</span>
+              </p>
+              <p className="mt-2 text-[15px] text-cream/90">each time {name} gives you a result. If it fails, you are not charged.</p>
+              <p className="mt-3 text-[15px] text-cream/90">
+                Credit packs start at ₹{minPack.inr} for {minPack.credits} credits. New accounts get 100 free credits.
+              </p>
+              <div className="mt-6 space-y-2.5 lg:mt-auto lg:pt-6">
+                <Button size="lg" onClick={handleUseIt} className="h-12 w-full">
+                  Try it now <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 w-full">
+                  <Link to="/credits">See credit packs</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ───────── Related apps ───────── */}
         {related.length > 0 && (
-          <section className="border-t border-border/40 bg-muted/30 py-16 md:py-20">
-            <div className="container mx-auto px-4">
-              <div className="mx-auto max-w-6xl">
-                <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-                  <h2 className="text-2xl font-bold md:text-3xl">More {category} apps</h2>
-                  <Link
-                    to={`/ai-apps?category=${encodeURIComponent(category)}`}
-                    className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
-                  >
-                    View all <ArrowRight className="ml-1 h-4 w-4" />
+          <section className="border-y-2 border-ink bg-sand py-12 md:py-16">
+            <div className="mx-auto max-w-7xl px-4">
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold md:text-3xl">Use it with</h2>
+                  <p className="mt-1 text-[15px] text-muted-foreground">More {category} apps people use alongside this one.</p>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/ai-apps?category=${encodeURIComponent(category)}`}>
+                    See all <ArrowRight className="h-4 w-4" />
                   </Link>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {related.map((t) => {
-                    const m = resolveToolMedia(t.id, t.category, t);
-                    return (
-                      <Link
-                        key={t.id}
-                        to={`/promo/${promoSlug(t.name)}`}
-                        className="group flex gap-3 rounded-2xl border-2 border-ink bg-card p-4 transition-all hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-sand">
-                          {m.iconUrl ? (
-                            <img src={m.iconUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-                          ) : (
-                            <Sparkles className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{t.name}</p>
-                          <p className="line-clamp-2 text-xs text-muted-foreground">{t.description}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                </Button>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {related.map((t) => (
+                  <Link
+                    key={t.id}
+                    to={`/promo/${promoSlug(t.name)}`}
+                    className="block-card block-lift flex gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <AppIcon toolId={t.id} category={t.category} name={t.name} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">{t.name}</p>
+                      <p className="line-clamp-2 text-sm text-muted-foreground">You get {categoryInfo(t.category).get}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           </section>
         )}
 
         {/* ───────── Final CTA + guarantees ───────── */}
-        <section className="py-16 md:py-20">
-          <div className="container mx-auto px-4">
-            <motion.div
-              {...fadeUp}
-              className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 rounded-3xl border border-primary/20 bg-card p-6 md:flex-row md:items-center md:p-10"
-            >
+        <section className="py-12 md:py-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border-2 border-ink p-6 shadow-block-lg md:flex-row md:items-center md:p-10" style={{ background: goal.color }}>
               <div className="min-w-0">
-                <h2 className="text-2xl font-bold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
-                <p className="mt-2 text-muted-foreground">
+                <h2 className="text-2xl font-extrabold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
+                <p className="mt-2 text-ink/85">
                   {row?.final_cta_subtitle ?? (creditCost > 0 ? `Pay only for results: ${creditLabel} each. Failed runs are never charged.` : "Free to use.")}
                 </p>
               </div>
               {tryButton("w-full md:w-auto")}
-            </motion.div>
+            </div>
 
-            <ul className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {GUARANTEES.map(({ Icon, title: t, body }) => (
-                <li key={t} className="flex items-start gap-3 rounded-2xl p-2">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-sun">
-                    <Icon className="h-5 w-5 text-primary" />
+                <li key={t} className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card">
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{t}</p>
-                    <p className="text-sm text-muted-foreground">{body}</p>
+                    <p className="font-bold">{t}</p>
+                    <p className="text-[15px] text-muted-foreground">{body}</p>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
         </section>
+
+        {/* Phone: keep the main action in reach */}
+        <div className="sticky bottom-[76px] z-30 mx-4 mb-4 flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-card p-2.5 pl-4 shadow-block md:hidden">
+          <span className="min-w-0 truncate font-bold">{name}</span>
+          <Button size="sm" onClick={handleUseIt} className="h-10 shrink-0">
+            Try it <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
 
         <SEOFooter />
 
@@ -519,24 +486,15 @@ export default function PromoPage() {
   );
 }
 
-// Shown when an app has no screenshots yet: its icon on a branded card.
-function IconHero({ name, iconUrl, category }: { name: string; iconUrl: string | null; category: string }) {
+// Shown when an app has no screenshots yet: its icon on the colour of its goal.
+function IconHero({ name, toolId, category, color, get }: { name: string; toolId: string; category: string; color: string; get: string }) {
   return (
-    <div className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden rounded-3xl bg-gradient-hero p-8 shadow-2xl">
-      <div aria-hidden className="absolute inset-0 bg-black/10" />
-      <div aria-hidden className="absolute -left-10 -top-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
-      <div aria-hidden className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-      <div className="relative flex h-full flex-col items-center justify-center text-center text-white">
-        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/30 bg-white/15 shadow-xl backdrop-blur md:h-36 md:w-36">
-          {iconUrl ? (
-            <img src={iconUrl} alt={`${name} icon`} className="h-full w-full object-cover" />
-          ) : (
-            <Sparkles className="h-14 w-14" />
-          )}
-        </div>
-        <p className="mt-6 font-display text-2xl font-bold md:text-3xl">{name}</p>
-        {category && <p className="mt-1 text-sm text-white/85">{category}</p>}
-      </div>
+    <div className="relative mx-auto flex aspect-[4/3] w-full max-w-xl flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-ink p-8 text-center shadow-block-lg" style={{ background: color }}>
+      <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-ink bg-card/60" />
+      <div aria-hidden className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full border-2 border-ink bg-card/40" />
+      <AppIcon toolId={toolId} category={category} name={name} size="xl" className="relative shadow-block" />
+      <p className="relative mt-6 font-display text-2xl font-extrabold md:text-3xl">{name}</p>
+      <p className="relative mt-2 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">You get {get}</p>
     </div>
   );
 }
@@ -573,8 +531,8 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
         touchX.current = null;
       }}
     >
-      <div className="overflow-hidden rounded-2xl border-2 border-ink bg-card p-2.5 shadow-2xl backdrop-blur-sm">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted/40">
+      <div className="overflow-hidden rounded-3xl border-2 border-ink bg-card p-2.5 shadow-block-lg">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border-2 border-ink bg-sand">
           <AnimatePresence mode="wait" initial={false}>
             <motion.img
               key={current.url + idx}
@@ -589,7 +547,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
           </AnimatePresence>
 
           {current.caption && (
-            <div className="absolute bottom-3 left-3 z-10 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur">
+            <div className="absolute bottom-3 left-3 z-10 rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-bold">
               {current.caption}
             </div>
           )}
@@ -600,7 +558,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
                 type="button"
                 aria-label="Previous image"
                 onClick={() => go(idx - 1)}
-                className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 backdrop-blur transition hover:bg-background"
+                className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -608,7 +566,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
                 type="button"
                 aria-label="Next image"
                 onClick={() => go(idx + 1)}
-                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/80 backdrop-blur transition hover:bg-background"
+                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -629,7 +587,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
               >
                 <span
                   className={`block h-1.5 rounded-full transition-all ${
-                    i === idx ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                    i === idx ? "w-6 bg-ink" : "w-1.5 bg-ink/30 hover:bg-ink/60"
                   }`}
                 />
               </button>

@@ -45,7 +45,7 @@ export default function Glossary({ toolId }: { toolId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => fileRef.current?.click()} disabled={reading}>{reading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />} From PDF / text file</Button>
             <input ref={fileRef} type="file" accept=".pdf,.txt,.md" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (!f) return; setReading(true); try { setText((await fileText(f)).slice(0, 60000)); } catch (err) { toast.error(String(err)); } finally { setReading(false); } }} />
-            <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Definition language">{["English", "Hindi", "Gujarati", "Marathi"].map((l) => <option key={l}>{l}</option>)}</select>
+            <select className="h-9 rounded-xl border-2 border-input bg-card px-2 text-sm" value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Definition language">{["English", "Hindi", "Gujarati", "Marathi"].map((l) => <option key={l}>{l}</option>)}</select>
             <Button className="ml-auto gap-2" onClick={extract} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Build glossary</Button>
           </div>
           <p className="text-[11px] text-muted-foreground">Up to ~25,000 characters are read per run.</p>

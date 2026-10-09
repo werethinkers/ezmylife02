@@ -81,14 +81,14 @@ export default function PdfImages({ toolId }: { toolId: string }) {
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} wide>
       {!doc ? (
-        <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 hover:border-primary/50">
+        <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 hover:border-ink">
           <FileUp className="h-8 w-8 text-primary" /><span className="mt-2 font-medium">Open a PDF</span><span className="text-xs text-muted-foreground">Everything happens in your browser — your files never leave your device.</span>
         </button>
       ) : (
         <>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold">{name} · {doc.numPages} pages</p>
-            <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={quality} onChange={(e) => setQuality(+e.target.value)} aria-label="Image quality">
+            <select className="h-9 rounded-xl border-2 border-input bg-card px-2 text-sm" value={quality} onChange={(e) => setQuality(+e.target.value)} aria-label="Image quality">
               <option value={1200}>Screen (1200 px)</option><option value={2000}>High (2000 px)</option><option value={3200}>Print (3200 px)</option>
             </select>
             <Button size="sm" variant="outline" onClick={() => setSel(sel.size === thumbs.length ? new Set() : new Set(thumbs.map((_, i) => i + 1)))}>{sel.size === thumbs.length ? "Select none" : "Select all"}</Button>

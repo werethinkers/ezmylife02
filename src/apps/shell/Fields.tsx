@@ -27,7 +27,7 @@ export function FieldInput({
 
   return (
     <div className={cn("space-y-1.5", field.half ? "sm:col-span-1" : "sm:col-span-2")}>
-      <Label htmlFor={id} className="text-xs font-medium">
+      <Label htmlFor={id} className="text-sm font-semibold">
         {field.label}
         {field.required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
@@ -62,8 +62,8 @@ export function FieldInput({
                   onChange(Array.from(set).join("|"));
                 }}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs transition-colors",
-                  on ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50",
+                  "rounded-full border-2 px-3 py-1 text-sm font-semibold transition-colors",
+                  on ? "border-ink bg-sun text-ink" : "border-ink/30 bg-card text-ink hover:border-ink",
                 )}
               >
                 {o}
@@ -83,7 +83,7 @@ export function FieldInput({
           onChange={(e) => onChange(e.target.value)}
         />
       )}
-      {field.help && <p className="text-[11px] text-muted-foreground">{field.help}</p>}
+      {field.help && <p className="text-xs text-muted-foreground">{field.help}</p>}
     </div>
   );
 }
@@ -94,12 +94,12 @@ export function RowsEditor({ columns, rows, onChange }: { columns: RowColumn[]; 
   const set = (i: number, k: string, v: string) => onChange(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto rounded-xl border border-border/60">
+      <div className="overflow-x-auto rounded-xl border-2 border-ink">
         <table className="w-full min-w-[480px] text-sm">
-          <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+          <thead className="border-b-2 border-ink bg-sand text-left text-xs font-bold text-ink">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className="px-2 py-1.5 font-medium">
+                <th key={c.key} className="px-2 py-2 font-bold">
                   {c.label}
                 </th>
               ))}
@@ -108,12 +108,12 @@ export function RowsEditor({ columns, rows, onChange }: { columns: RowColumn[]; 
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-t border-border/50">
+              <tr key={i} className="border-t border-ink/15">
                 {columns.map((c) => (
                   <td key={c.key} className="p-1">
                     {c.type === "select" ? (
                       <select
-                        className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+                        className="h-9 w-full rounded-lg border-2 border-ink/30 bg-card px-2 text-sm focus:border-ink focus:outline-none"
                         value={r[c.key] ?? ""}
                         onChange={(e) => set(i, c.key, e.target.value)}
                         aria-label={c.label}

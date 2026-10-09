@@ -4,8 +4,7 @@ import { tools, getToolUrl } from "@/data/tools";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2, Clock, Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
 import { hasEngineApp } from "@/apps/registry";
@@ -15,7 +14,11 @@ import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { logActivity } from "@/lib/activityLogger";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { PageSeo } from "@/components/seo/PageSeo";
-import logo from "@/assets/logo.png";
+import { Logo } from "@/components/brand/Logo";
+import { FlowSteps } from "@/components/brand/FlowSteps";
+import { AppIcon } from "@/components/store/AppIcon";
+import { GiveGet } from "@/components/brand/GiveGet";
+import { categoryInfo, goalOf } from "@/data/goals";
 
 interface CatalogTool {
   name: string;
@@ -151,10 +154,10 @@ const ToolViewer = () => {
         <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
           <AlertCircle className="h-16 w-16 text-destructive" />
-          <h1 className="text-2xl font-bold text-foreground">Tool Not Found</h1>
-          <p className="text-muted-foreground">The requested tool could not be found.</p>
+          <h1 className="text-2xl font-bold text-foreground">We couldn't find that app</h1>
+          <p className="text-muted-foreground">It may have been renamed. Browse the apps to find it.</p>
           <Button onClick={() => navigate("/ai-apps")} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tools
+            <ArrowLeft className="mr-2 h-4 w-4" /> See all apps
           </Button>
         </div>
       </div>
@@ -188,17 +191,17 @@ const ToolViewer = () => {
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
-        <div className="absolute top-0 left-0 right-0 z-30 h-12 bg-background/95 backdrop-blur-sm border-b border-border/20 flex items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="ezyourlife" className="h-8 w-auto" />
-            <span className="text-sm font-medium text-foreground">{toolTitle}</span>
+        <div className="absolute top-0 left-0 right-0 z-30 h-14 bg-background border-b-2 border-ink flex items-center justify-between px-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Logo compact />
+            <span className="truncate text-sm font-bold text-foreground">{toolTitle}</span>
           </div>
           <Button onClick={toggleFullscreen} variant="ghost" size="sm" className="gap-2">
             <Minimize2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Exit Fullscreen</span>
+            <span className="hidden sm:inline">Exit full screen</span>
           </Button>
         </div>
-        <div className="pt-12 h-full overflow-auto">
+        <div className="pt-14 h-full overflow-auto">
           {renderContent()}
         </div>
       </div>
@@ -232,40 +235,45 @@ const ToolViewer = () => {
         jsonLd={seoJsonLd}
       />
       <Navbar />
-      <div className="border-b border-border/40 bg-background/95 backdrop-blur-sm z-20 shrink-0">
-        <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/ai-apps")} variant="ghost" size="sm" className="gap-2 h-8">
+      <div className="z-20 shrink-0 border-b-2 border-ink bg-card">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button onClick={() => navigate(toolTitle && toolTitle !== toolId ? `/promo/${toolTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` : "/ai-apps")} variant="outline" size="sm" className="h-9 shrink-0" aria-label="Back to what this app does">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
             </Button>
-            <div className="h-5 w-px bg-border/50" />
-            <div className="flex items-center gap-2">
-              <img src={logo} alt="ezyourlife" className="h-8 w-auto hidden sm:block" />
-              <span className="hidden sm:block text-muted-foreground" aria-hidden="true">/</span>
-              <span className="font-medium text-foreground text-sm truncate max-w-[200px]">{toolTitle}</span>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                Live
-              </Badge>
+            <AppIcon toolId={toolId ?? ""} category={toolCategory} name={toolTitle} size="sm" className="hidden h-10 w-10 sm:block" />
+            <div className="min-w-0">
+              <p className="truncate font-bold leading-tight">{toolTitle}</p>
+              <p className="truncate text-xs text-muted-foreground">{toolCategory ? `${goalOf(toolCategory).name} · ${toolCategory}` : "App"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-          {toolId && <BulkButton toolId={toolId} />}
-          <Button onClick={toggleFullscreen} variant="outline" size="sm" className="gap-2 h-8">
-            <Maximize2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline text-xs">Fullscreen</span>
-          </Button>
+            {toolId && <BulkButton toolId={toolId} />}
+            <Button onClick={toggleFullscreen} variant="outline" size="sm" className="h-9">
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span className="hidden text-xs sm:inline">Full screen</span>
+            </Button>
           </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 pb-3">
+          <FlowSteps flow="app" step={2} className="max-w-3xl" />
         </div>
       </div>
 
-      {toolId && <NextApps toolId={toolId} />}
+      {/* Older apps don't carry the shared app frame, so show what they do in plain words here. */}
+      {isNativeTool && !uploadedToolUrl && toolCategory && !hasEngineApp(toolId ?? "") && (
+        <div className="mx-auto w-full max-w-4xl px-4 pt-6">
+          <GiveGet give={categoryInfo(toolCategory).give} get={categoryInfo(toolCategory).get} time={null} className="max-w-2xl" />
+        </div>
+      )}
+
 
       {isLoading && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading {toolTitle}...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-ink" />
+            <p className="font-semibold text-muted-foreground">Opening {toolTitle}…</p>
           </div>
         </div>
       )}
@@ -273,6 +281,9 @@ const ToolViewer = () => {
       <div className={`${isNativeTool && !uploadedToolUrl ? "min-h-[calc(100vh-7rem)] pb-24 md:pb-8" : "h-[calc(100vh-7rem)] min-h-[500px]"} ${isLoading ? "hidden" : ""}`}>
         {renderContent()}
       </div>
+
+      {/* Engine apps list related apps inside their own frame; older apps get the suggestions strip. */}
+      {toolId && !isLoading && !hasEngineApp(toolId) && <NextApps toolId={toolId} />}
 
       {!hasEngineApp(toolId ?? "") && <ToolDemoPreview
         demoInput={catalogInfo?.demo_input}

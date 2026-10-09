@@ -83,7 +83,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
             <Textarea id={`${toolId}-prompt`} rows={4} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={def.promptPlaceholder} maxLength={1800} />
             <div className="flex flex-wrap gap-1.5 pt-1">
               {def.ideas.map((i) => (
-                <button key={i} type="button" onClick={() => setPrompt(i)} className="rounded-full border border-border/70 px-2.5 py-1 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-foreground">
+                <button key={i} type="button" onClick={() => setPrompt(i)} className="rounded-full border-2 border-ink/30 bg-card px-2.5 py-1 text-[11px] font-semibold text-ink transition-colors hover:border-ink hover:bg-sun">
                   {i.length > 42 ? `${i.slice(0, 40)}…` : i}
                 </button>
               ))}
@@ -93,7 +93,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
             <p className="text-xs font-medium">Style</p>
             <div className="flex flex-wrap gap-1.5">
               {def.styles.map((s) => (
-                <button key={s} type="button" aria-pressed={style === s} onClick={() => setStyle(s)} className={cn("rounded-full border px-3 py-1 text-xs", style === s ? "border-primary bg-primary/10" : "border-border text-muted-foreground hover:border-primary/50")}>
+                <button key={s} type="button" aria-pressed={style === s} onClick={() => setStyle(s)} className={cn("rounded-full border px-3 py-1 text-xs", style === s ? "border-primary bg-primary/10" : "border-border text-muted-foreground hover:border-ink")}>
                   {s}
                 </button>
               ))}
@@ -103,7 +103,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
             <p className="text-xs font-medium">Shape</p>
             <div className="flex flex-wrap gap-1.5">
               {def.aspects.map((a) => (
-                <button key={a} type="button" aria-pressed={aspect === a} onClick={() => setAspect(a)} className={cn("rounded-full border px-3 py-1 text-xs", aspect === a ? "border-primary bg-primary/10" : "border-border text-muted-foreground hover:border-primary/50")}>
+                <button key={a} type="button" aria-pressed={aspect === a} onClick={() => setAspect(a)} className={cn("rounded-full border px-3 py-1 text-xs", aspect === a ? "border-primary bg-primary/10" : "border-border text-muted-foreground hover:border-ink")}>
                   {a}
                 </button>
               ))}
@@ -113,7 +113,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
             <div className="space-y-1.5">
               <p className="text-xs font-medium">Reference photo (optional)</p>
               {ref ? (
-                <div className="relative w-28 overflow-hidden rounded-lg border border-border/60">
+                <div className="relative w-28 overflow-hidden rounded-lg border-2 border-ink">
                   <img src={ref} alt="Reference" className="aspect-square w-full object-cover" />
                   <button type="button" className="absolute right-1 top-1 rounded-full bg-background/90 p-1" onClick={() => setRef(null)} aria-label="Remove reference">
                     <X className="h-3 w-3" />
@@ -169,7 +169,7 @@ export default function ImageGenApp({ toolId, def }: { toolId: string; def: Imag
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {gallery.map((g) =>
                   g.result_url ? (
-                    <div key={g.id} className="group relative overflow-hidden rounded-xl border border-border/60">
+                    <div key={g.id} className="group relative overflow-hidden rounded-xl border-2 border-ink">
                       <button type="button" className="block w-full" onClick={() => setCurrent(g.result_url)} aria-label={`Open ${g.prompt}`}>
                         <img src={g.result_url} alt={g.prompt} loading="lazy" className="aspect-square w-full object-cover" />
                       </button>

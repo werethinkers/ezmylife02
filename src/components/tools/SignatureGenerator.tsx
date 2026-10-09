@@ -158,10 +158,10 @@ export const SignatureGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Signature Generator</h1>
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Signature Generator</h1>
           <p className="text-muted-foreground">Draw your signature and download it for documents</p>
         </div>
 
