@@ -373,7 +373,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
       </p>
 
       {/* AI insights */}
-      <section className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
+      <section className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
         <div className="space-y-3 rounded-2xl border-2 border-ink bg-card p-4">
           <p className="text-sm font-semibold">{def.aiLabel}</p>
           <p className="text-xs text-muted-foreground">The AI reads your rows (and the settings below) and writes a short, practical report.</p>

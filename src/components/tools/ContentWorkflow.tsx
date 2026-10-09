@@ -512,7 +512,7 @@ export const ContentWorkflow = () => {
                 </p>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
                 <Card className="border-border/30">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">

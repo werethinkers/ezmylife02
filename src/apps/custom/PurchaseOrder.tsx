@@ -133,7 +133,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
 
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} steps={["Add supplier & items", "Print or save the PO", "Send with the AI email"]}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 rounded-2xl border-2 border-ink bg-card p-4 sm:grid-cols-2">
             {([

@@ -17,8 +17,11 @@ export class NeedsCredits extends Error {
 export async function runApp<T = unknown>(toolId: string, body: Record<string, unknown>): Promise<T> {
   try {
     const res = await callFunction<{ ok: boolean; output?: T; image?: T }>("ai-app", { tool_id: toolId, ...body });
+    const out = (res?.output ?? res?.image) as T | undefined;
+    // An empty reply is an error, not a result: stop here so the app shows a message instead of crashing.
+    if (out === undefined || out === null || out === "") throw new Error("No result came back. Please try again.");
     emitCreditPrompt({ kind: "charged" });
-    return (res.output ?? res.image) as T;
+    return out;
   } catch (e) {
     if (await handleCreditError(e)) throw new NeedsCredits();
     throw e;

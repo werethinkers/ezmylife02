@@ -523,7 +523,7 @@ const VideoMaker = () => {
                   No previous videos found. Start creating!
                 </p>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
                   {previousCreations.map((creation) => (
                     <Card key={creation.id} className="overflow-hidden">
                       <div className="flex">

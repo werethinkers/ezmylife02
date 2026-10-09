@@ -143,7 +143,7 @@ export const ContentIdeaGenerator = () => {
             <div className="mt-6 space-y-4">
               <h3 className="font-medium">Content Ideas</h3>
               
-              <div className="grid gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
                 {ideas.map((idea, index) => (
                   <Card key={index} className="border-border/30 bg-muted/30">
                     <CardContent className="p-4">
