@@ -234,7 +234,7 @@ const Tools = () => {
             </h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {catTools.map((t) => (
-                <AppTile key={t.id} tool={t} className="w-auto" />
+                <AppTile key={t.id} tool={t} className="w-full" />
               ))}
             </div>
           </section>
@@ -289,7 +289,7 @@ const Tools = () => {
                       </div>
                       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {tools.slice(0, PER_CATEGORY).map((t) => (
-                          <AppTile key={t.id} tool={t} className="w-auto" />
+                          <AppTile key={t.id} tool={t} className="w-full" />
                         ))}
                       </div>
                     </div>
