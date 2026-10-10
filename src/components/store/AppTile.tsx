@@ -6,8 +6,23 @@ import { PricePill } from "./PricePill";
 import { useQuickLook } from "./QuickLook";
 import { cn } from "@/lib/utils";
 
-/** Large shelf card: preview, icon, name, what you get, and the price pill. */
-export function AppTile({ tool, className }: { tool: CatalogTool; className?: string }) {
+/**
+ * Large app card: preview, icon, name, what you get, and the price pill.
+ *
+ * `layout` picks how the card is sized. On a shelf it is a flex child of a scrolling
+ * rail, so it takes a percentage of that rail to peek the next card. In a grid the
+ * cell already sets the width — a percentage there would be a fraction of the cell
+ * and shrink the card, so grid cards fill their cell instead.
+ */
+export function AppTile({
+  tool,
+  className,
+  layout = "shelf",
+}: {
+  tool: CatalogTool;
+  className?: string;
+  layout?: "shelf" | "grid";
+}) {
   const { openQuickLook } = useQuickLook();
   const media = useToolMedia(tool.id, tool.category);
   const goal = goalOf(tool.category);
@@ -25,7 +40,10 @@ export function AppTile({ tool, className }: { tool: CatalogTool; className?: st
       }}
       aria-label={`${tool.name}, quick look`}
       className={cn(
-        "block-card block-lift group w-[78%] shrink-0 snap-start cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[46%] lg:w-[31%] xl:w-[23.5%]",
+        "block-card block-lift group cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        layout === "shelf"
+          ? "w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%] xl:w-[23.5%]"
+          : "w-full",
         className,
       )}
     >
