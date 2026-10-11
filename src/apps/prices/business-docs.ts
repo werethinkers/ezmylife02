@@ -1,0 +1,22 @@
+// Display prices (credits per run). The server copy in supabase/functions/_shared/appSpecs/ is what is charged.
+export const businessDocs: Record<string, number> = {
+  "tool-10": 2,
+  "tool-12": 2,
+  "tool-18": 2,
+  "tool-29": 2,
+  "tool-38": 2,
+  "tool-8": 3,
+  "tool-36": 2,
+  "tool-9": 2,
+  "tool-16": 2,
+  "tool-14": 1,
+  "tool-7": 3,
+  "tool-5": 2,
+  "tool-27": 1,
+  "tool-13": 1,
+  "tool-11": 1,
+  "tool-15": 2,
+  "tool-19": 1,
+  "tool-17": 2,
+  "tool-31": 1,
+};

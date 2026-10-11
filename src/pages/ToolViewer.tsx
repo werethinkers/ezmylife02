@@ -19,6 +19,8 @@ import { FlowSteps } from "@/components/brand/FlowSteps";
 import { AppIcon } from "@/components/store/AppIcon";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { categoryInfo, goalOf } from "@/data/goals";
+import { appIntroOf } from "@/data/appKind";
+import { appSeoDescription, appSeoKeywords, appSeoTitle, sentence } from "@/lib/appSeo";
 
 interface CatalogTool {
   name: string;
@@ -208,10 +210,13 @@ const ToolViewer = () => {
     );
   }
 
+  // Same words as the page written for search engines at build time (scripts/prerender-apps.mjs).
   const seoName = catalogInfo?.name || tool?.title || toolTitle;
-  const seoCategory = catalogInfo?.category || tool?.category || "AI";
-  const seoDesc = (catalogInfo?.description || tool?.description || `${seoName} — free AI ${seoCategory.toLowerCase()} tool on EZYOURLIFE. Run instantly in your browser, pay-as-you-go from ₹10.`).slice(0, 300);
-  const seoKeywords = `${seoName.toLowerCase()}, ai ${seoCategory.toLowerCase()} tool, free ${seoName.toLowerCase()}, online ${seoName.toLowerCase()}, ai tool for ${seoCategory.toLowerCase()}, ${seoName.toLowerCase()} online, best ai ${seoName.toLowerCase()}`;
+  const seoCategory = catalogInfo?.category || tool?.category || "";
+  const seoInfo = categoryInfo(seoCategory);
+  const seoIntro = appIntroOf(toolId) || catalogInfo?.description || tool?.description || "";
+  const seoDesc = appSeoDescription(seoName, seoIntro, seoInfo.give, seoInfo.get);
+  const seoKeywords = appSeoKeywords(seoName, seoCategory);
   const seoJsonLd = catalogInfo
     ? {
         "@context": "https://schema.org",
@@ -219,16 +224,15 @@ const ToolViewer = () => {
         name: seoName,
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
-        description: seoDesc,
+        description: sentence(seoIntro || seoName),
         url: `https://ezyourlife.com/tool/${toolId}`,
-        offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
       }
     : undefined;
 
   return (
     <div className="min-h-screen flex flex-col">
       <PageSeo
-        title={`${seoName} — Free AI ${seoCategory} Tool | EZYOURLIFE`}
+        title={appSeoTitle(seoName, catalogInfo?.description || tool?.description || "")}
         description={seoDesc}
         keywords={seoKeywords}
         path={`/tool/${toolId}`}

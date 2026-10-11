@@ -1,84 +1,23 @@
+import { businessDocs } from "./prices/business-docs";
+import { businessTrackers } from "./prices/business-trackers";
+import { contentAi } from "./prices/content-ai";
+import { customApps } from "./prices/custom";
+import { extras } from "./prices/extras";
+
 // Default prices (credits per successful run) for apps built on the shared engines.
 // They mirror supabase/functions/_shared/appSpecs.ts — the server's copy is what is charged;
 // this copy only lets the page show the right price before the app's first run creates its
 // pricing row. Every app costs at least 1 credit per use.
-export const DEFAULT_PRICES: Record<string, number> = {
-  "google-business-kit": 2,
-  "tool-10": 2,
-  "tool-6": 2,
-  "tool-28": 1,
-  "quiz-maker": 1,
-  "quiz": 1,
-  "lesson-planner": 1,
-  "flashcard-maker": 1,
-  "study-planner": 1,
-  "exam-scheduler": 1,
-  "tool-12": 2,
-  "tool-18": 2,
-  "tool-29": 2,
-  "tool-38": 2,
-  "tool-8": 3,
-  "tool-36": 2,
-  "tool-9": 2,
-  "tool-16": 2,
-  "tool-14": 1,
-  "tool-7": 3,
-  "tool-5": 2,
-  "tool-27": 1,
-  "tool-13": 1,
-  "tool-11": 1,
-  "tool-15": 2,
-  "tool-19": 1,
-  "tool-17": 2,
-  "tool-31": 1,
-  "tool-22": 1,
-  "tool-21": 1,
-  "tool-23": 1,
-  "tool-32": 1,
-  "tool-33": 2,
-  "tool-34": 1,
-  "tool-37": 1,
-  "tool-35": 1,
-  "tool-25": 1,
-  "tool-26": 1,
-  "tool-20": 1,
-  "tool-24": 1,
-  "tool-39": 1,
-  "cognimap": 2,
-  "wrong-written-words": 1,
-  "storybook-creator": 2,
-  "smart-diagram-ai": 1,
-  "interactive-videos": 1,
-  "soul-mirror": 1,
-  "ai-data-analysis": 2,
-  "advance-ai-bot": 1,
-  "html-editor": 1,
-  "rich-editor": 1,
-  "book-editor": 1,
-  "book-editor-html": 1,
-  "pdf-metadata-ai-analyst": 1,
-  "pdf-profile-extractor": 2,
-  "dictionary-extractor-ai": 1,
-  "ocr": 1,
-  "advance-text-extractor": 2,
-  "auto-text-extractor": 2,
-  "image-creator": 12,
-  "create-3d-images": 12,
-  "sketchflow-ai": 12,
-  "storybook-illustration": 12,
-  "thumbnail-maker": 12,
-  "startup-analyser-chat": 1,
-  "productvision-angle": 12,
-  "thumbnail-maker-img": 12,
-  "video-keyframe": 12,
-  "virasat-book": 10,
-  "content-workflow-step": 1,
-  "startup-analyser-flash": 10,
-  "bulk-ai-background": 12,
-  "bulk-ai-passport": 12,
-  "bulk-ai-beautify": 12,
-  "pdf-chart-image-extractor": 1,
+// One file per vertical in ./prices; a new vertical adds one file and one line here.
+export const PRICE_GROUPS: Record<string, Record<string, number>> = {
+  "business-docs": businessDocs,
+  "business-trackers": businessTrackers,
+  "content-ai": contentAi,
+  custom: customApps,
+  extras,
 };
+
+export const DEFAULT_PRICES: Record<string, number> = Object.assign({}, ...Object.values(PRICE_GROUPS));
 
 export const defaultPrice = (toolId: string): number | undefined => DEFAULT_PRICES[toolId];
 

@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "check:apps": "node scripts/check-apps.mjs",
+    "gen:catalog": "node scripts/gen-catalog-migration.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

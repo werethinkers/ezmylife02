@@ -54,9 +54,10 @@ Deno.serve(async () => {
   for (const t of tools ?? []) {
     const lastmod = t.updated_at ? new Date(t.updated_at).toISOString().slice(0, 10) : today;
     const id = escapeXml(t.id);
+    // One address per app: /tool/<id>, which has its own page for search engines.
+    // (/tool-preview/<id> only redirects and is blocked in robots.txt, so it is not listed.)
     urls.push(
-      `<url><loc>${SITE}/tool-preview/${id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
-      `<url><loc>${SITE}/tool/${id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.65</priority></url>`
+      `<url><loc>${SITE}/tool/${id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`
     );
   }
 
@@ -68,7 +69,7 @@ Deno.serve(async () => {
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<!-- launch-check: phase0-a -->
+<!-- launch-check: phase0-b -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join("\n")}
 </urlset>`;

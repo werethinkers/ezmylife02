@@ -1,3 +1,5 @@
+import { CATALOG_GROUPS } from "./catalog";
+
 // Complete Tool Database - Master list of all tools with categories
 // This file serves as the single source of truth for tool filtering
 
@@ -9,6 +11,10 @@ export interface ToolEntry {
   toolType: string[];
   source: "business" | "featured";
   isLive: boolean;
+  /** Only for apps with their own page instead of /tool/<id>. */
+  dedicatedRoute?: string;
+  /** Position inside lists; lower shows first. Leave out for the default (0). */
+  displayOrder?: number;
 }
 
 // Master tool database with all tools and their type mappings
@@ -32,7 +38,7 @@ export const toolsDatabase: ToolEntry[] = [
   // Marketing & Sales
   { id: "tool-11", name: "Cold Outreach", description: "Pitch services to new clients", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Writing Tools", "Communication"], source: "business", isLive: true },
   { id: "tool-12", name: "Offer Generator", description: "Create festival discount strategies", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Writing Tools"], source: "business", isLive: true },
-  { id: "google-business-kit", name: "Google Business Kit", description: "Keywords, profile content and reviews for any business", category: "Marketing & Sales", toolType: ["Marketing & Sales", "AI & Automation", "Customer Service"], source: "business", isLive: true },
+  { id: "google-business-kit", name: "Google Business Kit", description: "Add your business and products — get local keywords, Google profile content, review links & QR, and a reviews dashboard.", category: "Marketing & Sales", toolType: ["Marketing & Sales", "AI & Automation", "Customer Service"], source: "business", isLive: true, dedicatedRoute: "/google-business" },
   { id: "tool-13", name: "Review Replier", description: "Draft replies to Google/Amazon reviews", category: "Marketing & Sales", toolType: ["Marketing & Sales", "AI & Automation", "Communication"], source: "business", isLive: true },
   { id: "tool-14", name: "Customer Follow-up", description: "Schedule polite lead reminders", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Communication", "Productivity"], source: "business", isLive: true },
   { id: "tool-15", name: "Social Media Plan", description: "Create weekly content calendars", category: "Marketing & Sales", toolType: ["Marketing & Sales", "Social Media", "Content Creation"], source: "business", isLive: true },
@@ -77,10 +83,10 @@ export const toolsDatabase: ToolEntry[] = [
   { id: "advance-text-extractor", name: "Advance Text Extractor", description: "Extract document excerpts", category: "Content", toolType: ["Text Tools", "Document Tools"], source: "featured", isLive: true },
   { id: "create-3d-images", name: "Create 3D Images", description: "3D image generation", category: "Content", toolType: ["Design Tools", "Image Tools"], source: "featured", isLive: true },
   { id: "sketchflow-ai", name: "SketchFlow AI", description: "Flowcharts and diagrams", category: "Content", toolType: ["Design Tools", "Developer Tools"], source: "featured", isLive: true },
-  { id: "speedy-notebook", name: "Speedy Notebook", description: "Rich-text workspace with AI rephrasing, personal shortcuts that sync to browser extensions, and auto-saving", category: "Research", toolType: ["Document Tools", "Writing Tools", "Productivity", "AI & Automation"], source: "featured", isLive: true },
-  { id: "promptmaster-ai", name: "PromptMaster AI", description: "Elite prompt engineering workspace with AI brainstorm, favourites with synced shortcuts, and multi-format output", category: "AI Agent", toolType: ["AI & Automation", "Writing Tools", "Productivity"], source: "featured", isLive: true },
-  { id: "startup-analyser", name: "Startup Analyser", description: "Generate exhaustive VC-style investment reports with AI, competitor analysis, financials and more", category: "AI Agent", toolType: ["AI & Automation", "Analytics Tools", "Document Tools"], source: "featured", isLive: true },
-  { id: "meet-nudge", name: "Meet Nudge", description: "Collect event contacts via QR forms, card scanning, and WhatsApp follow-up", category: "Networking", toolType: ["Productivity", "Communication", "AI & Automation", "QR & Barcode"], source: "featured", isLive: true },
+  { id: "speedy-notebook", name: "Speedy Notebook", description: "Rich-text workspace with AI rephrasing, personal shortcuts that sync to browser extensions, and auto-saving", category: "Research", toolType: ["Document Tools", "Writing Tools", "Productivity", "AI & Automation"], source: "featured", isLive: true, dedicatedRoute: "/notebook" },
+  { id: "promptmaster-ai", name: "PromptMaster AI", description: "Elite prompt engineering workspace with AI brainstorm, favourites with synced shortcuts, and multi-format output", category: "AI Agent", toolType: ["AI & Automation", "Writing Tools", "Productivity"], source: "featured", isLive: true, dedicatedRoute: "/promptmaster" },
+  { id: "startup-analyser", name: "Startup Analyser", description: "Generate exhaustive VC-style investment reports with AI, competitor analysis, financials and more", category: "AI Agent", toolType: ["AI & Automation", "Analytics Tools", "Document Tools"], source: "featured", isLive: true, dedicatedRoute: "/startup-analyser" },
+  { id: "meet-nudge", name: "Meet Nudge", description: "Networking tool for event hosts — collect contacts via QR codes, scan business cards with AI, and follow up on WhatsApp.", category: "Networking", toolType: ["ai", "productivity"], source: "featured", isLive: true, dedicatedRoute: "/meet-nudge" },
   { id: "rich-editor", name: "Rich Editor", description: "Text formatting tool", category: "Research", toolType: ["Document Tools", "Text Tools"], source: "featured", isLive: true },
   { id: "pdf-chart-image-extractor", name: "PDF Chart & Image Extractor", description: "Extract from PDFs", category: "Research", toolType: ["Document Tools", "Data Tools"], source: "featured", isLive: true },
   { id: "html-editor", name: "HTML Editor", description: "Create/edit HTML", category: "Research", toolType: ["Developer Tools", "Document Tools"], source: "featured", isLive: true },
@@ -208,6 +214,13 @@ export const toolsDatabase: ToolEntry[] = [
   { id: "content-workflow", name: "Content Creation Workflow", description: "End-to-end content creation", category: "Content Creation", toolType: ["Content Creation", "Productivity"], source: "featured", isLive: true },
   { id: "thumbnail-maker", name: "AI Thumbnail Maker", description: "Generate video thumbnails with AI", category: "Content Creation", toolType: ["Content Creation", "Image Tools", "AI & Automation", "Design Tools"], source: "featured", isLive: true },
   { id: "video-maker", name: "AI Video Maker", description: "Create videos from text/images", category: "Content Creation", toolType: ["Content Creation", "Video Tools", "AI & Automation"], source: "featured", isLive: true },
+
+  // Apps with their own page that were only in the database until October 2026
+  { id: "virasat", name: "Virasat: A Father's Legacy", description: "Record your life stories in podcast form with a warm AI host, then turn them into a beautiful keepsake book for your children.", category: "Personal", toolType: ["Storytelling", "AI", "Family", "Audio"], source: "featured", isLive: true, dedicatedRoute: "/virasat" },
+  { id: "productvision-360", name: "ProductVision 360", description: "Generate catalog-ready product angles, swap backgrounds, and download a 360° spin pack — all from a single product photo.", category: "AI Image Generation", toolType: ["image"], source: "featured", isLive: true, dedicatedRoute: "/tools/productvision-360" },
+
+  // ========== LAUNCH VERTICALS (one file each in ./catalog) ==========
+  ...Object.values(CATALOG_GROUPS).flat(),
 ];
 
 // Helper functions

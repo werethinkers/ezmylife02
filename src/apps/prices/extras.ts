@@ -1,0 +1,25 @@
+// Display prices (credits per run). The server copy in supabase/functions/_shared/appSpecs/ is what is charged.
+// Price ids with no app screen of their own: bulk mode, re-priced apps and paid steps inside other apps.
+export const extras: Record<string, number> = {
+  "google-business-kit": 2,
+  "tool-6": 2,
+  "tool-28": 1,
+  "quiz-maker": 1,
+  "quiz": 1,
+  "lesson-planner": 1,
+  "flashcard-maker": 1,
+  "study-planner": 1,
+  "exam-scheduler": 1,
+  "storybook-illustration": 12,
+  "thumbnail-maker": 12,
+  "startup-analyser-chat": 1,
+  "productvision-angle": 12,
+  "thumbnail-maker-img": 12,
+  "video-keyframe": 12,
+  "virasat-book": 10,
+  "content-workflow-step": 1,
+  "startup-analyser-flash": 10,
+  "bulk-ai-background": 12,
+  "bulk-ai-passport": 12,
+  "bulk-ai-beautify": 12,
+};
