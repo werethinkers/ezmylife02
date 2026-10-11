@@ -1,4 +1,5 @@
 // Dynamic sitemap.xml generated from live tools_catalog
+// Go-live test marker (docs/launch-plan.md): the "launch-check" comment in the output changes only when this function is redeployed.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -67,6 +68,7 @@ Deno.serve(async () => {
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- launch-check: phase0-a -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join("\n")}
 </urlset>`;
