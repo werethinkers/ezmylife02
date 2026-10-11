@@ -8,16 +8,16 @@ Read it at the start of every phase and update it at the end.
 | Phase | What | Target | Status | Apps added | Running total |
 |---|---|---|---|---|---|
 | 0 | Foundation | 0 | **Done 12 Oct 2026** (two live checks left, see "Open items") | 0 | 154 apps + 104 website and card designs |
-| 1 | Pilot: business documents and legal templates | ~100 | Not started | | |
+| 1 | Pilot: business documents and legal templates | ~100 | **Done 11 Oct 2026** | 65 | 219 apps |
 | 2 | New engines: calculator, file converter, photo presets | ~30 | Not started | | |
 | 3 | Preset scale-up, one vertical per chat | ~870 | Not started | | |
 | 4 | AI verticals, one vertical per chat | ~650 | Not started | | |
 | 5 | Invitations and greetings | ~250 | Not started | | |
 | 6 | Clean-up | 0 | Not started | | |
 
-Counts: "apps" are live rows in the `tools_catalog` table (154 on 12 Oct 2026, and the code
-copy in `src/data/toolsDatabase.ts` matches it row for row). The 104 website, card and
-invitation designs are active rows in `ip_products`. Site copy says "150+" (the real count
+Counts: "apps" are live rows in the `tools_catalog` table (219 on 11 Oct 2026 after Phase 1). The code
+copies in `src/data/catalog/` and older `src/data/toolsDatabase.ts` match row for row. The 104 website, card and
+invitation designs are active rows in `ip_products`. Site copy says "250+" (the real count
 rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
 
 ## Fixed rules

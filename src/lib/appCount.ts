@@ -5,7 +5,7 @@ import { useToolsCatalog } from "@/hooks/useToolsCatalog";
  * Static copy (index.html, llms.txt, MCP text) uses APP_COUNT_FALLBACK; update it
  * when the catalogue grows. React pages use the live hook so they never overstate.
  */
-export const APP_COUNT_FALLBACK = "150+";
+export const APP_COUNT_FALLBACK = "250+";
 
 export function useAppCountLabel(): string {
   const { data = [] } = useToolsCatalog();
