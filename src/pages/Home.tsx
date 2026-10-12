@@ -35,13 +35,6 @@ const AppDirectory = lazy(() => import("@/components/home/AppDirectory"));
 const SKIP_CATEGORY_SHELVES = new Set(["Popular", "Lab"]);
 const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
 
-const STEPS = [
-  { t: "Pick what you need", s: "Search, or choose your business type." },
-  { t: "Fill a few details", s: "Examples are filled in so you know what to type." },
-  { t: "Pay only for results", s: "Apps use credits only when they work. Websites and cards are paid once." },
-  { t: "Download or share", s: "Save a PDF, copy it, or send it on WhatsApp." },
-];
-
 function Section({ id, title, line, children, action }: { id?: string; title: string; line?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section id={id} className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 md:py-14">
@@ -255,21 +248,6 @@ const Home = () => {
                   </Link>
                 ))}
               </div>
-            </Section>
-
-            {/* ───────── How it works ───────── */}
-            <Section title="How it works" line="The same four steps for every app, website and card.">
-              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {STEPS.map((s, i) => (
-                  <li key={s.t} className="block-card flex gap-3 p-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display text-lg font-extrabold">{i + 1}</span>
-                    <span className="min-w-0">
-                      <span className="block font-bold">{s.t}</span>
-                      <span className="block text-sm text-muted-foreground">{s.s}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
             </Section>
 
             {/* ───────── Business type ───────── */}
