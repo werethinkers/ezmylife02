@@ -12,6 +12,7 @@ import { ProductRenderer } from "@/instant/renderers";
 import { pageUrlFor } from "@/instant/util";
 import { toast } from "sonner";
 import { KIT, resolvePick, type KitPicks } from "@/data/kit";
+import { seoFor } from "@/lib/seo/pages";
 
 /*
  * The one paid offer, at /kit. Every paid channel (influencer links, ads) lands here.
@@ -228,9 +229,7 @@ export default function Kit() {
   return (
     <div className="flex min-h-screen flex-col text-base leading-normal" style={{ background: CREAM, color: INK, fontFamily: "'Hind', system-ui, sans-serif" }}>
       <SEOHead
-        title="Your business online for ₹999 | EZYOURLIFE"
-        description="A published website, a digital visiting card and 3,000 credits for business apps. One payment of ₹999, no subscription."
-        path="/kit"
+        {...seoFor("/kit", "")}
       />
 
       {community && (

@@ -1,4 +1,5 @@
 import type { Family, Product } from "./types";
+import { cut, sentence } from "@/lib/appSeo";
 
 // Copy for each product's promotional page (/make/:productId). Written per family, then
 // personalised with the product's own name, so all 104 pages read as their own page.
@@ -100,4 +101,13 @@ const P: Record<Family, FamilyPromo> = {
 export function promoFor(p: Product) {
   const f = P[p.family];
   return { ...f, headline: p.name, pitch: p.description || p.tagline };
+}
+
+/** Search title and description of a product's /make/<id> page. Shared with the static page the build writes. */
+export function promoSeo(p: Product) {
+  const promo = promoFor(p);
+  return {
+    title: `${cut(p.name, 40)} online, ready in minutes | EZYOURLIFE`,
+    description: cut(`${sentence(p.tagline)} ${promo.pitch}`, 158),
+  };
 }

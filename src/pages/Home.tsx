@@ -23,6 +23,7 @@ import RequestToolSection from "@/components/RequestToolSection";
 import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { cn } from "@/lib/utils";
+import { seoFor } from "@/lib/seo/pages";
 
 // Website and card shelves need the design catalogue; load it after the first screen is up.
 const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
@@ -104,9 +105,7 @@ const Home = () => {
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-background">
         <SEOHead
-          title={`EZYOURLIFE - The Future's First AI App Store | ${countLabel} AI Apps`}
-          description={`Business apps, websites and cards for small businesses in India. ${countLabel} AI apps for bills, customers, staff and photos. Pay only for results, packs from ₹10, 100 free credits to start.`}
-          path="/"
+          {...seoFor("/", countLabel)}
           keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, business website maker, gst invoice app"
         />
         <Navbar />

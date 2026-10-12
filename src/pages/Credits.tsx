@@ -16,6 +16,7 @@ import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { Zap, Loader2, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
+import { seoFor } from "@/lib/seo/pages";
 
 const Credits = () => {
   const { user } = useAuth();
@@ -132,9 +133,7 @@ const Credits = () => {
   return (
     <>
       <SEOHead
-        title="Prices and credits — pay only for what you use | EZYOURLIFE"
-        description="EZYOURLIFE apps use credits only when they give you a result. Packs from ₹10, no monthly plan, 100 free credits to start."
-        path="/credits"
+        {...seoFor("/credits", "")}
       />
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
