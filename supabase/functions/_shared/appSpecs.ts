@@ -10,6 +10,7 @@ import { businessTrackers } from "./appSpecs/business-trackers.ts";
 import { contentAi } from "./appSpecs/content-ai.ts";
 import { customApps } from "./appSpecs/custom.ts";
 import { extras } from "./appSpecs/extras.ts";
+import { calculators } from "./appSpecs/calculators.ts";
 
 export type { AppKind, AppSpec } from "./appSpecs/base.ts";
 export { COMMON_RULES } from "./appSpecs/base.ts";
@@ -20,6 +21,7 @@ export const SPEC_GROUPS: Record<string, Record<string, AppSpec>> = {
   "content-ai": contentAi,
   custom: customApps,
   extras,
+  calculators,
 };
 
 export const APP_SPECS: Record<string, AppSpec> = Object.assign({}, ...Object.values(SPEC_GROUPS));

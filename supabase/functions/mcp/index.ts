@@ -29,7 +29,7 @@ Example: user says *"save shortcut sig -> Best, Abhijay"* \u2192 call save_short
 - **analyze_prompt(prompt, goal?)** \u2014 rewrites/improves a prompt using Gemini. Returns an optimized version with rationale.
 
 ## Catalog & user data
-- **list_tools(query?, limit?)** \u2014 browse the 215+ EZYOURLIFE AI app catalog.
+- **list_tools(query?, limit?)** \u2014 browse the 240+ EZYOURLIFE AI app catalog.
 - **get_tool_link(tool_id)** \u2014 get a direct URL to open a tool in the browser (for iframe/UI-only tools that can't run over MCP).
 - **list_my_creations(limit?)** \u2014 recent items the user generated (images, videos, docs).
 - **list_bulk_jobs(limit?)** \u2014 the user's bulk-processing jobs.
@@ -524,7 +524,7 @@ var mcp_default = defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
   version: "0.2.0",
-  instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 215+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
+  instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 240+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
 
 **Start by calling \`help\` for the full tool guide with examples.**
 

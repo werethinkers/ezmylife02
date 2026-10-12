@@ -14,6 +14,7 @@ const KIND_LABEL: Record<AppKind, string> = {
   document: "Opens a document maker (fill a form, get a document)",
   sheet: "Opens a sheet (rows that add up)",
   photo: "Opens a photo editor",
+  file: "Opens a file converter (add files, download new ones)",
 };
 
 /**

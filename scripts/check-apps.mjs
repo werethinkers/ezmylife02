@@ -40,19 +40,41 @@ for (const c of new Set(d.catalogue.map((t) => t.category))) {
 }
 
 // 4. Every app definition has a catalogue row, a whole-number price, and (unless it has its own screen) server instructions.
-const KIND_FOR_ENGINE = { doc: ["doc"], tracker: ["doc"], chat: ["chat"], vision: ["vision"], image: ["image"] };
+const KIND_FOR_ENGINE = { doc: ["doc"], tracker: ["doc"], chat: ["chat"], vision: ["vision"], image: ["image"], calc: ["doc"] };
+// Engines that run wholly in the browser: no server instructions, but they must be charged per use.
+const BROWSER_ENGINES = new Set(["convert", "preset"]);
 for (const [id, def] of Object.entries(d.APPS)) {
   if (!catalogue.has(id)) err(`App "${id}" has a definition but no catalogue row`);
   const price = d.DEFAULT_PRICES[id];
   if (!Number.isInteger(price) || price < 1) err(`App "${id}" has no price of at least 1 credit in src/apps/prices/`);
   else if (def.credits !== price) err(`App "${id}": definition says ${def.credits} credits, price file says ${price}`);
   const spec = d.APP_SPECS[id];
-  if (def.engine !== "custom") {
+  if (BROWSER_ENGINES.has(def.engine)) {
+    if (!d.USAGE_GATED.has(id)) err(`App "${id}" (${def.engine}) runs in the browser, so it must be in USAGE_GATED (src/apps/prices.ts) to be charged`);
+  } else if (def.engine !== "custom") {
     if (!spec) err(`App "${id}" (${def.engine}) has no server instructions in supabase/functions/_shared/appSpecs/`);
     else if (!KIND_FOR_ENGINE[def.engine].includes(spec.kind)) err(`App "${id}": engine "${def.engine}" does not match server kind "${spec.kind}"`);
   }
   for (const r of def.related ?? []) if (!catalogue.has(r)) err(`App "${id}" lists related app "${r}", which is not in the catalogue`);
   if (!def.intro?.trim()) err(`App "${id}" has no intro line`);
+  if (def.engine === "calc" && !d.USAGE_GATED.has(id)) err(`Calculator "${id}" must be in USAGE_GATED, or its sums could be used without paying`);
+
+  // Facts from outside (exam rules, rates, legal limits) need an official page beside them.
+  const sources = def.sources ?? [];
+  if (def.engine === "preset" && !sources.length) err(`App "${id}": exam and ID presets need at least one official source`);
+  for (const s of sources) {
+    if (!/^https:\/\//.test(s.url ?? "")) err(`App "${id}": source "${s.label}" needs an https address`);
+    if (!s.checked?.trim()) err(`App "${id}": source "${s.label}" needs the date it was checked`);
+  }
+  for (const it of def.engine === "preset" ? def.items : []) {
+    const where = `App "${id}" ${it.key}`;
+    if (it.minKB !== undefined && it.maxKB !== undefined && !(it.maxKB > it.minKB)) err(`${where}: the KB range must have a maximum above the minimum`);
+    const exact = it.width && it.height;
+    const ranged = it.minW || it.maxW || it.minH || it.maxH;
+    if (!exact && !ranged && !(it.outW && it.outH)) err(`${where}: give the exact pixel size, the pixel range, or our own output size (outW/outH)`);
+    if (!exact && !it.aspect) err(`${where}: without an exact size, give the shape (aspect) to crop to`);
+    if (it.aspect && it.aspectRule && (it.aspect < it.aspectRule[0] || it.aspect > it.aspectRule[1])) err(`${where}: aspect ${it.aspect} is outside the allowed shape ${it.aspectRule.join("–")}`);
+  }
 }
 
 // 5. The price a page shows equals the price the server charges.

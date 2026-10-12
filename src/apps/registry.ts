@@ -3,6 +3,9 @@ import { businessDocs } from "./defs/business-docs";
 import { businessTrackers } from "./defs/business-trackers";
 import { contentAi } from "./defs/content-ai";
 import { customApps } from "./defs/custom";
+import { calculators } from "./defs/calculators";
+import { converters } from "./defs/converters";
+import { examPresets } from "./defs/exam-presets";
 
 /*
  * Every app built on the shared engines, by catalogue id.
@@ -14,6 +17,9 @@ export const APP_GROUPS: Record<string, Record<string, AppDef>> = {
   "business-trackers": businessTrackers,
   "content-ai": contentAi,
   custom: customApps,
+  calculators,
+  converters,
+  "exam-presets": examPresets,
 };
 
 export const APPS: Record<string, AppDef> = Object.assign({}, ...Object.values(APP_GROUPS));

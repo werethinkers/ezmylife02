@@ -7,6 +7,9 @@ const TrackerApp = lazy(() => import("./engines/TrackerApp"));
 const ChatApp = lazy(() => import("./engines/ChatApp"));
 const VisionApp = lazy(() => import("./engines/VisionApp"));
 const ImageGenApp = lazy(() => import("./engines/ImageGenApp"));
+const CalcApp = lazy(() => import("./engines/CalcApp"));
+const ConvertApp = lazy(() => import("./engines/ConvertApp"));
+const PresetApp = lazy(() => import("./engines/PresetApp"));
 
 const Loading = () => (
   <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -30,6 +33,12 @@ export default function AppRenderer({ toolId }: { toolId: string }) {
         <VisionApp toolId={toolId} def={def} />
       ) : def.engine === "image" ? (
         <ImageGenApp toolId={toolId} def={def} />
+      ) : def.engine === "calc" ? (
+        <CalcApp toolId={toolId} def={def} />
+      ) : def.engine === "convert" ? (
+        <ConvertApp toolId={toolId} def={def} />
+      ) : def.engine === "preset" ? (
+        <PresetApp toolId={toolId} def={def} />
       ) : (
         <def.component toolId={toolId} />
       )}

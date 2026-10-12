@@ -1,5 +1,8 @@
 import { businessDocs } from "./prices/business-docs";
 import { businessTrackers } from "./prices/business-trackers";
+import { calculators } from "./prices/calculators";
+import { converters } from "./prices/converters";
+import { examPresets } from "./prices/exam-presets";
 import { contentAi } from "./prices/content-ai";
 import { customApps } from "./prices/custom";
 import { extras } from "./prices/extras";
@@ -15,6 +18,9 @@ export const PRICE_GROUPS: Record<string, Record<string, number>> = {
   "content-ai": contentAi,
   custom: customApps,
   extras,
+  calculators,
+  converters,
+  "exam-presets": examPresets,
 };
 
 export const DEFAULT_PRICES: Record<string, number> = Object.assign({}, ...Object.values(PRICE_GROUPS));
@@ -62,5 +68,7 @@ export const priceIdFor = (toolId: string) => CHARGE_ID[toolId] ?? toolId;
 export const USAGE_GATED = new Set<string>([
   ...BROWSER_ONLY,
   "tool-21", "tool-23", "tool-32", "tool-33", "tool-34", "tool-37", "tool-35", "tool-25", "tool-26", "tool-20", "tool-24", "tool-39",
+  // Phase 2: calculators and file converters work in the browser.
+  ...Object.keys(calculators), ...Object.keys(converters), ...Object.keys(examPresets),
   "tool-22", "html-editor", "rich-editor", "book-editor", "book-editor-html", "smart-diagram-ai", "ai-data-analysis", "pdf-metadata-ai-analyst",
 ]);
