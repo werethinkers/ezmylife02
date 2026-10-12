@@ -184,11 +184,12 @@ export async function checkPages(pages, appPages) {
   return { errors, warnings };
 }
 
-export function sitemapXml(urls) {
+export function sitemapXml(urls, lastmod = new Date().toISOString().slice(0, 10)) {
+  // lastmod is the build date: the sitemap is rewritten on every build, so Google sees it change and re-reads it.
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!-- Written by scripts/prerender-pages.mjs at every build. Do not edit by hand. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join("\n")}
+${urls.map((u) => `  <url><loc>${esc(u)}</loc><lastmod>${lastmod}</lastmod></url>`).join("\n")}
 </urlset>
 `;
 }
