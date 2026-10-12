@@ -141,6 +141,21 @@ const orphanSpecs = Object.keys(d.APP_SPECS).filter((id) => !catalogue.has(id) &
 if (orphanSpecs.length) notes.push(`Server instructions without a catalogue row: ${orphanSpecs.join(", ")}`);
 const sharedScreens = d.catalogue.filter((t) => launchIds.has(t.id) === false && !(t.id in d.APPS) && d.nativeIds.has(t.id)).length;
 
+// AI access goes through supabase/functions/_shared/ai.ts (aiFetch) or _shared/llm.ts (chat/image),
+// so every app gets the Lovable key plus the backup Gemini keys. No function may call the gateway itself.
+{
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const { ROOT } = await import("./lib/load-apps.mjs");
+  const fnDir = path.join(ROOT, "supabase/functions");
+  for (const name of fs.readdirSync(fnDir)) {
+    const file = path.join(fnDir, name, "index.ts");
+    if (name.startsWith("_") || !fs.existsSync(file)) continue;
+    if (fs.readFileSync(file, "utf8").includes("ai.gateway.lovable.dev"))
+      err(`supabase/functions/${name} calls the AI gateway directly — use aiFetch from _shared/ai.ts instead`);
+  }
+}
+
 const live = d.catalogue.filter((t) => t.isLive).length;
 console.log(`Catalogue: ${d.catalogue.length} apps (${live} live), ${launchIds.size} added by the launch.`);
 console.log(`App definitions: ${Object.keys(d.APPS).length} · server instructions: ${Object.keys(d.APP_SPECS).length} · prices: ${Object.keys(d.DEFAULT_PRICES).length} · older screens: ${sharedScreens}`);
