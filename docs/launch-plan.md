@@ -81,6 +81,13 @@ Cards, websites and invitations live in `src/instant/catalog/`. Follow `docs/des
 - Visitors see changes after the 10-minute cache. Static SEO pages (built by `prerender-apps.mjs`) use the built-in category wording only.
 - Migration `20261012044000_catalog_groupings.sql` is applied to the live DB (19 categories, 12 apps with extra categories).
 
+## Category split and the home directory (12 Oct 2026)
+
+- Image Tools (75 apps) and Research were split: new categories **ID & Exam Photos**, **Photo Enhance & Retouch**, **Blur & Privacy**, **Social Media Sizes** (also in Content Creation) and **Writing & Editors**. 47 apps moved; names, prices and pages unchanged.
+- SQL: `supabase/migrations/20261012070000_catalog_split_categories.sql` (written by `scripts/gen-recategorise-migration.mjs`). Apply it **after** the Phase 2 catalogue SQL, so the exam presets exist before they are moved. It only moves an app still in its old category.
+- New photo apps for passports, visas, exams and signatures go in ID & Exam Photos, not Image Tools.
+- Home page: "Apps by what you need" is now "Everything in the store" (`src/components/home/AppDirectory.tsx`): every app and every website and card design, goal → category, five per category with "Show all", a goal picker and a search box. It reads the live catalogue, so new apps and categories appear there with no code change.
+
 ## Search pages
 
 Every live app has its own address, `/tool/<id>`. At the end of each build, `scripts/prerender-apps.mjs`
@@ -97,7 +104,7 @@ already so and was left alone.
 
 | Vertical | Category | Goal |
 |---|---|---|
-| Exam and ID photo/signature presets | Image Tools (also For Students for exams) | Photos & content |
+| Exam and ID photo/signature presets | ID & Exam Photos (also For Students for exams) | Photos & content |
 | PDF and file converters | PDF & Files (new in Phase 2; image converters also in Image Tools) | Smart helpers |
 | Finance calculators | Calculators (new in Phase 2; some also in Finance & Accounting) | Run your business |
 | Business documents | Finance, Legal, HR, Operations | Run your business |

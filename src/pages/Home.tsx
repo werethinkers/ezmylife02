@@ -12,7 +12,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { PERSONAS } from "@/data/personas";
-import { GOALS, byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
+import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
 import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 
 // Website and card shelves need the design catalogue; load it after the first screen is up.
 const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
+// The full store list also needs the design catalogue; it sits below the fold.
+const AppDirectory = lazy(() => import("@/components/home/AppDirectory"));
 
 const SKIP_CATEGORY_SHELVES = new Set(["Popular", "Lab"]);
 const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
@@ -92,10 +94,6 @@ const Home = () => {
   const personaTools = persona ? (persona.toolIds.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[]) : [];
   const marquee = useMemo(() => live.slice(0, 36).map((t) => t.name), [live]);
 
-  const goalBlocks = useMemo(
-    () => GOALS.map((g) => ({ goal: g, cats: categories.filter(([c]) => categoryInfo(c).goal === g.id) })).filter((b) => b.cats.length > 0),
-    [categories],
-  );
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,42 +334,21 @@ const Home = () => {
               </AnimatePresence>
             </Section>
 
-            {/* ───────── Apps by goal ───────── */}
-            {goalBlocks.length > 0 && (
-              <Section
-                title="Apps by what you need"
-                line="Every app sits under one simple goal."
-                action={
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/ai-apps">See all apps</Link>
-                  </Button>
-                }
-              >
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {goalBlocks.map(({ goal, cats }) => (
-                    <div key={goal.id} className="block-card p-5" style={{ background: goal.color }}>
-                      <Link to={`/ai-apps?goal=${goal.id}`} className="font-display text-xl font-bold hover:underline">
-                        {goal.name}
-                      </Link>
-                      <p className="mt-1 text-sm text-ink/80">{goal.line}</p>
-                      <ul className="mt-3 space-y-0.5">
-                        {cats.map(([name, n]) => (
-                          <li key={name}>
-                            <Link
-                              to={`/ai-apps?category=${encodeURIComponent(name)}`}
-                              className="-mx-2 flex items-center justify-between rounded-lg px-2 py-1.5 text-[15px] font-semibold hover:bg-card"
-                            >
-                              <span>{name}</span>
-                              <span className="tabular-nums">{n}</span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
+            {/* ───────── Every app, website and card ───────── */}
+            <Section
+              id="all-apps"
+              title="Everything in the store"
+              line="Every app, website and card, sorted by what you need. Tap a category to see all of it."
+              action={
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/ai-apps">Open the full app page</Link>
+                </Button>
+              }
+            >
+              <Suspense fallback={<div className="min-h-[60vh]" />}>
+                <AppDirectory apps={live} />
+              </Suspense>
+            </Section>
 
             {/* ───────── Shelves ───────── */}
             <div className="mx-auto max-w-7xl space-y-12 px-4 py-10">
@@ -431,7 +408,9 @@ const Home = () => {
               <CreditValue catalog={catalog} onBuy={setBuyPackId} />
             </Section>
 
-            <RequestToolSection />
+            <div id="request-tool" className="scroll-mt-24">
+              <RequestToolSection />
+            </div>
 
             {!user && (
               <section className="mx-auto max-w-7xl px-4 pb-16">

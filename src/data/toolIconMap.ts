@@ -75,6 +75,11 @@ const toolIdIconMap: Record<string, string> = {
 // Category-based fallback icons for Image Tools (many variants share the same icon)
 const categoryIconMap: Record<string, string> = {
   "Image Tools": imageToolsIcon,
+  "ID & Exam Photos": imageToolsIcon,
+  "Photo Enhance & Retouch": imageToolsIcon,
+  "Blur & Privacy": imageToolsIcon,
+  "Social Media Sizes": imageToolsIcon,
+  "Writing & Editors": pdfReaderIcon,
   "For Students": quizIcon,
   "For Teachers": quizIcon,
   "Content Creation": contentCreationIcon,
