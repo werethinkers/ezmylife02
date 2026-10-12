@@ -103,7 +103,10 @@ export function AppRow({ tool, rank, className }: { tool: CatalogTool; rank?: nu
       )}
       <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="sm" />
       <div className="min-w-0 flex-1 py-1">
-        <p className="truncate text-[15px] font-bold">{tool.name}</p>
+        <p className="flex items-center gap-1.5 text-[15px] font-bold">
+          <span className="truncate">{tool.name}</span>
+          {STUDIO_IDS.has(tool.id) && <span className="shrink-0 rounded-full border-2 border-ink bg-sun px-1.5 text-[10px] font-bold leading-4">Studio</span>}
+        </p>
         <p className="truncate text-[13px] text-muted-foreground">You get {info.get}</p>
       </div>
       <PricePill toolId={tool.id} />

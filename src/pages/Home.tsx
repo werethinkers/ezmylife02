@@ -252,14 +252,14 @@ const Home = () => {
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
                 ].map((d) => (
-                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
+                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex min-h-[250px] flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
                     <div className="flex items-center justify-between">
                       <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", d.c.includes("bg-ink") && "bg-sun text-ink")}>
                         <d.Icon className="h-5 w-5" aria-hidden />
                       </span>
                       <span className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold", d.c.includes("bg-ink") ? "bg-sun text-ink" : "bg-card")}>{d.tag}</span>
                     </div>
-                    <h3 className="text-2xl font-extrabold leading-tight">{d.h}</h3>
+                    <h3 className="text-[22px] font-extrabold leading-tight">{d.h}</h3>
                     <p className={cn("text-[16px]", d.c.includes("bg-ink") ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
                     <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-2 font-bold", d.c.includes("bg-ink") && "text-sun")}>
                       {d.go} <ArrowRight className="h-4 w-4" />
@@ -272,7 +272,7 @@ const Home = () => {
             {/* ───────── Business type ───────── */}
             <Section
               title="Pick your business type"
-              line="We show the apps people like you use most."
+              line="We show the apps and studios people like you use most."
               action={
                 <Button asChild variant="outline" size="sm">
                   <Link to="/explore">All business types</Link>
@@ -280,7 +280,7 @@ const Home = () => {
               }
             >
               <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show apps for">
-                {PERSONAS.map((p, i) => {
+                {PERSONAS.map((p) => {
                   const active = p.id === personaId;
                   return (
                     <button
@@ -290,7 +290,7 @@ const Home = () => {
                       onClick={() => setPersonaId(active ? null : p.id)}
                       className={cn(
                         "shrink-0 rounded-full border-2 border-ink px-4 py-2 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        active ? "bg-ink text-cream" : ["bg-pink", "bg-sun", "bg-teal", "bg-lime"][i % 4],
+                        active ? "bg-ink text-cream" : "bg-card hover:bg-sun",
                       )}
                     >
                       <span aria-hidden>{p.emoji} </span>
@@ -311,7 +311,7 @@ const Home = () => {
                     className="overflow-hidden"
                     aria-live="polite"
                   >
-                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sun/25 p-5 shadow-block md:p-6">
+                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sky/30 p-5 md:p-6">
                       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="text-xl font-bold">
