@@ -87,7 +87,8 @@ export function render(template, page) {
   };
   swap(/<title>[\s\S]*?<\/title>/, `<title>${esc(page.title)}</title>\n    <link rel="canonical" href="${esc(page.url)}" />`, "a <title>");
   swap(/<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(page.description)}" />`, "a description tag");
-  swap(/<meta name="keywords" content="[^"]*"\s*\/?>/, `<meta name="keywords" content="${esc(page.keywords)}" />`, "a keywords tag");
+  swap(/<meta name="keywords" content="[^"]*"\s*\/?>/, `<meta name="keywords" content="${esc(page.keywords ?? "")}" />`, "a keywords tag");
+  if (page.noindex) swap(/<meta name="robots" content="[^"]*"\s*\/?>/, `<meta name="robots" content="noindex, follow" />`, "a robots tag");
   swap(/<meta property="og:url" content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${esc(page.url)}" />`, "an og:url tag");
   swap(/<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${esc(page.title)}">`, "an og:title tag");
   swap(/<meta name="twitter:title" content="[^"]*"\s*\/?>/, `<meta name="twitter:title" content="${esc(page.title)}">`, "a twitter:title tag");
@@ -101,7 +102,7 @@ export function render(template, page) {
     return "";
   });
   if (!kept) throw new Error("index.html no longer has its Organization data; update scripts/prerender-apps.mjs");
-  const ld = page.jsonLd.map((o) => `    <script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`).join("\n");
+  const ld = page.jsonLd.map((o) => `    <script type="application/ld+json" data-static-page>${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`).join("\n");
   swap(/<\/head>/, `${ld}\n  </head>`, "a </head>");
   swap(/<div id="root"><\/div>/, `<div id="root">${page.body}\n    </div>`, 'an empty <div id="root">');
   html = html.replace(/\s*<!-- Noscript fallback[^>]*-->\s*<noscript>[\s\S]*?<\/noscript>/, "");
@@ -129,22 +130,11 @@ export async function prerenderApps({ dist = path.join(ROOT, "dist"), log = cons
     fs.writeFileSync(path.join(dist, "tool", `${app.id}.html`), html);
     n++;
   }
-  // Keep the static sitemap complete: add any live app that public/sitemap.xml does not list yet.
-  const sitemapFile = path.join(dist, "sitemap.xml");
-  if (fs.existsSync(sitemapFile)) {
-    const xml = fs.readFileSync(sitemapFile, "utf8");
-    const missing = live.filter((t) => !xml.includes(`<loc>${SITE}/tool/${esc(t.id)}</loc>`));
-    if (missing.length && xml.includes("</urlset>")) {
-      const add = missing.map((t) => `  <url>\n    <loc>${SITE}/tool/${esc(t.id)}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`).join("");
-      fs.writeFileSync(sitemapFile, xml.replace("</urlset>", add + "</urlset>"));
-      log(`Sitemap: added ${missing.length} app address${missing.length === 1 ? "" : "es"} that were missing.`);
-    }
-  }
   log(`App pages for search: wrote ${n} pages to ${path.relative(ROOT, path.join(dist, "tool"))}/`);
   return n;
 }
 
-/** Vite plugin: write the app pages at the end of every build. A failure here never blocks a publish. */
+/** Vite plugin: write the app pages, the other public pages and the sitemap at the end of every build. A failure here never blocks a publish. */
 export function appPages() {
   let outDir = "dist";
   return {
@@ -156,6 +146,13 @@ export function appPages() {
         await prerenderApps({ dist: outDir });
       } catch (e) {
         console.warn(`\nApp pages for search were NOT written: ${e.message}\nThe site itself is fine; app addresses fall back to the shared page.\n`);
+      }
+      // Then every other public page and the sitemap (scripts/prerender-pages.mjs).
+      try {
+        const { prerenderPages } = await import("./prerender-pages.mjs");
+        await prerenderPages({ dist: outDir });
+      } catch (e) {
+        console.warn(`\nPages for search and the sitemap were NOT written: ${e.message}\nThe site itself is fine; those addresses fall back to the shared page and public/sitemap.xml.\n`);
       }
     },
   };

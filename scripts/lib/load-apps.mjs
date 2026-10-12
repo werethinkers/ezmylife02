@@ -66,3 +66,22 @@ export function displayPrice(d, id) {
   if (p) return p;
   return d.BROWSER_ONLY.has(id) ? 1 : undefined;
 }
+
+/** Loads any of the site's TypeScript files into Node, keyed by path. */
+export async function loadModules(files) {
+  const server = await createServer({
+    root: ROOT,
+    configFile: false,
+    logLevel: "error",
+    appType: "custom",
+    server: { middlewareMode: true, hmr: false, ws: false },
+    optimizeDeps: { noDiscovery: true, include: [] },
+    resolve: { alias: { "@": path.join(ROOT, "src") } },
+  });
+  try {
+    const mods = await Promise.all(files.map((f) => server.ssrLoadModule("/" + f)));
+    return Object.fromEntries(files.map((f, i) => [f, mods[i]]));
+  } finally {
+    await server.close();
+  }
+}

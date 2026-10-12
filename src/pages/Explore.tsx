@@ -6,6 +6,7 @@ import { USE_CASE_SEEDS, INDUSTRY_SEEDS, humanize } from "@/lib/seoData";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
 import { categoriesOf } from "@/data/goals";
+import { seoFor } from "@/lib/seo/pages";
 
 const TOP_USE_CASES = USE_CASE_SEEDS.slice(0, 80);
 const TOP_INDUSTRIES = INDUSTRY_SEEDS.slice(0, 50);
@@ -28,10 +29,9 @@ const Explore = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageSeo
-        title="Explore AI Apps by Use Case & Industry | EZYOURLIFE"
-        description="Browse every AI app on EZYOURLIFE by use case, industry, and category. Find the right AI app for any task — pay-as-you-go from ₹10."
+        {...seoFor("/explore", "")}
         keywords="ai tool for, ai apps directory, ai for industry, browse ai tools, ai tool explorer, ezyourlife"
-        path="/explore"
+
         jsonLd={jsonLd}
       />
       <Navbar />

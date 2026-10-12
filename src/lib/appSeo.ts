@@ -4,7 +4,7 @@
  * (scripts/prerender-apps.mjs), so a search engine sees the same words either way.
  */
 
-const cut = (s: string, max: number) => {
+export const cut = (s: string, max: number) => {
   if (s.length <= max) return s;
   const t = s.slice(0, max - 1);
   return t.slice(0, Math.max(t.lastIndexOf(" "), max - 25)).replace(/[\s,;:—–-]+$/, "") + "…";

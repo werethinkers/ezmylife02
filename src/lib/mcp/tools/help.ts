@@ -22,7 +22,7 @@ Example: user says *"save shortcut sig -> Best, Abhijay"* → call save_shortcut
 - **analyze_prompt(prompt, goal?)** — rewrites/improves a prompt using Gemini. Returns an optimized version with rationale.
 
 ## Catalog & user data
-- **list_tools(query?, limit?)** — browse the 240+ EZYOURLIFE AI app catalog.
+- **list_tools(query?, limit?)** — browse the 440+ EZYOURLIFE AI app catalog.
 - **get_tool_link(tool_id)** — get a direct URL to open a tool in the browser (for iframe/UI-only tools that can't run over MCP).
 - **list_my_creations(limit?)** — recent items the user generated (images, videos, docs).
 - **list_bulk_jobs(limit?)** — the user's bulk-processing jobs.
