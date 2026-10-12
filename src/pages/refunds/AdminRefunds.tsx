@@ -10,6 +10,16 @@ import { supabase } from "@/integrations/supabase/client";
 const rpc = (name: string, args: Record<string, unknown> = {}) =>
   (supabase as any).rpc(name, args) as Promise<{ data: any; error: { message: string } | null }>;
 
+// supabase-js reports a missing or unreachable edge function as a generic send
+// failure, which tells the admin nothing. Say what it actually means.
+const explain = (e: unknown) => {
+  const m = e instanceof Error ? e.message : String(e);
+  if (/failed to send a request|failed to fetch|load failed|networkerror/i.test(m)) {
+    return "This button needs a server function that is not deployed yet. Publish the site from Lovable, then try again.";
+  }
+  return m;
+};
+
 const inr = (n: number | null | undefined) =>
   "₹" + Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 const dt = (s: string | null) => (s ? new Date(s).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "—");
@@ -127,7 +137,7 @@ export default function AdminRefunds() {
       if (error || data?.error) throw new Error(data?.error ?? error?.message);
       toast({ title: "Refund sent", description: `${inr(data.refunded_inr)} · Razorpay ref ${data.razorpay_refund_id}` });
     } catch (e) {
-      toast({ title: "Refund did not go through", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Refund did not go through", description: explain(e), variant: "destructive" });
     } finally {
       setBusy(null);
       refresh();

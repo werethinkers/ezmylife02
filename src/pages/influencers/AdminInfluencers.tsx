@@ -19,6 +19,16 @@ type Row = {
   tds_on_payable_est_inr: number; net_payable_now_inr: number; net_paid_total_inr: number;
 };
 
+// supabase-js reports a missing or unreachable edge function as a generic send
+// failure, which tells the admin nothing. Say what it actually means.
+const explain = (e: unknown) => {
+  const m = e instanceof Error ? e.message : String(e);
+  if (/failed to send a request|failed to fetch|load failed|networkerror/i.test(m)) {
+    return "This button needs a server function that is not deployed yet. Publish the site from Lovable, then try again.";
+  }
+  return m;
+};
+
 const inr = (n: number | null | undefined) =>
   "₹" + Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
@@ -100,7 +110,7 @@ export default function AdminInfluencers() {
       });
       refresh();
     } catch (e) {
-      toast({ title: "Could not update", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Could not update", description: explain(e), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -156,7 +166,7 @@ export default function AdminInfluencers() {
       });
       refresh();
     } catch (e) {
-      toast({ title: "Could not create login", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Could not create login", description: explain(e), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -388,18 +398,90 @@ export default function AdminInfluencers() {
             {showAdd ? "▾" : "▸"} Add a new influencer
           </button>
           {showAdd && (
-            <div className="border-t-2 border-[#121212] p-4 space-y-3">
-              <p className="text-sm text-neutral-700">
-                The code is what buyers see in the link (lowercase, 3–20 letters, numbers or dashes), e.g. <span className="font-mono">priya-indore</span>.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                <Input placeholder="Instagram handle" value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
-                <Input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-                <Input placeholder="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toLowerCase().replace(/\s/g, "-") })} />
-                <Input placeholder="Commission %" value={form.commission_pct} onChange={(e) => setForm({ ...form, commission_pct: e.target.value })} />
+            <div className="border-t-2 border-[#121212] p-4 space-y-4">
+              <div className="grid md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-bold">Name</label>
+                  <p className="text-xs text-neutral-600 mb-1">Their real name, so you can recognise them here.</p>
+                  <Input placeholder="e.g. Priya Sharma" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold">Instagram handle</label>
+                  <p className="text-xs text-neutral-600 mb-1">Optional. Just so you know which account this is.</p>
+                  <Input placeholder="e.g. @priya.indore" value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold">City</label>
+                  <p className="text-xs text-neutral-600 mb-1">Optional. Useful when you compare cities later.</p>
+                  <Input placeholder="e.g. Indore" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                </div>
               </div>
-              <Button onClick={addInfluencer} disabled={!form.name || !form.code} className="border-2 border-[#121212]">Add influencer</Button>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="border-2 border-[#121212] bg-[#FFF8EB] p-3">
+                  <label className="block text-sm font-bold">Code — their tracking link</label>
+                  <p className="text-xs text-neutral-700 mb-2">
+                    This is the tag at the end of their link. Every sale that comes through a link with this code is
+                    counted for them, and nobody else. Pick something you will still recognise in six months — their
+                    name plus their city works well. Small letters, numbers and dashes only, 3 to 20 characters.
+                  </p>
+                  <Input placeholder="e.g. priya-indore" value={form.code}
+                         onChange={(e) => setForm({ ...form, code: e.target.value.toLowerCase().replace(/\s/g, "-") })} />
+                  <p className="text-xs mt-2">
+                    Their link will be:{" "}
+                    <span className="font-mono font-bold break-all">
+                      ezyourlife.com/?ref={form.code || "priya-indore"}
+                    </span>
+                  </p>
+                  {form.code && !/^[a-z0-9-]{3,20}$/.test(form.code) && (
+                    <p className="text-xs mt-1 font-bold text-[#b1430f]">
+                      Not allowed yet: use only small letters, numbers and dashes, 3 to 20 characters.
+                    </p>
+                  )}
+                  {form.code && rows.some((r) => r.code === form.code) && (
+                    <p className="text-xs mt-1 font-bold text-[#b1430f]">This code is already taken.</p>
+                  )}
+                </div>
+
+                <div className="border-2 border-[#121212] bg-[#FFF8EB] p-3">
+                  <label className="block text-sm font-bold">Commission % — their cut of each sale</label>
+                  <p className="text-xs text-neutral-700 mb-2">
+                    The share of the sale amount they earn. 20 means they get 20% of whatever the buyer pays. It is a
+                    percentage, not rupees. 20 is the usual starting point; you can raise it later for someone who
+                    brings real sales.
+                  </p>
+                  <Input placeholder="20" value={form.commission_pct}
+                         onChange={(e) => setForm({ ...form, commission_pct: e.target.value })} />
+                  {(() => {
+                    const pct = Number(form.commission_pct);
+                    if (!Number.isFinite(pct) || pct <= 0) {
+                      return <p className="text-xs mt-2 text-neutral-600">Enter a number between 0 and 50.</p>;
+                    }
+                    if (pct > 50) {
+                      return <p className="text-xs mt-2 font-bold text-[#b1430f]">Too high: 50 is the maximum.</p>;
+                    }
+                    return (
+                      <p className="text-xs mt-2">
+                        At {pct}%, a <strong>₹999</strong> sale earns them <strong>{inr((999 * pct) / 100)}</strong> and
+                        you keep <strong>{inr(999 - (999 * pct) / 100)}</strong>. A ₹1,000 pack earns them{" "}
+                        <strong>{inr((1000 * pct) / 100)}</strong>.
+                      </p>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <p className="text-xs text-neutral-600">
+                Nothing is paid out automatically. Commission only becomes payable after the
+                {" "}{dash.data?.refund_window_days ?? 7}-day refund window closes with no refund, and you still send
+                the money yourself from your bank.
+              </p>
+
+              <Button onClick={addInfluencer}
+                      disabled={!form.name || !/^[a-z0-9-]{3,20}$/.test(form.code) || rows.some((r) => r.code === form.code)}
+                      className="border-2 border-[#121212]">
+                Add influencer
+              </Button>
             </div>
           )}
         </section>
