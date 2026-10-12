@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/ai.ts";
 // Edge function: generate a hero image for a tool via Lovable AI Gateway,
 // upload it to the tool-media storage bucket, and insert a tool_media row.
 // Idempotent per tool_id — skips if media already exists.
