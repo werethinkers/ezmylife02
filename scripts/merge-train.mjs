@@ -108,7 +108,7 @@ for (const c of conflicted) log(`Skipped, conflicts with staging: ${c.branch}\n$
 for (const b of broken) log(`Skipped, breaks the build or check:apps: ${b.branch}\n${b.why}`);
 
 if (push) {
-  git("push origin staging", { stdio: "inherit" });
+  execSync("git push origin staging", { stdio: "inherit" });
   log("Pushed staging.");
 } else {
   log("Not pushed (add --push to push staging).");

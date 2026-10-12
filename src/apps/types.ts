@@ -253,4 +253,4 @@ export interface PresetDef extends BaseDef {
   note?: string;
 }
 
-export type AppDef = DocAppDef | TrackerDef | ChatAppDef | VisionAppDef | ImageAppDef | CustomAppDef | CalcDef | ConvertDef | PresetDef;
+export type { AppDef } from "./appDefs";

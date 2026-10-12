@@ -42,6 +42,7 @@ lines from both sides:
 |---|---|---|
 | A vertical of apps | its own file in `src/apps/defs/`, `src/apps/prices/`, `supabase/functions/_shared/appSpecs/`, `src/data/catalog/` | `src/apps/defs/groups.ts`, `src/apps/prices/groups.ts`, `supabase/functions/_shared/appSpecs/groups.ts`, `src/data/catalog/index.ts` |
 | A page | `src/pages/...` | `src/featureRoutes.tsx` (not `src/App.tsx`) |
+| An engine (a shared shell many apps use) | its own file in `src/apps/engines/`, its def type in its own file | `src/apps/engines/index.ts`, `src/apps/appDefs.ts` |
 
 Rules for union-merged files: every line must stand on its own (one import per line, one entry
 per line, trailing comma), and nothing else goes in them. The build and `npm run check:apps`
@@ -53,6 +54,9 @@ would change the same line:
 - The app count: `APP_COUNT_FALLBACK` in `src/lib/appCount.ts`, `index.html`, `public/llms.txt`, the MCP text.
 - The progress table in `docs/launch-plan.md`.
 - `src/integrations/supabase/types.ts` (Lovable regenerates it).
+
+A new engine still needs its name added to the engine lists in `scripts/check-apps.mjs` and `KIND_BY_ENGINE` in
+`src/data/goals.ts`; those are short and rarely touched by two branches at once.
 
 Edits to shared code (`src/App.tsx`, `ToolViewer`, `Home`, `_shared/llm.ts`) can still conflict.
 Keep them small, and when the train skips a branch, merge `staging` into that branch, fix the

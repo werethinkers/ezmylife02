@@ -6,3 +6,5 @@ src/apps/prices/groups.ts merge=union
 src/data/catalog/index.ts merge=union
 supabase/functions/_shared/appSpecs/groups.ts merge=union
 src/featureRoutes.tsx merge=union
+src/apps/engines/index.ts merge=union
+src/apps/appDefs.ts merge=union
