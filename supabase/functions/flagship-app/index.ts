@@ -4,7 +4,7 @@
 //   final   – the finished result of an interview, upload, plan or pack app: the app's price.
 //   variant – one picture from a photo studio app: the app's price, per picture.
 //   start   – opens a coaching session: the app's price, per session.
-//   ask     – a follow-up question on a finished result: "flagship-followup" (1 credit).
+//   ask     – a follow-up question on a finished result: "flagship-followup" (2 credits).
 //   image   – an AI picture made from a result: "flagship-image" (30 credits).
 // Free steps, capped so they stay cheap: "next" (the next interview question, Flash-Lite, short),
 // and "turn" / "wrap" inside a paid coaching session (a signed session ticket is required).
@@ -256,7 +256,7 @@ Deno.serve(
             return json({ ok: true, output: out });
           }
 
-          // 1 credit: a follow-up question on a finished result.
+          // 2 credits: a follow-up question on a finished result.
           case "ask": {
             const result = typeof body.result === "string" ? body.result.slice(0, MAX_RESULT) : "";
             const history = cleanMessages(body.messages, 8);

@@ -5,10 +5,10 @@ import { LITE } from "./base.ts";
 import { FOLLOWUP_ID, IMAGE_ID } from "./flagship-base.ts";
 
 export const flagshipCommon: Record<string, AppSpec> = {
-  // Flash-Lite, up to ~6k tokens of result in and 1k out: about ₹0.10 a question → 1 credit.
+  // Flash-Lite, up to ~6k tokens of result in and 1k out: about ₹0.10 a question → 1 credit by the 3× rule, raised to the AI minimum of 2 (docs/pricing.md).
   [FOLLOWUP_ID]: {
     kind: "chat",
-    credits: 1,
+    credits: 2,
     model: LITE,
     maxTokens: 1000,
     system:

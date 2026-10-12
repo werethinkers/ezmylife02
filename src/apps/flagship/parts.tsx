@@ -133,7 +133,7 @@ interface Msg {
   content: string;
 }
 
-/** Questions about the finished result, 1 credit each. */
+/** Questions about the finished result, 2 credits each. */
 function FollowUp({ toolId, result }: { toolId: string; result: string }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
@@ -160,7 +160,7 @@ function FollowUp({ toolId, result }: { toolId: string; result: string }) {
   return (
     <div className={card}>
       <p className="text-[15px] font-bold">Ask about your result</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">Ask what anything means, or ask for one part to be rewritten. 1 credit a question.</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Ask what anything means, or ask for one part to be rewritten. 2 credits a question.</p>
       {msgs.length > 0 && (
         <div className="mt-3 space-y-2">
           {msgs.map((m, i) => (
@@ -273,7 +273,7 @@ export function ResultView({
         editable={!!onEdit}
         onEdit={onEdit}
       />
-      {onRefine && <p className="-mt-2 px-1 text-[11px] text-muted-foreground">A revision rewrites the whole result and costs the app's price again. To change one part, ask below for 1 credit.</p>}
+      {onRefine && <p className="-mt-2 px-1 text-[11px] text-muted-foreground">A revision rewrites the whole result and costs the app's price again. To change one part, ask below for 2 credits.</p>}
       <FollowUp toolId={toolId} result={text} />
       {def.pictures && <Pictures toolId={toolId} label={def.pictures.label} ideas={def.pictures.ideas} />}
     </div>
