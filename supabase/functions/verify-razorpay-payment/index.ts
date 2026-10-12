@@ -20,7 +20,10 @@ serve(async (req) => {
   try {
     const keyId = Deno.env.get("RAZORPAY_KEY_ID");
     const secret = Deno.env.get("RAZORPAY_KEY_SECRET");
-    if (!keyId || !secret) throw new Error("Razorpay not configured");
+    if (!keyId || !secret) {
+      console.error("Razorpay env vars missing: keyId=", !!keyId, "secret=", !!secret);
+      throw new Error("Razorpay not configured. Contact support with error code: RAZORPAY_MISSING_CONFIG");
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -84,7 +87,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("verify-razorpay-payment error:", msg);
+    return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500,
     });
   }
