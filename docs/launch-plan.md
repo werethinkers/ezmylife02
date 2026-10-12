@@ -8,17 +8,17 @@ Read it at the start of every phase and update it at the end.
 | Phase | What | Target | Status | Apps added | Running total |
 |---|---|---|---|---|---|
 | 0 | Foundation | 0 | **Done 12 Oct 2026** (two live checks left, see "Open items") | 0 | 154 apps + 104 website and card designs |
-| 1 | Pilot: business documents and legal templates | ~100 | **Done 11 Oct 2026** | 65 | 219 apps |
+| 1 | Pilot: business documents and legal templates | ~100 | **Built 12 Oct 2026, waiting to go live** (Publish, then apply SQL — see "Phase 1 notes") | 64 | 218 apps once live |
 | 2 | New engines: calculator, file converter, photo presets | ~30 | Not started | | |
 | 3 | Preset scale-up, one vertical per chat | ~870 | Not started | | |
 | 4 | AI verticals, one vertical per chat | ~650 | Not started | | |
 | 5 | Invitations and greetings | ~250 | Not started | | |
 | 6 | Clean-up | 0 | Not started | | |
 
-Counts: "apps" are live rows in the `tools_catalog` table (219 on 11 Oct 2026 after Phase 1). The code
-copies in `src/data/catalog/` and older `src/data/toolsDatabase.ts` match row for row. The 104 website, card and
-invitation designs are active rows in `ip_products`. Site copy says "250+" (the real count
-rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
+Counts: "apps" are live rows in the `tools_catalog` table: 154 on 12 Oct 2026, and 218 once the
+Phase 1 SQL is applied. The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
+The 104 website, card and invitation designs are active rows in `ip_products`. Site copy says "215+"
+(218 rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
 
 ## Fixed rules
 
@@ -117,6 +117,46 @@ App counts are targets, not quotas. Stop short if the remaining ideas would be p
 3. Merge to `main` and go live as in "How changes go live".
 4. Update this file: status, apps added, running total, what was skipped and why.
 5. Update the count text to the live number rounded down to the nearest 5: `APP_COUNT_FALLBACK` in `src/lib/appCount.ts`, `index.html`, `public/llms.txt`, and the MCP text in `src/lib/mcp/` and `supabase/functions/mcp/`.
+
+## Phase 1 notes
+
+**64 apps, tool-40 to tool-104** (no tool-78), all on the doc engine, in `src/apps/defs/business-docs.tsx`.
+
+Every app has: a filled "Fill in an example", 3–4 plain steps, placeholders, refine chips for its kind
+(bills, HR letters, agreements, printable forms), apps to go to next, and live sums where there are
+numbers (quotation and invoice totals with GST, salary net pay, EMI, rent and deposit, partner shares,
+milestone billing, appraisal average, time-sheet hours and amount, receipt balance). The worked-out figures
+are sent to the model, which is told to use them as given and not recalculate.
+
+Every engine app already gets these from the shared shell: history saved on every run (synced to the
+account), Bulk mode from a CSV (item tables fit in one cell as `col=value | col=value ; next row`),
+copy, Word, Markdown, print/PDF, WhatsApp, and Email (new: to the saved client, in the body, or as a Word
+attachment). `npm run check:apps` now fails a launch app that has no example value for a required field,
+fewer than 2 steps or fewer than 2 related apps.
+
+Grouping: document apps in HR and Operations no longer say "a sheet that adds up for you"; the give/get
+line follows what the app produces (`giveGetFor` in `src/data/goals.ts`). Quotation Comparison moved to
+Operations, Bill of Sale to Legal, Non-Compete also tagged Legal.
+
+Left out or changed, and why:
+- **tool-78 Invoice Template removed**: the same job as the live Invoice Generator (tool-1).
+- **NDA split**: tool-62 is the one-way NDA; tool-73 is now "Joint Project NDA" (both sides share, with no-poaching).
+- **tool-84 Non-Compete & Non-Solicitation**: Section 27 of the Indian Contract Act makes an agreement restraining
+  anyone from a lawful profession, trade or business void to that extent
+  ([India Code](https://indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf)). So competing is barred only
+  while employed; after exit only poaching customers or staff and using company data.
+- Eviction notice and legal notice no longer state notice periods "the law requires"; they use the period the user picks.
+- LLP Agreement step "File it with the MCA within 30 days" is from
+  [MCA LLP e-filing](https://www.mca.gov.in/MinistryV2/llpefiling.html) (eForm 3 within 30 days of incorporation).
+
+Tested in a browser on 16 apps (tool-40, 45, 50, 53, 55, 60, 61, 62, 65, 69, 73, 77, 84, 92, 98 and 104
+): example fills, totals compute, Bulk mode opens with a filled example row. The AI call itself could not
+run from the test machine (no outside network), so the first live run of each kind is still to be seen.
+
+**Go live in this order:** 1) Abhijay presses Publish in Lovable (site and app definitions); 2) apply
+`supabase/migrations/20261012042353_catalog_businessdocs.sql` through the Lovable database connection
+(insert-only). Applying the SQL first would list apps the live site cannot open yet. 3) Check that the
+`ai-app` function has the new server instructions (see "Open items": not yet confirmed that Publish deploys functions).
 
 ## Open items
 

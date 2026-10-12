@@ -1,5 +1,5 @@
 import { APPS } from "@/apps/registry";
-import { categoryInfo, KIND_BY_ENGINE, type AppKind } from "@/data/goals";
+import { categoryInfo, giveGetFor, KIND_BY_ENGINE, type AppKind } from "@/data/goals";
 
 /**
  * How an app opens, for the plain "how it works" line: worked out from the app's real engine
@@ -9,6 +9,14 @@ export function appKindOf(toolId: string | undefined, category?: string | null):
   const def = toolId ? APPS[toolId] : undefined;
   if (def && def.engine !== "custom") return KIND_BY_ENGINE[def.engine] ?? categoryInfo(category).kind;
   return categoryInfo(category).kind;
+}
+
+/**
+ * "You give / you get" for an app, matched to what the app really produces rather than only
+ * to its category, so a letter in a sheet-heavy category is not described as a sheet.
+ */
+export function appGiveGetOf(toolId: string | undefined, category?: string | null) {
+  return giveGetFor(category, { kind: appKindOf(toolId, category) });
 }
 
 /** Plain one-line purpose from the shared engines (their own intro), when there is one. */

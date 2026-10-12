@@ -21,13 +21,15 @@ export function pageFor(d, app, byId) {
   const goal = d.GOALS.find((g) => g.id === info.goal);
   const kind = def && def.engine !== "custom" ? d.KIND_BY_ENGINE[def.engine] ?? info.kind : info.kind;
   const how = d.KIND_TEXT[kind];
+  // What the app produces, not only what its category usually produces.
+  const { give, get } = d.giveGetFor(app.category, { kind });
   const url = `${SITE}/tool/${slug(app.id)}`;
 
   const { sentence, appSeoTitle, appSeoDescription, appSeoKeywords } = d.seo;
   const intro = sentence(def?.intro ?? app.description);
   const title = appSeoTitle(app.name, app.description);
-  const description = appSeoDescription(app.name, def?.intro ?? app.description, info.give, info.get);
-  const steps = def?.steps?.length ? def.steps : [`Open ${app.name} in your browser. Nothing to install.`, `Give ${info.give}.`, `Get ${info.get}.`];
+  const description = appSeoDescription(app.name, def?.intro ?? app.description, give, get);
+  const steps = def?.steps?.length ? def.steps : [`Open ${app.name} in your browser. Nothing to install.`, `Give ${give}.`, `Get ${get}.`];
   const related = (def?.related ?? []).map((id) => byId.get(id)).filter((t) => t?.isLive);
   const siblings = [...byId.values()].filter((t) => t.isLive && t.category === app.category && t.id !== app.id && !related.includes(t)).slice(0, 12);
   const link = (t) => `<li><a href="/tool/${slug(t.id)}">${esc(t.name)}</a> — ${esc(t.description)}</li>`;
@@ -39,7 +41,7 @@ export function pageFor(d, app, byId) {
         <p>${esc(intro)}</p>
         ${def?.intro && sentence(app.description) !== intro ? `<p>${esc(sentence(app.description))}</p>` : ""}
         <h2>What you give and what you get</h2>
-        <p>You give ${esc(info.give)}. You get ${esc(info.get)}. ${esc(how.line)}</p>
+        <p>You give ${esc(give)}. You get ${esc(get)}. ${esc(how.line)}</p>
         <h2>How ${esc(app.name)} works</h2>
         <ol>${steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
         <h2>What it costs</h2>

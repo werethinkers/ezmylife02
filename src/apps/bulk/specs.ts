@@ -3,9 +3,10 @@ import { getBulkConfig } from "@/data/bulkTools";
 import { APPS } from "../registry";
 import { runApp } from "../lib/api";
 import { dataUrlToBlob, fileText, imageToDataUrl, markdownToHtml, openPdf, pdfPageImage, pdfPageText, toCsv } from "../lib/files";
+import { serializeValues } from "../shell/Fields";
 import { googleBusinessBulk } from "../google-business/bulk";
 import type { BulkColumn, BulkEnv, BulkResult, BulkSpec, RowsBulk } from "./types";
-import type { AppDef, DocAppDef, FormValues } from "../types";
+import type { AppDef, DocAppDef, Field, FormValues, RowColumn } from "../types";
 
 /*
  * Bulk Mode for every app. Each app gets one of:
@@ -43,22 +44,76 @@ const htmlDoc = (title: string, body: string) =>
 
 // ───────────── Generic builders for engine apps ─────────────
 
+/*
+ * Bulk mode runs one app per CSV row, so an app's item table has to fit in a single cell.
+ * The shape is `col=value | col=value ; col=value | col=value` — pipes between columns,
+ * semicolons between rows — and the template's example cell shows it filled in. Plain
+ * values in column order work too, for someone who would rather not type the keys.
+ */
+const ROW_SEP = ";";
+const COL_SEP = "|";
+
+function flattenRowsCell(rows: Record<string, string>[], cols: RowColumn[]): string {
+  return rows
+    .filter((r) => cols.some((c) => (r[c.key] ?? "").trim()))
+    .map((r) =>
+      cols
+        .filter((c) => (r[c.key] ?? "").trim())
+        .map((c) => `${c.key}=${r[c.key]}`)
+        .join(` ${COL_SEP} `),
+    )
+    .join(`${ROW_SEP} `);
+}
+
+function parseRowsCell(text: string, cols: RowColumn[]): Record<string, string>[] {
+  const keys = cols.map((c) => c.key);
+  return text
+    .split(ROW_SEP)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const row: Record<string, string> = {};
+      const cells = part.split(COL_SEP).map((c) => c.trim());
+      cells.forEach((cell, i) => {
+        if (!cell) return;
+        const named = cell.match(/^([A-Za-z0-9_]+)\s*=\s*([\s\S]*)$/);
+        if (named && keys.includes(named[1])) row[named[1]] = named[2].trim();
+        else if (keys[i]) row[keys[i]] = cell;
+      });
+      return row;
+    })
+    .filter((r) => Object.values(r).some((v) => v?.trim()));
+}
+
 function docBulk(toolId: string, def: DocAppDef): RowsBulk {
-  const fields = def.fields.filter((f) => f.type !== "chips" || true);
-  const columns: BulkColumn[] = fields.map((f) => ({ key: f.key, label: f.label, required: f.required, example: def.sample?.[f.key] ?? f.placeholder }));
+  const fields = def.fields;
+  // The example cell: a plain sample value, an item table flattened to one cell, or the hint.
+  const exampleFor = (f: Field) => {
+    const v = def.sample?.[f.key];
+    if (Array.isArray(v)) return f.columns ? flattenRowsCell(v, f.columns) : undefined;
+    if (typeof v === "string" && v) return v;
+    // A date cell is useless without the expected format, and a fixed date would go stale.
+    if (f.type === "date") return f.placeholder ?? "YYYY-MM-DD";
+    if (f.type === "select" && f.options?.length) return f.placeholder ?? f.options[0];
+    return f.placeholder;
+  };
+  const columns: BulkColumn[] = fields.map((f) => ({ key: f.key, label: f.label, required: f.required, example: exampleFor(f) }));
+  const tables = fields.filter((f) => f.type === "rows").map((f) => f.label);
   return {
     mode: "rows",
     columns,
-    note: `One ${def.fileName.replace(/-/g, " ")} per row. Leave a cell empty and it becomes a [placeholder].`,
+    note:
+      `One ${def.fileName.replace(/-/g, " ")} per row. Leave a cell empty and it becomes a [placeholder].` +
+      (tables.length ? ` For ${tables.join(" and ")}, put the whole table in the cell as \`col=value ${COL_SEP} col=value ${ROW_SEP} next row\` — the example row shows the shape.` : ""),
     run: async (row, env) => {
       const values: FormValues = {};
-      const inputs: Record<string, string> = {};
       for (const f of fields) {
-        const v = (row[f.key] ?? "").trim() || (f.profile ? env.profile[f.profile] ?? "" : "");
-        values[f.key] = v;
-        if (v) inputs[f.label] = v;
+        const raw = (row[f.key] ?? "").trim();
+        if (f.type === "rows") values[f.key] = raw && f.columns ? parseRowsCell(raw, f.columns) : [];
+        else values[f.key] = raw || (f.profile ? env.profile[f.profile] ?? "" : "");
       }
-      Object.assign(inputs, def.compute?.(values) ?? {});
+      // Same inputs the form would send, so totals and tables come out identical.
+      const inputs = { ...serializeValues(fields, values), ...(def.compute?.(values) ?? {}) };
       const out = await runApp<string>(toolId, { inputs, action: "generate" });
       return md(`${def.fileName}-${slug(first(row))}`, out);
     },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Copy, Download, FileText, Loader2, Printer, Send, Share2, Wand2 } from "lucide-react";
+import { Check, Copy, Download, FileText, Loader2, Mail, Printer, Send, Share2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +16,27 @@ import { Markdown } from "@/components/common/Markdown";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { downloadText, downloadWord, printMarkdown } from "../lib/files";
 import { sendHandoff } from "../lib/handoff";
+import { useWorkContext } from "../lib/context";
 import { cn } from "@/lib/utils";
+
+/** Markdown stripped back to something that reads correctly in WhatsApp or an email body. */
+function plainText(md: string): string {
+  return md
+    .replace(/^\s*#{1,6}\s*/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)\*(?!\s)(.+?)\*/g, "$1$2")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/`/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Most mail clients cut a mailto body somewhere past 2,000 characters. */
+const MAILTO_BODY_LIMIT = 1800;
 
 /**
  * Shows an AI result with the same actions everywhere: copy, Word, Markdown, print/PDF,
- * WhatsApp, refine with an instruction, and send it on to another app.
+ * WhatsApp, email, refine with an instruction, and send it on to another app.
  */
 export function OutputPanel({
   toolId,
@@ -51,9 +67,11 @@ export function OutputPanel({
   const [instruction, setInstruction] = useState("");
   const [editing, setEditing] = useState(false);
   const navigate = useNavigate();
+  const { ctx } = useWorkContext();
   const { data: catalog = [] } = useToolsCatalog();
   const targets = (sendTo ?? []).map((id) => catalog.find((t) => t.id === id && t.is_live)).filter(Boolean) as typeof catalog;
   const fromName = catalog.find((t) => t.id === toolId)?.name ?? "another app";
+  const clientEmail = ctx.client?.email?.trim() || undefined;
 
   const copy = async () => {
     try {
@@ -75,6 +93,33 @@ export function OutputPanel({
   const whatsapp = () => {
     const plain = text.replace(/\*\*(.+?)\*\*/g, "*$1*").replace(/^#+\s*/gm, "").slice(0, 3500);
     window.open(`https://wa.me/?text=${encodeURIComponent(plain)}`, "_blank", "noopener,noreferrer");
+  };
+
+  /** Opens the person's mail app with the result in the body, to the saved client if there is one. */
+  const email = async (to = "") => {
+    const body = plainText(text);
+    const long = body.length > MAILTO_BODY_LIMIT;
+    if (long) {
+      try {
+        await navigator.clipboard.writeText(body);
+        toast.success("Full document copied — paste it into the email that just opened.");
+      } catch {
+        toast.info("This document is long, so the email may be cut short. Attach the Word file instead.");
+      }
+    }
+    const qs = new URLSearchParams({ subject: title, body: long ? `${body.slice(0, MAILTO_BODY_LIMIT)}\n\n…` : body });
+    window.location.href = `mailto:${encodeURIComponent(to)}?${qs.toString().replace(/\+/g, "%20")}`;
+  };
+
+  const emailAsAttachment = () => {
+    downloadWord(text, fileName, title);
+    toast.success("Word file saved — attach it to the email that just opened.");
+    window.location.href = `mailto:${encodeURIComponent(clientEmail ?? "")}?${new URLSearchParams({
+      subject: title,
+      body: `Dear Sir / Madam,\n\nPlease find the ${title.toLowerCase()} attached.\n\nRegards,\n`,
+    })
+      .toString()
+      .replace(/\+/g, "%20")}`;
   };
 
   return (
@@ -120,6 +165,24 @@ export function OutputPanel({
             <Share2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">WhatsApp</span>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 gap-1.5">
+                <Mail className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Email</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {clientEmail && (
+                <>
+                  <DropdownMenuItem onClick={() => void email(clientEmail)}>Email to {clientEmail}</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={() => void email()}>Email in the message body</DropdownMenuItem>
+              <DropdownMenuItem onClick={emailAsAttachment}>Email as a Word attachment</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {targets.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

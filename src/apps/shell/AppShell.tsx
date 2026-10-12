@@ -6,7 +6,7 @@ import { AppIcon } from "@/components/store/AppIcon";
 import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { cn } from "@/lib/utils";
 import { GiveGet } from "@/components/brand/GiveGet";
-import { categoryInfo } from "@/data/goals";
+import { appGiveGetOf } from "@/data/appKind";
 
 /**
  * The common frame for every app built on the shared engines, so all of them look and behave
@@ -52,7 +52,7 @@ export function AppShell({
         </div>
       </header>
 
-      {tool?.category && <GiveGet className="mt-4 max-w-2xl" give={categoryInfo(tool.category).give} get={categoryInfo(tool.category).get} time={null} />}
+      {tool?.category && <GiveGet className="mt-4 max-w-2xl" {...appGiveGetOf(toolId, tool.category)} time={null} />}
 
       {steps && steps.length > 0 && (
         <ol className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1 text-[13px] font-semibold text-ink no-scrollbar" aria-label="How to use it">

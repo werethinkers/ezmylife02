@@ -66,7 +66,7 @@ export const SmartAssistantChatbot = () => {
         {
           role: "assistant",
           content:
-            "✅ Got it! Your request is **registered with the EZYOURLIFE team**. We'll build or update the app and email you within **24-48 hours**.\n\nMeanwhile, want to explore [150+ live apps](/ai-apps)?",
+            "✅ Got it! Your request is **registered with the EZYOURLIFE team**. We'll build or update the app and email you within **24-48 hours**.\n\nMeanwhile, want to explore [215+ live apps](/ai-apps)?",
         },
       ]);
     } catch (e: any) {

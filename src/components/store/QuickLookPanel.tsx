@@ -18,7 +18,7 @@ import { PricePill } from "./PricePill";
 import { cn } from "@/lib/utils";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { categoryInfo, goalOf, KIND_TEXT } from "@/data/goals";
-import { appIntroOf, appKindOf } from "@/data/appKind";
+import { appGiveGetOf, appIntroOf, appKindOf } from "@/data/appKind";
 
 /*
  * Quick Look: tap any app to see its screenshots, price and an Open button in a sheet
@@ -125,7 +125,7 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
           <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{appIntroOf(toolId) ?? tool.description}</p>
         </section>
 
-        <GiveGet give={categoryInfo(tool.category).give} get={categoryInfo(tool.category).get} time={null} />
+        <GiveGet {...appGiveGetOf(toolId, tool.category)} time={null} />
 
         <section className="border-l-[6px] border-ink pl-3">
           <p className="text-[15px] font-bold">{KIND_TEXT[appKindOf(toolId, tool.category)].title}</p>

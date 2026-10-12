@@ -1,6 +1,6 @@
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { useToolMedia } from "@/hooks/useToolMedia";
-import { categoryInfo, goalOf } from "@/data/goals";
+import { giveGetFor, goalOf } from "@/data/goals";
 import { AppIcon } from "./AppIcon";
 import { PricePill } from "./PricePill";
 import { useQuickLook } from "./QuickLook";
@@ -26,7 +26,7 @@ export function AppTile({
   const { openQuickLook } = useQuickLook();
   const media = useToolMedia(tool.id, tool.category);
   const goal = goalOf(tool.category);
-  const info = categoryInfo(tool.category);
+  const info = giveGetFor(tool.category, { toolTypes: tool.tool_types });
   return (
     <div
       role="button"
@@ -76,7 +76,7 @@ export function AppTile({
 /** Compact row: icon, name, what you get, price pill. Optional rank number on the left. */
 export function AppRow({ tool, rank, className }: { tool: CatalogTool; rank?: number; className?: string }) {
   const { openQuickLook } = useQuickLook();
-  const info = categoryInfo(tool.category);
+  const info = giveGetFor(tool.category, { toolTypes: tool.tool_types });
   return (
     <div
       role="button"

@@ -50,6 +50,7 @@ export async function loadApps() {
       KIND_TEXT: goals.KIND_TEXT,
       KIND_BY_ENGINE: goals.KIND_BY_ENGINE,
       categoryInfo: goals.categoryInfo,
+      giveGetFor: goals.giveGetFor,
       nativeIds,
       seo,
     };

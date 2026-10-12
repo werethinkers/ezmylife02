@@ -76,8 +76,8 @@ export interface DocAppDef extends BaseDef {
   /** Live panel shown under the form (calculators, previews). */
   preview?: (v: FormValues) => ReactNode;
   refineChips?: string[];
-  /** Example values to show what a good input looks like. */
-  sample?: Record<string, string>;
+  /** Example values to show what a good input looks like, item tables included. */
+  sample?: FormValues;
   /** Name of the document for downloads, e.g. "safety-protocol". */
   fileName: string;
 }

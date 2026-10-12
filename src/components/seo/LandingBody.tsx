@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/store/AppIcon";
-import { categoryInfo } from "@/data/goals";
+import { giveGetFor } from "@/data/goals";
 import SEOFooter from "@/components/SEOFooter";
 
 export interface LandingTool {
@@ -10,6 +10,7 @@ export interface LandingTool {
   name: string;
   description: string | null;
   category: string | null;
+  tool_types?: string[] | null;
 }
 
 /**
@@ -76,7 +77,7 @@ export function LandingBody({
                     </div>
                   </div>
                   {t.description && <p className="line-clamp-2 text-sm text-muted-foreground">{t.description}</p>}
-                  <p className="text-sm font-semibold">You get {categoryInfo(t.category).get}</p>
+                  <p className="text-sm font-semibold">You get {giveGetFor(t.category, { toolTypes: t.tool_types }).get}</p>
                   <span className="mt-auto inline-flex items-center gap-1 text-sm font-bold">
                     Open the app <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </span>

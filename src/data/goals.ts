@@ -43,6 +43,9 @@ interface CategoryInfo {
   give: string;
   get: string;
   kind: AppKind;
+  /** Wording for apps here that write a document instead of filling a sheet (see giveGetFor). */
+  docGive?: string;
+  docGet?: string;
 }
 
 export const CATEGORY_INFO: Record<string, CategoryInfo> = {
@@ -51,8 +54,8 @@ export const CATEGORY_INFO: Record<string, CategoryInfo> = {
   Networking: { goal: "customers", line: "Remember the people you meet and follow up.", give: "who you met and where", get: "a follow-up you can send", kind: "quick" },
   "Finance & Accounting": { goal: "business", line: "Bills, expenses, tax and profit.", give: "amounts and customer details", get: "a ready document or sum", kind: "document" },
   "Legal & Compliance": { goal: "business", line: "Contracts, notices and rules in plain words.", give: "names, dates and what was agreed", get: "a ready legal document", kind: "document" },
-  "HR & Staffing": { goal: "business", line: "Hire people, track attendance and pay salaries.", give: "your staff details", get: "a filled sheet or document", kind: "sheet" },
-  "Operations & Inventory": { goal: "business", line: "Stock, shifts, repairs and quality checks.", give: "your stock or task list", get: "a sheet that adds up for you", kind: "sheet" },
+  "HR & Staffing": { goal: "business", line: "Hire people, track attendance and pay salaries.", give: "your staff details", get: "a filled sheet or document", kind: "sheet", docGive: "the employee's details", docGet: "a ready letter or form" },
+  "Operations & Inventory": { goal: "business", line: "Stock, shifts, repairs and quality checks.", give: "your stock or task list", get: "a sheet that adds up for you", kind: "sheet", docGive: "the order or job details", docGet: "a ready document to print" },
   "Image Tools": { goal: "content", line: "Edit, resize and fix photos.", give: "a photo from your phone", get: "the edited photo to download", kind: "photo" },
   "AI Image Generation": { goal: "content", line: "Turn product photos into studio pictures.", give: "a product photo", get: "studio-style pictures", kind: "photo" },
   Content: { goal: "content", line: "Pull text from images, make quizzes and sketches.", give: "a file or a topic", get: "text, pictures or a quiz", kind: "document" },
@@ -70,6 +73,25 @@ export const CATEGORY_INFO: Record<string, CategoryInfo> = {
 const FALLBACK: CategoryInfo = { goal: "more", line: "", give: "a few details", get: "your result", kind: "document" };
 
 export const categoryInfo = (category?: string | null): CategoryInfo => (category && CATEGORY_INFO[category]) || FALLBACK;
+
+/**
+ * "You give / you get" for one app. A category can hold both sheets and documents (a staff
+ * register and an offer letter are both HR), so the category's sheet wording would be wrong
+ * on a letter. Say what the app produces either with `kind` (from appKindOf, exact — it reads
+ * the app's engine) or with `toolTypes` from the catalogue row, which lists are built from
+ * and which must not pull the whole app registry into the page.
+ */
+export function giveGetFor(
+  category: string | null | undefined,
+  produces: { kind?: AppKind; toolTypes?: string[] | null } = {},
+): { give: string; get: string } {
+  const info = categoryInfo(category);
+  const kind = produces.kind ?? (produces.toolTypes?.includes("Document Tools") ? "document" : info.kind);
+  if (kind === "document" && info.kind === "sheet") {
+    return { give: info.docGive ?? info.give, get: info.docGet ?? "a ready document" };
+  }
+  return { give: info.give, get: info.get };
+}
 export const goalOf = (category?: string | null): Goal => GOALS.find((g) => g.id === categoryInfo(category).goal)!;
 export const goalById = (id?: string | null): Goal | undefined => GOALS.find((g) => g.id === id);
 

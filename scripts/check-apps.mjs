@@ -90,6 +90,20 @@ for (const [group, rows] of Object.entries(d.CATALOG_GROUPS)) {
     const key = norm(t.description);
     if (descs.has(key)) err(`${where}: same description as "${descs.get(key)}" — two apps must differ in something real`);
     else descs.set(key, t.id);
+
+    // A launch app has to be usable on sight: an example to fill in, steps, and apps to go to next.
+    if (def) {
+      if ((def.steps ?? []).length < 2) err(`${where}: needs at least 2 "how it works" steps`);
+      if ((def.related ?? []).length < 2) err(`${where}: needs at least 2 related apps`);
+      const filled = (v) => (typeof v === "string" ? v.trim().length > 0 : Array.isArray(v) && v.length > 0);
+      for (const f of def.fields ?? []) {
+        // Dates are exempt: a fixed example date goes stale, and the field has a picker.
+        if (!f.required || f.type === "date") continue;
+        if (!filled(def.sample?.[f.key]) && !filled(f.default)) {
+          err(`${where}: required field "${f.key}" has no sample value, so "Fill in an example" and the Bulk mode template are incomplete`);
+        }
+      }
+    }
   }
 }
 

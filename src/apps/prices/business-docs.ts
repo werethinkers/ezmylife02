@@ -57,7 +57,6 @@ export const businessDocs: Record<string, number> = {
   "tool-75": 2,
   "tool-76": 1,
   "tool-77": 2,
-  "tool-78": 1,
   "tool-79": 1,
   "tool-80": 1,
   "tool-81": 1,
