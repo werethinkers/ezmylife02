@@ -5,7 +5,7 @@ The AI key (LOVABLE_API_KEY) and your 5 Gemini keys are saved. Three apps (ai-ap
 
 ## Fix
 1. Check the key works. If the AI service says it isn't registered, issue a new one (rotate once) and redeploy.
-   - Studio apps (the 200 studios) already use the shared helper through flagship-app. Their failure cause isn't confirmed yet. Read flagship-app's logs and run one text test and one image test to find it. Likely causes: an unregistered Lovable key, or Gemini keys that are invalid or out of quota. Then fix what the logs show, including deactivating dead keys and making the fallback also cover 401/403/400 key errors. Redeploy flagship-app and retest 3 studios.
+   - Studio apps (the 200 studios) already use the shared helper through flagship-app. flagship-app and ai-app are live: an unsigned request gets the expected "please sign in" reply. They have no recent error logs, so the failure cause isn't confirmed yet. Step one: sign in as you, run 3 studios in the preview, and capture the real error from the browser and the gateway logs. Likely causes: an unregistered Lovable key, Gemini keys that are invalid or out of quota, or a timeout on long studio runs. Then fix what we actually find, including deactivating dead keys and making the fallback also cover 401/403/400 key errors. Redeploy flagship-app and retest the same 3 studios until they return results.
 2. Add one shared helper, `_shared/ai.ts`, with:
    - `AI` constants: the gateway address, the default text model, the default image model.
    - `getAiKey()`: returns the Lovable key, or throws a clear error if it's missing.
