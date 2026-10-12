@@ -74,3 +74,19 @@ verify_jwt = false
 
 [functions.ip-checkout]
 verify_jwt = false
+
+# Influencer programme and refunds. Each one checks authorisation in its own
+# code: influencer-track needs none (it only records a click for a live code),
+# and the other three verify the caller holds the admin role before doing
+# anything. This matches how the other functions here are configured.
+[functions.influencer-track]
+verify_jwt = false
+
+[functions.influencer-sync]
+verify_jwt = false
+
+[functions.influencer-create-login]
+verify_jwt = false
+
+[functions.refund-process]
+verify_jwt = false
