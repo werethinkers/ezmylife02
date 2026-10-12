@@ -13,7 +13,7 @@ import { ProductRenderer } from "@/instant/renderers";
 import { FieldInput } from "@/instant/builder/FieldInput";
 import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
-import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages } from "@/instant/api";
+import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages, publishPrepaid } from "@/instant/api";
 import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
@@ -119,6 +119,16 @@ function BuilderInner({ product }: { product: Product }) {
         if (!r.ok) throw new Error("Couldn't update the live page.");
         checkout({ action: "updated", page_id: id }).catch(() => undefined); // WhatsApp + email confirmation
         toast({ title: "Live page updated" });
+        navigate(`/create/done/${id}`); return;
+      }
+
+      // The ₹999 kit prepays one business website and one visiting card. If this
+      // page is covered by an unused one, it publishes free and no payment opens.
+      setBusy("Checking your kit…");
+      const prepaid = await publishPrepaid(id);
+      if (prepaid?.ok) {
+        try { localStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+        toast({ title: "Published with your kit", description: "This one was already paid for." });
         navigate(`/create/done/${id}`); return;
       }
 

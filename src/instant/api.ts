@@ -136,3 +136,15 @@ export async function setOgImage(id: string, url: string) {
   const { error } = await db.from("ip_pages").update({ og_image: url }).eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Publishes a page the ₹999 kit already paid for. Returns null when the page is
+ * not covered, so the caller falls through to the normal paid checkout.
+ */
+export async function publishPrepaid(pageId: string): Promise<{ ok: true; slug: string } | null> {
+  const { data, error } = await (supabase as unknown as {
+    rpc: (n: string, a: Record<string, unknown>) => Promise<{ data: { ok?: boolean; slug?: string } | null; error: { message: string } | null }>;
+  }).rpc("ip_publish_prepaid", { _page_id: pageId });
+  if (error || !data?.ok) return null;
+  return { ok: true, slug: data.slug ?? "" };
+}

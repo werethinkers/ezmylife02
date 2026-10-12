@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Inbox, Pencil, Plus, Share2, Trash2, EyeOff, Globe } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -11,14 +11,82 @@ import { deleteDraft, leadCounts, myPages, republish, unpublish, type PageRow } 
 import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
 import { useLinkPreview } from "@/instant/linkPreview";
+import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@/hooks/useWallet";
 
 const STATUS: Record<PageRow["status"], [string, string]> = {
   draft: ["Draft", "bg-muted text-muted-foreground"], pending_payment: ["Awaiting payment", "bg-amber-100 text-amber-800"],
   published: ["Live", "bg-green-100 text-green-800"], unpublished: ["Offline", "bg-muted text-muted-foreground"], removed: ["Removed", "bg-red-100 text-red-800"],
 };
 
+/**
+ * What the ₹999 kit handed over: the credits, and the website and visiting card
+ * that are already paid for. Shown only to someone who has bought a kit.
+ * ?kit=1 means they have just come back from paying.
+ */
+function KitPanel({ justBought }: { justBought: boolean }) {
+  const ents = useQuery({
+    queryKey: ["kit-entitlements"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("kit_my_entitlements");
+      if (error) throw new Error(error.message);
+      return (data ?? []) as { id: string; scope: "business" | "card"; used: boolean; page_id: string | null }[];
+    },
+  });
+  const wallet = useWallet();
+
+  const rows = ents.data ?? [];
+  if (rows.length === 0) return null;
+
+  const left = (scope: "business" | "card") => rows.filter((r) => r.scope === scope && !r.used).length;
+  const items = [
+    { scope: "business" as const, title: "A website for your business", where: "/websites",
+      body: "Pick any business design, add your name, photos and prices, then publish. Publishing is already paid for." },
+    { scope: "card" as const, title: "A digital visiting card", where: "/create/digital-visiting-card",
+      body: "Your name, number and WhatsApp on one link you can send to anyone. Publishing is already paid for." },
+  ];
+
+  return (
+    <section className="mb-6 grid gap-3 rounded-3xl border-2 border-ink bg-sand/60 p-5">
+      <div>
+        <h2 className="font-display text-xl font-extrabold">
+          {justBought ? "Thank you. Here is everything in your kit." : "Your kit"}
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          {wallet.isLoading
+            ? "Your credits are in your wallet."
+            : `${wallet.total.toLocaleString("en-IN")} credits are in your wallet.`}{" "}
+          These two are paid for, so publishing them costs you nothing.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((it) => {
+          const n = left(it.scope);
+          return (
+            <div key={it.scope} className="grid gap-2 rounded-2xl border-2 border-ink bg-card p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-bold">{it.title}</h3>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${n > 0 ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}`}>
+                  {n > 0 ? "Paid for · not made yet" : "Used"}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{it.body}</p>
+              {n > 0 && <Button asChild size="sm" className="w-fit"><Link to={it.where}>Make it now</Link></Button>}
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Credits are spent only when an app gives you a result. Anything you make beyond these two is priced as usual.
+      </p>
+    </section>
+  );
+}
+
 export default function MyPages() {
   const qc = useQueryClient();
+  const [params] = useSearchParams();
+  const justBought = params.get("kit") === "1";
   const { toast } = useToast();
   const pages = useQuery({ queryKey: ["ip-my-pages"], queryFn: myPages });
   const counts = useQuery({ queryKey: ["ip-lead-counts"], queryFn: leadCounts });
@@ -41,6 +109,8 @@ export default function MyPages() {
           </div>
           <Button asChild><Link to="/create"><Plus className="h-4 w-4" /> Make something</Link></Button>
         </div>
+        <KitPanel justBought={justBought} />
+
         {pages.isLoading && <p className="text-muted-foreground">Loading…</p>}
         {pages.data && pages.data.length === 0 && (
           <div className="grid gap-3 rounded-3xl border-2 border-dashed border-ink/60 bg-sand/60 p-10 text-center">
