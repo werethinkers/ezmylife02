@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_answer_cache: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          key: string
+          output: Json
+          tool_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          key: string
+          output: Json
+          tool_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          key?: string
+          output?: Json
+          tool_id?: string
+        }
+        Relationships: []
+      }
       bulk_jobs: {
         Row: {
           completed_at: string | null
@@ -1586,6 +1610,7 @@ export type Database = {
         Row: {
           cost_inr: number
           credit_cost: number
+          is_image: boolean
           tool_id: string
           updated_at: string
           updated_by: string | null
@@ -1593,6 +1618,7 @@ export type Database = {
         Insert: {
           cost_inr?: number
           credit_cost?: number
+          is_image?: boolean
           tool_id: string
           updated_at?: string
           updated_by?: string | null
@@ -1600,6 +1626,7 @@ export type Database = {
         Update: {
           cost_inr?: number
           credit_cost?: number
+          is_image?: boolean
           tool_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -2219,6 +2246,7 @@ export type Database = {
       }
       compute_credit_cost: { Args: { _cost_inr: number }; Returns: number }
       ensure_wallet: { Args: { _uid: string }; Returns: undefined }
+      free_image_runs_used: { Args: { _uid: string }; Returns: number }
       get_tool_view_counts: {
         Args: { _tool_ids: string[] }
         Returns: {
@@ -2262,6 +2290,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      image_runs_affordable: {
+        Args: { _per: number; _uid: string }
+        Returns: number
       }
       influencer_approve_due: { Args: never; Returns: number }
       influencer_assert_admin: { Args: never; Returns: undefined }
