@@ -152,7 +152,7 @@ const Credits = () => {
           </p>
           <ol className="mt-6 grid gap-3 sm:grid-cols-3">
             {[
-              { t: "Every app shows its price", s: "Most apps use 1 credit a result. Bigger jobs show more." },
+              { t: "Every app shows its price", s: "Browser apps use 1 credit, AI apps start at 2. Bigger jobs show more." },
               { t: "Credits only when it works", s: "If an app fails, you are not charged." },
               { t: "Free to start", s: "50 free credits when you sign up, 50 more after your first run." },
             ].map((x, i) => (
