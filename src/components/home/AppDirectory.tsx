@@ -230,8 +230,14 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
               <span className="text-[14px] text-muted-foreground">
                 {count(b)} · {b.line}
               </span>
+              {b.groups.length > 1 && (
+                <span className="w-full text-[13px] font-semibold text-muted-foreground sm:hidden">
+                  {b.groups.length} categories · swipe to see all →
+                </span>
+              )}
             </div>
-            <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Phones: one swipeable row per goal, so the page stays short. Larger screens: a grid. */}
+            <div className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-4 px-4 pb-3 pt-1 no-scrollbar sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
               {b.groups.map((g) => {
                 const k = `${b.id}:${g.name}`;
                 const expanded = !!query || open.has(k);
@@ -239,7 +245,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                 const more = g.items.length - SHOWN;
                 const seeAll = b.id === DESIGNS ? (WEBSITE_CATEGORIES as readonly string[]).includes(DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id ?? "") ? "/websites" : `/cards?cat=${DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id}` : `/ai-apps?category=${encodeURIComponent(g.name)}`;
                 return (
-                  <section key={k} className="block-card overflow-hidden" aria-label={g.name}>
+                  <section key={k} className="block-card w-[84%] shrink-0 snap-start overflow-hidden sm:w-auto" aria-label={g.name}>
                     <div className="flex items-start justify-between gap-3 border-b-2 border-ink px-4 py-3" style={{ background: g.color }}>
                       <div className="min-w-0">
                         <Link to={seeAll} className="font-bold leading-tight hover:underline">
