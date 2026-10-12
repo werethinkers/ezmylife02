@@ -1,0 +1,18 @@
+# Build and app checks on every PR into staging or main, and on every push to staging.
+name: Checks
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-package-lock --no-audit --no-fund
+      - run: npm run build
+      - run: npm run check:apps

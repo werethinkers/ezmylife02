@@ -3,7 +3,7 @@ import { billed } from "../_shared/billing.ts";
 
 // Every request is signed-in-checked and, for paid actions, charged on the server.
 const serve = (handler: (req: Request) => Promise<Response>) =>
-  stdServe(billed({ tool: "video-keyframe", defaultCredits: () => 12 }, (req) => handler(req)));
+  stdServe(billed({ tool: "video-keyframe", defaultCredits: () => 31, isImage: () => true }, (req) => handler(req)));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

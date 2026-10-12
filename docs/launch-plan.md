@@ -50,14 +50,14 @@ For catalogue rows the SQL is insert-only (`ON CONFLICT (id) DO NOTHING`), so ap
 
 ## How an app is made
 
-Each app has the same id in four places. One file per vertical in each, plus one line in the index next to it:
+Each app has the same id in four places. One file per vertical in each, plus one import line and one entry line in the index next to it (these index files merge with git's union driver; see `docs/branching.md`):
 
 | Piece | Folder | Index |
 |---|---|---|
 | Catalogue row (name, description, category) | `src/data/catalog/<vertical>.ts` | `src/data/catalog/index.ts` |
-| App definition (form, engine) | `src/apps/defs/<vertical>.tsx` | `src/apps/registry.ts` |
-| Server instructions and price charged | `supabase/functions/_shared/appSpecs/<vertical>.ts` | `supabase/functions/_shared/appSpecs.ts` |
-| Price shown on the page | `src/apps/prices/<vertical>.ts` | `src/apps/prices.ts` |
+| App definition (form, engine) | `src/apps/defs/<vertical>.tsx` | `src/apps/defs/groups.ts` |
+| Server instructions and price charged | `supabase/functions/_shared/appSpecs/<vertical>.ts` | `supabase/functions/_shared/appSpecs/groups.ts` |
+| Price shown on the page | `src/apps/prices/<vertical>.ts` | `src/apps/prices/groups.ts` |
 
 Steps for a batch:
 

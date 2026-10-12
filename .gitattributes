@@ -1,0 +1,10 @@
+# Lists that every new vertical or page adds a line to. Git's "union" merge keeps the lines from
+# both sides, so branches that each add one never conflict. Every line in these files must stand
+# on its own (see docs/branching.md). The build and `npm run check:apps` catch a bad union.
+src/apps/defs/groups.ts merge=union
+src/apps/prices/groups.ts merge=union
+src/data/catalog/index.ts merge=union
+supabase/functions/_shared/appSpecs/groups.ts merge=union
+src/featureRoutes.tsx merge=union
+src/apps/engines/index.ts merge=union
+src/apps/appDefs.ts merge=union

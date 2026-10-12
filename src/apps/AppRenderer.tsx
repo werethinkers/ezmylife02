@@ -1,15 +1,7 @@
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { APPS } from "./registry";
-
-const DocApp = lazy(() => import("./engines/DocApp"));
-const TrackerApp = lazy(() => import("./engines/TrackerApp"));
-const ChatApp = lazy(() => import("./engines/ChatApp"));
-const VisionApp = lazy(() => import("./engines/VisionApp"));
-const ImageGenApp = lazy(() => import("./engines/ImageGenApp"));
-const CalcApp = lazy(() => import("./engines/CalcApp"));
-const ConvertApp = lazy(() => import("./engines/ConvertApp"));
-const PresetApp = lazy(() => import("./engines/PresetApp"));
+import { ENGINES } from "./engines";
 
 const Loading = () => (
   <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -21,27 +13,18 @@ const Loading = () => (
 export default function AppRenderer({ toolId }: { toolId: string }) {
   const def = APPS[toolId];
   if (!def) return null;
+  if (def.engine === "custom") {
+    return (
+      <Suspense fallback={<Loading />}>
+        <def.component toolId={toolId} />
+      </Suspense>
+    );
+  }
+  const Engine = ENGINES[def.engine];
+  if (!Engine) return null;
   return (
     <Suspense fallback={<Loading />}>
-      {def.engine === "doc" ? (
-        <DocApp toolId={toolId} def={def} />
-      ) : def.engine === "tracker" ? (
-        <TrackerApp toolId={toolId} def={def} />
-      ) : def.engine === "chat" ? (
-        <ChatApp toolId={toolId} def={def} />
-      ) : def.engine === "vision" ? (
-        <VisionApp toolId={toolId} def={def} />
-      ) : def.engine === "image" ? (
-        <ImageGenApp toolId={toolId} def={def} />
-      ) : def.engine === "calc" ? (
-        <CalcApp toolId={toolId} def={def} />
-      ) : def.engine === "convert" ? (
-        <ConvertApp toolId={toolId} def={def} />
-      ) : def.engine === "preset" ? (
-        <PresetApp toolId={toolId} def={def} />
-      ) : (
-        <def.component toolId={toolId} />
-      )}
+      <Engine toolId={toolId} def={def} />
     </Suspense>
   );
 }

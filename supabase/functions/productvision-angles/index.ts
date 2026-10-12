@@ -1,19 +1,21 @@
 // ProductVision 360 — generates product angles in-house with Gemini image model
 // using our rotating GEMINI_API_KEY secrets. Validates the caller's JWT.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
 
-// Each generated angle is one AI image (~₹3.4 at list price), so it is charged per successful
-// angle on the server. Failed angles cost nothing.
+// Each generated angle is one AI image (about ₹3.3 at Google's list price), charged per successful
+// angle on the server by the 3x cost rule (docs/pricing.md). Failed angles cost nothing.
 const ANGLE_TOOL = "productvision-angle";
-const DEFAULT_ANGLE_CREDITS = 12;
+const DEFAULT_ANGLE_CREDITS = 27;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const IMAGE_MODEL = "gemini-2.5-flash-image";
+// Google's named replacement for 2.5 Flash Image, about 14% cheaper per image. If it is not
+// available on a key, the angle is tried once more on the older model.
+const IMAGE_MODELS = ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image"];
 
 const ANGLE_HINTS: Record<string, string> = {
   "Front": "straight-on front view, camera facing the product directly",
@@ -36,8 +38,18 @@ function anglePrompt(angle: string) {
 type AngleResult = { ok: true; mimeType: string; base64: string } | { ok: false; error: string; keyError: boolean };
 
 async function generateAngle(key: string, imageBase64: string, mimeType: string, angle: string): Promise<AngleResult> {
+  let last: AngleResult = { ok: false, error: "no_model", keyError: false };
+  for (const model of IMAGE_MODELS) {
+    last = await generateWith(model, key, imageBase64, mimeType, angle);
+    // Move to the older model only when this one is missing for the key (404) or rejects the request (400).
+    if (last.ok || last.keyError || !/^(400|404):/.test(last.error)) return last;
+  }
+  return last;
+}
+
+async function generateWith(model: string, key: string, imageBase64: string, mimeType: string, angle: string): Promise<AngleResult> {
   try {
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${key}`, {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -105,15 +117,21 @@ serve(async (req) => {
     }
 
     // Make sure the caller can afford every requested angle before spending anything.
-    await ensurePrice(ANGLE_TOOL, DEFAULT_ANGLE_CREDITS);
+    await ensurePrice(ANGLE_TOOL, DEFAULT_ANGLE_CREDITS, true);
     const perAngle = (await priceOf(ANGLE_TOOL)) ?? DEFAULT_ANGLE_CREDITS;
+    // Free credits pay for at most a few AI images per person (image_runs_affordable in the database),
+    // so count the angles this wallet can really pay for before any image is made.
     const balance = await walletBalance(ud.user.id);
-    if (balance < perAngle * angles.length) {
+    const affordable = await imageRunsAffordable(ud.user.id, perAngle);
+    if (affordable < angles.length) {
+      const freeCapped = affordable < Math.floor(balance / perAngle);
       return new Response(JSON.stringify({
         error: "insufficient_credits",
         credits_required: perAngle * angles.length,
         balance,
-        message: `${angles.length} angles need ${perAngle * angles.length} credits (${perAngle} each). You have ${balance}.`,
+        message: freeCapped
+          ? `Free credits cover ${FREE_IMAGE_LIMIT} AI images per person. ${angles.length} angles need ${perAngle * angles.length} bought credits (${perAngle} each); you can make ${affordable} now.`
+          : `${angles.length} angles need ${perAngle * angles.length} credits (${perAngle} each). You have ${balance}.`,
       }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const chargeForImages = async (count: number): Promise<number> => {
