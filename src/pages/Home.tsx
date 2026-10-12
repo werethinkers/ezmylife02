@@ -247,7 +247,7 @@ const Home = () => {
                 {[
                   { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
                   ...(hasStudios
-                    ? [{ to: "#studios", c: "bg-ink text-cream", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
+                    ? [{ to: "/studios", c: "bg-ink text-cream", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
                     : []),
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
@@ -407,7 +407,16 @@ const Home = () => {
 
             {/* ───────── Studios ───────── */}
             {hasStudios && (
-              <Section id="studios" title="Studios" line="Bigger jobs, done start to finish. Answer a few questions and get a full plan, report or set of pictures.">
+              <Section
+                id="studios"
+                title="Studios"
+                line="Bigger jobs, done start to finish. Answer a few questions and get a full plan, report or set of pictures."
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/studios">See all studios</Link>
+                  </Button>
+                }
+              >
                 <StudiosShelf apps={live} />
               </Section>
             )}

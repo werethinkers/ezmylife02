@@ -5,6 +5,8 @@ import { AppIcon } from "./AppIcon";
 import { PricePill } from "./PricePill";
 import { useQuickLook } from "./QuickLook";
 import { cn } from "@/lib/utils";
+import { STUDIO_IDS } from "@/data/studios";
+import { StudioThumb } from "./StudioThumb";
 
 /**
  * Large app card: preview, icon, name, what you get, and the price pill.
@@ -55,6 +57,8 @@ export function AppTile({
             loading="lazy"
             className={cn("h-full w-full", media.previewFit === "contain" ? "object-contain" : "object-cover")}
           />
+        ) : STUDIO_IDS.has(tool.id) ? (
+          <StudioThumb toolId={tool.id} name={tool.name} />
         ) : (
           <div className="flex h-full items-center justify-center">
             <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="lg" className="shadow-block-sm" />
