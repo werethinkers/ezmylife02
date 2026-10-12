@@ -276,3 +276,7 @@ export const STUDIO_TABS: StudioTab[] = [
 ];
 
 export const STUDIO_IDS: ReadonlySet<string> = new Set(STUDIO_TABS.flatMap((t) => t.ids));
+
+/** The tab (group) a studio belongs to, for colours and icons. */
+const TAB_OF = new Map(STUDIO_TABS.flatMap((t, i) => t.ids.map((id) => [id, { tab: t, index: i }] as const)));
+export const studioTabOf = (id: string) => TAB_OF.get(id);

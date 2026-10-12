@@ -11,5 +11,6 @@ export type FeatureRoute = { path: string; page: LazyExoticComponent<ComponentTy
 export const featureRoutes: FeatureRoute[] = [
   { path: "/admin/influencers", page: lazy(() => import("./pages/influencers/AdminInfluencers")), signedIn: true },
   { path: "/admin/refunds", page: lazy(() => import("./pages/refunds/AdminRefunds")), signedIn: true },
+  { path: "/studios", page: lazy(() => import("./pages/Studios")) },
   { path: "/influencer", page: lazy(() => import("./pages/influencers/InfluencerPortal")) },
 ];

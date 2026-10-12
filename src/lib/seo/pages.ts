@@ -57,6 +57,17 @@ export const SITE_PAGES: SitePage[] = [
     links: MAIN_LINKS,
   },
   {
+    path: "/studios",
+    title: "Studios: business plan, resume, photos and more, finished for you",
+    description: "Answer a few questions and a studio finishes the whole job: business plan, pitch deck, catalogue photos, resume, tax plan or family book. 100 free credits to start.",
+    h1: "Big jobs, finished for you",
+    text: [
+      "Studios on EZYOURLIFE do a whole job from start to finish: a business plan, a pitch deck, catalogue photos, a resume, a tax plan or a family book.",
+      "Answer a few questions, and the studio builds each part in order. You pay in credits only when you get a result, and new accounts start with 100 free credits.",
+    ],
+    links: MAIN_LINKS,
+  },
+  {
     path: "/explore",
     title: "Find AI apps by business type or job | EZYOURLIFE",
     description: "Pick your type of business or the job you need done, and see the EZYOURLIFE apps that fit. Pay only for results, credit packs from ₹10.",
