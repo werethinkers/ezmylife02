@@ -2,14 +2,13 @@ import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Link } from "react-router-dom";
+import { seoFor } from "@/lib/seo/pages";
 
 const RefundPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Cancellation & Refund Policy - EZYOURLIFE"
-        description="Read EZYOURLIFE's cancellation and refund policy. Learn about our process for cancellations, damaged items, and refund processing timelines."
-        path="/refund-policy"
+        {...seoFor("/refund-policy", "")}
         jsonLd={[
           {
             "@context": "https://schema.org",

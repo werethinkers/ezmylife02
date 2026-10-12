@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { CARD_CATEGORIES, WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { ProductCard } from "@/components/instant/ProductCard";
+import { seoFor } from "@/lib/seo/pages";
 
 type Sort = "recommended" | "price-asc" | "price-desc" | "name";
 const PRICES = [
@@ -36,8 +37,6 @@ const COPY = {
     line: "A website stays online. You get one link to put on WhatsApp, Google and your shop board, with call and WhatsApp buttons built in.",
     search: "Try “gym”, “salon”, “menu”, “visiting card”",
     color: "hsl(var(--teal))",
-    seo: "Business websites, QR menus and visiting cards in minutes | EZYOURLIFE",
-    seoDesc: "Pick a ready-made website for your gym, salon, clinic, shop or kitchen. Add your details, see it live, pay once and share one link. QR menus and digital visiting cards too.",
     path: "/websites",
   },
   cards: {
@@ -45,8 +44,6 @@ const COPY = {
     line: "A card is made for one moment. Add names, a photo and your message, pay once, and send the link on WhatsApp.",
     search: "Try “birthday”, “wedding”, “diwali”, “anniversary”",
     color: "hsl(var(--sun))",
-    seo: "Wedding invitations, festival wishes and birthday surprises online | EZYOURLIFE",
-    seoDesc: "Beautiful digital invitations, festival greetings and birthday surprises with music, photos and RSVPs. Make one in minutes and share it on WhatsApp.",
     path: "/cards",
   },
   all: {
@@ -54,8 +51,6 @@ const COPY = {
     line: "Ready-made designs for your business and your celebrations. Add your details, see it live, pay once and share one link.",
     search: "Try “birthday”, “gym”, “menu”, “wedding”",
     color: "hsl(var(--pink))",
-    seo: "Create instantly: birthday surprises, invitations, business websites and QR menus | EZYOURLIFE",
-    seoDesc: "Pick a beautifully designed digital product, add your details, preview it live and publish in minutes. Business websites, QR menus, wedding invitations, birthday surprises and more.",
     path: "/create",
   },
 } as const;
@@ -127,7 +122,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
 
   return (
     <div className="min-h-screen bg-background">
-      <PageSeo title={copy.seo} description={copy.seoDesc} path={copy.path} />
+      <PageSeo {...seoFor(copy.path, "")} />
       <Navbar section={kind ?? null} />
 
       <header className="mx-auto max-w-7xl px-4 pt-6 md:pt-10">

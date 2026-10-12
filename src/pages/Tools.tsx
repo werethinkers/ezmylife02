@@ -18,6 +18,7 @@ import { AppTile, AppRow } from "@/components/store/AppTile";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
+import { seoFor } from "@/lib/seo/pages";
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
@@ -114,9 +115,7 @@ const Tools = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={`${countLabel} AI apps for small business — browse without signing up | EZYOURLIFE`}
-        description={`Browse ${countLabel} AI apps for bills, customers, staff, photos and content. Try any app, pay only for results. The Future's First AI App Store.`}
-        path="/ai-apps"
+        {...seoFor("/ai-apps", countLabel)}
         keywords="ai apps for business, gst invoice app, passport photo maker, ai tools india, ezyourlife ai apps"
       />
       <Navbar />
