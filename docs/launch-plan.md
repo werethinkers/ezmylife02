@@ -8,15 +8,15 @@ Read it at the start of every phase and update it at the end.
 | Phase | What | Target | Status | Apps added | Running total |
 |---|---|---|---|---|---|
 | 0 | Foundation | 0 | **Done 12 Oct 2026** (two live checks left, see "Open items") | 0 | 154 apps + 104 website and card designs |
-| 1 | Pilot: business documents and legal templates | ~100 | **Built 12 Oct 2026, waiting to go live** (Publish, then apply SQL — see "Phase 1 notes") | 64 | 218 apps once live |
+| 1 | Pilot: business documents and legal templates | ~100 | **Live 12 Oct 2026** (Published, SQL applied; first real AI run of each kind still to be checked) | 64 | 218 apps |
 | 2 | New engines: calculator, file converter, photo presets | ~30 | Not started | | |
 | 3 | Preset scale-up, one vertical per chat | ~870 | Not started | | |
 | 4 | AI verticals, one vertical per chat | ~650 | Not started | | |
 | 5 | Invitations and greetings | ~250 | Not started | | |
 | 6 | Clean-up | 0 | Not started | | |
 
-Counts: "apps" are live rows in the `tools_catalog` table: 154 on 12 Oct 2026, and 218 once the
-Phase 1 SQL is applied. The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
+Counts: "apps" are live rows in the `tools_catalog` table: 218 on 12 Oct 2026 (154 before Phase 1, plus 64; the
+Phase 1 SQL was applied that day through the Lovable database connection). The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
 The 104 website, card and invitation designs are active rows in `ip_products`. Site copy says "215+"
 (218 rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
 
@@ -153,7 +153,7 @@ Tested in a browser on 16 apps (tool-40, 45, 50, 53, 55, 60, 61, 62, 65, 69, 73,
 ): example fills, totals compute, Bulk mode opens with a filled example row. The AI call itself could not
 run from the test machine (no outside network), so the first live run of each kind is still to be seen.
 
-**Go live in this order:** 1) Abhijay presses Publish in Lovable (site and app definitions); 2) apply
+**How Phase 1 went live (done 12 Oct 2026):** 1) Abhijay presses Publish in Lovable (site and app definitions); 2) apply
 `supabase/migrations/20261012042353_catalog_businessdocs.sql` through the Lovable database connection
 (insert-only). Applying the SQL first would list apps the live site cannot open yet. 3) Check that the
 `ai-app` function has the new server instructions (see "Open items": not yet confirmed that Publish deploys functions).
