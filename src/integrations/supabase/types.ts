@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -262,6 +262,7 @@ export type Database = {
           paid_at: string | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
+          ref_code: string | null
           status: string
           user_id: string
         }
@@ -275,6 +276,7 @@ export type Database = {
           paid_at?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          ref_code?: string | null
           status?: string
           user_id: string
         }
@@ -288,6 +290,7 @@ export type Database = {
           paid_at?: string | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          ref_code?: string | null
           status?: string
           user_id?: string
         }
@@ -500,6 +503,197 @@ export type Database = {
           subtitle?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      influencer_clicks: {
+        Row: {
+          created_at: string
+          id: number
+          influencer_id: string
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          influencer_id: string
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          influencer_id?: string
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_clicks_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "influencers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_commissions: {
+        Row: {
+          approve_after: string
+          buyer_user_id: string
+          commission_inr: number
+          commission_pct: number
+          created_at: string
+          gross_inr: number
+          id: string
+          influencer_id: string
+          payout_id: string | null
+          purchase_id: string
+          purchased_at: string
+          reversed_reason: string | null
+          status: string
+        }
+        Insert: {
+          approve_after: string
+          buyer_user_id: string
+          commission_inr: number
+          commission_pct: number
+          created_at?: string
+          gross_inr: number
+          id?: string
+          influencer_id: string
+          payout_id?: string | null
+          purchase_id: string
+          purchased_at: string
+          reversed_reason?: string | null
+          status?: string
+        }
+        Update: {
+          approve_after?: string
+          buyer_user_id?: string
+          commission_inr?: number
+          commission_pct?: number
+          created_at?: string
+          gross_inr?: number
+          id?: string
+          influencer_id?: string
+          payout_id?: string | null
+          purchase_id?: string
+          purchased_at?: string
+          reversed_reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_commissions_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "influencers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_commissions_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_commissions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: true
+            referencedRelation: "credit_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_payouts: {
+        Row: {
+          gross_inr: number
+          id: string
+          influencer_id: string
+          net_inr: number
+          paid_at: string
+          tds_inr: number
+          utr: string
+        }
+        Insert: {
+          gross_inr: number
+          id?: string
+          influencer_id: string
+          net_inr: number
+          paid_at?: string
+          tds_inr?: number
+          utr: string
+        }
+        Update: {
+          gross_inr?: number
+          id?: string
+          influencer_id?: string
+          net_inr?: number
+          paid_at?: string
+          tds_inr?: number
+          utr?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_payouts_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "influencers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_settings: {
+        Row: {
+          key: string
+          value: number
+        }
+        Insert: {
+          key: string
+          value: number
+        }
+        Update: {
+          key?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      influencers: {
+        Row: {
+          campaign: string
+          city: string | null
+          code: string
+          commission_pct: number
+          created_at: string
+          handle: string | null
+          id: string
+          name: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign?: string
+          city?: string | null
+          code: string
+          commission_pct?: number
+          created_at?: string
+          handle?: string | null
+          id?: string
+          name: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign?: string
+          city?: string | null
+          code?: string
+          commission_pct?: number
+          created_at?: string
+          handle?: string | null
+          id?: string
+          name?: string
+          status?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1127,6 +1321,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      refund_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          credits_purchased: number
+          credits_unused: number
+          credits_used: number
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          processed_at: string | null
+          processed_credits_unused: number | null
+          processed_inr: number | null
+          purchase_id: string
+          razorpay_refund_id: string | null
+          reason: string | null
+          refundable_inr: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          credits_purchased: number
+          credits_unused: number
+          credits_used: number
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_credits_unused?: number | null
+          processed_inr?: number | null
+          purchase_id: string
+          razorpay_refund_id?: string | null
+          reason?: string | null
+          refundable_inr: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          credits_purchased?: number
+          credits_unused?: number
+          credits_used?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_credits_unused?: number | null
+          processed_inr?: number | null
+          purchase_id?: string
+          razorpay_refund_id?: string | null
+          reason?: string | null
+          refundable_inr?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "credit_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_recommendations: {
         Row: {
@@ -1926,6 +2188,42 @@ export type Database = {
         }
         Returns: boolean
       }
+      influencer_approve_due: { Args: never; Returns: number }
+      influencer_assert_admin: { Args: never; Returns: undefined }
+      influencer_attach_login: {
+        Args: { _influencer_id: string; _user_id: string }
+        Returns: undefined
+      }
+      influencer_dashboard: { Args: never; Returns: Json }
+      influencer_detail: { Args: { _influencer_id: string }; Returns: Json }
+      influencer_fy_start: { Args: never; Returns: string }
+      influencer_mark_paid: {
+        Args: { _influencer_id: string; _utr: string }
+        Returns: Json
+      }
+      influencer_me: { Args: never; Returns: Json }
+      influencer_record_click: {
+        Args: { _code: string; _visitor: string }
+        Returns: boolean
+      }
+      influencer_reverse: {
+        Args: { _purchase_id: string; _reason: string }
+        Returns: undefined
+      }
+      influencer_save: {
+        Args: {
+          _campaign: string
+          _city: string
+          _code: string
+          _commission_pct: number
+          _handle: string
+          _id: string
+          _name: string
+          _status: string
+        }
+        Returns: string
+      }
+      influencer_setting: { Args: { _key: string }; Returns: number }
       ip_get_public_page: { Args: { _slug: string }; Returns: Json }
       ip_mark_order_paid: {
         Args: { _payment_id: string; _razorpay_order_id: string }
@@ -1965,6 +2263,37 @@ export type Database = {
         Returns: Json
       }
       monthly_free_reset: { Args: never; Returns: number }
+      refund_admin_list: { Args: { _status?: string }; Returns: Json }
+      refund_approve: {
+        Args: { _note: string; _request_id: string }
+        Returns: Json
+      }
+      refund_claim_for_processing: {
+        Args: { _request_id: string }
+        Returns: Json
+      }
+      refund_mark_failed: {
+        Args: { _note: string; _request_id: string }
+        Returns: undefined
+      }
+      refund_mark_processed: {
+        Args: {
+          _amount_inr: number
+          _credits_removed: number
+          _refund_id: string
+          _request_id: string
+        }
+        Returns: Json
+      }
+      refund_quote: { Args: { _purchase_id: string }; Returns: Json }
+      refund_reject: {
+        Args: { _note: string; _request_id: string }
+        Returns: undefined
+      }
+      refund_request_create: {
+        Args: { _purchase_id: string; _reason: string }
+        Returns: string
+      }
       start_tool_run: {
         Args: { _tool_id: string; _uid: string }
         Returns: Json
