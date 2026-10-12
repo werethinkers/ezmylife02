@@ -1,4 +1,4 @@
-import { aiFetch } from "../_shared/ai.ts";
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -47,7 +47,7 @@ serve(async (req) => {
       else if (typeof v === "number") params[k] = Math.max(1, Math.min(k === "count" ? 30 : 5000, v));
       else params[k] = v;
     }
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");

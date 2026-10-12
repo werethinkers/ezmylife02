@@ -1,4 +1,4 @@
-import { aiFetch } from "../_shared/ai.ts";
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -84,7 +84,7 @@ serve(async (req) => {
     const keywords = String(body?.keywords ?? "").slice(0, 4000);
     const selections = (Array.isArray(body?.selections) ? body.selections : []).slice(0, 40).map((x: unknown) => String(x).slice(0, 100));
 
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    const apiKey = (getAiKey() || "own-gemini-keys");
 
     let prompt = '';
 

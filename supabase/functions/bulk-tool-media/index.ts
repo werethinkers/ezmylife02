@@ -1,4 +1,4 @@
-import { aiFetch } from "../_shared/ai.ts";
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 // Edge function: generate a hero image for a tool via Lovable AI Gateway,
 // upload it to the tool-media storage bucket, and insert a tool_media row.
 // Idempotent per tool_id — skips if media already exists.
@@ -12,7 +12,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
 
 function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; contentType: string } {
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
