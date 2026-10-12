@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { USE_CASE_SEEDS, INDUSTRY_SEEDS, humanize } from "@/lib/seoData";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
+import { categoriesOf } from "@/data/goals";
 
 const TOP_USE_CASES = USE_CASE_SEEDS.slice(0, 80);
 const TOP_INDUSTRIES = INDUSTRY_SEEDS.slice(0, 50);
@@ -13,7 +14,7 @@ const Explore = () => {
   const countLabel = useAppCountLabel();
   const { data: catalog = [] } = useToolsCatalog();
   const liveTools = catalog.filter((t) => t.is_live).sort((a, b) => a.name.localeCompare(b.name));
-  const categories = Array.from(new Set(liveTools.map((t) => t.category))).sort();
+  const categories = Array.from(new Set(liveTools.flatMap((t) => categoriesOf(t)))).sort();
 
   const jsonLd = {
     "@context": "https://schema.org",

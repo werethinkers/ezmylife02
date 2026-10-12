@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { categoriesOf, inCategory } from "@/data/goals";
 import { ToolLandscapeCard } from "./ToolLandscapeCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,14 +21,14 @@ export const ExploreMoreTools = ({ onPreview }: ExploreMoreToolsProps) => {
 
   const categories = useMemo(() => {
     const set = new Set<string>();
-    liveTools.forEach((t) => t.category && set.add(t.category));
+    liveTools.forEach((t) => categoriesOf(t).forEach((c) => set.add(c)));
     return Array.from(set).sort();
   }, [liveTools]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = liveTools.filter((t) => {
-      if (category !== "all" && t.category !== category) return false;
+      if (category !== "all" && !inCategory(t, category)) return false;
       if (!q) return true;
       return (
         t.name.toLowerCase().includes(q) ||

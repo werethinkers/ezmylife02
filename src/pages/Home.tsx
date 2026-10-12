@@ -12,7 +12,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { PERSONAS } from "@/data/personas";
-import { GOALS, categoryInfo } from "@/data/goals";
+import { GOALS, byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
 import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
@@ -68,7 +68,7 @@ const Home = () => {
 
   const query = search.trim().toLowerCase();
   const results = useMemo(
-    () => (query ? live.filter((t) => `${t.name} ${t.description} ${t.category}`.toLowerCase().includes(query)).slice(0, 24) : []),
+    () => (query ? live.filter((t) => `${t.name} ${t.description} ${categoriesOf(t).join(" ")} ${(t.tool_types ?? []).join(" ")}`.toLowerCase().includes(query)).slice(0, 24) : []),
     [live, query],
   );
 
@@ -79,8 +79,9 @@ const Home = () => {
 
   const categories = useMemo(() => {
     const m = new Map<string, number>();
-    live.forEach((t) => m.set(t.category, (m.get(t.category) ?? 0) + 1));
-    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+    // An app counts once under every category it is listed in (main one plus "also in").
+    live.forEach((t) => categoriesOf(t).forEach((c) => m.set(c, (m.get(c) ?? 0) + 1)));
+    return [...m.entries()].sort(byCategoryOrder);
   }, [live]);
 
   const shelfCategories = useMemo(() => {
@@ -382,13 +383,15 @@ const Home = () => {
                 </Shelf>
               )}
               {shelfCategories.map((cat) => {
-                const tools = live.filter((t) => t.category === cat).slice(0, 14);
+                // Apps whose main category this is come first, then the ones that are also listed here.
+                const inCat = live.filter((t) => inCategory(t, cat)).sort((a, b) => Number(b.category === cat) - Number(a.category === cat));
+                const tools = inCat.slice(0, 14);
                 if (tools.length < 3) return null;
                 return (
                   <Shelf
                     key={cat}
                     title={cat}
-                    subtitle={categoryInfo(cat).line || `${live.filter((t) => t.category === cat).length} apps`}
+                    subtitle={categoryInfo(cat).line || `${inCat.length} apps`}
                     seeAllTo={`/ai-apps?category=${encodeURIComponent(cat)}`}
                   >
                     {tools.map((t) => (

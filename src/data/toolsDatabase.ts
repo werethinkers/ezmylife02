@@ -8,6 +8,8 @@ export interface ToolEntry {
   name: string;
   description: string;
   category: string;
+  /** Other categories the app is also listed under, e.g. a loan agreement is Finance and also Legal. */
+  alsoIn?: string[];
   toolType: string[];
   source: "business" | "featured";
   isLive: boolean;

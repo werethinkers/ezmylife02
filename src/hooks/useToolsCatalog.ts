@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { REMOVED_APPS } from "@/apps/prices";
+import { registerCategories, type CategoryRow } from "@/data/goals";
 
 export interface CatalogTool {
   id: string;
@@ -8,6 +9,8 @@ export interface CatalogTool {
   description: string;
   category: string;
   tool_types: string[];
+  /** Other categories the app is also listed under (the main one is `category`). */
+  extra_categories?: string[] | null;
   source: "business" | "featured";
   is_live: boolean;
   is_free?: boolean;
@@ -24,15 +27,30 @@ export interface CatalogTool {
   updated_at: string;
 }
 
-async function fetchToolsCatalog(): Promise<CatalogTool[]> {
-  const { data, error } = await supabase
-    .from("tools_catalog")
-    // Only the columns the store needs — the long demo texts are fetched by the app page itself.
-    .select("id,name,description,category,tool_types,source,is_live,is_free,display_order,icon_url,rating,review_count,preview_image_url,preview_image_fit,icon_fit,home_section,dedicated_route,created_at,updated_at")
-    .order("created_at", { ascending: true });
+const COLUMNS =
+  "id,name,description,category,tool_types,source,is_live,is_free,display_order,icon_url,rating,review_count,preview_image_url,preview_image_fit,icon_fit,home_section,dedicated_route,created_at,updated_at";
 
-  if (error) throw error;
-  const list = ((data as unknown as CatalogTool[]) ?? []).filter((t) => !REMOVED_APPS.has(t.id));
+async function fetchToolsCatalog(): Promise<CatalogTool[]> {
+  // Only the columns the store needs — the long demo texts are fetched by the app page itself.
+  // `extra_categories` is newer than the rest; if the database does not have it yet, load without it
+  // so the store never breaks.
+  const load = (columns: string) => supabase.from("tools_catalog").select(columns).order("created_at", { ascending: true });
+  let res = await load(`${COLUMNS},extra_categories`);
+  if (res.error) res = await load(COLUMNS);
+  if (res.error) throw res.error;
+
+  // Categories made in admin. Optional too: without the table the built-in map in goals.ts is used.
+  const cats = await supabase.from("catalog_categories").select("*");
+  if (!cats.error && cats.data) {
+    registerCategories(cats.data as unknown as CategoryRow[]);
+    try {
+      localStorage.setItem(CATEGORY_KEY, JSON.stringify(cats.data));
+    } catch {
+      /* storage full / blocked */
+    }
+  }
+
+  const list = ((res.data as unknown as CatalogTool[]) ?? []).filter((t) => !REMOVED_APPS.has(t.id));
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
   } catch {
@@ -44,6 +62,14 @@ async function fetchToolsCatalog(): Promise<CatalogTool[]> {
 // Last catalog seen in this browser: pages render instantly on repeat visits while a fresh
 // copy loads in the background.
 const CACHE_KEY = "ez.catalog.v3";
+const CATEGORY_KEY = "ez.categories.v1";
+// Register the last categories seen in this browser right away, so the first paint groups correctly.
+try {
+  const raw = localStorage.getItem(CATEGORY_KEY);
+  if (raw) registerCategories(JSON.parse(raw));
+} catch {
+  /* storage blocked or bad data */
+}
 function cachedCatalog(): { at: number; list: CatalogTool[] } | undefined {
   try {
     const raw = localStorage.getItem(CACHE_KEY);

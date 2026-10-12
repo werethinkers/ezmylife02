@@ -28,6 +28,7 @@ import ToolDemoEditor from "@/components/admin/ToolDemoEditor";
 import PromoPagesManager from "@/components/admin/PromoPagesManager";
 
 import { ToolManagement } from "@/components/admin/ToolManagement";
+import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { format } from "date-fns";
 
 interface ActivityLog {
@@ -64,7 +65,7 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "tool-demos" | "promo-pages" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing" | "data-export">("analytics");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "groupings" | "tool-demos" | "promo-pages" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing" | "data-export">("analytics");
 
   useEffect(() => {
     if (authLoading) return;
@@ -177,6 +178,7 @@ const AdminDashboard = () => {
       label: "Tools",
       tabs: [
         ...(!isViewOnly ? [{ id: "tool-mgmt" as const, label: "Tool Management", icon: Wrench }] : []),
+        ...(!isViewOnly ? [{ id: "groupings" as const, label: "Groupings & Filters", icon: LayoutGrid }] : []),
         ...(!isViewOnly ? [{ id: "tool-demos" as const, label: "Demo Examples", icon: Sparkles }] : []),
         ...(!isViewOnly ? [{ id: "promo-pages" as const, label: "Promo Pages", icon: Rocket }] : []),
         { id: "tool-usage", label: "Tool Usage", icon: BarChart3 },
@@ -389,6 +391,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "tool-mgmt" && <ToolManagement />}
+        {activeTab === "groupings" && !isViewOnly && <CategoriesManager />}
         {activeTab === "home-sections" && !isViewOnly && <HomeSectionsManager />}
         {activeTab === "tool-requests" && <ToolRequests />}
         {activeTab === "archived-events" && <ArchivedEvents />}

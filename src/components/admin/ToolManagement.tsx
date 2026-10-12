@@ -17,6 +17,8 @@ import { format } from "date-fns";
 import { ToolFileUploader } from "./ToolFileUploader";
 import { useToolViewCounts } from "@/hooks/useToolViewCounts";
 import { ToolViewChart } from "./ToolViewChart";
+import { GroupingPicker } from "./GroupingPicker";
+import { useRefreshGroupings } from "@/hooks/useCategoryRows";
 import {
   DndContext,
   closestCenter,
@@ -41,6 +43,8 @@ interface CatalogTool {
   description: string;
   category: string;
   tool_types: string[];
+  /** Other categories it is also listed under (absent until the database update is applied). */
+  extra_categories?: string[];
   source: string;
   is_live: boolean;
   has_uploaded_files: boolean;
@@ -53,19 +57,15 @@ interface CatalogTool {
   updated_at: string;
 }
 
-const CATEGORIES = [
-  "Image Processing", "Business & Finance", "Content Creation", "Education",
-  "Social Media", "Design", "Productivity", "AI Tools", "Development", "Other"
-];
-
 const SOURCES = ["business", "featured"];
 
 const emptyTool: Omit<CatalogTool, "created_at" | "updated_at"> = {
   id: "",
   name: "",
   description: "",
-  category: "Other",
+  category: "",
   tool_types: [],
+  extra_categories: [],
   source: "featured",
   is_live: false,
   has_uploaded_files: false,
@@ -111,7 +111,7 @@ export const ToolManagement = () => {
   const [toolToDelete, setToolToDelete] = useState<CatalogTool | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toolTypesInput, setToolTypesInput] = useState("");
+  const refreshGroupings = useRefreshGroupings();
   const [dialogTab, setDialogTab] = useState<"details" | "files">("details");
 
   const sensors = useSensors(
@@ -180,7 +180,8 @@ export const ToolManagement = () => {
     const matchesSearch = !search || 
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.id.toLowerCase().includes(search.toLowerCase()) ||
-      t.category.toLowerCase().includes(search.toLowerCase());
+      t.category.toLowerCase().includes(search.toLowerCase()) ||
+      (t.extra_categories ?? []).some((c) => c.toLowerCase().includes(search.toLowerCase()));
     const matchesFilter = filterLive === "all" || 
       (filterLive === "live" && t.is_live) || 
       (filterLive === "draft" && !t.is_live);
@@ -189,7 +190,6 @@ export const ToolManagement = () => {
 
   const openAdd = () => {
     setEditingTool({ ...emptyTool });
-    setToolTypesInput("");
     setIsNew(true);
     setDialogTab("details");
     setDialogOpen(true);
@@ -201,7 +201,8 @@ export const ToolManagement = () => {
       name: tool.name,
       description: tool.description,
       category: tool.category,
-      tool_types: tool.tool_types,
+      tool_types: tool.tool_types ?? [],
+      extra_categories: tool.extra_categories ?? [],
       source: tool.source,
       is_live: tool.is_live,
       has_uploaded_files: tool.has_uploaded_files,
@@ -211,7 +212,6 @@ export const ToolManagement = () => {
       dedicated_route: tool.dedicated_route,
       icon_url: tool.icon_url ?? null,
     });
-    setToolTypesInput(tool.tool_types.join(", "));
     setIsNew(false);
     setDialogTab("details");
     setDialogOpen(true);
@@ -222,14 +222,20 @@ export const ToolManagement = () => {
       toast.error("ID and Name are required");
       return;
     }
+    if (!editingTool.category) {
+      toast.error("Pick a main category so the app shows up in the right group");
+      return;
+    }
     setSaving(true);
-    const toolTypes = toolTypesInput.split(",").map(s => s.trim()).filter(Boolean);
+    // The "also in" column only exists once the database update is applied; leave it out until then.
+    const hasExtraColumn = tools.some((t) => "extra_categories" in t);
     const payload = {
       id: editingTool.id,
       name: editingTool.name,
       description: editingTool.description,
       category: editingTool.category,
-      tool_types: toolTypes,
+      tool_types: editingTool.tool_types,
+      ...(hasExtraColumn ? { extra_categories: (editingTool.extra_categories ?? []).filter((c) => c !== editingTool.category) } : {}),
       source: editingTool.source,
       is_live: editingTool.is_live,
       is_premium: editingTool.is_premium,
@@ -244,6 +250,7 @@ export const ToolManagement = () => {
         toast.error(error.message);
       } else {
         toast.success("Tool added successfully");
+        refreshGroupings();
         setDialogOpen(false);
         fetchTools();
       }
@@ -257,6 +264,7 @@ export const ToolManagement = () => {
         toast.error(error.message);
       } else {
         toast.success("Tool updated successfully");
+        refreshGroupings();
         setDialogOpen(false);
         fetchTools();
       }
@@ -422,7 +430,14 @@ export const ToolManagement = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">{tool.id}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{tool.category}</Badge></TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Badge variant="outline" className="text-xs">{tool.category}</Badge>
+                      {(tool.extra_categories ?? []).length > 0 && (
+                        <Badge variant="secondary" className="text-xs" title={(tool.extra_categories ?? []).join(", ")}>+{(tool.extra_categories ?? []).length}</Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {tool.has_uploaded_files ? (
                       <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs gap-1">
@@ -563,18 +578,6 @@ export const ToolManagement = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select
-                      value={editingTool.category}
-                      onValueChange={v => setEditingTool({ ...editingTool, category: v })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
                     <Label>Source</Label>
                     <Select
                       value={editingTool.source}
@@ -587,14 +590,11 @@ export const ToolManagement = () => {
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Tool Types (comma-separated)</Label>
-                  <Input
-                    value={toolTypesInput}
-                    onChange={e => setToolTypesInput(e.target.value)}
-                    placeholder="e.g. ai, image, productivity"
-                  />
-                </div>
+                <GroupingPicker
+                  value={{ category: editingTool.category, extra: editingTool.extra_categories ?? [], tags: editingTool.tool_types ?? [] }}
+                  onChange={(g) => setEditingTool({ ...editingTool, category: g.category, extra_categories: g.extra, tool_types: g.tags })}
+                  allTools={tools}
+                />
                 <div className="space-y-2">
                   <Label>Dedicated Route (optional, for internal apps)</Label>
                   <Input

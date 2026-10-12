@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
@@ -10,7 +10,8 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppCountLabel } from "@/lib/appCount";
-import { GOALS, KIND_TEXT, categoryInfo, goalById, type GoalId } from "@/data/goals";
+import { GOALS, KIND_TEXT, byCategoryOrder, categoriesOf, categoryInfo, goalById, type GoalId } from "@/data/goals";
+import { hasTag, tagCounts } from "@/lib/catalogTags";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
@@ -19,10 +20,15 @@ import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
 
 const PER_CATEGORY = 8;
+/** Filter-by-type chips shown before "Show more". */
+const TAGS_SHOWN = 8;
+/** A type needs at least this many apps to be worth a chip. */
+const TAG_MIN_APPS = 3;
 
 /**
  * All business apps, organised by what people want to get done. Filters live in the URL so every
- * view can be linked: ?goal=customers, ?category=Image%20Tools, ?q=invoice, ?request=1.
+ * view can be linked: ?goal=customers, ?category=Image%20Tools, ?type=document%20tools, ?q=invoice,
+ * ?request=1. An app that sits in more than one category (set in admin) is listed under each.
  */
 const Tools = () => {
   const countLabel = useAppCountLabel();
@@ -30,6 +36,8 @@ const Tools = () => {
   const q = params.get("q") ?? "";
   const goalId = (params.get("goal") as GoalId | null) ?? null;
   const category = params.get("category");
+  const typeKey = params.get("type");
+  const [allTags, setAllTags] = useState(false);
   const { data: catalog = [] } = useToolsCatalog();
   const { user } = useAuth();
   const { recent } = useRecentTools();
@@ -49,26 +57,33 @@ const Tools = () => {
   }, [params]);
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
+  // Apps after the "type" filter (if one is on); everything below groups these.
+  const shown = useMemo(() => (typeKey ? live.filter((t) => hasTag(t, typeKey)) : live), [live, typeKey]);
   const byCategory = useMemo(() => {
     const m = new Map<string, CatalogTool[]>();
-    live.forEach((t) => m.set(t.category, [...(m.get(t.category) ?? []), t]));
+    shown.forEach((t) => categoriesOf(t).forEach((c) => m.set(c, [...(m.get(c) ?? []), t])));
     return m;
-  }, [live]);
+  }, [shown]);
 
-  // Goals in display order, each with its categories (largest first).
+  // Goals in display order, each with its categories (admin order first, then largest).
   const goals = useMemo(
     () =>
       GOALS.map((g) => ({
         goal: g,
-        cats: [...byCategory.entries()].filter(([c]) => categoryInfo(c).goal === g.id).sort((a, b) => b[1].length - a[1].length),
+        cats: [...byCategory.entries()]
+          .filter(([c]) => categoryInfo(c).goal === g.id)
+          .sort((a, b) => byCategoryOrder([a[0], a[1].length], [b[0], b[1].length])),
       })).filter((x) => x.cats.length > 0),
     [byCategory],
   );
 
   const query = q.trim().toLowerCase();
   const results = useMemo(
-    () => (query ? live.filter((t) => `${t.name} ${t.description} ${t.category}`.toLowerCase().includes(query)) : []),
-    [live, query],
+    () =>
+      query
+        ? shown.filter((t) => `${t.name} ${t.description} ${categoriesOf(t).join(" ")} ${(t.tool_types ?? []).join(" ")}`.toLowerCase().includes(query))
+        : [],
+    [shown, query],
   );
   const hot = useMemo(() => live.filter((t) => t.home_section === "hot"), [live]);
 
@@ -76,6 +91,19 @@ const Tools = () => {
   const visibleGoals = activeGoal ? goals.filter((g) => g.goal.id === activeGoal.id) : goals;
   const catInfo = category ? categoryInfo(category) : null;
   const catTools = category ? byCategory.get(category) ?? [] : [];
+
+  // The "type" chips: tags of the apps in the current goal or category, so every chip leads somewhere.
+  const tagOptions = useMemo(() => {
+    const inScope = live.filter((t) => {
+      const cats = categoriesOf(t);
+      if (category) return cats.includes(category);
+      if (activeGoal) return cats.some((c) => categoryInfo(c).goal === activeGoal.id);
+      return true;
+    });
+    const counted = tagCounts(inScope).filter((x) => x.count >= TAG_MIN_APPS || x.key === typeKey);
+    return counted;
+  }, [live, category, activeGoal, typeKey]);
+  const tagsVisible = allTags ? tagOptions : tagOptions.slice(0, TAGS_SHOWN);
 
   const chip = (on: boolean) =>
     cn(
@@ -202,6 +230,35 @@ const Tools = () => {
                 {c} <span className="tabular-nums text-muted-foreground">{tools.length}</span>
               </button>
             ))}
+          </div>
+        )}
+        {tagOptions.length > 1 && (
+          <div className="-mx-4 flex flex-wrap items-center gap-2 px-4 pb-2 pt-1" role="group" aria-label="Filter by type">
+            <span className="text-sm font-semibold text-muted-foreground">Type:</span>
+            {tagsVisible.map((tg) => (
+              <button
+                key={tg.key}
+                type="button"
+                aria-pressed={typeKey === tg.key}
+                onClick={() => set({ type: typeKey === tg.key ? null : tg.key })}
+                className={cn(
+                  "rounded-full border-2 px-3 py-0.5 text-sm font-semibold",
+                  typeKey === tg.key ? "border-ink bg-ink text-cream" : "border-ink/30 bg-card hover:border-ink",
+                )}
+              >
+                {tg.label} <span className={cn("tabular-nums", typeKey === tg.key ? "text-cream/80" : "text-muted-foreground")}>{tg.count}</span>
+              </button>
+            ))}
+            {tagOptions.length > TAGS_SHOWN && (
+              <button type="button" onClick={() => setAllTags((v) => !v)} className="rounded-full px-2 py-0.5 text-sm font-semibold underline underline-offset-4 hover:text-ink">
+                {allTags ? "Show fewer" : `Show ${tagOptions.length - TAGS_SHOWN} more`}
+              </button>
+            )}
+            {typeKey && (
+              <button type="button" onClick={() => set({ type: null })} className="rounded-full px-2 py-0.5 text-sm font-semibold underline underline-offset-4 hover:text-ink">
+                Clear type
+              </button>
+            )}
           </div>
         )}
       </header>

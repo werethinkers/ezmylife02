@@ -91,6 +91,13 @@ for (const [group, rows] of Object.entries(d.CATALOG_GROUPS)) {
     if (descs.has(key)) err(`${where}: same description as "${descs.get(key)}" — two apps must differ in something real`);
     else descs.set(key, t.id);
 
+    // Extra categories must exist and differ from the main one, or the app would list twice or nowhere.
+    for (const c of t.alsoIn ?? []) {
+      if (!d.CATEGORY_INFO[c]) err(`${where}: also-in category "${c}" is not in CATEGORY_INFO (src/data/goals.ts)`);
+      if (c === t.category) err(`${where}: also-in category "${c}" is the same as its main category`);
+    }
+    if (new Set(t.alsoIn ?? []).size !== (t.alsoIn ?? []).length) err(`${where}: also-in lists a category twice`);
+
     // A launch app has to be usable on sight: an example to fill in, steps, and apps to go to next.
     if (def) {
       if ((def.steps ?? []).length < 2) err(`${where}: needs at least 2 "how it works" steps`);

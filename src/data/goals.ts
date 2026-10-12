@@ -4,7 +4,8 @@
  * Every catalogue category sits under one business goal, so people pick what they want done
  * ("Get customers") instead of reading category jargon. Each category also says, in plain words,
  * what you give the app, what you get back, and how the app opens. Categories not listed here
- * (new ones added in admin) fall under "More apps" with neutral wording until they are added.
+ * (new ones added in admin) are read from the catalog_categories table (see registerCategories),
+ * and only fall under "More apps" with neutral wording if they are in neither place.
  */
 
 export type GoalId = "customers" | "business" | "content" | "helpers" | "learn" | "more";
@@ -36,7 +37,7 @@ export const KIND_TEXT: Record<AppKind, { title: string; line: string }> = {
   sheet: { title: "Opens a sheet", line: "Add rows like a register. Totals and alerts work themselves out." },
 };
 
-interface CategoryInfo {
+export interface CategoryInfo {
   goal: GoalId;
   /** One plain line about the category. */
   line: string;
@@ -72,7 +73,74 @@ export const CATEGORY_INFO: Record<string, CategoryInfo> = {
 
 const FALLBACK: CategoryInfo = { goal: "more", line: "", give: "a few details", get: "your result", kind: "document" };
 
-export const categoryInfo = (category?: string | null): CategoryInfo => (category && CATEGORY_INFO[category]) || FALLBACK;
+/** A row of the catalog_categories table: the same wording as CATEGORY_INFO, plus an order. */
+export interface CategoryRow {
+  name: string;
+  goal: string;
+  line?: string | null;
+  give?: string | null;
+  get_text?: string | null;
+  kind?: string | null;
+  doc_give?: string | null;
+  doc_get?: string | null;
+  sort_order?: number | null;
+}
+
+// Categories made in admin. They win over the built-in map above, so a change in admin shows
+// everywhere without a code change. Filled by useToolsCatalog; empty in build scripts.
+let dynamicInfo: Record<string, CategoryInfo> = {};
+let dynamicOrder: Record<string, number> = {};
+const KINDS: AppKind[] = ["quick", "photo", "document", "sheet"];
+
+export function registerCategories(rows: CategoryRow[] | null | undefined) {
+  const info: Record<string, CategoryInfo> = {};
+  const order: Record<string, number> = {};
+  for (const r of rows ?? []) {
+    if (!r?.name) continue;
+    const base = CATEGORY_INFO[r.name] ?? FALLBACK;
+    info[r.name] = {
+      goal: GOALS.some((g) => g.id === r.goal) ? (r.goal as GoalId) : base.goal,
+      line: r.line ?? base.line,
+      give: r.give || base.give,
+      get: r.get_text || base.get,
+      kind: KINDS.includes(r.kind as AppKind) ? (r.kind as AppKind) : base.kind,
+      docGive: r.doc_give || base.docGive,
+      docGet: r.doc_get || base.docGet,
+    };
+    order[r.name] = r.sort_order ?? 0;
+  }
+  dynamicInfo = info;
+  dynamicOrder = order;
+}
+
+export const categoryInfo = (category?: string | null): CategoryInfo =>
+  (category && (dynamicInfo[category] ?? CATEGORY_INFO[category])) || FALLBACK;
+
+/** Is this category known anywhere (built in or made in admin)? */
+export const isKnownCategory = (category?: string | null): boolean =>
+  !!category && !!(dynamicInfo[category] ?? CATEGORY_INFO[category]);
+
+/** Every known category name, built in and from admin. */
+export const knownCategories = (): string[] => [...new Set([...Object.keys(CATEGORY_INFO), ...Object.keys(dynamicInfo)])];
+
+/** Order set in admin: 1 is first, 0 means "no preference" (largest first, as before). */
+export const categoryOrder = (category: string): number => dynamicOrder[category] || 0;
+/** Sort comparator for [category, apps] pairs: admin order first, then the biggest. */
+export const byCategoryOrder = (a: [string, number], b: [string, number]): number =>
+  (categoryOrder(a[0]) || 9999) - (categoryOrder(b[0]) || 9999) || b[1] - a[1] || a[0].localeCompare(b[0]);
+
+/**
+ * Where an app is listed: its main category first, then any others it was also put in.
+ * Everything that groups apps (home, the apps page, shelves, counts) goes through this, so an
+ * app in two categories shows up under both, once each.
+ */
+export const categoriesOf = (t: { category?: string | null; extra_categories?: string[] | null }): string[] => {
+  const out: string[] = [];
+  for (const c of [t.category, ...(t.extra_categories ?? [])]) if (c && !out.includes(c)) out.push(c);
+  return out;
+};
+export const inCategory = (t: { category?: string | null; extra_categories?: string[] | null }, category: string): boolean =>
+  categoriesOf(t).includes(category);
 
 /**
  * "You give / you get" for one app. A category can hold both sheets and documents (a staff

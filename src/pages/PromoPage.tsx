@@ -26,7 +26,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { AppIcon } from "@/components/store/AppIcon";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
-import { categoryInfo, goalOf, KIND_TEXT } from "@/data/goals";
+import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
 import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import SEOFooter from "@/components/SEOFooter";
 
@@ -210,7 +210,7 @@ export default function PromoPage() {
   const slides = ordered.map((s) => s ?? leftovers.shift() ?? null).filter(Boolean).slice(0, 4) as GalleryImage[];
 
   const related = catalog
-    .filter((t) => t.is_live && t.category === category && t.id !== toolId)
+    .filter((t) => t.is_live && inCategory(t, category) && t.id !== toolId)
     .slice(0, 4);
 
   const minPack = CREDIT_PACKS[0];

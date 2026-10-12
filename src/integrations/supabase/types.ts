@@ -101,6 +101,48 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_categories: {
+        Row: {
+          created_at: string
+          doc_get: string | null
+          doc_give: string | null
+          get_text: string
+          give: string
+          goal: string
+          kind: string
+          line: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_get?: string | null
+          doc_give?: string | null
+          get_text?: string
+          give?: string
+          goal?: string
+          kind?: string
+          line?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_get?: string | null
+          doc_give?: string | null
+          get_text?: string
+          give?: string
+          goal?: string
+          kind?: string
+          line?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coupon_codes: {
         Row: {
           access_type: string
@@ -1487,6 +1529,7 @@ export type Database = {
           demo_output: string | null
           description: string
           display_order: number
+          extra_categories: string[]
           has_uploaded_files: boolean
           home_section: string | null
           icon_fit: string
@@ -1512,6 +1555,7 @@ export type Database = {
           demo_output?: string | null
           description: string
           display_order?: number
+          extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
           icon_fit?: string
@@ -1537,6 +1581,7 @@ export type Database = {
           demo_output?: string | null
           description?: string
           display_order?: number
+          extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
           icon_fit?: string

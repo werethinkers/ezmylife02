@@ -62,7 +62,7 @@ Each app has the same id in four places. One file per vertical in each, plus one
 Steps for a batch:
 
 1. Add or extend the four files for the vertical.
-2. A new category must be added to `CATEGORY_INFO` in `src/data/goals.ts`, or its apps fall into "More apps".
+2. Pick the app's main `category` and, if it belongs in more than one place, `alsoIn: [...]` in its catalogue entry (the checker verifies the names). A brand-new category goes in `CATEGORY_INFO` in `src/data/goals.ts`; `gen:catalog` then also writes it into the `catalog_categories` table. Categories can also be made in admin (see Groupings).
 3. `npm run check:apps` — must pass. It checks unique ids and names, that every app has all four pieces, that the page price equals the server price, that every category has a goal, and that launch apps have real descriptions that differ from each other.
 4. `npm run gen:catalog -- <vertical>` — writes the SQL file for the new rows in `supabase/migrations/`. Never type catalogue SQL by hand. Running it again only adds rows that are not in an earlier file.
 5. `npm run build` — also writes one HTML page per app for search engines and adds new apps to the sitemap.
@@ -71,6 +71,15 @@ Steps for a batch:
 Apps that run only in the browser (no server instructions) must be listed in `USAGE_GATED` in `src/apps/prices.ts`, or they would run without being charged. The checker enforces this for launch apps.
 
 Cards, websites and invitations live in `src/instant/catalog/`. Follow `docs/design.md` and `docs/instant-products.md` for look and wording.
+
+## Groupings and filters
+
+- Goal → Category → App. An app has one main `category`, optional `extra_categories` ("also shown under") and `tool_types` (the "Type" filter chips on /ai-apps).
+- Categories live in the `catalog_categories` table (seeded from `CATEGORY_INFO`). The site loads them at runtime, so a category made in admin shows everywhere without a code change.
+- Admin: Tool Management → add/edit app uses the Grouping picker (main category, also-show-under, filter types, New category). Admin → "Groupings & Filters" lists categories with counts and a "Needs a look" queue of new apps.
+- Filter types are merged case-insensitively; a type needs 3+ apps to show as a chip; /ai-apps shows 8 and "Show N more".
+- Visitors see changes after the 10-minute cache. Static SEO pages (built by `prerender-apps.mjs`) use the built-in category wording only.
+- Migration `20261012044000_catalog_groupings.sql` is applied to the live DB (19 categories, 12 apps with extra categories).
 
 ## Search pages
 
