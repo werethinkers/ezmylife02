@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { ArrowRight, Gift, Globe, LayoutGrid, Mail, Search, X } from "lucide-react";
+import { ArrowRight, Gift, Globe, LayoutGrid, Mail, Search, Sparkles, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import SEOFooter from "@/components/SEOFooter";
 import { Navbar } from "@/components/Navbar";
@@ -35,6 +35,19 @@ const AppDirectory = lazy(() => import("@/components/home/AppDirectory"));
 const SKIP_CATEGORY_SHELVES = new Set(["Popular", "Lab"]);
 const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
 
+/** A door: a page link, or an on-page jump (to="#studios") for a section further down. */
+function DoorLink({ to, className, children }: { to: string; className?: string; children: React.ReactNode }) {
+  return to.startsWith("#") ? (
+    <a href={to} className={className}>
+      {children}
+    </a>
+  ) : (
+    <Link to={to} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 function Section({ id, title, line, children, action }: { id?: string; title: string; line?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section id={id} className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 md:py-14">
@@ -62,7 +75,9 @@ const Home = () => {
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
   const byId = useMemo(() => new Map(live.map((t) => [t.id, t])), [live]);
-  const hasStudios = useMemo(() => live.some((t) => STUDIO_IDS.has(t.id)), [live]);
+  const studioCount = useMemo(() => live.filter((t) => STUDIO_IDS.has(t.id)).length, [live]);
+  const hasStudios = studioCount > 0;
+  const studioLabel = `${Math.floor(studioCount / 10) * 10}+`;
   const persona = PERSONAS.find((p) => p.id === personaId) ?? null;
 
   const query = search.trim().toLowerCase();
@@ -128,8 +143,9 @@ const Home = () => {
               <span className="marker">one place</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              {countLabel} ready apps for bills, customers, staff and photos, plus websites and cards you make in minutes. Pay only when an app gives you
-              a result. Start with 100 free credits.
+              {countLabel} ready apps for bills, customers, staff and photos, plus websites and cards you make in minutes.
+              {studioCount >= 10 && ` Plus ${studioLabel} studios that finish big jobs for you: a business plan, catalogue photos, a resume, a family book.`} Pay only when an app
+              gives you a result. Start with 100 free credits.
             </p>
 
             <form onSubmit={onSearch} className="mt-7 flex max-w-2xl gap-2.5" role="search">
@@ -226,14 +242,17 @@ const Home = () => {
         ) : (
           <>
             {/* ───────── Three doors ───────── */}
-            <Section title="What do you want to do today?" line="Three things you can do here. Pick one.">
-              <div className="grid gap-5 md:grid-cols-3">
+            <Section title="What do you want to do today?" line={hasStudios ? "Four things you can do here. Pick one." : "Three things you can do here. Pick one."}>
+              <div className={cn("grid gap-5", hasStudios ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3")}>
                 {[
                   { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
+                  ...(hasStudios
+                    ? [{ to: "#studios", c: "bg-ink text-cream", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
+                    : []),
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
                 ].map((d) => (
-                  <Link key={d.to} to={d.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
+                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
                     <div className="flex items-center justify-between">
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card">
                         <d.Icon className="h-5 w-5" aria-hidden />
@@ -241,11 +260,11 @@ const Home = () => {
                       <span className="rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">{d.tag}</span>
                     </div>
                     <h3 className="text-2xl font-extrabold leading-tight">{d.h}</h3>
-                    <p className="text-[16px] text-ink/85">{d.d}</p>
+                    <p className={cn("text-[16px]", d.c.includes("bg-ink") ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
                     <span className="mt-auto inline-flex items-center gap-1.5 pt-2 font-bold">
                       {d.go} <ArrowRight className="h-4 w-4" />
                     </span>
-                  </Link>
+                  </DoorLink>
                 ))}
               </div>
             </Section>
