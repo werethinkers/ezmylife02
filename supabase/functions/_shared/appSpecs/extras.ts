@@ -11,6 +11,6 @@ export const extras: Record<string, AppSpec> = {
   "flashcard-maker": { kind: "doc", credits: 1, model: LITE, system: "You make accurate study flashcards.", task: "Make the number of flashcards requested on the topic as a Markdown table with columns Front | Back." },
   "study-planner": { kind: "doc", credits: 1, model: LITE, system: "You are a study coach.", task: "Make a day-by-day study plan as a Markdown table up to the exam date, covering the subjects in the hours per day given, with revision days and one rest day a week." },
   "exam-scheduler": { kind: "doc", credits: 1, model: LITE, system: "You are a study coach.", task: "Turn the exam list into a preparation timetable (Markdown table) with revision blocks before each exam and a checklist for exam day." },
-  "storybook-illustration": { kind: "image", credits: 12, system: "" },
-  "thumbnail-maker": { kind: "image", credits: 12, system: "", chargeId: "thumbnail-maker-img" },
+  "storybook-illustration": { kind: "image", credits: 31, system: "" },
+  "thumbnail-maker": { kind: "image", credits: 31, system: "", chargeId: "thumbnail-maker-img" },
 };

@@ -59,6 +59,7 @@ Deno.serve(
       return id ? APP_SPECS[id].chargeId ?? id : null;
     },
     defaultCredits: (chargeId) => Object.entries(APP_SPECS).find(([id, s]) => (s.chargeId ?? id) === chargeId)?.[1].credits,
+    isImage: (chargeId) => Object.entries(APP_SPECS).some(([id, s]) => (s.chargeId ?? id) === chargeId && s.kind === "image"),
   }, async (_req, ctx) => {
     const body = (ctx.body ?? {}) as Body;
     const toolId = toolOf(body);

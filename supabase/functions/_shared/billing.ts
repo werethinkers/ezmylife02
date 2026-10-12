@@ -92,6 +92,19 @@ export async function walletBalance(userId: string): Promise<number> {
   return rows[0] ? (rows[0].free_balance ?? 0) + (rows[0].paid_balance ?? 0) : 0;
 }
 
+/** How many AI images free credits may pay for, per person (enforced in start_tool_run / complete_tool_run). */
+export const FREE_IMAGE_LIMIT = 4;
+
+/** How many image runs at `perRun` credits this wallet can pay for, counting the free-credit image limit. */
+export async function imageRunsAffordable(userId: string, perRun: number): Promise<number> {
+  try {
+    return await rpc<number>("image_runs_affordable", { _uid: userId, _per: perRun });
+  } catch {
+    // Database function not there yet: fall back to the plain balance.
+    return Math.floor((await walletBalance(userId)) / Math.max(1, perRun));
+  }
+}
+
 /** Credit price of an app, or null when it has no pricing row. */
 export async function priceOf(toolId: string): Promise<number | null> {
   const r = await fetch(
@@ -109,20 +122,26 @@ export async function priceOf(toolId: string): Promise<number | null> {
  * (ceil(cost × 1.5 / 0.45) = credits).
  */
 const ensured = new Set<string>();
-export async function ensurePrice(toolId: string, credits: number): Promise<void> {
+export async function ensurePrice(toolId: string, credits: number, isImage = false): Promise<void> {
   if (ensured.has(toolId)) return;
   const c = Math.max(1, Math.round(credits));
   ensured.add(toolId);
-  await fetch(`${SUPABASE_URL}/rest/v1/tool_pricing?on_conflict=tool_id`, {
-    method: "POST",
-    headers: {
-      apikey: SERVICE_ROLE,
-      Authorization: `Bearer ${SERVICE_ROLE}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=ignore-duplicates,return=minimal",
-    },
-    body: JSON.stringify({ tool_id: toolId, cost_inr: Number((c * 0.3).toFixed(2)), credit_cost: c }),
-  }).catch(() => undefined);
+  const insert = (row: Record<string, unknown>) =>
+    fetch(`${SUPABASE_URL}/rest/v1/tool_pricing?on_conflict=tool_id`, {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_ROLE,
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=ignore-duplicates,return=minimal",
+      },
+      body: JSON.stringify(row),
+    }).catch(() => null);
+  const row = { tool_id: toolId, cost_inr: Number((c * 0.3).toFixed(2)), credit_cost: c };
+  // is_image marks AI-image prices for the free-credit image limit. If that column is not in the
+  // database yet, create the price row without it rather than leaving the app unpriced.
+  const r = await insert(isImage ? { ...row, is_image: true } : row);
+  if (isImage && (!r || !r.ok)) await insert(row);
 }
 
 export interface BilledContext {
@@ -140,6 +159,8 @@ export interface BilledOptions {
   allowAnonymous?: boolean;
   /** Default credit price for apps that have no pricing row yet (created before the first charge). */
   defaultCredits?: (toolId: string) => number | undefined;
+  /** True when the charged app makes an AI image (free credits pay for only FREE_IMAGE_LIMIT of these). */
+  isImage?: (toolId: string) => boolean;
 }
 
 /**
@@ -177,7 +198,7 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
 
     const userId = caller.userId;
     // No app is free: an app without a price row gets its default (minimum 1 credit) first.
-    await ensurePrice(toolId, opts.defaultCredits?.(toolId) ?? 1);
+    await ensurePrice(toolId, opts.defaultCredits?.(toolId) ?? 1, opts.isImage?.(toolId) ?? false);
     let start: StartResult;
     try {
       start = await startRun(userId, toolId);
@@ -189,7 +210,10 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
       return json(
         {
           error: "insufficient_credits",
-          message: `This needs ${start.credits_required ?? "more"} credits. You have ${start.balance ?? 0}.`,
+          message:
+            start.reason === "free_image_limit"
+              ? `Free credits cover ${FREE_IMAGE_LIMIT} AI images per person. This needs ${start.credits_required ?? "more"} bought credits; you have ${start.balance ?? 0}.`
+              : `This needs ${start.credits_required ?? "more"} credits. You have ${start.balance ?? 0}.`,
           credits_required: start.credits_required,
           balance: start.balance,
         },
