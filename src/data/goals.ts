@@ -77,6 +77,13 @@ export const CATEGORY_INFO: Record<string, CategoryInfo> = {
   Personal: { goal: "learn", line: "Save your family's stories.", give: "family stories and photos", get: "a saved family record", kind: "document" },
   Calculators: { goal: "business", line: "EMI, SIP, deposits, growth and break-even, worked out as you type.", give: "a few numbers", get: "the answer, worked out", kind: "quick" },
   "PDF & Files": { goal: "helpers", line: "Join, split and convert PDFs and photos on your own device.", give: "your files", get: "the converted file to download", kind: "file" },
+  // Flagship apps (scripts/flagship): deeper, multi-step apps.
+  "Startups & Strategy": { goal: "business", line: "Business plans, pitch decks, pricing and investor prep.", give: "your idea or your numbers", get: "a plan or report you can act on", kind: "document" },
+  "Online Selling": { goal: "customers", line: "Listings, store launches and marketplace fixes for online sellers.", give: "your products or seller reports", get: "listings and fixes ready to use", kind: "document" },
+  "Money & Planning": { goal: "helpers", line: "Plan savings, retirement, tax and family money in plain words.", give: "your income, goals or statements", get: "a money plan with the sums shown", kind: "document" },
+  "Jobs & Careers": { goal: "learn", line: "Resumes, interviews, career moves and salary talks.", give: "your CV or the job you want", get: "a stronger CV, plan or practice", kind: "document" },
+  "Health & Wellness": { goal: "helpers", line: "Meal plans, fitness and health reports explained simply.", give: "your goals or reports", get: "a clear plan or explanation", kind: "document" },
+  "Home, Family & Travel": { goal: "helpers", line: "Weddings, trips, moves, homes and family care, planned for you.", give: "what you are planning", get: "a full plan and checklist", kind: "document" },
 };
 
 const FALLBACK: CategoryInfo = { goal: "more", line: "", give: "a few details", get: "your result", kind: "document" };
@@ -181,4 +188,10 @@ export const KIND_BY_ENGINE: Record<string, AppKind> = {
   calc: "quick",
   convert: "file",
   preset: "photo",
+  interview: "document",
+  analyse: "document",
+  studio: "photo",
+  plan: "document",
+  pack: "document",
+  coach: "quick",
 };

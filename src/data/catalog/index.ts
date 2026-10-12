@@ -3,6 +3,16 @@ import { businessDocs } from "./business-docs";
 import { calculators } from "./calculators";
 import { converters } from "./converters";
 import { examPresets } from "./exam-presets";
+import { flagshipBusiness } from "./flagship-business";
+import { flagshipMarketing } from "./flagship-marketing";
+import { flagshipEcommerce } from "./flagship-ecommerce";
+import { flagshipCreators } from "./flagship-creators";
+import { flagshipMoney } from "./flagship-money";
+import { flagshipLegal } from "./flagship-legal";
+import { flagshipCareers } from "./flagship-careers";
+import { flagshipEducation } from "./flagship-education";
+import { flagshipFamily } from "./flagship-family";
+import { flagshipHealth } from "./flagship-health";
 
 /*
  * Catalogue rows for apps added by the 2,000-app launch (docs/launch-plan.md).
@@ -19,4 +29,14 @@ export const CATALOG_GROUPS: Record<string, ToolEntry[]> = {
   calculators,
   converters,
   examPresets,
+  flagshipBusiness,
+  flagshipMarketing,
+  flagshipEcommerce,
+  flagshipCreators,
+  flagshipMoney,
+  flagshipLegal,
+  flagshipCareers,
+  flagshipEducation,
+  flagshipFamily,
+  flagshipHealth,
 };
