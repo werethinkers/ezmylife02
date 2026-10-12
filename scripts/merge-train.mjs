@@ -41,7 +41,9 @@ const merged = [];
 const conflicted = [];
 
 function mergeOne(ref, label) {
-  const r = tryGit(["merge", "--no-ff", "--no-edit", "-m", `Merge ${label} into staging`, ref]);
+  // main fast-forwards staging when staging has nothing of its own (right after a release).
+  const ff = label === "main" ? "--ff" : "--no-ff";
+  const r = tryGit(["merge", ff, "--no-edit", "-m", `Merge ${label} into staging`, ref]);
   if (r.status === 0) return true;
   // rerere may have resolved everything from an earlier run; accept that.
   const left = git("diff --name-only --diff-filter=U");
@@ -110,7 +112,20 @@ for (const b of broken) log(`Skipped, breaks the build or check:apps: ${b.branch
 if (push) {
   execSync("git push origin staging", { stdio: "inherit" });
   log("Pushed staging.");
+  ensureReleasePr();
 } else {
   log("Not pushed (add --push to push staging).");
 }
 if (conflicted.length || broken.length) process.exitCode = 2;
+
+// Keeps one open release PR from staging into main whenever staging has something main lacks.
+// Best effort: GitHub Actions may not be allowed to open PRs in this repo's settings.
+function ensureReleasePr() {
+  if (git("rev-list --count origin/main..staging") === "0") return;
+  const open = spawnSync("gh", ["pr", "list", "--base", "main", "--head", "staging", "--state", "open", "--json", "number", "--jq", "length"], { encoding: "utf8" });
+  if (open.status !== 0 || open.stdout.trim() !== "0") return;
+  const r = spawnSync("gh", ["pr", "create", "--draft", "--base", "main", "--head", "staging",
+    "--title", "Release: staging into main",
+    "--body", "Everything merged into staging since the last release. Merge with a merge commit (not squash) only when Abhijay says go, then Publish in Lovable. See docs/branching.md."], { encoding: "utf8" });
+  log(r.status === 0 ? `Opened release PR: ${r.stdout.trim()}` : `Could not open the release PR: ${r.stderr.trim()}`);
+}
