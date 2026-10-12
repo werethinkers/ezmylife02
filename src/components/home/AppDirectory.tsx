@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useProducts, type Listed } from "@/instant/useProducts";
@@ -49,6 +49,30 @@ interface Block {
 
 const designColor = (category: string) =>
   (WEBSITE_CATEGORIES as readonly string[]).includes(category) ? "hsl(var(--teal))" : "hsl(var(--sun))";
+
+/** One swipeable row per goal at every screen size; ‹ › buttons for mouse users on larger screens. */
+function GoalRail({ label, children }: { label: string; children: React.ReactNode }) {
+  const rail = useRef<HTMLDivElement>(null);
+  const page = (dir: 1 | -1) => rail.current?.scrollBy({ left: dir * rail.current.clientWidth * 0.85, behavior: "smooth" });
+  return (
+    <div className="relative">
+      <div className="mb-2 hidden justify-end gap-1.5 md:flex">
+        <button type="button" aria-label={`Scroll ${label} left`} onClick={() => page(-1)} className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun">
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button type="button" aria-label={`Scroll ${label} right`} onClick={() => page(1)} className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun">
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div
+        ref={rail}
+        className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-smooth scroll-px-4 px-4 pb-3 pt-1 no-scrollbar sm:mx-0 sm:gap-4 sm:scroll-px-0 sm:px-1"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
   const { costOf } = usePricingMap();
@@ -231,13 +255,13 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                 {count(b)} · {b.line}
               </span>
               {b.groups.length > 1 && (
-                <span className="w-full text-[13px] font-semibold text-muted-foreground sm:hidden">
+                <span className="w-full text-[13px] font-semibold text-muted-foreground">
                   {b.groups.length} categories · swipe to see all →
                 </span>
               )}
             </div>
-            {/* Phones: one swipeable row per goal, so the page stays short. Larger screens: a grid. */}
-            <div className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-4 px-4 pb-3 pt-1 no-scrollbar sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
+            {/* One swipeable row per goal, on phones and on larger screens alike. */}
+            <GoalRail label={b.name}>
               {b.groups.map((g) => {
                 const k = `${b.id}:${g.name}`;
                 const expanded = !!query || open.has(k);
@@ -245,7 +269,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                 const more = g.items.length - SHOWN;
                 const seeAll = b.id === DESIGNS ? (WEBSITE_CATEGORIES as readonly string[]).includes(DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id ?? "") ? "/websites" : `/cards?cat=${DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id}` : `/ai-apps?category=${encodeURIComponent(g.name)}`;
                 return (
-                  <section key={k} className="block-card w-[84%] shrink-0 snap-start overflow-hidden sm:w-auto" aria-label={g.name}>
+                  <section key={k} className="block-card w-[84%] shrink-0 snap-start overflow-hidden sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]" aria-label={g.name}>
                     <div className="flex items-start justify-between gap-3 border-b-2 border-ink px-4 py-3" style={{ background: g.color }}>
                       <div className="min-w-0">
                         <Link to={seeAll} className="font-bold leading-tight hover:underline">
@@ -283,7 +307,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                   </section>
                 );
               })}
-            </div>
+            </GoalRail>
           </div>
         ))}
       </div>
