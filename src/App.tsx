@@ -72,6 +72,8 @@ const ProductPromo = lazy(() => import("./pages/instant/ProductPromo"));
 const MyPages = lazy(() => import("./pages/instant/MyPages"));
 const PageLeads = lazy(() => import("./pages/instant/PageLeads"));
 const AdminInstant = lazy(() => import("./pages/instant/AdminInstant"));
+const AdminInfluencers = lazy(() => import("./pages/influencers/AdminInfluencers"));
+const AdminRefunds = lazy(() => import("./pages/refunds/AdminRefunds"));
 
 
 
@@ -281,6 +283,8 @@ const AnimatedRoutes = () => {
             <Route path="/my-pages" element={<ProtectedRoute><MyPages /></ProtectedRoute>} />
             <Route path="/my-pages/:pageId" element={<ProtectedRoute><PageLeads /></ProtectedRoute>} />
             <Route path="/admin/instant" element={<ProtectedRoute><AdminInstant /></ProtectedRoute>} />
+            <Route path="/admin/influencers" element={<ProtectedRoute><AdminInfluencers /></ProtectedRoute>} />
+            <Route path="/admin/refunds" element={<ProtectedRoute><AdminRefunds /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"
