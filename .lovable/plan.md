@@ -9,6 +9,7 @@
 2. Redeploy the payment functions (create order, verify payment, webhook) so the live versions include the kit pack and the current Razorpay keys.
 3. If the keys themselves are rejected by Razorpay, open the secure form for you to re-enter the live Key ID and Secret.
 4. Verify: the kit "Pay Rs. 999" button opens the Razorpay window with the right amount, and a kit order row is created as pending.
+5. Offer credits: when the kit is paid, the buyer's wallet goes up by the full 3,000 offer credits (2,200 + 800 bonus) exactly once, plus the website and card. The crediting step already adds whatever amount is stored on the order, so the check is that the live checkout stores 3,000 for the kit. After your first real kit purchase I will confirm the wallet, history entry and website/card grants.
 
 ## Not changed
 - No page design, wording, prices, or influencer screens.
