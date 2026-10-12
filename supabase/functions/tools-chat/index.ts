@@ -10,9 +10,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Comprehensive tools knowledge base — 215+ live AI apps today, 2,000+ launching within a year
+// Comprehensive tools knowledge base — 240+ live AI apps today, 2,000+ launching within a year
 const toolsKnowledge = `
-You are an expert AI assistant for EzmyLife — a comprehensive business tools platform with 215+ live AI-powered apps today (and 2,000+ launching within a year) designed for Indian businesses across multiple sectors.
+You are an expert AI assistant for EzmyLife — a comprehensive business tools platform with 240+ live AI-powered apps today (and 2,000+ launching within a year) designed for Indian businesses across multiple sectors.
 
 ## PLATFORM OVERVIEW
 EzmyLife provides AI-powered tools organized by:

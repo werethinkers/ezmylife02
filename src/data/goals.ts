@@ -28,13 +28,14 @@ export const GOALS: Goal[] = [
 ];
 
 /** How an app opens: on the same page, or as a full-screen workspace. */
-export type AppKind = "quick" | "photo" | "document" | "sheet";
+export type AppKind = "quick" | "photo" | "document" | "sheet" | "file";
 
 export const KIND_TEXT: Record<AppKind, { title: string; line: string }> = {
   quick: { title: "Works in a few taps", line: "Type a line or two and get your answer on the same screen." },
   photo: { title: "Opens a photo editor", line: "Add a photo, pick what you want, and download the new one." },
   document: { title: "Opens a document maker", line: "Fill a short form and your document is written for you." },
   sheet: { title: "Opens a sheet", line: "Add rows like a register. Totals and alerts work themselves out." },
+  file: { title: "Opens a file converter", line: "Add your files, pick the format, and download the new ones. Nothing is uploaded." },
 };
 
 export interface CategoryInfo {
@@ -69,6 +70,8 @@ export const CATEGORY_INFO: Record<string, CategoryInfo> = {
   "For Students": { goal: "learn", line: "Study plans, flashcards and marks.", give: "your subjects and dates", get: "a study plan or sheet", kind: "sheet" },
   "For Teachers": { goal: "learn", line: "Plan lessons in minutes.", give: "class and topic", get: "a lesson plan", kind: "document" },
   Personal: { goal: "learn", line: "Save your family's stories.", give: "family stories and photos", get: "a saved family record", kind: "document" },
+  Calculators: { goal: "business", line: "EMI, SIP, deposits, growth and break-even, worked out as you type.", give: "a few numbers", get: "the answer, worked out", kind: "quick" },
+  "PDF & Files": { goal: "helpers", line: "Join, split and convert PDFs and photos on your own device.", give: "your files", get: "the converted file to download", kind: "file" },
 };
 
 const FALLBACK: CategoryInfo = { goal: "more", line: "", give: "a few details", get: "your result", kind: "document" };
@@ -90,7 +93,7 @@ export interface CategoryRow {
 // everywhere without a code change. Filled by useToolsCatalog; empty in build scripts.
 let dynamicInfo: Record<string, CategoryInfo> = {};
 let dynamicOrder: Record<string, number> = {};
-const KINDS: AppKind[] = ["quick", "photo", "document", "sheet"];
+const KINDS: AppKind[] = ["quick", "photo", "document", "sheet", "file"];
 
 export function registerCategories(rows: CategoryRow[] | null | undefined) {
   const info: Record<string, CategoryInfo> = {};
@@ -170,4 +173,7 @@ export const KIND_BY_ENGINE: Record<string, AppKind> = {
   chat: "quick",
   vision: "document",
   image: "photo",
+  calc: "quick",
+  convert: "file",
+  preset: "photo",
 };

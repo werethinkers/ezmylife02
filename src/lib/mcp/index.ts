@@ -20,7 +20,7 @@ export default defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
   version: "0.2.0",
-  instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 215+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
+  instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 240+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
 
 **Start by calling \`help\` for the full tool guide with examples.**
 

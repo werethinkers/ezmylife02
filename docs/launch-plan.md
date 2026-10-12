@@ -9,7 +9,7 @@ Read it at the start of every phase and update it at the end.
 |---|---|---|---|---|---|
 | 0 | Foundation | 0 | **Done 12 Oct 2026** (two live checks left, see "Open items") | 0 | 154 apps + 104 website and card designs |
 | 1 | Pilot: business documents and legal templates | ~100 | **Live 12 Oct 2026** (Published, SQL applied; first real AI run of each kind still to be checked) | 64 | 218 apps |
-| 2 | New engines: calculator, file converter, photo presets | ~30 | Not started | | |
+| 2 | New engines: calculator, file converter, photo presets | ~30 | **Built 12 Oct 2026**, waiting for Publish, then the SQL (see "Phase 2 notes") | 25 | 243 apps |
 | 3 | Preset scale-up, one vertical per chat | ~870 | Not started | | |
 | 4 | AI verticals, one vertical per chat | ~650 | Not started | | |
 | 5 | Invitations and greetings | ~250 | Not started | | |
@@ -17,8 +17,8 @@ Read it at the start of every phase and update it at the end.
 
 Counts: "apps" are live rows in the `tools_catalog` table: 218 on 12 Oct 2026 (154 before Phase 1, plus 64; the
 Phase 1 SQL was applied that day through the Lovable database connection). The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
-The 104 website, card and invitation designs are active rows in `ip_products`. Site copy says "215+"
-(218 rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
+The 104 website, card and invitation designs are active rows in `ip_products`. Site copy says "240+"
+from Phase 2 (243 once its SQL is applied, rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
 
 ## Fixed rules
 
@@ -97,9 +97,9 @@ already so and was left alone.
 
 | Vertical | Category | Goal |
 |---|---|---|
-| Exam and ID photo/signature presets | Image Tools | Photos & content |
-| PDF and file converters | PDF & Files (new) | Smart helpers |
-| Finance calculators | Finance & Accounting | Run your business |
+| Exam and ID photo/signature presets | Image Tools (also For Students for exams) | Photos & content |
+| PDF and file converters | PDF & Files (new in Phase 2; image converters also in Image Tools) | Smart helpers |
+| Finance calculators | Calculators (new in Phase 2; some also in Finance & Accounting) | Run your business |
 | Business documents | Finance, Legal, HR, Operations | Run your business |
 | Legal templates | Legal & Compliance | Run your business |
 | Careers | Jobs & Careers (new) | Learn & grow |
@@ -166,6 +166,39 @@ run from the test machine (no outside network), so the first live run of each ki
 `supabase/migrations/20261012042353_catalog_businessdocs.sql` through the Lovable database connection
 (insert-only). Applying the SQL first would list apps the live site cannot open yet. 3) Check that the
 `ai-app` function has the new server instructions (see "Open items": not yet confirmed that Publish deploys functions).
+
+## Phase 2 notes
+
+**25 apps on three new engines** (all run in the browser; files never leave the device). The preset
+engine is new rather than a layer on the old passport and signature screens, because those screens
+take no app id and so cannot know which exam they are for.
+
+| Engine | File | Apps |
+|---|---|---|
+| Calculator (`engine: "calc"`, `src/apps/engines/CalcApp.tsx`) | `src/apps/defs/calculators.ts` | EMI, Loan Prepayment, SIP, FD, RD, CAGR, Break-Even, Percentage, Age (9) |
+| File converter (`engine: "convert"`, `ConvertApp.tsx`, converters in `src/apps/lib/convert.ts`) | `src/apps/defs/converters.ts` | JPG to PDF, PDF to JPG, Merge PDF, Split PDF, Rotate PDF, PDF to Text, HEIC to JPG, WebP to JPG, PNG to JPG, Image to WebP (10) |
+| Exam/ID preset (`engine: "preset"`, `PresetApp.tsx`, image work in `src/apps/lib/presetImage.ts`) | `src/apps/defs/exam-presets.ts` | NEET/JEE/CUET (NTA), SBI Clerk 2026, GATE 2027, US visa, OCI card, India e-Visa (6) |
+
+How each engine works:
+- **Calculator**: the formula runs on every keystroke; the example is filled in on open so the answer shows straight away. Results, a split bar, a year-wise table (Show all), Copy, WhatsApp, CSV for Excel. Each calculation is saved to history by itself. "Explain in plain words" is the only AI step (1 credit, Flash-Lite, `appSpecs/calculators.ts`); the model is told to use the worked-out figures as given and give no investment, tax or legal advice.
+- **Converter**: add files (drag, tap, several at once), reorder for Merge and JPG to PDF, pick settings, download one file or a ZIP. History keeps file names only. pdf-lib builds and edits PDFs; pdf.js (already on the site) reads them; heic2any reads iPhone photos. Both new packages were added to `package.json` and `bun.lock` (checked with `bun install --frozen-lockfile`).
+- **Preset**: a preset is a data row per exam: exact pixel size, or a pixel range and shape, KB range, background and the official rules, with the source page and the date it was read. One card per upload (photo, signature, thumb, declaration). The app crops, cleans paper to white for ink items, sets the exact size, and finds the best JPG quality inside the KB range; too-small files are padded with a JPEG comment block (the picture is unchanged). KB limits are met for both 1 KB = 1000 and 1 KB = 1024 bytes. Ticks show each rule passing; Download all gives a ZIP. Where the official page sets no pixel size, the app says so and uses our own size.
+- Price: 1 credit per use (30 minutes) for all 25, through `USAGE_GATED`. The calculator explanation is a separate 1-credit AI run.
+- New categories: **Calculators** (Run your business) and **PDF & Files** (Smart helpers), with a new kind `file` ("Opens a file converter"). `npm run check:apps` now checks the new engines: browser engines must be in `USAGE_GATED`, presets must have an https source with a date, and size and KB rules must be complete.
+
+Sources used (read 12 Oct 2026): NTA bulletins for NEET (UG) 2026, JEE (Main) 2026 and CUET (UG) 2026; SBI Junior Associates 2026 advertisement CRPD/CR/2026-27/17; GATE 2027 photograph and signature page (IIT Madras); US State Department digital image requirements; Embassy of India Asunción OCI page; Indian e-Visa page. Links are in `src/apps/defs/exam-presets.ts` and on each app page.
+
+Left out, and why:
+- **GST, PPF and gratuity calculators**: no official page could be read for the current figures (NSI and UPSC block automated reading; the CBIC page only links elsewhere; gratuity moved under the Code on Social Security from 21 Nov 2025 and the ceiling under it was not confirmed). Add them in Phase 3 with a source.
+- **UPSC, SSC, IBPS, CAT, RRB, PAN presets**: the official notices could not be opened (robots blocks, script-only sites or no link found). PAN's Protean article gives conflicting KB limits.
+- **UK passport and Canada photos**: both say the photo must not be altered by software, which a resizing tool cannot honour.
+- **NEET finger and thumb impressions**: the 2026 bulletin gives two different KB ranges.
+- NEET and JEE Main share one app with CUET: their photo rules are the same and one signature file (10–50 KB) passes all three, so separate apps would be padding.
+- Existing live apps **SSC, UPSC, PSC and PAN Photo Resize** still open the general passport tool with generic sizes, not exam rules. They should move to the preset engine once their official notices are sourced (Phase 3).
+
+Tested in a browser: all 9 calculators (example result, answer changes with input, auto-history), all 10 converters on real files (page counts and rotations checked in the output PDFs; HEIC with a real HEIC file), all 6 presets with a photo and a signature on grey paper (every tick green, ZIP download). The AI explanation could not be run from the test machine.
+
+**How Phase 2 goes live:** 1) Abhijay presses Publish in Lovable. 2) Apply, in this order, through the Lovable database connection: `20261012060000_category_kind_file.sql` (allows the new kind), then `20261012060124_catalog_calculators.sql`, `20261012060125_catalog_converters.sql`, `20261012060126_catalog_exampresets.sql` (insert-only). 3) Run one "Explain in plain words" to confirm the `ai-app` function has the new instructions.
 
 ## Open items
 

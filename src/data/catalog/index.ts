@@ -1,4 +1,7 @@
 import type { ToolEntry } from "../toolsDatabase";
+import { calculators } from "./calculators";
+import { converters } from "./converters";
+import { examPresets } from "./exam-presets";
 
 /*
  * Catalogue rows for apps added by the 2,000-app launch (docs/launch-plan.md).
@@ -78,5 +81,8 @@ export const CATALOG_GROUPS: Record<string, ToolEntry[]> = {
     { id: "tool-102", name: "Benefit Statement", description: "Compensation and benefits summary for employee", category: "HR & Staffing", toolType: ["HR & Staffing", "Document Tools"], source: "business", isLive: true },
     { id: "tool-103", name: "Grievance Form", description: "Employee complaint and grievance mechanism", category: "HR & Staffing", toolType: ["HR & Staffing", "Document Tools"], source: "business", isLive: true },
     { id: "tool-104", name: "Company Policy", description: "HR and operational policy template", category: "HR & Staffing", toolType: ["HR & Staffing", "Document Tools"], source: "business", isLive: true },
-  ]
+  ],
+  calculators,
+  converters,
+  examPresets,
 };
