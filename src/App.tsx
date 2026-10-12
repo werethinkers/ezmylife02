@@ -64,6 +64,7 @@ const UseCaseLanding = lazy(() => import("./pages/UseCaseLanding"));
 const IndustryLanding = lazy(() => import("./pages/IndustryLanding"));
 const Explore = lazy(() => import("./pages/Explore"));
 const PromoPage = lazy(() => import("./pages/PromoPage"));
+const Kit = lazy(() => import("./pages/Kit"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const CreateGallery = lazy(() => import("./pages/instant/CreateGallery"));
 const Builder = lazy(() => import("./pages/instant/Builder"));
@@ -275,6 +276,7 @@ const AnimatedRoutes = () => {
               }
             />
             <Route path="/promo/:slug" element={<PromoPage />} />
+            <Route path="/kit" element={<Kit />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/create" element={<CreateGallery />} />
             <Route path="/websites" element={<CreateGallery kind="websites" />} />

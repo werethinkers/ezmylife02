@@ -61,7 +61,7 @@ BEGIN
     'ok', true,
     'name', r.name, 'handle', r.handle, 'city', r.city, 'campaign', r.campaign,
     'code', r.code, 'commission_pct', r.commission_pct, 'status', r.status,
-    'link', 'https://ezyourlife.com/?ref=' || r.code,
+    'link', 'https://ezyourlife.com/kit?ref=' || r.code,
     'refund_window_days', v_window,
     'clicks', v_clicks,
     'buyers', v_buyers,

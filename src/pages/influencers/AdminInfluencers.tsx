@@ -132,7 +132,7 @@ export default function AdminInfluencers() {
     if (error) return toast({ title: "Not added", description: error.message, variant: "destructive" });
     setForm({ name: "", handle: "", city: "", code: "", commission_pct: "20" });
     setShowAdd(false);
-    toast({ title: "Added", description: `Give them this link: ezyourlife.com/?ref=${form.code}` });
+    toast({ title: "Added", description: `Give them this link: ezyourlife.com/kit?ref=${form.code}` });
     refresh();
   };
 
@@ -317,7 +317,7 @@ export default function AdminInfluencers() {
                       {r.city ? <span className="font-normal text-neutral-600"> · {r.city}</span> : null}
                     </div>
                     <div className="text-sm text-neutral-700">
-                      Link: <span className="font-mono">ezyourlife.com/?ref={r.code}</span> · {r.commission_pct}% commission
+                      Link: <span className="font-mono">ezyourlife.com/kit?ref={r.code}</span> · {r.commission_pct}% commission
                     </div>
                     <div className="text-sm mt-1">
                       {r.has_login
@@ -510,7 +510,7 @@ export default function AdminInfluencers() {
                   <p className="text-xs mt-2">
                     Their link will be:{" "}
                     <span className="font-mono font-bold break-all">
-                      ezyourlife.com/?ref={form.code || "priya-indore"}
+                      ezyourlife.com/kit?ref={form.code || "priya-indore"}
                     </span>
                   </p>
                   {form.code && !/^[a-z0-9-]{3,20}$/.test(form.code) && (
