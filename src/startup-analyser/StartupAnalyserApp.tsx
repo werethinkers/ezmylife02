@@ -420,7 +420,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
         const newHistory = [...prev];
         newHistory[newHistory.length - 1] = {
           role: 'assistant',
-          content: handled ? "Sign in or add credits to ask follow-up questions (1 credit each)." : (err instanceof Error && err.message ? err.message : "Sorry, I encountered an error. Please try again."),
+          content: handled ? "Sign in or add credits to ask follow-up questions (2 credits each)." : (err instanceof Error && err.message ? err.message : "Sorry, I encountered an error. Please try again."),
         };
         return newHistory;
       });
