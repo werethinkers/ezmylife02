@@ -229,7 +229,7 @@ export default function Kit() {
     <div className="flex min-h-screen flex-col text-base leading-normal" style={{ background: CREAM, color: INK, fontFamily: "'Hind', system-ui, sans-serif" }}>
       <SEOHead
         title="Your business online for ₹999 | EZYOURLIFE"
-        description="A published website, a digital visiting card and 2,200 credits for business apps. One payment of ₹999, no subscription."
+        description="A published website, a digital visiting card and 3,000 credits for business apps. One payment of ₹999, no subscription."
         path="/kit"
       />
 
@@ -291,7 +291,7 @@ export default function Kit() {
             </div>
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {[
-                { t: `${num(KIT.credits)} credits`, s: "For bills, documents, photos and posts", b: `Worth ${inr(KIT.creditsWorth)}` },
+                { t: `${num(KIT.credits)} credits`, s: `The normal ₹1,000 pack has ${num(KIT.normalCredits)}`, b: `+${num(KIT.bonusCredits)} free` },
                 { t: "Website for your business", s: `Online for a year · sold at ${KIT.items[0].worth.replace("₹149 to ", "up to ")}`, b: "Free" },
                 { t: "Digital visiting card", s: `Share it as a link · sold at ${KIT.items[1].worth}`, b: "Free" },
               ].map((r) => (

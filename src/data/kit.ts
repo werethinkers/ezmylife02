@@ -8,13 +8,15 @@ import type { Product } from "@/instant/types";
 export const KIT = {
   packId: "kit999",
   inr: 999,
-  credits: 2200,
+  credits: 3000,
+  /** What the normal ₹1,000 pack gives, and the free extra on top of it. */
+  normalCredits: 2200,
+  bonusCredits: 800,
   /** What the buyer can make, already paid for, after buying. */
   items: [
     { name: "A website for your business, published", worth: "₹149 to ₹299", scope: "business" as const },
     { name: "A digital visiting card, published", worth: "₹99", scope: "card" as const },
   ],
-  creditsWorth: 1000,
   /** Price ranges an influencer may choose designs from. Mirrors kit_product_scope in the database. */
   siteMaxInr: 299,
   cardMaxInr: 99,

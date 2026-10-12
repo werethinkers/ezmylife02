@@ -14,9 +14,9 @@ const PACKS: Record<string, { inr: number; credits: number; label: string }> = {
   p250:  { inr: 250,  credits: 500,  label: "500 credits" },
   p500:  { inr: 500,  credits: 1100, label: "1,100 credits" },
   p1000: { inr: 1000, credits: 2200, label: "2,200 credits" },
-  // The kit sold on /kit. Same 2,200 credits as p1000, ₹1 less, and the paid
+  // The kit sold on /kit: the 2,200 credits of p1000 plus 800 free, and the paid
   // purchase also grants one website and one visiting card (kit_grant_on_paid).
-  kit999: { inr: 999, credits: 2200, label: "Business kit: 2,200 credits, website and visiting card" },
+  kit999: { inr: 999, credits: 3000, label: "Business kit: 3,000 credits, website and visiting card" },
 };
 
 serve(async (req) => {
