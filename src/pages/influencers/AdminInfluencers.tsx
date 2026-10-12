@@ -29,6 +29,13 @@ const explain = (e: unknown) => {
   return m;
 };
 
+// Readable password like "tiger-maple-42". Shown once to the admin to send on.
+function generatePassword() {
+  const words = ["tiger", "maple", "river", "lotus", "sunny", "cobra", "amber", "orbit", "pearl", "comet"];
+  const pick = () => words[Math.floor(Math.random() * words.length)];
+  return `${pick()}-${pick()}-${Math.floor(10 + Math.random() * 90)}`;
+}
+
 const inr = (n: number | null | undefined) =>
   "₹" + Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
@@ -61,6 +68,7 @@ export default function AdminInfluencers() {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", handle: "", city: "", code: "", commission_pct: "20" });
   const [newLogin, setNewLogin] = useState<{ name: string; email: string; password: string | null; reused: boolean } | null>(null);
+  const [loginForm, setLoginForm] = useState({ email: "", password: generatePassword() });
 
   const isAdmin = useQuery({
     queryKey: ["influencer-admin"],
@@ -144,29 +152,63 @@ export default function AdminInfluencers() {
     refresh();
   };
 
+  // Login actions run as database functions (migration 20261012190000), so they
+  // work without any edge function deployment.
   const createLogin = async (r: Row) => {
-    const email = window.prompt(
-      `Create a login for ${r.name}.\n\n` +
-      `They will sign in at ezyourlife.com/influencer and see only their own numbers.\n` +
-      `They never get access to this admin area.\n\nTheir email:`,
-      "",
-    );
-    if (!email) return;
+    const email = loginForm.email.trim();
+    const password = loginForm.password;
+    if (!email) return toast({ title: "Enter their email first", variant: "destructive" });
+    if (password.length < 8) return toast({ title: "Password must be at least 8 characters", variant: "destructive" });
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke("influencer-create-login", {
-        body: { influencer_id: r.id, email },
+      const { data, error } = await rpc("influencer_create_login", {
+        _influencer_id: r.id, _email: email, _password: password,
       });
-      if (error || data?.error) throw new Error(data?.error ?? error?.message);
+      if (error) throw new Error(error.message);
       setNewLogin({
         name: r.name,
         email: data.email,
-        password: data.password,
-        reused: !!data.reused_existing_account,
+        password: data.created ? password : null,
+        reused: data.created === false,
       });
+      setLoginForm({ email: "", password: generatePassword() });
       refresh();
     } catch (e) {
       toast({ title: "Could not create login", description: explain(e), variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPassword = async (r: Row) => {
+    const password = loginForm.password;
+    if (password.length < 8) return toast({ title: "Password must be at least 8 characters", variant: "destructive" });
+    if (!window.confirm(`Set a new password for ${r.name}? Their old password will stop working.`)) return;
+    setBusy(true);
+    try {
+      const { data, error } = await rpc("influencer_reset_password", { _influencer_id: r.id, _password: password });
+      if (error) throw new Error(error.message);
+      setNewLogin({ name: r.name, email: data.email, password, reused: false });
+      setLoginForm({ email: "", password: generatePassword() });
+    } catch (e) {
+      toast({ title: "Password not changed", description: explain(e), variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const linkExisting = async (r: Row) => {
+    const email = loginForm.email.trim();
+    if (!email) return toast({ title: "Enter the email of their existing account", variant: "destructive" });
+    setBusy(true);
+    try {
+      const { data, error } = await rpc("influencer_link_by_email", { _influencer_id: r.id, _email: email });
+      if (error) throw new Error(error.message);
+      setNewLogin({ name: r.name, email: data.email, password: null, reused: true });
+      setLoginForm({ email: "", password: generatePassword() });
+      refresh();
+    } catch (e) {
+      toast({ title: "Not linked", description: explain(e), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -299,18 +341,56 @@ export default function AdminInfluencers() {
                       <Tile label="Already paid" value={inr(current.net_paid_total_inr)} hint="net, after TDS" />
                     </div>
 
-                    {!current.has_login && (
-                      <div className="border-2 border-[#121212] bg-[#FFC800] p-4">
-                        <h3 className="font-bold">Give {current.name} their own dashboard</h3>
-                        <p className="text-sm mt-1">
-                          They sign in at ezyourlife.com/influencer and see their clicks, sales and earnings.
-                          They cannot see this admin area or any buyer's name.
-                        </p>
-                        <Button onClick={() => createLogin(current)} disabled={busy} className="border-2 border-[#121212] mt-2">
-                          {busy ? "Creating…" : "Create login"}
+                    <div className="border-2 border-[#121212] bg-[#FFC800] p-4 space-y-3">
+                      <h3 className="font-bold">
+                        {current.has_login ? `${current.name}'s dashboard login` : `Give ${current.name} their own dashboard`}
+                      </h3>
+                      <p className="text-sm">
+                        They sign in at ezyourlife.com/influencer and see only their own clicks, sales and earnings.
+                        They cannot open this admin area or see any buyer's name.
+                      </p>
+                      {current.has_login && (
+                        <p className="text-sm">Current login: <span className="font-mono">{current.login_email}</span></p>
+                      )}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold">{current.has_login ? "Their email (only for linking another account)" : "Their email"}</label>
+                          <Input value={loginForm.email} placeholder="priya@example.com"
+                                 onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold">Password you choose</label>
+                          <div className="flex gap-2">
+                            <Input value={loginForm.password} className="font-mono"
+                                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
+                            <Button type="button" variant="outline" className="border-2 border-[#121212] whitespace-nowrap"
+                                    onClick={() => setLoginForm({ ...loginForm, password: generatePassword() })}>
+                              New
+                            </Button>
+                          </div>
+                          <p className="text-xs mt-1">At least 8 characters. Change it to anything you like.</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {!current.has_login && (
+                          <Button onClick={() => createLogin(current)} disabled={busy} className="border-2 border-[#121212]">
+                            {busy ? "Creating…" : "Create ID and password"}
+                          </Button>
+                        )}
+                        {current.has_login && (
+                          <Button onClick={() => resetPassword(current)} disabled={busy} className="border-2 border-[#121212]">
+                            Set new password
+                          </Button>
+                        )}
+                        <Button onClick={() => linkExisting(current)} disabled={busy} variant="outline" className="border-2 border-[#121212]">
+                          Link an account they already have
                         </Button>
                       </div>
-                    )}
+                      <p className="text-xs">
+                        Use <strong>Link an account</strong> only if they already signed up on Ezyourlife with that email.
+                        It keeps their existing password.
+                      </p>
+                    </div>
 
                     <div className="bg-[#FFF8EB] border-2 border-[#121212] p-4">
                       <h3 className="font-bold">Payment</h3>
