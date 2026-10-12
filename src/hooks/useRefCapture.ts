@@ -19,8 +19,9 @@ export function useRefCapture() {
       return;
     }
     if (!code) return;
-    supabase.functions
-      .invoke("influencer-track", { body: { code, visitor: getVisitorId() } })
-      .catch(() => { /* ignore */ });
+    // Direct database call (anon may run it). No edge function to deploy.
+    (supabase as any)
+      .rpc("influencer_record_click", { _code: code, _visitor: getVisitorId() })
+      .then(() => undefined, () => undefined);
   }, [location.search]);
 }

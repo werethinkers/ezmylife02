@@ -83,7 +83,7 @@ export default function AdminInfluencers() {
   const dash = useQuery({
     queryKey: ["influencer-dashboard"],
     enabled: isAdmin.data === true,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await rpc("influencer_dashboard");
       if (error) throw new Error(error.message);
@@ -94,7 +94,7 @@ export default function AdminInfluencers() {
   const detail = useQuery({
     queryKey: ["influencer-detail", selected],
     enabled: !!selected,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await rpc("influencer_detail", { _influencer_id: selected });
       if (error) throw new Error(error.message);
@@ -249,7 +249,7 @@ export default function AdminInfluencers() {
               after the {dash.data?.refund_window_days ?? 7}-day refund window closes with no refund.
             </p>
             <p className="text-xs text-neutral-500 mt-1">
-              Updates every 30 seconds{dash.data?.generated_at ? ` · last at ${new Date(dash.data.generated_at).toLocaleTimeString("en-IN")}` : ""}.
+              Updates every 10 seconds{dash.data?.generated_at ? ` · last at ${new Date(dash.data.generated_at).toLocaleTimeString("en-IN")}` : ""}.
             </p>
           </div>
           <Button onClick={syncNow} disabled={busy} className="border-2 border-[#121212] shadow-[4px_4px_0_#121212]">

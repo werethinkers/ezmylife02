@@ -90,7 +90,7 @@ export default function InfluencerPortal() {
   const me = useQuery({
     queryKey: ["influencer-me", user?.id],
     enabled: !!user,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await rpc("influencer_me");
       if (error) throw new Error(error.message);
@@ -253,7 +253,7 @@ export default function InfluencerPortal() {
         </section>
 
         <p className="text-xs text-neutral-600 pb-8">
-          Numbers update every 30 seconds. Commission is due only on sales that are not refunded within
+          Numbers update every 10 seconds. Commission is due only on sales that are not refunded within
           {" "}{d.refund_window_days} days. TDS is deducted as required by law when we pay you.
         </p>
       </main>
