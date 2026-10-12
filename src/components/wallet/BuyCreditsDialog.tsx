@@ -5,6 +5,7 @@ import { Zap, Loader2, Check } from "lucide-react";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getRefCode } from "@/lib/refTracking";
 import { useRefreshWallet } from "@/hooks/useWallet";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { toast } from "sonner";
@@ -57,7 +58,7 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
       if (!session) { setLoginOpen(true); return; }
 
       const { data: orderData, error } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { pack_id: packId },
+        body: { pack_id: packId, ref_code: getRefCode() },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error || orderData?.error) throw new Error(orderData?.error || error?.message);

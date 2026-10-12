@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useRefCapture } from "@/hooks/useRefCapture";
 import { QuickLookProvider } from "@/components/store/QuickLook";
 import { MobileDock } from "@/components/MobileDock";
 const SmartAssistantChatbot = lazy(() =>
@@ -74,6 +75,7 @@ const PageLeads = lazy(() => import("./pages/instant/PageLeads"));
 const AdminInstant = lazy(() => import("./pages/instant/AdminInstant"));
 const AdminInfluencers = lazy(() => import("./pages/influencers/AdminInfluencers"));
 const AdminRefunds = lazy(() => import("./pages/refunds/AdminRefunds"));
+const InfluencerPortal = lazy(() => import("./pages/influencers/InfluencerPortal"));
 
 
 
@@ -112,6 +114,7 @@ const pageVariants = {
 const AnimatedRoutes = () => {
   const location = useLocation();
   usePageTracking();
+  useRefCapture();
   const routes = (
           <Routes location={location}>
             <Route path="/" element={<Home />} />
@@ -285,6 +288,7 @@ const AnimatedRoutes = () => {
             <Route path="/admin/instant" element={<ProtectedRoute><AdminInstant /></ProtectedRoute>} />
             <Route path="/admin/influencers" element={<ProtectedRoute><AdminInfluencers /></ProtectedRoute>} />
             <Route path="/admin/refunds" element={<ProtectedRoute><AdminRefunds /></ProtectedRoute>} />
+            <Route path="/influencer" element={<InfluencerPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route
               path="/tools/productvision-360"

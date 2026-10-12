@@ -39,16 +39,20 @@ serve(async (req) => {
     const byCode = new Map((influencers ?? []).map((i: any) => [i.code, i]));
 
     // 1) New paid purchases that used an influencer code.
+    // ref_code is the attribution code captured from /?ref=CODE at checkout.
+    // coupon_code is still read as a fallback for sales captured before ref_code existed.
     const { data: paid } = await supabase
       .from("credit_purchases")
-      .select("id, user_id, inr_amount, coupon_code, paid_at, razorpay_payment_id")
-      .eq("status", "paid").not("coupon_code", "is", null);
+      .select("id, user_id, inr_amount, ref_code, coupon_code, paid_at, razorpay_payment_id")
+      .eq("status", "paid")
+      .or("ref_code.not.is.null,coupon_code.not.is.null");
     const { data: existing } = await supabase.from("influencer_commissions").select("purchase_id");
     const seen = new Set((existing ?? []).map((e: any) => e.purchase_id));
 
     let created = 0;
     for (const p of paid ?? []) {
-      const inf = byCode.get(String(p.coupon_code).toLowerCase().trim());
+      const code = String(p.ref_code ?? p.coupon_code ?? "").toLowerCase().trim();
+      const inf = byCode.get(code);
       if (!inf || seen.has(p.id) || !p.paid_at) continue;
       const commission = Math.round(p.inr_amount * Number(inf.commission_pct)) / 100;
       const approveAfter = new Date(new Date(p.paid_at).getTime() + windowDays * 86400000).toISOString();

@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getRefCode } from "@/lib/refTracking";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
 import { BASELINE_CREDITS_PER_RUPEE, CREDIT_PACKS } from "@/data/creditPacks";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
@@ -58,7 +59,7 @@ const Credits = () => {
       if (!session) { setLoginOpen(true); return; }
 
       const { data: orderData, error } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { pack_id: packId },
+        body: { pack_id: packId, ref_code: getRefCode() },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error || orderData?.error) throw new Error(orderData?.error || error?.message);

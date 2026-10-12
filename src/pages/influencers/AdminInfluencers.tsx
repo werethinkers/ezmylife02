@@ -13,6 +13,7 @@ const rpc = (name: string, args: Record<string, unknown> = {}) =>
 type Row = {
   id: string; name: string; handle: string | null; city: string | null; code: string;
   commission_pct: number; status: string;
+  has_login: boolean; login_email: string | null;
   clicks: number; buyers: number; orders: number; conversion_pct: number; gross_inr: number;
   commission_pending_inr: number; commission_approved_inr: number; commission_paid_inr: number;
   tds_on_payable_est_inr: number; net_payable_now_inr: number; net_paid_total_inr: number;
@@ -49,6 +50,7 @@ export default function AdminInfluencers() {
   const [busy, setBusy] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", handle: "", city: "", code: "", commission_pct: "20" });
+  const [newLogin, setNewLogin] = useState<{ name: string; email: string; password: string | null; reused: boolean } | null>(null);
 
   const isAdmin = useQuery({
     queryKey: ["influencer-admin"],
@@ -132,6 +134,34 @@ export default function AdminInfluencers() {
     refresh();
   };
 
+  const createLogin = async (r: Row) => {
+    const email = window.prompt(
+      `Create a login for ${r.name}.\n\n` +
+      `They will sign in at ezyourlife.com/influencer and see only their own numbers.\n` +
+      `They never get access to this admin area.\n\nTheir email:`,
+      "",
+    );
+    if (!email) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("influencer-create-login", {
+        body: { influencer_id: r.id, email },
+      });
+      if (error || data?.error) throw new Error(data?.error ?? error?.message);
+      setNewLogin({
+        name: r.name,
+        email: data.email,
+        password: data.password,
+        reused: !!data.reused_existing_account,
+      });
+      refresh();
+    } catch (e) {
+      toast({ title: "Could not create login", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reverse = async (purchaseId: string) => {
     const reason = window.prompt("Why is this sale being cancelled? (e.g. buyer refunded)");
     if (!reason) return;
@@ -175,6 +205,38 @@ export default function AdminInfluencers() {
           </Button>
         </header>
 
+        {newLogin && (
+          <section className="border-2 border-[#121212] bg-[#22C3A6] p-4 shadow-[4px_4px_0_#121212] space-y-2">
+            <h2 className="font-bold text-lg">Login ready for {newLogin.name}</h2>
+            {newLogin.reused ? (
+              <p className="text-sm">
+                This email already had an Ezyourlife account, so it keeps its existing password. We linked it to
+                this influencer. Tell them to sign in at <strong>ezyourlife.com/influencer</strong> with their
+                usual password.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm">Send these to {newLogin.name}. The password is shown only once.</p>
+                <div className="bg-white border-2 border-[#121212] p-3 text-sm font-mono space-y-1">
+                  <div>Page: ezyourlife.com/influencer</div>
+                  <div>Email: {newLogin.email}</div>
+                  <div>Password: {newLogin.password}</div>
+                </div>
+                <Button
+                  onClick={() => {
+                    const text = `Your Ezyourlife influencer dashboard\n\nPage: https://ezyourlife.com/influencer\nEmail: ${newLogin.email}\nPassword: ${newLogin.password}\n\nSign in to see your clicks, sales and earnings.`;
+                    navigator.clipboard.writeText(text).then(
+                      () => toast({ title: "Copied", description: "Paste it into WhatsApp." }),
+                      () => toast({ title: "Could not copy" }),
+                    );
+                  }}
+                  className="border-2 border-[#121212]">Copy message for WhatsApp</Button>
+              </>
+            )}
+            <button onClick={() => setNewLogin(null)} className="text-sm underline block">Close</button>
+          </section>
+        )}
+
         {dash.error && <p className="text-red-700">{(dash.error as Error).message}</p>}
 
         <section className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -205,6 +267,11 @@ export default function AdminInfluencers() {
                     <div className="text-sm text-neutral-700">
                       Link: <span className="font-mono">ezyourlife.com/?ref={r.code}</span> · {r.commission_pct}% commission
                     </div>
+                    <div className="text-sm mt-1">
+                      {r.has_login
+                        ? <span className="text-neutral-700">Dashboard login: <span className="font-mono">{r.login_email}</span></span>
+                        : <span className="text-[#b1430f] font-semibold">No dashboard login yet</span>}
+                    </div>
                   </div>
                   <div className="flex gap-4 text-sm">
                     <div><div className="text-neutral-600">Clicks</div><div className="font-bold">{r.clicks}</div></div>
@@ -221,6 +288,19 @@ export default function AdminInfluencers() {
                       <Tile label="Ready to pay" value={inr(current.commission_approved_inr)} hint="window closed" />
                       <Tile label="Already paid" value={inr(current.net_paid_total_inr)} hint="net, after TDS" />
                     </div>
+
+                    {!current.has_login && (
+                      <div className="border-2 border-[#121212] bg-[#FFC800] p-4">
+                        <h3 className="font-bold">Give {current.name} their own dashboard</h3>
+                        <p className="text-sm mt-1">
+                          They sign in at ezyourlife.com/influencer and see their clicks, sales and earnings.
+                          They cannot see this admin area or any buyer's name.
+                        </p>
+                        <Button onClick={() => createLogin(current)} disabled={busy} className="border-2 border-[#121212] mt-2">
+                          {busy ? "Creating…" : "Create login"}
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="bg-[#FFF8EB] border-2 border-[#121212] p-4">
                       <h3 className="font-bold">Payment</h3>

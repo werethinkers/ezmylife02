@@ -35,9 +35,14 @@ serve(async (req) => {
     if (ue || !ud.user?.email) throw new Error("Auth failed");
     const user = ud.user;
 
-    const { pack_id, coupon_code } = await req.json();
+    const { pack_id, coupon_code, ref_code } = await req.json();
     const pack = PACKS[pack_id];
     if (!pack) throw new Error("Invalid pack");
+
+    // Influencer attribution only: recorded on the purchase row, never applied as
+    // a discount. The amount charged is the pack price, exactly as before.
+    const refCode = String(ref_code ?? "").toLowerCase().trim();
+    const cleanRef = /^[a-z0-9-]{3,20}$/.test(refCode) ? refCode : null;
 
     const amount = pack.inr * 100; // paise
 
@@ -66,6 +71,7 @@ serve(async (req) => {
         credits: pack.credits,
         razorpay_order_id: order.id,
         coupon_code: coupon_code ?? null,
+        ref_code: cleanRef,
       })
       .select()
       .single();
