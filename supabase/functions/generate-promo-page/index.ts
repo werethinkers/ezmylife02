@@ -56,15 +56,11 @@ Return STRICT JSON with this shape:
 Rules: describe only what the description says the app does. Never invent ratings, review counts, user numbers, statistics, customer names, testimonials, awards or claims like "loved by" or "trusted by".
 Return only the JSON object.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
+    const aiRes = await aiFetch({
         model: "google/gemini-2.5-flash",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
-      }),
-    });
+      });
     if (!aiRes.ok) throw new Error(`AI: ${await aiRes.text()}`);
     const aiJson = await aiRes.json();
     const content = aiJson.choices?.[0]?.message?.content ?? "{}";

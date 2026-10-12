@@ -135,11 +135,7 @@ RESPOND WITH ONLY a JSON array of objects with "title" and "prompt" keys. No oth
         };
         if (jsonMode) requestBody.response_format = { type: 'json_object' };
 
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await aiFetch(requestBody);
 
         if (response.ok) {
           const data = await response.json();

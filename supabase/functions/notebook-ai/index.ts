@@ -122,11 +122,7 @@ serve(async (req) => {
     // 1. Try Lovable AI first
     if (apiKey) {
       try {
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await aiFetch(requestBody);
         if (response.ok) {
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content || '';

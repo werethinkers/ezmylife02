@@ -125,20 +125,13 @@ Make it engaging with a strong hook and CTA.`;
         throw new Error(`Unknown content type: ${type}`);
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await aiFetch({
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-      }),
-    });
+      });
 
     if (!response.ok) {
       if (response.status === 429) {

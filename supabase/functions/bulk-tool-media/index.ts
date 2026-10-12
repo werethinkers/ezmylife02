@@ -53,15 +53,11 @@ Deno.serve(async (req) => {
 
     const prompt = `A premium 16:9 hero illustration for an AI tool called "${name}". ${description ?? ""}. Category: ${category ?? "productivity"}. Style: dark glassmorphism, deep navy and indigo background with vibrant violet, electric blue, and magenta gradient accents, soft volumetric lighting, futuristic abstract shapes, subtle grid lines, high-end tech magazine aesthetic. Cinematic, polished, atmospheric. NO text, NO words, NO letters, NO logos. Centered composition, subtle depth, premium feel.`;
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const aiResp = await aiFetch({
         model: "google/gemini-2.5-flash-image",
         messages: [{ role: "user", content: prompt }],
         modalities: ["image", "text"],
-      }),
-    });
+      });
     if (!aiResp.ok) {
       const t = await aiResp.text();
       return new Response(JSON.stringify({ error: "ai_failed", status: aiResp.status, detail: t.slice(0, 500) }), {

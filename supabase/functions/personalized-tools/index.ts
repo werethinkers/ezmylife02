@@ -141,13 +141,7 @@ Otherwise, ask a follow-up question to better understand their needs.`;
       userMessage = userProfile.lastMessage || "";
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await aiFetch({
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
@@ -155,8 +149,7 @@ Otherwise, ask a follow-up question to better understand their needs.`;
           { role: "user", content: userMessage }
         ],
         stream: true,
-      }),
-    });
+      });
 
     if (!response.ok) {
       if (response.status === 429) {

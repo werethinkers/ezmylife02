@@ -187,15 +187,11 @@ ${catalogList}
     // 1. Try Lovable AI Gateway first
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (LOVABLE_API_KEY) {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const resp = await aiFetch({
           model: "google/gemini-3-flash-preview",
           messages: [{ role: "system", content: system }, ...messages],
           stream: true,
-        }),
-      });
+        });
       if (resp.ok) {
         return new Response(resp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
       }

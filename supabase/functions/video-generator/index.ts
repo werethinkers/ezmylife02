@@ -65,14 +65,7 @@ serve(async (req) => {
 
     console.log('Generating video frame with prompt:', enhancedPrompt.substring(0, 100));
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await aiFetch(requestBody);
 
     if (!response.ok) {
       const errorText = await response.text();
