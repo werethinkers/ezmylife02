@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
+import { PageSeo } from "@/components/seo/PageSeo";
 
 const NotFound = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageSeo title="Page not found | EZYOURLIFE" description="This page does not exist. Browse business apps, websites and cards on EZYOURLIFE." path={location.pathname} noindex />
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <div className="rounded-3xl border-2 border-ink bg-sun p-8 text-center shadow-block-lg md:p-12">

@@ -3,11 +3,11 @@
 //
 //   node scripts/merge-train.mjs                     # main + every open PR into staging (needs gh)
 //   node scripts/merge-train.mjs branch-a branch-b   # main + just these branches
-//   add --push to push staging when everything passes, --no-checks to skip build and check:apps
+//   add --push to push staging when everything passes, --no-checks to skip build, check:apps and check:seo
 //
 // Steps: start from origin/staging (or origin/main if staging does not exist yet), merge
 // origin/main in, then merge each branch. A branch that conflicts is skipped and reported; the
-// others still go in. Then the build and `npm run check:apps` run. If they fail, each branch is
+// others still go in. Then the build, `npm run check:apps` and `npm run check:seo` run. If they fail, each branch is
 // tried on its own to find the one that breaks them, and that branch is left out.
 import { execSync, spawnSync } from "node:child_process";
 
@@ -41,7 +41,9 @@ const merged = [];
 const conflicted = [];
 
 function mergeOne(ref, label) {
-  const r = tryGit(["merge", "--no-ff", "--no-edit", "-m", `Merge ${label} into staging`, ref]);
+  // main fast-forwards staging when staging has nothing of its own (right after a release).
+  const ff = label === "main" ? "--ff" : "--no-ff";
+  const r = tryGit(["merge", ff, "--no-edit", "-m", `Merge ${label} into staging`, ref]);
   if (r.status === 0) return true;
   // rerere may have resolved everything from an earlier run; accept that.
   const left = git("diff --name-only --diff-filter=U");
@@ -72,7 +74,7 @@ for (const b of branches) {
 }
 
 function runChecks() {
-  for (const cmd of ["npm run build", "npm run check:apps"]) {
+  for (const cmd of ["npm run build", "npm run check:apps", "npm run check:seo"]) {
     const r = spawnSync(cmd, { shell: true, encoding: "utf8" });
     if (r.status !== 0) return `${cmd} failed:\n${(r.stdout + r.stderr).split("\n").slice(-25).join("\n")}`;
   }
@@ -110,7 +112,20 @@ for (const b of broken) log(`Skipped, breaks the build or check:apps: ${b.branch
 if (push) {
   execSync("git push origin staging", { stdio: "inherit" });
   log("Pushed staging.");
+  ensureReleasePr();
 } else {
   log("Not pushed (add --push to push staging).");
 }
 if (conflicted.length || broken.length) process.exitCode = 2;
+
+// Keeps one open release PR from staging into main whenever staging has something main lacks.
+// Best effort: GitHub Actions may not be allowed to open PRs in this repo's settings.
+function ensureReleasePr() {
+  if (git("rev-list --count origin/main..staging") === "0") return;
+  const open = spawnSync("gh", ["pr", "list", "--base", "main", "--head", "staging", "--state", "open", "--json", "number", "--jq", "length"], { encoding: "utf8" });
+  if (open.status !== 0 || open.stdout.trim() !== "0") return;
+  const r = spawnSync("gh", ["pr", "create", "--draft", "--base", "main", "--head", "staging",
+    "--title", "Release: staging into main",
+    "--body", "Everything merged into staging since the last release. Merge with a merge commit (not squash) only when Abhijay says go, then Publish in Lovable. See docs/branching.md."], { encoding: "utf8" });
+  log(r.status === 0 ? `Opened release PR: ${r.stdout.trim()}` : `Could not open the release PR: ${r.stderr.trim()}`);
+}
