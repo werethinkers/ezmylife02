@@ -179,8 +179,14 @@ html {
 
   /* Bold block surfaces */
   .block-card {
-    @apply rounded-2xl border-2 border-foreground bg-card;
+    @apply rounded-2xl border-2 border-foreground;
     box-shadow: var(--shadow-block);
+  }
+
+  /* White by default, but with no weight, so a colour class on the card (bg-pink, bg-sun...) wins.
+     A plain bg-card here used to beat them: custom utilities are emitted after Tailwind's own. */
+  :where(.block-card) {
+    background-color: hsl(var(--card));
   }
 
   .block-lift {
