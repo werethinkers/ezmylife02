@@ -96,6 +96,38 @@ export async function sitePages({ d } = {}) {
     }
   }
 
+  // "See what it does" page for every live app, at /promo/<name> (the address the store links to).
+  // Same slug rule as src/pages/PromoPage.tsx. Title and text differ from the /tool/<id> page, which is the app itself.
+  const promoSlugOf = (name) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const seenPromo = new Set();
+  for (const app of live) {
+    const slug = promoSlugOf(app.name);
+    if (!slug || seenPromo.has(slug)) continue; // two apps with one name: the first keeps the address
+    seenPromo.add(slug);
+    const def = d.APPS[app.id];
+    const info = d.categoryInfo(app.category);
+    const kind = def && def.engine !== "custom" ? d.KIND_BY_ENGINE[def.engine] ?? info.kind : info.kind;
+    const { give, get } = d.giveGetFor(app.category, { kind });
+    const intro = d.seo.sentence(def?.intro ?? app.description);
+    const p = `/promo/${slug}`;
+    const title = `${app.name}: what it does and how it works`;
+    const description = `${intro} See what ${app.name} gives you, how it works and what it costs before you try it.`.slice(0, 170);
+    pages.push({
+      path: p,
+      title,
+      description,
+      keywords: d.seo.appSeoKeywords(app.name, app.category, app.toolType),
+      body: shell(`        <h1>${esc(app.name)}</h1>
+        <p>${esc(intro)}</p>
+        <h2>What you give and what you get</h2>
+        <p>You give ${esc(give)}. You get ${esc(get)}.</p>
+        <h2>What it costs</h2>
+        <p>New accounts get 100 free credits. An app uses credits only when it gives you a result. <a href="/credits">See prices</a>.</p>
+        <p><a href="/tool/${esc(encodeURIComponent(app.id))}">Open ${esc(app.name)}</a> · <a href="/ai-apps">See all apps</a></p>`),
+      jsonLd: [crumbs([["EZYOURLIFE", "/"], ["Business apps", "/ai-apps"], [app.name, p]])],
+    });
+  }
+
   // Websites, cards and invites.
   for (const p of CATALOG) {
     const promo = promoFor(p);
@@ -220,12 +252,13 @@ export async function prerenderPages({ dist = path.join(ROOT, "dist"), log = con
   }
 
   // Fixed pages first, then apps, then websites and cards, then the "AI tool for" pages.
-  const rank = (p) => (p.startsWith("/ai-tool-for/") || p.startsWith("/ai-for/") ? 3 : p.startsWith("/make/") ? 2 : 0);
+  const rank = (p) => (p.startsWith("/ai-tool-for/") || p.startsWith("/ai-for/") ? 3 : p.startsWith("/make/") ? 2 : p.startsWith("/promo/") ? 4 : 0);
   const listed = pages.filter((p) => !p.noindex).map((p) => p.path);
   const indexable = [
     ...listed.filter((p) => rank(p) === 0),
     ...live.map((t) => `/tool/${t.id}`),
     ...listed.filter((p) => rank(p) === 2),
+    ...listed.filter((p) => rank(p) === 4),
     ...listed.filter((p) => rank(p) === 3),
   ].map((p) => `${SITE}${p === "/" ? "/" : enc(p)}`);
   const urls = [`${SITE}/`, ...[...new Set(indexable)].filter((u) => u !== `${SITE}/`)];
