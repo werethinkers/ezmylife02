@@ -3,14 +3,14 @@ import { billed } from "../_shared/billing.ts";
 
 // Every request is signed-in-checked and charged on the server.
 // - Full analysis: "startup-analyser-flash" (Gemini 2.5 Flash, 10 credits).
-// - Follow-up chat question: "startup-analyser-chat" (Gemini 2.5 Flash, 1 credit).
+// - Follow-up chat question: "startup-analyser-chat" (Gemini 2.5 Flash, 2 credits).
 // All AI calls use the platform's own rotating keys — users never supply a key.
 const serve = (handler: (req: Request) => Promise<Response>) =>
   stdServe(
     billed(
       {
         tool: (b) => (b?.action === "chat" ? "startup-analyser-chat" : "startup-analyser-flash"),
-        defaultCredits: (id) => (id === "startup-analyser-chat" ? 1 : id === "startup-analyser-flash" ? 10 : undefined),
+        defaultCredits: (id) => (id === "startup-analyser-chat" ? 2 : id === "startup-analyser-flash" ? 10 : undefined),
       },
       (req) => handler(req),
     ),

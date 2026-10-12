@@ -4,11 +4,13 @@ Applied 12 Oct 2026 with the owner's approval (migration `20261013100000_ai_pric
 
 When pricing a new AI app, use the rule below with its model and size, and put the same number in `src/apps/prices/` and `supabase/functions/_shared/appSpecs/`.
 
-**What this shows:** most AI apps priced at 1 to 3 credits earn back 0.4x to 1.8x their AI cost. Image apps earn about 1.2x. The 1-credit Flash-Lite apps already earn 4.3x and do not need a price rise.
+**What this shows:** most AI apps priced at 1 to 3 credits earn back 0.4x to 1.8x their AI cost. Image apps earn about 1.2x. The 1-credit Flash-Lite apps already earn 4.3x; they move to 2 credits under the AI minimum.
 
 ## The rule
 
-> **Price in credits = round up (AI cost per run in ₹ × 3 ÷ ₹0.376)**, with a minimum of 1.
+> **Price in credits = round up (AI cost per run in ₹ × 3 ÷ ₹0.376)**, with a minimum of 2 for any app that calls AI. Apps that run fully in the browser stay at 1.
+
+The minimum of 2 was added on 12 Oct 2026 at the owner's choice, so cheap Flash-Lite apps also help pay for hosting and other fixed costs (2 credits earn about ₹0.75 against about ₹0.09 of AI cost). Calculators stay at 1: that price pays for using the calculator, and its optional "Explain" note is a very small Flash-Lite call.
 
 - **₹0.376 is what one credit earns you, at the worst case.** The ₹1,000 pack gives 2,200 credits, which is ₹0.4545 a credit. Taking out 18% GST (assuming pack prices include GST) leaves ₹0.385. Taking out Razorpay's 2% fee plus 18% GST on that fee (2.36% in total) leaves **₹0.376**. On the ₹10 pack a credit earns ₹0.55, so everything below is conservative.
 - **× 3** means each paid run brings back three times its AI cost: one share pays for the AI, one covers the free credits you give away (100 for every sign-up), and one goes to hosting, other overheads and profit. This is a policy choice. A multiplier of × 2 gives the lower numbers in the last column of the table.
@@ -40,7 +42,7 @@ The current price tiers (1, 2 and 3 credits) were set by how complex each app is
 
 | Kind of app | Apps | Price now | AI cost / run | Earns back now | New price (× 3) | With × 2 |
 |---|---|---|---|---|---|---|
-| Flash-Lite documents (1 credit) | 75 | 1 | ₹0.09 | 4.3× | **1 (no change)** | 1 |
+| Flash-Lite documents (1 credit) | 75 | 1 | ₹0.09 | 4.3× | **2 (AI minimum)** | 2 |
 | Flash, short (1 credit) | 8 | 1 | ₹0.41 | 0.9× (loss) | **4** | 3 |
 | Flash, standard (2 credits) | 42 | 2 | ₹0.65 | 1.2× | **6** | 4 |
 | Flash, long: compliance, notice reply (3 credits) | 4 | 3 | ₹1.02 | 1.1× | **9** | 6 |
