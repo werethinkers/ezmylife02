@@ -12,11 +12,13 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { PERSONAS } from "@/data/personas";
+import { STUDIO_IDS } from "@/data/studios";
 import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
 import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
+import { StudiosShelf } from "@/components/home/StudiosShelf";
 import { TodaySection } from "@/components/home/TodaySection";
 import { CreditValue } from "@/components/home/CreditValue";
 import RequestToolSection from "@/components/RequestToolSection";
@@ -67,13 +69,27 @@ const Home = () => {
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
   const byId = useMemo(() => new Map(live.map((t) => [t.id, t])), [live]);
+  const hasStudios = useMemo(() => live.some((t) => STUDIO_IDS.has(t.id)), [live]);
   const persona = PERSONAS.find((p) => p.id === personaId) ?? null;
 
   const query = search.trim().toLowerCase();
-  const results = useMemo(
-    () => (query ? live.filter((t) => `${t.name} ${t.description} ${categoriesOf(t).join(" ")} ${(t.tool_types ?? []).join(" ")}`.toLowerCase().includes(query)).slice(0, 24) : []),
-    [live, query],
-  );
+  // Exact name first, then names that start with the search, then Studios, then everything else.
+  // Sorting happens before the cut at 24 so newer apps are not dropped for being later in the catalogue.
+  const results = useMemo(() => {
+    if (!query) return [];
+    const rank = (t: CatalogTool) => {
+      const name = t.name.toLowerCase();
+      if (name === query) return 0;
+      if (name.startsWith(query)) return 1;
+      return STUDIO_IDS.has(t.id) ? 2 : 3;
+    };
+    return live
+      .filter((t) => `${t.name} ${t.description} ${categoriesOf(t).join(" ")} ${(t.tool_types ?? []).join(" ")}`.toLowerCase().includes(query))
+      .map((t, i) => ({ t, i, r: rank(t) }))
+      .sort((a, b) => a.r - b.r || a.i - b.i)
+      .slice(0, 24)
+      .map((x) => x.t);
+  }, [live, query]);
 
   // Hand-picked by the team (catalog flag set in admin).
   const editorsPicks = useMemo(() => live.filter((t) => t.home_section === "hot"), [live]);
@@ -391,6 +407,13 @@ const Home = () => {
                 </Shelf>
               )}
             </div>
+
+            {/* ───────── Studios ───────── */}
+            {hasStudios && (
+              <Section id="studios" title="Studios" line="Bigger jobs, done start to finish. Answer a few questions and get a full plan, report or set of pictures.">
+                <StudiosShelf apps={live} />
+              </Section>
+            )}
 
             {/* ───────── App bundles ───────── */}
             <Section title="App bundles" line="A few apps that work well together, for one job.">
