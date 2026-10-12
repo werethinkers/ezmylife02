@@ -247,21 +247,21 @@ const Home = () => {
                 {[
                   { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
                   ...(hasStudios
-                    ? [{ to: "/studios", c: "bg-ink text-cream", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
+                    ? [{ to: "/studios", c: "bg-ink text-cream shadow-[5px_5px_0_0_hsl(var(--sun))]", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
                     : []),
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
                 ].map((d) => (
                   <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
                     <div className="flex items-center justify-between">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card">
+                      <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", d.c.includes("bg-ink") && "bg-sun text-ink")}>
                         <d.Icon className="h-5 w-5" aria-hidden />
                       </span>
-                      <span className="rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">{d.tag}</span>
+                      <span className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold", d.c.includes("bg-ink") ? "bg-sun text-ink" : "bg-card")}>{d.tag}</span>
                     </div>
                     <h3 className="text-2xl font-extrabold leading-tight">{d.h}</h3>
                     <p className={cn("text-[16px]", d.c.includes("bg-ink") ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
-                    <span className="mt-auto inline-flex items-center gap-1.5 pt-2 font-bold">
+                    <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-2 font-bold", d.c.includes("bg-ink") && "text-sun")}>
                       {d.go} <ArrowRight className="h-4 w-4" />
                     </span>
                   </DoorLink>
@@ -280,7 +280,7 @@ const Home = () => {
               }
             >
               <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show apps for">
-                {PERSONAS.map((p) => {
+                {PERSONAS.map((p, i) => {
                   const active = p.id === personaId;
                   return (
                     <button
@@ -290,7 +290,7 @@ const Home = () => {
                       onClick={() => setPersonaId(active ? null : p.id)}
                       className={cn(
                         "shrink-0 rounded-full border-2 border-ink px-4 py-2 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        active ? "bg-ink text-cream" : "bg-card hover:bg-sun",
+                        active ? "bg-ink text-cream" : ["bg-pink", "bg-sun", "bg-teal", "bg-lime"][i % 4],
                       )}
                     >
                       <span aria-hidden>{p.emoji} </span>
@@ -311,7 +311,7 @@ const Home = () => {
                     className="overflow-hidden"
                     aria-live="polite"
                   >
-                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sky/40 p-5 md:p-6">
+                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sun/25 p-5 shadow-block md:p-6">
                       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="text-xl font-bold">
