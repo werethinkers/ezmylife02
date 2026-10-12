@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { motion, MotionConfig } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, ListChecks, MessageSquareText, FileCheck2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -14,6 +15,16 @@ import { cn } from "@/lib/utils";
 
 const TAB_COLOURS = ["bg-pink", "bg-sun", "bg-teal", "bg-lime", "bg-sky", "bg-coral"];
 const FIRST = 6;
+const POPULAR = ["business-plan-studio", "resume-studio", "catalogue-photo-studio", "ai-headshot-studio", "income-tax-regime-planner", "home-interior-designer", "maa-ki-virasat"];
+
+/** Fades and lifts its children in once, as they scroll into view. */
+function Reveal({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div className={className} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5, ease: "easeOut" }}>
+      {children}
+    </motion.div>
+  );
+}
 
 const STEPS = [
   { Icon: MessageSquareText, h: "Answer a few questions", d: "Plain questions about your business or your job. Speak or type." },
@@ -25,17 +36,27 @@ function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index
   const [all, setAll] = useState(false);
   const shown = all ? tools : tools.slice(0, FIRST);
   return (
-    <section id={tab.id} className="scroll-mt-28 py-8 md:py-10">
-      <div className={cn("mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink p-5 shadow-block", TAB_COLOURS[index % TAB_COLOURS.length])}>
+    <section id={tab.id} className="scroll-mt-28 py-8 md:py-12">
+      <Reveal>
+      <div className={cn("mb-7 flex flex-wrap items-center justify-between gap-3 rounded-3xl border-2 border-ink p-5 shadow-block md:p-6", TAB_COLOURS[index % TAB_COLOURS.length])}>
         <div className="min-w-0">
           <h2 className="text-2xl font-extrabold md:text-3xl">{tab.label}</h2>
           <p className="mt-1 text-[16px] text-ink/85">{tab.line}</p>
         </div>
         <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">{tools.length} studios</span>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {shown.map((t) => (
-          <AppTile key={t.id} tool={t} layout="grid" />
+      </Reveal>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {shown.map((t, i) => (
+          <motion.div
+            key={t.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.4, delay: (i % 3) * 0.06, ease: "easeOut" }}
+          >
+            <AppTile tool={t} layout="grid" />
+          </motion.div>
         ))}
       </div>
       {tools.length > FIRST && (
@@ -57,10 +78,26 @@ const Studios = () => {
     () => STUDIO_TABS.map((t, i) => ({ tab: t, index: i, tools: t.ids.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[] })).filter((g) => g.tools.length > 0),
     [byId],
   );
+  const popular = useMemo(() => POPULAR.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[], [byId]);
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    const els = groups.map((g) => document.getElementById(g.tab.id)).filter(Boolean) as HTMLElement[];
+    if (!els.length || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.find((e) => e.isIntersecting);
+        if (hit) setActive(hit.target.id);
+      },
+      { rootMargin: "-30% 0px -60% 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [groups]);
   const total = groups.reduce((n, g) => n + g.tools.length, 0);
   const label = total >= 10 ? `${Math.floor(total / 10) * 10}+` : String(total);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen bg-background">
       <PageSeo
         {...seoFor("/studios", countLabel)}
@@ -71,8 +108,10 @@ const Studios = () => {
 
       <main>
         <header className="mx-auto max-w-7xl px-4 pt-8 md:pt-12">
-          <div className="grid gap-8 rounded-3xl border-2 border-ink bg-pink p-6 shadow-block-lg md:grid-cols-[1.3fr_1fr] md:p-12">
-            <div>
+          <div className="relative grid gap-8 overflow-hidden rounded-[2rem] border-2 border-ink bg-pink p-6 shadow-block-lg md:grid-cols-[1.3fr_1fr] md:p-12">
+            <motion.span aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-ink bg-sun" animate={{ y: [0, 10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
+            <motion.span aria-hidden className="pointer-events-none absolute -bottom-12 left-1/3 h-32 w-32 rotate-12 rounded-3xl border-2 border-ink bg-lime" animate={{ y: [0, -10, 0], rotate: [12, 6, 12] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
+            <motion.div className="relative" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: "easeOut" }}>
               <span className="inline-flex rounded-full border-2 border-ink bg-sun px-3 py-1 text-[13px] font-bold">
                 {total > 0 ? `${label} studios` : "Studios"}
               </span>
@@ -93,10 +132,10 @@ const Studios = () => {
                 </Button>
               </div>
               <p className="mt-4 text-sm font-semibold text-ink/80">100 free credits to start. Pay only when you get a result.</p>
-            </div>
-            <ol className="flex flex-col gap-3 self-center">
+            </motion.div>
+            <ol className="relative flex flex-col gap-3 self-center">
               {STEPS.map(({ Icon, h, d }, i) => (
-                <li key={h} className="flex gap-3 rounded-2xl border-2 border-ink bg-card p-4 shadow-block-sm">
+                <motion.li key={h} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: "easeOut" }} className="flex gap-3 rounded-2xl border-2 border-ink bg-card p-4 shadow-block-sm">
                   <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink", ["bg-sun", "bg-teal", "bg-lime"][i])}>
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
@@ -104,7 +143,7 @@ const Studios = () => {
                     <p className="font-bold">{h}</p>
                     <p className="text-[14px] text-muted-foreground">{d}</p>
                   </div>
-                </li>
+                </motion.li>
               ))}
             </ol>
           </div>
@@ -117,8 +156,8 @@ const Studios = () => {
                 key={g.tab.id}
                 href={`#${g.tab.id}`}
                 className={cn(
-                  "shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-transform hover:-translate-y-0.5",
-                  TAB_COLOURS[g.index % TAB_COLOURS.length],
+                  "shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-all duration-200 hover:-translate-y-0.5",
+                  active === g.tab.id ? "bg-ink text-cream" : TAB_COLOURS[g.index % TAB_COLOURS.length],
                 )}
               >
                 {g.tab.label}
@@ -129,6 +168,19 @@ const Studios = () => {
 
         <div id="all" className="mx-auto max-w-7xl px-4 pb-6">
           {groups.length === 0 && <p className="py-16 text-center text-muted-foreground">Studios are being added. Check back soon.</p>}
+          {popular.length >= 3 && (
+            <section className="pt-10 md:pt-12" aria-label="Most used studios">
+              <Reveal>
+                <h2 className="text-2xl font-extrabold md:text-3xl">Start with a favourite</h2>
+                <p className="mt-1 text-[16px] text-muted-foreground">The studios people open first.</p>
+              </Reveal>
+              <div className="-mx-4 mt-6 flex snap-x gap-5 overflow-x-auto px-4 pb-4 no-scrollbar">
+                {popular.map((t) => (
+                  <AppTile key={t.id} tool={t} />
+                ))}
+              </div>
+            </section>
+          )}
           {groups.map((g) => (
             <Group key={g.tab.id} tab={g.tab} index={g.index} tools={g.tools} />
           ))}
@@ -151,6 +203,7 @@ const Studios = () => {
       </main>
       <SEOFooter />
     </div>
+    </MotionConfig>
   );
 };
 
