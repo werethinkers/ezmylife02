@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import KitPicker from "./KitPicker";
 
 // influencer_me() from 20261012170000_influencer_login.sql. It returns only the
 // signed-in influencer's own campaign, so there is nothing to pass in.
@@ -311,6 +312,8 @@ export default function InfluencerPortal() {
         </section>
 
         <OfferEditor d={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["influencer-me"] })} />
+
+        <KitPicker />
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Tile label="People who clicked" value={d.clicks} hint="from your link" />

@@ -1,5 +1,10 @@
+import { CATALOG, getProduct } from "@/instant/catalog";
+import type { Product } from "@/instant/types";
+
 /** The one offer sold on /kit. Prices here are only for showing what the parts
- *  cost separately; the amount charged comes from the server (pack kit999). */
+ *  cost separately; the amount charged comes from the server (pack kit999).
+ *  Every number on the page comes from here, so changing the offer is one edit
+ *  here plus the matching server pack. */
 export const KIT = {
   packId: "kit999",
   inr: 999,
@@ -10,6 +15,12 @@ export const KIT = {
     { name: "A digital visiting card, published", worth: "₹99", scope: "card" as const },
   ],
   creditsWorth: 1000,
+  /** Price ranges an influencer may choose designs from. Mirrors kit_product_scope in the database. */
+  siteMaxInr: 299,
+  cardMaxInr: 99,
+  /** Shown until an influencer picks their own. */
+  defaultSite: "boutique",
+  defaultCard: "digital-visiting-card",
 };
 
 export type Trade = {
@@ -83,3 +94,26 @@ export const TRADES: Trade[] = [
     ],
   },
 ];
+
+/** The kit's picks, as the influencer chose them (or the defaults). */
+export type KitPicks = {
+  site_product?: string | null; site_theme?: string | null;
+  card_product?: string | null; card_theme?: string | null;
+};
+
+/** Websites an influencer may choose: business designs in the kit price range. */
+export const kitSiteChoices = (priceOf: (p: Product) => number) =>
+  CATALOG.filter((p) => p.family === "business" && priceOf(p) <= KIT.siteMaxInr);
+
+/** Cards an influencer may choose: profile designs in the kit price range. */
+export const kitCardChoices = (priceOf: (p: Product) => number) =>
+  CATALOG.filter((p) => p.family === "profile" && priceOf(p) <= KIT.cardMaxInr);
+
+/** Resolves a pick to a real product and design, falling back to the default. */
+export function resolvePick(kind: "site" | "card", picks?: KitPicks | null) {
+  const wantedP = kind === "site" ? picks?.site_product : picks?.card_product;
+  const wantedT = kind === "site" ? picks?.site_theme : picks?.card_theme;
+  const product = getProduct(wantedP) ?? getProduct(kind === "site" ? KIT.defaultSite : KIT.defaultCard)!;
+  const theme = product.themes.find((t) => t.id === wantedT) ?? product.themes[0];
+  return { product, theme };
+}

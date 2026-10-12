@@ -57,7 +57,13 @@ function BuilderInner({ product }: { product: Product }) {
   const { user } = useAuth();
   const { list } = useProducts();
   const price = list.find((l) => l.product.id === product.id)?.price ?? product.price;
-  const initial = useMemo<Draft>(() => readDraft(product.id) ?? { variantId: product.themes[0].id, content: { ...product.sample } }, [product]);
+  // ?design=<theme id> opens a specific design (used by the kit links), unless a saved page is being edited.
+  const wantedDesign = params.get("design");
+  const initial = useMemo<Draft>(() => {
+    const base = readDraft(product.id) ?? { variantId: product.themes[0].id, content: { ...product.sample } };
+    return wantedDesign && !editId && product.themes.some((t) => t.id === wantedDesign) ? { ...base, variantId: wantedDesign } : base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product]);
   const [variantId, setVariantId] = useState(initial.variantId);
   const [content, setContent] = useState<Content>(initial.content);
   const [pageId, setPageId] = useState<string | undefined>(editId ?? initial.pageId);

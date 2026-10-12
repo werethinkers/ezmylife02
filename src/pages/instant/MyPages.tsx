@@ -30,7 +30,7 @@ function KitPanel({ justBought }: { justBought: boolean }) {
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("kit_my_entitlements");
       if (error) throw new Error(error.message);
-      return (data ?? []) as { id: string; scope: "business" | "card"; used: boolean; page_id: string | null }[];
+      return (data ?? []) as { id: string; scope: "business" | "card"; used: boolean; page_id: string | null; pick_product?: string | null; pick_theme?: string | null }[];
     },
   });
   const wallet = useWallet();
@@ -39,10 +39,16 @@ function KitPanel({ justBought }: { justBought: boolean }) {
   if (rows.length === 0) return null;
 
   const left = (scope: "business" | "card") => rows.filter((r) => r.scope === scope && !r.used).length;
+  // Opens the design the influencer chose for this buyer; the buyer can still pick another there.
+  const whereFor = (scope: "business" | "card", fallback: string) => {
+    const r = rows.find((x) => x.scope === scope && !x.used && x.pick_product && getProduct(x.pick_product));
+    if (!r?.pick_product) return fallback;
+    return `/create/${r.pick_product}${r.pick_theme ? `?design=${encodeURIComponent(r.pick_theme)}` : ""}`;
+  };
   const items = [
-    { scope: "business" as const, title: "A website for your business", where: "/websites",
+    { scope: "business" as const, title: "A website for your business", where: whereFor("business", "/websites"),
       body: "Pick any business design, add your name, photos and prices, then publish. Publishing is already paid for." },
-    { scope: "card" as const, title: "A digital visiting card", where: "/create/digital-visiting-card",
+    { scope: "card" as const, title: "A digital visiting card", where: whereFor("card", "/create/digital-visiting-card"),
       body: "Your name, number and WhatsApp on one link you can send to anyone. Publishing is already paid for." },
   ];
 
