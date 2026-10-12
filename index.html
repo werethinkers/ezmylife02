@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,14 +17,13 @@
     <meta name="author" content="EZYOURLIFE" />
     <meta name="application-name" content="EZYOURLIFE" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow" />
     <link rel="icon" type="image/png" href="/favicon.png">
     <!-- Brand fonts are self-hosted in /public/fonts (see src/fonts.css). -->
     <meta name="theme-color" content="#FFF8EC">
     <link rel="preconnect" href="https://vrsadzjyugbusfazdgyi.supabase.co" crossorigin>
     <link rel="preload" href="/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/unbounded-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <!-- Per-route <link rel="canonical"> is emitted via react-helmet-async -->
+    <!-- Each page sets its own canonical address (src/lib/seo/head.ts); the build writes it into each page's HTML. -->
     <meta name="google-site-verification" content="TQHVedVyFhaWvvTZLY_QzvG3p8rKhXnWz0nLzpSFKog" />
 
     <!-- Open Graph -->
@@ -136,43 +135,7 @@
     }
     </script>
 
-    <!-- JSON-LD BreadcrumbList -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ezyourlife.com/"},
-        {"@type": "ListItem", "position": 2, "name": "AI Tools", "item": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 3, "name": "Pricing", "item": "https://ezyourlife.com/subscription"},
-        {"@type": "ListItem", "position": 4, "name": "About", "item": "https://ezyourlife.com/about"},
-        {"@type": "ListItem", "position": 5, "name": "Contact", "item": "https://ezyourlife.com/contact"}
-      ]
-    }
-    </script>
 
-    <!-- JSON-LD ItemList (Top Tools) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": "Top AI Tools on EZYOURLIFE",
-      "description": "Most popular free AI tools available on the EZYOURLIFE platform",
-      "numberOfItems": 10,
-      "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "AI Image Background Remover", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 2, "name": "AI Invoice Generator", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 3, "name": "AI Caption Generator", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 4, "name": "AI Study Planner", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 5, "name": "AI Image Compressor", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 6, "name": "AI Video Script Writer", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 7, "name": "AI Contract Drafter", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 8, "name": "AI Startup Analyser", "url": "https://ezyourlife.com/startup-analyser"},
-        {"@type": "ListItem", "position": 9, "name": "AI Quiz Maker", "url": "https://ezyourlife.com/tools"},
-        {"@type": "ListItem", "position": 10, "name": "AI Expense Tracker", "url": "https://ezyourlife.com/tools"}
-      ]
-    }
-    </script>
 
     <!-- JSON-LD WebSite with SearchAction -->
     <script type="application/ld+json">
@@ -181,11 +144,11 @@
       "@type": "WebSite",
       "name": "EZYOURLIFE",
       "alternateName": "ezyourlife AI App Store",
-      "url": "https://ezyourlife.com",
+      "url": "https://ezyourlife.com/",
       "description": "the Future's First AI App Store with 240+ live AI tools today (2,000+ launching within a year)",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://ezyourlife.com/tools?q={search_term_string}",
+        "target": "https://ezyourlife.com/ai-apps?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }
@@ -222,14 +185,18 @@
         <nav>
           <ul>
             <li><a href="/">Home — EZYOURLIFE AI App Store</a></li>
-            <li><a href="/tools">Browse All Live AI Tools</a></li>
-            <li><a href="/subscription">Pricing — Free & Premium Plans</a></li>
+            <li><a href="/ai-apps">Browse All Live AI Apps</a></li>
+            <li><a href="/websites">Business Websites</a></li>
+            <li><a href="/cards">Cards and Invitations</a></li>
+            <li><a href="/explore">Find Apps by Job or Business Type</a></li>
+            <li><a href="/credits">Prices and Credits</a></li>
             <li><a href="/about">About EZYOURLIFE</a></li>
-            <li><a href="/contact">Contact EZYOURLIFE Support</a></li>
+            <li><a href="/about#contact">Contact EZYOURLIFE Support</a></li>
             <li><a href="/startup-analyser">AI Startup Analyser</a></li>
             <li><a href="/notebook">Speedy Notebook — AI Writing Tool</a></li>
             <li><a href="/promptmaster">Prompt Master — AI Prompt Optimizer</a></li>
             <li><a href="/meet-nudge">Meet Nudge — AI Business Card Scanner</a></li>
+            <li><a href="/tools/productvision-360">ProductVision 360 — Product Photos from Every Angle</a></li>
             <li><a href="/get-extension">EZYOURLIFE Browser Extension</a></li>
             <li><a href="/refund-policy">Refund Policy</a></li>
           </ul>

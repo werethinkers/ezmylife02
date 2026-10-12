@@ -26,6 +26,7 @@ import { z } from "zod";
 import founderAbhijay from "@/assets/founder-abhijay.jpg";
 import founderArinjay from "@/assets/founder-arinjay.jpg";
 import { useAppCountLabel } from "@/lib/appCount";
+import { seoFor } from "@/lib/seo/pages";
 
 const SUPPORT_EMAIL = "support@ezyourlife.com";
 
@@ -126,9 +127,7 @@ const About = () => {
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-background">
         <SEOHead
-          title="About EZYOURLIFE - The Future's First AI App Store | Our Mission"
-          description={`What is EZYOURLIFE? Learn about the Future's First AI App Store — ${countLabel} live AI Apps today and 2,000+ launching within a year, for productivity, business, content creation and education. Meet the founders and discover the ezyourlife mission.`}
-          path="/about"
+          {...seoFor("/about", countLabel)}
           keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story, ezyourlife founders"
           jsonLd={[
             {

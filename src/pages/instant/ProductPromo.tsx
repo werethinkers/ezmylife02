@@ -7,7 +7,7 @@ import { getProduct } from "@/instant/catalog";
 import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { ProductRenderer } from "@/instant/renderers";
 import { useProducts } from "@/instant/useProducts";
-import { promoFor } from "@/instant/promo";
+import { promoFor, promoSeo } from "@/instant/promo";
 import { inr, pageUrlFor } from "@/instant/util";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
@@ -47,8 +47,7 @@ export default function ProductPromo() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageSeo title={`${product.name}: make it online in minutes from ${priceText} | EZYOURLIFE`}
-        description={`${product.tagline} ${promo.pitch}`.slice(0, 158)} path={`/make/${product.id}`} jsonLd={jsonLd}
+      <PageSeo {...promoSeo(product)} path={`/make/${product.id}`} jsonLd={jsonLd}
         keywords={`${product.name.toLowerCase()}, online ${product.name.toLowerCase()}, ${product.category}, whatsapp, ezyourlife`} />
       <Navbar section={isSite ? "websites" : "cards"} />
 

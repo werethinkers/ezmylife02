@@ -57,3 +57,38 @@ export function slugify(input: string): string {
     .replace(/-+/g, "-")
     .slice(0, 80);
 }
+
+interface Matchable { name: string; description?: string | null; category?: string | null; tool_types?: string[] | null; toolType?: string[] | null }
+
+/** Apps whose name, description or category has a word of the slug. Used by the pages and by the static pages the build writes. */
+export function landingMatches<T extends Matchable>(slug: string, tools: T[]): T[] {
+  const tokens = slug.toLowerCase().split("-").filter((t) => t.length > 2);
+  // A word must start a word in the app's text ("art" finds "artwork", not "start"); plurals also find the singular.
+  const words = (tokens.length ? tokens : [slug.toLowerCase()]).map((w) => (w.length > 4 ? w.replace(/s$/, "") : w));
+  const res = words.map((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+  return tools.filter((t) => {
+    const hay = [t.name, t.description, t.category, ...(t.tool_types ?? t.toolType ?? [])].join("\n").toLowerCase();
+    return res.some((re) => re.test(hay));
+  });
+}
+
+/** Title and description of an /ai-tool-for/<slug> page. Shared with the static page the build writes. */
+export function useCaseSeo(slug: string, matches: number) {
+  const human = humanize(slug);
+  const low = human.toLowerCase();
+  return {
+    title: `AI tools for ${low}: apps that do the work | EZYOURLIFE`,
+    description: `${matches ? `${matches} AI apps` : "AI apps"} for ${low} on EZYOURLIFE. Runs in your browser, pay only for results, credit packs from ₹10 and 100 free credits to start.`,
+    keywords: `ai tool for ${low}, best ai for ${low}, ${low} ai app, ai app for ${low}`,
+  };
+}
+
+/** Title and description of an /ai-for/<slug> page. */
+export function industrySeo(slug: string) {
+  const low = humanize(slug).toLowerCase();
+  return {
+    title: `AI apps for ${low} businesses | EZYOURLIFE`,
+    description: `AI apps for ${low} businesses on EZYOURLIFE: bills, customers, staff and content. Runs in your browser, pay only for results, packs from ₹10, 100 free credits.`,
+    keywords: `ai for ${low}, ai tools for ${low}, ${low} ai software, ${low} automation`,
+  };
+}

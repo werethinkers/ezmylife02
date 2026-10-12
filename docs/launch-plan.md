@@ -100,6 +100,10 @@ pages, because live prices can be changed in admin and the static text would go 
 `/promo/<name>` pages are still marked "do not index" and blocked in `robots.txt`; that was
 already so and was left alone.
 
+Every other public page gets the same treatment from `scripts/prerender-pages.mjs`, which runs
+right after it in the build and also writes `dist/sitemap.xml`. How it works and what to do when
+adding a page: `docs/seo.md`.
+
 ## Where new verticals sit
 
 | Vertical | Category | Goal |

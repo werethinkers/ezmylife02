@@ -1,46 +1,21 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { Navbar } from "@/components/Navbar";
 import { LandingBody } from "@/components/seo/LandingBody";
 import { PageSeo } from "@/components/seo/PageSeo";
-import { humanize } from "@/lib/seoData";
+import { humanize, landingMatches, useCaseSeo } from "@/lib/seoData";
+import { MIN_LANDING_APPS } from "@/lib/seo/pages";
 import { useAppCountLabel } from "@/lib/appCount";
-
-interface Tool {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string | null;
-}
 
 const UseCaseLanding = () => {
   const countLabel = useAppCountLabel();
   const { query = "" } = useParams<{ query: string }>();
   const human = humanize(query);
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: catalogue = [], isLoading: loading } = useToolsCatalog();
+  const tools = useMemo(() => landingMatches(query, catalogue.filter((t) => t.is_live)).slice(0, 36), [query, catalogue]);
 
-  useEffect(() => {
-    const tokens = query.split("-").filter(t => t.length > 2);
-    (async () => {
-      const ors = tokens
-        .flatMap(t => [`name.ilike.%${t}%`, `description.ilike.%${t}%`, `category.ilike.%${t}%`])
-        .join(",");
-      const { data } = await supabase
-        .from("tools_catalog")
-        .select("id,name,description,category")
-        .eq("is_live", true)
-        .or(ors || `name.ilike.%${query}%`)
-        .limit(36);
-      setTools((data as Tool[]) || []);
-      setLoading(false);
-    })();
-  }, [query]);
-
-  const title = `AI Tool for ${human} — Best Free AI App for ${human} | EZYOURLIFE`;
-  const description = `AI apps for ${human.toLowerCase()} on EZYOURLIFE. Runs in your browser, pay only for results, 100 free credits to start. ${tools.length ? `${tools.length} matching apps.` : ""}`.trim();
-  const keywords = `ai tool for ${human.toLowerCase()}, best ai for ${human.toLowerCase()}, free ${human.toLowerCase()} ai, online ${human.toLowerCase()} generator, ${human.toLowerCase()} ai app, ai app for ${human.toLowerCase()}`;
+  const { title, description, keywords } = useCaseSeo(query, tools.length);
 
   const jsonLd = [
     {
@@ -76,7 +51,8 @@ const UseCaseLanding = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <PageSeo title={title} description={description} keywords={keywords} path={`/ai-tool-for/${query}`} jsonLd={jsonLd} />
+      <PageSeo title={title} description={description} keywords={keywords} path={`/ai-tool-for/${query}`} jsonLd={jsonLd}
+        noindex={loading ? "keep" : tools.length < MIN_LANDING_APPS} />
       <Navbar />
 
       <LandingBody

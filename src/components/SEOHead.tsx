@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { applyHead, canonicalUrl } from "@/lib/seo/head";
 
 interface SEOHeadProps {
   title: string;
@@ -11,125 +12,20 @@ interface SEOHeadProps {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const BASE_URL = "https://ezyourlife.com";
-
-export const SEOHead = ({
-  title,
-  description,
-  path,
-  type = "website",
-  image = `${BASE_URL}/og-image.png`,
-  noindex = false,
-  keywords,
-  jsonLd,
-}: SEOHeadProps) => {
+export const SEOHead = ({ title, description, path, type = "website", image, noindex = false, keywords, jsonLd }: SEOHeadProps) => {
   const fullTitle = title.includes("EZYOURLIFE") ? title : `${title} | EZYOURLIFE`;
-  const canonicalUrl = `${BASE_URL}${path}`;
+  const ld = JSON.stringify(jsonLd ?? null);
 
   useEffect(() => {
-    document.title = fullTitle;
-
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement;
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute(attr, key);
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", content);
-    };
-
-    // Standard meta
-    setMeta("name", "description", description);
-    setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large");
-    setMeta("name", "author", "EZYOURLIFE");
-    setMeta("name", "application-name", "EZYOURLIFE");
-
-    if (keywords) {
-      setMeta("name", "keywords", keywords);
-    }
-
-    // Open Graph
-    setMeta("property", "og:title", fullTitle);
-    setMeta("property", "og:description", description);
-    setMeta("property", "og:url", canonicalUrl);
-    setMeta("property", "og:type", type);
-    setMeta("property", "og:image", image);
-    setMeta("property", "og:site_name", "EZYOURLIFE");
-
-    // Twitter
-    setMeta("name", "twitter:card", "summary_large_image");
-    setMeta("name", "twitter:title", fullTitle);
-    setMeta("name", "twitter:description", description);
-    setMeta("name", "twitter:image", image);
-
-    // Canonical link
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", canonicalUrl);
-
-    // JSON-LD structured data
-    const existingLd = document.getElementById("seo-jsonld");
-    if (existingLd) existingLd.remove();
-
-    const script = document.createElement("script");
-    script.id = "seo-jsonld";
-    script.type = "application/ld+json";
-
-    const defaultJsonLd: Record<string, unknown> = {
-      "@context": "https://schema.org",
-      "@type": type === "website" ? "WebSite" : "WebPage",
-      name: fullTitle,
-      description,
-      url: canonicalUrl,
-      image,
-      publisher: {
-        "@type": "Organization",
-        name: "EZYOURLIFE",
-        alternateName: ["ezyourlife", "ez your life"],
-        url: BASE_URL,
-        logo: {
-          "@type": "ImageObject",
-          url: `${BASE_URL}/favicon.png`,
-        },
-      },
-    };
-
-    if (path === "/") {
-      defaultJsonLd["@type"] = "WebSite";
-      defaultJsonLd.potentialAction = {
-        "@type": "SearchAction",
-        target: `${BASE_URL}/tools?q={search_term_string}`,
-        "query-input": "required name=search_term_string",
-      };
-    }
-
-    const jsonLdData = jsonLd || defaultJsonLd;
-    if (Array.isArray(jsonLdData)) {
-      // Inject multiple JSON-LD blocks
-      jsonLdData.forEach((ld, i) => {
-        const s = document.createElement("script");
-        s.id = `seo-jsonld-${i}`;
-        s.type = "application/ld+json";
-        s.textContent = JSON.stringify(ld);
-        document.head.appendChild(s);
-      });
-    } else {
-      script.textContent = JSON.stringify(jsonLdData);
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      const el = document.getElementById("seo-jsonld");
-      if (el) el.remove();
-      // Clean up array JSON-LD blocks
-      document.querySelectorAll('script[id^="seo-jsonld-"]').forEach(el => el.remove());
-    };
-  }, [fullTitle, description, canonicalUrl, type, image, noindex, keywords, jsonLd]);
+    // The home page's WebSite and Organization data is already in index.html.
+    const fallback =
+      path === "/"
+        ? undefined
+        : { "@context": "https://schema.org", "@type": "WebPage", name: fullTitle, description, url: canonicalUrl(path), isPartOf: { "@type": "WebSite", name: "EZYOURLIFE", url: "https://ezyourlife.com/" } };
+    applyHead({ title: fullTitle, description, path, keywords, image, ogType: type, noindex, jsonLd: jsonLd ?? fallback });
+    // jsonLd is compared by value (ld).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullTitle, description, path, type, image, noindex, keywords, ld]);
 
   return null;
 };

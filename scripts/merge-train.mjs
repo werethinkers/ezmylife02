@@ -3,11 +3,11 @@
 //
 //   node scripts/merge-train.mjs                     # main + every open PR into staging (needs gh)
 //   node scripts/merge-train.mjs branch-a branch-b   # main + just these branches
-//   add --push to push staging when everything passes, --no-checks to skip build and check:apps
+//   add --push to push staging when everything passes, --no-checks to skip build, check:apps and check:seo
 //
 // Steps: start from origin/staging (or origin/main if staging does not exist yet), merge
 // origin/main in, then merge each branch. A branch that conflicts is skipped and reported; the
-// others still go in. Then the build and `npm run check:apps` run. If they fail, each branch is
+// others still go in. Then the build, `npm run check:apps` and `npm run check:seo` run. If they fail, each branch is
 // tried on its own to find the one that breaks them, and that branch is left out.
 import { execSync, spawnSync } from "node:child_process";
 
@@ -74,7 +74,7 @@ for (const b of branches) {
 }
 
 function runChecks() {
-  for (const cmd of ["npm run build", "npm run check:apps"]) {
+  for (const cmd of ["npm run build", "npm run check:apps", "npm run check:seo"]) {
     const r = spawnSync(cmd, { shell: true, encoding: "utf8" });
     if (r.status !== 0) return `${cmd} failed:\n${(r.stdout + r.stderr).split("\n").slice(-25).join("\n")}`;
   }
