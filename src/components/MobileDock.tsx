@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 // and card pages (/make/:id, /create/:id) the screen belongs to the task and has its own buy bar,
 // so the tab bar steps aside.
 const DOCK_PATHS = [
-  /^\/$/, /^\/ai-apps/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//,
+  /^\/$/, /^\/ai-apps/, /^\/studios/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//,
   /^\/profile$/, /^\/create$/, /^\/websites/, /^\/cards/, /^\/my-pages$/, /^\/refund-policy$/,
 ];
 
