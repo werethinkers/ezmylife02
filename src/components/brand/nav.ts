@@ -1,10 +1,10 @@
-import { Home, LayoutGrid, Globe, Mail, Wallet, Info, type LucideIcon } from "lucide-react";
+import { Home, LayoutGrid, Globe, Mail, Sparkles, Wallet, Info, type LucideIcon } from "lucide-react";
 
 /**
  * The site's main sections, in plain words. The header, the phone tab bar and the footer all
  * read from here, so a section is named the same way everywhere.
  */
-export type SectionId = "home" | "apps" | "websites" | "cards" | "prices" | "about";
+export type SectionId = "home" | "apps" | "studios" | "websites" | "cards" | "prices" | "about";
 
 export interface NavSection {
   id: SectionId;
@@ -20,6 +20,7 @@ export interface NavSection {
 export const NAV_SECTIONS: NavSection[] = [
   { id: "home", to: "/", label: "Home", short: "Home", Icon: Home, color: "hsl(var(--lime))" },
   { id: "apps", to: "/ai-apps", label: "Business apps", short: "Apps", Icon: LayoutGrid, color: "hsl(var(--pink))" },
+  { id: "studios", to: "/studios", label: "Studios", short: "Studios", Icon: Sparkles, color: "hsl(var(--pink))" },
   { id: "websites", to: "/websites", label: "Websites", short: "Websites", Icon: Globe, color: "hsl(var(--teal))" },
   { id: "cards", to: "/cards", label: "Cards & invites", short: "Cards", Icon: Mail, color: "hsl(var(--sun))" },
   { id: "prices", to: "/credits", label: "Prices", short: "Prices", Icon: Wallet, color: "hsl(var(--sky))" },
@@ -35,6 +36,7 @@ export const CARD_CATEGORIES = ["celebrations", "festivals", "events"] as const;
 export function sectionOf(pathname: string, productCategory?: string | null): SectionId | null {
   if (pathname === "/") return "home";
   if (/^\/(ai-apps|tool|tool-preview|promo|explore|ai-for|ai-tool-for)(\/|$)/.test(pathname)) return "apps";
+  if (/^\/studios(\/|$)/.test(pathname)) return "studios";
   if (/^\/websites(\/|$)/.test(pathname)) return "websites";
   if (/^\/cards(\/|$)/.test(pathname)) return "cards";
   if (/^\/(create|make)\//.test(pathname) && productCategory) {

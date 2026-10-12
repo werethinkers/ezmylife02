@@ -50,7 +50,7 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                 to={s.to}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "whitespace-nowrap rounded-full border-2 px-3.5 py-1.5 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "whitespace-nowrap rounded-full border-2 px-2.5 py-1.5 text-[14px] xl:px-3.5 xl:text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   on ? "border-ink bg-ink text-cream" : "border-transparent text-ink hover:border-ink hover:bg-card",
                 )}
               >
