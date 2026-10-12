@@ -38,6 +38,30 @@ async function fetchDbKeys(sb: ReturnType<typeof createClient>): Promise<DbKey[]
   }
 }
 
+type CatalogRow = { id: string; name: string; description: string | null; category: string | null };
+
+const SHORTLIST = 40;
+const STOP = new Set("the and for with that this you your are can how what which want need app apps tool tools help make from have into about please something some just like also get any".split(" "));
+const words = (s: string) =>
+  s.toLowerCase().split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length > 2 && !STOP.has(w)).map((w) => w.replace(/(ies|es|s)$/, ""));
+
+/** Ranks apps by how many of the person's words appear in their name (counted 3x), category (2x) and description. */
+function closestApps(rows: CatalogRow[], asked: string, n: number): CatalogRow[] {
+  const q = new Set(words(asked));
+  if (!q.size) return rows.slice(0, n);
+  const score = (t: CatalogRow) => {
+    let s = 0;
+    const name = new Set(words(t.name)), cat = new Set(words(t.category ?? "")), desc = new Set(words(t.description ?? ""));
+    for (const w of q) s += (name.has(w) ? 3 : 0) + (cat.has(w) ? 2 : 0) + (desc.has(w) ? 1 : 0);
+    return s;
+  };
+  return rows
+    .map((t, i) => ({ t, i, s: score(t) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, n)
+    .map((x) => x.t);
+}
+
 async function recordKeySuccess(sb: ReturnType<typeof createClient>, id: string) {
   try {
     await sb.from("gemini_api_keys").update({ last_used_at: new Date().toISOString(), failure_count: 0 }).eq("id", id);
@@ -107,7 +131,7 @@ async function streamFromGemini(apiKey: string, system: string, messages: { role
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents,
-      generationConfig: { temperature: 0.8 },
+      generationConfig: { temperature: 0.8, thinkingConfig: { thinkingBudget: 0 } },
     }),
   });
 }
@@ -130,10 +154,15 @@ serve(async (req) => {
       .from("tools_catalog")
       .select("id,name,description,category")
       .eq("is_live", true)
-      .limit(250);
+      .limit(5000);
 
-    const catalogList = (tools ?? [])
-      .map((t) => `- ${t.name} [id:${t.id}] (${t.category}): ${t.description}`)
+    // Send the model only the apps closest to what the person asked, picked here in code, not
+    // the whole catalogue: a fraction of the input cost per message, flat as the catalogue grows,
+    // and the model chooses from a short relevant list instead of hunting through hundreds.
+    const asked = messages.filter((m) => m.role === "user").slice(-3).map((m) => m.content).join(" ");
+    const shortlist = closestApps(tools ?? [], asked, SHORTLIST);
+    const catalogList = shortlist
+      .map((t) => `- ${t.name} [id:${t.id}] (${t.category}): ${String(t.description ?? "").slice(0, 220)}`)
       .join("\n");
 
     const system = `You are the EZYOURLIFE Assistant — a friendly, sharp guide on "The Future's First AI App Store".
@@ -150,7 +179,7 @@ YOUR JOB:
 
 Tone: warm, concise, a bit excited. Use markdown. Never invent app IDs. Never ask the user to sign up — the assistant works without auth.
 
-LIVE APP CATALOG (${tools?.length ?? 0} apps):
+LIVE APPS CLOSEST TO THIS CONVERSATION (${shortlist.length} of ${tools?.length ?? 0} live apps, best matches first; recommend only from this list):
 ${catalogList}
 `;
 

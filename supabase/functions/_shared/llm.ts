@@ -55,6 +55,9 @@ function toGeminiContents(messages: ChatMessage[]) {
   return { system, contents };
 }
 
+/** Flash and Flash-Lite answer well without "thinking"; Pro and the image models cannot turn it off. */
+const canSkipThinking = (model: string) => /flash/.test(model) && !/image/.test(model);
+
 export interface ChatOptions {
   model?: string; // gateway id, e.g. "google/gemini-2.5-flash"
   maxTokens?: number;
@@ -70,17 +73,25 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
 
   if (LOVABLE_API_KEY) {
     try {
-      const r = await fetch(GATEWAY, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          messages,
-          max_tokens: opts.maxTokens,
-          temperature: opts.temperature,
-          ...(opts.json ? { response_format: { type: "json_object" } } : {}),
-        }),
-      });
+      const send = (noThinking: boolean) =>
+        fetch(GATEWAY, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model,
+            messages,
+            max_tokens: opts.maxTokens,
+            temperature: opts.temperature,
+            ...(opts.json ? { response_format: { type: "json_object" } } : {}),
+            ...(noThinking ? { reasoning_effort: "none" } : {}),
+          }),
+        });
+      // 2.5 Flash "thinks" by default and the hidden reasoning tokens are billed as output, often
+      // more than the answer itself. Turn it off as on our own keys below; if the gateway rejects
+      // the setting, send the request again without it rather than failing.
+      const noThinking = canSkipThinking(model);
+      let r = await send(noThinking);
+      if (noThinking && r.status === 400) r = await send(false);
       if (r.ok) {
         const data = await r.json();
         const text = data?.choices?.[0]?.message?.content;
@@ -110,7 +121,7 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
             ...(opts.json ? { responseMimeType: "application/json" } : {}),
             // Flash / Flash-Lite answer well without "thinking"; turning it off avoids paying for
             // hidden reasoning tokens on our own keys. (2.5 Pro cannot turn it off.)
-            ...(/flash/.test(geminiModel) && !/image/.test(geminiModel) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+            ...(canSkipThinking(geminiModel) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           },
         }),
       });

@@ -5,7 +5,7 @@ import { billed } from "../_shared/billing.ts";
 const serve = (handler: (req: Request) => Promise<Response>) =>
   stdServe(billed({
   // Each content type is its own app. Every AI step of the Content Workflow is charged as one
-  // "content-workflow-step" run (1 credit), so no step can be used as a free generator.
+  // "content-workflow-step" run (4 credits), so no step can be used as a free generator.
   tool: (b) => (({
     "social-post": "social-post-generator",
     "captions": "caption-generator",
@@ -17,7 +17,7 @@ const serve = (handler: (req: Request) => Promise<Response>) =>
     "workflow-hashtags": "content-workflow-step",
     "workflow-caption": "content-workflow-step",
   }) as Record<string, string>)[b?.type] ?? "content-generator-unknown",
-  defaultCredits: (id) => (id === "content-workflow-step" ? 1 : undefined),
+  defaultCredits: (id) => (id === "content-workflow-step" ? 4 : undefined),
 },(req) => handler(req)));
 
 const corsHeaders = {
