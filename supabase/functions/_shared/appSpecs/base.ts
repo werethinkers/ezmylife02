@@ -4,7 +4,7 @@
 // default price live here so a request can't change what a run costs.
 //
 // credits: default price used only when the app has no row in tool_pricing yet
-// (non-image apps 1–10 by complexity; image generation priced at cost: ~₹3.4/image → 12).
+// (set by the 3x cost rule in docs/pricing.md: Flash-Lite 1, Flash 4/6/9, vision 4, chat 3, one AI image 31).
 
 export type AppKind = "doc" | "json" | "chat" | "vision" | "image";
 

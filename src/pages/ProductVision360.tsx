@@ -35,7 +35,7 @@ const ProductVision360 = () => {
   const refreshWallet = useRefreshWallet();
   // Charged per angle that is actually generated (the server creates the price row on first use).
   const { creditCost: anglePrice } = useToolPricing("productvision-angle");
-  const perAngle = anglePrice > 0 ? anglePrice : 12;
+  const perAngle = anglePrice > 0 ? anglePrice : 27;
 
   const toggleAngle = (a: AngleName) => {
     setSelectedAngles((prev) =>

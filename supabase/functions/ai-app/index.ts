@@ -5,6 +5,7 @@ import { billed } from "../_shared/billing.ts";
 import { json } from "../_shared/http.ts";
 import { chat, image, parseJson, ModelError, type ChatMessage, type Part } from "../_shared/llm.ts";
 import { APP_SPECS, COMMON_RULES } from "../_shared/appSpecs.ts";
+import { cacheKey, cachedAnswer, saveAnswer } from "../_shared/answerCache.ts";
 
 const FLASH_DEFAULT = "google/gemini-2.5-flash";
 const MAX_FIELD = 6000;
@@ -58,6 +59,7 @@ Deno.serve(
       return id ? APP_SPECS[id].chargeId ?? id : null;
     },
     defaultCredits: (chargeId) => Object.entries(APP_SPECS).find(([id, s]) => (s.chargeId ?? id) === chargeId)?.[1].credits,
+    isImage: (chargeId) => Object.entries(APP_SPECS).some(([id, s]) => (s.chargeId ?? id) === chargeId && s.kind === "image"),
   }, async (_req, ctx) => {
     const body = (ctx.body ?? {}) as Body;
     const toolId = toolOf(body);
@@ -115,7 +117,16 @@ Deno.serve(
       }
 
       const messages: ChatMessage[] = [{ role: "system", content: system }, { role: "user", content: userPrompt }];
-      if (body.action === "refine" && typeof body.previous === "string" && body.instruction) {
+      const refining = body.action === "refine" && typeof body.previous === "string" && !!body.instruction;
+      const model = spec.model ?? FLASH_DEFAULT;
+      // Same app, same instructions, same inputs as someone else's earlier run: reuse that answer.
+      const key = refining ? null : await cacheKey(toolId, model, system, userPrompt);
+      const userId = ctx.caller.userId;
+      if (key) {
+        const hit = await cachedAnswer(key, userId);
+        if (hit !== undefined) return json({ ok: true, output: hit, cached: true });
+      }
+      if (refining && typeof body.previous === "string") {
         messages.push({ role: "assistant", content: body.previous.slice(0, 20_000) });
         messages.push({
           role: "user",
@@ -123,11 +134,13 @@ Deno.serve(
         });
       }
       const text = await chat(messages, {
-        model: spec.model ?? FLASH_DEFAULT,
+        model,
         maxTokens: spec.maxTokens ?? 8192,
         json: spec.kind === "json",
       });
-      return json({ ok: true, output: spec.kind === "json" ? parseJson(text) : text });
+      const output = spec.kind === "json" ? parseJson(text) : text;
+      if (key) await saveAnswer(key, toolId, output, userId);
+      return json({ ok: true, output });
     } catch (e) {
       const status = e instanceof ModelError ? e.status : 500;
       return json({ error: e instanceof Error ? e.message : String(e) }, status >= 400 ? status : 500);

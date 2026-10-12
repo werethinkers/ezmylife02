@@ -9,7 +9,7 @@
 //  • Each item's output is stored as it finishes; the ZIP is assembled at the end.
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { corsHeaders, json } from "../_shared/http.ts";
-import { ensurePrice, finishRun, identify, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
 import { image } from "../_shared/llm.ts";
 import { notifyTaskDone } from "../_shared/notify.ts";
 
@@ -44,12 +44,12 @@ interface Job {
   failed_items: number;
 }
 
-// Which price each bulk tool is charged at. AI image edits are priced at cost (12 credits).
-const PRICE_TOOL: Record<string, { tool: string; credits: number }> = {
-  "background-remover": { tool: "bulk-ai-background", credits: 12 },
-  "passport-photo-maker": { tool: "bulk-ai-passport", credits: 12 },
-  "image-beautify": { tool: "bulk-ai-beautify", credits: 12 },
-  "business-card-scanner": { tool: "meet-nudge", credits: 2 },
+// Which price each bulk tool is charged at. AI image edits are priced by the 3x cost rule (31 credits, see docs/pricing.md).
+const PRICE_TOOL: Record<string, { tool: string; credits: number; image?: boolean }> = {
+  "background-remover": { tool: "bulk-ai-background", credits: 31, image: true },
+  "passport-photo-maker": { tool: "bulk-ai-passport", credits: 31, image: true },
+  "image-beautify": { tool: "bulk-ai-beautify", credits: 31, image: true },
+  "business-card-scanner": { tool: "meet-nudge", credits: 4 },
 };
 
 const svc = { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` };
@@ -212,7 +212,7 @@ async function runChunk(jobId: string) {
   const items = Array.isArray(job.input_manifest) ? job.input_manifest : [];
   const outputs: OutputRow[] = Array.isArray(job.outputs) ? [...job.outputs] : [];
   const price = PRICE_TOOL[job.tool_id];
-  if (price) await ensurePrice(price.tool, price.credits);
+  if (price) await ensurePrice(price.tool, price.credits, price.image);
   const started = Date.now();
   let totalCharged = Number((job as unknown as { total_credits_charged?: number }).total_credits_charged ?? 0);
 
@@ -275,24 +275,18 @@ Deno.serve(async (req) => {
       const price = PRICE_TOOL[job.tool_id];
       if (!price) return json({ error: "Bulk mode is not available for this app" }, 400);
       // Check up front that the whole batch is affordable, so nobody starts a batch that stops halfway.
-      await ensurePrice(price.tool, price.credits);
+      await ensurePrice(price.tool, price.credits, price.image);
       const each = (await priceOf(price.tool)) ?? price.credits;
       const count = Array.isArray(job.input_manifest) ? job.input_manifest.length : 0;
       const balance = await walletBalance(caller.userId as string);
-      if (balance < each * count) {
-        await patchJob(job.id, {
-          status: "failed",
-          error_message: `Not enough credits: ${count} files need ${each * count}, you have ${balance}. Nothing was charged.`,
-        });
-        return json(
-          {
-            error: "insufficient_credits",
-            credits_required: each * count,
-            balance,
-            message: `${count} files need ${each * count} credits (${each} each). You have ${balance}.`,
-          },
-          402,
-        );
+      // AI images: free credits pay for only a few per person, so count what this wallet can really pay for.
+      const affordable = price.image ? await imageRunsAffordable(caller.userId as string, each) : Math.floor(balance / each);
+      if (affordable < count) {
+        const why = price.image && affordable < Math.floor(balance / each)
+          ? `Free credits cover ${FREE_IMAGE_LIMIT} AI images per person, so ${count} files need ${each * count} bought credits (${each} each); you can do ${affordable} now.`
+          : `${count} files need ${each * count} credits (${each} each). You have ${balance}.`;
+        await patchJob(job.id, { status: "failed", error_message: `${why} Nothing was charged.` });
+        return json({ error: "insufficient_credits", credits_required: each * count, balance, message: why }, 402);
       }
       await patchJob(job.id, { status: "running" });
     }
