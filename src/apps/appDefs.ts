@@ -13,4 +13,5 @@ export type AppDef =
   | import("./types").CalcDef
   | import("./types").ConvertDef
   | import("./types").PresetDef
+  | import("./flagship/types").FlagshipDef
 ;

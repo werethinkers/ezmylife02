@@ -40,7 +40,7 @@ for (const c of new Set(d.catalogue.map((t) => t.category))) {
 }
 
 // 4. Every app definition has a catalogue row, a whole-number price, and (unless it has its own screen) server instructions.
-const KIND_FOR_ENGINE = { doc: ["doc"], tracker: ["doc"], chat: ["chat"], vision: ["vision"], image: ["image"], calc: ["doc"] };
+const KIND_FOR_ENGINE = { doc: ["doc"], tracker: ["doc"], chat: ["chat"], vision: ["vision"], image: ["image"], calc: ["doc"], interview: ["doc"], analyse: ["doc"], plan: ["doc"], pack: ["doc"], coach: ["chat"], studio: ["image"] };
 // Engines that run wholly in the browser: no server instructions, but they must be charged per use.
 const BROWSER_ENGINES = new Set(["convert", "preset"]);
 for (const [id, def] of Object.entries(d.APPS)) {

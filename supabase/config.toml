@@ -90,3 +90,6 @@ verify_jwt = false
 
 [functions.refund-process]
 verify_jwt = false
+
+[functions.flagship-app]
+verify_jwt = false

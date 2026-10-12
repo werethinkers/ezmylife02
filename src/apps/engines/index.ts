@@ -15,4 +15,10 @@ export const ENGINES: Record<string, LazyExoticComponent<ComponentType<{ toolId:
   calc: lazy(() => import("./CalcApp")),
   convert: lazy(() => import("./ConvertApp")),
   preset: lazy(() => import("./PresetApp")),
+  interview: lazy(() => import("./InterviewApp")),
+  analyse: lazy(() => import("./AnalyseApp")),
+  studio: lazy(() => import("./StudioApp")),
+  plan: lazy(() => import("./PlanApp")),
+  pack: lazy(() => import("./PlanApp")),
+  coach: lazy(() => import("./CoachApp")),
 };

@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,6 +23,7 @@ export function Markdown({ children, className }: { children: string; className?
     >
       <ReactMarkdown
         skipHtml
+        remarkPlugins={[remarkGfm]}
         components={{
           a: ({ href, children: c }) => {
             const safe = safeHref(href);
@@ -37,6 +39,12 @@ export function Markdown({ children, className }: { children: string; className?
               </a>
             );
           },
+          // Wide tables scroll sideways on phones instead of stretching the page.
+          table: ({ children: c }) => (
+            <div className="overflow-x-auto">
+              <table>{c}</table>
+            </div>
+          ),
         }}
       >
         {children}
