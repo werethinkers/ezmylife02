@@ -1,3 +1,4 @@
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -30,7 +31,7 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
     
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -64,14 +65,7 @@ serve(async (req) => {
 
     console.log('Generating video frame with prompt:', enhancedPrompt.substring(0, 100));
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await aiFetch(requestBody);
 
     if (!response.ok) {
       const errorText = await response.text();

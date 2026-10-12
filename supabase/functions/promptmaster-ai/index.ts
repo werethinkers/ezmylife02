@@ -1,3 +1,4 @@
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -83,7 +84,7 @@ serve(async (req) => {
     const keywords = String(body?.keywords ?? "").slice(0, 4000);
     const selections = (Array.isArray(body?.selections) ? body.selections : []).slice(0, 40).map((x: unknown) => String(x).slice(0, 100));
 
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    const apiKey = (getAiKey() || "own-gemini-keys");
 
     let prompt = '';
 
@@ -134,11 +135,7 @@ RESPOND WITH ONLY a JSON array of objects with "title" and "prompt" keys. No oth
         };
         if (jsonMode) requestBody.response_format = { type: 'json_object' };
 
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await aiFetch(requestBody);
 
         if (response.ok) {
           const data = await response.json();

@@ -1,3 +1,4 @@
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -106,7 +107,7 @@ serve(async (req) => {
     // One request = one credit, so keep the prompt to a sensible size.
     const prompt = String(rawPrompt ?? "").slice(0, 12000);
     
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    const apiKey = (getAiKey() || "own-gemini-keys");
     const model = 'google/gemini-2.5-flash';
 
     const requestBody: Record<string, unknown> = {
@@ -121,11 +122,7 @@ serve(async (req) => {
     // 1. Try Lovable AI first
     if (apiKey) {
       try {
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await aiFetch(requestBody);
         if (response.ok) {
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content || '';

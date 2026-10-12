@@ -1,3 +1,4 @@
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -34,7 +35,7 @@ serve(async (req) => {
       .select("id, name, description, category").eq("id", tool_id).maybeSingle();
     if (!tool) throw new Error("Tool not found");
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = (getAiKey() || "own-gemini-keys");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const prompt = `You are writing landing-page copy for an AI app called "${tool.name}" in the "${tool.category}" category. Description: ${tool.description}.
@@ -55,15 +56,11 @@ Return STRICT JSON with this shape:
 Rules: describe only what the description says the app does. Never invent ratings, review counts, user numbers, statistics, customer names, testimonials, awards or claims like "loved by" or "trusted by".
 Return only the JSON object.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
+    const aiRes = await aiFetch({
         model: "google/gemini-2.5-flash",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
-      }),
-    });
+      });
     if (!aiRes.ok) throw new Error(`AI: ${await aiRes.text()}`);
     const aiJson = await aiRes.json();
     const content = aiJson.choices?.[0]?.message?.content ?? "{}";

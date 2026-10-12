@@ -1,3 +1,4 @@
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -85,7 +86,7 @@ serve(async (req) => {
 
   try {
     const { userProfile, conversationType } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("API key not configured");
@@ -140,13 +141,7 @@ Otherwise, ask a follow-up question to better understand their needs.`;
       userMessage = userProfile.lastMessage || "";
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await aiFetch({
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
@@ -154,8 +149,7 @@ Otherwise, ask a follow-up question to better understand their needs.`;
           { role: "user", content: userMessage }
         ],
         stream: true,
-      }),
-    });
+      });
 
     if (!response.ok) {
       if (response.status === 429) {
