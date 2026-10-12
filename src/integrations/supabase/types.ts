@@ -664,10 +664,18 @@ export type Database = {
           city: string | null
           code: string
           commission_pct: number
+          community_name: string | null
           created_at: string
+          display_name: string | null
           handle: string | null
           id: string
+          kit_card_product: string | null
+          kit_card_theme: string | null
+          kit_site_product: string | null
+          kit_site_theme: string | null
           name: string
+          offer_cap: number | null
+          offer_ends_at: string | null
           status: string
           user_id: string | null
         }
@@ -676,10 +684,18 @@ export type Database = {
           city?: string | null
           code: string
           commission_pct?: number
+          community_name?: string | null
           created_at?: string
+          display_name?: string | null
           handle?: string | null
           id?: string
+          kit_card_product?: string | null
+          kit_card_theme?: string | null
+          kit_site_product?: string | null
+          kit_site_theme?: string | null
           name: string
+          offer_cap?: number | null
+          offer_ends_at?: string | null
           status?: string
           user_id?: string | null
         }
@@ -688,10 +704,18 @@ export type Database = {
           city?: string | null
           code?: string
           commission_pct?: number
+          community_name?: string | null
           created_at?: string
+          display_name?: string | null
           handle?: string | null
           id?: string
+          kit_card_product?: string | null
+          kit_card_theme?: string | null
+          kit_site_product?: string | null
+          kit_site_theme?: string | null
           name?: string
+          offer_cap?: number | null
+          offer_ends_at?: string | null
           status?: string
           user_id?: string | null
         }
@@ -900,6 +924,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      kit_entitlements: {
+        Row: {
+          created_at: string
+          id: string
+          page_id: string | null
+          pick_product: string | null
+          pick_theme: string | null
+          purchase_id: string
+          scope: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_id?: string | null
+          pick_product?: string | null
+          pick_theme?: string | null
+          purchase_id: string
+          scope: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_id?: string | null
+          pick_product?: string | null
+          pick_theme?: string | null
+          purchase_id?: string
+          scope?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_entitlements_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ip_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kit_entitlements_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "credit_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meet_nudge_contacts: {
         Row: {
@@ -2194,17 +2269,31 @@ export type Database = {
         Args: { _influencer_id: string; _user_id: string }
         Returns: undefined
       }
+      influencer_create_login: {
+        Args: { _email: string; _influencer_id: string; _password: string }
+        Returns: Json
+      }
       influencer_dashboard: { Args: never; Returns: Json }
       influencer_detail: { Args: { _influencer_id: string }; Returns: Json }
       influencer_fy_start: { Args: never; Returns: string }
+      influencer_link_by_email: {
+        Args: { _email: string; _influencer_id: string }
+        Returns: Json
+      }
       influencer_mark_paid: {
         Args: { _influencer_id: string; _utr: string }
         Returns: Json
       }
       influencer_me: { Args: never; Returns: Json }
+      influencer_my_kit_picks: { Args: never; Returns: Json }
+      influencer_offer_public: { Args: { _code: string }; Returns: Json }
       influencer_record_click: {
         Args: { _code: string; _visitor: string }
         Returns: boolean
+      }
+      influencer_reset_password: {
+        Args: { _influencer_id: string; _password: string }
+        Returns: Json
       }
       influencer_reverse: {
         Args: { _purchase_id: string; _reason: string }
@@ -2224,6 +2313,24 @@ export type Database = {
         Returns: string
       }
       influencer_setting: { Args: { _key: string }; Returns: number }
+      influencer_update_kit_picks: {
+        Args: {
+          _card_product: string
+          _card_theme: string
+          _site_product: string
+          _site_theme: string
+        }
+        Returns: Json
+      }
+      influencer_update_offer: {
+        Args: {
+          _community_name: string
+          _display_name: string
+          _offer_cap: number
+          _offer_ends_at: string
+        }
+        Returns: Json
+      }
       ip_get_public_page: { Args: { _slug: string }; Returns: Json }
       ip_mark_order_paid: {
         Args: { _payment_id: string; _razorpay_order_id: string }
@@ -2231,6 +2338,7 @@ export type Database = {
       }
       ip_page_hit: { Args: { _slug: string }; Returns: undefined }
       ip_publish_page: { Args: { _page_id: string }; Returns: Json }
+      ip_publish_prepaid: { Args: { _page_id: string }; Returns: Json }
       ip_republish: { Args: { _page_id: string }; Returns: Json }
       ip_set_share_url: {
         Args: { _page_id: string; _url: string }
@@ -2262,6 +2370,8 @@ export type Database = {
         }
         Returns: Json
       }
+      kit_my_entitlements: { Args: never; Returns: Json }
+      kit_product_scope: { Args: { _product_id: string }; Returns: string }
       monthly_free_reset: { Args: never; Returns: number }
       refund_admin_list: { Args: { _status?: string }; Returns: Json }
       refund_approve: {
