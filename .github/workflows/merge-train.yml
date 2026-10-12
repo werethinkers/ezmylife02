@@ -1,0 +1,37 @@
+# Merges main and every open, non-draft PR into staging (scripts/merge-train.mjs), then pushes staging.
+# Runs by hand from the Actions tab, and by itself after every push to main so staging keeps up with Lovable.
+name: Merge train
+on:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: "Branches to merge, space separated. Leave empty for every open PR into staging."
+        required: false
+        default: ""
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: merge-train
+  cancel-in-progress: false
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-package-lock --no-audit --no-fund
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Merge into staging
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCHES: ${{ github.event.inputs.branches }}
+        run: node scripts/merge-train.mjs --push $BRANCHES

@@ -1,27 +1,14 @@
-import { businessDocs } from "./prices/business-docs";
-import { businessTrackers } from "./prices/business-trackers";
+import { PRICE_GROUPS } from "./prices/groups";
 import { calculators } from "./prices/calculators";
 import { converters } from "./prices/converters";
 import { examPresets } from "./prices/exam-presets";
-import { contentAi } from "./prices/content-ai";
-import { customApps } from "./prices/custom";
-import { extras } from "./prices/extras";
 
 // Default prices (credits per successful run) for apps built on the shared engines.
 // They mirror supabase/functions/_shared/appSpecs.ts — the server's copy is what is charged;
 // this copy only lets the page show the right price before the app's first run creates its
 // pricing row. Every app costs at least 1 credit per use.
-// One file per vertical in ./prices; a new vertical adds one file and one line here.
-export const PRICE_GROUPS: Record<string, Record<string, number>> = {
-  "business-docs": businessDocs,
-  "business-trackers": businessTrackers,
-  "content-ai": contentAi,
-  custom: customApps,
-  extras,
-  calculators,
-  converters,
-  "exam-presets": examPresets,
-};
+// One file per vertical in ./prices; a new vertical adds one file and its lines in ./prices/groups.ts.
+export { PRICE_GROUPS };
 
 export const DEFAULT_PRICES: Record<string, number> = Object.assign({}, ...Object.values(PRICE_GROUPS));
 
