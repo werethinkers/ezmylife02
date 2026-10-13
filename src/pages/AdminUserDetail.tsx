@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, User, Mail, Phone, Building, MapPin, Globe, Linkedin, Calendar, Shield, Activity, BarChart3, Crown } from "lucide-react";
 import { format } from "date-fns";
+import { GrantCreditsForm } from "@/components/admin/GrantCreditsForm";
 
 interface Profile {
   id: string;
@@ -147,6 +148,11 @@ const AdminUserDetail = () => {
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Admin
           </Button>
         </div>
+
+        <div className="mb-8">
+          <GrantCreditsForm fixedUser={{ id: profile.id, email: profile.email, display_name: profile.display_name, full_name: profile.full_name }} />
+        </div>
+
 
         <div className="flex items-center gap-4 mb-8">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
