@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Zap, Search } from "lucide-react";
 import { format } from "date-fns";
+import { GrantCreditsForm } from "./GrantCreditsForm";
 
 interface Pricing { tool_id: string; cost_inr: number; credit_cost: number }
 interface CatalogRow { id: string; name: string }
@@ -199,46 +200,7 @@ export const CreditsAdmin = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Grant free credits to a user</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input placeholder="Search by email or name" value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && doSearch()}
-            />
-            <Button variant="outline" onClick={doSearch}><Search className="h-4 w-4" /></Button>
-          </div>
-          {results.length > 0 && (
-            <div className="border border-border rounded-md divide-y">
-              {results.map((r) => (
-                <button key={r.id}
-                  onClick={() => { setPicked(r); setResults([]); setSearch(r.email || ""); }}
-                  className="w-full text-left p-2 hover:bg-accent text-sm flex justify-between"
-                >
-                  <span>{r.full_name || r.display_name || "—"}</span>
-                  <span className="text-muted-foreground">{r.email}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {picked && (
-            <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-              Selected: <strong>{picked.email}</strong>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-2">
-            <Input type="number" placeholder="Credits" value={grantAmt} onChange={(e) => setGrantAmt(Number(e.target.value))} />
-            <Input placeholder="Note (optional)" value={grantNote} onChange={(e) => setGrantNote(e.target.value)} />
-          </div>
-          <Button onClick={grant} disabled={!picked || !grantAmt || granting}>
-            {granting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
-            Grant {grantAmt} credits
-          </Button>
-        </CardContent>
-      </Card>
+      <GrantCreditsForm onDone={load} />
 
       <Card>
         <CardHeader><CardTitle>Recent admin grants</CardTitle></CardHeader>
@@ -258,7 +220,7 @@ export const CreditsAdmin = () => {
                   <TableCell className="text-xs">{format(new Date(r.created_at), "MMM d, HH:mm")}</TableCell>
                   <TableCell className="text-xs">{r.user_id.slice(0, 8)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{r.delta > 0 ? `+${r.delta}` : r.delta}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{(r.metadata?.note as string) || "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{r.metadata?.bucket === "paid" ? "Lasting" : r.metadata?.bucket === "free" ? "Free" : ""} {(r.metadata?.note as string) || "—"}</TableCell>
                 </TableRow>
               ))}
               {recent.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No grants yet</TableCell></TableRow>}
