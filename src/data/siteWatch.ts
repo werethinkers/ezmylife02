@@ -2,7 +2,7 @@
 // Photos are free-licence stock from Pexels (https://www.pexels.com/license/), shown as sample photos.
 
 /** Where the "Need one customised for your venture?" buttons go. Fill these in; empty shows a placeholder. */
-export const SITES_CONTACT = { whatsapp: "", email: "" };
+export const SITES_CONTACT = { whatsapp: "+91 9098083486", email: "ceo@ezyourlife.com" };
 
 export type Sev = "High" | "Medium" | "Low";
 export type AlertState = "open" | "tasked" | "dismissed" | "false";
