@@ -12,6 +12,7 @@ import { useAppCountLabel } from "@/lib/appCount";
 import { seoFor } from "@/lib/seo/pages";
 import { STUDIO_TABS } from "@/data/studios";
 import { SitesCta } from "@/components/sites/SitesCta";
+import { SiteTile } from "@/components/sites/SiteTile";
 import "./sitewatch/sitewatch.css";
 import { cn } from "@/lib/utils";
 
@@ -34,28 +35,25 @@ const STEPS = [
   { Icon: FileCheck2, h: "Take the finished result", d: "A full plan, report, set of pictures or document, ready to use or share." },
 ];
 
-/** The Sites category: apps for roads, solar plants and construction sites. Not in the catalogue yet, so it is listed here. */
-function SitesGroup() {
+/** The Sites category: apps for roads, solar plants and construction. Not in the catalogue yet, so it is listed here, styled like the other groups. */
+function SitesGroup({ index }: { index: number }) {
+  const colour = TAB_COLOURS[index % TAB_COLOURS.length];
   return (
     <>
-      <section id="sites" className="sw scroll-mt-28">
-        <div className="sec">
-          <Reveal>
-            <h2>Sites</h2>
-            <p className="m" style={{ margin: "6px 0 0", fontSize: 15 }}>Photos, drone and camera footage turned into tasks and proof for roads, solar plants and construction.</p>
-          </Reveal>
-          <div className="cards">
-            <Link to="/studios/site-watch" className="scard" style={{ cursor: "pointer", color: "inherit", textDecoration: "none" }}>
-              <span className="k">APP · RUN YOUR SITES</span>
-              <h3 style={{ fontSize: 18 }}>Site Watch</h3>
-              <span>You get problems spotted, tasks sent to your crew and proof that the work is done.</span>
-              <span style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                <span className="chip pk">Watch the demo</span><span className="chip">Roads</span><span className="chip sun">Solar</span><span className="chip ok">Construction</span>
-              </span>
-            </Link>
-            <div className="scard soon"><span className="k">COMING SOON</span><h3 style={{ fontSize: 18 }}>Site Attendance</h3><span>Who was on site, when, with proof.</span></div>
-            <div className="scard soon"><span className="k">COMING SOON</span><h3 style={{ fontSize: 18 }}>Material Tracker</h3><span>Stock counts from photos.</span></div>
+      <section id="sites" className="scroll-mt-28 py-8 md:py-12">
+        <Reveal>
+          <div className={cn("mb-7 flex flex-wrap items-center justify-between gap-3 rounded-3xl border-2 border-ink p-5 shadow-block md:p-6", colour)}>
+            <div className="min-w-0">
+              <h2 className="text-2xl font-extrabold md:text-3xl">Sites</h2>
+              <p className="mt-1 text-[16px] text-ink/85">Roads, solar plants and construction sites, watched and followed up.</p>
+            </div>
+            <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">1 studio, 2 coming soon</span>
           </div>
+        </Reveal>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <SiteTile name="Site Watch" get="problems spotted, tasks sent and proof of work" to="/studios/site-watch" colour="bg-sky" accent="bg-sun" icon="sites" />
+          <SiteTile name="Site Attendance" get="who was on site, when, with proof" colour="bg-lime" accent="bg-pink" icon="build" soon />
+          <SiteTile name="Material Tracker" get="stock counts from photos" colour="bg-coral" accent="bg-sun" icon="roads" soon />
         </div>
       </section>
       <SitesCta />
@@ -198,7 +196,7 @@ const Studios = () => {
               href="#sites"
               className={cn(
                 "relative shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-all duration-200 hover:-translate-y-0.5",
-                active === "sites" ? "bg-ink text-cream" : "bg-sky",
+                active === "sites" ? "bg-ink text-cream" : TAB_COLOURS[groups.length % TAB_COLOURS.length],
               )}
             >
               Sites
@@ -225,7 +223,7 @@ const Studios = () => {
           {groups.map((g) => (
             <Group key={g.tab.id} tab={g.tab} index={g.index} tools={g.tools} />
           ))}
-          <SitesGroup />
+          <SitesGroup index={groups.length} />
         </div>
 
         <section className="mx-auto max-w-7xl px-4 pb-16">
