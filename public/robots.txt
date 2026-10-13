@@ -6,7 +6,6 @@ Disallow: /admin
 Disallow: /auth/callback
 Disallow: /profile
 Disallow: /tool-preview/
-Disallow: /promo/
 Disallow: /my-pages
 Disallow: /bulk/
 Disallow: /credits/history
