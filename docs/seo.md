@@ -10,6 +10,7 @@ a browser, and sets the same title and description again.
 | `/tool/<id>`, one per live app | `scripts/prerender-apps.mjs` | the catalogue, app definitions, `src/lib/appSeo.ts` |
 | Fixed pages (home, about, prices, websites, cards, kit, the signed-in apps) | `scripts/prerender-pages.mjs` | `src/lib/seo/pages.ts` |
 | `/ai-tool-for/<job>`, `/ai-for/<business type>` | `scripts/prerender-pages.mjs` | seeds and rules in `src/lib/seoData.ts` |
+| `/promo/<name>`, one per live app ("see what it does") | `scripts/prerender-pages.mjs` | the catalogue and app definitions |
 | `/make/<id>`, websites, cards and invites | `scripts/prerender-pages.mjs` | `src/instant/catalog`, `promoSeo` in `src/instant/promo.ts` |
 | `sitemap.xml` | `scripts/prerender-pages.mjs` | all of the above, indexable pages only |
 
@@ -43,7 +44,7 @@ They still work for visitors, and they come back into search on their own as mat
 
 One `User-agent: *` group for every crawler. Do not add a group for one bot (for example Googlebot):
 a bot with its own group ignores every rule in the `*` group, which is how Google was allowed into
-`/admin` and `/promo/` before.
+`/admin` before.
 
 ## Only Abhi can do
 
