@@ -12,5 +12,6 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/admin/influencers", page: lazy(() => import("./pages/influencers/AdminInfluencers")), signedIn: true },
   { path: "/admin/refunds", page: lazy(() => import("./pages/refunds/AdminRefunds")), signedIn: true },
   { path: "/studios", page: lazy(() => import("./pages/Studios")) },
+  { path: "/studios/site-watch", page: lazy(() => import("./pages/SiteWatchDemo")) },
   { path: "/influencer", page: lazy(() => import("./pages/influencers/InfluencerPortal")) },
 ];
