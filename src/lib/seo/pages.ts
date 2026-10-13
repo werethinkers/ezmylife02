@@ -68,6 +68,17 @@ export const SITE_PAGES: SitePage[] = [
     links: MAIN_LINKS,
   },
   {
+    path: "/studios/site-watch",
+    title: "Site Watch: see problems on your sites and get them fixed",
+    description: "Try Site Watch on sample data. Photos and footage from roads, solar plants and construction sites become alerts, tasks for your crew and proof of work.",
+    h1: "Site Watch",
+    text: [
+      "Site Watch turns photos, drone and camera footage from roads, solar plants and construction sites into alerts, tasks for your crew and proof that the work is done.",
+      "Try the demo with sample sites and see every step. Need one made for your own venture? Contact the team.",
+    ],
+    links: [["Studios", "/studios"], ...MAIN_LINKS],
+  },
+  {
     path: "/explore",
     title: "Find AI apps by business type or job | EZYOURLIFE",
     description: "Pick your type of business or the job you need done, and see the EZYOURLIFE apps that fit. Pay only for results, credit packs from ₹10.",

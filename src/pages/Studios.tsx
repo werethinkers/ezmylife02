@@ -11,6 +11,8 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
 import { seoFor } from "@/lib/seo/pages";
 import { STUDIO_TABS } from "@/data/studios";
+import { SitesCta } from "@/components/sites/SitesCta";
+import "./sitewatch/sitewatch.css";
 import { cn } from "@/lib/utils";
 
 const TAB_COLOURS = ["bg-pink", "bg-sun", "bg-teal", "bg-lime", "bg-sky", "bg-coral"];
@@ -31,6 +33,35 @@ const STEPS = [
   { Icon: ListChecks, h: "We do the heavy work", d: "The studio builds each part in order and shows you as it goes." },
   { Icon: FileCheck2, h: "Take the finished result", d: "A full plan, report, set of pictures or document, ready to use or share." },
 ];
+
+/** The Sites category: apps for roads, solar plants and construction sites. Not in the catalogue yet, so it is listed here. */
+function SitesGroup() {
+  return (
+    <>
+      <section id="sites" className="sw scroll-mt-28">
+        <div className="sec">
+          <Reveal>
+            <h2>Sites</h2>
+            <p className="m" style={{ margin: "6px 0 0", fontSize: 15 }}>Photos, drone and camera footage turned into tasks and proof for roads, solar plants and construction.</p>
+          </Reveal>
+          <div className="cards">
+            <Link to="/studios/site-watch" className="scard" style={{ cursor: "pointer", color: "inherit", textDecoration: "none" }}>
+              <span className="k">APP · RUN YOUR SITES</span>
+              <h3 style={{ fontSize: 18 }}>Site Watch</h3>
+              <span>You get problems spotted, tasks sent to your crew and proof that the work is done.</span>
+              <span style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                <span className="chip pk">Watch the demo</span><span className="chip">Roads</span><span className="chip sun">Solar</span><span className="chip ok">Construction</span>
+              </span>
+            </Link>
+            <div className="scard soon"><span className="k">COMING SOON</span><h3 style={{ fontSize: 18 }}>Site Attendance</h3><span>Who was on site, when, with proof.</span></div>
+            <div className="scard soon"><span className="k">COMING SOON</span><h3 style={{ fontSize: 18 }}>Material Tracker</h3><span>Stock counts from photos.</span></div>
+          </div>
+        </div>
+      </section>
+      <SitesCta />
+    </>
+  );
+}
 
 function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index: number; tools: CatalogTool[] }) {
   const [all, setAll] = useState(false);
@@ -81,7 +112,7 @@ const Studios = () => {
   const popular = useMemo(() => POPULAR.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[], [byId]);
   const [active, setActive] = useState<string | null>(null);
   useEffect(() => {
-    const els = groups.map((g) => document.getElementById(g.tab.id)).filter(Boolean) as HTMLElement[];
+    const els = [...groups.map((g) => g.tab.id), "sites"].map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
     if (!els.length || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       (entries) => {
@@ -119,7 +150,7 @@ const Studios = () => {
                 Big jobs, <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">finished</span> for you.
               </h1>
               <p className="mt-4 max-w-xl text-lg text-ink/85 md:text-xl">
-                A business plan, catalogue photos, a resume, a tax plan, a family book. Answer a few questions and a studio does the whole job, step by step.
+                A business plan, catalogue photos, a resume, a tax plan, a family book, and now your sites. Answer a few questions and a studio does the whole job, step by step.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild size="lg">
@@ -163,6 +194,16 @@ const Studios = () => {
                 {g.tab.label}
               </a>
             ))}
+            <a
+              href="#sites"
+              className={cn(
+                "relative shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-all duration-200 hover:-translate-y-0.5",
+                active === "sites" ? "bg-ink text-cream" : "bg-sky",
+              )}
+            >
+              Sites
+              <span className="absolute -right-1.5 -top-2.5 rounded-full bg-ink px-1.5 text-[10px] font-extrabold tracking-wider text-lime">NEW</span>
+            </a>
           </div>
         </nav>
 
@@ -184,6 +225,7 @@ const Studios = () => {
           {groups.map((g) => (
             <Group key={g.tab.id} tab={g.tab} index={g.index} tools={g.tools} />
           ))}
+          <SitesGroup />
         </div>
 
         <section className="mx-auto max-w-7xl px-4 pb-16">
