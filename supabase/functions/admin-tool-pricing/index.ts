@@ -55,8 +55,10 @@ serve(async (req) => {
     }
     if (action === "grant_credits") {
       const { user_id, credits, note, bucket } = body;
-      const delta = Math.trunc(Number(credits));
-      if (!user_id || !delta) throw new Error("user_id and credits required");
+      const delta = Number(credits);
+      if (!user_id || !Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 100_000_000) {
+        throw new Error("user_id and a whole, non-zero number of credits required");
+      }
       const buck = bucket === "paid" ? "paid" : "free";
       // Ensure wallet exists
       await supabase.from("credit_wallets").upsert({ user_id }, { onConflict: "user_id" });
@@ -77,7 +79,7 @@ serve(async (req) => {
         free_delta: buck === "free" ? delta : 0,
         paid_delta: buck === "paid" ? delta : 0,
         reason: "admin_adjust",
-        metadata: { note: note || "admin grant", by: ud.user.id },
+        metadata: { note: note || "admin grant", by: ud.user.id, bucket: buck },
       });
       if (ledErr) throw new Error(ledErr.message);
       return json({ ok: true, new_free: newFree, new_paid: newPaid });
