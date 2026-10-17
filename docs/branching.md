@@ -16,7 +16,7 @@ main  ◄── one PR, merged when Abhijay says go ── staging ◄── PR 
    Name it after the work (`cut-ai-cost`, `phase-3-health-apps`), not after the thread.
 2. Push the branch and open a PR with **base `staging`**. Draft while working, ready when done.
    The Checks workflow runs the build and `npm run check:apps` on it.
-3. Never push to another piece of work's branch. Never push to `main` directly.
+3. Never push to another piece of work's branch. Never push to `main` directly, unless Vijay explicitly asks for that change to go to `main`.
 4. Database SQL goes in a new file in `supabase/migrations/` with a fresh timestamp. Never edit an
    existing migration; two branches editing the same file is the one conflict nothing can avoid.
 
