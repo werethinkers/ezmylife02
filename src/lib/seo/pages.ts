@@ -79,6 +79,17 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Studios", "/studios"], ...MAIN_LINKS],
   },
   {
+    path: "/studios/bhed-prabhed",
+    title: "Bhed Prabhed: split a topic into parts and finer parts",
+    description: "Turn a topic into a table of parts that open into finer parts, with photos and notes on each. View it as a table or a map, save it to your account, export it.",
+    h1: "Bhed Prabhed",
+    text: [
+      "Bhed Prabhed splits one topic into its parts, and each part into finer parts, as many levels deep as you need. Add notes, photos, audio or video to any part.",
+      "See the chart as a table or as a map, search it, step back through earlier versions, and export it as an outline, a document or a zip. A new map costs 25 credits; opening and editing your maps is free.",
+    ],
+    links: [["Studios", "/studios"], ...MAIN_LINKS],
+  },
+  {
     path: "/explore",
     title: "Find AI apps by business type or job | EZYOURLIFE",
     description: "Pick your type of business or the job you need done, and see the EZYOURLIFE apps that fit. Pay only for results, credit packs from ₹10.",

@@ -5,6 +5,7 @@ import { converters } from "./converters";
 import { examPresets } from "./exam-presets";
 import { contentAi } from "./content-ai";
 import { customApps } from "./custom";
+import { bhedPrices } from "./bhed";
 import { extras } from "./extras";
 import { flagshipBusiness } from "./flagship-business";
 import { flagshipCommon } from "./flagship-common";
@@ -26,6 +27,7 @@ export const PRICE_GROUPS: Record<string, Record<string, number>> = {
   "business-trackers": businessTrackers,
   "content-ai": contentAi,
   custom: customApps,
+  bhed: bhedPrices,
   extras,
   calculators,
   converters,
