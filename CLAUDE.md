@@ -9,4 +9,5 @@ Vite + React + Tailwind + shadcn, Supabase backend, synced with Lovable. Live at
 - Adding apps: one file per vertical in `src/data/catalog/`, `src/apps/defs/`, `supabase/functions/_shared/appSpecs/` and `src/apps/prices/`, plus one line in each folder's `groups.ts` (`index.ts` for the catalogue). New pages go in `src/featureRoutes.tsx`, not `src/App.tsx`. A new public page also gets one entry in `src/lib/seo/pages.ts` (`docs/seo.md`). Then `npm run check:apps` and `npm run gen:catalog -- <vertical>`.
 - Install with `npm install --no-package-lock` (the lock file is stale; Lovable builds with bun).
 - Look and wording: `docs/design.md` and `docs/instant-products.md`.
+- Apps from outside developers (`/developer`, ids `dev-*`, sandboxed): `docs/developer-apps.md`.
 - Stop and ask before touching payment, wallet or credit-charging code, the price or name of a live app, or deleting data.

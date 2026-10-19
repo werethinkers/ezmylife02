@@ -21,6 +21,8 @@ import { GiveGet } from "@/components/brand/GiveGet";
 import { categoryInfo, goalOf } from "@/data/goals";
 import { appIntroOf } from "@/data/appKind";
 import { appSeoDescription, appSeoKeywords, appSeoTitle, sentence } from "@/lib/appSeo";
+import { isDeveloperApp } from "@/lib/devApps";
+import HostedApp from "@/apps/hosted/HostedApp";
 
 interface CatalogTool {
   name: string;
@@ -47,6 +49,8 @@ const ToolViewer = () => {
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
   const isNativeTool = toolId ? hasNativeImplementation(toolId) : false;
+  // Apps published by outside developers (ids start with "dev-") run in a sandbox: src/apps/hosted.
+  const isHosted = isDeveloperApp(toolId);
 
   const hasLoggedRef = useRef(false);
 
@@ -60,6 +64,13 @@ const ToolViewer = () => {
         .select("name, description, category, dedicated_route, has_uploaded_files, is_live, demo_input, demo_output")
         .eq("id", toolId)
         .maybeSingle();
+
+      if (isHosted) {
+        if (data) setCatalogInfo(data as CatalogTool);
+        setIsLoading(false);
+        setCatalogChecked(true);
+        return;
+      }
 
       if (data) {
         // Redirect to dedicated route if set — do this FIRST and don't touch
@@ -102,7 +113,7 @@ const ToolViewer = () => {
     };
 
     checkCatalog();
-  }, [toolId, navigate, isNativeTool, tool, toolUrl]);
+  }, [toolId, navigate, isNativeTool, isHosted, tool, toolUrl]);
 
   // Log tool usage once
   useEffect(() => {
@@ -167,11 +178,12 @@ const ToolViewer = () => {
   }
 
   // Tool exists in catalog but has no implementation yet — redirect to catalog.
-  if (catalogChecked && !redirecting && !isNativeTool && !iframeSrc && !uploadedToolUrl && catalogInfo) {
+  if (catalogChecked && !redirecting && !isNativeTool && !isHosted && !iframeSrc && !uploadedToolUrl && catalogInfo) {
     return <Navigate to="/ai-apps" replace />;
   }
 
   const renderContent = () => {
+    if (isHosted) return <HostedApp toolId={toolId!} />;
     if (isNativeTool && !uploadedToolUrl) {
       // Remembers entries across apps and offers them back in any matching field.
       return <FieldMemory><NativeToolRenderer toolId={toolId!} /></FieldMemory>;

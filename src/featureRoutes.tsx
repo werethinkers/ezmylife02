@@ -15,4 +15,8 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/studios/site-watch", page: lazy(() => import("./pages/SiteWatchDemo")) },
   { path: "/studios/bhed-prabhed", page: lazy(() => import("./pages/BhedPrabhed")) },
   { path: "/influencer", page: lazy(() => import("./pages/influencers/InfluencerPortal")) },
+  { path: "/developer", page: lazy(() => import("./pages/developer/DeveloperHome")), signedIn: true },
+  { path: "/developer/apps/:appId", page: lazy(() => import("./pages/developer/DeveloperAppEditor")), signedIn: true },
+  { path: "/developer/preview/:versionId", page: lazy(() => import("./pages/developer/DeveloperPreview")), signedIn: true },
+  { path: "/admin/developer-apps", page: lazy(() => import("./pages/developer/AdminDeveloperApps")), signedIn: true },
 ];

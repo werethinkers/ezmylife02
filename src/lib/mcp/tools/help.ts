@@ -32,6 +32,11 @@ Example: user says *"save shortcut sig -> Best, Abhijay"* → call save_shortcut
 ## Not available over MCP
 Startup Analyser and Video Generator are long-running (>60s) and would time out. Suggest the user run them at https://ezyourlife.com directly — use get_tool_link to hand them the URL.
 
+## Developers: publish your own web app
+- **dev_get_standards()** — the rules (one HTML file, no AI calls, no keys), the steps and the valid categories. Call first.
+- **dev_create_app(slug, name)** · **dev_save_app(app_id, html?, listing?)** · **dev_run_checks(app_id)** · **dev_get_preview_link(app_id)** · **dev_submit_for_review(app_id)** · **dev_get_status(app_id)** · **dev_list_my_apps()**
+- The EzYourLife team approves on ezyourlife.com and sets the price and share; these tools cannot approve or publish.
+
 ## Tips
 - Always call tools rather than guessing data. Shortcuts, contacts, and creations are per-user.
 - If a tool needs credits, the user's wallet is charged automatically — surface the balance from get_credit_balance if they ask.
