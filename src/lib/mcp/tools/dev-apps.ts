@@ -1,45 +1,61 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { SITE, dbMessage, devClient, fail, latestVersion, notSignedIn, text } from "./dev-shared";
+import { MAX_APP_BYTES, PART_UNITS } from "../../devUploadParts";
+import { devGetUploadLink, devImportFile, uploadText } from "./dev-import";
 
 /*
  * Developer tools: let Claude (or any MCP client) put a developer's web app on EzYourLife.
- * Flow: dev_get_standards → dev_create_app → dev_save_app → dev_run_checks → (fix, repeat)
+ * Flow: dev_get_standards → dev_create_app → dev_save_app / dev_import_file / dev_get_upload_link → dev_run_checks → (fix, repeat)
  * → dev_get_preview_link → dev_submit_for_review → dev_get_status. An admin approves on
  * ezyourlife.com/admin/developer-apps; nothing here can approve, publish or set a price.
  */
 
 const STANDARDS = `# Putting an app on EzYourLife
 
-## What an app must be
-- ONE self-contained HTML file: HTML, CSS and JavaScript inline. Up to 2 MB. Libraries may load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
-- A React / Vue / Svelte / Vite app must be built into a single HTML file first (inline the JS and CSS bundles; inline small images as data URIs).
+## What the app must be when you send it
+- ONE self-contained HTML file: HTML, CSS and JavaScript inline. Up to 10 MB (checks warn above 2 MB). Libraries may also load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
 - Runs entirely in the browser. No own backend, no own login, no own payments.
 - No AI calls (OpenAI, Anthropic, Gemini, Groq, OpenRouter and similar are blocked by the checks). No API keys, tokens or passwords anywhere in the file.
-- Add <meta name="viewport" content="width=device-width, initial-scale=1"> and make it work at 375 px wide.
+- Has <meta name="viewport" content="width=device-width, initial-scale=1"> and works at 375 px wide.
+
+## Adapting someone's existing app (do this before sending)
+1. Read the project: framework, build tool, entry point, what it calls over the network.
+2. Remove or replace every AI call, API key, secret, login and payment. If the app cannot work without them, stop and tell the developer it cannot be published yet.
+3. Make storage safe: every localStorage / sessionStorage / IndexedDB / document.cookie use goes inside try/catch with an in-memory fallback.
+4. Remove anything that reaches the page around it (window.top, parent.location).
+5. Add the viewport tag; check the layout at 375 px.
+6. Build it into ONE HTML file. Vite: add the vite-plugin-singlefile plugin, set build.assetsInlineLimit high, build, and use dist/index.html. Plain HTML: inline the CSS and scripts. Inline small images as data URIs; keep big media on a CDN or compress it.
+7. Open the built file locally once to check it works.
 
 ## Where it runs
-- In a sandboxed iframe with a unique origin: no cookies, no localStorage/sessionStorage/IndexedDB (they throw — wrap any use in try/catch and keep state in memory), no camera, microphone, location or notifications, and it cannot reach the page around it.
-- Downloads, forms, alerts and opening links in a new tab work.
+- In a sandboxed iframe with a unique origin: no cookies, no browser storage (it throws), no camera, microphone, location or notifications, and it cannot reach the page around it. Downloads, forms, alerts and opening links in a new tab work.
+
+## Sending the file (pick one)
+- Small file (under about 200 KB): dev_save_app with html.
+- Bigger file from a cloud workspace (claude.ai, Cowork): commit the built file to a GitHub repo, push, then dev_import_file with github {repo, path, ref}. Use the commit SHA as ref to pin exactly what you tested.
+- Bigger file on a computer (Claude Code): dev_get_upload_link, then run the script it gives.
+- Or the developer uploads it on ${SITE}/developer.
 
 ## Store listing (all required)
-- name: 3–60 characters, not the same as an app already in the store.
-- short_description: 20–160 characters, plain words: what the user gets.
+- name: 3 to 60 characters, not the same as an app already in the store.
+- short_description: 20 to 160 characters, plain words: what the user gets.
 - description: at least 40 characters: what you give, what you get, who it is for.
 - category: exactly one of the categories listed below.
 - tool_types: up to 5 short filter words (optional). support_email (optional). release_notes for updates.
+Fill these from the code and README; ask the developer only for what you cannot find.
 
 ## Steps
-1. dev_create_app(slug, name) once. The app's address becomes ${SITE}/tool/dev-<slug>.
-2. dev_save_app(app_id, html, listing). Fill the listing from the code and README; ask the user only for what you cannot find.
-3. dev_run_checks(app_id). Fix every "Must fix" item, save again, re-run. "Look" items are shown to the admin.
-4. dev_get_preview_link(app_id) and ask the user to try it (signed in on ezyourlife.com).
-5. dev_submit_for_review(app_id) only when the user agrees.
-6. dev_get_status(app_id) to see the decision and any requested changes.
+1. dev_create_app(slug, name) once (or dev_list_my_apps to find an existing app). The address becomes ${SITE}/tool/dev-<slug>.
+2. Send the file (above) and dev_save_app(app_id, listing).
+3. dev_run_checks(app_id). Fix every "MUST FIX", send again, re-run. "LOOK" items are shown to the admin.
+4. dev_get_preview_link(app_id) and ask the developer to try it (signed in on ezyourlife.com).
+5. dev_submit_for_review(app_id) only when the developer agrees.
+6. dev_get_status(app_id) for the decision and any requested changes.
 
 ## Rules you cannot change
-- Team EzYourLife sets the credits per use and the developer's share at approval.
-- A live app is never replaced silently: saving changes to a live app starts a new version that needs approval.`;
+- Team EzYourLife sets the credits per use and the developer's share at approval. Only a person on the team can approve.
+- A live app is never replaced silently: sending changes to a live app starts a new version that needs approval.`;
 
 const listingSchema = z
   .object({
@@ -117,19 +133,32 @@ export const devListMyApps = defineTool({
 export const devSaveApp = defineTool({
   name: "dev_save_app",
   title: "Save a developer app's file and listing",
-  description: "Saves the app's single HTML file and/or store listing to its editable version. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
+  description: "Saves the app's single HTML file (best under about 200 KB; for bigger files use dev_import_file or dev_get_upload_link) and/or store listing to its editable version. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
   inputSchema: {
     app_id: z.string().uuid(),
-    html: z.string().max(2_000_000).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
+    html: z.string().max(MAX_APP_BYTES).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
     listing: listingSchema.optional(),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id, html, listing }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
     if (html === undefined && !listing) return fail("Nothing to save: pass html, listing or both.");
-    const { data, error } = await devClient(ctx).rpc("dev_save_draft", { _app_id: app_id, _html: html ?? null, _listing: listing ?? null });
-    if (error) return fail(dbMessage(error.message));
-    return text(`Saved version ${data.version_no}. Next: dev_run_checks.`, data);
+    const sb = devClient(ctx);
+    try {
+      if (html !== undefined && html.length > PART_UNITS) {
+        const saved = await uploadText(sb, app_id, html, { kind: "inline", via: "connector" });
+        if (listing) {
+          const r = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: null, _listing: listing });
+          if (r.error) return fail(dbMessage(r.error.message));
+        }
+        return text(`Saved version ${saved.version_no} (${saved.parts} parts). Next: dev_run_checks.`, saved);
+      }
+      const { data, error } = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: html ?? null, _listing: listing ?? null });
+      if (error) return fail(dbMessage(error.message));
+      return text(`Saved version ${data.version_no}. Next: dev_run_checks.`, data);
+    } catch (e) {
+      return fail(dbMessage(e instanceof Error ? e.message : String(e)));
+    }
   },
 });
 
@@ -233,6 +262,8 @@ export const devTools = [
   devCreateApp,
   devListMyApps,
   devSaveApp,
+  devImportFile,
+  devGetUploadLink,
   devRunChecks,
   devGetPreviewLink,
   devSubmitForReview,

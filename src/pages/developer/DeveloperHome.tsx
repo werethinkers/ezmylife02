@@ -12,7 +12,7 @@ import { createApp, isAdmin, listMyApps, slugify } from "@/lib/devApps";
 import { Pill, VersionPill } from "./parts";
 
 const STEPS = [
-  { n: 1, title: "Upload", text: "One HTML file with its CSS and JavaScript inside." },
+  { n: 1, title: "Upload", text: "One HTML file with its CSS and JavaScript inside, up to 10 MB." },
   { n: 2, title: "Check", text: "Our server checks it for keys, AI calls, size and a full listing." },
   { n: 3, title: "Preview", text: "Use the real app on a phone or desktop screen." },
   { n: 4, title: "Send", text: "Our team sets the price and approves. One click puts it live." },
@@ -149,7 +149,7 @@ export default function DeveloperHome() {
             <div className="rounded-2xl border-2 border-ink bg-sky/40 p-5">
               <h2 className="font-display text-base font-bold">Work with Claude</h2>
               <p className="mt-2 text-sm">
-                Add the EzYourLife connector in Claude, sign in, and say “Put my app on EzYourLife”. Claude makes it one file, fills the listing, runs the checks and sends it for review.
+                Add the EzYourLife connector in Claude, sign in, and say “Put my app on EzYourLife”. Send it your project, even a big one: Claude adapts the code to these rules, builds it into one file, sends it (through GitHub for big files), fills the listing and runs the checks. You still try it and send it for review.
               </p>
               <div className="mt-3 flex items-center gap-2 rounded-lg border-2 border-ink bg-card px-2 py-1.5">
                 <code className="min-w-0 flex-1 truncate text-xs">{connectorUrl}</code>
@@ -172,7 +172,7 @@ export default function DeveloperHome() {
             <div className="rounded-2xl border-2 border-ink bg-card p-5 text-sm">
               <p className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" /> House rules</p>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-                <li>One HTML file, up to 2 MB.</li>
+                <li>One HTML file, up to 10 MB.</li>
                 <li>No AI calls, API keys, own logins or own payments.</li>
                 <li>Apps run in a locked frame and cannot see users' accounts.</li>
                 <li>Our team sets the credits per use and your share.</li>

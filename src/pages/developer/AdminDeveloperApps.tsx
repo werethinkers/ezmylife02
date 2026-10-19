@@ -18,6 +18,7 @@ import {
   getVersionHtml,
   isAdmin,
   kb,
+  sourceText,
   when,
   type QueueItem,
 } from "@/lib/devApps";
@@ -88,6 +89,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
           <div><dt className="inline font-semibold">Support: </dt><dd className="inline">{item.support_email ?? "none"}</dd></div>
           <div><dt className="inline font-semibold">Size: </dt><dd className="inline">{kb(item.bytes)} · sent {when(item.submitted_at)}</dd></div>
           {item.release_notes && <div className="sm:col-span-2"><dt className="inline font-semibold">What's new: </dt><dd className="inline">{item.release_notes}</dd></div>}
+          {item.source && <div className="sm:col-span-2"><dt className="inline font-semibold">File came from: </dt><dd className="inline break-all">{sourceText(item.source)}</dd></div>}
           <div className="sm:col-span-2 text-xs text-muted-foreground">Content fingerprint {item.html_sha256?.slice(0, 16)}: this exact file is what goes live.</div>
         </dl>
       </div>

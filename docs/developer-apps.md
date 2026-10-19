@@ -1,13 +1,25 @@
 # Developer apps
 
 Outside developers publish their own web apps to the store. Built 20 Oct 2026 (Phase 1 of the
-Developer Connector spec): single-file browser apps, no AI, admin approval with one click.
+Developer Connector spec): single-file browser apps up to 10 MB, no AI, admin approval with one click.
+Any Claude can do the developer's side through the EzYourLife connector and the `ezyourlife-developer`
+plugin (`plugins/ezyourlife-developer`).
 
 ## How it works
 
 1. A developer signs in and opens `/developer`, or asks Claude through the EzYourLife connector
    ("Put my app on EzYourLife"; tools `dev_*` in `src/lib/mcp/tools/dev-apps.ts`).
-2. They create an app (`/tool/dev-<slug>`), upload one HTML file and fill the store listing.
+2. They create an app (`/tool/dev-<slug>`), send one HTML file (up to 10 MB) and fill the store listing.
+   Files travel in parts of under 1 MB through an upload session (`dev_begin_upload` → `dev_upload_part`
+   → `dev_finish_upload`) and are joined and size-checked on the server. Four ways in:
+   - web page upload on `/developer`;
+   - connector `dev_save_app` with the HTML (small files; bigger ones are split automatically);
+   - connector `dev_import_file`: the server fetches the file from a GitHub repo (path + commit) or a
+     public https link. This is the route for Claude's cloud workspaces, which can reach GitHub but not
+     our database;
+   - connector `dev_get_upload_link`: a one-time key (1 hour, one file) and a script, for Claude Code on
+     a computer.
+   Each version records where its file came from (`source`), shown to the admin.
 3. **Checks** run on the server (`dev_run_qa`): file, size, phone fit, keys and passwords, AI calls,
    own payments, outside addresses, browser storage, frame escape, listing, unique name, similar apps.
    "Must fix" blocks sending.
@@ -40,8 +52,21 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 | Client API | `src/lib/devApps.ts` |
 | Sandbox frame, store runner | `src/apps/hosted/HostedFrame.tsx`, `src/apps/hosted/HostedApp.tsx` |
 | Pages | `src/pages/developer/` (home, editor, preview, admin) |
-| Connector tools | `src/lib/mcp/tools/dev-apps.ts`, `dev-shared.ts` |
+| Connector tools | `src/lib/mcp/tools/dev-apps.ts`, `dev-import.ts`, `dev-shared.ts` |
+| Splitting files for upload | `src/lib/devUploadParts.ts` |
+| Bigger files, upload sessions | `supabase/migrations/20261020030000_developer_apps_bigger_files.sql` |
+| Claude plugin (connector + skill + scripts) | `plugins/ezyourlife-developer`, listed in `.claude-plugin/marketplace.json` |
 | Tool page hook-up | `src/pages/ToolViewer.tsx` (`isHosted` for ids starting `dev-`) |
+
+## Setup the team does once
+
+- Apply both migrations (`20261020010000_developer_apps.sql`, then `20261020030000_developer_apps_bigger_files.sql`).
+- Deploy the `mcp` function so the connector has the developer tools. Whether a push to `main` redeploys
+  functions is the open item in `docs/launch-plan.md`; the sitemap probe now reads `devapps-2` in the repo.
+  If `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap` still shows `phase0-b` after the push,
+  functions need a manual deploy.
+- Optional: a read-only GitHub token (fine-grained, Contents: read, on the repos developers use) as the
+  `EZYL_GITHUB_TOKEN` secret, so `dev_import_file` can read private repos. Public repos work without it.
 
 ## Not built yet (later phases)
 

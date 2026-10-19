@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { MAX_APP_BYTES, PART_UNITS, splitParts, utf8Bytes } from "@/lib/devUploadParts";
 
 /*
  * Developer apps: outside developers submit a single-file web app, test it in a sandboxed
@@ -63,11 +64,26 @@ export interface DevApp {
   updated_at: string;
 }
 
+/** How a version's app file arrived (reported by the uploader; shown to admins). */
+export interface FileSource {
+  kind?: "inline" | "upload" | "github" | "url";
+  via?: string;
+  repo?: string;
+  path?: string;
+  ref?: string;
+  commit?: string;
+  url?: string;
+  file_name?: string;
+  bytes?: number;
+  at?: string;
+}
+
 export interface DevVersion {
   id: string;
   app_id: string;
   version_no: number;
   status: VersionStatus;
+  source: FileSource | null;
   name: string;
   short_description: string;
   description: string;
@@ -96,9 +112,9 @@ export interface Listing {
 }
 
 const VERSION_COLUMNS =
-  "id, app_id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
+  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
 
-export const MAX_HTML_BYTES = 2_000_000;
+export const MAX_HTML_BYTES = MAX_APP_BYTES;
 
 /** Plain words for each version state, for developers and admins alike. */
 export const VERSION_TEXT: Record<VersionStatus, { label: string; tone: string }> = {
@@ -163,6 +179,41 @@ export const createApp = (slug: string, name: string) =>
 export const saveDraft = (appId: string, html: string | null, listing: Listing | null) =>
   rpc<{ version_id: string; version_no: number }>("dev_save_draft", { _app_id: appId, _html: html, _listing: listing });
 
+/**
+ * Sends an app file of any size up to 10 MB. Small pasted HTML is saved directly; files go
+ * through an upload session in parts of under 1 MB, joined and size-checked on the server.
+ */
+export async function uploadHtml(
+  appId: string,
+  html: string,
+  opts: { fileName?: string; onProgress?: (done: number, total: number) => void } = {},
+): Promise<{ version_id: string; version_no: number }> {
+  const bytes = utf8Bytes(html);
+  if (bytes > MAX_APP_BYTES) throw new Error(`The file is ${Math.ceil(bytes / 1e5) / 10} MB, over the 10 MB limit.`);
+  if (!opts.fileName && html.length <= PART_UNITS) return saveDraft(appId, html, null);
+  const parts = splitParts(html);
+  const begin = await rpc<{ upload_id: string }>("dev_begin_upload", {
+    _app_id: appId,
+    _source: { kind: opts.fileName ? "upload" : "inline", via: "web", file_name: opts.fileName },
+    _with_key: false,
+  });
+  for (let n = 0; n < parts.length; n++) {
+    opts.onProgress?.(n, parts.length);
+    await rpc("dev_upload_part", { _upload_id: begin.upload_id, _part_no: n + 1, _data: parts[n] });
+  }
+  opts.onProgress?.(parts.length, parts.length);
+  return rpc("dev_finish_upload", { _upload_id: begin.upload_id, _bytes: bytes, _parts: parts.length });
+}
+
+/** One line saying where a version's file came from. */
+export function sourceText(s: FileSource | null | undefined): string {
+  if (!s) return "";
+  if (s.kind === "github") return `GitHub ${s.repo ?? ""}${s.path ? ` · ${s.path}` : ""}${s.commit ? ` @ ${s.commit.slice(0, 7)}` : s.ref ? ` @ ${s.ref}` : ""}`;
+  if (s.kind === "url") return `Link ${s.url ?? ""}`;
+  if (s.kind === "upload") return `Uploaded${s.file_name ? ` ${s.file_name}` : ""}${s.via === "upload-link" ? " (upload link)" : s.via === "web" ? " (web)" : ""}`;
+  return s.via === "connector" ? "Sent by Claude" : "Pasted";
+}
+
 export const runChecks = (versionId: string) => rpc<QaReport>("dev_run_qa", { _version_id: versionId });
 
 export const submitVersion = (versionId: string) => rpc<{ ok: boolean }>("dev_submit", { _version_id: versionId });
@@ -188,6 +239,7 @@ export interface QueueItem {
   tool_types: string[];
   support_email: string | null;
   release_notes: string | null;
+  source: FileSource | null;
   qa: QaReport | null;
   qa_passed: boolean;
   qa_at: string | null;

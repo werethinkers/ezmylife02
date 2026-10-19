@@ -17,7 +17,9 @@ import {
   listCategories,
   runChecks,
   saveDraft,
+  sourceText,
   submitVersion,
+  uploadHtml,
   when,
   withdrawVersion,
   type DevVersion,
@@ -60,6 +62,7 @@ export default function DeveloperAppEditor() {
   const [form, setForm] = useState(emptyForm);
   const [paste, setPaste] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "file" | "listing" | "checks" | "submit" | "withdraw">(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Load the form whenever a different version (or a fresh save) arrives.
@@ -122,17 +125,26 @@ export default function DeveloperAppEditor() {
     release_notes: form.release_notes,
   });
 
-  const saveHtml = (text: string) => {
+  const saveHtml = async (text: string, fileName?: string) => {
     const bytes = new Blob([text]).size;
-    if (bytes > MAX_HTML_BYTES) return toast.error(`The file is ${kb(bytes)}. The limit is 2 MB.`);
-    void act("file", () => saveDraft(app.id, text, null), startsNext ? `Saved as version ${nextNo}. Run the checks next.` : "App file saved. Run the checks next.");
+    if (bytes > MAX_HTML_BYTES) return toast.error(`The file is ${kb(bytes)}. The limit is 10 MB.`);
+    await act(
+      "file",
+      () =>
+        uploadHtml(app.id, text, {
+          fileName,
+          onProgress: (done, total) => setProgress(total > 1 ? `Sending part ${Math.min(done + 1, total)} of ${total}…` : null),
+        }),
+      startsNext ? `Saved as version ${nextNo}. Run the checks next.` : "App file saved. Run the checks next.",
+    );
+    setProgress(null);
   };
 
   const onFile = async (f: File | undefined) => {
     if (!f) return;
-    if (f.size > MAX_HTML_BYTES) return toast.error(`The file is ${kb(f.size)}. The limit is 2 MB.`);
-    saveHtml(await f.text());
     if (fileRef.current) fileRef.current.value = "";
+    if (f.size > MAX_HTML_BYTES) return toast.error(`The file is ${kb(f.size)}. The limit is 10 MB.`);
+    await saveHtml(await f.text(), f.name);
   };
 
   const reviewNotes = latest.review_notes && (latest.status === "changes_requested" || latest.status === "draft" || latest.status === "rejected") ? latest.review_notes : null;
@@ -189,14 +201,14 @@ export default function DeveloperAppEditor() {
             <Section
               step={1}
               title="App file"
-              hint="One HTML file with its CSS and JavaScript inside, up to 2 MB. Built with React, Vue or Svelte? Build it as a single file first."
-              aside={hasFile ? <span className="text-xs text-muted-foreground">Saved: {kb(new Blob([htmlText]).size)}</span> : null}
+              hint="One HTML file with its CSS and JavaScript inside, up to 10 MB. Built with React, Vue or Svelte? Build it as a single file first, or ask Claude to adapt and send it."
+              aside={hasFile ? <span className="text-right text-xs text-muted-foreground">Saved: {kb(new Blob([htmlText]).size)}{latest.source ? <><br />{sourceText(latest.source)}</> : null}</span> : null}
             >
               <div className="flex flex-wrap gap-2">
                 <input ref={fileRef} type="file" accept=".html,.htm,text/html" className="sr-only" id="dev-file" onChange={(e) => void onFile(e.target.files?.[0])} disabled={locked || busy !== null} />
                 <Button type="button" onClick={() => fileRef.current?.click()} disabled={locked || busy !== null}>
                   {busy === "file" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-                  {hasFile ? "Replace file" : "Upload HTML file"}
+                  {busy === "file" && progress ? progress : hasFile ? "Replace file" : "Upload HTML file"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setPaste(paste === null ? htmlText : null)} disabled={locked}>
                   {paste === null ? "Paste or edit HTML" : "Close editor"}
@@ -205,7 +217,7 @@ export default function DeveloperAppEditor() {
               {paste !== null && (
                 <div className="mt-3 space-y-2">
                   <Textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={12} className="font-mono text-xs" spellCheck={false} aria-label="App HTML" />
-                  <Button type="button" onClick={() => saveHtml(paste)} disabled={locked || busy !== null || !paste.trim()}>
+                  <Button type="button" onClick={() => void saveHtml(paste)} disabled={locked || busy !== null || !paste.trim()}>
                     Save HTML
                   </Button>
                 </div>
@@ -312,6 +324,7 @@ export default function DeveloperAppEditor() {
                     <span className="text-muted-foreground">
                       {v.submitted_at ? `sent ${when(v.submitted_at)}` : `saved ${when(v.updated_at)}`}
                       {v.reviewed_at ? ` · decided ${when(v.reviewed_at)}` : ""}
+                      {v.source ? ` · ${sourceText(v.source)}` : ""}
                     </span>
                     <VersionPill status={v.status} />
                   </li>

@@ -1,0 +1,14 @@
+{
+  "name": "ezyourlife",
+  "description": "EzYourLife's own Claude plugins: publish web apps to the EzYourLife store.",
+  "owner": {
+    "name": "Astute Group / EzYourLife"
+  },
+  "plugins": [
+    {
+      "name": "ezyourlife-developer",
+      "source": "./plugins/ezyourlife-developer",
+      "description": "Put web apps on the EzYourLife store from any Claude: adapt, build into one file, send (via GitHub for big files), check, and send for admin approval."
+    }
+  ]
+}

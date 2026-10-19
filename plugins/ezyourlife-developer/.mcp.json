@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ezyourlife": {
+      "type": "http",
+      "url": "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/mcp"
+    }
+  }
+}

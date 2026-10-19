@@ -1,0 +1,8 @@
+{
+  "name": "ezyourlife-developer",
+  "version": "0.1.0",
+  "description": "Put web apps on the EzYourLife store from any Claude: adapts a project to EzYourLife's rules, builds it into one file, sends it (up to 10 MB, via GitHub for big files), runs the server checks and sends it for admin approval.",
+  "author": { "name": "Astute Group / EzYourLife" },
+  "homepage": "https://ezyourlife.com/developer",
+  "keywords": ["ezyourlife", "app store", "publishing", "developer"]
+}

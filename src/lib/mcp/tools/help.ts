@@ -34,7 +34,7 @@ Startup Analyser and Video Generator are long-running (>60s) and would time out.
 
 ## Developers: publish your own web app
 - **dev_get_standards()** — the rules (one HTML file, no AI calls, no keys), the steps and the valid categories. Call first.
-- **dev_create_app(slug, name)** · **dev_save_app(app_id, html?, listing?)** · **dev_run_checks(app_id)** · **dev_get_preview_link(app_id)** · **dev_submit_for_review(app_id)** · **dev_get_status(app_id)** · **dev_list_my_apps()**
+- **dev_create_app(slug, name)** · **dev_save_app(app_id, html?, listing?)** · **dev_import_file(app_id, github|url)** for files up to 10 MB · **dev_get_upload_link(app_id)** for Claude Code · **dev_run_checks(app_id)** · **dev_get_preview_link(app_id)** · **dev_submit_for_review(app_id)** · **dev_get_status(app_id)** · **dev_list_my_apps()**
 - The EzYourLife team approves on ezyourlife.com and sets the price and share; these tools cannot approve or publish.
 
 ## Tips

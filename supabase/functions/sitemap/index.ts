@@ -69,7 +69,7 @@ Deno.serve(async () => {
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<!-- launch-check: phase0-b -->
+<!-- launch-check: devapps-2 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join("\n")}
 </urlset>`;

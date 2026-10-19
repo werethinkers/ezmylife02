@@ -32,7 +32,7 @@ Quick reference:
 - Prompt engineering: analyze_prompt (uses Gemini via PromptMaster, charges credits)
 - Catalog & their data: list_tools, get_tool_link, list_my_creations, list_bulk_jobs, get_credit_balance
 - Meta: submit_tool_request (ask the team to build a new tool)
-- Developers publishing their own web app to the store: dev_get_standards first, then dev_create_app, dev_save_app, dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
+- Developers publishing their own web app to the store: dev_get_standards first, then dev_create_app, dev_save_app (small) or dev_import_file / dev_get_upload_link (big, up to 10 MB), dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
 
 For long-running tools like Startup Analyser or Video Generator that can't run over MCP, use \`get_tool_link\` and send the user to open it on ezyourlife.com.`,
   auth: auth.oauth.issuer({
