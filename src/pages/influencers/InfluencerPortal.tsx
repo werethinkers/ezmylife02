@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import KitPicker from "./KitPicker";
+import { KIT } from "@/data/kit";
 
 // influencer_me() from 20261012170000_influencer_login.sql. It returns only the
 // signed-in influencer's own campaign, so there is nothing to pass in.
@@ -305,6 +306,47 @@ function OfferEditor({ d, onSaved }: { d: Me; onSaved: () => void }) {
   );
 }
 
+// A rough guide, not a promise: 5% of followers buy the kit and the commission is 10%.
+const EST_BUY_PCT = 5;
+const EST_COMMISSION_PCT = 10;
+
+function EarningsEstimate() {
+  const [raw, setRaw] = useState("10000");
+  const followers = Math.max(0, Math.min(100_000_000, Math.floor(Number(raw.replace(/,/g, "")) || 0)));
+  const buyers = Math.floor((followers * EST_BUY_PCT) / 100);
+  const earn = Math.round((buyers * KIT.inr * EST_COMMISSION_PCT) / 100);
+
+  return (
+    <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212] space-y-3">
+      <div>
+        <h2 className="font-bold text-lg">What could I earn?</h2>
+        <p className="text-sm text-neutral-700">
+          Type how many followers you have. We assume {EST_BUY_PCT} in every 100 buy the ₹{KIT.inr} kit, and a {EST_COMMISSION_PCT}% commission.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor="est-followers" className="block text-xs font-semibold">Your followers</label>
+          <Input id="est-followers" inputMode="numeric" value={raw} onChange={(e) => setRaw(e.target.value.replace(/[^0-9,]/g, ""))} className="w-44" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="border-2 border-[#121212] bg-[#22C3A6] p-3">
+          <div className="text-xs font-semibold">People who buy</div>
+          <div className="text-2xl font-bold">{buyers.toLocaleString("en-IN")}</div>
+        </div>
+        <div className="border-2 border-[#121212] bg-[#FFC800] p-3">
+          <div className="text-xs font-semibold">You could earn about</div>
+          <div className="text-2xl font-bold">{inr(earn)}</div>
+        </div>
+      </div>
+      <p className="text-xs text-neutral-600">
+        An estimate only. Real sales depend on your posts, and a refunded sale earns nothing. Your own commission is the one we agree with you.
+      </p>
+    </section>
+  );
+}
+
 export default function InfluencerPortal() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -385,6 +427,8 @@ export default function InfluencerPortal() {
         </section>
 
         <OfferEditor d={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["influencer-me"] })} />
+
+        <EarningsEstimate />
 
         <KitPicker />
 
