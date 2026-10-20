@@ -263,6 +263,8 @@ export interface CostEstimate {
   margin: number;
   worst_case_inr_per_credit: number;
   min_credits: number;
+  ai_hosts?: string[];
+  outside_hosts?: string[];
   notes: string[];
 }
 

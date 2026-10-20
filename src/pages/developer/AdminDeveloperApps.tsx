@@ -115,13 +115,14 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
             <h3 className="font-display text-base font-bold">Decide</h3>
             {cost && (
               <div className="mt-4 rounded-xl border-2 border-dashed border-ink/40 p-3 text-sm">
-                <p className="font-semibold">What this app costs to run (only admins see this)</p>
+                <p className="font-semibold">Hidden costs (only admins see this)</p>
                 <p className="mt-1">
-                  About {inr4(cost.per_run_inr)} a run ({kb(cost.bytes)} served each time, plus a small fixed cost). At least <strong>{cost.min_credits} credit{cost.min_credits > 1 ? "s" : ""}</strong> keeps a {cost.margin}× margin at the worst case (₹{cost.worst_case_inr_per_credit} a credit).
-                  A developer asking for free or very cheap does not change this.
+                  Fixed cost about {inr4(cost.per_run_inr)} a run, so at least <strong>{cost.min_credits} credit{cost.min_credits > 1 ? "s" : ""}</strong> keeps a {cost.margin}× margin (₹{cost.worst_case_inr_per_credit} a credit). A developer asking for free does not change this.
                 </p>
+                {(cost.ai_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold text-destructive">AI provider calls found: {cost.ai_hosts!.join(", ")}. Do not approve.</p>}
+                {(cost.outside_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold">Outside services that may bill per call: {cost.outside_hosts!.join(", ")}.</p>}
                 {cost.notes.map((n) => <p key={n} className="mt-1 text-xs text-muted-foreground">{n}</p>)}
-                <p className="mt-1 text-xs text-muted-foreground">Planning estimate from file size, not your bill. The Start box below is filled with this minimum.</p>
+                <p className="mt-1 text-xs text-muted-foreground">The Start box below is filled with the minimum.</p>
               </div>
             )}
             {options.length > 0 && (

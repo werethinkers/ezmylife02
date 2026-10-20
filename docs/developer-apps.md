@@ -71,7 +71,7 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 ## Charging, cost and frequency
 
 - Developers propose charge options (up to 6: levels of use, or rupee prices). The admin sees them with a rupee to credit conversion at the worst case (0.108 rupees a credit) and sets credits for each. Only the Start price is charged at use time today; per-option charging needs a change to the charging code and sign-off.
-- Free or 0 is only a request. The admin screen shows a "What this app costs to run" panel (`dev_cost_estimate`: bytes served per run plus a fixed cost, 3x margin, minimum credits) and prefills the Start credits with that minimum. It is admin-only (`admin_dev_queue`); developers and the connector never receive it, and the Claude instructions forbid quoting cost. The figures are planning assumptions, not a bill; change them in the function.
+- Free or 0 is only a request. The admin screen shows a "Hidden costs" panel from `dev_cost_estimate`: our own hosting (database, bandwidth) is deliberately not counted; it lists AI provider calls (do not approve) and outside services that may bill per call (maps, SMS, email and similar; free font and script CDNs are ignored), plus the minimum credits for a 3x margin on the small fixed cost. The Start credits are prefilled with that minimum; the admin adds any outside per-call price. Admin-only (`admin_dev_queue`); developers and the connector never receive it, and the Claude instructions forbid quoting cost.
 - EzYourLife credits are the only payment system; own payment code is removed.
 - Apps run only when pressed. `dev_run_qa` adds a "Runs only when pressed" warning for timers, auto-refresh, cron code and schedule wording.
 
