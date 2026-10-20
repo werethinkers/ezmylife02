@@ -126,6 +126,8 @@ export interface VisionAppDef extends BaseDef {
   mode: "text" | "fields";
   instructionsLabel?: string;
   fileName: string;
+  /** Most pictures or pages per run, when the app sets its own limit (developer AI apps). */
+  maxImages?: number;
 }
 
 export interface ImageAppDef extends BaseDef {

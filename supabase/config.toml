@@ -72,6 +72,10 @@ verify_jwt = false
 [functions.ai-app]
 verify_jwt = false
 
+# Runs developer AI apps. Signs the caller in itself (billed()); test runs also check the version's owner.
+[functions.dev-app-run]
+verify_jwt = false
+
 [functions.ip-checkout]
 verify_jwt = false
 

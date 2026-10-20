@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Laptop, RotateCcw, Smartphone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HostedFrame } from "@/apps/hosted/HostedFrame";
-import { CHECK_TEXT, VERSION_TEXT, imageData, when, type DevImage, type Promo, type QaReport, type VersionStatus } from "@/lib/devApps";
+import { PREVIEW_MESSAGE } from "@/apps/lib/preview";
+import { CHECK_TEXT, VERSION_TEXT, imageData, runsLeft, when, type DevImage, type Promo, type QaDuplicate, type QaReport, type VersionStatus } from "@/lib/devApps";
 
 /* Pieces shared by the developer pages and the admin review page. */
 
@@ -36,7 +37,7 @@ export function Section({ step, title, hint, children, aside }: { step?: number;
 }
 
 /** The server checks, as plain rows with a coloured tag each. */
-export function ChecksReport({ qa, stale }: { qa: QaReport | null; stale?: boolean }) {
+export function ChecksReport({ qa, stale, hideSimilar }: { qa: QaReport | null; stale?: boolean; hideSimilar?: boolean }) {
   if (!qa) {
     return <p className="text-sm text-muted-foreground">{stale ? "Not checked since the last change." : "Not checked yet."}</p>;
   }
@@ -59,23 +60,137 @@ export function ChecksReport({ qa, stale }: { qa: QaReport | null; stale?: boole
           </li>
         ))}
       </ul>
-      {qa.duplicates?.length > 0 && (
-        <div className="rounded-xl border-2 border-ink bg-sun/30 p-3 text-sm">
-          <p className="font-semibold">Similar apps</p>
-          <ul className="mt-1 space-y-1">
-            {qa.duplicates.map((d) => (
-              <li key={d.tool_id} className="flex flex-wrap items-center gap-2">
-                <Link to={`/tool/${d.tool_id}`} target="_blank" className="font-semibold underline underline-offset-2">
+      {!hideSimilar && qa.duplicates?.length > 0 && <SimilarList items={qa.duplicates} />}
+    </div>
+  );
+}
+
+/**
+ * Apps like this one that are already in the store or in review. Another developer's app that is still in review
+ * has no link and no name for developers (only the team sees those).
+ */
+export function SimilarList({ items, title = "Similar apps" }: { items: QaDuplicate[]; title?: string }) {
+  return (
+    <div className="rounded-xl border-2 border-ink bg-sun/30 p-3 text-sm">
+      <p className="font-semibold">{title}</p>
+      <ul className="mt-1 space-y-1.5">
+        {items.map((d, i) => (
+          <li key={d.tool_id ?? `${d.name}-${i}`}>
+            <div className="flex flex-wrap items-center gap-2">
+              {d.tool_id ? (
+                <Link to={d.path || `/tool/${d.tool_id}`} target="_blank" className="font-semibold underline underline-offset-2">
                   {d.name}
                 </Link>
-                <span className="text-muted-foreground">
-                  {d.source === "store" ? "in the store" : "by another developer"} · {Math.round(d.score * 100)}% of words in common
-                </span>
-              </li>
-            ))}
-          </ul>
+              ) : (
+                <span className="font-semibold">{d.name}</span>
+              )}
+              <span className="text-muted-foreground">
+                {d.source === "store" ? "in the store" : d.status === "in review" || !d.tool_id ? "another developer, in review" : "by another developer"} ·{" "}
+                {Math.round(d.score * 100)}% of words in common
+              </span>
+            </div>
+            {d.short_description && <p className="text-xs text-muted-foreground">{d.short_description}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** "Test runs left today", refreshed after each run in the preview frame. Admins are not limited. */
+export function RunsLeft() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["dev-runs-left"], queryFn: runsLeft, staleTime: 0, retry: false });
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin === window.location.origin && e.data?.type === PREVIEW_MESSAGE) void qc.invalidateQueries({ queryKey: ["dev-runs-left"] });
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [qc]);
+  if (!q.data) return null;
+  const { left, limit } = q.data;
+  const none = left !== null && left <= 0;
+  return (
+    <Pill tone={none ? "bg-coral" : "bg-teal"}>
+      {left === null ? "Test runs: no daily limit" : none ? "No test runs left today" : `${left} of ${limit} test runs left today`}
+    </Pill>
+  );
+}
+
+/**
+ * The real app of an AI version, in a frame of its own so it gets a true phone or desktop width. The frame loads the
+ * bare embed page (same screens the store uses). Test runs are free and limited each day.
+ */
+export function AiPreviewFrame({ versionId, title, device, reloadKey = 0 }: { versionId: string; title: string; device: "phone" | "desktop"; reloadKey?: number }) {
+  const frame = <iframe key={reloadKey} title={title} src={`/developer/preview/${versionId}/embed`} className="h-full w-full border-0 bg-background" />;
+  if (device === "phone") {
+    return (
+      <div className="flex justify-center">
+        <div className="h-[740px] max-h-[80vh] w-full max-w-[390px] overflow-hidden rounded-[28px] border-2 border-ink bg-background shadow-block">{frame}</div>
+      </div>
+    );
+  }
+  return <div className="h-full w-full overflow-hidden bg-background">{frame}</div>;
+}
+
+/** Phone / desktop switch, restart, runs left. Same look as the preview of file apps. */
+export function AiPreviewPanel({ versionId, title, fullScreenHref }: { versionId: string | null; title: string; fullScreenHref?: string }) {
+  const [device, setDevice] = useState<"phone" | "desktop">("phone");
+  const [reloadKey, setReloadKey] = useState(0);
+  return (
+    <div className="rounded-2xl border-2 border-ink bg-card p-4 shadow-block-sm">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-base font-bold">Live preview</h2>
+        <div className="flex items-center gap-1.5">
+          <DeviceSwitch device={device} onChange={setDevice} />
+          <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setReloadKey((k) => k + 1)} aria-label="Restart the app">
+            <RotateCcw className="h-3.5 w-3.5" />
+          </Button>
+          {fullScreenHref && (
+            <Button asChild variant="outline" size="sm" className="h-8">
+              <a href={fullScreenHref} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Full screen</span>
+              </a>
+            </Button>
+          )}
         </div>
+      </div>
+      {versionId ? (
+        device === "phone" ? (
+          <AiPreviewFrame versionId={versionId} title={title} device="phone" reloadKey={reloadKey} />
+        ) : (
+          <div className="h-[640px] max-h-[75vh] overflow-hidden rounded-xl border-2 border-ink">
+            <AiPreviewFrame versionId={versionId} title={title} device="desktop" reloadKey={reloadKey} />
+          </div>
+        )
+      ) : (
+        <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-ink/40 text-center text-sm text-muted-foreground">Save the app first to see it here.</div>
       )}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <RunsLeft />
+        <p className="text-xs text-muted-foreground">
+          This is the real app on the same screens the store uses. Test runs use the real AI, cost you nothing, and the team can read them at review.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function DeviceSwitch({ device, onChange }: { device: "phone" | "desktop"; onChange: (d: "phone" | "desktop") => void }) {
+  return (
+    <div className="flex rounded-lg border-2 border-ink p-0.5" role="group" aria-label="Preview size">
+      {(["phone", "desktop"] as const).map((d) => (
+        <button
+          key={d}
+          type="button"
+          onClick={() => onChange(d)}
+          aria-pressed={device === d}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${device === d ? "bg-ink text-background" : ""}`}
+        >
+          {d === "phone" ? <Smartphone className="h-3.5 w-3.5" /> : <Laptop className="h-3.5 w-3.5" />} {d === "phone" ? "Phone" : "Desktop"}
+        </button>
+      ))}
     </div>
   );
 }

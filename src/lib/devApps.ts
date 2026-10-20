@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MAX_APP_BYTES, PART_UNITS, splitParts, utf8Bytes } from "@/lib/devUploadParts";
+import type { AiSpec } from "@/apps/ai/specToDef";
 
 /*
  * Developer apps: outside developers submit a single-file web app, test it in a sandboxed
@@ -37,10 +38,14 @@ export interface QaCheck {
 }
 
 export interface QaDuplicate {
-  tool_id: string;
+  /** Missing for another developer's app that is still in review (its name is hidden from developers). */
+  tool_id?: string;
   name: string;
   source: "store" | "developer";
   score: number;
+  status?: "live" | "in review";
+  short_description?: string;
+  path?: string | null;
 }
 
 export interface QaReport {
@@ -93,10 +98,19 @@ export interface DevImage {
   bytes: number;
 }
 
+export type AppKind = "hosted" | "ai";
+
+/** The full definition of an AI app: the screen (see AiSpec) and the AI instructions, which only the developer and admins can read. */
+export type AiSpecFull = Omit<AiSpec, "ai"> & {
+  ai: { system: string; task?: string; model: "flash" | "lite"; maxTokens: number; maxImages?: number; maxContext?: number };
+};
+
 export interface DevApp {
   id: string;
   developer_id: string;
   tool_id: string;
+  /** hosted = one HTML file in a sandbox; ai = a definition run on EzYourLife's own screens and AI. */
+  kind: AppKind;
   status: AppStatus;
   live_version_id: string | null;
   credits: number | null;
@@ -108,7 +122,7 @@ export interface DevApp {
 
 /** How a version's app file arrived (reported by the uploader; shown to admins). */
 export interface FileSource {
-  kind?: "inline" | "upload" | "github" | "url";
+  kind?: "inline" | "upload" | "github" | "url" | "definition";
   via?: string;
   repo?: string;
   path?: string;
@@ -126,6 +140,10 @@ export interface DevVersion {
   version_no: number;
   status: VersionStatus;
   source: FileSource | null;
+  /** AI apps: the definition (screen + instructions). The developer's own copy; the public reader removes the instructions. */
+  spec: AiSpecFull | null;
+  /** Why this app is different from a similar one already in the store. */
+  similar_note: string | null;
   name: string;
   short_description: string;
   description: string;
@@ -146,6 +164,8 @@ export interface DevVersion {
 }
 
 export interface Listing {
+  /** How this app is different from the similar apps the checks found (1 to 2 sentences). */
+  similar_note?: string;
   name?: string;
   short_description?: string;
   description?: string;
@@ -158,7 +178,7 @@ export interface Listing {
 }
 
 const VERSION_COLUMNS =
-  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
+  "id, app_id, version_no, status, source, spec, similar_note, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
 
 export const MAX_HTML_BYTES = MAX_APP_BYTES;
 
@@ -211,13 +231,32 @@ export async function getApp(appId: string): Promise<{ app: DevApp; versions: De
   return { app: app as DevApp, versions: (versions ?? []) as DevVersion[] };
 }
 
-/** The app file of one version. Readable by its developer and by admins only. */
-export async function getVersionHtml(versionId: string): Promise<{ html: string; name: string; version_no: number; app_id: string; status: VersionStatus }> {
-  const { data, error } = await db.from("dev_app_versions").select("html, name, version_no, app_id, status").eq("id", versionId).maybeSingle();
+/** One version for the preview page: the app file (file apps) or the definition (AI apps). Readable by its developer and by admins only. */
+export async function getVersionHtml(versionId: string): Promise<{
+  html: string;
+  name: string;
+  version_no: number;
+  app_id: string;
+  status: VersionStatus;
+  category: string | null;
+  spec: AiSpecFull | null;
+  kind: AppKind;
+  tool_id: string;
+}> {
+  const { data, error } = await db
+    .from("dev_app_versions")
+    .select("html, name, version_no, app_id, status, category, spec, dev_apps(kind, tool_id)")
+    .eq("id", versionId)
+    .maybeSingle();
   if (error) throw new Error(cleanError(error.message));
   if (!data) throw new Error("Preview not found, or you are not signed in as its developer or an admin.");
-  return data;
+  const app = (Array.isArray(data.dev_apps) ? data.dev_apps[0] : data.dev_apps) ?? {};
+  const { dev_apps: _drop, ...rest } = data;
+  return { ...rest, kind: (app.kind ?? "hosted") as AppKind, tool_id: app.tool_id ?? "" };
 }
+
+/** The developer's test runs left today (null for admins, who are not limited). */
+export const runsLeft = () => rpc<{ left: number | null; limit: number | null; allowed: boolean }>("dev_ai_runs_left");
 
 export const createApp = (slug: string, name: string) =>
   rpc<{ app_id: string; tool_id: string; version_id: string; version_no: number }>("dev_create_app", { _slug: slug, _name: name });
@@ -256,6 +295,7 @@ export function sourceText(s: FileSource | null | undefined): string {
   if (!s) return "";
   if (s.kind === "github") return `GitHub ${s.repo ?? ""}${s.path ? ` · ${s.path}` : ""}${s.commit ? ` @ ${s.commit.slice(0, 7)}` : s.ref ? ` @ ${s.ref}` : ""}`;
   if (s.kind === "url") return `Link ${s.url ?? ""}`;
+  if (s.kind === "definition") return s.via === "connector" ? "Definition sent by Claude" : "App definition";
   if (s.kind === "upload") return `Uploaded${s.file_name ? ` ${s.file_name}` : ""}${s.via === "upload-link" ? " (upload link)" : s.via === "web" ? " (web)" : ""}`;
   return s.via === "connector" ? "Sent by Claude" : "Pasted";
 }
@@ -366,8 +406,41 @@ export interface LiveSummary {
   image_count: number;
 }
 
+/** What the AI of one AI app costs per run, and the price that follows from it. Admins only. */
+export interface AiCostEstimate {
+  model: "flash" | "lite";
+  max_tokens: number;
+  prompt_tokens: number;
+  typical_in_tokens: number;
+  typical_out_tokens: number;
+  typical_inr: number;
+  ceiling_inr: number;
+  runs_measured: number;
+  measured_avg_inr: number | null;
+  rate_inr_per_credit: number;
+  margin: number;
+  suggested_credits: number;
+  ceiling_credits: number;
+  notes: string[];
+}
+
+export interface AiSample {
+  inputs: Record<string, unknown> | null;
+  output: string;
+  at: string;
+}
+
 export interface QueueItem {
   version_id: string;
+  kind?: AppKind;
+  spec?: AiSpecFull | null;
+  live_spec?: AiSpecFull | null;
+  ai_cost?: AiCostEstimate | null;
+  samples?: AiSample[];
+  /** The developer's note on how this app differs from the similar ones. */
+  similar_note?: string | null;
+  /** Similar apps right now, with other developers' unreleased apps named (admins only). */
+  similar_apps?: QaDuplicate[];
   version_no: number;
   name: string;
   short_description: string;
@@ -434,6 +507,24 @@ export function changesSinceLive(item: QueueItem): string[] {
   return out;
 }
 
+/** Plain-language list of what a new AI definition changes compared with the live one. */
+export function aiChangesSinceLive(item: QueueItem): string[] {
+  const n = item.spec;
+  const o = item.live_spec;
+  if (!n || !o) return [];
+  const out: string[] = [];
+  const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  if (n.engine !== o.engine) out.push(`Type of screen: ${o.engine} → ${n.engine}`);
+  if (n.ai.system !== o.ai.system) out.push("AI instructions (system) changed. Read them below.");
+  if ((n.ai.task ?? "") !== (o.ai.task ?? "")) out.push("AI task (what to produce) changed. Read it below.");
+  if (n.ai.model !== o.ai.model) out.push(`AI model: ${o.ai.model} → ${n.ai.model}`);
+  if (n.ai.maxTokens !== o.ai.maxTokens) out.push(`Longest answer: ${o.ai.maxTokens} → ${n.ai.maxTokens} tokens`);
+  if (!same(n.fields, o.fields)) out.push(`Form fields changed (${o.fields?.length ?? 0} → ${n.fields?.length ?? 0})`);
+  if (n.intro !== o.intro || !same(n.steps, o.steps) || n.cta !== o.cta) out.push("Wording on the app screen changed");
+  if (!out.length) out.push("The AI app definition is unchanged.");
+  return out;
+}
+
 export const adminQueue = () => rpc<QueueItem[]>("admin_dev_queue");
 export const adminApps = () => rpc<AdminAppRow[]>("admin_dev_apps");
 export const adminApprove = (versionId: string, credits: number, sharePct: number, plan?: { credits: number }[]) =>
@@ -459,6 +550,20 @@ export async function isAdmin(): Promise<boolean> {
 
 export async function getHostedApp(toolId: string): Promise<{ tool_id: string; name: string; html: string; version_no: number } | null> {
   const { data, error } = await db.rpc("get_hosted_app", { _tool_id: toolId });
+  if (error) return null;
+  return data ?? null;
+}
+
+/** Which kind a live developer app is (null when it is not live). */
+export async function getDevAppKind(toolId: string): Promise<AppKind | null> {
+  const { data, error } = await db.rpc("get_dev_app_kind", { _tool_id: toolId });
+  if (error) return null;
+  return (data as AppKind | null) ?? null;
+}
+
+/** The screen of a live AI app (the instructions are not included: they stay on the server). */
+export async function getAiApp(toolId: string): Promise<{ tool_id: string; name: string; version_no: number; spec: AiSpec } | null> {
+  const { data, error } = await db.rpc("get_ai_app", { _tool_id: toolId });
   if (error) return null;
   return data ?? null;
 }

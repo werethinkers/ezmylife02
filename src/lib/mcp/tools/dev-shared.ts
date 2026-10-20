@@ -27,7 +27,7 @@ export const fail = (t: string) => ({ content: [{ type: "text" as const, text: t
 export const notSignedIn = () => fail("Not signed in to EzYourLife. Reconnect the connector and sign in.");
 
 export const VERSION_FIELDS =
-  "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
+  "id, version_no, status, spec, similar_note, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
 
 /** The newest version of an app the signed-in developer owns, or null. */
 export async function latestVersion(sb: ReturnType<typeof devClient>, appId: string) {
@@ -43,6 +43,9 @@ export async function latestVersion(sb: ReturnType<typeof devClient>, appId: str
     id: string;
     version_no: number;
     status: string;
+    /** AI apps only: the definition (never returned to the model; used to tell the app kinds apart). */
+    spec: { engine?: string } | null;
+    similar_note: string | null;
     name: string;
     qa: { checks: { label: string; status: string; detail: string }[]; passed: boolean } | null;
     qa_passed: boolean;

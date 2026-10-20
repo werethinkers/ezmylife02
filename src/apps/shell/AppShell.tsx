@@ -7,6 +7,7 @@ import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { cn } from "@/lib/utils";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { appGiveGetOf } from "@/data/appKind";
+import { usePreview } from "../lib/preview";
 
 /**
  * The common frame for every app built on the shared engines, so all of them look and behave
@@ -32,27 +33,33 @@ export function AppShell({
   priceNote?: string;
 }) {
   const { data: catalog = [] } = useToolsCatalog();
+  const preview = usePreview();
   const tool = catalog.find((t) => t.id === toolId);
-  const name = tool?.name ?? "App";
+  const name = preview?.name ?? tool?.name ?? "App";
+  const category = preview?.category ?? tool?.category;
 
   return (
     <div className={cn("mx-auto w-full px-4 py-5 md:py-8", wide ? "max-w-7xl" : "max-w-6xl")}>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-          <AppIcon toolId={toolId} category={tool?.category} name={name} size="sm" />
+          <AppIcon toolId={toolId} category={category} name={name} size="sm" />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">{name}</h1>
             <p className="mt-1.5 max-w-2xl text-[16px] text-muted-foreground">{intro}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <CreditCostBadge toolId={toolId} />
+          {preview ? (
+            <span className="rounded-full border-2 border-ink bg-sun px-2.5 py-0.5 text-xs font-bold">Preview · price is set when the team approves</span>
+          ) : (
+            <CreditCostBadge toolId={toolId} />
+          )}
           {priceNote && <span className="text-xs text-muted-foreground">{priceNote}</span>}
           {syncState && <SyncChip state={syncState} />}
         </div>
       </header>
 
-      {tool?.category && <GiveGet className="mt-4 max-w-2xl" {...appGiveGetOf(toolId, tool.category)} time={null} />}
+      {category && <GiveGet className="mt-4 max-w-2xl" {...appGiveGetOf(toolId, category)} time={null} />}
 
       {steps && steps.length > 0 && (
         <ol className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1 text-[13px] font-semibold text-ink no-scrollbar" aria-label="How to use it">

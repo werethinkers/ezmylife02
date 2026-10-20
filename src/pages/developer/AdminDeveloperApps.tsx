@@ -26,7 +26,8 @@ import {
   creditsForInr,
   type QueueItem,
 } from "@/lib/devApps";
-import { ChecksReport, Pill, PreviewPanel, PromoSummary, VersionPill } from "./parts";
+import { AiPreviewPanel, ChecksReport, Pill, PreviewPanel, PromoSummary, VersionPill } from "./parts";
+import { AiChanges, AiCost, AiDefinition, KindPill, SimilarReview } from "./AiReview";
 
 /*
  * Admin review of developer apps. Approve and publish is one click: it sets the credits per use
@@ -40,9 +41,13 @@ const inr4 = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionD
 const inr = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void> }) {
-  const html = useQuery({ queryKey: ["dev-admin-html", item.version_id], queryFn: () => getVersionHtml(item.version_id) });
+  const isAi = item.kind === "ai";
+  const html = useQuery({ queryKey: ["dev-admin-html", item.version_id], queryFn: () => getVersionHtml(item.version_id), enabled: !isAi });
   const cost = item.cost_estimate ?? null;
-  const [credits, setCredits] = useState(item.credits != null ? String(item.credits) : cost ? String(cost.min_credits) : "");
+  // The least credits that keep the 3x margin: from the file's running cost, or from the AI's cost for an AI app.
+  const minCredits = isAi ? item.ai_cost?.suggested_credits ?? null : cost?.min_credits ?? null;
+  const fewest = isAi ? 2 : 1;
+  const [credits, setCredits] = useState(item.credits != null ? String(item.credits) : minCredits != null ? String(minCredits) : "");
   const [share, setShare] = useState(item.share_pct != null ? String(Number(item.share_pct)) : "");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState<null | "approve" | "changes" | "reject">(null);
@@ -52,16 +57,16 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
   const [planCredits, setPlanCredits] = useState<string[]>([]);
 
   useEffect(() => {
-    setCredits(item.credits != null ? String(item.credits) : cost ? String(cost.min_credits) : "");
+    setCredits(item.credits != null ? String(item.credits) : minCredits != null ? String(minCredits) : "");
     setShare(item.share_pct != null ? String(Number(item.share_pct)) : "");
     setNotes("");
     setPlanCredits(options.map((o) => (o.kind === "money" && o.inr ? String(creditsForInr(o.inr)) : "")));
-  }, [item.version_id, item.credits, item.share_pct, options, cost]);
+  }, [item.version_id, item.credits, item.share_pct, options, minCredits]);
 
   const c = Number(credits);
   const s = Number(share);
   const planOk = options.length === 0 || (planCredits.length === options.length && planCredits.every((v) => v !== "" && Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 5000));
-  const valid = credits !== "" && share !== "" && Number.isInteger(c) && c >= 1 && c <= 100 && s >= 0 && s <= 90 && planOk;
+  const valid = credits !== "" && share !== "" && Number.isInteger(c) && c >= fewest && c <= 100 && s >= 0 && s <= 90 && planOk;
   const perUse = c * WORST_CASE_INR_PER_CREDIT;
 
   const run = async (kind: NonNullable<typeof busy>, fn: () => Promise<unknown>, ok: string) => {
@@ -88,7 +93,9 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
             </p>
           </div>
           <div className="flex flex-wrap gap-1.5">
+            <KindPill item={item} />
             {item.live_version_no ? <Pill tone="bg-sky">Update to live v{item.live_version_no}</Pill> : <Pill tone="bg-lime">New app</Pill>}
+            {(item.similar_apps?.length ?? 0) > 0 && <Pill tone="bg-sun">Similar to {item.similar_apps!.length} other{item.similar_apps!.length > 1 ? "s" : ""}</Pill>}
             <Pill tone={item.qa_passed ? "bg-teal" : "bg-coral"}>{item.qa_passed ? "Checks passed" : "Checks failed"}</Pill>
           </div>
         </div>
@@ -98,16 +105,21 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
           <div><dt className="inline font-semibold">Category: </dt><dd className="inline">{item.category ?? "none"}</dd></div>
           <div><dt className="inline font-semibold">Filter types: </dt><dd className="inline">{item.tool_types?.join(", ") || "none"}</dd></div>
           <div><dt className="inline font-semibold">Support: </dt><dd className="inline">{item.support_email ?? "none"}</dd></div>
-          <div><dt className="inline font-semibold">Size: </dt><dd className="inline">{kb(item.bytes)} · sent {when(item.submitted_at)}</dd></div>
+          <div><dt className="inline font-semibold">{isAi ? "Definition: " : "Size: "}</dt><dd className="inline">{kb(item.bytes)} · sent {when(item.submitted_at)}</dd></div>
           {item.release_notes && <div className="sm:col-span-2"><dt className="inline font-semibold">What's new: </dt><dd className="inline">{item.release_notes}</dd></div>}
-          {item.source && <div className="sm:col-span-2"><dt className="inline font-semibold">File came from: </dt><dd className="inline break-all">{sourceText(item.source)}</dd></div>}
-          <div className="sm:col-span-2 text-xs text-muted-foreground">Content fingerprint {item.html_sha256?.slice(0, 16)}: this exact file is what goes live.</div>
+          {!isAi && item.source && <div className="sm:col-span-2"><dt className="inline font-semibold">File came from: </dt><dd className="inline break-all">{sourceText(item.source)}</dd></div>}
+          <div className="sm:col-span-2 text-xs text-muted-foreground">Content fingerprint {item.html_sha256?.slice(0, 16)}: this exact {isAi ? "definition" : "file"} is what goes live.</div>
         </dl>
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
         <div className="space-y-5">
-          {item.live && (
+          <SimilarReview item={item} />
+
+          {isAi && <AiChanges item={item} />}
+          {isAi && <AiDefinition item={item} />}
+
+          {!isAi && item.live && (
             <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
               <h3 className="mb-2 font-display text-base font-bold">What changed since live version {item.live.version_no}</h3>
               <ul className="list-disc space-y-1 pl-5 text-sm">
@@ -124,12 +136,13 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
 
           <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
             <h3 className="mb-3 font-display text-base font-bold">Checks report</h3>
-            <ChecksReport qa={item.qa} />
+            <ChecksReport qa={item.qa} hideSimilar={item.similar_apps !== undefined} />
           </div>
 
           <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
             <h3 className="font-display text-base font-bold">Decide</h3>
-            {cost && (
+            {isAi && <AiCost item={item} credits={Number.isInteger(c) && credits !== "" ? c : null} />}
+            {!isAi && cost && (
               <div className="mt-4 rounded-xl border-2 border-dashed border-ink/40 p-3 text-sm">
                 <p className="font-semibold">Hidden costs (only admins see this)</p>
                 <p className="mt-1">
@@ -191,14 +204,15 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="a-credits">{options.length ? "Credits charged at Start" : "Credits per use"}</Label>
-                <Input id="a-credits" type="number" min={1} max={100} step={1} value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 2" />
+                <Input id="a-credits" type="number" min={fewest} max={100} step={1} value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 2" />
+                {isAi && <p className="mt-1 text-xs text-muted-foreground">AI apps need at least 2 credits.</p>}
               </div>
               <div>
                 <Label htmlFor="a-share">Developer share (%)</Label>
                 <Input id="a-share" type="number" min={0} max={90} step={1} value={share} onChange={(e) => setShare(e.target.value)} placeholder="e.g. 30" />
               </div>
             </div>
-            {cost && credits !== "" && Number.isInteger(c) && c >= 1 && c < cost.min_credits && (
+            {!isAi && cost && credits !== "" && Number.isInteger(c) && c >= 1 && c < cost.min_credits && (
               <p className="mt-3 rounded-lg bg-coral/30 p-2 text-sm">{c} credit{c > 1 ? "s are" : " is"} below the {cost.min_credits} needed for a {cost.margin}× margin on this app's running cost.</p>
             )}
             {valid && (
@@ -232,12 +246,16 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
         </div>
 
         <div className="xl:sticky xl:top-20 xl:self-start">
-          <PreviewPanel
-            html={html.data?.html ?? null}
-            title={item.name}
-            fullScreenHref={`/developer/preview/${item.version_id}`}
-            emptyText={html.isLoading ? "Loading…" : (html.error as Error)?.message}
-          />
+          {isAi ? (
+            <AiPreviewPanel versionId={item.version_id} title={item.name} fullScreenHref={`/developer/preview/${item.version_id}`} />
+          ) : (
+            <PreviewPanel
+              html={html.data?.html ?? null}
+              title={item.name}
+              fullScreenHref={`/developer/preview/${item.version_id}`}
+              emptyText={html.isLoading ? "Loading…" : (html.error as Error)?.message}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -317,7 +335,10 @@ export default function AdminDeveloperApps() {
                       className={`w-full rounded-xl border-2 border-ink p-3 text-left ${current?.version_id === i.version_id ? "bg-sun shadow-block-sm" : "bg-card"}`}
                     >
                       <p className="font-semibold">{i.name}</p>
-                      <p className="text-xs text-muted-foreground">v{i.version_no} · {i.live_version_no ? "update" : "new"} · {when(i.submitted_at)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        v{i.version_no} · {i.live_version_no ? "update" : "new"} · {i.kind === "ai" ? "AI app" : "file app"} · {when(i.submitted_at)}
+                      </p>
+                      {(i.similar_apps?.length ?? 0) > 0 && <p className="text-xs font-semibold">Similar to {i.similar_apps!.length} other{i.similar_apps!.length > 1 ? "s" : ""}</p>}
                       <p className="truncate text-xs text-muted-foreground">{i.developer_email}</p>
                     </button>
                   </li>

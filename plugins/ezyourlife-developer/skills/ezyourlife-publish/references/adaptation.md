@@ -1,4 +1,6 @@
-# Adapting an app for EzYourLife
+# Adapting a file app for EzYourLife
+
+This page is for apps that are pure browser logic and become ONE HTML file (a "file app"). If the app's value is an AI model, it is an AI app: see `ai-apps.md` and use `dev_save_ai_app` instead; do not keep AI calls in a file.
 
 EzYourLife runs every developer app inside a sandboxed iframe with a unique, empty origin. Inside it:
 
@@ -25,7 +27,7 @@ grep -rnE "sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}|AKIA[0-9A-Z]{16}|gh[pousr
 Remove every hit from the app. If a key was ever committed, tell the developer to rotate it; deleting it from the file does not make it safe.
 
 ### 2. AI, login, payments, own backend
-- **AI calls** (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Mistral, Cohere, Together, Hugging Face, DeepSeek, Perplexity, xAI, Replicate): remove them. If the feature can be done without AI (rules, templates, calculations), rewrite it that way. Otherwise remove the feature and tell the developer.
+- **AI calls** (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Mistral, Cohere, Together, Hugging Face, DeepSeek, Perplexity, xAI, Replicate): remove them. If the feature can be done without AI (rules, templates, calculations), rewrite it that way. Otherwise move the app (or that feature) to the AI lane: see `ai-apps.md`.
 - **Login** (Firebase Auth, Auth0, Supabase Auth, Clerk and so on): remove it. EzYourLife handles sign-in and charges credits before the app opens.
 - **Payments** (Razorpay, Stripe, PayPal, Cashfree, Paytm): remove them. EzYourLife charges credits per use and is the only payment system. Turn each paid tier into a `money` charge option in the listing.
 - **Hourly, daily, monthly or timer-based runs** (`setInterval`, cron, auto-refresh, "every day"): replace with a button the visitor presses, for example "Get output". One press is one use. Scheduled repeats are not available yet.

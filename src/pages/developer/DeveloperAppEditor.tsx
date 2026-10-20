@@ -35,7 +35,8 @@ import {
   type DevVersion,
   type Listing,
 } from "@/lib/devApps";
-import { ChecksReport, Pill, PreviewPanel, Section, Shot, VersionPill } from "./parts";
+import { AiPreviewPanel, ChecksReport, Pill, PreviewPanel, Section, Shot, SimilarList, VersionPill } from "./parts";
+import { DeveloperAiSummary } from "./AiReview";
 
 const selectClass =
   "mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -43,7 +44,7 @@ const selectClass =
 type ChargeRow = { label: string; kind: "per_use" | "money"; inr: string; note: string };
 
 const emptyForm = {
-  name: "", short_description: "", description: "", category: "", types: "", support_email: "", release_notes: "", charges: [] as ChargeRow[],
+  name: "", short_description: "", description: "", similar_note: "", category: "", types: "", support_email: "", release_notes: "", charges: [] as ChargeRow[],
   headline: "", tagline: "", audience: "", highlights: "", steps: "", faq: "",
 };
 
@@ -56,6 +57,7 @@ const formFrom = (v: DevVersion | undefined) =>
         name: v.name ?? "",
         short_description: v.short_description ?? "",
         description: v.description ?? "",
+        similar_note: v.similar_note ?? "",
         category: v.category ?? "",
         types: (v.tool_types ?? []).join(", "),
         support_email: v.support_email ?? "",
@@ -81,7 +83,7 @@ export default function DeveloperAppEditor() {
   const html = useQuery({
     queryKey: ["dev-html", latest?.id, latest?.updated_at],
     queryFn: () => getVersionHtml(latest!.id),
-    enabled: !!latest,
+    enabled: !!latest && app?.kind !== "ai",
   });
 
   const images = useQuery({
@@ -142,8 +144,13 @@ export default function DeveloperAppEditor() {
   const startsNext = ["approved", "rejected", "superseded"].includes(latest.status);
   const editable = latest.status === "draft" || latest.status === "changes_requested";
   const nextNo = startsNext ? latest.version_no + 1 : latest.version_no;
+  const isAi = app.kind === "ai";
   const htmlText = html.data?.html ?? "";
-  const hasFile = htmlText.trim().length > 0;
+  // A file app needs its HTML file; an AI app needs its saved definition.
+  const hasFile = isAi ? !!latest.spec : htmlText.trim().length > 0;
+  // Show "How is yours different?" once the checks have found similar apps (or a note already exists).
+  const similar = latest.qa?.duplicates ?? [];
+  const showSimilar = similar.length > 0 || !!latest.similar_note || !!form.similar_note;
   const listingDirty = JSON.stringify(form) !== JSON.stringify(formFrom(latest));
 
   const listing = (): Listing => ({
@@ -154,6 +161,7 @@ export default function DeveloperAppEditor() {
     tool_types: form.types.split(",").map((t) => t.trim()).filter(Boolean),
     support_email: form.support_email,
     release_notes: form.release_notes,
+    similar_note: form.similar_note.trim(),
     promo: {
       headline: form.headline,
       tagline: form.tagline,
@@ -233,6 +241,7 @@ export default function DeveloperAppEditor() {
             <p className="mt-1 text-sm text-muted-foreground">ezyourlife.com/tool/{app.tool_id} · version {latest.version_no}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Pill tone={isAi ? "bg-pink" : "bg-sand"}>{isAi ? "AI app" : "File app"}</Pill>
             <VersionPill status={latest.status} />
             {app.status === "live" && (
               <Button asChild variant="outline" size="sm">
@@ -274,6 +283,16 @@ export default function DeveloperAppEditor() {
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
           <div className="space-y-6">
+            {isAi ? (
+              <Section
+                step={1}
+                title="App definition"
+                hint="This app runs on EzYourLife's own screens and AI, so there is no file to upload. Your Claude wrote the definition below. To change it, ask Claude to update the app; it saves the new version here."
+                aside={latest.source ? <span className="text-right text-xs text-muted-foreground">{sourceText(latest.source)}</span> : null}
+              >
+                <DeveloperAiSummary version={latest} />
+              </Section>
+            ) : (
             <Section
               step={1}
               title="App file"
@@ -299,6 +318,7 @@ export default function DeveloperAppEditor() {
                 </div>
               )}
             </Section>
+            )}
 
             <Section step={2} title="Store listing" hint="What people see in the store. Our team may edit wording before it goes live.">
               <form
@@ -343,6 +363,17 @@ export default function DeveloperAppEditor() {
                     <Label htmlFor="l-notes">What's new in this version</Label>
                     <Input id="l-notes" value={form.release_notes} maxLength={1000} onChange={(e) => setForm({ ...form, release_notes: e.target.value })} disabled={locked} />
                   </div>
+                )}
+                {showSimilar && (
+                  <fieldset className="sm:col-span-2 rounded-xl border-2 border-ink bg-sun/20 p-4" disabled={locked}>
+                    <legend className="px-1 text-sm font-semibold">How is yours different?</legend>
+                    {similar.length > 0 && <div className="mb-3"><SimilarList items={similar} title="Apps that look similar" /></div>}
+                    <p className="text-xs text-muted-foreground">
+                      The store already has apps like this. If yours does something different, say how in one or two sentences. Our team reads your note next to the similar apps and decides. If it does the same job, there is no need to send it.
+                    </p>
+                    <Textarea id="l-similar" className="mt-2" rows={3} maxLength={1000} value={form.similar_note} onChange={(e) => setForm({ ...form, similar_note: e.target.value })} placeholder="Unlike the others, this one reads GST invoices and lists each tax line separately." />
+                    <p className="mt-1 text-xs text-muted-foreground">{form.similar_note.trim().length}/1000 · at least 20 characters</p>
+                  </fieldset>
                 )}
                 <fieldset className="sm:col-span-2 rounded-xl border-2 border-ink/20 p-4" disabled={locked}>
                   <legend className="px-1 text-sm font-semibold">Your app's own page (required)</legend>
@@ -453,7 +484,11 @@ export default function DeveloperAppEditor() {
             <Section
               step={4}
               title="Checks"
-              hint="They run on EzYourLife's server: keys and passwords, AI calls, payments, size, phone fit, outside addresses, listing, promo page, screenshots and similar apps."
+              hint={
+                isAi
+                  ? "They run on EzYourLife's server: the definition and its fields, secrets in the instructions, a successful test run, listing, promo page, screenshots and similar apps. Try the app in the preview first: at least one successful test run of this exact version is needed."
+                  : "They run on EzYourLife's server: keys and passwords, AI calls, payments, size, phone fit, outside addresses, listing, promo page, screenshots and similar apps."
+              }
               aside={
                 <Button
                   type="button"
@@ -507,12 +542,16 @@ export default function DeveloperAppEditor() {
           </div>
 
           <div className="lg:sticky lg:top-20 lg:self-start">
-            <PreviewPanel
-              html={hasFile ? htmlText : null}
-              title={latest.name || app.tool_id}
-              fullScreenHref={hasFile ? `/developer/preview/${latest.id}` : undefined}
-              emptyText={html.isLoading ? "Loading…" : undefined}
-            />
+            {isAi ? (
+              <AiPreviewPanel versionId={hasFile ? latest.id : null} title={latest.name || app.tool_id} fullScreenHref={hasFile ? `/developer/preview/${latest.id}` : undefined} />
+            ) : (
+              <PreviewPanel
+                html={hasFile ? htmlText : null}
+                title={latest.name || app.tool_id}
+                fullScreenHref={hasFile ? `/developer/preview/${latest.id}` : undefined}
+                emptyText={html.isLoading ? "Loading…" : undefined}
+              />
+            )}
           </div>
         </div>
       </main>

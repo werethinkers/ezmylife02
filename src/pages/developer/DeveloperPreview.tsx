@@ -6,7 +6,7 @@ import { PageSeo } from "@/components/seo/PageSeo";
 import { Button } from "@/components/ui/button";
 import { HostedFrame } from "@/apps/hosted/HostedFrame";
 import { getVersionHtml } from "@/lib/devApps";
-import { VersionPill } from "./parts";
+import { AiPreviewFrame, RunsLeft, VersionPill } from "./parts";
 
 /* Full-screen preview of one version. Only its developer and admins can open it (row-level security). */
 export default function DeveloperPreview() {
@@ -27,11 +27,12 @@ export default function DeveloperPreview() {
           </Button>
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{v.data?.name || "Preview"}</p>
-            <p className="text-xs text-muted-foreground">{v.data ? `Version ${v.data.version_no} · preview, no credits used` : ""}</p>
+            <p className="text-xs text-muted-foreground">{v.data ? `Version ${v.data.version_no} · ${v.data.kind === "ai" ? "test runs are free" : "preview, no credits used"}` : ""}</p>
           </div>
           {v.data && <VersionPill status={v.data.status} />}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {v.data?.kind === "ai" && <RunsLeft />}
           <Button size="sm" variant={device === "phone" ? "default" : "outline"} className="h-8" onClick={() => setDevice("phone")} aria-pressed={device === "phone"}>
             <Smartphone className="h-3.5 w-3.5" /> Phone
           </Button>
@@ -48,6 +49,16 @@ export default function DeveloperPreview() {
           <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : v.error || !v.data ? (
           <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">{(v.error as Error)?.message ?? "Preview not found."}</p>
+        ) : v.data.kind === "ai" ? (
+          v.data.spec ? (
+            device === "phone" ? (
+              <AiPreviewFrame versionId={versionId!} title={v.data.name} device="phone" reloadKey={reloadKey} />
+            ) : (
+              <AiPreviewFrame versionId={versionId!} title={v.data.name} device="desktop" reloadKey={reloadKey} />
+            )
+          ) : (
+            <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">This version has no AI definition yet.</p>
+          )
         ) : !v.data.html.trim() ? (
           <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">This version has no app file yet.</p>
         ) : (

@@ -20,7 +20,7 @@ const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unse
 export default defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
-  version: "0.2.0",
+  version: "0.3.0",
   instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 440+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
 
 **Start by calling \`help\` for the full tool guide with examples.**
@@ -32,7 +32,7 @@ Quick reference:
 - Prompt engineering: analyze_prompt (uses Gemini via PromptMaster, charges credits)
 - Catalog & their data: list_tools, get_tool_link, list_my_creations, list_bulk_jobs, get_credit_balance
 - Meta: submit_tool_request (ask the team to build a new tool)
-- Developers publishing their own web app to the store: dev_get_standards first, then dev_create_app, dev_save_app (small) or dev_import_file / dev_get_upload_link (big, up to 10 MB), dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
+- Developers publishing their own app to the store, in any form (AI Studio export, multi-file project, plain HTML, an app built in Claude): dev_get_standards first (rules and conversion playbook), then dev_list_my_apps, dev_check_similar, dev_create_app. AI apps: dev_save_ai_app, dev_test_run. File apps: dev_save_app, or dev_import_file / dev_get_upload_link for big files (up to 10 MB). Then dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
 
 For long-running tools like Startup Analyser or Video Generator that can't run over MCP, use \`get_tool_link\` and send the user to open it on ezyourlife.com.`,
   auth: auth.oauth.issuer({

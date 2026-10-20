@@ -1,15 +1,14 @@
 # EzYourLife Developer
 
-Lets any of your Claudes put a web app on the EzYourLife store. Give Claude a project, a zip or a big HTML file and say "put my app on EzYourLife". Claude:
+Lets any of your Claudes put an app on the EzYourLife store, whatever form it is in: a Google AI Studio export, a multi-file React project, plain HTML, or an app you built inside Claude. Say "put my app on EzYourLife" (or "make this live on EzYourLife"). Claude:
 
-1. Adapts the code to EzYourLife's rules: no keys, no AI calls, no own login or payments, storage that survives the sandbox, hash routing, fits phones.
-2. Builds it into one HTML file, up to 10 MB.
-3. Sends it to your EzYourLife app:
-   - small files go directly
-   - big files go through GitHub (works from claude.ai, Cowork and Claude Code)
-   - or through a one-time upload link (Claude Code on a computer)
-4. Fills in the store listing and runs EzYourLife's server checks until they pass.
-5. Gives you a live preview link, and sends the app for review only when you say so.
+1. Checks the store for **similar apps** first. If there are some, it tells you and asks how yours is different; your answer goes to the team with your app.
+2. Converts the app to EzYourLife's rules, the way the store's existing apps were made:
+   - **AI apps** (a form that writes a result, a chat assistant, photos read into text): Claude sends a definition (screen, fields, AI instructions) that runs on EzYourLife's own screens and AI, charged in credits. Your own server, keys, wallet and payments are removed.
+   - **File apps** (calculators, converters, tools with no AI): Claude builds one HTML file of up to 10 MB: no keys, no own login or payments, storage that survives the sandbox, hash routing, fits phones.
+3. Sends it to your EzYourLife app (small files directly, big files through GitHub or a one-time upload link).
+4. Test-runs an AI app on the real AI, fills in the store listing, the app's own promo page and screenshots, and runs EzYourLife's server checks until they pass.
+5. Gives you a preview link that shows the real app as it will look on the site, on a phone-sized or desktop-sized screen, and sends it for review only when you say so.
 
 An EzYourLife admin then tries the app, sets the credits per use and your share, and approves it. Nothing goes live without that approval. A live app is never replaced silently: changes go in as a new version that also needs approval.
 
@@ -17,8 +16,8 @@ An EzYourLife admin then tries the app, sets the credits per use and your share,
 
 | Part | What it does |
 |---|---|
-| `ezyourlife` connector | EzYourLife's own MCP server (sign in with your EzYourLife account). Tools: `dev_get_standards`, `dev_create_app`, `dev_list_my_apps`, `dev_save_app`, `dev_import_file`, `dev_get_upload_link`, `dev_run_checks`, `dev_get_preview_link`, `dev_submit_for_review`, `dev_get_status` |
-| `ezyourlife-publish` skill | The step-by-step workflow, the adaptation checklist and the single-file build recipes |
+| `ezyourlife` connector | EzYourLife's own MCP server (sign in with your EzYourLife account). Tools: `dev_get_standards`, `dev_list_my_apps`, `dev_check_similar`, `dev_create_app`, `dev_save_ai_app`, `dev_test_run`, `dev_save_app`, `dev_import_file`, `dev_get_upload_link`, `dev_add_image`, `dev_remove_image`, `dev_run_checks`, `dev_get_preview_link`, `dev_submit_for_review`, `dev_get_status` |
+| `ezyourlife-publish` skill | The step-by-step workflow, how to convert each kind of app, the AI app definition guide (`references/ai-apps.md`), the file-app adaptation checklist and the single-file build recipes |
 | `scripts/inline-html.mjs` | Turns any built app folder into one HTML file (no dependencies) |
 | `scripts/ezyourlife-upload.mjs` | Sends a local file with a one-time upload key (no dependencies) |
 

@@ -26,7 +26,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
   const { data: catalog = [] } = useToolsCatalog();
   const appName = catalog.find((t) => t.id === toolId)?.name ?? "Result";
   const store = useAppStore<{ history: HistoryItem[]; savedAt?: number }>(toolId, { history: [] });
-  const max = MAX[toolId] ?? 6;
+  const max = def.maxImages ?? MAX[toolId] ?? 6;
   const [images, setImages] = useState<{ name: string; url: string }[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);

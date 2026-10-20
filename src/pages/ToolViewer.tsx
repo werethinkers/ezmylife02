@@ -22,7 +22,7 @@ import { categoryInfo, goalOf } from "@/data/goals";
 import { appIntroOf } from "@/data/appKind";
 import { appSeoDescription, appSeoKeywords, appSeoTitle, sentence } from "@/lib/appSeo";
 import { isDeveloperApp } from "@/lib/devApps";
-import HostedApp from "@/apps/hosted/HostedApp";
+import DeveloperApp from "@/apps/hosted/DeveloperApp";
 
 interface CatalogTool {
   name: string;
@@ -183,7 +183,7 @@ const ToolViewer = () => {
   }
 
   const renderContent = () => {
-    if (isHosted) return <HostedApp toolId={toolId!} />;
+    if (isHosted) return <DeveloperApp toolId={toolId!} />;
     if (isNativeTool && !uploadedToolUrl) {
       // Remembers entries across apps and offers them back in any matching field.
       return <FieldMemory><NativeToolRenderer toolId={toolId!} /></FieldMemory>;

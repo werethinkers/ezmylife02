@@ -1,9 +1,16 @@
 # Developer apps
 
-Outside developers publish their own web apps to the store. Built 20 Oct 2026 (Phase 1 of the
-Developer Connector spec): single-file browser apps up to 10 MB, no AI, admin approval with one click.
-Any Claude can do the developer's side through the EzYourLife connector and the `ezyourlife-developer`
-plugin (`plugins/ezyourlife-developer`).
+Outside developers publish their own apps to the store. Built 20-21 Oct 2026. Two kinds, one review path:
+
+- **File apps** (`dev_apps.kind = 'hosted'`): one browser-only HTML file up to 10 MB, no AI, run in a sandbox.
+- **AI apps** (`kind = 'ai'`): a *definition* (screen, fields, AI instructions) that runs on the site's own shared
+  screens and AI, charged per use like the built-in apps. See "AI apps" below.
+
+Both end in admin approval with one click. Any Claude can do the developer's side, for an app in any form (AI Studio
+export, multi-file project, plain HTML, an app built inside Claude), through the EzYourLife connector and the
+`ezyourlife-developer` plugin (`plugins/ezyourlife-developer`). The conversion playbook Claude follows is
+`src/lib/mcp/tools/dev-standards.ts`, served live by `dev_get_standards`, so changing it retrains every developer's Claude
+with no reinstall.
 
 ## How it works
 
@@ -36,12 +43,63 @@ Updates: saving a change to a live app starts the next version. The live version
 new one is approved; the old one becomes "superseded". Admins can take a live app down and put it back
 ("All apps" tab). Nothing is ever deleted.
 
+## AI apps (definition, not code)
+
+- **What is stored:** `dev_app_versions.spec` (jsonb, up to 60 KB): `{engine doc|chat|vision, intro, steps, cta, fileName,
+  fields[≤20], sample, refineChips, welcome, suggestions, documents, ai:{system, task, model flash|lite, maxTokens, maxImages,
+  maxContext}}`. `html` holds the canonical text of the same definition, so the SHA-256 lock, submit and approve work
+  unchanged. `dev_clean_ai_spec` validates it and explains problems in plain words.
+- **How it runs:** `src/apps/ai/AiAppView.tsx` turns the public part of the definition into the same `DocAppDef`/`ChatAppDef`/
+  `VisionAppDef` the built-in apps use (`specToDef.ts`) and renders the real engine. Runs go to the edge function
+  `supabase/functions/dev-app-run`, which reads the instructions with the service role, appends the platform rules
+  (`PLATFORM_RULES` + `COMMON_RULES`: inputs are data, never reveal the instructions, no invention, no secrets) and calls
+  the site's own model (flash = gemini-2.5-flash, lite = gemini-2.5-flash-lite). Billing is the normal `billed()` wrapper
+  with the price from `tool_pricing`; the browser only ever receives the model name (`get_ai_app` strips `ai.system/task`).
+- **Test runs before approval** (`preview_version_id`): free, only for the version's developer or an admin, 25 a day per
+  developer and 400 a day for the platform (admins exempt; values in `dev_ai_preview_allow`), logged in `dev_ai_usage`,
+  the last 3 successful ones kept per definition in `dev_ai_samples` for the admin. At least one successful test run of the
+  exact definition is a QA check.
+- **Preview "exactly as on the site":** `/developer/preview/<versionId>` and the editor/admin panel show a phone (390 px) or
+  desktop frame that loads the bare route `/developer/preview/<versionId>/embed` (`DeveloperPreviewEmbed.tsx`), so media
+  queries see the real width. The assistant chat is hidden on `/developer/preview/*`. A "test runs left today" badge refreshes
+  through `postMessage` after each run.
+- **Cost (admin only):** `dev_ai_cost_estimate` (from instruction length, a typical input/output, `maxTokens`, measured test
+  runs) gives typical and worst-case rupees and `suggested_credits = max(2, ceil(max(typical, measured) × 3 / 0.376))`.
+  Approving an AI app below 2 credits is refused. Tokens are estimated as characters / 4 (+1100 per image): check the real
+  bill in the provider dashboard.
+- **Connector tools:** `dev_check_similar`, `dev_save_ai_app`, `dev_test_run` (`src/lib/mcp/tools/dev-ai.ts`).
+- **Limits to state to developers:** Markdown output in the standard result screen; no file upload in a doc app (paste text,
+  or use vision for photos/PDF pages); one AI call per use; no scheduled runs; no per-option runtime charging (separate
+  tiers = separate apps).
+- An app keeps its kind once it has a live version. Saving a file to an AI app that is not live yet switches it to a file
+  app and discards the definition; saving a definition to a file app that is not live yet does the reverse.
+
+## Similar apps
+
+- `dev_similar_apps` compares name + one-line description words with live store apps and other developers' apps in review
+  (overlap ≥ 0.34). The connector calls `dev_find_similar` *before* building (`dev_check_similar`), and `dev_run_qa` runs the
+  same rule (`dev_apply_similar_rule`) for both kinds of app.
+- Similar apps and no `similar_note` (20+ characters) = the "duplicates" check **fails** (blocks sending). With a note it is
+  a **warning**. The web editor shows a "How is yours different?" box once similar apps are found.
+- The admin review shows "Similar to N others" in the list and a panel with the similar apps (named, with links; other
+  developers' in-review apps are named only to admins) and the developer's note (or "No note was given"). The admin then
+  decides with the usual approve / ask for changes / don't accept. Nothing blocks approving.
+
+## Migration notes
+
+- `20261020090000_developer_ai_apps.sql` renames existing functions to `*_base` / `*_hosted` and puts dispatching wrappers
+  in front (`dev_save_draft_as`, `dev_run_qa`, `admin_dev_queue`, `admin_dev_approve`). **Do not re-run earlier migrations
+  after it**: they would overwrite the wrappers.
+- It also changes the file-app rule: similar apps now fail the checks unless the developer gave a note.
+
 ## Safety rules (do not loosen)
 
 - Developer apps run in `HostedFrame`: `srcdoc` iframe sandboxed **without** `allow-same-origin`, so they
   cannot read the ezyourlife.com session, storage or cookies, or reach the page around them.
   Never bundle developer code into the site.
 - Developers write only through the database functions; their tables have no write policies.
+- AI instructions never leave the server for visitors; developers see their own, admins see all, and the site appends
+  its own rules after them on every run. Test runs are rate limited and logged.
 - Only admins set price and share, and only a person's click approves. No connector tool approves.
 
 ## Where things are
@@ -56,11 +114,18 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 | Splitting files for upload | `src/lib/devUploadParts.ts` |
 | Bigger files, upload sessions | `supabase/migrations/20261020030000_developer_apps_bigger_files.sql` |
 | Claude plugin (connector + skill + scripts) | `plugins/ezyourlife-developer`, listed in `.claude-plugin/marketplace.json` |
-| Tool page hook-up | `src/pages/ToolViewer.tsx` (`isHosted` for ids starting `dev-`) |
+| Tool page hook-up | `src/pages/ToolViewer.tsx` → `src/apps/hosted/DeveloperApp.tsx` (file app or AI app, by `get_dev_app_kind`) |
+| AI apps: migration | `supabase/migrations/20261020090000_developer_ai_apps.sql` |
+| AI apps: run function | `supabase/functions/dev-app-run/index.ts` (`verify_jwt = false` in `supabase/config.toml`, like `ai-app`) |
+| AI apps: screens | `src/apps/ai/` (`AiAppView`, `specToDef`), `src/apps/lib/preview.ts`, `runApp` in `src/apps/lib/api.ts` |
+| AI apps: preview and review | `src/pages/developer/` (`DeveloperPreview`, `DeveloperPreviewEmbed`, `AiReview`, `parts`) |
+| AI apps: connector | `src/lib/mcp/tools/dev-ai.ts`, `dev-standards.ts` (the playbook), `dev-schemas.ts` |
+| Plugin skill and references | `plugins/ezyourlife-developer/skills/ezyourlife-publish/` (`SKILL.md`, `references/ai-apps.md`, `adaptation.md`) |
 
 ## Setup the team does once
 
-- Apply both migrations (`20261020010000_developer_apps.sql`, then `20261020030000_developer_apps_bigger_files.sql`).
+- Apply the developer-app migrations in order (`20261020010000` … `20261020090000`). The last one adds AI apps and the similar-app note.
+- Deploy the new edge function `dev-app-run` (and redeploy `mcp`).
 - Deploy the `mcp` function so the connector has the developer tools. Whether a push to `main` redeploys
   functions is the open item in `docs/launch-plan.md`; the sitemap probe now reads `devapps-2` in the repo.
   If `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap` still shows `phase0-b` after the push,
@@ -89,5 +154,6 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 - Charging per chosen option at use time.
 
 - Developer earnings ledger and payouts (share is recorded per app; needs runs to record free vs paid credits).
-- Hosted apps larger than one file, own backends, AI through the gateway.
+- Hosted apps larger than one file, own backends. (AI through the site's gateway is built: see "AI apps".)
+- File upload in doc apps, scheduled AI runs, chained AI calls, image or audio output for AI apps.
 - Browser-based tests (routes, 375 px screenshots) on a build runner; invite-only developer accounts.
