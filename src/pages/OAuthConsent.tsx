@@ -5,17 +5,63 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-// Typed shim for the beta supabase.auth.oauth namespace.
 type OAuthResult = {
   data?: { redirect_url?: string; redirect_to?: string; client?: { name?: string; redirect_uris?: string[] }; scope?: string } | null;
   error?: { message: string } | null;
 };
-type OAuthNs = {
-  getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
-  approveAuthorization: (id: string) => Promise<OAuthResult>;
-  denyAuthorization: (id: string) => Promise<OAuthResult>;
+
+// The consent calls go straight to the auth server. The supabase.auth.oauth helper only exists in
+// newer supabase-js versions, and the Lovable build (bun.lock) uses an older one, where
+// `supabase.auth.oauth` is undefined and this page stayed on its loading spinner forever.
+const AUTH_URL = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1`;
+
+async function authCall(id: string, path: string, method: "GET" | "POST", token: string, body?: unknown): Promise<OAuthResult> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${AUTH_URL}/oauth/authorizations/${encodeURIComponent(id)}${path}`, {
+      method,
+      signal: ctrl.signal,
+      headers: {
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      const msg = (json && (json.msg || json.message || json.error_description || json.error)) || `Request failed (${res.status})`;
+      return { data: null, error: { message: String(msg) } };
+    }
+    return { data: json, error: null };
+  } catch (e) {
+    const aborted = e instanceof DOMException && e.name === "AbortError";
+    return { data: null, error: { message: aborted ? "The sign-in server did not answer. Reload this page, or start the connection again from Claude." : "Could not reach the sign-in server. Check your connection and reload." } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function accessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
+const oauth = {
+  getAuthorizationDetails: async (id: string) => {
+    const t = await accessToken();
+    return t ? authCall(id, "", "GET", t) : { data: null, error: { message: "You are signed out. Sign in and try again." } };
+  },
+  approveAuthorization: async (id: string) => {
+    const t = await accessToken();
+    return t ? authCall(id, "/consent", "POST", t, { action: "approve" }) : { data: null, error: { message: "You are signed out. Sign in and try again." } };
+  },
+  denyAuthorization: async (id: string) => {
+    const t = await accessToken();
+    return t ? authCall(id, "/consent", "POST", t, { action: "deny" }) : { data: null, error: { message: "You are signed out. Sign in and try again." } };
+  },
 };
-const oauth = (supabase.auth as unknown as { oauth: OAuthNs }).oauth;
 
 export default function OAuthConsent() {
   const [params] = useSearchParams();
@@ -28,6 +74,7 @@ export default function OAuthConsent() {
   useEffect(() => {
     let active = true;
     (async () => {
+      try {
       if (!authorizationId) return setError("Missing authorization_id");
       const { data: sess } = await supabase.auth.getSession();
       if (!sess.session) {
@@ -44,6 +91,9 @@ export default function OAuthConsent() {
       const immediate = data?.redirect_url ?? data?.redirect_to;
       if (immediate && !data?.client) { window.location.href = immediate; return; }
       setDetails(data ?? null);
+      } catch (e) {
+        if (active) setError(e instanceof Error ? e.message : "Something went wrong loading this request.");
+      }
     })();
     return () => { active = false; };
   }, [authorizationId]);
@@ -87,7 +137,7 @@ export default function OAuthConsent() {
           {userEmail && <p className="text-sm text-muted-foreground">Signed in as {userEmail}</p>}
         </div>
         <div className="space-y-2 text-sm">
-          <p><strong>{clientName}</strong> will be able to call EZYOURLIFE tools as you — manage shortcuts, notes, Meet Nudge contacts, and check your credit balance.</p>
+          <p><strong>{clientName}</strong> will be able to call EZYOURLIFE tools as you — manage shortcuts, notes, Meet Nudge contacts, check your credit balance, and prepare apps for the developer store. Nothing goes live without EZYOURLIFE team approval.</p>
           <p className="text-muted-foreground text-xs">This does not bypass EZYOURLIFE permissions or your account policies. Credit-costing actions will deduct from your wallet.</p>
         </div>
         <div className="flex gap-3">
