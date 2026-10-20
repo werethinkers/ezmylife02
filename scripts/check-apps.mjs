@@ -119,6 +119,10 @@ for (const [group, rows] of Object.entries(d.CATALOG_GROUPS)) {
       if (c === t.category) err(`${where}: also-in category "${c}" is the same as its main category`);
     }
     if (new Set(t.alsoIn ?? []).size !== (t.alsoIn ?? []).length) err(`${where}: also-in lists a category twice`);
+    // Placements must be places the site knows, or the app would silently show nowhere extra.
+    for (const p of t.placements ?? []) {
+      if (!d.PLACEMENT_IDS.includes(p)) err(`${where}: placement "${p}" is not in PLACEMENTS (src/data/placements.ts)`);
+    }
 
     // A launch app has to be usable on sight: an example to fill in, steps, and apps to go to next.
     if (def) {

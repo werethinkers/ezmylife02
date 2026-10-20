@@ -1,4 +1,5 @@
 import { CATALOG_GROUPS } from "./catalog";
+import type { PlacementId } from "./placements";
 
 // Complete Tool Database - Master list of all tools with categories
 // This file serves as the single source of truth for tool filtering
@@ -17,6 +18,8 @@ export interface ToolEntry {
   dedicatedRoute?: string;
   /** Position inside lists; lower shows first. Leave out for the default (0). */
   displayOrder?: number;
+  /** Extra places the app shows, e.g. ["home-start"]. The list is in src/data/placements.ts. */
+  placements?: PlacementId[];
 }
 
 // Master tool database with all tools and their type mappings

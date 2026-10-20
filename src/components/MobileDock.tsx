@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 // so the tab bar steps aside.
 const DOCK_PATHS = [
   /^\/$/, /^\/ai-apps/, /^\/studios/, /^\/explore/, /^\/credits$/, /^\/about/, /^\/promo\//, /^\/ai-for\//, /^\/ai-tool-for\//,
-  /^\/profile$/, /^\/create$/, /^\/websites/, /^\/cards/, /^\/my-pages$/, /^\/refund-policy$/,
+  /^\/profile$/, /^\/create$/, /^\/websites/, /^\/cards/, /^\/my-pages$/, /^\/refund-policy$/, /^\/creators$/, /^\/list-your-app$/,
 ];
 
 const TABS = ["home", "apps", "websites", "cards"] as const;

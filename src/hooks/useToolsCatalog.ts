@@ -23,6 +23,8 @@ export interface CatalogTool {
   icon_fit?: "cover" | "contain" | null;
   /** Admin-set shelf flag, e.g. "hot" for hand-picked apps. */
   home_section?: string | null;
+  /** Extra places the app is shown, e.g. "home-start" (see src/data/placements.ts). */
+  placements?: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,10 +34,11 @@ const COLUMNS =
 
 async function fetchToolsCatalog(): Promise<CatalogTool[]> {
   // Only the columns the store needs — the long demo texts are fetched by the app page itself.
-  // `extra_categories` is newer than the rest; if the database does not have it yet, load without it
-  // so the store never breaks.
+  // `extra_categories` and `placements` are newer than the rest; if the database does not have them yet,
+  // load without them so the store never breaks.
   const load = (columns: string) => supabase.from("tools_catalog").select(columns).order("created_at", { ascending: true });
-  let res = await load(`${COLUMNS},extra_categories`);
+  let res = await load(`${COLUMNS},extra_categories,placements`);
+  if (res.error) res = await load(`${COLUMNS},extra_categories`);
   if (res.error) res = await load(COLUMNS);
   if (res.error) throw res.error;
 

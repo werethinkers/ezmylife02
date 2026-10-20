@@ -1,10 +1,10 @@
-import { Home, LayoutGrid, Globe, Mail, Sparkles, Wallet, Info, type LucideIcon } from "lucide-react";
+import { Home, LayoutGrid, Globe, Mail, Sparkles, Wallet, Info, HandCoins, Megaphone, Boxes, type LucideIcon } from "lucide-react";
 
 /**
  * The site's main sections, in plain words. The header, the phone tab bar and the footer all
  * read from here, so a section is named the same way everywhere.
  */
-export type SectionId = "home" | "apps" | "studios" | "websites" | "cards" | "prices" | "about";
+export type SectionId = "home" | "apps" | "studios" | "websites" | "cards" | "prices" | "earn" | "about";
 
 export interface NavSection {
   id: SectionId;
@@ -24,7 +24,14 @@ export const NAV_SECTIONS: NavSection[] = [
   { id: "websites", to: "/websites", label: "Websites", short: "Websites", Icon: Globe, color: "hsl(var(--teal))" },
   { id: "cards", to: "/cards", label: "Cards & invites", short: "Cards", Icon: Mail, color: "hsl(var(--sun))" },
   { id: "prices", to: "/credits", label: "Prices", short: "Prices", Icon: Wallet, color: "hsl(var(--sky))" },
+  { id: "earn", to: "/creators", label: "Earn with us", short: "Earn", Icon: HandCoins, color: "hsl(var(--sun))" },
   { id: "about", to: "/about", label: "About", short: "About", Icon: Info, color: "hsl(var(--coral))" },
+];
+
+/** The pages under "Earn with us". The header shows them as a small menu, the phone menu as a group. */
+export const EARN_LINKS: { to: string; label: string; line: string; Icon: LucideIcon; color: string }[] = [
+  { to: "/creators", label: "For creators", line: "Share Ezyourlife and earn on every sale you bring.", Icon: Megaphone, color: "hsl(var(--pink))" },
+  { to: "/list-your-app", label: "List your app", line: "Put your web app in our store and earn a share when people use it.", Icon: Boxes, color: "hsl(var(--teal))" },
 ];
 
 /** Product categories in the website/card builder that count as websites (they stay online). */
@@ -43,6 +50,7 @@ export function sectionOf(pathname: string, productCategory?: string | null): Se
     return (WEBSITE_CATEGORIES as readonly string[]).includes(productCategory) ? "websites" : "cards";
   }
   if (/^\/(credits|subscription)(\/|$)/.test(pathname)) return "prices";
+  if (/^\/(creators|list-your-app)(\/|$)/.test(pathname)) return "earn";
   if (/^\/(about|refund-policy)(\/|$)/.test(pathname)) return "about";
   return null;
 }

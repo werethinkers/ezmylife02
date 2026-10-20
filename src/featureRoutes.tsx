@@ -18,5 +18,7 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/developer", page: lazy(() => import("./pages/developer/DeveloperHome")), signedIn: true },
   { path: "/developer/apps/:appId", page: lazy(() => import("./pages/developer/DeveloperAppEditor")), signedIn: true },
   { path: "/developer/preview/:versionId", page: lazy(() => import("./pages/developer/DeveloperPreview")), signedIn: true },
+  { path: "/creators", page: lazy(() => import("./pages/earn/Creators")) },
+  { path: "/list-your-app", page: lazy(() => import("./pages/earn/ListYourApp")) },
   { path: "/admin/developer-apps", page: lazy(() => import("./pages/developer/AdminDeveloperApps")), signedIn: true },
 ];
