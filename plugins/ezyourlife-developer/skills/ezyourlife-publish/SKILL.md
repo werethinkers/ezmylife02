@@ -9,7 +9,7 @@ Turn the developer's app into one self-contained HTML file that meets EzYourLife
 
 ## 0. Before starting
 
-- Confirm the connector works: call `dev_get_standards`. It returns the current rules and the list of valid store categories. If the tools are missing or say "not signed in", ask the developer to connect the EzYourLife connector and sign in with their EzYourLife account, then stop.
+- Confirm the connector works: call `dev_get_standards`. Its rules are served live and are newer than this skill and anything remembered; where they differ, follow them. It returns the current rules and the list of valid store categories. If the tools are missing or say "not signed in", ask the developer to connect the EzYourLife connector and sign in with their EzYourLife account, then stop.
 - Call `dev_list_my_apps`. If this is an update to an existing app, use that `app_id`; never create a duplicate app.
 
 ## 1. Read the project

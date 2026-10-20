@@ -120,7 +120,8 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
                   Fixed cost about {inr4(cost.per_run_inr)} a run, so at least <strong>{cost.min_credits} credit{cost.min_credits > 1 ? "s" : ""}</strong> keeps a {cost.margin}× margin (₹{cost.worst_case_inr_per_credit} a credit). A developer asking for free does not change this.
                 </p>
                 {(cost.ai_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold text-destructive">AI provider calls found: {cost.ai_hosts!.join(", ")}. Do not approve.</p>}
-                {(cost.outside_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold">Outside services that may bill per call: {cost.outside_hosts!.join(", ")}.</p>}
+                {(cost.paid_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold text-destructive">Known paid services: {cost.paid_hosts!.join(", ")}. Price their per-call cost into the credits or send back.</p>}
+                {(cost.outside_hosts?.length ?? 0) > 0 && <p className="mt-1 font-semibold">Other outside services (check if they bill per call): {cost.outside_hosts!.join(", ")}.</p>}
                 {cost.notes.map((n) => <p key={n} className="mt-1 text-xs text-muted-foreground">{n}</p>)}
                 <p className="mt-1 text-xs text-muted-foreground">The Start box below is filled with the minimum.</p>
               </div>

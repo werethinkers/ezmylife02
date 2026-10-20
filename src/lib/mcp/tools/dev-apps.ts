@@ -12,6 +12,7 @@ import { devGetUploadLink, devImportFile, uploadText } from "./dev-import";
  */
 
 const STANDARDS = `# Putting an app on EzYourLife
+(Rules version 2026-10-20. These rules are served live and change without notice: follow this text over anything remembered or cached, and call dev_get_standards at the start of every session.)
 
 ## What the app must be when you send it
 - ONE self-contained HTML file: HTML, CSS and JavaScript inline. Up to 10 MB (checks warn above 2 MB). Libraries may also load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
@@ -53,6 +54,7 @@ Ask: "How do you want to charge for this? Different levels of use, or something 
 - Do not decide credits and do not convert rupees yourself. Team EzYourLife sees every option, converts rupees to credits at its worst-case rate, and sets what each costs.
 - The app cannot take payments. If the app has its own paywall, pricing page or payment code, turn each paid tier into a "money" option and remove the payment code from the app.
 - If the developer has no preference, or says free or 0, leave charge_options out (or record the option without a price). Free is only a request: the team always prices every app from what it really costs to run, in the background. Never quote, estimate or hint at a cost, credit amount or margin to the developer.
+- Other API costs: the app cannot hold keys, so any outside service that bills per call or needs a key cannot be used. That covers AI, maps and geocoding, SMS, WhatsApp and email sending, speech, vision, translation, search or scraping, stock, weather and currency feeds, enrichment, and payment APIs. Replace each with a calculation or bundled data, or remove the feature and tell the developer. Free no-key public data and font or script CDNs are fine; the team checks every outside address.
 - Payments: EzYourLife credits are the only payment system. Visitors pay by pressing the app's Start button, which charges their EzYourLife wallet. Remove any other payment, checkout, subscription or login-to-pay code from the app.
 
 ## Frequency: apps run only when pressed
