@@ -1896,6 +1896,7 @@ export type Database = {
           extra_categories: string[]
           has_uploaded_files: boolean
           home_section: string | null
+          placements: string[]
           icon_fit: string
           icon_url: string | null
           id: string
@@ -1922,6 +1923,7 @@ export type Database = {
           extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
+          placements?: string[]
           icon_fit?: string
           icon_url?: string | null
           id: string
@@ -1948,6 +1950,7 @@ export type Database = {
           extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
+          placements?: string[]
           icon_fit?: string
           icon_url?: string | null
           id?: string

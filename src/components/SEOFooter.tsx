@@ -20,6 +20,12 @@ const SPECIAL_LINKS = [
   { to: "/google-business", label: "Google Business kit" },
 ];
 
+const EARN_FOOTER_LINKS = [
+  { to: "/creators", label: "Earn as a creator" },
+  { to: "/list-your-app", label: "List your app" },
+  { to: "/influencer", label: "Creator sign in" },
+];
+
 const COMPANY_LINKS = [
   { to: "/about", label: "About us" },
   { to: "/about#contact", label: "Talk to us" },
@@ -39,7 +45,7 @@ const SEOFooter = () => {
   return (
     <footer className="mt-10 border-t-2 border-ink bg-ink text-cream">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-5">
           <div className={col}>
             <h3 className={head}>Business apps</h3>
             <ul>
@@ -63,6 +69,14 @@ const SEOFooter = () => {
             <h3 className={head}>Special apps</h3>
             <ul>
               {SPECIAL_LINKS.map((l) => (
+                <li key={l.to}><Link to={l.to} className={link}>{l.label}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div className={col}>
+            <h3 className={head}>Earn with us</h3>
+            <ul>
+              {EARN_FOOTER_LINKS.map((l) => (
                 <li key={l.to}><Link to={l.to} className={link}>{l.label}</Link></li>
               ))}
             </ul>
