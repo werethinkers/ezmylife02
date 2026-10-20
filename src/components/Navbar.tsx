@@ -11,10 +11,10 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass } from "lucide-react";
+import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown } from "lucide-react";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { Logo } from "@/components/brand/Logo";
-import { NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
+import { EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
 import { cn } from "@/lib/utils";
 
 /**
@@ -44,17 +44,45 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
         <nav aria-label="Main" className="ml-2 hidden items-center gap-1 lg:flex">
           {NAV_SECTIONS.map((s) => {
             const on = current === s.id;
+            const pill = cn(
+              "inline-flex items-center gap-1 whitespace-nowrap rounded-full border-2 px-2.5 py-1.5 text-[14px] xl:px-3 xl:text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              on ? "border-ink bg-ink text-cream" : "border-transparent text-ink hover:border-ink hover:bg-card",
+            );
+            // Short names until there is room for the full ones (8 sections fit a 1024 px screen this way).
+            const name = (
+              <>
+                <span className="xl:hidden">{s.short}</span>
+                <span className="hidden xl:inline">{s.label}</span>
+              </>
+            );
+            if (s.id === "earn") {
+              return (
+                <DropdownMenu key={s.id}>
+                  <DropdownMenuTrigger className={pill} aria-current={on ? "page" : undefined}>
+                    {name}
+                    <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-80 rounded-2xl border-2 border-ink p-2 shadow-block">
+                    {EARN_LINKS.map((l) => (
+                      <DropdownMenuItem key={l.to} asChild className="cursor-pointer rounded-xl p-3 focus:bg-sand">
+                        <Link to={l.to} className="flex items-start gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-ink" style={{ background: l.color }}>
+                            <l.Icon className="h-4 w-4" aria-hidden />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[15px] font-bold">{l.label}</span>
+                            <span className="block text-[13px] leading-snug text-muted-foreground">{l.line}</span>
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
             return (
-              <NavLink
-                key={s.id}
-                to={s.to}
-                aria-current={on ? "page" : undefined}
-                className={cn(
-                  "whitespace-nowrap rounded-full border-2 px-2.5 py-1.5 text-[14px] xl:px-3.5 xl:text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  on ? "border-ink bg-ink text-cream" : "border-transparent text-ink hover:border-ink hover:bg-card",
-                )}
-              >
-                {s.label}
+              <NavLink key={s.id} to={s.to} aria-current={on ? "page" : undefined} className={pill}>
+                {name}
               </NavLink>
             );
           })}
@@ -129,6 +157,34 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
           <ul className="mx-auto grid max-w-7xl grid-cols-2 gap-2 px-4 py-4 sm:grid-cols-3">
             {NAV_SECTIONS.map((s) => {
               const on = current === s.id;
+              if (s.id === "earn") {
+                return (
+                  <li key={s.id} className="col-span-2 sm:col-span-3">
+                    <div className="rounded-xl border-2 border-ink bg-sun p-2 shadow-[3px_3px_0_0_hsl(var(--ink))]">
+                      <p className="px-1.5 pb-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider">{s.label}</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {EARN_LINKS.map((l) => (
+                          <Link
+                            key={l.to}
+                            to={l.to}
+                            onClick={() => setOpen(false)}
+                            aria-current={pathname === l.to ? "page" : undefined}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg border-2 border-ink px-3 py-2.5 text-[15px] font-semibold",
+                              pathname === l.to ? "bg-ink text-cream" : "bg-card",
+                            )}
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-ink" style={{ background: l.color }}>
+                              <l.Icon className="h-4 w-4" aria-hidden />
+                            </span>
+                            {l.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+                );
+              }
               return (
                 <li key={s.id}>
                   <Link

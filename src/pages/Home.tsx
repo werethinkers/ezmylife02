@@ -21,6 +21,8 @@ import { HeroPicker } from "@/components/home/HeroPicker";
 import { StudiosShelf } from "@/components/home/StudiosShelf";
 import { TodaySection } from "@/components/home/TodaySection";
 import { CreditValue } from "@/components/home/CreditValue";
+import { EarnBand } from "@/components/earn/EarnBits";
+import { placedIn } from "@/data/placements";
 import RequestToolSection from "@/components/RequestToolSection";
 import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
@@ -99,10 +101,15 @@ const Home = () => {
       .map((x) => x.t);
   }, [live, query]);
 
-  // Hand-picked by the team (catalog flag set in admin).
-  const editorsPicks = useMemo(() => live.filter((t) => t.home_section === "hot"), [live]);
+  // Apps placed on the home page (src/data/placements.ts). A new app that lists a place shows there by itself.
+  const editorsPicks = useMemo(() => placedIn(live, "home-start"), [live]);
   const oneCredit = useMemo(() => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14), [live, costOf, editorsPicks]);
-  const newest = useMemo(() => [...live].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 12), [live]);
+  // Pinned new apps first, then the latest additions.
+  const newest = useMemo(() => {
+    const pinned = placedIn(live, "home-new");
+    const rest = [...live].filter((t) => !pinned.includes(t)).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return [...pinned, ...rest].slice(0, 12);
+  }, [live]);
 
   const categories = useMemo(() => {
     const m = new Map<string, number>();
@@ -117,7 +124,14 @@ const Home = () => {
   }, [persona, categories]);
 
   const personaTools = persona ? (persona.toolIds.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[]) : [];
-  const marquee = useMemo(() => live.slice(0, 36).map((t) => t.name), [live]);
+  // The moving strip: apps placed there, then the team's picks, then the newest, so it never shows only the oldest apps.
+  const marquee = useMemo(() => {
+    const seen = new Set<string>();
+    return [...placedIn(live, "home-strip"), ...editorsPicks, ...newest, ...live]
+      .filter((t) => !seen.has(t.id) && seen.add(t.id))
+      .slice(0, 36)
+      .map((t) => t.name);
+  }, [live, editorsPicks, newest]);
 
 
   const onSearch = (e: React.FormEvent) => {
@@ -346,22 +360,6 @@ const Home = () => {
               </AnimatePresence>
             </Section>
 
-            {/* ───────── Every app, website and card ───────── */}
-            <Section
-              id="all-apps"
-              title="Everything in the store"
-              line="Every app, website and card, sorted by what you need. Tap a category to see all of it."
-              action={
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/ai-apps">Open the full app page</Link>
-                </Button>
-              }
-            >
-              <Suspense fallback={<div className="min-h-[60vh]" />}>
-                <AppDirectory apps={live} />
-              </Suspense>
-            </Section>
-
             {/* ───────── Shelves ───────── */}
             <div className="mx-auto max-w-7xl space-y-12 px-4 py-10">
               {editorsPicks.length > 0 && (
@@ -421,6 +419,22 @@ const Home = () => {
               </Section>
             )}
 
+            {/* ───────── Every app, website and card ───────── */}
+            <Section
+              id="all-apps"
+              title="Everything in the store"
+              line="Every app, website and card, sorted by what you need. Tap a category to see all of it."
+              action={
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/ai-apps">Open the full app page</Link>
+                </Button>
+              }
+            >
+              <Suspense fallback={<div className="min-h-[60vh]" />}>
+                <AppDirectory apps={live} />
+              </Suspense>
+            </Section>
+
             {/* ───────── App bundles ───────── */}
             <Section title="App bundles" line="A few apps that work well together, for one job.">
               <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={personaId} />
@@ -430,6 +444,11 @@ const Home = () => {
             <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
               <HomeMakeShelves />
             </Suspense>
+
+            {/* ───────── Earn with us ───────── */}
+            <Section id="earn" title="Earn with Ezyourlife" line="Two ways to earn from what you already have: your followers, or an app you built.">
+              <EarnBand />
+            </Section>
 
             {/* ───────── Credits ───────── */}
             <Section id="credits" title="What does ₹10 get you?" line="One wallet for every app. Credits never tie you to a plan, and failed runs are free.">

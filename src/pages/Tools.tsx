@@ -19,6 +19,7 @@ import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
 import { seoFor } from "@/lib/seo/pages";
+import { placedIn } from "@/data/placements";
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
@@ -86,7 +87,8 @@ const Tools = () => {
         : [],
     [shown, query],
   );
-  const hot = useMemo(() => live.filter((t) => t.home_section === "hot"), [live]);
+  // Same picks as the home page's "Most useful to start" (src/data/placements.ts).
+  const hot = useMemo(() => placedIn(live, "home-start"), [live]);
 
   const activeGoal = category ? goalById(categoryInfo(category).goal) : goalById(goalId);
   const visibleGoals = activeGoal ? goals.filter((g) => g.goal.id === activeGoal.id) : goals;

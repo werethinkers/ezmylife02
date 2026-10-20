@@ -68,6 +68,30 @@ export const SITE_PAGES: SitePage[] = [
     links: MAIN_LINKS,
   },
   {
+    path: "/creators",
+    title: "Earn as a creator: free website and commission on every sale",
+    description: "Creators get a free website and visiting card, their own link to the ₹999 business kit, and commission on every sale, with a live dashboard of clicks and buyers.",
+    h1: "Share Ezyourlife. Earn on every sale.",
+    text: [
+      "If your followers run shops, salons or small businesses, share the EZYOURLIFE ₹999 kit: a business website, a digital visiting card and 3,000 credits.",
+      "You get a free website and visiting card in your name, your own offer link, and commission on every sale it brings, with a live dashboard of clicks, buyers, refund requests and commission.",
+      "Message us to join. Commission is approved after the buyer's 7-day refund window and paid by bank transfer.",
+    ],
+    links: [["See the ₹999 kit", "/kit"], ["List your app", "/list-your-app"], ["Creator sign in", "/influencer"], ...MAIN_LINKS],
+  },
+  {
+    path: "/list-your-app",
+    title: "List your app on EZYOURLIFE and earn a share",
+    description: "Built a web app? Put it in the EZYOURLIFE store through Claude or the website. We review it, set the price in credits, and you earn a share when people use it.",
+    h1: "Built an app? List it with us.",
+    text: [
+      "Put your web app in the EZYOURLIFE store, next to {count} business apps. People pay in credits when they use it, and you earn a share.",
+      "Add the EzYourLife connector in Claude and say \"Put my app on EzYourLife\", or upload one file from your developer page. Our team tries every app, sets the price and approves it before it goes live.",
+      "Apps today are one file up to 10 MB that work on a phone, with no AI calls, logins or payments of their own.",
+    ],
+    links: [["Earn as a creator", "/creators"], ...MAIN_LINKS],
+  },
+  {
     path: "/studios/site-watch",
     title: "Site Watch: see problems on your sites and get them fixed",
     description: "Try Site Watch on sample data. Photos and footage from roads, solar plants and construction sites become alerts, tasks for your crew and proof of work.",
