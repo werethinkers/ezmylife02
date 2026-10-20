@@ -3,12 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import KitPicker from "./KitPicker";
-import { KIT } from "@/data/kit";
+import { EarningsEstimate } from "@/components/earn/EarningsEstimate";
 
 // influencer_me() from 20261012170000_influencer_login.sql. It returns only the
 // signed-in influencer's own campaign, so there is nothing to pass in.
@@ -303,70 +302,6 @@ function OfferEditor({ d, onSaved }: { d: Me; onSaved: () => void }) {
           </div>
         </div>
       )}
-    </section>
-  );
-}
-
-// A rough guide, not a promise: the commission is fixed at 10%; the creator moves how many followers
-// they have and how many of them buy the kit.
-const EST_COMMISSION_PCT = 10;
-const FOLLOWERS_MIN = 1_000;
-// The slider runs 0-90 on a log scale (30 steps per tenfold), so 1,000 and 10 lakh are both easy to reach
-// and position 30 is exactly 10,000.
-const followersAt = (pos: number) => {
-  const raw = FOLLOWERS_MIN * Math.pow(10, pos / 30);
-  const step = raw >= 100_000 ? 5_000 : raw >= 10_000 ? 500 : raw >= 2_000 ? 100 : 50;
-  return Math.round(raw / step) * step;
-};
-
-function EarningsEstimate() {
-  const [pos, setPos] = useState(30) // 10,000 followers;
-  const [buyPct, setBuyPct] = useState(5);
-  const followers = followersAt(pos);
-  const buyers = Math.floor((followers * buyPct) / 100);
-  const earn = Math.round((buyers * KIT.inr * EST_COMMISSION_PCT) / 100);
-
-  return (
-    <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212] space-y-4">
-      <div>
-        <h2 className="font-bold text-lg">What could I earn?</h2>
-        <p className="text-sm text-neutral-700">
-          Slide to try it. This counts only the ₹{KIT.inr} kit, with a {EST_COMMISSION_PCT}% commission.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="est-followers" className="text-sm font-semibold">Your followers</label>
-          <span className="font-bold">{followers.toLocaleString("en-IN")}</span>
-        </div>
-        <Slider id="est-followers" min={0} max={90} step={1} value={[pos]}
-                onValueChange={(v) => setPos(v[0])} aria-label="Your followers" />
-        <div className="flex justify-between text-xs text-neutral-600"><span>1,000</span><span>10 lakh</span></div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="est-buy" className="text-sm font-semibold">How many of them buy</label>
-          <span className="font-bold">{buyPct} in every 100</span>
-        </div>
-        <Slider id="est-buy" min={1} max={10} step={1} value={[buyPct]} onValueChange={(v) => setBuyPct(v[0])} aria-label="How many followers buy" />
-        <div className="flex justify-between text-xs text-neutral-600"><span>1%</span><span>10%</span></div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="border-2 border-[#121212] bg-[#22C3A6] p-3">
-          <div className="text-xs font-semibold">People who buy</div>
-          <div className="text-2xl font-bold">{buyers.toLocaleString("en-IN")}</div>
-        </div>
-        <div className="border-2 border-[#121212] bg-[#FFC800] p-3">
-          <div className="text-xs font-semibold">You could earn about</div>
-          <div className="text-2xl font-bold">{inr(earn)}</div>
-        </div>
-      </div>
-      <p className="text-xs text-neutral-600">
-        An estimate only. Real sales depend on your posts, and a refunded sale earns nothing. Your own commission is the one we agree with you.
-      </p>
     </section>
   );
 }
