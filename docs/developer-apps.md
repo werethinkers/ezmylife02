@@ -68,6 +68,14 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 - Optional: a read-only GitHub token (fine-grained, Contents: read, on the repos developers use) as the
   `EZYL_GITHUB_TOKEN` secret, so `dev_import_file` can read private repos. Public repos work without it.
 
+## Promo page, screenshots and updates
+
+- Each version carries promo copy (`dev_app_versions.promo`: headline, tagline, audience, highlights, steps, faq) and up to 6 screenshots (`dev_app_images`, png/jpeg/webp, 400 KB each, stored as base64 in the database; the editor shrinks pictures to webp, the connector accepts a link, a public GitHub file or base64). The checks fail without the text or at least 1 screenshot and warn under 3.
+- The admin review screen shows the promo text and pictures, plus a "what changed since the live version" list for updates (code size and fingerprint, listing, charge options, promo, screenshots, new outside addresses).
+- Approving writes the copy and pictures into `tool_promo_pages` (`/promo/<name>`, the existing promo page), so the page goes live with the app and is rewritten by each approved update; unlisting hides it. Nothing needs a Lovable Publish: approval is database-only (`tools_catalog`, `tool_pricing`, `tool_promo_pages`, `get_hosted_app`).
+- Limits: the static search sitemap is built at deploy time, so a new app's promo page is reachable and shareable at once but only joins the sitemap after the next Publish. Screenshots travel inside the page data, so they are capped small.
+- Updating: a developer's Claude saves the new file with the same app id; it becomes the next version, the live one keeps running until the new one is approved.
+
 ## Charging, cost and frequency
 
 - Developers propose charge options (up to 6: levels of use, or rupee prices). The admin sees them with a rupee to credit conversion at the worst case (0.108 rupees a credit) and sets credits for each. Only the Start price is charged at use time today; per-option charging needs a change to the charging code and sign-off.

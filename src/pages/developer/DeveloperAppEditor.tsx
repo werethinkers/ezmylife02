@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, FileUp, Loader2, Plus, Send, ShieldCheck, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileUp, ImagePlus, Loader2, Plus, Send, ShieldCheck, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -11,7 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   MAX_HTML_BYTES,
+  MAX_IMAGES,
+  addImage,
   getApp,
+  listImages,
+  parseFaq,
+  parseTitled,
+  removeImage,
+  shrinkImage,
+  showFaq,
+  showTitled,
   getVersionHtml,
   kb,
   listCategories,
@@ -26,14 +35,17 @@ import {
   type DevVersion,
   type Listing,
 } from "@/lib/devApps";
-import { ChecksReport, Pill, PreviewPanel, Section, VersionPill } from "./parts";
+import { ChecksReport, Pill, PreviewPanel, Section, Shot, VersionPill } from "./parts";
 
 const selectClass =
   "mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 type ChargeRow = { label: string; kind: "per_use" | "money"; inr: string; note: string };
 
-const emptyForm = { name: "", short_description: "", description: "", category: "", types: "", support_email: "", release_notes: "", charges: [] as ChargeRow[] };
+const emptyForm = {
+  name: "", short_description: "", description: "", category: "", types: "", support_email: "", release_notes: "", charges: [] as ChargeRow[],
+  headline: "", tagline: "", audience: "", highlights: "", steps: "", faq: "",
+};
 
 const chargeRows = (o: ChargeOption[] | undefined): ChargeRow[] =>
   (o ?? []).map((c) => ({ label: c.label, kind: c.kind, inr: c.inr != null ? String(c.inr) : "", note: c.note ?? "" }));
@@ -49,6 +61,12 @@ const formFrom = (v: DevVersion | undefined) =>
         support_email: v.support_email ?? "",
         release_notes: v.release_notes ?? "",
         charges: chargeRows(v.charge_options),
+        headline: v.promo?.headline ?? "",
+        tagline: v.promo?.tagline ?? "",
+        audience: v.promo?.audience ?? "",
+        highlights: showTitled(v.promo?.highlights),
+        steps: showTitled(v.promo?.steps),
+        faq: showFaq(v.promo?.faq),
       }
     : emptyForm;
 
@@ -66,7 +84,13 @@ export default function DeveloperAppEditor() {
     enabled: !!latest,
   });
 
+  const images = useQuery({
+    queryKey: ["dev-images", latest?.id, latest?.updated_at],
+    queryFn: () => listImages(latest!.id),
+    enabled: !!latest,
+  });
   const [form, setForm] = useState(emptyForm);
+  const shotRef = useRef<HTMLInputElement>(null);
   const [paste, setPaste] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "file" | "listing" | "checks" | "submit" | "withdraw">(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -130,6 +154,14 @@ export default function DeveloperAppEditor() {
     tool_types: form.types.split(",").map((t) => t.trim()).filter(Boolean),
     support_email: form.support_email,
     release_notes: form.release_notes,
+    promo: {
+      headline: form.headline,
+      tagline: form.tagline,
+      audience: form.audience,
+      highlights: parseTitled(form.highlights),
+      steps: parseTitled(form.steps),
+      faq: parseFaq(form.faq),
+    },
     charge_options: form.charges
       .filter((c) => c.label.trim() !== "")
       .map((c) => ({
@@ -165,6 +197,25 @@ export default function DeveloperAppEditor() {
     await saveHtml(await f.text(), f.name);
   };
 
+  const onShots = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const list = Array.from(files);
+    if (shotRef.current) shotRef.current.value = "";
+    if (listingDirty) return toast.error("Save the listing first, then add screenshots.");
+    await act(
+      "file",
+      async () => {
+        for (const f of list) {
+          const { mime, base64 } = await shrinkImage(f);
+          await addImage(app.id, mime, base64, f.name.replace(/\.[^.]+$/, "").slice(0, 60));
+        }
+      },
+      list.length > 1 ? "Screenshots added." : "Screenshot added.",
+    );
+  };
+
+  const shots = images.data ?? [];
+
   const reviewNotes = latest.review_notes && (latest.status === "changes_requested" || latest.status === "draft" || latest.status === "rejected") ? latest.review_notes : null;
 
   return (
@@ -187,6 +238,13 @@ export default function DeveloperAppEditor() {
               <Button asChild variant="outline" size="sm">
                 <a href={`/tool/${app.tool_id}`} target="_blank" rel="noreferrer">
                   Open live app <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            )}
+            {app.status === "live" && (
+              <Button asChild variant="outline" size="sm">
+                <a href={`/promo/${(latest.name || app.tool_id).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`} target="_blank" rel="noreferrer">
+                  Open its page <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </Button>
             )}
@@ -287,6 +345,38 @@ export default function DeveloperAppEditor() {
                   </div>
                 )}
                 <fieldset className="sm:col-span-2 rounded-xl border-2 border-ink/20 p-4" disabled={locked}>
+                  <legend className="px-1 text-sm font-semibold">Your app's own page (required)</legend>
+                  <p className="text-xs text-muted-foreground">
+                    Every app gets a page at ezyourlife.com/promo/your-app-name where visitors see what it does before they try it. It goes live when our team approves the app. Write it for the person who will use the app; do not add ratings, reviews or customer quotes.
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    <div>
+                      <Label htmlFor="p-head">Headline</Label>
+                      <Input id="p-head" value={form.headline} maxLength={80} onChange={(e) => setForm({ ...form, headline: e.target.value })} placeholder="Split any bill in seconds" />
+                    </div>
+                    <div>
+                      <Label htmlFor="p-tag">Tagline</Label>
+                      <Input id="p-tag" value={form.tagline} maxLength={200} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Enter the bill and the tip. See what each friend owes." />
+                    </div>
+                    <div>
+                      <Label htmlFor="p-aud">Who it is for (optional)</Label>
+                      <Input id="p-aud" value={form.audience} maxLength={160} onChange={(e) => setForm({ ...form, audience: e.target.value })} placeholder="Friends eating out" />
+                    </div>
+                    <div>
+                      <Label htmlFor="p-high">Highlights: 3 to 6, one per line as “Title: sentence”</Label>
+                      <Textarea id="p-high" rows={4} value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} placeholder={"Fair splits: works for any group size.\nTip presets: 5 to 25 percent."} />
+                    </div>
+                    <div>
+                      <Label htmlFor="p-steps">How it works: 2 to 5 steps, one per line as “Title: sentence”</Label>
+                      <Textarea id="p-steps" rows={3} value={form.steps} onChange={(e) => setForm({ ...form, steps: e.target.value })} placeholder={"Enter the bill: type the total.\nPick a tip: choose a preset."} />
+                    </div>
+                    <div>
+                      <Label htmlFor="p-faq">Questions people ask (optional): one per line as “Question | Answer”</Label>
+                      <Textarea id="p-faq" rows={3} value={form.faq} onChange={(e) => setForm({ ...form, faq: e.target.value })} placeholder="Does it save my data? | No, nothing leaves your phone." />
+                    </div>
+                  </div>
+                </fieldset>
+                <fieldset className="sm:col-span-2 rounded-xl border-2 border-ink/20 p-4" disabled={locked}>
                   <legend className="px-1 text-sm font-semibold">How should people be charged? (optional)</legend>
                   <p className="text-xs text-muted-foreground">
                     List the levels of use, or what you would sell for rupees. Our team turns each one into credits and sets the final price; you cannot set it.
@@ -338,8 +428,32 @@ export default function DeveloperAppEditor() {
 
             <Section
               step={3}
+              title="Screenshots"
+              hint={`Real pictures of your app for its page: the start screen, the app in use, and what it produces. At least 1 is required, 3 or more look best (up to ${MAX_IMAGES}). We shrink them for you.`}
+              aside={
+                <>
+                  <input ref={shotRef} type="file" multiple accept="image/png,image/jpeg,image/webp" className="sr-only" id="dev-shots" onChange={(e) => void onShots(e.target.files)} disabled={locked || busy !== null || shots.length >= MAX_IMAGES} />
+                  <Button type="button" variant="outline" onClick={() => shotRef.current?.click()} disabled={locked || busy !== null || shots.length >= MAX_IMAGES}>
+                    {busy === "file" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />} Add screenshots
+                  </Button>
+                </>
+              }
+            >
+              {shots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No screenshots yet.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {shots.map((s) => (
+                    <Shot key={s.id} image={s} onRemove={locked ? undefined : () => (listingDirty ? toast.error("Save the listing first.") : void act("file", () => removeImage(s.id), "Screenshot removed."))} />
+                  ))}
+                </div>
+              )}
+            </Section>
+
+            <Section
+              step={4}
               title="Checks"
-              hint="They run on EzYourLife's server: keys and passwords, AI calls, payments, size, phone fit, outside addresses, listing and similar apps."
+              hint="They run on EzYourLife's server: keys and passwords, AI calls, payments, size, phone fit, outside addresses, listing, promo page, screenshots and similar apps."
               aside={
                 <Button
                   type="button"
@@ -359,7 +473,7 @@ export default function DeveloperAppEditor() {
               )}
             </Section>
 
-            <Section step={4} title="Send for review" hint="Our team tries the app, sets the credits per use and your share, then approves. One click puts it live.">
+            <Section step={5} title="Send for review" hint="Our team tries the app, sets the credits per use and your share, then approves. One click puts it live.">
               <Button
                 type="button"
                 onClick={() => void act("submit", () => submitVersion(latest.id), "Sent for review.")}

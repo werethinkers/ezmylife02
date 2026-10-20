@@ -69,6 +69,9 @@ Remove `window.top`, `top.location`, `parent.location` and `parent.document`. Li
 ### 8. Outside addresses
 List every external host the app calls (fonts, CDNs, public APIs). The checks show this list to the admin, who will ask about anything unusual. Remove analytics and tracking scripts; EzYourLife has its own.
 
+### 9. Promo page and screenshots
+Write the app's promo copy from the code and README (headline, tagline, highlights, how-it-works steps) and collect real screenshots from the developer or by running the app yourself. Do not invent features, ratings, reviews or user numbers.
+
 ## What to tell the developer
 End with a short list:
 - what was removed and why

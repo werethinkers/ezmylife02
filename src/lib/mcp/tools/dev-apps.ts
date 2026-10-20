@@ -3,6 +3,7 @@ import { z } from "zod";
 import { SITE, dbMessage, devClient, fail, latestVersion, notSignedIn, text } from "./dev-shared";
 import { MAX_APP_BYTES, PART_UNITS } from "../../devUploadParts";
 import { devGetUploadLink, devImportFile, uploadText } from "./dev-import";
+import { devAddImage, devRemoveImage, latestPromo } from "./dev-images";
 
 /*
  * Developer tools: let Claude (or any MCP client) put a developer's web app on EzYourLife.
@@ -61,6 +62,15 @@ Ask: "How do you want to charge for this? Different levels of use, or something 
 - Anything that runs hourly, daily, weekly, monthly, on a timer, on auto-refresh or on a schedule must become a button (for example "Get output"). Each press is one use and one charge. Run dev_run_checks: the "Runs only when pressed" check flags setInterval, auto-refresh, cron code and schedule wording.
 - Repeat runs are only possible if the visitor agrees after being told how many credits that frequency over that period will cost. Scheduled runs are not available yet, so do not build them; if the developer wants them, add a charge option such as {label: "Weekly report, 4 runs", kind: "per_use"} so the team can price it.
 
+## The app's promo page and screenshots (required, built in)
+- Every app gets its own page at ${SITE}/promo/<app-name>, written from listing.promo and shown when the team approves the app. Draft it from the code and README: headline, tagline, who it is for, 3 to 6 highlights, 2 to 5 "how it works" steps, and optionally a few questions. Only say what the app really does. No ratings, reviews, testimonials, user counts or comparisons you cannot back up.
+- Ask the developer for pictures: "Please share 3 or more screenshots of the app: the start screen, the app in use, and what it produces." Add each with dev_add_image (from a public https link, a file in a public GitHub repo, or base64 of a picture under 400 KB). If you can run the app yourself (for example in Claude Code with a browser), take the screenshots yourself. Never make up or mock screenshots.
+- The checks require the promo text and at least 1 screenshot. The team sees all of it while reviewing and it goes live with the app.
+
+## Updating an app that is live
+- When the developer changes features or fixes the code, save the new file with the same app_id (dev_save_app / dev_import_file). That starts the next version; the live app keeps running unchanged. Describe what changed in listing.release_notes, update promo and screenshots if the app looks or works differently, run the checks and submit again. The team sees a "what changed" list and approves with one click; no one needs to do anything else for it to go live.
+- If the team asks for changes, dev_get_status shows their notes. Fix them in the code, save, check and submit again.
+
 ## Steps
 1. dev_create_app(slug, name) once (or dev_list_my_apps to find an existing app). The address becomes ${SITE}/tool/dev-<slug>.
 2. Send the file (above) and dev_save_app(app_id, listing).
@@ -85,6 +95,18 @@ const chargeOptionsSchema = z
   .max(6)
   .describe("Every way the developer wants to charge, so the team can price each one. Replaces the earlier list. Pass [] to clear. The team, not you, decides the credits.");
 
+const titled = z.object({ title: z.string().trim().min(1).max(60), body: z.string().trim().max(220).optional() });
+const promoSchema = z
+  .object({
+    headline: z.string().trim().min(10).max(80).describe("The page's main line, for example 'Split any bill in seconds'."),
+    tagline: z.string().trim().min(20).max(200).describe("One sentence on what the visitor gets."),
+    audience: z.string().trim().max(160).optional().describe("Who it is for."),
+    highlights: z.array(titled).min(3).max(6).describe("3 to 6 things the app does well. Real features only."),
+    steps: z.array(titled).min(2).max(5).describe("How it works, 2 to 5 steps."),
+    faq: z.array(z.object({ q: z.string().trim().min(1).max(120), a: z.string().trim().min(1).max(400) })).max(5).optional(),
+  })
+  .describe("The app's own promo page. Required. No ratings, reviews, customer quotes or claims the app does not back up.");
+
 const listingSchema = z
   .object({
     name: z.string().max(60).optional(),
@@ -95,6 +117,7 @@ const listingSchema = z
     support_email: z.string().max(200).optional(),
     release_notes: z.string().max(1000).optional(),
     charge_options: chargeOptionsSchema.optional(),
+    promo: promoSchema.optional(),
   })
   .describe("Store listing fields to set. Leave out any field you are not changing.");
 
@@ -281,6 +304,7 @@ export const devGetStatus = defineTool({
       credits_per_use: app.credits,
       developer_share_pct: app.share_pct,
       charge_plan_set_by_team: app.charge_plan ?? null,
+      latest_promo_and_screenshots: await latestPromo(sb, app_id),
       versions: versions ?? [],
     };
     return text(JSON.stringify(out, null, 2), out);
@@ -294,6 +318,8 @@ export const devTools = [
   devSaveApp,
   devImportFile,
   devGetUploadLink,
+  devAddImage,
+  devRemoveImage,
   devRunChecks,
   devGetPreviewLink,
   devSubmitForReview,

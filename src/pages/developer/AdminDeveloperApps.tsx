@@ -22,10 +22,11 @@ import {
   when,
   NORMAL_INR_PER_CREDIT,
   WORST_CASE_INR_PER_CREDIT,
+  changesSinceLive,
   creditsForInr,
   type QueueItem,
 } from "@/lib/devApps";
-import { ChecksReport, Pill, PreviewPanel, VersionPill } from "./parts";
+import { ChecksReport, Pill, PreviewPanel, PromoSummary, VersionPill } from "./parts";
 
 /*
  * Admin review of developer apps. Approve and publish is one click: it sets the credits per use
@@ -106,6 +107,21 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
         <div className="space-y-5">
+          {item.live && (
+            <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
+              <h3 className="mb-2 font-display text-base font-bold">What changed since live version {item.live.version_no}</h3>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {changesSinceLive(item).map((c) => <li key={c}>{c}</li>)}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">The live version keeps running unchanged until you approve this one. Approving replaces it and updates the app's promo page.</p>
+            </div>
+          )}
+
+          <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
+            <h3 className="mb-3 font-display text-base font-bold">Promo page and screenshots (goes live when you approve)</h3>
+            <PromoSummary promo={item.promo} images={item.images} />
+          </div>
+
           <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
             <h3 className="mb-3 font-display text-base font-bold">Checks report</h3>
             <ChecksReport qa={item.qa} />

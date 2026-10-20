@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Laptop, RotateCcw, Smartphone } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ExternalLink, Laptop, RotateCcw, Smartphone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HostedFrame } from "@/apps/hosted/HostedFrame";
-import { CHECK_TEXT, VERSION_TEXT, when, type QaReport, type VersionStatus } from "@/lib/devApps";
+import { CHECK_TEXT, VERSION_TEXT, imageData, when, type DevImage, type Promo, type QaReport, type VersionStatus } from "@/lib/devApps";
 
 /* Pieces shared by the developer pages and the admin review page. */
 
@@ -134,6 +135,65 @@ export function PreviewPanel({ html, title, fullScreenHref, emptyText }: { html:
       <p className="mt-3 text-xs text-muted-foreground">
         This is the real app, running in the same locked-down frame the store uses. It works here without spending credits.
       </p>
+    </div>
+  );
+}
+
+/** One screenshot, loaded on its own so the page does not wait for all of them. */
+export function Shot({ image, onRemove, className }: { image: DevImage; onRemove?: () => void; className?: string }) {
+  const q = useQuery({ queryKey: ["dev-image", image.id], queryFn: () => imageData(image.id), staleTime: Infinity });
+  return (
+    <figure className={`relative overflow-hidden rounded-xl border-2 border-ink bg-background ${className ?? ""}`}>
+      {q.data ? (
+        <img src={q.data} alt={image.caption || `Screenshot ${image.position}`} className="aspect-[4/3] w-full object-cover object-top" loading="lazy" />
+      ) : (
+        <div className="flex aspect-[4/3] items-center justify-center text-xs text-muted-foreground">{q.isError ? "Could not load" : "Loading…"}</div>
+      )}
+      {(image.caption || onRemove) && (
+        <figcaption className="flex items-center justify-between gap-2 border-t-2 border-ink px-2 py-1 text-xs">
+          <span className="min-w-0 truncate">{image.caption || `Screenshot ${image.position}`}</span>
+          {onRemove && (
+            <button type="button" onClick={onRemove} className="shrink-0 rounded p-1 hover:bg-coral/30" aria-label={`Remove screenshot ${image.position}`}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** The promo page text as visitors will see it (headline, highlights, steps, questions), with the screenshots. */
+export function PromoSummary({ promo, images }: { promo: Promo | null | undefined; images: DevImage[] | undefined }) {
+  if (!promo) return <p className="text-sm text-muted-foreground">No promo page text yet.</p>;
+  return (
+    <div className="space-y-3 text-sm">
+      <div>
+        <p className="font-display text-lg font-bold">{promo.headline}</p>
+        <p className="text-muted-foreground">{promo.tagline}</p>
+        {promo.audience && <p className="mt-1 text-xs font-semibold">For: {promo.audience}</p>}
+      </div>
+      {(images?.length ?? 0) > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {images!.map((i) => <Shot key={i.id} image={i} />)}
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <p className="font-semibold">Highlights</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">{promo.highlights.map((h) => <li key={h.title}><strong>{h.title}</strong>{h.body ? ` — ${h.body}` : ""}</li>)}</ul>
+        </div>
+        <div>
+          <p className="font-semibold">How it works</p>
+          <ol className="mt-1 list-decimal space-y-1 pl-5">{promo.steps.map((s) => <li key={s.title}><strong>{s.title}</strong>{s.body ? ` — ${s.body}` : ""}</li>)}</ol>
+        </div>
+      </div>
+      {(promo.faq?.length ?? 0) > 0 && (
+        <div>
+          <p className="font-semibold">Questions</p>
+          <ul className="mt-1 space-y-1">{promo.faq!.map((f) => <li key={f.q}><strong>{f.q}</strong> {f.a}</li>)}</ul>
+        </div>
+      )}
     </div>
   );
 }

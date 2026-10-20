@@ -69,6 +69,10 @@ Call `dev_save_app(app_id, listing)` with:
 
 Draft these from the code and README. Ask the developer only for what cannot be found, in one short question.
 
+### The app's own page and screenshots (required)
+Every app gets a page at ezyourlife.com/promo/<name>, built from what you send and shown to the team at review. Put it in `listing.promo`: `headline` (10 to 80 characters), `tagline` (one sentence), `audience`, 3 to 6 `highlights` and 2 to 5 `steps` (each `{title, body}`), and a few `faq` items if useful. Write only what the app really does: no ratings, reviews, customer quotes, user counts or claims you cannot back up.
+Then ask the developer: "Please share 3 or more screenshots: the start screen, the app in use, and what it produces." Add each with `dev_add_image` (a public https link, a public GitHub file, or base64 under 400 KB). If you can run the app and take screenshots yourself, do that. Never invent or mock pictures. The checks need the promo text and at least 1 screenshot.
+
 ### Charging
 Ask once: "How do you want to charge: different levels of use, or something you would sell for rupees?" Pass every answer (up to 6) in `listing.charge_options`, each `{label, kind: "per_use" | "money", inr?, note?}`. Do not convert rupees to credits and do not suggest credit amounts.
 - If they say free or 0, record that as their wish only. The team prices every app from its real running cost, in the background. Never tell the developer what an app costs to run, never quote credits or margins, and never promise it will be free.
@@ -80,6 +84,9 @@ Ask once: "How do you want to charge: different levels of use, or something you 
 1. Call `dev_run_checks(app_id)`. Fix every `MUST FIX` in the source, rebuild, re-send and re-run until none remain. Mention each `LOOK` item to the developer; the admin sees them too.
 2. Call `dev_get_preview_link(app_id)`. Give the developer the link to try the real app (they must be signed in to ezyourlife.com). It runs in the same sandbox as the store and uses no credits.
 3. Call `dev_submit_for_review(app_id)` only after the developer says it works and agrees to send it.
+
+## Updating a live app
+When the developer fixes or changes features, edit the code, rebuild the single file and save it with the same `app_id`. That starts the next version; the live app keeps running unchanged. Put what changed in `release_notes`, refresh the promo text and screenshots if the app now looks or works differently, run the checks and ask before submitting. The team sees what changed and approves with one click; nothing else is needed for the update to go live. If the team asked for changes, `dev_get_status` shows their notes: fix them in the code and submit again.
 
 ## 8. Report back
 

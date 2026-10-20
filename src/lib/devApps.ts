@@ -74,6 +74,25 @@ export const NORMAL_INR_PER_CREDIT = 0.376;
 export const creditsForInr = (inr: number, perCredit: number = WORST_CASE_INR_PER_CREDIT) =>
   inr > 0 ? Math.ceil(inr / perCredit - 1e-9) : 0;
 
+/** The app's own page (/promo/<name>): written here, shown to the team at review, published on approval. */
+export interface Promo {
+  headline: string;
+  tagline: string;
+  audience?: string;
+  highlights: { title: string; body: string }[];
+  steps: { title: string; body: string }[];
+  faq?: { q: string; a: string }[];
+}
+
+/** A screenshot of a version (the picture itself is read separately with imageData). */
+export interface DevImage {
+  id: string;
+  position: number;
+  caption: string | null;
+  mime: string;
+  bytes: number;
+}
+
 export interface DevApp {
   id: string;
   developer_id: string;
@@ -115,6 +134,7 @@ export interface DevVersion {
   support_email: string | null;
   release_notes: string | null;
   charge_options: ChargeOption[];
+  promo: Promo | null;
   qa: QaReport | null;
   qa_passed: boolean;
   qa_at: string | null;
@@ -134,10 +154,11 @@ export interface Listing {
   support_email?: string;
   release_notes?: string;
   charge_options?: ChargeOption[];
+  promo?: Promo;
 }
 
 const VERSION_COLUMNS =
-  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
+  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
 
 export const MAX_HTML_BYTES = MAX_APP_BYTES;
 
@@ -245,6 +266,67 @@ export const submitVersion = (versionId: string) => rpc<{ ok: boolean }>("dev_su
 
 export const withdrawVersion = (versionId: string) => rpc<{ ok: boolean }>("dev_withdraw", { _version_id: versionId });
 
+// ----- screenshots -----
+
+export const MAX_IMAGES = 6;
+
+export async function listImages(versionId: string): Promise<DevImage[]> {
+  const { data, error } = await db.from("dev_app_images").select("id, position, caption, mime, bytes").eq("version_id", versionId).order("position");
+  if (error) throw new Error(cleanError(error.message));
+  return (data ?? []) as DevImage[];
+}
+
+/** One screenshot as a data address an <img> can show. Readable by its developer and by admins only. */
+export async function imageData(imageId: string): Promise<string> {
+  const { data, error } = await db.from("dev_app_images").select("mime, data").eq("id", imageId).maybeSingle();
+  if (error || !data) throw new Error(error ? cleanError(error.message) : "Screenshot not found.");
+  return `data:${data.mime};base64,${data.data}`;
+}
+
+export const addImage = (appId: string, mime: string, base64: string, caption: string | null) =>
+  rpc<{ image_id: string; position: number; version_id: string; count: number }>("dev_add_image", { _app_id: appId, _mime: mime, _data: base64, _caption: caption });
+
+export const removeImage = (imageId: string) => rpc<{ ok: boolean }>("dev_remove_image", { _image_id: imageId });
+
+/** Shrinks a picture in the browser to at most 1100 px wide as webp, under 390 KB, ready for addImage. */
+export async function shrinkImage(file: File): Promise<{ mime: string; base64: string }> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1100 / bitmap.width);
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("This browser cannot resize pictures.");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  for (const q of [0.85, 0.7, 0.55, 0.4]) {
+    const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, "image/webp", q));
+    if (blob && blob.size <= 390 * 1024) {
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return { mime: "image/webp", base64: btoa(bin) };
+    }
+  }
+  throw new Error("That picture is too detailed to shrink under 400 KB. Try a smaller screenshot.");
+}
+
+/** "Title: text" per line → items, and back. */
+export const parseTitled = (t: string): { title: string; body: string }[] =>
+  t.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.indexOf(":");
+    return i > 0 ? { title: l.slice(0, i).trim(), body: l.slice(i + 1).trim() } : { title: l, body: "" };
+  });
+export const showTitled = (a: { title: string; body: string }[] | undefined) => (a ?? []).map((x) => (x.body ? `${x.title}: ${x.body}` : x.title)).join("\n");
+/** "Question? | Answer" per line. */
+export const parseFaq = (t: string): { q: string; a: string }[] =>
+  t.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.indexOf("|");
+    return i > 0 ? { q: l.slice(0, i).trim(), a: l.slice(i + 1).trim() } : { q: l, a: "" };
+  }).filter((x) => x.q && x.a);
+export const showFaq = (a: { q: string; a: string }[] | undefined) => (a ?? []).map((x) => `${x.q} | ${x.a}`).join("\n");
+
 // ----- store categories (for the listing form) -----
 
 export async function listCategories(): Promise<string[]> {
@@ -269,6 +351,21 @@ export interface CostEstimate {
   notes: string[];
 }
 
+export interface LiveSummary {
+  version_no: number;
+  name: string;
+  short_description: string;
+  description: string;
+  category: string | null;
+  tool_types: string[];
+  charge_options: ChargeOption[] | null;
+  promo: Promo | null;
+  bytes: number;
+  html_sha256: string | null;
+  hosts: string[];
+  image_count: number;
+}
+
 export interface QueueItem {
   version_id: string;
   version_no: number;
@@ -281,6 +378,10 @@ export interface QueueItem {
   release_notes: string | null;
   source: FileSource | null;
   charge_options: ChargeOption[] | null;
+  promo?: Promo | null;
+  images?: DevImage[];
+  /** The live version this one would replace (null for a first version). */
+  live?: LiveSummary | null;
   cost_estimate?: CostEstimate | null;
   qa: QaReport | null;
   qa_passed: boolean;
@@ -309,6 +410,28 @@ export interface AdminAppRow {
   latest_status: VersionStatus | null;
   name: string | null;
   developer_email: string | null;
+}
+
+/** Plain-language list of what an update changes compared with the live version. */
+export function changesSinceLive(item: QueueItem): string[] {
+  const l = item.live;
+  if (!l) return [];
+  const out: string[] = [];
+  if (item.html_sha256 !== l.html_sha256) {
+    const d = item.bytes - l.bytes;
+    out.push(`App code changed (${kb(l.bytes)} → ${kb(item.bytes)}${d === 0 ? ", same size" : d > 0 ? `, ${kb(d)} bigger` : `, ${kb(-d)} smaller`}). Try the preview.`);
+  } else out.push("App code is unchanged.");
+  if (item.name !== l.name) out.push(`Name: “${l.name}” → “${item.name}”`);
+  if (item.short_description !== l.short_description) out.push("One-line description changed");
+  if (item.description !== l.description) out.push("Full description changed");
+  if (item.category !== l.category) out.push(`Category: ${l.category ?? "none"} → ${item.category ?? "none"}`);
+  if (JSON.stringify(item.charge_options ?? []) !== JSON.stringify((l.charge_options ?? []).map(({ credits: _c, ...o }) => o))) out.push("Charge options changed (the team prices them again)");
+  if (JSON.stringify(item.promo ?? null) !== JSON.stringify(l.promo ?? null)) out.push("Promo page text changed");
+  const imgs = item.images?.length ?? 0;
+  if (imgs !== l.image_count) out.push(`Screenshots: ${l.image_count} → ${imgs}`);
+  const newHosts = (item.qa?.hosts ?? []).filter((h) => !(l.hosts ?? []).includes(h));
+  if (newHosts.length) out.push(`New outside addresses: ${newHosts.join(", ")}`);
+  return out;
 }
 
 export const adminQueue = () => rpc<QueueItem[]>("admin_dev_queue");

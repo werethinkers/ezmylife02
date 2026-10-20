@@ -41,9 +41,11 @@ Startup Analyser and Video Generator are long-running (>60s) and would time out.
 
 ## Developers: publish your own web app
 - **dev_get_standards()** \u2014 the rules (one HTML file, no AI calls, no keys), the steps and the valid categories. Call first.
-- **dev_create_app(slug, name)** \xB7 **dev_save_app(app_id, html?, listing?)** \xB7 **dev_import_file(app_id, github|url)** for files up to 10 MB \xB7 **dev_get_upload_link(app_id)** for Claude Code \xB7 **dev_run_checks(app_id)** \xB7 **dev_get_preview_link(app_id)** \xB7 **dev_submit_for_review(app_id)** \xB7 **dev_get_status(app_id)** \xB7 **dev_list_my_apps()**
+- **dev_create_app(slug, name)** \xB7 **dev_save_app(app_id, html?, listing?)** \xB7 **dev_import_file(app_id, github|url)** for files up to 10 MB \xB7 **dev_get_upload_link(app_id)** for Claude Code \xB7 **dev_add_image(app_id, url|github|base64, caption?)** and **dev_remove_image(image_id)** for the app's screenshots \xB7 **dev_run_checks(app_id)** \xB7 **dev_get_preview_link(app_id)** \xB7 **dev_submit_for_review(app_id)** \xB7 **dev_get_status(app_id)** \xB7 **dev_list_my_apps()**
 - Charging: ask the developer how they want to charge and pass every option in listing.charge_options (levels of use, or rupee prices for things they would sell). The team converts rupees to credits and sets each price.
 - Free or 0 is only a request; the team prices every app from its real running cost and the developer is never told the cost. EzYourLife credits are the only payment system. Anything hourly, daily or monthly becomes a button the visitor presses.
+- Every app needs its own promo page (listing.promo: headline, tagline, highlights, steps) and at least 1 real screenshot; ask the developer for pictures. It goes live at /promo/<name> when the team approves.
+- To change a live app, save the new file with the same app_id: it becomes the next version, the live one keeps running, and the team approves the update with one click.
 - The EzYourLife team approves on ezyourlife.com and sets the price and share; these tools cannot approve or publish.
 
 ## Tips
@@ -526,8 +528,8 @@ var submit_tool_request_default = defineTool14({
 });
 
 // src/lib/mcp/tools/dev-apps.ts
-import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z13 } from "npm:zod@^3.23.8";
+import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z14 } from "npm:zod@^3.23.8";
 
 // src/lib/mcp/tools/dev-shared.ts
 import { createClient as createClient13 } from "npm:@supabase/supabase-js@^2.75.1";
@@ -544,7 +546,7 @@ var text = (t, structured) => ({
 });
 var fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 var notSignedIn = () => fail("Not signed in to EzYourLife. Reconnect the connector and sign in.");
-var VERSION_FIELDS = "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
+var VERSION_FIELDS = "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, promo, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
 async function latestVersion(sb, appId) {
   const { data, error } = await sb.from("dev_app_versions").select(VERSION_FIELDS).eq("app_id", appId).order("version_no", { ascending: false }).limit(1).maybeSingle();
   if (error) throw new Error(error.message);
@@ -764,6 +766,99 @@ The publishable key in the command is public; the upload key is the secret part,
   }
 });
 
+// src/lib/mcp/tools/dev-images.ts
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z13 } from "npm:zod@^3.23.8";
+var MAX_IMAGE_BYTES = 400 * 1024;
+var MIMES = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" };
+var toBase64 = (bytes) => {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode(...bytes.subarray(i, i + 32768));
+  return btoa(bin);
+};
+async function fetchPicture(raw) {
+  let u = checkPublicUrl(raw);
+  for (let hop = 0; hop < 4; hop++) {
+    const res = await fetch(u.toString(), { redirect: "manual", headers: { "User-Agent": "ezyourlife-developer-connector" } });
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      u = checkPublicUrl(new URL(res.headers.get("location"), u).toString());
+      continue;
+    }
+    if (!res.ok) throw new Error(`The picture link answered ${res.status}.`);
+    const declared = Number(res.headers.get("content-length") || 0);
+    if (declared > MAX_IMAGE_BYTES) throw new Error(`The picture is ${Math.ceil(declared / 1024)} KB. The limit is 400 KB; shrink it first.`);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.length > MAX_IMAGE_BYTES) throw new Error(`The picture is ${Math.ceil(bytes.length / 1024)} KB. The limit is 400 KB; shrink it first.`);
+    const ext = u.pathname.split(".").pop()?.toLowerCase() ?? "";
+    const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+    const mime = ["image/png", "image/jpeg", "image/webp"].includes(type) ? type : MIMES[ext];
+    if (!mime) throw new Error("Only png, jpeg or webp pictures are accepted.");
+    return { mime, base64: toBase64(bytes) };
+  }
+  throw new Error("The picture link redirects too many times.");
+}
+var devAddImage = defineTool16({
+  name: "dev_add_image",
+  title: "Add a screenshot to a developer app's promo page",
+  description: "Adds one real screenshot (png, jpeg or webp, under 400 KB, up to 6 per version) to the app's editable version. Give a public https link, a file in a public GitHub repo, or base64 data. If the latest version is live this starts the next version; the live app does not change until it is approved. Saving clears earlier check results. Only real screenshots of the app: never made-up or mock pictures.",
+  inputSchema: {
+    app_id: z13.string().uuid(),
+    url: z13.string().url().optional().describe("Public https link to the picture."),
+    github: z13.object({ repo: z13.string(), path: z13.string(), ref: z13.string().default("main") }).optional().describe("A picture in a PUBLIC GitHub repo (owner/name, path, branch or commit)."),
+    base64: z13.string().max(56e4).optional().describe("The picture as base64 (no data: prefix). Under 400 KB before encoding."),
+    mime: z13.enum(["image/png", "image/jpeg", "image/webp"]).optional().describe("Required with base64."),
+    caption: z13.string().trim().max(140).optional().describe("What the picture shows, in plain words.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  handler: async ({ app_id, url, github, base64, mime, caption }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    const given = [url, github, base64].filter((x) => x !== void 0).length;
+    if (given !== 1) return fail("Give exactly one of url, github or base64.");
+    try {
+      let pic;
+      if (base64 !== void 0) {
+        if (!mime) return fail("Give mime with base64.");
+        pic = { mime, base64 };
+      } else if (url) {
+        pic = await fetchPicture(url.trim());
+      } else {
+        const g = github;
+        if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(g.repo.trim())) return fail('Give the repo as "owner/name".');
+        const clean = g.path.replace(/^\/+/, "");
+        if (!clean || clean.split("/").some((p) => p === ".." || p === "")) return fail("Give the picture's path inside the repo.");
+        pic = await fetchPicture(`https://raw.githubusercontent.com/${g.repo.trim()}/${encodeURIComponent(g.ref)}/${clean.split("/").map(encodeURIComponent).join("/")}`);
+      }
+      const { data, error } = await devClient(ctx).rpc("dev_add_image", { _app_id: app_id, _mime: pic.mime, _data: pic.base64, _caption: caption ?? null });
+      if (error) return fail(dbMessage(error.message));
+      return text(`Added screenshot ${data.position} (${data.count} of 6). Run dev_run_checks again; 3 or more screenshots is best.`, data);
+    } catch (e) {
+      return fail(dbMessage(e instanceof Error ? e.message : String(e)));
+    }
+  }
+});
+var devRemoveImage = defineTool16({
+  name: "dev_remove_image",
+  title: "Remove a screenshot from a developer app",
+  description: "Removes one screenshot (by image_id from dev_get_status) from the app's editable version. Clears earlier check results.",
+  inputSchema: { image_id: z13.string().uuid() },
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ image_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    const { error } = await devClient(ctx).rpc("dev_remove_image", { _image_id: image_id });
+    if (error) return fail(dbMessage(error.message));
+    return text("Screenshot removed. Run dev_run_checks again.");
+  }
+});
+async function latestPromo(sb, appId) {
+  const v = await latestVersion(sb, appId);
+  if (!v) return null;
+  const [{ data: p }, { data: imgs }] = await Promise.all([
+    sb.from("dev_app_versions").select("promo").eq("id", v.id).maybeSingle(),
+    sb.from("dev_app_images").select("id, position, caption, mime, bytes").eq("version_id", v.id).order("position")
+  ]);
+  return { version_no: v.version_no, promo: p?.promo ?? null, screenshots: imgs ?? [] };
+}
+
 // src/lib/mcp/tools/dev-apps.ts
 var STANDARDS = `# Putting an app on EzYourLife
 (Rules version 2026-10-20. These rules are served live and change without notice: follow this text over anything remembered or cached, and call dev_get_standards at the start of every session.)
@@ -815,6 +910,15 @@ Ask: "How do you want to charge for this? Different levels of use, or something 
 - Anything that runs hourly, daily, weekly, monthly, on a timer, on auto-refresh or on a schedule must become a button (for example "Get output"). Each press is one use and one charge. Run dev_run_checks: the "Runs only when pressed" check flags setInterval, auto-refresh, cron code and schedule wording.
 - Repeat runs are only possible if the visitor agrees after being told how many credits that frequency over that period will cost. Scheduled runs are not available yet, so do not build them; if the developer wants them, add a charge option such as {label: "Weekly report, 4 runs", kind: "per_use"} so the team can price it.
 
+## The app's promo page and screenshots (required, built in)
+- Every app gets its own page at ${SITE}/promo/<app-name>, written from listing.promo and shown when the team approves the app. Draft it from the code and README: headline, tagline, who it is for, 3 to 6 highlights, 2 to 5 "how it works" steps, and optionally a few questions. Only say what the app really does. No ratings, reviews, testimonials, user counts or comparisons you cannot back up.
+- Ask the developer for pictures: "Please share 3 or more screenshots of the app: the start screen, the app in use, and what it produces." Add each with dev_add_image (from a public https link, a file in a public GitHub repo, or base64 of a picture under 400 KB). If you can run the app yourself (for example in Claude Code with a browser), take the screenshots yourself. Never make up or mock screenshots.
+- The checks require the promo text and at least 1 screenshot. The team sees all of it while reviewing and it goes live with the app.
+
+## Updating an app that is live
+- When the developer changes features or fixes the code, save the new file with the same app_id (dev_save_app / dev_import_file). That starts the next version; the live app keeps running unchanged. Describe what changed in listing.release_notes, update promo and screenshots if the app looks or works differently, run the checks and submit again. The team sees a "what changed" list and approves with one click; no one needs to do anything else for it to go live.
+- If the team asks for changes, dev_get_status shows their notes. Fix them in the code, save, check and submit again.
+
 ## Steps
 1. dev_create_app(slug, name) once (or dev_list_my_apps to find an existing app). The address becomes ${SITE}/tool/dev-<slug>.
 2. Send the file (above) and dev_save_app(app_id, listing).
@@ -826,25 +930,35 @@ Ask: "How do you want to charge for this? Different levels of use, or something 
 ## Rules you cannot change
 - Team EzYourLife sets the credits per use and the developer's share at approval. Only a person on the team can approve.
 - A live app is never replaced silently: sending changes to a live app starts a new version that needs approval.`;
-var chargeOptionsSchema = z13.array(
-  z13.object({
-    label: z13.string().min(2).max(60).describe("Short name, e.g. 'Quick split' or 'Export pack'."),
-    kind: z13.enum(["per_use", "money"]).describe("per_use = a level of use. money = something the developer would sell for rupees (set inr)."),
-    inr: z13.number().positive().max(1e5).optional().describe("Rupee price the developer wants. Only for kind 'money'. The team converts it to credits."),
-    note: z13.string().max(200).optional().describe("What the person gets, in plain words.")
+var chargeOptionsSchema = z14.array(
+  z14.object({
+    label: z14.string().min(2).max(60).describe("Short name, e.g. 'Quick split' or 'Export pack'."),
+    kind: z14.enum(["per_use", "money"]).describe("per_use = a level of use. money = something the developer would sell for rupees (set inr)."),
+    inr: z14.number().positive().max(1e5).optional().describe("Rupee price the developer wants. Only for kind 'money'. The team converts it to credits."),
+    note: z14.string().max(200).optional().describe("What the person gets, in plain words.")
   })
 ).max(6).describe("Every way the developer wants to charge, so the team can price each one. Replaces the earlier list. Pass [] to clear. The team, not you, decides the credits.");
-var listingSchema = z13.object({
-  name: z13.string().max(60).optional(),
-  short_description: z13.string().max(160).optional(),
-  description: z13.string().max(4e3).optional(),
-  category: z13.string().optional(),
-  tool_types: z13.array(z13.string().max(30)).max(5).optional(),
-  support_email: z13.string().max(200).optional(),
-  release_notes: z13.string().max(1e3).optional(),
-  charge_options: chargeOptionsSchema.optional()
+var titled = z14.object({ title: z14.string().trim().min(1).max(60), body: z14.string().trim().max(220).optional() });
+var promoSchema = z14.object({
+  headline: z14.string().trim().min(10).max(80).describe("The page's main line, for example 'Split any bill in seconds'."),
+  tagline: z14.string().trim().min(20).max(200).describe("One sentence on what the visitor gets."),
+  audience: z14.string().trim().max(160).optional().describe("Who it is for."),
+  highlights: z14.array(titled).min(3).max(6).describe("3 to 6 things the app does well. Real features only."),
+  steps: z14.array(titled).min(2).max(5).describe("How it works, 2 to 5 steps."),
+  faq: z14.array(z14.object({ q: z14.string().trim().min(1).max(120), a: z14.string().trim().min(1).max(400) })).max(5).optional()
+}).describe("The app's own promo page. Required. No ratings, reviews, customer quotes or claims the app does not back up.");
+var listingSchema = z14.object({
+  name: z14.string().max(60).optional(),
+  short_description: z14.string().max(160).optional(),
+  description: z14.string().max(4e3).optional(),
+  category: z14.string().optional(),
+  tool_types: z14.array(z14.string().max(30)).max(5).optional(),
+  support_email: z14.string().max(200).optional(),
+  release_notes: z14.string().max(1e3).optional(),
+  charge_options: chargeOptionsSchema.optional(),
+  promo: promoSchema.optional()
 }).describe("Store listing fields to set. Leave out any field you are not changing.");
-var devGetStandards = defineTool16({
+var devGetStandards = defineTool17({
   name: "dev_get_standards",
   title: "EzYourLife developer rules and categories",
   description: "Returns the rules an app must meet to be published on EzYourLife, the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife.",
@@ -860,13 +974,13 @@ var devGetStandards = defineTool16({
 ${cats.map((c) => `- ${c}`).join("\n")}`, { categories: cats });
   }
 });
-var devCreateApp = defineTool16({
+var devCreateApp = defineTool17({
   name: "dev_create_app",
   title: "Create a developer app on EzYourLife",
   description: "Creates a new app for the signed-in developer with an empty first version. The slug becomes the address /tool/dev-<slug> and cannot be changed later.",
   inputSchema: {
-    slug: z13.string().trim().min(3).max(48).describe("Lowercase letters, numbers and dashes, e.g. 'tip-splitter'."),
-    name: z13.string().trim().min(3).max(60).describe("The app's name in the store.")
+    slug: z14.string().trim().min(3).max(48).describe("Lowercase letters, numbers and dashes, e.g. 'tip-splitter'."),
+    name: z14.string().trim().min(3).max(60).describe("The app's name in the store.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ slug, name }, ctx) => {
@@ -876,7 +990,7 @@ var devCreateApp = defineTool16({
     return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: dev_save_app with the HTML and listing.`, data);
   }
 });
-var devListMyApps = defineTool16({
+var devListMyApps = defineTool17({
   name: "dev_list_my_apps",
   title: "List my EzYourLife developer apps",
   description: "Lists the signed-in developer's apps with their latest version, its state and whether the app is live.",
@@ -905,13 +1019,13 @@ var devListMyApps = defineTool16({
     return text(rows.length ? JSON.stringify(rows, null, 2) : "No apps yet. Use dev_create_app.", { apps: rows });
   }
 });
-var devSaveApp = defineTool16({
+var devSaveApp = defineTool17({
   name: "dev_save_app",
   title: "Save a developer app's file and listing",
   description: "Saves the app's single HTML file (best under about 200 KB; for bigger files use dev_import_file or dev_get_upload_link) and/or store listing to its editable version. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
   inputSchema: {
-    app_id: z13.string().uuid(),
-    html: z13.string().max(MAX_APP_BYTES).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
+    app_id: z14.string().uuid(),
+    html: z14.string().max(MAX_APP_BYTES).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
     listing: listingSchema.optional()
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -936,11 +1050,11 @@ var devSaveApp = defineTool16({
     }
   }
 });
-var devRunChecks = defineTool16({
+var devRunChecks = defineTool17({
   name: "dev_run_checks",
   title: "Run EzYourLife's checks on a developer app",
   description: "Runs the server-side checks on the app's latest version: app file, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, store listing, unique name and similar apps. Returns each result; 'fail' items must be fixed before submitting.",
-  inputSchema: { app_id: z13.string().uuid() },
+  inputSchema: { app_id: z14.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -959,11 +1073,11 @@ ${lines.join("\n")}`, data);
     }
   }
 });
-var devGetPreviewLink = defineTool16({
+var devGetPreviewLink = defineTool17({
   name: "dev_get_preview_link",
   title: "Get the live preview link for a developer app",
   description: "Returns the preview link for the app's latest version. The developer opens it while signed in to ezyourlife.com to try the real app in the same sandbox the store uses; no credits are used.",
-  inputSchema: { app_id: z13.string().uuid() },
+  inputSchema: { app_id: z14.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -979,11 +1093,11 @@ Edit, check and send from: ${editor}`, { preview_url: preview, editor_url: edito
     }
   }
 });
-var devSubmitForReview = defineTool16({
+var devSubmitForReview = defineTool17({
   name: "dev_submit_for_review",
   title: "Send a developer app for EzYourLife review",
   description: "Sends the latest version to the EzYourLife admin queue. Only works after the checks passed on this exact file. Ask the developer before calling it. The version is locked while it waits.",
-  inputSchema: { app_id: z13.string().uuid() },
+  inputSchema: { app_id: z14.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -999,11 +1113,11 @@ var devSubmitForReview = defineTool16({
     }
   }
 });
-var devGetStatus = defineTool16({
+var devGetStatus = defineTool17({
   name: "dev_get_status",
   title: "Status and review feedback for a developer app",
   description: "Returns every version of the app with its state, the team's requested changes, the charge options the developer listed, whether it is live and its live address, and the credits per use, per-option credits and share set by the team.",
-  inputSchema: { app_id: z13.string().uuid() },
+  inputSchema: { app_id: z14.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1019,6 +1133,7 @@ var devGetStatus = defineTool16({
       credits_per_use: app.credits,
       developer_share_pct: app.share_pct,
       charge_plan_set_by_team: app.charge_plan ?? null,
+      latest_promo_and_screenshots: await latestPromo(sb, app_id),
       versions: versions ?? []
     };
     return text(JSON.stringify(out, null, 2), out);
@@ -1031,6 +1146,8 @@ var devTools = [
   devSaveApp,
   devImportFile,
   devGetUploadLink,
+  devAddImage,
+  devRemoveImage,
   devRunChecks,
   devGetPreviewLink,
   devSubmitForReview,
