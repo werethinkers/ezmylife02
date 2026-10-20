@@ -27,7 +27,7 @@ export const fail = (t: string) => ({ content: [{ type: "text" as const, text: t
 export const notSignedIn = () => fail("Not signed in to EzYourLife. Reconnect the connector and sign in.");
 
 export const VERSION_FIELDS =
-  "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
+  "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
 
 /** The newest version of an app the signed-in developer owns, or null. */
 export async function latestVersion(sb: ReturnType<typeof devClient>, appId: string) {

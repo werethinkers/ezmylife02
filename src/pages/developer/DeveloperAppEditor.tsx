@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, FileUp, Loader2, Send, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileUp, Loader2, Plus, Send, ShieldCheck, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -22,6 +22,7 @@ import {
   uploadHtml,
   when,
   withdrawVersion,
+  type ChargeOption,
   type DevVersion,
   type Listing,
 } from "@/lib/devApps";
@@ -30,7 +31,12 @@ import { ChecksReport, Pill, PreviewPanel, Section, VersionPill } from "./parts"
 const selectClass =
   "mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-const emptyForm = { name: "", short_description: "", description: "", category: "", types: "", support_email: "", release_notes: "" };
+type ChargeRow = { label: string; kind: "per_use" | "money"; inr: string; note: string };
+
+const emptyForm = { name: "", short_description: "", description: "", category: "", types: "", support_email: "", release_notes: "", charges: [] as ChargeRow[] };
+
+const chargeRows = (o: ChargeOption[] | undefined): ChargeRow[] =>
+  (o ?? []).map((c) => ({ label: c.label, kind: c.kind, inr: c.inr != null ? String(c.inr) : "", note: c.note ?? "" }));
 
 const formFrom = (v: DevVersion | undefined) =>
   v
@@ -42,6 +48,7 @@ const formFrom = (v: DevVersion | undefined) =>
         types: (v.tool_types ?? []).join(", "),
         support_email: v.support_email ?? "",
         release_notes: v.release_notes ?? "",
+        charges: chargeRows(v.charge_options),
       }
     : emptyForm;
 
@@ -123,7 +130,18 @@ export default function DeveloperAppEditor() {
     tool_types: form.types.split(",").map((t) => t.trim()).filter(Boolean),
     support_email: form.support_email,
     release_notes: form.release_notes,
+    charge_options: form.charges
+      .filter((c) => c.label.trim() !== "")
+      .map((c) => ({
+        label: c.label.trim(),
+        kind: c.kind,
+        ...(c.kind === "money" ? { inr: Number(c.inr) } : {}),
+        ...(c.note.trim() ? { note: c.note.trim() } : {}),
+      })),
   });
+
+  const setCharge = (i: number, patch: Partial<ChargeRow>) =>
+    setForm({ ...form, charges: form.charges.map((c, j) => (j === i ? { ...c, ...patch } : c)) });
 
   const saveHtml = async (text: string, fileName?: string) => {
     const bytes = new Blob([text]).size;
@@ -268,6 +286,47 @@ export default function DeveloperAppEditor() {
                     <Input id="l-notes" value={form.release_notes} maxLength={1000} onChange={(e) => setForm({ ...form, release_notes: e.target.value })} disabled={locked} />
                   </div>
                 )}
+                <fieldset className="sm:col-span-2 rounded-xl border-2 border-ink/20 p-4" disabled={locked}>
+                  <legend className="px-1 text-sm font-semibold">How should people be charged? (optional)</legend>
+                  <p className="text-xs text-muted-foreground">
+                    List the levels of use, or what you would sell for rupees. Our team turns each one into credits and sets the final price; you cannot set it.
+                    Apps cannot take money themselves, so a rupee price is only a hint we convert into credits.
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {form.charges.map((c, i) => (
+                      <div key={i} className="grid gap-2 rounded-lg bg-background p-3 sm:grid-cols-[minmax(0,1fr)_150px_110px_auto]">
+                        <div className="min-w-0">
+                          <Label htmlFor={`c-label-${i}`}>Name</Label>
+                          <Input id={`c-label-${i}`} value={c.label} maxLength={60} onChange={(e) => setCharge(i, { label: e.target.value })} placeholder="Quick split" />
+                        </div>
+                        <div>
+                          <Label htmlFor={`c-kind-${i}`}>Type</Label>
+                          <select id={`c-kind-${i}`} className={selectClass} value={c.kind} onChange={(e) => setCharge(i, { kind: e.target.value as ChargeRow["kind"] })}>
+                            <option value="per_use">Level of use</option>
+                            <option value="money">Price in rupees</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor={`c-inr-${i}`}>Rupees</Label>
+                          <Input id={`c-inr-${i}`} type="number" min={1} step="any" value={c.inr} disabled={c.kind !== "money"} onChange={(e) => setCharge(i, { inr: e.target.value })} placeholder={c.kind === "money" ? "49" : "n/a"} />
+                        </div>
+                        <div className="flex items-end">
+                          <Button type="button" variant="outline" size="icon" aria-label={`Remove ${c.label || "this option"}`} onClick={() => setForm({ ...form, charges: form.charges.filter((_, j) => j !== i) })}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="sm:col-span-4">
+                          <Label htmlFor={`c-note-${i}`}>What the person gets (optional)</Label>
+                          <Input id={`c-note-${i}`} value={c.note} maxLength={200} onChange={(e) => setCharge(i, { note: e.target.value })} placeholder="One bill, up to 10 people" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button type="button" variant="outline" size="sm" className="mt-3" disabled={form.charges.length >= 6} onClick={() => setForm({ ...form, charges: [...form.charges, { label: "", kind: "per_use", inr: "", note: "" }] })}>
+                    <Plus className="h-4 w-4" /> Add an option
+                  </Button>
+                  <p className="mt-2 text-xs text-muted-foreground">Up to 6 options.</p>
+                </fieldset>
                 <div className="sm:col-span-2">
                   <Button type="submit" disabled={locked || busy !== null || !listingDirty}>
                     {busy === "listing" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

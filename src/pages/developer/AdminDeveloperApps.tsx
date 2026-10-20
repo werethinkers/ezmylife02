@@ -20,6 +20,9 @@ import {
   kb,
   sourceText,
   when,
+  NORMAL_INR_PER_CREDIT,
+  WORST_CASE_INR_PER_CREDIT,
+  creditsForInr,
   type QueueItem,
 } from "@/lib/devApps";
 import { ChecksReport, Pill, PreviewPanel, VersionPill } from "./parts";
@@ -30,27 +33,34 @@ import { ChecksReport, Pill, PreviewPanel, VersionPill } from "./parts";
  * (admin_dev_approve in supabase/migrations/20261020010000_developer_apps.sql).
  */
 
-/** What one credit earns at the worst case: the ₹999 kit sold at the 50% influencer commission cap. */
-const WORST_CASE_INR_PER_CREDIT = 0.108;
+// Worst case: the ₹999 kit sold at the 50% influencer commission cap, about ₹0.108 a credit (see WORST_CASE_INR_PER_CREDIT).
 
+const inr4 = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const inr = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void> }) {
   const html = useQuery({ queryKey: ["dev-admin-html", item.version_id], queryFn: () => getVersionHtml(item.version_id) });
-  const [credits, setCredits] = useState(item.credits != null ? String(item.credits) : "");
+  const cost = item.cost_estimate ?? null;
+  const [credits, setCredits] = useState(item.credits != null ? String(item.credits) : cost ? String(cost.min_credits) : "");
   const [share, setShare] = useState(item.share_pct != null ? String(Number(item.share_pct)) : "");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState<null | "approve" | "changes" | "reject">(null);
+  const options = useMemo(() => item.charge_options ?? [], [item.charge_options]);
+  // One box per charge option the developer listed. Rupee options start at the worst-case conversion.
+  const suggestion = (i: number) => (options[i]?.kind === "money" && options[i].inr ? creditsForInr(options[i].inr!) : null);
+  const [planCredits, setPlanCredits] = useState<string[]>([]);
 
   useEffect(() => {
-    setCredits(item.credits != null ? String(item.credits) : "");
+    setCredits(item.credits != null ? String(item.credits) : cost ? String(cost.min_credits) : "");
     setShare(item.share_pct != null ? String(Number(item.share_pct)) : "");
     setNotes("");
-  }, [item.version_id, item.credits, item.share_pct]);
+    setPlanCredits(options.map((o) => (o.kind === "money" && o.inr ? String(creditsForInr(o.inr)) : "")));
+  }, [item.version_id, item.credits, item.share_pct, options, cost]);
 
   const c = Number(credits);
   const s = Number(share);
-  const valid = credits !== "" && share !== "" && Number.isInteger(c) && c >= 1 && c <= 100 && s >= 0 && s <= 90;
+  const planOk = options.length === 0 || (planCredits.length === options.length && planCredits.every((v) => v !== "" && Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 5000));
+  const valid = credits !== "" && share !== "" && Number.isInteger(c) && c >= 1 && c <= 100 && s >= 0 && s <= 90 && planOk;
   const perUse = c * WORST_CASE_INR_PER_CREDIT;
 
   const run = async (kind: NonNullable<typeof busy>, fn: () => Promise<unknown>, ok: string) => {
@@ -103,9 +113,66 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
 
           <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
             <h3 className="font-display text-base font-bold">Decide</h3>
+            {cost && (
+              <div className="mt-4 rounded-xl border-2 border-dashed border-ink/40 p-3 text-sm">
+                <p className="font-semibold">What this app costs to run (only admins see this)</p>
+                <p className="mt-1">
+                  About {inr4(cost.per_run_inr)} a run ({kb(cost.bytes)} served each time, plus a small fixed cost). At least <strong>{cost.min_credits} credit{cost.min_credits > 1 ? "s" : ""}</strong> keeps a {cost.margin}× margin at the worst case (₹{cost.worst_case_inr_per_credit} a credit).
+                  A developer asking for free or very cheap does not change this.
+                </p>
+                {cost.notes.map((n) => <p key={n} className="mt-1 text-xs text-muted-foreground">{n}</p>)}
+                <p className="mt-1 text-xs text-muted-foreground">Planning estimate from file size, not your bill. The Start box below is filled with this minimum.</p>
+              </div>
+            )}
+            {options.length > 0 && (
+              <div className="mt-4 rounded-xl border-2 border-ink bg-sun/30 p-4">
+                <p className="font-semibold">This app has {options.length} charge option{options.length > 1 ? "s" : ""}. How many credits for each?</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Rupee prices are converted at the worst case (₹999 kit, 50% commission, ₹{WORST_CASE_INR_PER_CREDIT} a credit) so you never earn less than the developer asked. The normal rate (₹{NORMAL_INR_PER_CREDIT}) is shown for comparison.
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {options.map((o, i) => {
+                    const v = Number(planCredits[i] ?? "");
+                    const worst = v * WORST_CASE_INR_PER_CREDIT;
+                    const sug = suggestion(i);
+                    return (
+                      <li key={i} className="rounded-lg border-2 border-ink/20 bg-card p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold">{o.label}</p>
+                            {o.note && <p className="text-xs text-muted-foreground">{o.note}</p>}
+                          </div>
+                          <Pill tone={o.kind === "money" ? "bg-sky" : "bg-lime"}>{o.kind === "money" ? `Asks ₹${o.inr}` : "Level of use"}</Pill>
+                        </div>
+                        {o.kind === "money" && o.inr ? (
+                          <p className="mt-2 text-sm">
+                            ₹{o.inr} is at least <strong>{creditsForInr(o.inr)} credits</strong> at the worst case, or {creditsForInr(o.inr, NORMAL_INR_PER_CREDIT)} credits at the normal rate.
+                          </p>
+                        ) : (
+                          <p className="mt-2 text-sm text-muted-foreground">No rupee price. Pick credits that fit how much this level of use costs and gives.</p>
+                        )}
+                        <div className="mt-2 flex flex-wrap items-end gap-3">
+                          <div className="w-32">
+                            <Label htmlFor={`a-plan-${i}`}>Credits</Label>
+                            <Input id={`a-plan-${i}`} type="number" min={1} max={5000} step={1} value={planCredits[i] ?? ""} onChange={(e) => setPlanCredits(planCredits.map((x, j) => (j === i ? e.target.value : x)))} placeholder="e.g. 5" />
+                          </div>
+                          {sug != null && String(sug) !== planCredits[i] && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => setPlanCredits(planCredits.map((x, j) => (j === i ? String(sug) : x)))}>Use {sug}</Button>
+                          )}
+                          {v > 0 && <p className="pb-2 text-xs text-muted-foreground">Worth {inr(worst)} at the worst case{o.kind === "money" && o.inr && worst < o.inr ? `, below the ₹${o.inr} asked` : ""}.</p>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  The store charges one price when a visitor presses Start (the box below). These per-option credits are saved with the app as your decision; charging by option at use time is not built yet.
+                </p>
+              </div>
+            )}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="a-credits">Credits per use</Label>
+                <Label htmlFor="a-credits">{options.length ? "Credits charged at Start" : "Credits per use"}</Label>
                 <Input id="a-credits" type="number" min={1} max={100} step={1} value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 2" />
               </div>
               <div>
@@ -113,6 +180,9 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
                 <Input id="a-share" type="number" min={0} max={90} step={1} value={share} onChange={(e) => setShare(e.target.value)} placeholder="e.g. 30" />
               </div>
             </div>
+            {cost && credits !== "" && Number.isInteger(c) && c >= 1 && c < cost.min_credits && (
+              <p className="mt-3 rounded-lg bg-coral/30 p-2 text-sm">{c} credit{c > 1 ? "s are" : " is"} below the {cost.min_credits} needed for a {cost.margin}× margin on this app's running cost.</p>
+            )}
             {valid && (
               <p className="mt-3 rounded-lg bg-background p-2 text-sm">
                 Worst case (₹999 kit, 50% influencer commission): a use earns {inr(perUse)}, of which the developer gets {inr((perUse * s) / 100)} and EzYourLife keeps {inr(perUse - (perUse * s) / 100)}.
@@ -122,7 +192,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
               className="mt-4 w-full"
               size="lg"
               disabled={!valid || !item.qa_passed || busy !== null}
-              onClick={() => void run("approve", () => adminApprove(item.version_id, c, s), `${item.name} is live at /tool/${item.tool_id}. It shows in the store within about 10 minutes.`)}
+              onClick={() => void run("approve", () => adminApprove(item.version_id, c, s, options.length ? planCredits.map((v) => ({ credits: Number(v) })) : undefined), `${item.name} is live at /tool/${item.tool_id}. It shows in the store within about 10 minutes.`)}
             >
               {busy === "approve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               Approve and publish

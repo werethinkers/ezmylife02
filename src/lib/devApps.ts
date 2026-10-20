@@ -52,6 +52,28 @@ export interface QaReport {
   ran_at: string;
 }
 
+/**
+ * One way the developer proposes to charge. "per_use" is a level of use ("Quick split", "Full report");
+ * "money" is something they would sell for rupees. The team turns each one into credits at approval.
+ * Apps cannot take money themselves: a rupee price is only the hint the team converts.
+ */
+export interface ChargeOption {
+  label: string;
+  kind: "per_use" | "money";
+  inr?: number;
+  note?: string;
+  /** Set by the team at approval (dev_apps.charge_plan). */
+  credits?: number;
+}
+
+/** What one credit earns at the worst case: the ₹999 kit sold at the 50% influencer commission cap. */
+export const WORST_CASE_INR_PER_CREDIT = 0.108;
+/** What one credit earns at the normal rate (docs/pricing.md), for comparison only. */
+export const NORMAL_INR_PER_CREDIT = 0.376;
+/** Credits needed so that a rupee price is earned back at the given rate, rounded up. */
+export const creditsForInr = (inr: number, perCredit: number = WORST_CASE_INR_PER_CREDIT) =>
+  inr > 0 ? Math.ceil(inr / perCredit - 1e-9) : 0;
+
 export interface DevApp {
   id: string;
   developer_id: string;
@@ -60,6 +82,7 @@ export interface DevApp {
   live_version_id: string | null;
   credits: number | null;
   share_pct: number | null;
+  charge_plan?: ChargeOption[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +114,7 @@ export interface DevVersion {
   tool_types: string[];
   support_email: string | null;
   release_notes: string | null;
+  charge_options: ChargeOption[];
   qa: QaReport | null;
   qa_passed: boolean;
   qa_at: string | null;
@@ -109,10 +133,11 @@ export interface Listing {
   tool_types?: string[];
   support_email?: string;
   release_notes?: string;
+  charge_options?: ChargeOption[];
 }
 
 const VERSION_COLUMNS =
-  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
+  "id, app_id, version_no, status, source, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, created_at, updated_at";
 
 export const MAX_HTML_BYTES = MAX_APP_BYTES;
 
@@ -229,6 +254,18 @@ export async function listCategories(): Promise<string[]> {
 
 // ----- admin -----
 
+/** What one run costs EzYourLife (a planning estimate). Admins only: developers never receive it. */
+export interface CostEstimate {
+  bytes: number;
+  egress_inr: number;
+  overhead_inr: number;
+  per_run_inr: number;
+  margin: number;
+  worst_case_inr_per_credit: number;
+  min_credits: number;
+  notes: string[];
+}
+
 export interface QueueItem {
   version_id: string;
   version_no: number;
@@ -240,6 +277,8 @@ export interface QueueItem {
   support_email: string | null;
   release_notes: string | null;
   source: FileSource | null;
+  charge_options: ChargeOption[] | null;
+  cost_estimate?: CostEstimate | null;
   qa: QaReport | null;
   qa_passed: boolean;
   qa_at: string | null;
@@ -271,11 +310,12 @@ export interface AdminAppRow {
 
 export const adminQueue = () => rpc<QueueItem[]>("admin_dev_queue");
 export const adminApps = () => rpc<AdminAppRow[]>("admin_dev_apps");
-export const adminApprove = (versionId: string, credits: number, sharePct: number) =>
+export const adminApprove = (versionId: string, credits: number, sharePct: number, plan?: { credits: number }[]) =>
   rpc<{ ok: boolean; tool_id: string; path: string; version_no: number }>("admin_dev_approve", {
     _version_id: versionId,
     _credits: credits,
     _share_pct: sharePct,
+    ...(plan && plan.length ? { _plan: plan } : {}),
   });
 export const adminRequestChanges = (versionId: string, notes: string, reject = false) =>
   rpc<{ ok: boolean }>("admin_dev_request_changes", { _version_id: versionId, _notes: notes, _reject: reject });

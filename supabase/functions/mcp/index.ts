@@ -42,6 +42,8 @@ Startup Analyser and Video Generator are long-running (>60s) and would time out.
 ## Developers: publish your own web app
 - **dev_get_standards()** \u2014 the rules (one HTML file, no AI calls, no keys), the steps and the valid categories. Call first.
 - **dev_create_app(slug, name)** \xB7 **dev_save_app(app_id, html?, listing?)** \xB7 **dev_import_file(app_id, github|url)** for files up to 10 MB \xB7 **dev_get_upload_link(app_id)** for Claude Code \xB7 **dev_run_checks(app_id)** \xB7 **dev_get_preview_link(app_id)** \xB7 **dev_submit_for_review(app_id)** \xB7 **dev_get_status(app_id)** \xB7 **dev_list_my_apps()**
+- Charging: ask the developer how they want to charge and pass every option in listing.charge_options (levels of use, or rupee prices for things they would sell). The team converts rupees to credits and sets each price.
+- Free or 0 is only a request; the team prices every app from its real running cost and the developer is never told the cost. EzYourLife credits are the only payment system. Anything hourly, daily or monthly becomes a button the visitor presses.
 - The EzYourLife team approves on ezyourlife.com and sets the price and share; these tools cannot approve or publish.
 
 ## Tips
@@ -542,7 +544,7 @@ var text = (t, structured) => ({
 });
 var fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 var notSignedIn = () => fail("Not signed in to EzYourLife. Reconnect the connector and sign in.");
-var VERSION_FIELDS = "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
+var VERSION_FIELDS = "id, version_no, status, name, short_description, description, category, tool_types, support_email, release_notes, charge_options, qa, qa_passed, qa_at, submitted_at, reviewed_at, review_notes, updated_at";
 async function latestVersion(sb, appId) {
   const { data, error } = await sb.from("dev_app_versions").select(VERSION_FIELDS).eq("app_id", appId).order("version_no", { ascending: false }).limit(1).maybeSingle();
   if (error) throw new Error(error.message);
@@ -797,6 +799,20 @@ var STANDARDS = `# Putting an app on EzYourLife
 - tool_types: up to 5 short filter words (optional). support_email (optional). release_notes for updates.
 Fill these from the code and README; ask the developer only for what you cannot find.
 
+## How the app should be charged (ask the developer, then pass charge_options)
+Ask: "How do you want to charge for this? Different levels of use, or something you would sell for rupees?"
+- Record EVERY option they give, not just one. Up to 6. Each is {label, kind, inr?, note?}.
+  - kind "per_use": a level of use, for example "Quick split" and "Group trip report".
+  - kind "money": something they would sell for rupees, with inr set, for example {label: "Export pack", kind: "money", inr: 49}.
+- Do not decide credits and do not convert rupees yourself. Team EzYourLife sees every option, converts rupees to credits at its worst-case rate, and sets what each costs.
+- The app cannot take payments. If the app has its own paywall, pricing page or payment code, turn each paid tier into a "money" option and remove the payment code from the app.
+- If the developer has no preference, or says free or 0, leave charge_options out (or record the option without a price). Free is only a request: the team always prices every app from what it really costs to run, in the background. Never quote, estimate or hint at a cost, credit amount or margin to the developer.
+- Payments: EzYourLife credits are the only payment system. Visitors pay by pressing the app's Start button, which charges their EzYourLife wallet. Remove any other payment, checkout, subscription or login-to-pay code from the app.
+
+## Frequency: apps run only when pressed
+- Anything that runs hourly, daily, weekly, monthly, on a timer, on auto-refresh or on a schedule must become a button (for example "Get output"). Each press is one use and one charge. Run dev_run_checks: the "Runs only when pressed" check flags setInterval, auto-refresh, cron code and schedule wording.
+- Repeat runs are only possible if the visitor agrees after being told how many credits that frequency over that period will cost. Scheduled runs are not available yet, so do not build them; if the developer wants them, add a charge option such as {label: "Weekly report, 4 runs", kind: "per_use"} so the team can price it.
+
 ## Steps
 1. dev_create_app(slug, name) once (or dev_list_my_apps to find an existing app). The address becomes ${SITE}/tool/dev-<slug>.
 2. Send the file (above) and dev_save_app(app_id, listing).
@@ -808,6 +824,14 @@ Fill these from the code and README; ask the developer only for what you cannot 
 ## Rules you cannot change
 - Team EzYourLife sets the credits per use and the developer's share at approval. Only a person on the team can approve.
 - A live app is never replaced silently: sending changes to a live app starts a new version that needs approval.`;
+var chargeOptionsSchema = z13.array(
+  z13.object({
+    label: z13.string().min(2).max(60).describe("Short name, e.g. 'Quick split' or 'Export pack'."),
+    kind: z13.enum(["per_use", "money"]).describe("per_use = a level of use. money = something the developer would sell for rupees (set inr)."),
+    inr: z13.number().positive().max(1e5).optional().describe("Rupee price the developer wants. Only for kind 'money'. The team converts it to credits."),
+    note: z13.string().max(200).optional().describe("What the person gets, in plain words.")
+  })
+).max(6).describe("Every way the developer wants to charge, so the team can price each one. Replaces the earlier list. Pass [] to clear. The team, not you, decides the credits.");
 var listingSchema = z13.object({
   name: z13.string().max(60).optional(),
   short_description: z13.string().max(160).optional(),
@@ -815,7 +839,8 @@ var listingSchema = z13.object({
   category: z13.string().optional(),
   tool_types: z13.array(z13.string().max(30)).max(5).optional(),
   support_email: z13.string().max(200).optional(),
-  release_notes: z13.string().max(1e3).optional()
+  release_notes: z13.string().max(1e3).optional(),
+  charge_options: chargeOptionsSchema.optional()
 }).describe("Store listing fields to set. Leave out any field you are not changing.");
 var devGetStandards = defineTool16({
   name: "dev_get_standards",
@@ -975,22 +1000,23 @@ var devSubmitForReview = defineTool16({
 var devGetStatus = defineTool16({
   name: "dev_get_status",
   title: "Status and review feedback for a developer app",
-  description: "Returns every version of the app with its state, the team's requested changes, whether it is live and its live address, and the credits per use and share set by the team.",
+  description: "Returns every version of the app with its state, the team's requested changes, the charge options the developer listed, whether it is live and its live address, and the credits per use, per-option credits and share set by the team.",
   inputSchema: { app_id: z13.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
     const sb = devClient(ctx);
-    const { data: app, error } = await sb.from("dev_apps").select("tool_id, status, live_version_id, credits, share_pct").eq("id", app_id).maybeSingle();
+    const { data: app, error } = await sb.from("dev_apps").select("tool_id, status, live_version_id, credits, share_pct, charge_plan").eq("id", app_id).maybeSingle();
     if (error) return fail(dbMessage(error.message));
     if (!app) return fail("App not found.");
-    const { data: versions } = await sb.from("dev_app_versions").select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed").eq("app_id", app_id).order("version_no", { ascending: false });
+    const { data: versions } = await sb.from("dev_app_versions").select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed, charge_options").eq("app_id", app_id).order("version_no", { ascending: false });
     const out = {
       address: `${SITE}/tool/${app.tool_id}`,
       store: app.status,
       live_version: (versions ?? []).find((v) => v.id === app.live_version_id)?.version_no ?? null,
       credits_per_use: app.credits,
       developer_share_pct: app.share_pct,
+      charge_plan_set_by_team: app.charge_plan ?? null,
       versions: versions ?? []
     };
     return text(JSON.stringify(out, null, 2), out);

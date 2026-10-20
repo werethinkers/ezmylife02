@@ -27,7 +27,8 @@ Remove every hit from the app. If a key was ever committed, tell the developer t
 ### 2. AI, login, payments, own backend
 - **AI calls** (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Mistral, Cohere, Together, Hugging Face, DeepSeek, Perplexity, xAI, Replicate): remove them. If the feature can be done without AI (rules, templates, calculations), rewrite it that way. Otherwise remove the feature and tell the developer.
 - **Login** (Firebase Auth, Auth0, Supabase Auth, Clerk and so on): remove it. EzYourLife handles sign-in and charges credits before the app opens.
-- **Payments** (Razorpay, Stripe, PayPal, Cashfree, Paytm): remove them. EzYourLife charges credits per use.
+- **Payments** (Razorpay, Stripe, PayPal, Cashfree, Paytm): remove them. EzYourLife charges credits per use and is the only payment system. Turn each paid tier into a `money` charge option in the listing.
+- **Hourly, daily, monthly or timer-based runs** (`setInterval`, cron, auto-refresh, "every day"): replace with a button the visitor presses, for example "Get output". One press is one use. Scheduled repeats are not available yet.
 - **Own backend**: if the app needs its own server or database to work, stop. It cannot be published yet.
 
 ### 3. Storage that survives the sandbox

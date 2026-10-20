@@ -69,6 +69,12 @@ Call `dev_save_app(app_id, listing)` with:
 
 Draft these from the code and README. Ask the developer only for what cannot be found, in one short question.
 
+### Charging
+Ask once: "How do you want to charge: different levels of use, or something you would sell for rupees?" Pass every answer (up to 6) in `listing.charge_options`, each `{label, kind: "per_use" | "money", inr?, note?}`. Do not convert rupees to credits and do not suggest credit amounts.
+- If they say free or 0, record that as their wish only. The team prices every app from its real running cost, in the background. Never tell the developer what an app costs to run, never quote credits or margins, and never promise it will be free.
+- EzYourLife credits are the only payment system. If the app has its own paywall, checkout or subscription, turn each paid tier into a `money` option and remove the payment code.
+- Apps run only when the visitor presses a button, and each press is one use. Anything hourly, daily, weekly, monthly, on a timer or auto-refresh becomes a button such as "Get output". The "Runs only when pressed" check flags what is left. Do not build scheduled runs: they need the visitor to agree after being told the credits for that frequency and period, and that is not available yet. If the developer wants them, list them as a charge option so the team can price them.
+
 ## 7. Checks, preview, submit
 
 1. Call `dev_run_checks(app_id)`. Fix every `MUST FIX` in the source, rebuild, re-send and re-run until none remain. Mention each `LOOK` item to the developer; the admin sees them too.
@@ -90,4 +96,5 @@ For updates: the live version keeps running unchanged until the new version is a
 - No keys, tokens or passwords anywhere in the app, in commits, or in chat.
 - Never call `dev_submit_for_review` without the developer's OK.
 - Never claim an app is approved, live, priced or earning; only `dev_get_status` knows.
-- Pricing and the developer's share are set only by the EzYourLife team.
+- Pricing and the developer's share are set only by the EzYourLife team. Never reveal running costs or the team's price reasoning.
+- No payment code, timers or schedules in the app; credits per press are the only charge.

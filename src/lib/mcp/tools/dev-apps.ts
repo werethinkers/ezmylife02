@@ -45,6 +45,20 @@ const STANDARDS = `# Putting an app on EzYourLife
 - tool_types: up to 5 short filter words (optional). support_email (optional). release_notes for updates.
 Fill these from the code and README; ask the developer only for what you cannot find.
 
+## How the app should be charged (ask the developer, then pass charge_options)
+Ask: "How do you want to charge for this? Different levels of use, or something you would sell for rupees?"
+- Record EVERY option they give, not just one. Up to 6. Each is {label, kind, inr?, note?}.
+  - kind "per_use": a level of use, for example "Quick split" and "Group trip report".
+  - kind "money": something they would sell for rupees, with inr set, for example {label: "Export pack", kind: "money", inr: 49}.
+- Do not decide credits and do not convert rupees yourself. Team EzYourLife sees every option, converts rupees to credits at its worst-case rate, and sets what each costs.
+- The app cannot take payments. If the app has its own paywall, pricing page or payment code, turn each paid tier into a "money" option and remove the payment code from the app.
+- If the developer has no preference, or says free or 0, leave charge_options out (or record the option without a price). Free is only a request: the team always prices every app from what it really costs to run, in the background. Never quote, estimate or hint at a cost, credit amount or margin to the developer.
+- Payments: EzYourLife credits are the only payment system. Visitors pay by pressing the app's Start button, which charges their EzYourLife wallet. Remove any other payment, checkout, subscription or login-to-pay code from the app.
+
+## Frequency: apps run only when pressed
+- Anything that runs hourly, daily, weekly, monthly, on a timer, on auto-refresh or on a schedule must become a button (for example "Get output"). Each press is one use and one charge. Run dev_run_checks: the "Runs only when pressed" check flags setInterval, auto-refresh, cron code and schedule wording.
+- Repeat runs are only possible if the visitor agrees after being told how many credits that frequency over that period will cost. Scheduled runs are not available yet, so do not build them; if the developer wants them, add a charge option such as {label: "Weekly report, 4 runs", kind: "per_use"} so the team can price it.
+
 ## Steps
 1. dev_create_app(slug, name) once (or dev_list_my_apps to find an existing app). The address becomes ${SITE}/tool/dev-<slug>.
 2. Send the file (above) and dev_save_app(app_id, listing).
@@ -57,6 +71,18 @@ Fill these from the code and README; ask the developer only for what you cannot 
 - Team EzYourLife sets the credits per use and the developer's share at approval. Only a person on the team can approve.
 - A live app is never replaced silently: sending changes to a live app starts a new version that needs approval.`;
 
+const chargeOptionsSchema = z
+  .array(
+    z.object({
+      label: z.string().min(2).max(60).describe("Short name, e.g. 'Quick split' or 'Export pack'."),
+      kind: z.enum(["per_use", "money"]).describe("per_use = a level of use. money = something the developer would sell for rupees (set inr)."),
+      inr: z.number().positive().max(100000).optional().describe("Rupee price the developer wants. Only for kind 'money'. The team converts it to credits."),
+      note: z.string().max(200).optional().describe("What the person gets, in plain words."),
+    }),
+  )
+  .max(6)
+  .describe("Every way the developer wants to charge, so the team can price each one. Replaces the earlier list. Pass [] to clear. The team, not you, decides the credits.");
+
 const listingSchema = z
   .object({
     name: z.string().max(60).optional(),
@@ -66,6 +92,7 @@ const listingSchema = z
     tool_types: z.array(z.string().max(30)).max(5).optional(),
     support_email: z.string().max(200).optional(),
     release_notes: z.string().max(1000).optional(),
+    charge_options: chargeOptionsSchema.optional(),
   })
   .describe("Store listing fields to set. Leave out any field you are not changing.");
 
@@ -231,18 +258,18 @@ export const devSubmitForReview = defineTool({
 export const devGetStatus = defineTool({
   name: "dev_get_status",
   title: "Status and review feedback for a developer app",
-  description: "Returns every version of the app with its state, the team's requested changes, whether it is live and its live address, and the credits per use and share set by the team.",
+  description: "Returns every version of the app with its state, the team's requested changes, the charge options the developer listed, whether it is live and its live address, and the credits per use, per-option credits and share set by the team.",
   inputSchema: { app_id: z.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
     const sb = devClient(ctx);
-    const { data: app, error } = await sb.from("dev_apps").select("tool_id, status, live_version_id, credits, share_pct").eq("id", app_id).maybeSingle();
+    const { data: app, error } = await sb.from("dev_apps").select("tool_id, status, live_version_id, credits, share_pct, charge_plan").eq("id", app_id).maybeSingle();
     if (error) return fail(dbMessage(error.message));
     if (!app) return fail("App not found.");
     const { data: versions } = await sb
       .from("dev_app_versions")
-      .select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed")
+      .select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed, charge_options")
       .eq("app_id", app_id)
       .order("version_no", { ascending: false });
     const out = {
@@ -251,6 +278,7 @@ export const devGetStatus = defineTool({
       live_version: (versions ?? []).find((v: { id: string }) => v.id === app.live_version_id)?.version_no ?? null,
       credits_per_use: app.credits,
       developer_share_pct: app.share_pct,
+      charge_plan_set_by_team: app.charge_plan ?? null,
       versions: versions ?? [],
     };
     return text(JSON.stringify(out, null, 2), out);
