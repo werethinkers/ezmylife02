@@ -86,7 +86,7 @@ export function MessageUs({ title, line, word, subject, colour }: { title: strin
 /** The home page band: one card for creators, one for builders. */
 export function EarnBand() {
   const cards = [
-    { ...EARN_LINKS[0], tag: "For creators", h: "Share Ezyourlife. Earn on every sale.", d: "A free website and visiting card in your name, your own link, and a live dashboard of clicks, buyers and commission.", go: "See how it works", bg: "bg-pink" },
+    { ...EARN_LINKS[0], tag: "For creators", h: "Share Ezyourlife. Earn on every sale.", d: "A free website and visiting card in your name, your own link, and a live dashboard of clicks, buyers and commission.", go: "Join free", bg: "bg-pink" },
     { ...EARN_LINKS[1], tag: "For builders", h: "Built an app? List it with us.", d: "Say “Put my app on EzYourLife” in Claude. We review it, set the price, and you earn a share when people use it.", go: "List your app", bg: "bg-teal" },
   ];
   return (

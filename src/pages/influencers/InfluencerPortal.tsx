@@ -41,35 +41,108 @@ const SALE_STATUS: Record<string, { label: string; help: string; tone: string }>
 
 function SignIn() {
   const { toast } = useToast();
+  const [mode, setMode] = useState<"in" | "up">("in");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
   const qc = useQueryClient();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (mode === "in") {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      setBusy(false);
+      if (error) return toast({ title: "Could not sign in", description: error.message, variant: "destructive" });
+      qc.invalidateQueries();
+      return;
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        // The confirmation email brings them straight back to this page.
+        emailRedirectTo: `${window.location.origin}/influencer`,
+        data: { full_name: name.trim(), display_name: name.trim().split(" ")[0] },
+      },
+    });
     setBusy(false);
-    if (error) return toast({ title: "Could not sign in", description: error.message, variant: "destructive" });
-    qc.invalidateQueries();
+    if (error) return toast({ title: "Could not create your account", description: error.message, variant: "destructive" });
+    if (data.session) qc.invalidateQueries();
+    else setCheckEmail(true);
+  };
+
+  if (checkEmail) {
+    return (
+      <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-3">
+          <h1 className="font-bold text-2xl">Check your email</h1>
+          <p className="text-sm text-neutral-700">
+            We sent a link to {email.trim()}. Open it and you land straight back here, ready to set up your page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
+      <form onSubmit={submit} className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-4">
+        <div>
+          <h1 className="font-bold text-2xl">{mode === "in" ? "Creator sign in" : "Join as a creator"}</h1>
+          <p className="text-sm text-neutral-700">
+            {mode === "in"
+              ? "Your dashboard, your link and your offer page."
+              : "Make a free account. You get your own link, dashboard and offer page."}
+          </p>
+        </div>
+        {mode === "up" && (
+          <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={60} />
+        )}
+        <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input type="password" placeholder={mode === "up" ? "Choose a password (8+ characters)" : "Password"} value={password}
+               onChange={(e) => setPassword(e.target.value)} required minLength={mode === "up" ? 8 : undefined} />
+        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">
+          {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create my account"}
+        </Button>
+        <button type="button" onClick={() => setMode(mode === "in" ? "up" : "in")} className="text-sm font-semibold underline underline-offset-4">
+          {mode === "in" ? "New here? Join as a creator" : "Already have an account? Sign in"}
+        </button>
+        <p className="text-xs text-neutral-600">Bookmark this page: ezyourlife.com/influencer. It is where you come back every time.</p>
+      </form>
+    </div>
+  );
+}
+
+function Register({ email, defaultName }: { email: string | undefined; defaultName: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [f, setF] = useState({ name: defaultName, handle: "", city: "" });
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await rpc("influencer_register", { _name: f.name, _handle: f.handle, _city: f.city });
+    setBusy(false);
+    if (error) return toast({ title: "Not saved", description: error.message, variant: "destructive" });
+    qc.invalidateQueries({ queryKey: ["influencer-me"] });
   };
 
   return (
     <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-4">
         <div>
-          <h1 className="font-bold text-2xl">Influencer sign in</h1>
-          <p className="text-sm text-neutral-700">Use the email and password Ezyourlife gave you.</p>
+          <h1 className="font-bold text-2xl">Set up your creator page</h1>
+          <p className="text-sm text-neutral-700">Signed in as {email}. Three quick details, then your dashboard opens.</p>
         </div>
-        <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">
-          {busy ? "Signing in…" : "Sign in"}
-        </Button>
-        <p className="text-xs text-neutral-600">
-          Lost your password? Message Ezyourlife and we will reset it for you.
-        </p>
+        <Input placeholder="Your name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required minLength={2} maxLength={60} />
+        <Input placeholder="Instagram handle (optional)" value={f.handle} onChange={(e) => setF({ ...f, handle: e.target.value })} maxLength={40} />
+        <Input placeholder="City (optional)" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} maxLength={60} />
+        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">{busy ? "Saving…" : "Open my dashboard"}</Button>
+        <button type="button" onClick={() => supabase.auth.signOut()} className="text-sm underline underline-offset-4">Sign out</button>
       </form>
     </div>
   );
@@ -257,19 +330,8 @@ export default function InfluencerPortal() {
 
   const d = me.data;
   if (!d?.ok) {
-    return (
-      <div className="min-h-screen bg-[#FFF8EB] flex items-center justify-center p-6">
-        <div className="max-w-md border-2 border-[#121212] bg-white p-6 text-center space-y-3">
-          <h1 className="font-bold text-xl">This login is not set up as an influencer</h1>
-          <p className="text-sm text-neutral-700">
-            You are signed in as {user.email}, but this account is not linked to an influencer campaign.
-            Message Ezyourlife to get it linked.
-          </p>
-          <Button variant="outline" className="border-2 border-[#121212]"
-                  onClick={() => supabase.auth.signOut()}>Sign out</Button>
-        </div>
-      </div>
-    );
+    const meta = (user.user_metadata ?? {}) as { full_name?: string };
+    return <Register email={user.email} defaultName={meta.full_name ?? ""} />;
   }
 
   const copyLink = async () => {
@@ -291,14 +353,25 @@ export default function InfluencerPortal() {
           <div>
             <h1 className="font-bold text-3xl">Hi {d.name.split(" ")[0]} 👋</h1>
             <p className="text-sm text-neutral-700">
-              Your Ezyourlife campaign · {d.commission_pct}% commission on every sale
-              {d.status !== "active" && <span className="font-bold"> · campaign {d.status}</span>}
+              Your Ezyourlife creator page
+              {d.status === "active" ? ` · ${d.commission_pct}% commission on every sale` : ""}
+              {d.status !== "active" && d.status !== "paused" && <span className="font-bold"> · campaign {d.status}</span>}
             </p>
           </div>
           <Button variant="outline" className="border-2 border-[#121212]" onClick={() => supabase.auth.signOut()}>
             Sign out
           </Button>
         </header>
+
+        {d.status === "paused" && (
+          <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212]">
+            <h2 className="font-bold text-lg">Waiting for our approval</h2>
+            <p className="text-sm text-neutral-700">
+              Your account is ready. Set up your offer page below while we look at your profile. Your link starts counting
+              clicks and sales once we approve you, and we tell you your commission then.
+            </p>
+          </section>
+        )}
 
         <section className="border-2 border-[#121212] bg-[#FFC800] p-4 shadow-[4px_4px_0_#121212] space-y-2">
           <h2 className="font-bold text-lg">Your link — share this everywhere</h2>
@@ -405,6 +478,14 @@ export default function InfluencerPortal() {
               (commission {inr(p.commission_inr)}, TDS {inr(p.tds_inr)}) · reference {p.reference}
             </div>
           ))}
+        </section>
+
+        <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212]">
+          <h2 className="font-bold text-lg">Come back any time</h2>
+          <p className="text-sm text-neutral-700">
+            This dashboard lives at <code className="font-semibold">ezyourlife.com/influencer</code>. Bookmark it and sign in with the
+            same email whenever you want to check your numbers or change your offer page.
+          </p>
         </section>
 
         <p className="text-xs text-neutral-600 pb-8">

@@ -136,6 +136,22 @@ export default function AdminInfluencers() {
     refresh();
   };
 
+  // A creator who registered on the site starts paused with 0% commission. Approving sets the
+  // commission and switches the link on (tracking, the offer page, commission).
+  const approve = async (r: Row) => {
+    const pct = window.prompt(`Commission for ${r.name} (%). Their link starts counting once you approve.`, "20");
+    if (pct === null) return;
+    const n = Number(pct);
+    if (!Number.isFinite(n) || n < 0 || n > 50) return toast({ title: "Enter a number from 0 to 50", variant: "destructive" });
+    const { error } = await rpc("influencer_save", {
+      _id: r.id, _name: r.name, _handle: r.handle, _city: r.city, _campaign: null,
+      _code: r.code, _commission_pct: n, _status: "active",
+    });
+    if (error) return toast({ title: "Not approved", description: error.message, variant: "destructive" });
+    toast({ title: "Approved", description: `${r.name} is live at ezyourlife.com/kit?ref=${r.code}` });
+    refresh();
+  };
+
   const payNow = async (r: Row) => {
     const ok = window.confirm(
       `Record a payment of ${inr(r.net_payable_now_inr)} to ${r.name}?\n\n` +
@@ -319,6 +335,7 @@ export default function AdminInfluencers() {
                     <div className="text-sm text-neutral-700">
                       Link: <span className="font-mono">ezyourlife.com/kit?ref={r.code}</span> · {r.commission_pct}% commission
                     </div>
+                    {r.status === "paused" && <div className="text-sm font-semibold text-[#b1430f]">Waiting for your approval</div>}
                     <div className="text-sm mt-1">
                       {r.has_login
                         ? <span className="text-neutral-700">Dashboard login: <span className="font-mono">{r.login_email}</span></span>
@@ -334,6 +351,12 @@ export default function AdminInfluencers() {
 
                 {open && current && (
                   <div className="border-t-2 border-[#121212] p-4 space-y-4">
+                    {r.status === "paused" && (
+                      <div className="border-2 border-[#121212] bg-[#FFC800] p-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-semibold">{r.name} signed up on the site. Their link does not count until you approve.</p>
+                        <Button onClick={() => approve(r)} className="border-2 border-[#121212]">Approve and set commission</Button>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       <Tile label="Sales" value={inr(current.gross_inr)} hint={`${current.orders} order(s)`} />
                       <Tile label="Waiting" value={inr(current.commission_pending_inr)} hint="refund window open" />
