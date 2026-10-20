@@ -7,6 +7,7 @@ import { PageSeo } from "@/components/seo/PageSeo";
 import { Button } from "@/components/ui/button";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile } from "@/components/store/AppTile";
+import { EarningsEstimate } from "@/components/earn/EarningsEstimate";
 import { EarnFaq, EarnSection, EarnSteps, MessageUs } from "@/components/earn/EarnBits";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
@@ -159,6 +160,9 @@ export default function Creators() {
 
       <EarnSection id="how" title="How it works" tone="card">
         <EarnSteps steps={STEPS} colour="bg-background" />
+        <div className="mx-auto mt-10 max-w-2xl">
+          <EarningsEstimate />
+        </div>
       </EarnSection>
 
       <EarnSection title="Questions">
