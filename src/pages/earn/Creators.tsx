@@ -22,8 +22,8 @@ const GETS = [
 ];
 
 const STEPS = [
-  { h: "Message us", d: "Tell us who you are and who follows you. We reply on the same channel." },
-  { h: "See your site first", d: "We make your free website and visiting card and send you a preview." },
+  { h: "Create your account", d: "Sign up free with your email. Your link, dashboard and offer page open straight away." },
+  { h: "We approve you", d: "We look at your profile, agree your commission with you and switch your link on." },
   { h: "Share your link", d: "Post it in a story, your bio or WhatsApp, marked as an ad as Instagram's rules ask." },
   { h: "Get paid", d: "Commission is approved after the buyer's 7-day refund window and paid by bank transfer." },
 ];
@@ -66,16 +66,16 @@ export default function Creators() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 px-6 text-base">
-              <a href="#message">Message us</a>
+              <Link to="/influencer">Join free</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
               <a href="#how">How it works</a>
             </Button>
           </div>
           <p className="mt-4 text-[15px] text-muted-foreground">
-            Already a creator with us?{" "}
+            Already joined?{" "}
             <Link to="/influencer" className="font-semibold text-ink underline underline-offset-4">
-              Sign in to your dashboard
+              Open your dashboard
             </Link>
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function Creators() {
       </EarnSection>
 
       <MessageUs
-        title="Message us to join"
+        title="Rather talk to us first?"
         line="Send the word CREATOR with your name and your Instagram. We reply with a preview of your free website."
         word="CREATOR"
         subject="I want to join as a creator"

@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import KitPicker from "./KitPicker";
+import { KIT } from "@/data/kit";
 
 // influencer_me() from 20261012170000_influencer_login.sql. It returns only the
 // signed-in influencer's own campaign, so there is nothing to pass in.
@@ -41,35 +43,108 @@ const SALE_STATUS: Record<string, { label: string; help: string; tone: string }>
 
 function SignIn() {
   const { toast } = useToast();
+  const [mode, setMode] = useState<"in" | "up">("in");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
   const qc = useQueryClient();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (mode === "in") {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      setBusy(false);
+      if (error) return toast({ title: "Could not sign in", description: error.message, variant: "destructive" });
+      qc.invalidateQueries();
+      return;
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        // The confirmation email brings them straight back to this page.
+        emailRedirectTo: `${window.location.origin}/influencer`,
+        data: { full_name: name.trim(), display_name: name.trim().split(" ")[0] },
+      },
+    });
     setBusy(false);
-    if (error) return toast({ title: "Could not sign in", description: error.message, variant: "destructive" });
-    qc.invalidateQueries();
+    if (error) return toast({ title: "Could not create your account", description: error.message, variant: "destructive" });
+    if (data.session) qc.invalidateQueries();
+    else setCheckEmail(true);
+  };
+
+  if (checkEmail) {
+    return (
+      <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-3">
+          <h1 className="font-bold text-2xl">Check your email</h1>
+          <p className="text-sm text-neutral-700">
+            We sent a link to {email.trim()}. Open it and you land straight back here, ready to set up your page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
+      <form onSubmit={submit} className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-4">
+        <div>
+          <h1 className="font-bold text-2xl">{mode === "in" ? "Creator sign in" : "Join as a creator"}</h1>
+          <p className="text-sm text-neutral-700">
+            {mode === "in"
+              ? "Your dashboard, your link and your offer page."
+              : "Make a free account. You get your own link, dashboard and offer page."}
+          </p>
+        </div>
+        {mode === "up" && (
+          <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={60} />
+        )}
+        <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input type="password" placeholder={mode === "up" ? "Choose a password (8+ characters)" : "Password"} value={password}
+               onChange={(e) => setPassword(e.target.value)} required minLength={mode === "up" ? 8 : undefined} />
+        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">
+          {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create my account"}
+        </Button>
+        <button type="button" onClick={() => setMode(mode === "in" ? "up" : "in")} className="text-sm font-semibold underline underline-offset-4">
+          {mode === "in" ? "New here? Join as a creator" : "Already have an account? Sign in"}
+        </button>
+        <p className="text-xs text-neutral-600">Bookmark this page: ezyourlife.com/influencer. It is where you come back every time.</p>
+      </form>
+    </div>
+  );
+}
+
+function Register({ email, defaultName }: { email: string | undefined; defaultName: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [f, setF] = useState({ name: defaultName, handle: "", city: "" });
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await rpc("influencer_register", { _name: f.name, _handle: f.handle, _city: f.city });
+    setBusy(false);
+    if (error) return toast({ title: "Not saved", description: error.message, variant: "destructive" });
+    qc.invalidateQueries({ queryKey: ["influencer-me"] });
   };
 
   return (
     <div className="min-h-screen bg-[#FFF8EB] text-[#121212] flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm border-2 border-[#121212] bg-white p-6 shadow-[6px_6px_0_#121212] space-y-4">
         <div>
-          <h1 className="font-bold text-2xl">Influencer sign in</h1>
-          <p className="text-sm text-neutral-700">Use the email and password Ezyourlife gave you.</p>
+          <h1 className="font-bold text-2xl">Set up your creator page</h1>
+          <p className="text-sm text-neutral-700">Signed in as {email}. Three quick details, then your dashboard opens.</p>
         </div>
-        <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">
-          {busy ? "Signing in…" : "Sign in"}
-        </Button>
-        <p className="text-xs text-neutral-600">
-          Lost your password? Message Ezyourlife and we will reset it for you.
-        </p>
+        <Input placeholder="Your name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required minLength={2} maxLength={60} />
+        <Input placeholder="Instagram handle (optional)" value={f.handle} onChange={(e) => setF({ ...f, handle: e.target.value })} maxLength={40} />
+        <Input placeholder="City (optional)" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} maxLength={60} />
+        <Button type="submit" disabled={busy} className="w-full border-2 border-[#121212]">{busy ? "Saving…" : "Open my dashboard"}</Button>
+        <button type="button" onClick={() => supabase.auth.signOut()} className="text-sm underline underline-offset-4">Sign out</button>
       </form>
     </div>
   );
@@ -232,6 +307,70 @@ function OfferEditor({ d, onSaved }: { d: Me; onSaved: () => void }) {
   );
 }
 
+// A rough guide, not a promise: the commission is fixed at 10%; the creator moves how many followers
+// they have and how many of them buy the kit.
+const EST_COMMISSION_PCT = 10;
+const FOLLOWERS_MIN = 1_000;
+// The slider runs 0-90 on a log scale (30 steps per tenfold), so 1,000 and 10 lakh are both easy to reach
+// and position 30 is exactly 10,000.
+const followersAt = (pos: number) => {
+  const raw = FOLLOWERS_MIN * Math.pow(10, pos / 30);
+  const step = raw >= 100_000 ? 5_000 : raw >= 10_000 ? 500 : raw >= 2_000 ? 100 : 50;
+  return Math.round(raw / step) * step;
+};
+
+function EarningsEstimate() {
+  const [pos, setPos] = useState(30) // 10,000 followers;
+  const [buyPct, setBuyPct] = useState(5);
+  const followers = followersAt(pos);
+  const buyers = Math.floor((followers * buyPct) / 100);
+  const earn = Math.round((buyers * KIT.inr * EST_COMMISSION_PCT) / 100);
+
+  return (
+    <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212] space-y-4">
+      <div>
+        <h2 className="font-bold text-lg">What could I earn?</h2>
+        <p className="text-sm text-neutral-700">
+          Slide to try it. This counts only the ₹{KIT.inr} kit, with a {EST_COMMISSION_PCT}% commission.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="est-followers" className="text-sm font-semibold">Your followers</label>
+          <span className="font-bold">{followers.toLocaleString("en-IN")}</span>
+        </div>
+        <Slider id="est-followers" min={0} max={90} step={1} value={[pos]}
+                onValueChange={(v) => setPos(v[0])} aria-label="Your followers" />
+        <div className="flex justify-between text-xs text-neutral-600"><span>1,000</span><span>10 lakh</span></div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="est-buy" className="text-sm font-semibold">How many of them buy</label>
+          <span className="font-bold">{buyPct} in every 100</span>
+        </div>
+        <Slider id="est-buy" min={1} max={10} step={1} value={[buyPct]} onValueChange={(v) => setBuyPct(v[0])} aria-label="How many followers buy" />
+        <div className="flex justify-between text-xs text-neutral-600"><span>1%</span><span>10%</span></div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="border-2 border-[#121212] bg-[#22C3A6] p-3">
+          <div className="text-xs font-semibold">People who buy</div>
+          <div className="text-2xl font-bold">{buyers.toLocaleString("en-IN")}</div>
+        </div>
+        <div className="border-2 border-[#121212] bg-[#FFC800] p-3">
+          <div className="text-xs font-semibold">You could earn about</div>
+          <div className="text-2xl font-bold">{inr(earn)}</div>
+        </div>
+      </div>
+      <p className="text-xs text-neutral-600">
+        An estimate only. Real sales depend on your posts, and a refunded sale earns nothing. Your own commission is the one we agree with you.
+      </p>
+    </section>
+  );
+}
+
 export default function InfluencerPortal() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -257,19 +396,8 @@ export default function InfluencerPortal() {
 
   const d = me.data;
   if (!d?.ok) {
-    return (
-      <div className="min-h-screen bg-[#FFF8EB] flex items-center justify-center p-6">
-        <div className="max-w-md border-2 border-[#121212] bg-white p-6 text-center space-y-3">
-          <h1 className="font-bold text-xl">This login is not set up as an influencer</h1>
-          <p className="text-sm text-neutral-700">
-            You are signed in as {user.email}, but this account is not linked to an influencer campaign.
-            Message Ezyourlife to get it linked.
-          </p>
-          <Button variant="outline" className="border-2 border-[#121212]"
-                  onClick={() => supabase.auth.signOut()}>Sign out</Button>
-        </div>
-      </div>
-    );
+    const meta = (user.user_metadata ?? {}) as { full_name?: string };
+    return <Register email={user.email} defaultName={meta.full_name ?? ""} />;
   }
 
   const copyLink = async () => {
@@ -291,14 +419,25 @@ export default function InfluencerPortal() {
           <div>
             <h1 className="font-bold text-3xl">Hi {d.name.split(" ")[0]} 👋</h1>
             <p className="text-sm text-neutral-700">
-              Your Ezyourlife campaign · {d.commission_pct}% commission on every sale
-              {d.status !== "active" && <span className="font-bold"> · campaign {d.status}</span>}
+              Your Ezyourlife creator page
+              {d.status === "active" ? ` · ${d.commission_pct}% commission on every sale` : ""}
+              {d.status !== "active" && d.status !== "paused" && <span className="font-bold"> · campaign {d.status}</span>}
             </p>
           </div>
           <Button variant="outline" className="border-2 border-[#121212]" onClick={() => supabase.auth.signOut()}>
             Sign out
           </Button>
         </header>
+
+        {d.status === "paused" && (
+          <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212]">
+            <h2 className="font-bold text-lg">Waiting for our approval</h2>
+            <p className="text-sm text-neutral-700">
+              Your account is ready. Set up your offer page below while we look at your profile. Your link starts counting
+              clicks and sales once we approve you, and we tell you your commission then.
+            </p>
+          </section>
+        )}
 
         <section className="border-2 border-[#121212] bg-[#FFC800] p-4 shadow-[4px_4px_0_#121212] space-y-2">
           <h2 className="font-bold text-lg">Your link — share this everywhere</h2>
@@ -312,6 +451,8 @@ export default function InfluencerPortal() {
         </section>
 
         <OfferEditor d={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["influencer-me"] })} />
+
+        <EarningsEstimate />
 
         <KitPicker />
 
@@ -405,6 +546,14 @@ export default function InfluencerPortal() {
               (commission {inr(p.commission_inr)}, TDS {inr(p.tds_inr)}) · reference {p.reference}
             </div>
           ))}
+        </section>
+
+        <section className="border-2 border-[#121212] bg-white p-4 shadow-[4px_4px_0_#121212]">
+          <h2 className="font-bold text-lg">Come back any time</h2>
+          <p className="text-sm text-neutral-700">
+            This dashboard lives at <code className="font-semibold">ezyourlife.com/influencer</code>. Bookmark it and sign in with the
+            same email whenever you want to check your numbers or change your offer page.
+          </p>
         </section>
 
         <p className="text-xs text-neutral-600 pb-8">
