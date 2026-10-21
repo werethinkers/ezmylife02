@@ -15,6 +15,7 @@ import { flagshipCareers } from "./flagship-careers";
 import { flagshipEducation } from "./flagship-education";
 import { flagshipFamily } from "./flagship-family";
 import { flagshipHealth } from "./flagship-health";
+import { mailBrainTools } from "./mail-brain";
 
 /*
  * Catalogue rows for apps added by the 2,000-app launch (docs/launch-plan.md).
@@ -43,4 +44,5 @@ export const CATALOG_GROUPS: Record<string, ToolEntry[]> = {
   flagshipEducation,
   flagshipFamily,
   flagshipHealth,
+  mailBrainTools,
 };

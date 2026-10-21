@@ -6,6 +6,7 @@ import { examPresets } from "./exam-presets";
 import { contentAi } from "./content-ai";
 import { customApps } from "./custom";
 import { bhedPrices } from "./bhed";
+import { mailBrainPrices } from "./mail-brain";
 import { extras } from "./extras";
 import { flagshipBusiness } from "./flagship-business";
 import { flagshipCommon } from "./flagship-common";
@@ -28,6 +29,7 @@ export const PRICE_GROUPS: Record<string, Record<string, number>> = {
   "content-ai": contentAi,
   custom: customApps,
   bhed: bhedPrices,
+  mailBrain: mailBrainPrices,
   extras,
   calculators,
   converters,

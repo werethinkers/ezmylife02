@@ -68,7 +68,7 @@ function Breakdown({ r }: { r: Req }) {
   );
 }
 
-export default function AdminRefunds() {
+export default function AdminRefunds({ embedded = false }: { embedded?: boolean } = {}) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
@@ -163,9 +163,9 @@ export default function AdminRefunds() {
   const sendTotal = bucket("approved").reduce((s, r) => s + r.live.refundable_inr, 0);
 
   return (
-    <div className="min-h-screen bg-[#FFF8EB] text-[#121212]">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+    <div className={embedded ? "text-[#121212]" : "min-h-screen bg-[#FFF8EB] text-[#121212]"}>
+      {!embedded && <Navbar />}
+      <main className={embedded ? "space-y-6" : "mx-auto max-w-6xl px-4 py-6 space-y-6"}>
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-bold text-3xl">Refunds</h1>

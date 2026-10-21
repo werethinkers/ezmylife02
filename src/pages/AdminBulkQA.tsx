@@ -38,7 +38,7 @@ function makeSampleImage(): Promise<File> {
   return new Promise((res) => c.toBlob((b) => res(new File([b!], "sample.png", { type: "image/png" })), "image/png"));
 }
 
-const AdminBulkQA = () => {
+const AdminBulkQA = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [allowed, setAllowed] = useState(false);
@@ -119,13 +119,13 @@ const AdminBulkQA = () => {
     a.click();
   };
 
-  if (checking) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (checking) return <div className={embedded ? "flex items-center justify-center py-16" : "flex items-center justify-center min-h-screen"}><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!allowed) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto pt-24 pb-16 px-4 max-w-6xl">
+    <div className={embedded ? "" : "min-h-screen bg-background"}>
+      {!embedded && <Navbar />}
+      <div className={embedded ? "" : "container mx-auto pt-24 pb-16 px-4 max-w-6xl"}>
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold">Bulk Mode QA Checklist</h1>

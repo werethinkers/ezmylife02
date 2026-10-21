@@ -46,7 +46,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminBulkQA = lazy(() => import("./pages/AdminBulkQA"));
+const AdminRedirect = lazy(() => import("./pages/AdminRedirect"));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const SpeedyNotebook = lazy(() => import("./pages/SpeedyNotebook"));
 const PromptMaster = lazy(() => import("./pages/PromptMaster"));
@@ -74,7 +74,6 @@ const PublishDone = lazy(() => import("./pages/instant/PublishDone"));
 const ProductPromo = lazy(() => import("./pages/instant/ProductPromo"));
 const MyPages = lazy(() => import("./pages/instant/MyPages"));
 const PageLeads = lazy(() => import("./pages/instant/PageLeads"));
-const AdminInstant = lazy(() => import("./pages/instant/AdminInstant"));
 
 
 
@@ -193,7 +192,7 @@ const AnimatedRoutes = () => {
               path="/admin/bulk-qa"
               element={
                 <ProtectedRoute>
-                  <AdminBulkQA />
+                  <AdminRedirect />
                 </ProtectedRoute>
               }
             />
@@ -285,7 +284,7 @@ const AnimatedRoutes = () => {
             <Route path="/p/:slug" element={<PublishedPage />} />
             <Route path="/my-pages" element={<ProtectedRoute><MyPages /></ProtectedRoute>} />
             <Route path="/my-pages/:pageId" element={<ProtectedRoute><PageLeads /></ProtectedRoute>} />
-            <Route path="/admin/instant" element={<ProtectedRoute><AdminInstant /></ProtectedRoute>} />
+            <Route path="/admin/instant" element={<ProtectedRoute><AdminRedirect /></ProtectedRoute>} />
             {featureRoutes.map(({ path, page: Page, signedIn }) => (
               <Route key={path} path={path} element={signedIn ? <ProtectedRoute><Page /></ProtectedRoute> : <Page />} />
             ))}

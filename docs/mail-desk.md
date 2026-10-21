@@ -1,6 +1,6 @@
-# Mail Desk
+# Mail Brain (code name: mail-desk)
 
-`/mail-desk` (signed-in only). A person's Gmail mails are brought in, sorted, and read by the AI into a summary, tasks, reminders and a reply draft. Nothing is ever sent for them. The Gmail they signed up with is their default account; they can add more Gmail accounts, each with its own settings (name, sign-off, reply language, "also read Updates").
+Shown to people as **Mail Brain**, a Studio app at `/mail-brain` (signed-in only; `/mail-desk` forwards there). It is a catalogue row (`src/data/catalog/mail-brain.ts`, `dedicatedRoute: "/mail-brain"`), listed in the Studios page and found by search. The catalogue SQL is `supabase/migrations/*_catalog_mailbraintools.sql`; apply it like any catalogue file. The function, tables and tool ids keep the `mail-desk` name. A person's Gmail mails are brought in, sorted, and read by the AI into a summary, tasks, reminders and a reply draft. Nothing is ever sent for them. The Gmail they signed up with is their default account; they can add more Gmail accounts, each with its own settings (name, sign-off, reply language, "also read Updates").
 
 ## What costs credits
 

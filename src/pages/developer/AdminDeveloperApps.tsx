@@ -262,7 +262,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
   );
 }
 
-export default function AdminDeveloperApps() {
+export default function AdminDeveloperApps({ embedded = false }: { embedded?: boolean } = {}) {
   const qc = useQueryClient();
   const admin = useQuery({ queryKey: ["dev-is-admin"], queryFn: isAdmin, staleTime: 10 * 60 * 1000 });
   const queue = useQuery({ queryKey: ["dev-admin-queue"], queryFn: adminQueue, enabled: admin.data === true });
@@ -281,26 +281,26 @@ export default function AdminDeveloperApps() {
 
   if (admin.isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <div className={embedded ? "" : "min-h-screen bg-background"}>
+        {!embedded && <Navbar />}
         <div className="flex justify-center pt-24"><Loader2 className="h-6 w-6 animate-spin" /></div>
       </div>
     );
   }
   if (!admin.data) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <div className={embedded ? "" : "min-h-screen bg-background"}>
+        {!embedded && <Navbar />}
         <p className="mx-auto max-w-md px-4 pt-24 text-center font-semibold">Admins only.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageSeo title="Developer apps review | Admin" description="Review developer apps." path="/admin/developer-apps" noindex />
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-6">
+    <div className={embedded ? "" : "min-h-screen bg-background"}>
+      <PageSeo title="Developer apps review | Admin" description="Review developer apps." path="/admin" noindex />
+      {!embedded && <Navbar />}
+      <main className={embedded ? "pb-8" : "mx-auto max-w-7xl px-4 pb-24 pt-6"}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold">Developer apps</h1>

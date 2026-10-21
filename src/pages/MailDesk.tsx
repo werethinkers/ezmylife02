@@ -17,7 +17,7 @@ import { emitCreditPrompt, handleCreditError } from "@/lib/creditPrompt";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-/* Mail Desk. Reading your mails here is free. You pay only when you press Fetch, and the
+/* Mail Brain. Reading your mails here is free. You pay only when you press Fetch, and the
    price (0.08 credits a mail, rounded up to whole credits) is shown before anything is taken. */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -160,7 +160,7 @@ const MailDesk = () => {
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mail Desk</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mail Brain</p>
             <h1 className="font-display text-3xl font-bold tracking-tight">Your mail, read for you</h1>
             <p className="mt-1 max-w-xl text-muted-foreground">Looking at your mail, tasks and replies is free. You pay only when you press Fetch, and you see the price first.</p>
           </div>
@@ -174,7 +174,7 @@ const MailDesk = () => {
           </div>
         </div>
 
-        <nav aria-label="Mail Desk sections" className="mt-6 flex flex-wrap gap-1">
+        <nav aria-label="Mail Brain sections" className="mt-6 flex flex-wrap gap-1">
           {TABS.map((t) => (
             <button
               key={t}
@@ -195,7 +195,7 @@ const MailDesk = () => {
 
         <div className="mt-6">
           {accounts.isLoading && <p className="text-muted-foreground">Loading…</p>}
-          {accounts.isError && <p className="rounded-xl border-2 border-ink bg-coral p-4">Mail Desk could not load. Please refresh the page.</p>}
+          {accounts.isError && <p className="rounded-xl border-2 border-ink bg-coral p-4">Mail Brain could not load. Please refresh the page.</p>}
           {accounts.data && tab === "Today" && <Today accts={accts} mails={mails.data ?? []} tasks={openTasks} needReply={needReply} onTab={setTab} onFetch={() => setFetchOpen(true)} onConnect={connect} />}
           {accounts.data && tab === "Mails" && <Mails mails={mails.data ?? []} byId={byId} multi={accts.length > 1} />}
           {accounts.data && tab === "Tasks" && <Tasks tasks={tasks.data ?? []} byId={byId} multi={accts.length > 1} onChange={refreshAll} />}
@@ -355,7 +355,7 @@ function Accounts({ accts, busy, onConnect, onChange }: { accts: Account[]; busy
     onChange();
   };
   const remove = async (a: Account) => {
-    if (!window.confirm(`Remove ${a.email} and all its mails from Mail Desk?`)) return;
+    if (!window.confirm(`Remove ${a.email} and all its mails from Mail Brain?`)) return;
     const { error } = await table("mail_desk_accounts").delete().eq("id", a.id);
     if (error) toast.error("Could not remove it.");
     onChange();

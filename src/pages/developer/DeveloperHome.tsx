@@ -58,7 +58,7 @@ export default function DeveloperHome() {
           </div>
           {admin.data && (
             <Button asChild variant="outline">
-              <Link to="/admin/developer-apps">
+              <Link to="/admin?tab=app-review">
                 Review queue <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

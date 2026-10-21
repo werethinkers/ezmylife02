@@ -59,7 +59,7 @@ function Tile({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
-export default function AdminInfluencers() {
+export default function AdminInfluencers({ embedded = false }: { embedded?: boolean } = {}) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
@@ -254,9 +254,9 @@ export default function AdminInfluencers() {
   const pct = t.clicks ? ((t.buyers / t.clicks) * 100).toFixed(1) : "0";
 
   return (
-    <div className="min-h-screen bg-[#FFF8EB] text-[#121212]">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+    <div className={embedded ? "text-[#121212]" : "min-h-screen bg-[#FFF8EB] text-[#121212]"}>
+      {!embedded && <Navbar />}
+      <main className={embedded ? "space-y-6" : "mx-auto max-w-6xl px-4 py-6 space-y-6"}>
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-bold text-3xl">Influencers</h1>

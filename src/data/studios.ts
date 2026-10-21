@@ -28,6 +28,7 @@ export const STUDIO_TABS: StudioTab[] = [
       "business-valuation-estimator",
       "restaurant-launch-planner",
       "annual-report-maker",
+      "mail-brain",
     ],
   },
   {

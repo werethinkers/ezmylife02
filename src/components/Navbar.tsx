@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, Inbox, BadgeCheck } from "lucide-react";
+import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, BadgeCheck } from "lucide-react";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { Logo } from "@/components/brand/Logo";
 import { EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
@@ -120,9 +120,6 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/subscription" className="cursor-pointer"><BadgeCheck className="mr-2 h-4 w-4" /> Subscription</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/mail-desk" className="cursor-pointer"><Inbox className="mr-2 h-4 w-4" /> Mail Desk</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>

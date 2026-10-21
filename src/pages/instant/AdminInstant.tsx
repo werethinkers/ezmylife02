@@ -17,7 +17,7 @@ import { pageUrlFor } from "@/instant/util";
 import type { Content } from "@/instant/types";
 
 /** Admin: price, availability and featuring for every Instant Digital Product. */
-export default function AdminInstant() {
+export default function AdminInstant({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -69,9 +69,9 @@ export default function AdminInstant() {
   if (allowed === false) return <div className="min-h-screen grid place-items-center"><p>Admins only.</p></div>;
   const s = q.trim().toLowerCase();
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8 max-w-5xl pb-24">
+    <div className={embedded ? "" : "min-h-screen bg-muted/30"}>
+      {!embedded && <Navbar />}
+      <main className={embedded ? "pb-8" : "container mx-auto px-4 py-8 max-w-5xl pb-24"}>
         <h1 className="font-display text-3xl font-bold">Instant products</h1>
         <p className="text-muted-foreground mb-4">{CATALOG.length} products. Prices are in rupees and apply to new orders immediately.</p>
         <div className="rounded-2xl border bg-background p-4 mb-6 flex flex-wrap items-center gap-3">

@@ -20,6 +20,9 @@ import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
 import { seoFor } from "@/lib/seo/pages";
 import { placedIn } from "@/data/placements";
+import { useProducts } from "@/instant/useProducts";
+import { CATEGORIES as DESIGN_CATEGORIES } from "@/instant/catalog";
+import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
@@ -41,6 +44,7 @@ const Tools = () => {
   const typeKey = params.get("type");
   const [allTags, setAllTags] = useState(false);
   const { data: catalog = [] } = useToolsCatalog();
+  const { list: designs } = useProducts();
   const { user } = useAuth();
   const { recent } = useRecentTools();
 
@@ -86,6 +90,14 @@ const Tools = () => {
         ? shown.filter((t) => `${t.name} ${t.description} ${categoriesOf(t).join(" ")} ${(t.tool_types ?? []).join(" ")}`.toLowerCase().includes(query))
         : [],
     [shown, query],
+  );
+  // Websites, cards and invites are found by the same search, so nothing in the store is hidden from it.
+  const designResults = useMemo(
+    () =>
+      query && !typeKey
+        ? designs.filter((l) => `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase().includes(query))
+        : [],
+    [designs, query, typeKey],
   );
   // Same picks as the home page's "Most useful to start" (src/data/placements.ts).
   const hot = useMemo(() => placedIn(live, "home-start"), [live]);
@@ -269,21 +281,44 @@ const Tools = () => {
           <section aria-live="polite">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-bold">
-                Results for “{q.trim()}” <span className="text-sm font-normal text-muted-foreground">({results.length})</span>
+                Results for “{q.trim()}” <span className="text-sm font-normal text-muted-foreground">({results.length + designResults.length})</span>
               </h2>
               <Button variant="outline" size="sm" onClick={() => set({ q: null })}>
                 Clear search
               </Button>
             </div>
-            {results.length ? (
+            {results.length > 0 && (
               <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
                 {results.map((t) => (
                   <AppRow key={t.id} tool={t} />
                 ))}
               </div>
-            ) : (
-              <ToolsEmptyState onClearFilters={() => set({ q: null })} hasActiveFilters />
             )}
+            {designResults.length > 0 && (
+              <div className={results.length ? "mt-10" : ""}>
+                <h3 className="mb-3 font-body text-lg font-bold">
+                  Websites, cards & invites <span className="text-sm font-normal text-muted-foreground">({designResults.length})</span>
+                </h3>
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {designResults.map((l) => {
+                    const site = (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category);
+                    return (
+                      <li key={l.product.id}>
+                        <Link to={`/make/${l.product.id}`} className="flex h-full flex-col gap-1 rounded-xl border-2 border-ink bg-card p-4 transition-transform hover:-translate-y-0.5">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="font-bold">{l.product.name}</span>
+                            <span className={cn("shrink-0 rounded-full border-2 border-ink px-2 text-[11px] font-bold", site ? "bg-teal" : "bg-sun")}>{site ? "Website" : "Card / invite"}</span>
+                          </span>
+                          {l.product.tagline && <span className="text-sm text-muted-foreground">{l.product.tagline}</span>}
+                          <span className="mt-auto pt-1 text-sm font-semibold">{l.price ? `₹${l.price} once` : "Free"}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+            {results.length === 0 && designResults.length === 0 && <ToolsEmptyState onClearFilters={() => set({ q: null })} hasActiveFilters />}
           </section>
         ) : category ? (
           <section>

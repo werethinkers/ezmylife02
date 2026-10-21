@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download, Megaphone, PackageCheck, Undo2, ListChecks, Store } from "lucide-react";
 import DataExport from "@/components/admin/DataExport";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import AdminSeoIndexing from "@/components/admin/AdminSeoIndexing";
@@ -30,6 +30,16 @@ import PromoPagesManager from "@/components/admin/PromoPagesManager";
 import { ToolManagement } from "@/components/admin/ToolManagement";
 import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { format } from "date-fns";
+
+// Heavy admin screens load only when their tab is opened.
+const AdminInfluencers = lazy(() => import("@/pages/influencers/AdminInfluencers"));
+const AdminDeveloperApps = lazy(() => import("@/pages/developer/AdminDeveloperApps"));
+const AdminRefunds = lazy(() => import("@/pages/refunds/AdminRefunds"));
+const AdminBulkQA = lazy(() => import("@/pages/AdminBulkQA"));
+const AdminInstant = lazy(() => import("@/pages/instant/AdminInstant"));
+
+const TAB_IDS = ["logs", "users", "credits", "tool-usage", "tool-mgmt", "groupings", "tool-demos", "promo-pages", "home-sections", "tool-requests", "archived-events", "meet-nudge", "api-keys", "analytics", "utm", "coupons", "virasat", "visitors", "tool-media", "enterprise", "seo-indexing", "data-export", "influencers", "app-review", "refunds", "bulk-qa", "instant"] as const;
+type TabId = (typeof TAB_IDS)[number];
 
 interface ActivityLog {
   id: string;
@@ -65,7 +75,17 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
-  const [activeTab, setActiveTab] = useState<"logs" | "users" | "credits" | "tool-usage" | "tool-mgmt" | "groupings" | "tool-demos" | "promo-pages" | "home-sections" | "tool-requests" | "archived-events" | "meet-nudge" | "api-keys" | "analytics" | "utm" | "coupons" | "virasat" | "visitors" | "tool-media" | "enterprise" | "seo-indexing" | "data-export">("analytics");
+  // The open section lives in the address (/admin?tab=influencers) so every admin screen has a link you can share or bookmark.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fromUrl = searchParams.get("tab") as TabId | null;
+  const [activeTab, setActiveTabState] = useState<TabId>(fromUrl && TAB_IDS.includes(fromUrl) ? fromUrl : "analytics");
+  const setActiveTab = (t: TabId) => {
+    setActiveTabState(t);
+    setSearchParams({ tab: t }, { replace: true });
+  };
+  useEffect(() => {
+    if (fromUrl && TAB_IDS.includes(fromUrl)) setActiveTabState(fromUrl);
+  }, [fromUrl]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -158,7 +178,7 @@ const AdminDashboard = () => {
     return totalB - totalA;
   });
 
-  const groups: { label: string; tabs: { id: typeof activeTab; label: string; icon: typeof Activity }[] }[] = [
+  const groups: { label: string; tabs: { id: TabId; label: string; icon: typeof Activity }[] }[] = [
     {
       label: "Overview",
       tabs: [
@@ -185,12 +205,24 @@ const AdminDashboard = () => {
         ...(!isViewOnly ? [{ id: "tool-media" as const, label: "Tool Media", icon: ImageIcon }] : []),
         ...(!isViewOnly ? [{ id: "home-sections" as const, label: "Home Sections", icon: LayoutGrid }] : []),
         { id: "tool-requests", label: "Tool Requests", icon: MessageSquarePlus },
+        ...(!isViewOnly ? [{ id: "bulk-qa" as const, label: "Bulk QA", icon: ListChecks }] : []),
       ],
     },
+    ...(!isViewOnly
+      ? [{
+          label: "Store",
+          tabs: [
+            { id: "app-review" as const, label: "App review", icon: PackageCheck },
+            { id: "instant" as const, label: "Websites & cards", icon: Store },
+            { id: "refunds" as const, label: "Refunds", icon: Undo2 },
+          ],
+        }]
+      : []),
     {
       label: "Growth",
       tabs: [
         ...(!isViewOnly ? [{ id: "utm" as const, label: "UTM Links", icon: LinkIcon }] : []),
+        ...(!isViewOnly ? [{ id: "influencers" as const, label: "Influencers", icon: Megaphone }] : []),
         ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
         { id: "enterprise", label: "Enterprise Leads", icon: Building2 },
         ...(!isViewOnly ? [{ id: "seo-indexing" as const, label: "SEO / Indexing", icon: Globe }] : []),
@@ -248,7 +280,7 @@ const AdminDashboard = () => {
           <div className="md:hidden">
             <select
               value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as typeof activeTab)}
+              onChange={(e) => setActiveTab(e.target.value as TabId)}
               className="w-full h-11 px-3 rounded-lg border border-border bg-background text-sm"
             >
               {groups.map((g) => (
@@ -408,6 +440,13 @@ const AdminDashboard = () => {
         {activeTab === "tool-demos" && !isViewOnly && <ToolDemoEditor />}
         {activeTab === "promo-pages" && !isViewOnly && <PromoPagesManager />}
         {activeTab === "data-export" && !isViewOnly && <DataExport />}
+        <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+          {activeTab === "influencers" && !isViewOnly && <AdminInfluencers embedded />}
+          {activeTab === "app-review" && !isViewOnly && <AdminDeveloperApps embedded />}
+          {activeTab === "refunds" && !isViewOnly && <AdminRefunds embedded />}
+          {activeTab === "bulk-qa" && !isViewOnly && <AdminBulkQA embedded />}
+          {activeTab === "instant" && !isViewOnly && <AdminInstant embedded />}
+        </Suspense>
           </div>
         </div>
       </div>

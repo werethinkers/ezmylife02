@@ -9,8 +9,8 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 export type FeatureRoute = { path: string; page: LazyExoticComponent<ComponentType>; signedIn?: boolean };
 
 export const featureRoutes: FeatureRoute[] = [
-  { path: "/admin/influencers", page: lazy(() => import("./pages/influencers/AdminInfluencers")), signedIn: true },
-  { path: "/admin/refunds", page: lazy(() => import("./pages/refunds/AdminRefunds")), signedIn: true },
+  { path: "/admin/influencers", page: lazy(() => import("./pages/AdminRedirect")), signedIn: true },
+  { path: "/admin/refunds", page: lazy(() => import("./pages/AdminRedirect")), signedIn: true },
   { path: "/studios", page: lazy(() => import("./pages/Studios")) },
   { path: "/studios/site-watch", page: lazy(() => import("./pages/SiteWatchDemo")) },
   { path: "/studios/bhed-prabhed", page: lazy(() => import("./pages/BhedPrabhed")) },
@@ -21,6 +21,7 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/creators", page: lazy(() => import("./pages/earn/Creators")) },
   { path: "/list-your-app", page: lazy(() => import("./pages/earn/ListYourApp")) },
   { path: "/developer/preview/:versionId/embed", page: lazy(() => import("./pages/developer/DeveloperPreviewEmbed")), signedIn: true },
-  { path: "/admin/developer-apps", page: lazy(() => import("./pages/developer/AdminDeveloperApps")), signedIn: true },
-  { path: "/mail-desk", page: lazy(() => import("./pages/MailDesk")), signedIn: true },
+  { path: "/admin/developer-apps", page: lazy(() => import("./pages/AdminRedirect")), signedIn: true },
+  { path: "/mail-brain", page: lazy(() => import("./pages/MailDesk")), signedIn: true },
+  { path: "/mail-desk", page: lazy(() => import("./pages/MailDeskRedirect")) },
 ];
