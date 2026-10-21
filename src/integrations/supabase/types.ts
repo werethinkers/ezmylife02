@@ -62,6 +62,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bhed_chart_media: {
+        Row: {
+          chart_id: string
+          data_b64: string
+          id: string
+          mime: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          chart_id: string
+          data_b64: string
+          id: string
+          mime: string
+          name: string
+          user_id?: string
+        }
+        Update: {
+          chart_id?: string
+          data_b64?: string
+          id?: string
+          mime?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bhed_charts: {
+        Row: {
+          created_ms: number
+          document: string
+          id: string
+          title: string
+          updated_ms: number
+          user_id: string
+        }
+        Insert: {
+          created_ms: number
+          document: string
+          id: string
+          title?: string
+          updated_ms: number
+          user_id?: string
+        }
+        Update: {
+          created_ms?: number
+          document?: string
+          id?: string
+          title?: string
+          updated_ms?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       bulk_jobs: {
         Row: {
           completed_at: string | null
@@ -349,6 +403,376 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      dev_ai_samples: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          inputs: Json | null
+          output: string
+          spec_sha: string
+          user_id: string | null
+          version_id: string | null
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          inputs?: Json | null
+          output: string
+          spec_sha: string
+          user_id?: string | null
+          version_id?: string | null
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          inputs?: Json | null
+          output?: string
+          spec_sha?: string
+          user_id?: string | null
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_ai_samples_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "dev_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dev_ai_samples_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "dev_app_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_ai_usage: {
+        Row: {
+          app_id: string | null
+          cost_inr: number
+          created_at: string
+          id: string
+          in_tokens: number
+          mode: string
+          model: string
+          ok: boolean
+          out_tokens: number
+          spec_sha: string | null
+          user_id: string | null
+          version_id: string | null
+        }
+        Insert: {
+          app_id?: string | null
+          cost_inr?: number
+          created_at?: string
+          id?: string
+          in_tokens?: number
+          mode: string
+          model: string
+          ok?: boolean
+          out_tokens?: number
+          spec_sha?: string | null
+          user_id?: string | null
+          version_id?: string | null
+        }
+        Update: {
+          app_id?: string | null
+          cost_inr?: number
+          created_at?: string
+          id?: string
+          in_tokens?: number
+          mode?: string
+          model?: string
+          ok?: boolean
+          out_tokens?: number
+          spec_sha?: string | null
+          user_id?: string | null
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_ai_usage_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "dev_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dev_ai_usage_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "dev_app_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_app_images: {
+        Row: {
+          bytes: number
+          caption: string | null
+          created_at: string
+          data: string
+          developer_id: string
+          id: string
+          mime: string
+          position: number
+          version_id: string
+        }
+        Insert: {
+          bytes: number
+          caption?: string | null
+          created_at?: string
+          data: string
+          developer_id: string
+          id?: string
+          mime: string
+          position: number
+          version_id: string
+        }
+        Update: {
+          bytes?: number
+          caption?: string | null
+          created_at?: string
+          data?: string
+          developer_id?: string
+          id?: string
+          mime?: string
+          position?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_app_images_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "dev_app_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_app_versions: {
+        Row: {
+          app_id: string
+          category: string | null
+          charge_options: Json
+          created_at: string
+          description: string
+          developer_id: string
+          html: string
+          html_sha256: string | null
+          id: string
+          name: string
+          promo: Json | null
+          qa: Json | null
+          qa_at: string | null
+          qa_passed: boolean
+          release_notes: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          short_description: string
+          similar_note: string | null
+          source: Json | null
+          spec: Json | null
+          status: string
+          submitted_at: string | null
+          support_email: string | null
+          tool_types: string[]
+          updated_at: string
+          version_no: number
+        }
+        Insert: {
+          app_id: string
+          category?: string | null
+          charge_options?: Json
+          created_at?: string
+          description?: string
+          developer_id: string
+          html?: string
+          html_sha256?: string | null
+          id?: string
+          name?: string
+          promo?: Json | null
+          qa?: Json | null
+          qa_at?: string | null
+          qa_passed?: boolean
+          release_notes?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          short_description?: string
+          similar_note?: string | null
+          source?: Json | null
+          spec?: Json | null
+          status?: string
+          submitted_at?: string | null
+          support_email?: string | null
+          tool_types?: string[]
+          updated_at?: string
+          version_no: number
+        }
+        Update: {
+          app_id?: string
+          category?: string | null
+          charge_options?: Json
+          created_at?: string
+          description?: string
+          developer_id?: string
+          html?: string
+          html_sha256?: string | null
+          id?: string
+          name?: string
+          promo?: Json | null
+          qa?: Json | null
+          qa_at?: string | null
+          qa_passed?: boolean
+          release_notes?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          short_description?: string
+          similar_note?: string | null
+          source?: Json | null
+          spec?: Json | null
+          status?: string
+          submitted_at?: string | null
+          support_email?: string | null
+          tool_types?: string[]
+          updated_at?: string
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_app_versions_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "dev_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_apps: {
+        Row: {
+          charge_plan: Json | null
+          created_at: string
+          credits: number | null
+          developer_id: string
+          id: string
+          kind: string
+          live_version_id: string | null
+          share_pct: number | null
+          status: string
+          tool_id: string
+          updated_at: string
+        }
+        Insert: {
+          charge_plan?: Json | null
+          created_at?: string
+          credits?: number | null
+          developer_id: string
+          id?: string
+          kind?: string
+          live_version_id?: string | null
+          share_pct?: number | null
+          status?: string
+          tool_id: string
+          updated_at?: string
+        }
+        Update: {
+          charge_plan?: Json | null
+          created_at?: string
+          credits?: number | null
+          developer_id?: string
+          id?: string
+          kind?: string
+          live_version_id?: string | null
+          share_pct?: number | null
+          status?: string
+          tool_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_apps_live_version_fk"
+            columns: ["live_version_id"]
+            isOneToOne: false
+            referencedRelation: "dev_app_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_upload_parts: {
+        Row: {
+          data: string
+          part_no: number
+          upload_id: string
+        }
+        Insert: {
+          data: string
+          part_no: number
+          upload_id: string
+        }
+        Update: {
+          data?: string
+          part_no?: number
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_upload_parts_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "dev_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_uploads: {
+        Row: {
+          app_id: string
+          created_at: string
+          developer_id: string
+          expires_at: string
+          finished_at: string | null
+          id: string
+          key_hash: string | null
+          source: Json | null
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          developer_id: string
+          expires_at?: string
+          finished_at?: string | null
+          id?: string
+          key_hash?: string | null
+          source?: Json | null
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          developer_id?: string
+          expires_at?: string
+          finished_at?: string | null
+          id?: string
+          key_hash?: string | null
+          source?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_uploads_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "dev_apps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_notifications: {
         Row: {
@@ -700,6 +1124,7 @@ export type Database = {
           name: string
           offer_cap: number | null
           offer_ends_at: string | null
+          self_signup: boolean
           status: string
           user_id: string | null
         }
@@ -720,6 +1145,7 @@ export type Database = {
           name: string
           offer_cap?: number | null
           offer_ends_at?: string | null
+          self_signup?: boolean
           status?: string
           user_id?: string | null
         }
@@ -740,6 +1166,7 @@ export type Database = {
           name?: string
           offer_cap?: number | null
           offer_ends_at?: string | null
+          self_signup?: boolean
           status?: string
           user_id?: string | null
         }
@@ -1896,7 +2323,6 @@ export type Database = {
           extra_categories: string[]
           has_uploaded_files: boolean
           home_section: string | null
-          placements: string[]
           icon_fit: string
           icon_url: string | null
           id: string
@@ -1904,6 +2330,7 @@ export type Database = {
           is_live: boolean
           is_premium: boolean
           name: string
+          placements: string[]
           preview_image_fit: string
           preview_image_url: string | null
           rating: number | null
@@ -1923,7 +2350,6 @@ export type Database = {
           extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
-          placements?: string[]
           icon_fit?: string
           icon_url?: string | null
           id: string
@@ -1931,6 +2357,7 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name: string
+          placements?: string[]
           preview_image_fit?: string
           preview_image_url?: string | null
           rating?: number | null
@@ -1950,7 +2377,6 @@ export type Database = {
           extra_categories?: string[]
           has_uploaded_files?: boolean
           home_section?: string | null
-          placements?: string[]
           icon_fit?: string
           icon_url?: string | null
           id?: string
@@ -1958,6 +2384,7 @@ export type Database = {
           is_live?: boolean
           is_premium?: boolean
           name?: string
+          placements?: string[]
           preview_image_fit?: string
           preview_image_url?: string | null
           rating?: number | null
@@ -2233,6 +2660,35 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_dev_approve: {
+        Args: {
+          _credits: number
+          _plan?: Json
+          _share_pct: number
+          _version_id: string
+        }
+        Returns: Json
+      }
+      admin_dev_approve_base: {
+        Args: {
+          _credits: number
+          _plan?: Json
+          _share_pct: number
+          _version_id: string
+        }
+        Returns: Json
+      }
+      admin_dev_apps: { Args: never; Returns: Json }
+      admin_dev_queue: { Args: never; Returns: Json }
+      admin_dev_queue_base: { Args: never; Returns: Json }
+      admin_dev_request_changes: {
+        Args: { _notes: string; _reject?: boolean; _version_id: string }
+        Returns: Json
+      }
+      admin_dev_set_listed: {
+        Args: { _app_id: string; _listed: boolean }
+        Returns: Json
+      }
       app_secret: { Args: { _name: string }; Returns: string }
       apply_credit_purchase: {
         Args: { _order_id: string; _payment_id: string; _purchase_id: string }
@@ -2248,8 +2704,149 @@ export type Database = {
         Returns: Json
       }
       compute_credit_cost: { Args: { _cost_inr: number }; Returns: number }
+      dev_add_image: {
+        Args: {
+          _app_id: string
+          _caption?: string
+          _data: string
+          _mime: string
+        }
+        Returns: Json
+      }
+      dev_ai_cost_estimate: {
+        Args: { _app_id: string; _sha: string; _spec: Json }
+        Returns: Json
+      }
+      dev_ai_cost_inr: {
+        Args: { _in: number; _model: string; _out: number }
+        Returns: number
+      }
+      dev_ai_load: {
+        Args: { _tool_id: string; _version_id?: string }
+        Returns: Json
+      }
+      dev_ai_log: {
+        Args: {
+          _images: number
+          _in_chars: number
+          _inputs: Json
+          _mode: string
+          _model: string
+          _ok: boolean
+          _out_chars: number
+          _output: string
+          _user: string
+          _version_id: string
+        }
+        Returns: undefined
+      }
+      dev_ai_preview_allow: { Args: { _user: string }; Returns: Json }
+      dev_ai_runs_left: { Args: never; Returns: Json }
+      dev_apply_similar_rule: {
+        Args: { _qa: Json; _version_id: string }
+        Returns: Json
+      }
+      dev_begin_upload: {
+        Args: { _app_id: string; _source?: Json; _with_key?: boolean }
+        Returns: Json
+      }
+      dev_check: {
+        Args: { _detail: string; _id: string; _label: string; _status: string }
+        Returns: Json
+      }
+      dev_clean_ai_spec: { Args: { _s: Json }; Returns: Json }
+      dev_clean_charge_options: { Args: { _o: Json }; Returns: Json }
+      dev_clean_promo: { Args: { _p: Json }; Returns: Json }
+      dev_clean_source: { Args: { _s: Json }; Returns: Json }
+      dev_cost_estimate: {
+        Args: { _bytes: number; _hosts: string[] }
+        Returns: Json
+      }
+      dev_create_app: { Args: { _name: string; _slug: string }; Returns: Json }
+      dev_find_similar: {
+        Args: { _app_id?: string; _name: string; _short: string }
+        Returns: Json
+      }
+      dev_finish_upload: {
+        Args: { _bytes: number; _parts: number; _upload_id: string }
+        Returns: Json
+      }
+      dev_finish_upload_as: {
+        Args: { _bytes: number; _parts: number; _upload_id: string }
+        Returns: Json
+      }
+      dev_frequency_flags: { Args: { _h: string }; Returns: string[] }
+      dev_keyed_upload_finish: {
+        Args: { _bytes: number; _key: string; _parts: number }
+        Returns: Json
+      }
+      dev_keyed_upload_part: {
+        Args: { _data: string; _key: string; _part_no: number }
+        Returns: Json
+      }
+      dev_overlap: { Args: { a: string[]; b: string[] }; Returns: number }
+      dev_put_part: {
+        Args: { _data: string; _part_no: number; _upload_id: string }
+        Returns: undefined
+      }
+      dev_remove_image: { Args: { _image_id: string }; Returns: Json }
+      dev_run_qa: { Args: { _version_id: string }; Returns: Json }
+      dev_run_qa_ai: { Args: { _version_id: string }; Returns: Json }
+      dev_run_qa_base: { Args: { _version_id: string }; Returns: Json }
+      dev_run_qa_hosted: { Args: { _version_id: string }; Returns: Json }
+      dev_save_ai_app: {
+        Args: { _app_id: string; _listing?: Json; _spec?: Json }
+        Returns: Json
+      }
+      dev_save_draft: {
+        Args: { _app_id: string; _html?: string; _listing?: Json }
+        Returns: Json
+      }
+      dev_save_draft_as: {
+        Args: {
+          _app_id: string
+          _html: string
+          _listing: Json
+          _source: Json
+          _uid: string
+        }
+        Returns: Json
+      }
+      dev_save_draft_as_base: {
+        Args: {
+          _app_id: string
+          _html: string
+          _listing: Json
+          _source: Json
+          _uid: string
+        }
+        Returns: Json
+      }
+      dev_set_similar_note: {
+        Args: { _listing: Json; _vid: string }
+        Returns: undefined
+      }
+      dev_similar_apps: {
+        Args: {
+          _app_id?: string
+          _full?: boolean
+          _name: string
+          _short: string
+        }
+        Returns: Json
+      }
+      dev_submit: { Args: { _version_id: string }; Returns: Json }
+      dev_upload_part: {
+        Args: { _data: string; _part_no: number; _upload_id: string }
+        Returns: Json
+      }
+      dev_withdraw: { Args: { _version_id: string }; Returns: Json }
+      dev_words: { Args: { _t: string }; Returns: string[] }
       ensure_wallet: { Args: { _uid: string }; Returns: undefined }
       free_image_runs_used: { Args: { _uid: string }; Returns: number }
+      get_ai_app: { Args: { _tool_id: string }; Returns: Json }
+      get_dev_app_kind: { Args: { _tool_id: string }; Returns: string }
+      get_hosted_app: { Args: { _tool_id: string }; Returns: Json }
       get_tool_view_counts: {
         Args: { _tool_ids: string[] }
         Returns: {
@@ -2325,6 +2922,10 @@ export type Database = {
       influencer_record_click: {
         Args: { _code: string; _visitor: string }
         Returns: boolean
+      }
+      influencer_register: {
+        Args: { _city: string; _handle: string; _name: string }
+        Returns: Json
       }
       influencer_reset_password: {
         Args: { _influencer_id: string; _password: string }
