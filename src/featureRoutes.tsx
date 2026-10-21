@@ -22,4 +22,5 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/list-your-app", page: lazy(() => import("./pages/earn/ListYourApp")) },
   { path: "/developer/preview/:versionId/embed", page: lazy(() => import("./pages/developer/DeveloperPreviewEmbed")), signedIn: true },
   { path: "/admin/developer-apps", page: lazy(() => import("./pages/developer/AdminDeveloperApps")), signedIn: true },
+  { path: "/mail-desk", page: lazy(() => import("./pages/MailDesk")), signedIn: true },
 ];
