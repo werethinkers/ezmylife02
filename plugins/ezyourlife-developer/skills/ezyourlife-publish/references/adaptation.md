@@ -1,6 +1,6 @@
 # Adapting a file app for EzYourLife
 
-This page is for apps that are pure browser logic and become ONE HTML file (a "file app"). If the app's value is an AI model, it is an AI app: see `ai-apps.md` and use `dev_save_ai_app` instead; do not keep AI calls in a file.
+This page is for apps that are browser logic with no AI (a "file app"). You adapt the project, build it as usual and send the whole build folder; EzYourLife packs it for its sandbox. If the app's value is an AI model, it is an AI app: see `ai-apps.md` and use `dev_save_ai_app` instead; do not keep AI calls in a file.
 
 EzYourLife runs every developer app inside a sandboxed iframe with a unique, empty origin. Inside it:
 
@@ -51,7 +51,7 @@ Do the same for `sessionStorage`. For IndexedDB, wrap opening it in try/catch an
 Use hash routing (`#/page`):
 - React Router: `HashRouter` or `createHashRouter`.
 - Vue Router: `createWebHashHistory()`.
-- SvelteKit: `router: { type: 'hash' }` in the kit config, built with the static adapter into a single page.
+- SvelteKit: `router: { type: 'hash' }` in the kit config, built with the static adapter (fallback `index.html`).
 
 Plain apps that switch views in JavaScript need no change.
 

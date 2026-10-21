@@ -1,4 +1,5 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
+import { supabaseKey, supabaseUrl } from "../env";
 import { z } from "zod";
 
 export default defineTool({
@@ -13,14 +14,14 @@ export default defineTool({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ prompt, goal }, ctx: ToolContext) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const url = `${process.env.SUPABASE_URL}/functions/v1/promptmaster-ai`;
+    const url = `${supabaseUrl()}/functions/v1/promptmaster-ai`;
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${ctx.getToken()}`,
-          apikey: process.env.SUPABASE_PUBLISHABLE_KEY!,
+          apikey: supabaseKey(),
         },
         // PromptMaster's "magic_write" action returns improved versions of a draft (1 run = its catalog price).
         body: JSON.stringify({
