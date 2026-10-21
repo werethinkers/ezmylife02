@@ -1,3 +1,4 @@
+// Deployed with the 21 Oct 2026 release (the connector could not test-run AI apps until this function was live).
 // Runs a developer's AI app (dev_apps.kind = 'ai'). The developer (or their Claude) sent a DEFINITION, not code:
 // the screen (doc, chat or vision), its fields, and the AI instructions. The instructions live in the database
 // and are read here with the service role; the browser only ever sends what the visitor typed.
