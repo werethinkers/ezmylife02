@@ -4,14 +4,13 @@ import { SITE, dbMessage, devClient, fail, latestVersion, notSignedIn, text } fr
 import { STANDARDS } from "./dev-standards";
 import { listingSchema } from "./dev-schemas";
 import { devAiTools } from "./dev-ai";
-import { MAX_APP_BYTES, PART_UNITS } from "../../devUploadParts";
-import { devGetUploadLink, devImportFile, uploadText } from "./dev-import";
+import { devGetUploadLink, devImportProject } from "./dev-import";
 import { devAddImage, devRemoveImage, latestPromo } from "./dev-images";
 
 /*
  * Developer tools: let Claude (or any MCP client) put a developer's app on EzYourLife, in any form it arrives.
  * Flow: dev_get_standards → dev_list_my_apps → dev_check_similar → dev_create_app →
- *   AI app: dev_save_ai_app → dev_test_run    |    file app: dev_save_app / dev_import_file / dev_get_upload_link
+ *   AI app: dev_save_ai_app → dev_test_run    |    file app: dev_import_project / dev_get_upload_link (a whole build folder) + dev_save_app (listing)
  * → dev_run_checks → (fix, repeat) → dev_get_preview_link → dev_submit_for_review → dev_get_status.
  * An admin approves on ezyourlife.com/admin/developer-apps; nothing here can approve, publish or set a price.
  * The rules and the conversion playbook are in ./dev-standards.ts (served live by dev_get_standards).
@@ -20,7 +19,7 @@ import { devAddImage, devRemoveImage, latestPromo } from "./dev-images";
 export const devGetStandards = defineTool({
   name: "dev_get_standards",
   title: "EzYourLife developer rules and categories",
-  description: "Returns the rules and the conversion playbook for putting an app on EzYourLife in any form (AI Studio export, multi-file project, plain HTML, an app built in Claude), the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife, every session.",
+  description: "Returns the rules and the conversion playbook for putting an app on EzYourLife in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude), the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife, every session.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
@@ -44,7 +43,7 @@ export const devCreateApp = defineTool({
     if (!ctx.isAuthenticated()) return notSignedIn();
     const { data, error } = await devClient(ctx).rpc("dev_create_app", { _slug: slug, _name: name });
     if (error) return fail(dbMessage(error.message));
-    return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: dev_save_app with the HTML and listing.`, data);
+    return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: AI app: dev_save_ai_app. File app: dev_import_project (or dev_get_upload_link) with the build folder, then dev_save_app with the listing.`, data);
   },
 });
 
@@ -81,30 +80,19 @@ export const devListMyApps = defineTool({
 
 export const devSaveApp = defineTool({
   name: "dev_save_app",
-  title: "Save a developer app's file and listing",
-  description: "FILE APPS: saves the app's single HTML file (best under about 200 KB; for bigger files use dev_import_file or dev_get_upload_link) and/or store listing to its editable version. For an AI app use dev_save_ai_app instead: sending an HTML file to an AI app that is not live yet turns it into a file app and discards its definition. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
+  title: "Save a file app's store listing",
+  description: "FILE APPS: saves the store listing (name, descriptions, category, charge options, promo and so on) to the app's editable version. The app itself is sent as a whole build folder with dev_import_project or dev_get_upload_link; a hand-made single HTML file is not accepted. For an AI app use dev_save_ai_app instead. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
   inputSchema: {
     app_id: z.string().uuid(),
-    html: z.string().max(MAX_APP_BYTES).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
-    listing: listingSchema.optional(),
+    listing: listingSchema,
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  handler: async ({ app_id, html, listing }, ctx) => {
+  handler: async ({ app_id, listing }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
-    if (html === undefined && !listing) return fail("Nothing to save: pass html, listing or both.");
-    const sb = devClient(ctx);
     try {
-      if (html !== undefined && html.length > PART_UNITS) {
-        const saved = await uploadText(sb, app_id, html, { kind: "inline", via: "connector" });
-        if (listing) {
-          const r = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: null, _listing: listing });
-          if (r.error) return fail(dbMessage(r.error.message));
-        }
-        return text(`Saved version ${saved.version_no} (${saved.parts} parts). Next: dev_run_checks.`, saved);
-      }
-      const { data, error } = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: html ?? null, _listing: listing ?? null });
+      const { data, error } = await devClient(ctx).rpc("dev_save_draft", { _app_id: app_id, _html: null, _listing: listing });
       if (error) return fail(dbMessage(error.message));
-      return text(`Saved version ${data.version_no}. Next: dev_run_checks.`, data);
+      return text(`Saved the listing on version ${data.version_no}. Next: dev_run_checks.`, data);
     } catch (e) {
       return fail(dbMessage(e instanceof Error ? e.message : String(e)));
     }
@@ -114,7 +102,7 @@ export const devSaveApp = defineTool({
 export const devRunChecks = defineTool({
   name: "dev_run_checks",
   title: "Run EzYourLife's checks on a developer app",
-  description: "Runs the server-side checks on the app's latest version. File apps: app file, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, listing, name, promo, screenshots and similar apps. AI apps: the definition and its fields, instructions, secrets, a successful test run, listing, name, promo, screenshots and similar apps. Returns each result; 'fail' items must be fixed before submitting. Similar apps without a similar_note in the listing are a 'fail'; with a note they are shown to the admin as 'look'.",
+  description: "Runs the server-side checks on the app's latest version. File apps: the packed app, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, listing, name, promo, screenshots and similar apps. AI apps: the definition and its fields, instructions, secrets, a successful test run, listing, name, promo, screenshots and similar apps. Returns each result; 'fail' items must be fixed before submitting. Similar apps without a similar_note in the listing are a 'fail'; with a note they are shown to the admin as 'look'.",
   inputSchema: { app_id: z.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
@@ -215,7 +203,7 @@ export const devTools = [
   devListMyApps,
   devSaveApp,
   ...devAiTools,
-  devImportFile,
+  devImportProject,
   devGetUploadLink,
   devAddImage,
   devRemoveImage,

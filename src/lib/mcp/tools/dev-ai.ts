@@ -2,6 +2,7 @@ import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { SITE, dbMessage, devClient, fail, latestVersion, notSignedIn, text } from "./dev-shared";
 import { listingSchema } from "./dev-schemas";
+import { supabaseKey, supabaseUrl } from "../env";
 
 /*
  * AI apps: the developer's Claude sends a DEFINITION (the screen, its fields and the AI instructions), not code.
@@ -160,9 +161,9 @@ export const devTestRun = defineTool({
       if (!v) return fail("App not found.");
       if (!v.spec) return fail("This version has no definition yet. Save one with dev_save_ai_app first.");
 
-      const res = await fetch(`${process.env.SUPABASE_URL}/functions/v1/dev-app-run`, {
+      const res = await fetch(`${supabaseUrl()}/functions/v1/dev-app-run`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ctx.getToken()}`, apikey: process.env.SUPABASE_PUBLISHABLE_KEY! },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ctx.getToken()}`, apikey: supabaseKey() },
         body: JSON.stringify({
           tool_id: app.tool_id,
           preview_version_id: v.id,
