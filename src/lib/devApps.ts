@@ -23,6 +23,10 @@ export function cleanError(message: string): string {
   if (/function .* does not exist|could not find the function|schema cache/i.test(message)) {
     return "The developer database is not set up yet. Ask the EzYourLife team to apply the developer-apps update.";
   }
+  // Never show database internals (embeds, relationships, codes) to a developer.
+  if (/could not embed|more than one relationship|PGRST\d+|violates|syntax error|relation .* does not exist/i.test(message)) {
+    return "Something went wrong on our side. Please try again, and tell the EzYourLife team if it keeps happening.";
+  }
   return message.replace(/^ERROR:\s*/i, "");
 }
 
@@ -245,14 +249,16 @@ export async function getVersionHtml(versionId: string): Promise<{
 }> {
   const { data, error } = await db
     .from("dev_app_versions")
-    .select("html, name, version_no, app_id, status, category, spec, dev_apps(kind, tool_id)")
+    .select("html, name, version_no, app_id, status, category, spec")
     .eq("id", versionId)
     .maybeSingle();
   if (error) throw new Error(cleanError(error.message));
   if (!data) throw new Error("Preview not found, or you are not signed in as its developer or an admin.");
-  const app = (Array.isArray(data.dev_apps) ? data.dev_apps[0] : data.dev_apps) ?? {};
-  const { dev_apps: _drop, ...rest } = data;
-  return { ...rest, kind: (app.kind ?? "hosted") as AppKind, tool_id: app.tool_id ?? "" };
+  // A separate lookup, not an embedded join: dev_apps and dev_app_versions point at each other twice
+  // (app_id and live_version_id), so PostgREST cannot pick the relationship for an embed.
+  const { data: app, error: appError } = await db.from("dev_apps").select("kind, tool_id").eq("id", data.app_id).maybeSingle();
+  if (appError) throw new Error(cleanError(appError.message));
+  return { ...data, kind: (app?.kind ?? "hosted") as AppKind, tool_id: app?.tool_id ?? "" };
 }
 
 /** The developer's test runs left today (null for admins, who are not limited). */

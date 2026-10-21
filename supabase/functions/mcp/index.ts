@@ -510,7 +510,7 @@ async function latestVersion(sb, appId) {
   if (error) throw new Error(error.message);
   return data;
 }
-var dbMessage = (m) => /does not exist|could not find the function|schema cache/i.test(m) ? "The developer-apps database update is not applied on EzYourLife yet. Ask the EzYourLife team to apply it." : m.replace(/^ERROR:\s*/i, "");
+var dbMessage = (m) => /does not exist|could not find the function|schema cache/i.test(m) ? "The developer-apps database update is not applied on EzYourLife yet. Ask the EzYourLife team to apply it." : /could not embed|more than one relationship|PGRST\d+|violates|syntax error/i.test(m) ? "Something went wrong on EzYourLife's side. Try again, and tell the EzYourLife team if it keeps happening." : m.replace(/^ERROR:\s*/i, "");
 
 // src/lib/mcp/tools/dev-standards.ts
 var STANDARDS = `# Putting an app on EzYourLife

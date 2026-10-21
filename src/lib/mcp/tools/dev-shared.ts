@@ -54,4 +54,6 @@ export async function latestVersion(sb: ReturnType<typeof devClient>, appId: str
 export const dbMessage = (m: string) =>
   /does not exist|could not find the function|schema cache/i.test(m)
     ? "The developer-apps database update is not applied on EzYourLife yet. Ask the EzYourLife team to apply it."
-    : m.replace(/^ERROR:\s*/i, "");
+    : /could not embed|more than one relationship|PGRST\d+|violates|syntax error/i.test(m)
+      ? "Something went wrong on EzYourLife's side. Try again, and tell the EzYourLife team if it keeps happening."
+      : m.replace(/^ERROR:\s*/i, "");
