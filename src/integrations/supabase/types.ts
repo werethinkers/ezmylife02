@@ -1427,6 +1427,303 @@ export type Database = {
           },
         ]
       }
+      mail_desk_accounts: {
+        Row: {
+          connected: boolean
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          include_in_fetch: boolean
+          is_default: boolean
+          last_fetched_at: string | null
+          last_synced_at: string | null
+          read_updates: boolean
+          reply_lang: string
+          scope_floor: string | null
+          sign_off: string | null
+          sync_cursor: string | null
+          user_id: string
+        }
+        Insert: {
+          connected?: boolean
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id?: string
+          include_in_fetch?: boolean
+          is_default?: boolean
+          last_fetched_at?: string | null
+          last_synced_at?: string | null
+          read_updates?: boolean
+          reply_lang?: string
+          scope_floor?: string | null
+          sign_off?: string | null
+          sync_cursor?: string | null
+          user_id: string
+        }
+        Update: {
+          connected?: boolean
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          include_in_fetch?: boolean
+          is_default?: boolean
+          last_fetched_at?: string | null
+          last_synced_at?: string | null
+          read_updates?: boolean
+          reply_lang?: string
+          scope_floor?: string | null
+          sign_off?: string | null
+          sync_cursor?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mail_desk_drafts: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          mail_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          mail_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          mail_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_desk_drafts_mail_id_fkey"
+            columns: ["mail_id"]
+            isOneToOne: true
+            referencedRelation: "mail_desk_mails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_desk_mails: {
+        Row: {
+          account_id: string
+          ai_done: boolean
+          body: string | null
+          claim_id: string | null
+          claimed_at: string | null
+          ext_id: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          kind: string | null
+          labels: string[]
+          list_unsub: boolean
+          precedence: string
+          received_at: string
+          reply_label: string | null
+          run_id: string | null
+          segmented_at: string | null
+          snippet: string | null
+          subject: string | null
+          summary: string | null
+          thread_id: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          ai_done?: boolean
+          body?: string | null
+          claim_id?: string | null
+          claimed_at?: string | null
+          ext_id: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          kind?: string | null
+          labels?: string[]
+          list_unsub?: boolean
+          precedence?: string
+          received_at: string
+          reply_label?: string | null
+          run_id?: string | null
+          segmented_at?: string | null
+          snippet?: string | null
+          subject?: string | null
+          summary?: string | null
+          thread_id?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          ai_done?: boolean
+          body?: string | null
+          claim_id?: string | null
+          claimed_at?: string | null
+          ext_id?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          kind?: string | null
+          labels?: string[]
+          list_unsub?: boolean
+          precedence?: string
+          received_at?: string
+          reply_label?: string | null
+          run_id?: string | null
+          segmented_at?: string | null
+          snippet?: string | null
+          subject?: string | null
+          summary?: string | null
+          thread_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_desk_mails_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "mail_desk_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_desk_runs: {
+        Row: {
+          account_ids: string[]
+          created_at: string
+          credits_charged: number
+          error: string | null
+          est_ai_cost_inr: number
+          id: string
+          mails: number
+          mails_ai: number
+          mails_free: number
+          status: string
+          tool_id: string
+          tool_run_id: string | null
+          user_id: string
+        }
+        Insert: {
+          account_ids?: string[]
+          created_at?: string
+          credits_charged?: number
+          error?: string | null
+          est_ai_cost_inr?: number
+          id?: string
+          mails: number
+          mails_ai?: number
+          mails_free?: number
+          status?: string
+          tool_id: string
+          tool_run_id?: string | null
+          user_id: string
+        }
+        Update: {
+          account_ids?: string[]
+          created_at?: string
+          credits_charged?: number
+          error?: string | null
+          est_ai_cost_inr?: number
+          id?: string
+          mails?: number
+          mails_ai?: number
+          mails_free?: number
+          status?: string
+          tool_id?: string
+          tool_run_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mail_desk_tasks: {
+        Row: {
+          account_id: string
+          created_at: string
+          done: boolean
+          due: string | null
+          id: string
+          kind: string
+          mail_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          done?: boolean
+          due?: string | null
+          id?: string
+          kind?: string
+          mail_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          done?: boolean
+          due?: string | null
+          id?: string
+          kind?: string
+          mail_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_desk_tasks_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "mail_desk_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_desk_tasks_mail_id_fkey"
+            columns: ["mail_id"]
+            isOneToOne: false
+            referencedRelation: "mail_desk_mails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_desk_tokens: {
+        Row: {
+          access_token: string | null
+          account_id: string
+          expiry: number | null
+          refresh_token: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          account_id: string
+          expiry?: number | null
+          refresh_token?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string
+          expiry?: number | null
+          refresh_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_desk_tokens_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "mail_desk_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meet_nudge_contacts: {
         Row: {
           business_name: string | null
