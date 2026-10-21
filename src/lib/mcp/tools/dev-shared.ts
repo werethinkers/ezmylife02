@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import type { ToolContext } from "@lovable.dev/mcp-js";
+import { userClient } from "../env";
 
 /*
  * Shared by the developer tools (dev-*.ts). Every call runs as the signed-in developer with
@@ -11,10 +11,7 @@ import type { ToolContext } from "@lovable.dev/mcp-js";
 export const SITE = "https://ezyourlife.com";
 
 export function devClient(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return userClient(ctx);
 }
 
 export const text = (t: string, structured?: Record<string, unknown>) => ({

@@ -2,12 +2,13 @@
 
 Outside developers publish their own apps to the store. Built 20-21 Oct 2026. Two kinds, one review path:
 
-- **File apps** (`dev_apps.kind = 'hosted'`): one browser-only HTML file up to 10 MB, no AI, run in a sandbox.
+- **File apps** (`dev_apps.kind = 'hosted'`): a whole browser-only project (a build folder: index.html plus its scripts, styles,
+  pictures, fonts and data), packed by EzYourLife into one sandboxed document of up to 10 MB, no AI.
 - **AI apps** (`kind = 'ai'`): a *definition* (screen, fields, AI instructions) that runs on the site's own shared
   screens and AI, charged per use like the built-in apps. See "AI apps" below.
 
 Both end in admin approval with one click. Any Claude can do the developer's side, for an app in any form (AI Studio
-export, multi-file project, plain HTML, an app built inside Claude), through the EzYourLife connector and the
+export, React/Vue/Svelte or other multi-file project, an app built inside Claude), through the EzYourLife connector and the
 `ezyourlife-developer` plugin (`plugins/ezyourlife-developer`). The conversion playbook Claude follows is
 `src/lib/mcp/tools/dev-standards.ts`, served live by `dev_get_standards`, so changing it retrains every developer's Claude
 with no reinstall.
@@ -16,16 +17,21 @@ with no reinstall.
 
 1. A developer signs in and opens `/developer`, or asks Claude through the EzYourLife connector
    ("Put my app on EzYourLife"; tools `dev_*` in `src/lib/mcp/tools/dev-apps.ts`).
-2. They create an app (`/tool/dev-<slug>`), send one HTML file (up to 10 MB) and fill the store listing.
-   Files travel in parts of under 1 MB through an upload session (`dev_begin_upload` → `dev_upload_part`
-   → `dev_finish_upload`) and are joined and size-checked on the server. Four ways in:
-   - web page upload on `/developer`;
-   - connector `dev_save_app` with the HTML (small files; bigger ones are split automatically);
-   - connector `dev_import_file`: the server fetches the file from a GitHub repo (path + commit) or a
-     public https link. This is the route for Claude's cloud workspaces, which can reach GitHub but not
-     our database;
-   - connector `dev_get_upload_link`: a one-time key (1 hour, one file) and a script, for Claude Code on
-     a computer.
+2. They create an app (`/tool/dev-<slug>`), send the app and fill the store listing. Through the connector an app
+   always arrives as a whole build folder (up to 600 files, 30 MB); a hand-made single HTML file is refused.
+   `bundleProject` (`src/lib/devBundle.ts`) packs the folder into the one document `HostedFrame` runs: CSS and
+   classic scripts inline, pictures and fonts as data: addresses, every JavaScript module as a data: module behind
+   an import map (`@ezyl/<path>`), so code-split pages and their lazy CSS keep working, and data files the code
+   fetches served from memory. It reports files the app names that are missing. The packed text travels in parts
+   of under 1 MB through an upload session (`dev_begin_upload` → `dev_upload_part` → `dev_finish_upload`) and is
+   joined and size-checked (10 MB) on the server. Ways in:
+   - connector `dev_import_project`: the server reads the build folder from a GitHub repo (folder + commit). This
+     is the route for Claude's cloud workspaces, which can reach GitHub but not our database;
+   - connector `dev_get_upload_link`: a one-time key (1 hour, one upload) and a script that packs a local build
+     folder with the same `bundleProject` (its source is embedded) and sends it, for Claude Code on a computer and
+     private projects;
+   - web page upload on `/developer` (still a built file).
+   `dev_save_app` saves the listing only.
    Each version records where its file came from (`source`), shown to the admin.
 3. **Checks** run on the server (`dev_run_qa`): file, size, phone fit, keys and passwords, AI calls,
    own payments, outside addresses, browser storage, frame escape, listing, unique name, similar apps.
@@ -110,7 +116,8 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 | Client API | `src/lib/devApps.ts` |
 | Sandbox frame, store runner | `src/apps/hosted/HostedFrame.tsx`, `src/apps/hosted/HostedApp.tsx` |
 | Pages | `src/pages/developer/` (home, editor, preview, admin) |
-| Connector tools | `src/lib/mcp/tools/dev-apps.ts`, `dev-import.ts`, `dev-shared.ts` |
+| Connector tools | `src/lib/mcp/tools/dev-apps.ts`, `dev-import.ts`, `dev-shared.ts`; server settings in `src/lib/mcp/env.ts` |
+| Packing a project folder | `src/lib/devBundle.ts` (server import and the upload script) |
 | Splitting files for upload | `src/lib/devUploadParts.ts` |
 | Bigger files, upload sessions | `supabase/migrations/20261020030000_developer_apps_bigger_files.sql` |
 | Claude plugin (connector + skill + scripts) | `plugins/ezyourlife-developer`, listed in `.claude-plugin/marketplace.json` |
@@ -131,7 +138,11 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
   If `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap` still shows `phase0-b` after the push,
   functions need a manual deploy.
 - Optional: a read-only GitHub token (fine-grained, Contents: read, on the repos developers use) as the
-  `EZYL_GITHUB_TOKEN` secret, so `dev_import_file` can read private repos. Public repos work without it.
+  `EZYL_GITHUB_TOKEN` secret, so `dev_import_project` can read private repos. Public repos work without it.
+- The connector reads `SUPABASE_URL` and the public key from `SUPABASE_PUBLISHABLE_KEY`, else `SUPABASE_ANON_KEY`, else
+  `SUPABASE_PUBLISHABLE_KEYS` (`src/lib/mcp/env.ts`). Supabase sets `SUPABASE_ANON_KEY` on edge functions by itself.
+  Until 21 Oct 2026 it read only `SUPABASE_PUBLISHABLE_KEY` (the browser build's name), and every tool that touched the
+  database failed with "tool execution failed" while `help` worked.
 
 ## Promo page, screenshots and updates
 
@@ -154,6 +165,6 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
 - Charging per chosen option at use time.
 
 - Developer earnings ledger and payouts (share is recorded per app; needs runs to record free vs paid credits).
-- Hosted apps larger than one file, own backends. (AI through the site's gateway is built: see "AI apps".)
+- Own backends for file apps. (AI through the site's gateway is built: see "AI apps".)
 - File upload in doc apps, scheduled AI runs, chained AI calls, image or audio output for AI apps.
 - Browser-based tests (routes, 375 px screenshots) on a build runner; invite-only developer accounts.

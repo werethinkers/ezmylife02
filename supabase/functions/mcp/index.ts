@@ -40,10 +40,10 @@ Example: user says *"save shortcut sig -> Best, Abhijay"* \u2192 call save_short
 Startup Analyser and Video Generator are long-running (>60s) and would time out. Suggest the user run them at https://ezyourlife.com directly \u2014 use get_tool_link to hand them the URL.
 
 ## Developers: publish your own web app
-- **dev_get_standards()** \u2014 the rules, the conversion playbook for any kind of app (AI Studio export, multi-file project, plain HTML, an app built in Claude), the steps and the valid categories. Call first, every session.
+- **dev_get_standards()** \u2014 the rules, the conversion playbook for any kind of app (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude), the steps and the valid categories. Call first, every session.
 - **dev_list_my_apps()** \xB7 **dev_check_similar(name, short_description?)** \u2014 look for similar apps BEFORE building; if there are any, tell the developer and ask how theirs differs (it goes in listing.similar_note and the team reads it) \xB7 **dev_create_app(slug, name)**
 - AI apps (a screen definition run on EzYourLife's own AI): **dev_save_ai_app(app_id, spec?, listing?)** \xB7 **dev_test_run(app_id, inputs?, messages?, images?)** (free, 25 a day, the team can read each run)
-- File apps (one HTML file, no AI): **dev_save_app(app_id, html?, listing?)** \xB7 **dev_import_file(app_id, github|url)** for files up to 10 MB \xB7 **dev_get_upload_link(app_id)** for Claude Code
+- File apps (a whole built project, no AI): **dev_import_project(app_id, github {repo, dir, ref})** reads every file of the build folder (for example dist/) from GitHub and packs it \xB7 **dev_get_upload_link(app_id, folder?)** does the same from Claude Code on a computer \xB7 **dev_save_app(app_id, listing)** for the listing. A hand-made single HTML file is not accepted.
 - **dev_add_image(app_id, url|github|base64, caption?)** and **dev_remove_image(image_id)** for the app's screenshots \xB7 **dev_run_checks(app_id)** \xB7 **dev_get_preview_link(app_id)** (the real app as it will look on the site, to test) \xB7 **dev_submit_for_review(app_id)** \xB7 **dev_get_status(app_id)**
 - Charging: ask the developer how they want to charge and pass every option in listing.charge_options (levels of use, or rupee prices for things they would sell). The team converts rupees to credits and sets each price.
 - Free or 0 is only a request; the team prices every app from its real running cost and the developer is never told the cost. EzYourLife credits are the only payment system. Anything hourly, daily or monthly becomes a button the visitor presses.
@@ -65,14 +65,50 @@ var help_default = defineTool({
 });
 
 // src/lib/mcp/tools/get-credit-balance.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
+
+// src/lib/mcp/env.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.75.1";
+function serverEnv(name) {
+  const g = globalThis;
+  try {
+    const fromProcess = g.process?.env?.[name];
+    if (fromProcess) return fromProcess;
+  } catch {
+  }
+  try {
+    return g.Deno?.env?.get(name) ?? "";
+  } catch {
+    return "";
+  }
+}
+function supabaseUrl() {
+  const url = serverEnv("SUPABASE_URL").replace(/\/+$/, "");
+  if (!url) throw new Error("The connector has no SUPABASE_URL setting.");
+  return url;
+}
+function supabaseKey() {
+  const single = serverEnv("SUPABASE_PUBLISHABLE_KEY") || serverEnv("SUPABASE_ANON_KEY");
+  if (single) return single;
+  const many = serverEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (many) {
+    try {
+      const keys = JSON.parse(many);
+      const first = keys.default ?? Object.values(keys)[0];
+      if (first) return first;
+    } catch {
+    }
+  }
+  throw new Error("The connector has no SUPABASE_ANON_KEY or SUPABASE_PUBLISHABLE_KEY setting.");
+}
 function userClient(ctx) {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient(supabaseUrl(), supabaseKey(), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
+
+// src/lib/mcp/tools/get-credit-balance.ts
 var get_credit_balance_default = defineTool2({
   name: "get_credit_balance",
   title: "Get EZYOURLIFE credit balance",
@@ -94,15 +130,8 @@ var get_credit_balance_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-tools.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z } from "npm:zod@^3.23.8";
-function userClient2(ctx) {
-  return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_tools_default = defineTool3({
   name: "list_tools",
   title: "List EZYOURLIFE AI apps",
@@ -113,7 +142,7 @@ var list_tools_default = defineTool3({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
-    const sb = userClient2(ctx);
+    const sb = userClient(ctx);
     let q = sb.from("tools_catalog").select("id,name,description,category,is_premium,is_free,dedicated_route").eq("is_live", true).limit(limit ?? 25);
     if (query && query.trim()) {
       const term = `%${query.trim()}%`;
@@ -129,15 +158,8 @@ var list_tools_default = defineTool3({
 });
 
 // src/lib/mcp/tools/get-tool-link.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z2 } from "npm:zod@^3.23.8";
-function userClient3(ctx) {
-  return createClient3(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var get_tool_link_default = defineTool4({
   name: "get_tool_link",
   title: "Get a direct link to an EZYOURLIFE tool",
@@ -145,7 +167,7 @@ var get_tool_link_default = defineTool4({
   inputSchema: { tool_id: z2.string().trim().min(1).describe("Tool ID (from list_tools) or slug.") },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ tool_id }, ctx) => {
-    const sb = userClient3(ctx);
+    const sb = userClient(ctx);
     const { data, error } = await sb.from("tools_catalog").select("id,name,description,dedicated_route,is_premium,is_free").eq("id", tool_id).maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     if (!data) return { content: [{ type: "text", text: `Tool '${tool_id}' not found. Use list_tools to search.` }], isError: true };
@@ -161,14 +183,7 @@ ${data.description ?? ""}` }],
 });
 
 // src/lib/mcp/tools/list-shortcuts.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.23.0";
-function userClient4(ctx) {
-  return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_shortcuts_default = defineTool5({
   name: "list_shortcuts",
   title: "List text-expansion shortcuts",
@@ -177,7 +192,7 @@ var list_shortcuts_default = defineTool5({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient4(ctx);
+    const sb = userClient(ctx);
     const { data, error } = await sb.from("notebook_sessions").select("session_shortcuts").eq("user_id", ctx.getUserId()).maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const shortcuts = Array.isArray(data?.session_shortcuts) ? data.session_shortcuts : [];
@@ -189,15 +204,8 @@ var list_shortcuts_default = defineTool5({
 });
 
 // src/lib/mcp/tools/save-shortcut.ts
-import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z3 } from "npm:zod@^3.23.8";
-function userClient5(ctx) {
-  return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var save_shortcut_default = defineTool6({
   name: "save_shortcut",
   title: "Save a text-expansion shortcut",
@@ -211,7 +219,7 @@ var save_shortcut_default = defineTool6({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ key, value, category, logic }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient5(ctx);
+    const sb = userClient(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("id,session_shortcuts,editor_content").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -239,15 +247,8 @@ var save_shortcut_default = defineTool6({
 });
 
 // src/lib/mcp/tools/delete-shortcut.ts
-import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z4 } from "npm:zod@^3.23.8";
-function userClient6(ctx) {
-  return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var delete_shortcut_default = defineTool7({
   name: "delete_shortcut",
   title: "Delete a text-expansion shortcut",
@@ -256,7 +257,7 @@ var delete_shortcut_default = defineTool7({
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ key }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient6(ctx);
+    const sb = userClient(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("session_shortcuts,editor_content").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -275,15 +276,8 @@ var delete_shortcut_default = defineTool7({
 });
 
 // src/lib/mcp/tools/add-meet-nudge-contact.ts
-import { createClient as createClient7 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z5 } from "npm:zod@^3.23.8";
-function userClient7(ctx) {
-  return createClient7(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var add_meet_nudge_contact_default = defineTool8({
   name: "add_meet_nudge_contact",
   title: "Add a Meet Nudge contact",
@@ -303,7 +297,7 @@ var add_meet_nudge_contact_default = defineTool8({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient7(ctx);
+    const sb = userClient(ctx);
     const { data, error } = await sb.from("meet_nudge_contacts").insert({ ...input, host_id: ctx.getUserId() }).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
@@ -314,15 +308,8 @@ var add_meet_nudge_contact_default = defineTool8({
 });
 
 // src/lib/mcp/tools/list-meet-nudge-contacts.ts
-import { createClient as createClient8 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z6 } from "npm:zod@^3.23.8";
-function userClient8(ctx) {
-  return createClient8(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_meet_nudge_contacts_default = defineTool9({
   name: "list_meet_nudge_contacts",
   title: "List Meet Nudge contacts",
@@ -334,7 +321,7 @@ var list_meet_nudge_contacts_default = defineTool9({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient8(ctx);
+    const sb = userClient(ctx);
     let q = sb.from("meet_nudge_contacts").select("id,name,email,phone,occupation,business_name,location,event_name,linkedin_url,website,fun_fact,created_at").is("deleted_at", null).order("created_at", { ascending: false }).limit(limit ?? 50);
     if (query && query.trim()) {
       const t = `%${query.trim()}%`;
@@ -350,15 +337,8 @@ var list_meet_nudge_contacts_default = defineTool9({
 });
 
 // src/lib/mcp/tools/append-notebook.ts
-import { createClient as createClient9 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z7 } from "npm:zod@^3.23.8";
-function userClient9(ctx) {
-  return createClient9(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var append_notebook_default = defineTool10({
   name: "append_notebook_entry",
   title: "Append to Speedy Notebook",
@@ -370,7 +350,7 @@ var append_notebook_default = defineTool10({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ content, heading }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient9(ctx);
+    const sb = userClient(ctx);
     const uid = ctx.getUserId();
     const { data: existing, error: readErr } = await sb.from("notebook_sessions").select("editor_content,session_shortcuts").eq("user_id", uid).maybeSingle();
     if (readErr) return { content: [{ type: "text", text: readErr.message }], isError: true };
@@ -405,14 +385,14 @@ var analyze_prompt_default = defineTool11({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ prompt, goal }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const url = `${process.env.SUPABASE_URL}/functions/v1/promptmaster-ai`;
+    const url = `${supabaseUrl()}/functions/v1/promptmaster-ai`;
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${ctx.getToken()}`,
-          apikey: process.env.SUPABASE_PUBLISHABLE_KEY
+          apikey: supabaseKey()
         },
         // PromptMaster's "magic_write" action returns improved versions of a draft (1 run = its catalog price).
         body: JSON.stringify({
@@ -433,15 +413,8 @@ Goal: ${goal}` : prompt
 });
 
 // src/lib/mcp/tools/list-my-creations.ts
-import { createClient as createClient10 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z9 } from "npm:zod@^3.23.8";
-function userClient10(ctx) {
-  return createClient10(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_my_creations_default = defineTool12({
   name: "list_my_creations",
   title: "List my AI creations",
@@ -453,7 +426,7 @@ var list_my_creations_default = defineTool12({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit, tool_type }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient10(ctx);
+    const sb = userClient(ctx);
     let q = sb.from("user_creations").select("id,tool_type,title,prompt,result_url,status,created_at").eq("user_id", ctx.getUserId()).order("created_at", { ascending: false }).limit(limit ?? 25);
     if (tool_type) q = q.eq("tool_type", tool_type);
     const { data, error } = await q;
@@ -466,15 +439,8 @@ var list_my_creations_default = defineTool12({
 });
 
 // src/lib/mcp/tools/list-bulk-jobs.ts
-import { createClient as createClient11 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z10 } from "npm:zod@^3.23.8";
-function userClient11(ctx) {
-  return createClient11(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_bulk_jobs_default = defineTool13({
   name: "list_bulk_jobs",
   title: "List my bulk processing jobs",
@@ -483,7 +449,7 @@ var list_bulk_jobs_default = defineTool13({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient11(ctx);
+    const sb = userClient(ctx);
     const { data, error } = await sb.from("bulk_jobs").select("id,tool_id,tool_name,status,total_items,completed_items,failed_items,total_credits_charged,output_zip_path,created_at,completed_at").eq("user_id", ctx.getUserId()).order("created_at", { ascending: false }).limit(limit ?? 25);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
@@ -494,15 +460,8 @@ var list_bulk_jobs_default = defineTool13({
 });
 
 // src/lib/mcp/tools/submit-tool-request.ts
-import { createClient as createClient12 } from "npm:@supabase/supabase-js@^2.75.1";
 import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z11 } from "npm:zod@^3.23.8";
-function userClient12(ctx) {
-  return createClient12(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var submit_tool_request_default = defineTool14({
   name: "submit_tool_request",
   title: "Request a new EZYOURLIFE tool",
@@ -515,7 +474,7 @@ var submit_tool_request_default = defineTool14({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ tool_description, name, email }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const sb = userClient12(ctx);
+    const sb = userClient(ctx);
     const { data, error } = await sb.from("tool_requests").insert({
       tool_description,
       name: name ?? ctx.getUserEmail() ?? "MCP user",
@@ -535,13 +494,9 @@ import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z16 } from "npm:zod@^3.23.8";
 
 // src/lib/mcp/tools/dev-shared.ts
-import { createClient as createClient13 } from "npm:@supabase/supabase-js@^2.75.1";
 var SITE = "https://ezyourlife.com";
 function devClient(ctx) {
-  return createClient13(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
+  return userClient(ctx);
 }
 var text = (t, structured) => ({
   content: [{ type: "text", text: t }],
@@ -562,7 +517,7 @@ var STANDARDS = `# Putting an app on EzYourLife
 (Rules version 2026-10-21. These rules are served live and change without notice: follow this text over anything remembered or cached, and call dev_get_standards at the start of every session.)
 
 ## The goal
-Turn the developer's app, in whatever form it arrives, into an EzYourLife app the same way the 440+ apps already in the store were made. Show the developer how it will look on the site, let them test it, and send it to Team EzYourLife for approval. Nothing goes live until a person on the team approves it. You never set a price, approve or publish.
+Turn the developer's app, in whatever form it arrives (usually a full multi-file project), into an EzYourLife app the same way the 440+ apps already in the store were made. Show the developer how it will look on the site, let them test it, and send it to Team EzYourLife for approval. Nothing goes live until a person on the team approves it. You never set a price, approve or publish.
 
 ## Step 0: always, in this order
 1. dev_list_my_apps. If this is an update, use that app_id; never create a duplicate.
@@ -574,7 +529,7 @@ Turn the developer's app, in whatever form it arrives, into an EzYourLife app th
 
 ## Two lanes: choose by what the app really needs
 AI app (dev_save_ai_app): the value comes from an AI model. Typical: a form that produces a written result (letters, plans, summaries, reports, replies), a chat assistant, a reader of photos or scanned pages. You send a DEFINITION (screen, fields, instructions), not code. EzYourLife runs it on its own screens and its own AI and charges credits per use, like the built-in apps. There is no file and no server.
-File app (dev_save_app, dev_import_file, dev_get_upload_link): the app is pure browser logic with no AI: calculators, converters, planners, games, visual tools. You send ONE self-contained HTML file. It runs in a locked frame and is charged when the visitor presses Start.
+File app (dev_import_project or dev_get_upload_link, then dev_save_app for the listing): the app is browser logic with no AI: calculators, converters, planners, editors, dashboards, games, visual tools. You send the WHOLE built project: its build folder with index.html and every script, style, picture, font and data file. EzYourLife packs it for the store's locked frame itself. A hand-made single HTML file is not accepted: never squeeze an app into one file. It is charged when the visitor presses Start.
 
 If an app mixes both, the AI part decides: use the AI lane and say plainly which client-only extras cannot come along. If the AI part is a minor extra, drop it and use the file lane. Never send AI calls or keys inside a file app; the checks block them.
 
@@ -588,13 +543,13 @@ Read first, change second. Find every AI call, every secret, every payment and e
    - Delete: the server, API routes, keys, the wallet, credits, free trials, coupons, payments, login and stored history. EzYourLife has sign-in, credits and a history in the standard screen.
    - If the original returned JSON that its UI drew as cards or tables, ask the AI for clear Markdown sections and tables instead. Never ask for JSON.
    - The tiers or packs it sold become listing.charge_options (the team prices them). The runtime cannot charge by option: put separate tiers in separate apps, or tell the developer that one price applies to every use.
-2. Multi-file React, Vue or Svelte project that runs in the browser: a file app. Follow the file-app adaptation steps below and build ONE HTML file. If it calls an AI service with a key from the browser, treat that part as case 1.
-3. Plain HTML, CSS and JavaScript (one or several files): a file app. Inline the CSS and scripts into one file. If it calls an LLM API directly, treat that part as case 1.
+2. React, Vue, Svelte or any other multi-file project that runs in the browser: a file app. Follow the file-app adaptation steps below, run its normal build (npm run build) and send the build folder (usually dist/). If it calls an AI service with a key from the browser, treat that part as case 1.
+3. Plain HTML, CSS and JavaScript in several files: a file app. Send the folder as it is (index.html at its top); do not merge the files. If it calls an LLM API directly, treat that part as case 1.
 4. An app made inside Claude, and the developer says "make it live":
-   a. A Claude artifact (HTML or React). No AI inside: a file app (bundle React and libraries into one file; do not rely on imports from other hosts). If it calls window.claude.complete or any Claude/AI API: an AI app; the prompt it sends becomes ai.system and ai.task. Replace window.storage, localStorage and similar with try/catch plus an in-memory fallback.
+   a. A Claude artifact (HTML or React). No AI inside: a file app (put it in a small Vite project, build it and send the build folder; do not rely on imports from other hosts). If it calls window.claude.complete or any Claude/AI API: an AI app; the prompt it sends becomes ai.system and ai.task. Replace window.storage, localStorage and similar with try/catch plus an in-memory fallback.
    b. A prompt, skill or workflow that lives in the conversation or a Claude Project ("I made a GST reply writer in Claude"): an AI app. The instructions that worked become ai.system and ai.task; what the person gives Claude each time becomes the fields (doc) or the chat; ask them to run a real example and use it as sample.
    c. A Claude Code or Cowork project: read the files and treat it as case 1, 2 or 3.
-5. Anything else (Python, Streamlit, Flask, Next.js with a server, a command-line tool): extract any AI prompts into an AI app. Pure calculation can be rewritten in JavaScript as a file app if it is small and the developer agrees. If it needs its own server or database to work, stop and tell the developer plainly that it cannot be published yet.
+5. Anything else (Python, Streamlit, Flask, Next.js with a server, a command-line tool): extract any AI prompts into an AI app. Pure calculation can be rewritten in JavaScript as a browser project (a file app) if the developer agrees. If it needs its own server or database to work, stop and tell the developer plainly that it cannot be published yet.
 
 What has no place here (say so plainly, and list what you removed at the end): the developer's own server, database, login, wallet, credits, free trials, coupons and payments; API keys; scheduled or background runs; chained model calls; web search or URL fetching by the AI; image, audio or video generation; uploading docx/xlsx/csv into a doc app (the visitor pastes text instead, or the vision screen takes photos and PDF pages). Several chained AI steps: fold them into one set of instructions that does all the steps and returns every section, or split the app in two, and tell the developer what changed.
 
@@ -613,13 +568,14 @@ Example (doc):
 
 After saving: dev_test_run with the sample (or a real example, a chat message list, or small images). Read the answer as a visitor would. Fix the instructions until it is correct, specific and in the right format, then save and test again. At least one successful test run of the exact saved version is required. Test runs are free, limited to 25 a day, and the team can read every one.
 
-## File app: what the file must be (dev_save_app)
-- ONE self-contained HTML file: HTML, CSS and JavaScript inline. Up to 10 MB (checks warn above 2 MB). Libraries may also load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
-- Runs entirely in the browser. No own backend, login or payments. No AI calls (OpenAI, Anthropic, Gemini, Groq, OpenRouter and similar are blocked by the checks). No API keys, tokens or passwords anywhere in the file.
-- Has <meta name="viewport" content="width=device-width, initial-scale=1"> and works at 375 px wide.
-- Adapt it: remove or replace AI calls, keys, logins and payments (if the app cannot work without them, stop and tell the developer); put every localStorage / sessionStorage / IndexedDB / document.cookie use inside try/catch with an in-memory fallback; use hash routing (#/page); remove window.top and parent.location; add the viewport tag; build ONE file (Vite: vite-plugin-singlefile with a high assetsInlineLimit, then dist/index.html; plain HTML: inline CSS and scripts; small images as data URIs). Open the built file once to check it works.
+## File app: what the project must be (dev_import_project, dev_get_upload_link)
+- The whole built app: a folder with index.html at its top and every file it uses (JavaScript, CSS, pictures, fonts, data files such as json or csv). For Vite, React, Vue, Svelte and similar this is the build output (dist/ after npm run build), never the source folder. Up to 600 files and 30 MB in the folder, 10 MB once packed (checks warn above 2 MB). Libraries may also load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
+- EzYourLife packs the folder itself: styles, scripts, JavaScript modules and code-split pages, pictures and fonts are carried inside, and data files the code fetches by path are served to it. Keep the default build settings (Vite base "/"); do not add single-file plugins.
+- Runs entirely in the browser. No own backend, login or payments. No AI calls (OpenAI, Anthropic, Gemini, Groq, OpenRouter and similar are blocked by the checks). No API keys, tokens or passwords anywhere in the project.
+- Has <meta name="viewport" content="width=device-width, initial-scale=1"> in index.html and works at 375 px wide.
+- Adapt it: remove or replace AI calls, keys, logins and payments (if the app cannot work without them, stop and tell the developer); put every localStorage / sessionStorage / IndexedDB / document.cookie use inside try/catch with an in-memory fallback; use hash routing (#/page); remove window.top and parent.location; add the viewport tag. Build it and open the build once to check it works.
 - It runs in a sandboxed iframe with a unique origin: no cookies, no browser storage (it throws), no camera, microphone, location or notifications, and it cannot reach the page around it. Downloads, forms, alerts and opening links in a new tab work.
-Sending the file (pick one): under about 200 KB: dev_save_app with html. Bigger, from a cloud workspace: commit the built file to a GitHub repo, push, then dev_import_file with github {repo, path, ref} (use the commit SHA as ref). Bigger, on a computer (Claude Code): dev_get_upload_link, then run the script it gives. Or the developer uploads it on ${SITE}/developer.
+Sending the project (pick one): from a cloud workspace: commit the build folder to a GitHub repo (public, or one the EzYourLife team can read), push, then dev_import_project with github {repo, dir, ref} (use the commit SHA as ref). On a computer (Claude Code), or for a private project: dev_get_upload_link, then run the script it gives on the build folder. Either way the answer lists any file the app names that is not in the folder, and anything to fix. Then dev_save_app with the listing.
 
 ## Store listing (all required, both lanes)
 - name: 3 to 60 characters. short_description: 20 to 160 characters, plain words: what the user gets. description: at least 40 characters: what you give, what you get, who it is for. category: exactly one of the categories listed below. tool_types: up to 5 short filter words (optional). support_email (optional). release_notes for updates. similar_note when dev_check_similar or the checks found similar apps.
@@ -642,13 +598,13 @@ Anything hourly, daily, weekly, monthly, on a timer, on auto-refresh or on a sch
 - The team sees all of it while reviewing and it goes live with the app.
 
 ## Updating an app that is live
-Save the new definition or file with the same app_id. That starts the next version; the live app keeps running unchanged. Describe what changed in listing.release_notes, refresh promo and screenshots if the app looks or works differently, run the checks and submit again. The team sees a "what changed" list and approves with one click. If the team asks for changes, dev_get_status shows their notes: fix them, save, test, check and submit again. An app keeps its kind: a live AI app cannot be replaced by a file, or the reverse; create a new app for that.
+Save the new definition, or send the new build folder, with the same app_id. That starts the next version; the live app keeps running unchanged. Describe what changed in listing.release_notes, refresh promo and screenshots if the app looks or works differently, run the checks and submit again. The team sees a "what changed" list and approves with one click. If the team asks for changes, dev_get_status shows their notes: fix them, save, test, check and submit again. An app keeps its kind: a live AI app cannot be replaced by a file, or the reverse; create a new app for that.
 
 ## Steps
 1. Step 0 above (dev_list_my_apps, dev_check_similar, lane).
 2. dev_create_app(slug, name) once. The address becomes ${SITE}/tool/dev-<slug>.
-3. AI lane: dev_save_ai_app(app_id, spec, listing). File lane: send the file, then dev_save_app(app_id, listing).
-4. AI lane: dev_test_run until the answer is right. File lane: open the built file once.
+3. AI lane: dev_save_ai_app(app_id, spec, listing). File lane: build, send the build folder (dev_import_project or dev_get_upload_link), then dev_save_app(app_id, listing).
+4. AI lane: dev_test_run until the answer is right. File lane: open the build once, and fix anything the import answer lists as missing.
 5. dev_run_checks(app_id). Fix every MUST FIX, save, re-run. LOOK items are shown to the admin; mention them to the developer.
 6. dev_get_preview_link(app_id): the developer opens it signed in on ezyourlife.com and sees the real app as it will look on the site, on a phone-sized or desktop-sized screen, and can test it. It uses no credits.
 7. dev_submit_for_review(app_id) only when the developer says it works and agrees to send it.
@@ -819,9 +775,9 @@ var devTestRun = defineTool15({
       const v = await latestVersion(sb, app_id);
       if (!v) return fail("App not found.");
       if (!v.spec) return fail("This version has no definition yet. Save one with dev_save_ai_app first.");
-      const res = await fetch(`${process.env.SUPABASE_URL}/functions/v1/dev-app-run`, {
+      const res = await fetch(`${supabaseUrl()}/functions/v1/dev-app-run`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ctx.getToken()}`, apikey: process.env.SUPABASE_PUBLISHABLE_KEY },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ctx.getToken()}`, apikey: supabaseKey() },
         body: JSON.stringify({
           tool_id: app.tool_id,
           preview_version_id: v.id,
@@ -856,6 +812,10 @@ ${out}`,
 });
 var devAiTools = [devCheckSimilar, devSaveAiApp, devTestRun];
 
+// src/lib/mcp/tools/dev-import.ts
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z14 } from "npm:zod@^3.23.8";
+
 // src/lib/devUploadParts.ts
 var MAX_APP_BYTES = 1e7;
 var PART_UNITS = 3e5;
@@ -876,9 +836,263 @@ function splitParts(text2, units = PART_UNITS) {
 }
 var looksLikeHtml = (text2) => /<(html|body|div|main|script|form|section|canvas|button)\b/i.test(text2);
 
+// src/lib/devBundle.ts
+function bundleProject(files, entry = "index.html") {
+  const MIME = {
+    js: "text/javascript",
+    mjs: "text/javascript",
+    css: "text/css",
+    html: "text/html",
+    json: "application/json",
+    svg: "image/svg+xml",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    webp: "image/webp",
+    avif: "image/avif",
+    ico: "image/x-icon",
+    bmp: "image/bmp",
+    woff: "font/woff",
+    woff2: "font/woff2",
+    ttf: "font/ttf",
+    otf: "font/otf",
+    eot: "application/vnd.ms-fontobject",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    ogg: "audio/ogg",
+    m4a: "audio/mp4",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    txt: "text/plain",
+    csv: "text/csv",
+    tsv: "text/tab-separated-values",
+    xml: "application/xml",
+    md: "text/markdown",
+    wasm: "application/wasm",
+    glb: "model/gltf-binary",
+    gltf: "model/gltf+json",
+    bin: "application/octet-stream",
+    pdf: "application/pdf",
+    webmanifest: "application/manifest+json"
+  };
+  const DATA = /\.(json|txt|csv|tsv|xml|md|wasm|glb|gltf|bin|svg|png|jpe?g|gif|webp|mp3|wav|ogg|m4a|mp4|webm|pdf)$/i;
+  const SHIM_LIMIT = 4e6;
+  const dec = new TextDecoder("utf-8");
+  const enc = new TextEncoder();
+  const textOf = (p) => dec.decode(files[p]).replace(/^\uFEFF/, "");
+  const extOf = (p) => (/\.([a-z0-9]+)$/i.exec(p)?.[1] ?? "").toLowerCase();
+  const mimeOf = (p) => MIME[extOf(p)] ?? "application/octet-stream";
+  const b64 = (bytes) => {
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 32768) s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 32768)));
+    return btoa(s);
+  };
+  const uriCache = {};
+  const dataUri = (p) => uriCache[p] ??= `data:${mimeOf(p)};base64,${b64(files[p])}`;
+  const used = /* @__PURE__ */ new Set([entry]);
+  const missing = /* @__PURE__ */ new Set();
+  const notes = [];
+  const dirOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+  const external = (ref) => /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(ref);
+  const resolve = (ref, from, report = true) => {
+    ref = ref.trim();
+    if (!ref || external(ref) || ref.includes("${")) return null;
+    let clean = ref.split("#")[0].split("?")[0];
+    try {
+      clean = decodeURIComponent(clean);
+    } catch {
+    }
+    if (!clean) return null;
+    const out = [];
+    for (const part of (clean.startsWith("/") ? clean.slice(1) : dirOf(from) + clean).split("/")) {
+      if (part === "" || part === ".") continue;
+      if (part === "..") out.pop();
+      else out.push(part);
+    }
+    const p = out.join("/");
+    if (p in files) return p;
+    if (report) missing.add(ref);
+    return null;
+  };
+  const css = (text2, from, depth = 0) => {
+    text2 = text2.replace(/@import\s+(?:url\(\s*)?(["']?)([^"')\s;]+)\1\s*\)?([^;]*);/gi, (m, _q, ref, media) => {
+      const p = depth < 8 ? resolve(ref, from) : null;
+      if (!p) return m;
+      used.add(p);
+      const inner = css(textOf(p), p, depth + 1);
+      return media.trim() ? `@media ${media.trim()}{${inner}}` : inner;
+    });
+    return text2.replace(/url\(\s*(["']?)([^"')]+?)\1\s*\)/gi, (m, _q, ref) => {
+      if (/^(data|blob):/i.test(ref.trim())) return m;
+      const p = resolve(ref, from);
+      if (!p) return m;
+      used.add(p);
+      return `url("${dataUri(p)}")`;
+    });
+  };
+  const assetStrings = (code, from) => code.replace(/(["'`])((?:\.{1,2}\/|\/)?[\w@~.%/-]{1,280}\.(?:svg|png|jpe?g|gif|webp|avif|ico|bmp|woff2?|ttf|otf|eot|mp3|wav|ogg|m4a|mp4|webm|pdf|wasm|glb|gltf|bin))\1/gi, (m, q, ref) => {
+    const p = resolve(ref, from, false) ?? (!ref.startsWith(".") ? resolve("/" + ref.replace(/^\/+/, ""), from, false) : null);
+    if (!p) return m;
+    used.add(p);
+    return q + dataUri(p) + q;
+  });
+  const modules = /* @__PURE__ */ new Map();
+  const bare = /* @__PURE__ */ new Set();
+  const addModule = (p) => {
+    if (modules.has(p)) return;
+    modules.set(p, "");
+    used.add(p);
+    modules.set(p, rewriteImports(textOf(p), p));
+  };
+  const rewriteImports = (code, from) => assetStrings(
+    code.replace(/(\bimport\s*\(\s*|\bfrom\s*|\bimport\s*)(["'])([^"'\n]+)\2/g, (m, pre, q, ref) => {
+      if (/^(\.{1,2}\/|\/)/.test(ref)) {
+        const p = resolve(ref, from);
+        if (!p || !/\.(m?js)$/i.test(p)) return m;
+        addModule(p);
+        return `${pre}${q}@ezyl/${p}${q}`;
+      }
+      if (!external(ref) && !ref.startsWith("@ezyl/") && /^[@a-z]/i.test(ref)) bare.add(ref);
+      return m;
+    }),
+    from
+  );
+  const noClose = (s, tag) => s.replace(new RegExp(`</(${tag})`, "gi"), "<\\/$1");
+  const attr = (attrs, name) => new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i").exec(attrs);
+  const attrValue = (attrs, name) => {
+    const m = attr(attrs, name);
+    return m ? m[1] ?? m[2] ?? m[3] ?? "" : null;
+  };
+  const dropAttr = (attrs, name) => attrs.replace(new RegExp(`\\s*\\b${name}(\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+))?`, "i"), "");
+  if (!(entry in files)) {
+    throw new Error(`There is no ${entry} in the folder. Import the built app (the folder with index.html, for example dist/), not the source.`);
+  }
+  if (Object.keys(files).length < 2) {
+    throw new Error("The folder holds only index.html. EzYourLife takes whole app projects, not a single HTML file: send the full build folder with its scripts, styles and pictures.");
+  }
+  let html = textOf(entry);
+  if (/<script[^>]+src=["']?\/?src\/[^"'>]+\.(tsx?|jsx)["'\s>]/i.test(html)) {
+    throw new Error("This index.html loads the source code (src/main.tsx or similar). Build the app first (npm run build) and import the build folder, usually dist/.");
+  }
+  const kept = [];
+  const keep = (s) => `\uE000${kept.push(s) - 1}\uE001`;
+  const tail = [];
+  const cssLinks = [];
+  html = html.replace(/<script\b[\s\S]*?<\/script\s*>|<!--[\s\S]*?-->/gi, (m) => m.startsWith("<!--") ? "" : m);
+  html = html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi, (m, attrs, body) => {
+    const src = attrValue(attrs, "src");
+    const type = (attrValue(attrs, "type") ?? "").toLowerCase();
+    const isModule = type === "module";
+    if (type === "importmap") {
+      notes.push("The page had its own import map; it was replaced. Imports of outside packages by name will not load.");
+      return "";
+    }
+    if (src) {
+      const p = resolve(src, entry);
+      if (!p) return external(src) ? keep(m) : "";
+      if (isModule) {
+        addModule(p);
+        return keep(`<script type="module">import "@ezyl/${p}";</script>`);
+      }
+      used.add(p);
+      const out = `<script${dropAttr(dropAttr(dropAttr(attrs, "src"), "defer"), "async")}>${noClose(assetStrings(textOf(p), p), "script")}</script>`;
+      if (/\b(defer|async)\b/i.test(attrs)) {
+        tail.push(out);
+        return "";
+      }
+      return keep(out);
+    }
+    if (isModule) return keep(`<script${attrs}>${noClose(rewriteImports(body, entry), "script")}</script>`);
+    if (!type || /javascript|ecmascript/.test(type)) return keep(`<script${attrs}>${assetStrings(body, entry)}</script>`);
+    return keep(m);
+  });
+  html = html.replace(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi, (_m, attrs, body) => keep(`<style${attrs}>${noClose(css(body, entry), "style")}</style>`));
+  html = html.replace(/<link\b([^>]*?)\/?>/gi, (m, attrs) => {
+    const rel = (attrValue(attrs, "rel") ?? "").toLowerCase();
+    const href = attrValue(attrs, "href");
+    if (!href || external(href)) return m;
+    if (/\b(modulepreload|preload|prefetch|manifest)\b/.test(rel)) {
+      const p2 = resolve(href, entry, false);
+      if (p2 && /\.m?js$/i.test(p2) && rel.includes("modulepreload")) addModule(p2);
+      return "";
+    }
+    const p = resolve(href, entry);
+    if (!p) return "";
+    used.add(p);
+    if (rel.includes("stylesheet")) {
+      cssLinks.push(p);
+      const media = attrValue(attrs, "media");
+      return keep(`<style${media ? ` media="${media}"` : ""}>${noClose(css(textOf(p), p), "style")}</style>`);
+    }
+    return m.replace(href, dataUri(p));
+  });
+  html = html.replace(
+    /<(img|source|video|audio|track|input|image|use|embed|object|iframe)\b[^>]*>/gi,
+    (tag) => tag.replace(/\b(src|poster|data|href|xlink:href)\s*=\s*(["'])([^"']+)\2/gi, (m, name, q, ref) => {
+      if (/^iframe$/i.test(tag.slice(1, 7)) && !/\.html?$/i.test(ref)) return m;
+      const p = resolve(ref, entry);
+      if (!p) return m;
+      used.add(p);
+      return `${name}=${q}${dataUri(p)}${q}`;
+    }).replace(/\bsrcset\s*=\s*(["'])([^"']+)\1/gi, (_m, q, set) => {
+      const first = set.split(",")[0].trim().split(/\s+/)[0];
+      const p = first ? resolve(first, entry) : null;
+      if (!p) return "";
+      used.add(p);
+      return `srcset=${q}${dataUri(p)}${q}`;
+    })
+  );
+  html = html.replace(/\bstyle\s*=\s*(["'])([^"']*url\([^"']*)\1/gi, (_m, q, body) => `style=${q}${css(body, entry).replace(/"/g, "'")}${q}`);
+  const allCode = Array.from(modules.values()).join("\n") + kept.join("\n");
+  const extraCss = [];
+  for (const p of Object.keys(files)) {
+    if (!/\.css$/i.test(p) || cssLinks.includes(p)) continue;
+    if (allCode.includes(p)) {
+      used.add(p);
+      extraCss.push(`<style>${noClose(css(textOf(p), p), "style")}</style>`);
+      cssLinks.push(p);
+    }
+  }
+  const standIns = cssLinks.map((p) => `<link rel="stylesheet" href="/${p}" disabled>`).join("");
+  const shimFiles = {};
+  let shimBytes = 0;
+  for (const p of Object.keys(files).sort()) {
+    if (used.has(p) || !DATA.test(p) || !allCode.includes(p.split("/").pop())) continue;
+    if (shimBytes + files[p].length > SHIM_LIMIT) {
+      notes.push(`${p} was left out: data files the code loads are limited to 4 MB in all.`);
+      continue;
+    }
+    shimBytes += files[p].length;
+    shimFiles["/" + p] = [mimeOf(p), b64(files[p])];
+    used.add(p);
+  }
+  let head = "";
+  if (modules.size) {
+    const imports = {};
+    for (const [p, code] of modules) imports[`@ezyl/${p}`] = `data:text/javascript;base64,${b64(enc.encode(code))}`;
+    head += `<script type="importmap">${JSON.stringify({ imports })}</script>`;
+  }
+  if (Object.keys(shimFiles).length) {
+    head += `<script>(function(){var F=${JSON.stringify(shimFiles)};var f0=window.fetch;window.fetch=function(i,o){try{var u=typeof i==="string"?i:(i&&i.url)||"";var b=(location.href||"").split(/[?#]/)[0].replace(/[^/]*$/,"");if(b&&u.indexOf(b)===0)u="/"+u.slice(b.length);var k=u.split(/[?#]/)[0].replace(/^\\.\\//,"/");if(k.charAt(0)!=="/")k="/"+k;var e=F[k];if(e){var s=atob(e[1]),a=new Uint8Array(s.length);for(var n=0;n<s.length;n++)a[n]=s.charCodeAt(n);return Promise.resolve(new Response(a,{status:200,headers:{"Content-Type":e[0]}}))}}catch(x){}return f0.apply(this,arguments)}})();</script>`;
+  }
+  head += extraCss.join("") + standIns;
+  if (/<head\b[^>]*>/i.test(html)) html = html.replace(/<head\b[^>]*>/i, (m) => m + head);
+  else if (/<html\b[^>]*>/i.test(html)) html = html.replace(/<html\b[^>]*>/i, (m) => `${m}<head>${head}</head>`);
+  else html = head + html;
+  if (tail.length) html = /<\/body\s*>/i.test(html) ? html.replace(/<\/body\s*>(?![\s\S]*<\/body)/i, tail.join("") + "</body>") : html + tail.join("");
+  html = html.replace(/\uE000(\d+)\uE001/g, (_m, n) => kept[Number(n)]);
+  if (!/<meta[^>]+name=["']?viewport/i.test(html)) notes.push('Add <meta name="viewport" content="width=device-width, initial-scale=1"> to index.html; the checks need it.');
+  if (bare.size) {
+    notes.push(
+      `The code imports ${Array.from(bare).slice(0, 5).join(", ")} by package name. Those are not in the folder and will not load: import the built output, where packages are bundled in.`
+    );
+  }
+  const unused = Object.keys(files).filter((p) => !used.has(p) && !/\.map$/i.test(p)).sort();
+  return { html, used: Array.from(used).sort(), unused, missing: Array.from(missing).sort(), notes, modules: modules.size };
+}
+
 // src/lib/mcp/tools/dev-import.ts
-import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z14 } from "npm:zod@^3.23.8";
 async function uploadText(sb, appId, html, source) {
   const bytes = utf8Bytes(html);
   if (bytes > MAX_APP_BYTES) throw new Error(`The file is ${Math.ceil(bytes / 1e5) / 10} MB, over the 10 MB limit.`);
@@ -910,70 +1124,131 @@ function checkPublicUrl(raw) {
   }
   return u;
 }
-async function readLimited(res, maxBytes = MAX_APP_BYTES) {
-  const declared = Number(res.headers.get("content-length") || 0);
-  if (declared > maxBytes) throw new Error(`The file is ${(declared / 1e6).toFixed(1)} MB. The limit is 10 MB.`);
-  if (!res.body) return await res.text();
-  const reader = res.body.getReader();
-  const chunks = [];
-  let total = 0;
-  for (; ; ) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.length;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new Error("The file is larger than 10 MB. The limit is 10 MB.");
-    }
-    chunks.push(value);
-  }
-  const all = new Uint8Array(total);
-  let at = 0;
-  for (const c of chunks) {
-    all.set(c, at);
-    at += c.length;
-  }
-  return new TextDecoder("utf-8").decode(all);
+var githubToken = () => serverEnv("EZYL_GITHUB_TOKEN");
+var MAX_PROJECT_FILES = 600;
+var MAX_PROJECT_BYTES = 3e7;
+var SKIP = /(^|\/)(\.git|node_modules|\.DS_Store|Thumbs\.db)(\/|$)|\.map$/i;
+async function readBytes(res, maxBytes, what) {
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  if (bytes.length > maxBytes) throw new Error(`${what} is ${(bytes.length / 1e6).toFixed(1)} MB, over the limit.`);
+  return bytes;
 }
-var githubToken = () => typeof process !== "undefined" ? process.env.EZYL_GITHUB_TOKEN || "" : "";
-async function fetchFromGithub(repo, path, ref, fetchImpl = fetch) {
+async function fetchProjectFromGithub(repo, dir, ref, fetchImpl = fetch) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) throw new Error('Give the repo as "owner/name".');
-  const clean = path.replace(/^\/+/, "");
-  if (!clean || clean.split("/").some((p) => p === ".." || p === "")) throw new Error("Give the file's path inside the repo, like dist/index.html.");
+  const folder = dir.trim().replace(/^\/+|\/+$/g, "");
+  if (folder.split("/").some((p) => p === "..")) throw new Error("Give the build folder's path inside the repo, like dist.");
   const token = githubToken();
   const headers = { "User-Agent": "ezyourlife-developer-connector", "X-GitHub-Api-Version": "2022-11-28" };
   if (token) headers.Authorization = `Bearer ${token}`;
   const base = `https://api.github.com/repos/${repo}`;
-  const res = await fetchImpl(`${base}/contents/${clean.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`, {
-    headers: { ...headers, Accept: "application/vnd.github.raw+json" }
-  });
-  if (res.status === 404 || res.status === 403 || res.status === 401) {
+  const c = await fetchImpl(`${base}/commits/${encodeURIComponent(ref)}`, { headers: { ...headers, Accept: "application/vnd.github.sha" } });
+  if (c.status === 404 || c.status === 403 || c.status === 401 || c.status === 422) {
     throw new Error(
-      token ? `GitHub could not find ${repo}/${clean} at ${ref}, or EzYourLife's read token has no access to that repo.` : `GitHub could not find ${repo}/${clean} at ${ref}. If the repo is private, EzYourLife needs a read token for it (ask the team), or make the file public.`
+      token ? `GitHub could not find ${repo} at ${ref}, or EzYourLife's read token has no access to that repo.` : `GitHub could not find ${repo} at ${ref}. If the repo is private, use dev_get_upload_link from Claude Code, or ask the EzYourLife team for read access.`
     );
   }
-  if (!res.ok) throw new Error(`GitHub answered ${res.status} for ${repo}/${clean}.`);
-  const body = await readLimited(res);
-  let commit = null;
-  try {
-    const c = await fetchImpl(`${base}/commits/${encodeURIComponent(ref)}`, { headers: { ...headers, Accept: "application/vnd.github.sha" } });
-    if (c.ok) commit = (await c.text()).trim().slice(0, 40) || null;
-  } catch {
-    commit = null;
+  if (!c.ok) throw new Error(`GitHub answered ${c.status} for ${repo}.`);
+  const commit = (await c.text()).trim().slice(0, 40);
+  const t = await fetchImpl(`${base}/git/trees/${commit}?recursive=1`, { headers: { ...headers, Accept: "application/vnd.github+json" } });
+  if (!t.ok) throw new Error(`GitHub answered ${t.status} listing the files of ${repo}.`);
+  const tree = await t.json();
+  if (tree.truncated) throw new Error("The repo has too many files for GitHub to list at once. Put the build folder in a smaller repo.");
+  const prefix = folder ? `${folder}/` : "";
+  const blobs = tree.tree.filter((e) => e.type === "blob" && e.path.startsWith(prefix) && !SKIP.test(e.path.slice(prefix.length)));
+  if (!blobs.length) throw new Error(`There are no files in ${folder || "the repo root"} at ${commit.slice(0, 7)}. Build the app and push the build folder first.`);
+  if (!blobs.some((e) => e.path === `${prefix}index.html`)) {
+    const near = tree.tree.filter((e) => e.type === "blob" && /(^|\/)index\.html$/.test(e.path)).map((e) => e.path.replace(/\/?index\.html$/, "") || "(root)");
+    throw new Error(`There is no index.html in ${folder || "the repo root"}.${near.length ? ` Folders with one: ${near.slice(0, 5).join(", ")}.` : ""} Give the folder of the built app (usually dist).`);
   }
-  return { html: body, commit };
+  if (blobs.length > MAX_PROJECT_FILES) throw new Error(`The folder has ${blobs.length} files; the limit is ${MAX_PROJECT_FILES}. Leave out source maps and files the app does not use.`);
+  const total = blobs.reduce((n, e) => n + (e.size ?? 0), 0);
+  if (total > MAX_PROJECT_BYTES) throw new Error(`The folder is ${(total / 1e6).toFixed(1)} MB; the limit is 30 MB before packing (10 MB after).`);
+  const files = {};
+  const queue = [...blobs];
+  const worker = async () => {
+    for (let e = queue.shift(); e; e = queue.shift()) {
+      const url = token ? `${base}/git/blobs/${e.sha}` : `https://raw.githubusercontent.com/${repo}/${commit}/${e.path.split("/").map(encodeURIComponent).join("/")}`;
+      const res = await fetchImpl(url, { headers: token ? { ...headers, Accept: "application/vnd.github.raw+json" } : { "User-Agent": headers["User-Agent"] } });
+      if (!res.ok) throw new Error(`GitHub answered ${res.status} for ${e.path}.`);
+      files[e.path.slice(prefix.length)] = await readBytes(res, MAX_PROJECT_BYTES, e.path);
+    }
+  };
+  await Promise.all(Array.from({ length: 8 }, worker));
+  return { files, commit };
 }
-var UPLOAD_SCRIPT = `// ezyourlife-upload.mjs: sends one app file to EzYourLife with a one-time upload key.
-// Usage: node ezyourlife-upload.mjs <file.html> <key> <supabase-url> <publishable-key>   (Node 18+)
-import { readFile } from "node:fs/promises";
-const [file, key, url, anon] = process.argv.slice(2);
-if (!file || !key || !url || !anon) { console.error("Usage: node ezyourlife-upload.mjs <file.html> <key> <supabase-url> <publishable-key>"); process.exit(1); }
-const text = await readFile(file, "utf8");
+function bundleSummary(r, bytes) {
+  const lines = [`Packed ${r.used.length} files${r.modules ? ` (${r.modules} JavaScript modules)` : ""} into ${Math.ceil(bytes / 1024)} KB.`];
+  if (r.missing.length) lines.push(`Not in the folder, so they will not load: ${r.missing.slice(0, 10).join(", ")}${r.missing.length > 10 ? ` and ${r.missing.length - 10} more` : ""}.`);
+  if (r.unused.length) lines.push(`Left out because nothing uses them: ${r.unused.slice(0, 10).join(", ")}${r.unused.length > 10 ? ` and ${r.unused.length - 10} more` : ""}.`);
+  for (const n of r.notes) lines.push(n);
+  return lines.join("\n");
+}
+var devImportProject = defineTool16({
+  name: "dev_import_project",
+  title: "Import a built app project from GitHub",
+  description: "FILE APPS: imports the developer's whole built app, every file in its build folder (index.html with its JavaScript, CSS, images, fonts and data files; for Vite, React, Vue or Svelte this is dist/ after npm run build). Push that folder to a GitHub repo, then call this with the repo, the folder and the commit. The EzYourLife server reads every file, packs them into the form the store's sandbox runs (code-split pages, styles, pictures and data files keep working), stores it in the app's editable version and records the repo and commit. Then call dev_run_checks.",
+  inputSchema: {
+    app_id: z14.string().uuid(),
+    github: z14.object({
+      repo: z14.string().describe('"owner/name", e.g. "werethinkers/meeting-notes".'),
+      dir: z14.string().max(300).optional().describe('The build folder inside the repo, e.g. "dist". Leave out if index.html is at the repo root.'),
+      ref: z14.string().optional().describe("Branch, tag or commit. Default main. A commit SHA pins exactly what you tested.")
+    })
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  handler: async ({ app_id, github }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    try {
+      const repo = github.repo.trim();
+      const dir = (github.dir ?? "").trim().replace(/^\/+|\/+$/g, "");
+      const ref = (github.ref || "main").trim();
+      const got = await fetchProjectFromGithub(repo, dir, ref);
+      const packed = bundleProject(got.files);
+      if (!looksLikeHtml(packed.html)) return fail("The folder's index.html is not an HTML page.");
+      const bytes = utf8Bytes(packed.html);
+      if (bytes > MAX_APP_BYTES) {
+        return fail(`Packed, the app is ${(bytes / 1e6).toFixed(1)} MB; the limit is 10 MB. Shrink big pictures, videos and fonts, or leave out what the app does not need.`);
+      }
+      const source = { kind: "github-project", repo, path: dir || "/", ref, commit: got.commit, via: "connector" };
+      const saved = await uploadText(devClient(ctx), app_id, packed.html, source);
+      return text(
+        `Imported ${repo}/${dir || ""} @ ${got.commit.slice(0, 7)} into version ${saved.version_no}.
+${bundleSummary(packed, bytes)}
+Next: dev_run_checks, then dev_get_preview_link.`,
+        { ...saved, source, files: packed.used.length, modules: packed.modules, missing: packed.missing, unused: packed.unused, notes: packed.notes }
+      );
+    } catch (e) {
+      return fail(dbMessage(e instanceof Error ? e.message : String(e)));
+    }
+  }
+});
+var UPLOAD_SCRIPT = `// ezyourlife-upload.mjs: packs a built app folder (index.html and its files) and sends it to EzYourLife with a one-time upload key.
+// Usage: node ezyourlife-upload.mjs <build-folder> <key> <supabase-url> <publishable-key>   (Node 18.17+)
+import { readFile, readdir } from "node:fs/promises";
+import { join, relative, sep } from "node:path";
+const [dir, key, url, anon] = process.argv.slice(2);
+if (!dir || !key || !url || !anon) { console.error("Usage: node ezyourlife-upload.mjs <build-folder> <key> <supabase-url> <publishable-key>"); process.exit(1); }
+const bundleProject = (${bundleProject.toString()});
+const SKIP = ${SKIP.toString()};
+const files = {};
+let total = 0;
+for (const e of await readdir(dir, { recursive: true, withFileTypes: true })) {
+  if (!e.isFile()) continue;
+  const full = join(e.parentPath ?? e.path, e.name);
+  const rel = relative(dir, full).split(sep).join("/");
+  if (SKIP.test(rel)) continue;
+  files[rel] = new Uint8Array(await readFile(full));
+  total += files[rel].length;
+  if (Object.keys(files).length > ${MAX_PROJECT_FILES} || total > ${MAX_PROJECT_BYTES}) { console.error("The folder is too big: at most ${MAX_PROJECT_FILES} files and 30 MB. Point at the build folder (for example dist), not the project."); process.exit(1); }
+}
+let packed;
+try { packed = bundleProject(files); } catch (err) { console.error(err.message); process.exit(1); }
+const text = packed.html;
 const bytes = Buffer.byteLength(text, "utf8");
-if (bytes > 10000000) { console.error(file + " is " + (bytes / 1e6).toFixed(1) + " MB; the limit is 10 MB."); process.exit(1); }
+if (bytes > ${MAX_APP_BYTES}) { console.error("Packed, the app is " + (bytes / 1e6).toFixed(1) + " MB; the limit is 10 MB."); process.exit(1); }
 const parts = [];
 for (let i = 0; i < text.length; ) {
-  let end = Math.min(i + 300000, text.length);
+  let end = Math.min(i + ${PART_UNITS}, text.length);
   const c = text.charCodeAt(end - 1);
   if (end < text.length && c >= 0xd800 && c <= 0xdbff) end -= 1;
   parts.push(text.slice(i, end)); i = end;
@@ -986,85 +1261,48 @@ const call = async (fn, body) => {
 };
 for (let n = 0; n < parts.length; n++) { await call("dev_keyed_upload_part", { _key: key, _part_no: n + 1, _data: parts[n] }); console.log("part " + (n + 1) + "/" + parts.length); }
 const done = await call("dev_keyed_upload_finish", { _key: key, _bytes: bytes, _parts: parts.length });
-console.log("Uploaded " + Math.round(bytes / 1024) + " KB as version " + done.version_no + ". Next: run the checks (dev_run_checks).");
+console.log("Packed " + packed.used.length + " files (" + Math.round(bytes / 1024) + " KB) as version " + done.version_no + ".");
+if (packed.missing.length) console.log("Not in the folder, so they will not load: " + packed.missing.slice(0, 10).join(", "));
+for (const n of packed.notes) console.log(n);
+console.log("Next: run the checks (dev_run_checks).");
 `;
-var devImportFile = defineTool16({
-  name: "dev_import_file",
-  title: "Import a big app file from GitHub or a link",
-  description: "For app files too big to pass inline (anything over about 200 KB, up to 10 MB). Push the built single-file app (for example dist/index.html) to a GitHub repo, then call this with the repo, path and branch or commit; or give a public https link to the file. The EzYourLife server fetches it, stores it in the app's editable version and records where it came from. Then call dev_run_checks.",
+var devGetUploadLink = defineTool16({
+  name: "dev_get_upload_link",
+  title: "One-time upload link for a local app project",
+  description: "FILE APPS, for Claude Code or any computer that can reach ezyourlife's database (also the way for private projects): returns a one-time key (valid 1 hour, one upload) and a Node script that packs a local build folder (index.html and every file it uses, for example dist/ after npm run build) exactly as dev_import_project does and sends it to the app's editable version. From a cloud workspace that can only reach GitHub, use dev_import_project.",
   inputSchema: {
     app_id: z14.string().uuid(),
-    github: z14.object({
-      repo: z14.string().describe('"owner/name", e.g. "werethinkers/tip-splitter".'),
-      path: z14.string().describe("Path of the built HTML file in the repo, e.g. dist/index.html."),
-      ref: z14.string().optional().describe("Branch, tag or commit. Default main. A commit SHA pins exactly what you tested.")
-    }).optional(),
-    url: z14.string().optional().describe("A public https link that returns the HTML file itself (not a web page about it).")
+    folder: z14.string().max(300).optional().describe("The local build folder you will send, e.g. dist. For the record and the command.")
   },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
-  handler: async ({ app_id, github, url }, ctx) => {
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ app_id, folder }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
-    if (!!github === !!url) return fail("Give either github {repo, path, ref} or url, not both.");
     try {
-      let html;
-      let source;
-      if (github) {
-        const ref = (github.ref || "main").trim();
-        const got = await fetchFromGithub(github.repo.trim(), github.path.trim(), ref);
-        html = got.html;
-        source = { kind: "github", repo: github.repo.trim(), path: github.path.trim(), ref, commit: got.commit ?? void 0, via: "connector" };
-      } else {
-        const u = checkPublicUrl(url.trim());
-        const res = await fetch(u.toString(), { redirect: "follow", headers: { "User-Agent": "ezyourlife-developer-connector" } });
-        if (!res.ok) return fail(`The link answered ${res.status}.`);
-        if (res.url) checkPublicUrl(res.url);
-        html = await readLimited(res);
-        source = { kind: "url", url: u.toString(), via: "connector" };
-      }
-      if (!looksLikeHtml(html)) return fail("That file is not an HTML page. Import the built single-file app (HTML with its CSS and JavaScript inside).");
-      const saved = await uploadText(devClient(ctx), app_id, html, source);
-      const where = github ? `${github.repo}/${github.path}${source.commit ? ` @ ${String(source.commit).slice(0, 7)}` : ""}` : url;
+      const { data, error } = await devClient(ctx).rpc("dev_begin_upload", {
+        _app_id: app_id,
+        _source: { kind: "upload", via: "upload-link", file_name: folder ?? void 0 },
+        _with_key: true
+      });
+      if (error) return fail(dbMessage(error.message));
+      const url = supabaseUrl();
+      const anon = supabaseKey();
+      const command = `node ezyourlife-upload.mjs ${folder || "dist"} ${data.key} ${url} ${anon}`;
       return text(
-        `Imported ${Math.ceil(saved.bytes / 1024)} KB from ${where} into version ${saved.version_no} (${saved.parts} part${saved.parts === 1 ? "" : "s"}). Next: dev_run_checks, then dev_get_preview_link.`,
-        { ...saved, source }
+        `One-time upload key, valid until ${data.expires_at} for one upload.
+
+1. Build the app (for example npm run build).
+2. Save this script as ezyourlife-upload.mjs:
+
+${UPLOAD_SCRIPT}
+3. Run:
+${command}
+
+The publishable key in the command is public; the upload key is the secret part, so don't share it. Then call dev_run_checks.`,
+        { key: data.key, expires_at: data.expires_at, supabase_url: url, publishable_key: anon, command, script: UPLOAD_SCRIPT }
       );
     } catch (e) {
       return fail(dbMessage(e instanceof Error ? e.message : String(e)));
     }
-  }
-});
-var devGetUploadLink = defineTool16({
-  name: "dev_get_upload_link",
-  title: "One-time upload link for a local app file",
-  description: "For Claude Code or any computer that can reach ezyourlife's database: returns a one-time key (valid 1 hour, one file) and a small Node script that sends a local HTML file (up to 10 MB) to the app's editable version. Use dev_import_file instead from a cloud workspace that can only reach GitHub.",
-  inputSchema: {
-    app_id: z14.string().uuid(),
-    file_name: z14.string().max(200).optional().describe("Name of the file you will send, for the record.")
-  },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-  handler: async ({ app_id, file_name }, ctx) => {
-    if (!ctx.isAuthenticated()) return notSignedIn();
-    const { data, error } = await devClient(ctx).rpc("dev_begin_upload", {
-      _app_id: app_id,
-      _source: { kind: "upload", via: "upload-link", file_name: file_name ?? void 0 },
-      _with_key: true
-    });
-    if (error) return fail(dbMessage(error.message));
-    const url = process.env.SUPABASE_URL;
-    const anon = process.env.SUPABASE_PUBLISHABLE_KEY;
-    const command = `node ezyourlife-upload.mjs ${file_name || "dist/index.html"} ${data.key} ${url} ${anon}`;
-    return text(
-      `One-time upload key, valid until ${data.expires_at} for one file.
-
-1. Save this script as ezyourlife-upload.mjs:
-
-${UPLOAD_SCRIPT}
-2. Run:
-${command}
-
-The publishable key in the command is public; the upload key is the secret part, so don't share it. Then call dev_run_checks.`,
-      { key: data.key, expires_at: data.expires_at, supabase_url: url, publishable_key: anon, command, script: UPLOAD_SCRIPT }
-    );
   }
 });
 
@@ -1165,7 +1403,7 @@ async function latestPromo(sb, appId) {
 var devGetStandards = defineTool18({
   name: "dev_get_standards",
   title: "EzYourLife developer rules and categories",
-  description: "Returns the rules and the conversion playbook for putting an app on EzYourLife in any form (AI Studio export, multi-file project, plain HTML, an app built in Claude), the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife, every session.",
+  description: "Returns the rules and the conversion playbook for putting an app on EzYourLife in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude), the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife, every session.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
@@ -1191,7 +1429,7 @@ var devCreateApp = defineTool18({
     if (!ctx.isAuthenticated()) return notSignedIn();
     const { data, error } = await devClient(ctx).rpc("dev_create_app", { _slug: slug, _name: name });
     if (error) return fail(dbMessage(error.message));
-    return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: dev_save_app with the HTML and listing.`, data);
+    return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: AI app: dev_save_ai_app. File app: dev_import_project (or dev_get_upload_link) with the build folder, then dev_save_app with the listing.`, data);
   }
 });
 var devListMyApps = defineTool18({
@@ -1226,30 +1464,19 @@ var devListMyApps = defineTool18({
 });
 var devSaveApp = defineTool18({
   name: "dev_save_app",
-  title: "Save a developer app's file and listing",
-  description: "FILE APPS: saves the app's single HTML file (best under about 200 KB; for bigger files use dev_import_file or dev_get_upload_link) and/or store listing to its editable version. For an AI app use dev_save_ai_app instead: sending an HTML file to an AI app that is not live yet turns it into a file app and discards its definition. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
+  title: "Save a file app's store listing",
+  description: "FILE APPS: saves the store listing (name, descriptions, category, charge options, promo and so on) to the app's editable version. The app itself is sent as a whole build folder with dev_import_project or dev_get_upload_link; a hand-made single HTML file is not accepted. For an AI app use dev_save_ai_app instead. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
   inputSchema: {
     app_id: z16.string().uuid(),
-    html: z16.string().max(MAX_APP_BYTES).optional().describe("The complete single-file HTML app. Leave out to keep the current file."),
-    listing: listingSchema.optional()
+    listing: listingSchema
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  handler: async ({ app_id, html, listing }, ctx) => {
+  handler: async ({ app_id, listing }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
-    if (html === void 0 && !listing) return fail("Nothing to save: pass html, listing or both.");
-    const sb = devClient(ctx);
     try {
-      if (html !== void 0 && html.length > PART_UNITS) {
-        const saved = await uploadText(sb, app_id, html, { kind: "inline", via: "connector" });
-        if (listing) {
-          const r = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: null, _listing: listing });
-          if (r.error) return fail(dbMessage(r.error.message));
-        }
-        return text(`Saved version ${saved.version_no} (${saved.parts} parts). Next: dev_run_checks.`, saved);
-      }
-      const { data, error } = await sb.rpc("dev_save_draft", { _app_id: app_id, _html: html ?? null, _listing: listing ?? null });
+      const { data, error } = await devClient(ctx).rpc("dev_save_draft", { _app_id: app_id, _html: null, _listing: listing });
       if (error) return fail(dbMessage(error.message));
-      return text(`Saved version ${data.version_no}. Next: dev_run_checks.`, data);
+      return text(`Saved the listing on version ${data.version_no}. Next: dev_run_checks.`, data);
     } catch (e) {
       return fail(dbMessage(e instanceof Error ? e.message : String(e)));
     }
@@ -1258,7 +1485,7 @@ var devSaveApp = defineTool18({
 var devRunChecks = defineTool18({
   name: "dev_run_checks",
   title: "Run EzYourLife's checks on a developer app",
-  description: "Runs the server-side checks on the app's latest version. File apps: app file, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, listing, name, promo, screenshots and similar apps. AI apps: the definition and its fields, instructions, secrets, a successful test run, listing, name, promo, screenshots and similar apps. Returns each result; 'fail' items must be fixed before submitting. Similar apps without a similar_note in the listing are a 'fail'; with a note they are shown to the admin as 'look'.",
+  description: "Runs the server-side checks on the app's latest version. File apps: the packed app, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, listing, name, promo, screenshots and similar apps. AI apps: the definition and its fields, instructions, secrets, a successful test run, listing, name, promo, screenshots and similar apps. Returns each result; 'fail' items must be fixed before submitting. Similar apps without a similar_note in the listing are a 'fail'; with a note they are shown to the admin as 'look'.",
   inputSchema: { app_id: z16.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
@@ -1351,7 +1578,7 @@ var devTools = [
   devListMyApps,
   devSaveApp,
   ...devAiTools,
-  devImportFile,
+  devImportProject,
   devGetUploadLink,
   devAddImage,
   devRemoveImage,
@@ -1366,7 +1593,7 @@ var projectRef = "vrsadzjyugbusfazdgyi";
 var mcp_default = defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
-  version: "0.3.0",
+  version: "0.4.0",
   instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 440+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
 
 **Start by calling \`help\` for the full tool guide with examples.**
@@ -1378,7 +1605,7 @@ Quick reference:
 - Prompt engineering: analyze_prompt (uses Gemini via PromptMaster, charges credits)
 - Catalog & their data: list_tools, get_tool_link, list_my_creations, list_bulk_jobs, get_credit_balance
 - Meta: submit_tool_request (ask the team to build a new tool)
-- Developers publishing their own app to the store, in any form (AI Studio export, multi-file project, plain HTML, an app built in Claude): dev_get_standards first (rules and conversion playbook), then dev_list_my_apps, dev_check_similar, dev_create_app. AI apps: dev_save_ai_app, dev_test_run. File apps: dev_save_app, or dev_import_file / dev_get_upload_link for big files (up to 10 MB). Then dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
+- Developers publishing their own app to the store, in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude): dev_get_standards first (rules and conversion playbook), then dev_list_my_apps, dev_check_similar, dev_create_app. AI apps: dev_save_ai_app, dev_test_run. File apps (a whole built project): dev_import_project from GitHub, or dev_get_upload_link from Claude Code, then dev_save_app for the listing. Then dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
 
 For long-running tools like Startup Analyser or Video Generator that can't run over MCP, use \`get_tool_link\` and send the user to open it on ezyourlife.com.`,
   auth: auth.oauth.issuer({
