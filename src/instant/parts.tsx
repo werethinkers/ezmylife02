@@ -48,7 +48,7 @@ export function useRevealBar<T extends Element>() {
 export const fitWords = (text: string) => ({ ["--fit" as string]: String(Math.max(4, ...String(text).split(/\s+/).map((w) => w.length))) }) as CSSProperties;
 
 /* ---------- photo gallery: swipe on phones, a grid on wider screens, tap for full screen ---------- */
-type Photo = { photo: string; caption?: string };
+export type Photo = { photo: string; caption?: string };
 export function Gallery({ photos, title, keyPrefix = "g", layout = "auto" }: { photos: Photo[]; title: string; keyPrefix?: string; layout?: "auto" | "grid" | "strip" }) {
   const [open, setOpen] = useState<number | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
@@ -74,7 +74,7 @@ export function Gallery({ photos, title, keyPrefix = "g", layout = "auto" }: { p
   );
 }
 
-function Lightbox({ photos, start, title, onClose, keyPrefix }: { photos: Photo[]; start: number; title: string; onClose: () => void; keyPrefix: string }) {
+export function Lightbox({ photos, start, title, onClose, keyPrefix }: { photos: Photo[]; start: number; title: string; onClose: () => void; keyPrefix: string }) {
   const [i, setI] = useState(start);
   const n = photos.length;
   const go = useCallback((d: number) => setI((x) => (x + d + n) % n), [n]);
