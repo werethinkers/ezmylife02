@@ -102,7 +102,7 @@ export default function MyPages() {
 
   const sp = sharing ? getProduct(sharing.product_id) : undefined;
   const st = sp?.themes.find((t) => t.id === sharing?.variant_id) ?? sp?.themes[0];
-  const { link, preparing } = useLinkPreview(sharing, sp, st, false);
+  const { link, preparing, prefs, apply } = useLinkPreview(sharing, sp, st, false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -159,7 +159,7 @@ export default function MyPages() {
       <Dialog open={!!sharing} onOpenChange={(o) => !o && setSharing(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Share {sharing?.title}</DialogTitle></DialogHeader>
-          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} link={link} preparing={preparing} />}
+          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} link={link} preparing={preparing} prefs={prefs} onSavePrefs={apply} />}
         </DialogContent>
       </Dialog>
     </div>

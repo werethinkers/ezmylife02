@@ -116,6 +116,19 @@ export async function drawShareCard(p: Product, theme: Theme, c: Content, url: s
   return cv;
 }
 
+/** Fills a 1200×630 link-preview picture with a photo, cropped from the middle like the cover of a book. */
+export async function drawPhotoPreview(src: string): Promise<HTMLCanvasElement> {
+  const [W, H] = FORMATS["Link preview"];
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const x = cv.getContext("2d")!;
+  x.fillStyle = "#111"; x.fillRect(0, 0, W, H);
+  const img = await load(src);
+  if (!img) throw new Error("That picture couldn't be opened.");
+  const r = Math.max(W / img.width, H / img.height);
+  x.drawImage(img, (W - img.width * r) / 2, (H - img.height * r) / 2, img.width * r, img.height * r);
+  return cv;
+}
+
 /** A printable A5 poster (300 dpi) with the QR code front and centre. */
 export async function drawQrPoster(p: Product, theme: Theme, c: Content, url: string, qr: HTMLCanvasElement): Promise<HTMLCanvasElement> {
   const W = 1748, H = 2480; const cv = document.createElement("canvas"); cv.width = W; cv.height = H;

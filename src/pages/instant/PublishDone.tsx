@@ -38,7 +38,7 @@ export default function PublishDone() {
   const theme = product?.themes.find((t) => t.id === page?.variant_id) ?? product?.themes[0];
   const content = page?.published_content ?? page?.content ?? {};
   // Every publish or edit lands here, so redraw the link preview from what is live now.
-  const { link, preparing } = useLinkPreview(live ? page : null, product, theme, true);
+  const { link, preparing, prefs, apply } = useLinkPreview(live ? page : null, product, theme, true);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -67,7 +67,7 @@ export default function PublishDone() {
               </div>
             </div>
             <div className="rounded-3xl border-2 border-ink bg-card p-6 shadow-block md:p-8">
-              <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} link={link} preparing={preparing} />
+              <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} link={link} preparing={preparing} prefs={prefs} onSavePrefs={apply} />
             </div>
             <p className="text-center text-sm text-muted-foreground">Need a change? <Link className="underline" to={`/create/${product.id}?page=${page.id}`}>Edit it</Link> any time. Updates are free.</p>
             <Button asChild variant="ghost"><Link to="/create">Make something else</Link></Button>

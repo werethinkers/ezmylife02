@@ -6,17 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import type { Content, Product, Theme } from "./types";
 import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
+import { LinkPreviewEditor } from "./LinkPreviewEditor";
+import { composeMessage, type SharePrefs } from "./sharePrefs";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
 /** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
-export function ShareKit({ product, theme, content, url, slug, link, preparing }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean }) {
+/** prefs + onSavePrefs: the owner's choices for the link preview, and how to save them. Without them only the suggested preview is offered. */
+export function ShareKit({ product, theme, content, url, slug, link, preparing, prefs, onSavePrefs }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean; prefs?: SharePrefs; onSavePrefs?: (draft: SharePrefs) => Promise<unknown> }) {
   const sendUrl = link || url;
   const { toast } = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const message = fill(product.share, { ...content, link: sendUrl });
+  const message = prefs ? composeMessage(product, content, prefs, sendUrl) : fill(product.share, { ...content, link: sendUrl });
   const qrCanvas = () => qrRef.current?.querySelector("canvas") ?? null;
 
   useEffect(() => {
@@ -46,6 +49,12 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing }
 
   return (
     <div className="grid gap-6">
+      {prefs && onSavePrefs && (
+        <>
+          <LinkPreviewEditor product={product} theme={theme} content={content} url={url} link={link} prefs={prefs} onSave={onSavePrefs} />
+          <hr className="border-t-2 border-ink/15" />
+        </>
+      )}
       <div className="grid gap-3">
         <a href={waShare(message)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#25D366] text-[#06260F] font-semibold text-base">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.7.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>
