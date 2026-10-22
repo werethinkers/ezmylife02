@@ -40,10 +40,12 @@ Example: user says *"save shortcut sig -> Best, Abhijay"* \u2192 call save_short
 Startup Analyser and Video Generator are long-running (>60s) and would time out. Suggest the user run them at https://ezyourlife.com directly \u2014 use get_tool_link to hand them the URL.
 
 ## Developers: publish your own web app
+- **dev_next_step(app_id)** \u2014 says exactly what to do next for an app (and what, if anything, to ask the developer). Call it after every change; do what it says until it reports waiting or live. For "build me this app on ezyourlife" / "publish this there": dev_get_standards, dev_list_my_apps, dev_check_similar, dev_create_app, then follow dev_next_step.
 - **dev_get_standards()** \u2014 the rules, the conversion playbook for any kind of app (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude), the steps and the valid categories. Call first, every session.
 - **dev_list_my_apps()** \xB7 **dev_check_similar(name, short_description?)** \u2014 look for similar apps BEFORE building; if there are any, tell the developer and ask how theirs differs (it goes in listing.similar_note and the team reads it) \xB7 **dev_create_app(slug, name)**
 - AI apps (a screen definition run on EzYourLife's own AI): **dev_save_ai_app(app_id, spec?, listing?)** \xB7 **dev_test_run(app_id, inputs?, messages?, images?)** (free, 25 a day, the team can read each run)
-- File apps (a whole built project, no AI): **dev_import_project(app_id, github {repo, dir, ref})** reads every file of the build folder (for example dist/) from GitHub and packs it \xB7 **dev_get_upload_link(app_id, folder?)** does the same from Claude Code on a computer \xB7 **dev_save_app(app_id, listing)** for the listing. A hand-made single HTML file is not accepted.
+- File app that uses AI (an AI Studio export with its own screens): upload it like a file app, then **dev_save_ai_step(app_id, spec)** (the AI's instructions, the inputs the page sends, a fallback) and replace the page's old server call with "await window.ezyourlife.ai(inputs)"; **dev_test_run(app_id, inputs)** runs it for real, free, as the page would call it. Visitors pay credits per AI result; opening the app is free. EzYourLife measures the cost and the team sets the price: never quote one.
+- File apps (a whole built project): **dev_import_project(app_id, github {repo, dir, ref})** reads every file of the build folder (for example dist/) from GitHub and packs it \xB7 **dev_get_upload_link(app_id, folder?)** does the same from Claude Code on a computer \xB7 **dev_save_app(app_id, listing)** for the listing. A hand-made single HTML file is not accepted.
 - **dev_add_image(app_id, url|github|base64, caption?)** and **dev_remove_image(image_id)** for the app's screenshots \xB7 **dev_run_checks(app_id)** \xB7 **dev_get_preview_link(app_id)** (the real app as it will look on the site, to test) \xB7 **dev_submit_for_review(app_id)** \xB7 **dev_get_status(app_id)**
 - Charging: ask the developer how they want to charge and pass every option in listing.charge_options (levels of use, or rupee prices for things they would sell). The team converts rupees to credits and sets each price.
 - Free or 0 is only a request; the team prices every app from its real running cost and the developer is never told the cost. EzYourLife credits are the only payment system. Anything hourly, daily or monthly becomes a button the visitor presses.
@@ -490,8 +492,8 @@ var submit_tool_request_default = defineTool14({
 });
 
 // src/lib/mcp/tools/dev-apps.ts
-import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z16 } from "npm:zod@^3.23.8";
+import { defineTool as defineTool19 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z17 } from "npm:zod@^3.23.8";
 
 // src/lib/mcp/tools/dev-shared.ts
 var SITE = "https://ezyourlife.com";
@@ -514,10 +516,13 @@ var dbMessage = (m) => /does not exist|could not find the function|schema cache/
 
 // src/lib/mcp/tools/dev-standards.ts
 var STANDARDS = `# Putting an app on EzYourLife
-(Rules version 2026-10-21. These rules are served live and change without notice: follow this text over anything remembered or cached, and call dev_get_standards at the start of every session.)
+(Rules version 2026-10-22. These rules are served live and change without notice: follow this text over anything remembered or cached, and call dev_get_standards at the start of every session.)
 
 ## The goal
 Turn the developer's app, in whatever form it arrives (usually a full multi-file project), into an EzYourLife app the same way the 440+ apps already in the store were made. Show the developer how it will look on the site, let them test it, and send it to Team EzYourLife for approval. Nothing goes live until a person on the team approves it. You never set a price, approve or publish.
+
+## Run it from dev_next_step
+After every change, and whenever you are unsure, call dev_next_step(app_id). It runs the checks and tells you the one next action, and lists the few things only the developer can answer. Do what it says. The whole job ("build me this app on ezyourlife", "publish this there") is: Step 0, create, upload, AI step if the app uses AI, test run with a real example, listing and screenshots, preview, ask, submit. Do not stop at a half-done app and do not hand the developer a to-do list; the developer is asked only for choices (how theirs differs from a similar app, how they want to charge, a support email, whether to submit).
 
 ## Step 0: always, in this order
 1. dev_list_my_apps. If this is an update, use that app_id; never create a duplicate.
@@ -527,16 +532,18 @@ Turn the developer's app, in whatever form it arrives (usually a full multi-file
    - If theirs does the same job and they cannot say how it differs, say so honestly and let them decide whether to go on. The team reads the note next to the similar apps and decides; you do not decide for them.
 3. Choose the lane (next section) and tell the developer which one and why, in one sentence.
 
-## Two lanes: choose by what the app really needs
+## Three kinds: choose by what the app really needs
 AI app (dev_save_ai_app): the value comes from an AI model. Typical: a form that produces a written result (letters, plans, summaries, reports, replies), a chat assistant, a reader of photos or scanned pages. You send a DEFINITION (screen, fields, instructions), not code. EzYourLife runs it on its own screens and its own AI and charges credits per use, like the built-in apps. There is no file and no server.
 File app (dev_import_project or dev_get_upload_link, then dev_save_app for the listing): the app is browser logic with no AI: calculators, converters, planners, editors, dashboards, games, visual tools. You send the WHOLE built project: its build folder with index.html and every script, style, picture, font and data file. EzYourLife packs it for the store's locked frame itself. A hand-made single HTML file is not accepted: never squeeze an app into one file. It is charged when the visitor presses Start.
 
-If an app mixes both, the AI part decides: use the AI lane and say plainly which client-only extras cannot come along. If the AI part is a minor extra, drop it and use the file lane. Never send AI calls or keys inside a file app; the checks block them.
+File app with an AI step (dev_import_project / upload, then dev_save_ai_step): the app has its OWN screens that matter (cards, tables, charts, animation, a game-like flow, a design the developer built) and one or more places where it asks an AI. The app is sent as a file app and its AI call is replaced by "await window.ezyourlife.ai(inputs)". The instructions live in the AI step on the server; the visitor is charged credits per AI RESULT only, and opening the app is free. This is the right kind for most AI Studio exports with a real UI.
+
+Pick the kind: written result in a standard form or chat or photo reader, and the developer's own screen adds nothing \u2192 AI app. The developer's own screens are the product, with AI inside \u2192 file app with an AI step. No AI \u2192 file app. Never send direct AI calls or keys inside a file app; the checks block them.
 
 ## Whatever form the app arrives in
 Read first, change second. Find every AI call, every secret, every payment and every server route before deciding anything.
 
-1. Google AI Studio export, or any app with an Express/Node server calling Gemini, OpenAI or Claude (often with its own wallet, credits, free trial or Razorpay): this is an AI app.
+1. Google AI Studio export, or any app with an Express/Node server calling Gemini, OpenAI or Claude (often with its own wallet, credits, free trial or Razorpay): an AI app, or (when its own screens matter) a file app with an AI step; see "File app with an AI step" below for that recipe. The notes that follow apply to both.
    - Find each AI call (grep generateContent, generateContentStream, chats.create, chat.completions, messages.create, responseSchema, systemInstruction).
    - ai.system = the standing instructions (role, rules, tone, output format). ai.task = what to produce from the inputs each time. Copy the developer's real prompt wording; improve only what the platform needs (below).
    - fields = what the visitor fills in, read from the UI form: labels, types, placeholders, options, which are required.
@@ -568,10 +575,25 @@ Example (doc):
 
 After saving: dev_test_run with the sample (or a real example, a chat message list, or small images). Read the answer as a visitor would. Fix the instructions until it is correct, specific and in the right format, then save and test again. At least one successful test run of the exact saved version is required. Test runs are free, limited to 25 a day, and the team can read every one.
 
+## File app with an AI step: the recipe (dev_save_ai_step)
+1. Read the server code (server.ts, api routes, functions) and find every AI call. For each: the system instruction and prompt text, the response schema if it returns JSON, the model, the values from the page it uses.
+2. The AI step (dev_save_ai_step(app_id, spec)): spec = { inputs: [{key,label}], fallback, ai: { system, task, model, maxTokens, json } }.
+   - ai.system = the standing instructions; ai.task = what to produce from the inputs each time and the exact layout. Copy the developer's real prompt wording. The inputs reach the AI as "- key: value" lines.
+   - json: true when the page draws an object (cards, tables). Then say in ai.task every field name and what it holds, exactly as the page reads them (copy the old responseSchema into words). The page gets the parsed object. If the AI Studio code returns text, use json: false.
+   - model "flash" (default) or "lite"; maxTokens as small as the output allows.
+   - fallback: one sentence on what the page shows without the AI. The page MUST really do it: keep the app's own fallback code (a template, a default result) and run it when window.ezyourlife.ai throws.
+3. Change the page: replace the call to the app's server (fetch('/api/\u2026')) with
+   try { const result = await window.ezyourlife.ai({ key: value, \u2026 }); /* use result */ } catch (e) { /* e.code is login, credits, limit, busy, unavailable or failed; show the app's fallback */ }
+   window.ezyourlife.ai exists inside the store; keep a guard (typeof window.ezyourlife === "undefined" \u2192 fallback) so the app also works elsewhere. The page never sees a key, a price or the instructions.
+4. Delete the server, keys (GEMINI_API_KEY and so on), the wallet, credits, trials and payments. Build it (npm install --legacy-peer-deps if peers complain, then npm run build) and open the build once.
+5. Send the build: dev_import_project (GitHub), dev_get_upload_link (Claude Code), or, when your workspace cannot reach EzYourLife, zip the dist folder, send the zip to the developer and tell them to drop it on the app's page (the editor link from dev_get_preview_link) under "Upload a built app". The AI step is saved on the version the upload makes: if you saved the step first and it is gone, save it again.
+6. dev_test_run(app_id, inputs): run a realistic example exactly as the page sends it (the app's own sample or default values). Read the result the page would receive: right fields, specific, no invented facts, in the layout the page draws. Improve ai.system / ai.task and run again until it is right. The checks do not pass until a run of this exact step succeeded. Test runs are free, 25 a day per developer, and the team reads every one. You can also open the preview link: the AI works there for real (free, same limit).
+7. Price: you do not set, estimate or mention one. EzYourLife measures what the step costs to run and the team sets credits per AI result at approval (never below 2). If the developer asks, say the team sets it from the measured cost and the visitor pays only when an AI result is produced; opening the app costs nothing.
+
 ## File app: what the project must be (dev_import_project, dev_get_upload_link)
 - The whole built app: a folder with index.html at its top and every file it uses (JavaScript, CSS, pictures, fonts, data files such as json or csv). For Vite, React, Vue, Svelte and similar this is the build output (dist/ after npm run build), never the source folder. Up to 600 files and 30 MB in the folder, 10 MB once packed (checks warn above 2 MB). Libraries may also load from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com.
 - EzYourLife packs the folder itself: styles, scripts, JavaScript modules and code-split pages, pictures and fonts are carried inside, and data files the code fetches by path are served to it. Keep the default build settings (Vite base "/"); do not add single-file plugins.
-- Runs entirely in the browser. No own backend, login or payments. No AI calls (OpenAI, Anthropic, Gemini, Groq, OpenRouter and similar are blocked by the checks). No API keys, tokens or passwords anywhere in the project.
+- Runs entirely in the browser. No own backend, login or payments. No direct AI calls (OpenAI, Anthropic, Gemini, Groq, OpenRouter and similar are blocked by the checks): use the AI step instead. No API keys, tokens or passwords anywhere in the project.
 - Has <meta name="viewport" content="width=device-width, initial-scale=1"> in index.html and works at 375 px wide.
 - Adapt it: remove or replace AI calls, keys, logins and payments (if the app cannot work without them, stop and tell the developer); put every localStorage / sessionStorage / IndexedDB / document.cookie use inside try/catch with an in-memory fallback; use hash routing (#/page); remove window.top and parent.location; add the viewport tag. Build it and open the build once to check it works.
 - It runs in a sandboxed iframe with a unique origin: no cookies, no browser storage (it throws), no camera, microphone, location or notifications, and it cannot reach the page around it. Downloads, forms, alerts and opening links in a new tab work.
@@ -586,7 +608,7 @@ Ask: "How do you want to charge for this? Different levels of use, or something 
 - Record EVERY option they give, up to 6. Each is {label, kind, inr?, note?}: kind "per_use" (a level of use, e.g. "Quick split", "Full report") or kind "money" (something they would sell for rupees, with inr set).
 - Do not decide credits and do not convert rupees yourself. Team EzYourLife sees every option, converts rupees to credits at its worst-case rate and sets what each costs.
 - The app cannot take payments. A paywall, pricing page, subscription or payment code is removed; each paid tier becomes a "money" option. EzYourLife credits are the only payment system.
-- Free or 0 is only a request: leave charge_options out or record it without a price. The team prices every app from what it really costs to run, in the background. Never quote, estimate or hint at a cost, credit amount or margin to the developer.
+- Free or 0 is only a request: leave charge_options out or record it without a price. The team prices every app from what it really costs to run, in the background (EzYourLife measures the cost of an AI step itself and shows the suggested price to the admin only). Never quote, estimate or hint at a cost, credit amount or margin to the developer. An app with an AI step opens free and charges per AI result.
 - Other API costs: the app cannot hold keys, so any outside service that bills per call or needs a key cannot be used (maps and geocoding, SMS, WhatsApp, email sending, speech, translation, search or scraping, stock, weather and currency feeds, enrichment, payment APIs). Replace each with a calculation or bundled data, or remove the feature and tell the developer. Free no-key public data and font or script CDNs are fine.
 
 ## Frequency: apps run only when pressed
@@ -603,12 +625,13 @@ Save the new definition, or send the new build folder, with the same app_id. Tha
 ## Steps
 1. Step 0 above (dev_list_my_apps, dev_check_similar, lane).
 2. dev_create_app(slug, name) once. The address becomes ${SITE}/tool/dev-<slug>.
-3. AI lane: dev_save_ai_app(app_id, spec, listing). File lane: build, send the build folder (dev_import_project or dev_get_upload_link), then dev_save_app(app_id, listing).
-4. AI lane: dev_test_run until the answer is right. File lane: open the build once, and fix anything the import answer lists as missing.
+3. AI lane: dev_save_ai_app(app_id, spec, listing). File lane: build, send the build folder (dev_import_project, dev_get_upload_link or the zip), then dev_save_app(app_id, listing). Uses AI: also dev_save_ai_step.
+4. AI lane, and file apps with an AI step: dev_test_run until the answer is right. File lane: open the build once, and fix anything the import answer lists as missing.
 5. dev_run_checks(app_id). Fix every MUST FIX, save, re-run. LOOK items are shown to the admin; mention them to the developer.
 6. dev_get_preview_link(app_id): the developer opens it signed in on ezyourlife.com and sees the real app as it will look on the site, on a phone-sized or desktop-sized screen, and can test it. It uses no credits.
 7. dev_submit_for_review(app_id) only when the developer says it works and agrees to send it.
 8. dev_get_status(app_id) for the decision and any requested changes.
+At any point dev_next_step(app_id) names the next action.
 
 ## Rules you cannot change
 - Team EzYourLife sets the credits per use and the developer's share at approval. Only a person on the team can approve.
@@ -751,10 +774,38 @@ var devSaveAiApp = defineTool15({
     return text(`Saved version ${data.version_no} as an AI app. Next: dev_test_run with a realistic example, then dev_run_checks.`, data);
   }
 });
+var aiStepSchema = z13.object({
+  inputs: z13.array(z13.object({ key: z13.string().min(1).max(40).describe("Letters, numbers, underscore: the key the page sends."), label: z13.string().max(80).optional().describe("What the visitor typed or chose, in words.") })).max(30).describe("Every answer the page sends to window.ezyourlife.ai(inputs). The team reads this to see which of the visitor's answers reach the AI."),
+  fallback: z13.string().min(10).max(500).describe("What the page shows when the AI is unavailable or the visitor has no credits. The page must really do this (keep the app's own fallback code)."),
+  ai: z13.object({
+    system: z13.string().min(80).max(2e4).describe("The AI's standing instructions, moved here from the app's old server code: role, rules, tone, what it must never invent. Stored on the server, never shown to visitors."),
+    task: z13.string().min(20).max(4e3).describe("What to produce from the inputs each time, and the exact layout of the answer. For JSON: every field name and what it holds."),
+    model: z13.enum(["flash", "lite"]).optional().describe("flash (default) or lite (cheaper, short simple jobs)."),
+    maxTokens: z13.number().int().min(256).max(8192).optional().describe("Longest answer. As small as the output allows."),
+    json: z13.boolean().optional().describe("true when the page expects an object: window.ezyourlife.ai then resolves with the parsed JSON object. false: it resolves with text.")
+  })
+}).describe("The AI step of a file app.");
+var devSaveAiStep = defineTool15({
+  name: "dev_save_ai_step",
+  title: "Save the AI step of a file app",
+  description: "FILE APPS that use AI (for example an AI Studio export that called Gemini from its own server): saves the AI step, the instructions the store runs on its own AI keys when the page calls window.ezyourlife.ai(inputs). The app's own code must call that function instead of its old server call, and keep its own fallback. Upload the app first (dev_import_project or the upload link; a new upload keeps the saved step). The visitor is charged credits per AI result only; the app opens free. EzYourLife works out the cost itself and the team sets the price: the developer does not set one and is not shown one. Pass spec: null to remove the step. Saving clears earlier check results. Next: dev_test_run with a realistic example.",
+  inputSchema: {
+    app_id: z13.string().uuid(),
+    spec: aiStepSchema.nullable().describe("The complete AI step, or null to remove it.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ app_id, spec }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    const { data, error } = await devClient(ctx).rpc("dev_save_ai_step", { _app_id: app_id, _spec: spec === null ? null : { engine: "api", ...spec } });
+    if (error) return fail(dbMessage(error.message));
+    if (!data?.ai_step) return text(`Removed the AI step from version ${data.version_no}. Next: dev_run_checks.`, { version_no: data.version_no, ai_step: false });
+    return text(`Saved the AI step on version ${data.version_no}. Next: dev_test_run with a realistic example (the page's own sample input), then read the answer critically.`, { version_no: data.version_no, ai_step: true });
+  }
+});
 var devTestRun = defineTool15({
   name: "dev_test_run",
   title: "Test-run an AI app with the real AI",
-  description: "Runs the saved definition of the app's latest version once, on EzYourLife's real AI, exactly as a visitor's run would go. Free for the developer and not charged to anyone. Limited to 25 runs a day per developer. Every run is kept, with its inputs and answer, for the team to read at review, and at least one successful run of the exact version is required before it can be sent. Use realistic inputs (for doc apps: the sample), read the answer critically, and improve the instructions if it is wrong, generic or invents facts. Returns the full answer.",
+  description: "Runs the saved definition (or, for a file app, its AI step) of the app's latest version once, on EzYourLife's real AI, exactly as a visitor's run would go. Free for the developer and not charged to anyone. Limited to 25 runs a day per developer. Every run is kept, with its inputs and answer, for the team to read at review, and at least one successful run of the exact version is required before it can be sent. Use realistic inputs (for doc apps: the sample), read the answer critically, and improve the instructions if it is wrong, generic or invents facts. Returns the full answer. For a file app with an AI step, pass inputs exactly as the page sends them to window.ezyourlife.ai(inputs); the answer is the parsed JSON or text the page would receive.",
   inputSchema: {
     app_id: z13.string().uuid(),
     inputs: z13.record(z13.string(), z13.unknown()).optional().describe("doc apps: the field values keyed by field key (strings; rows fields as arrays of objects). vision apps: an optional note under the key 'Extra instructions' (the pictures go in images)."),
@@ -771,16 +822,22 @@ var devTestRun = defineTool15({
       const { data: app, error } = await sb.from("dev_apps").select("tool_id, kind").eq("id", app_id).maybeSingle();
       if (error) return fail(dbMessage(error.message));
       if (!app) return fail("App not found.");
-      if (app.kind !== "ai") return fail("This is a file app, not an AI app. Test it with dev_get_preview_link instead.");
       const v = await latestVersion(sb, app_id);
       if (!v) return fail("App not found.");
+      const isStep = app.kind !== "ai";
+      if (isStep && !v.spec) return fail("This file app has no AI step. Test it with dev_get_preview_link, or save an AI step with dev_save_ai_step first.");
       if (!v.spec) return fail("This version has no definition yet. Save one with dev_save_ai_app first.");
+      if (isStep && (!inputs || !Object.keys(inputs).length)) {
+        const keys = (v.spec.inputs ?? []).map((i) => i.key).join(", ");
+        return fail(`Pass inputs: a realistic example of what the page sends to window.ezyourlife.ai${keys ? ` (keys: ${keys})` : ""}. Use the app's own sample or example data.`);
+      }
       const res = await fetch(`${supabaseUrl()}/functions/v1/dev-app-run`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${ctx.getToken()}`, apikey: supabaseKey() },
         body: JSON.stringify({
           tool_id: app.tool_id,
           preview_version_id: v.id,
+          ...isStep ? { action: "generate" } : {},
           ...inputs ? { inputs } : {},
           ...messages ? { messages } : {},
           ...context ? { context } : {},
@@ -790,14 +847,15 @@ var devTestRun = defineTool15({
         signal: AbortSignal.timeout(11e4)
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.ok || !body.output) {
+      const answer = isStep ? body?.result === void 0 || body?.result === null ? "" : typeof body.result === "string" ? body.result : JSON.stringify(body.result, null, 2) : body?.output ?? "";
+      if (!res.ok || !body?.ok || !answer) {
         const why = body?.message || body?.error || `The test run failed (${res.status}).`;
         return fail(`${why}${res.status >= 500 ? " Nothing was charged. Try once more, and tell the developer if it keeps failing." : ""}`);
       }
       const left = body.preview?.left;
-      const out = body.output.length > 2e4 ? `${body.output.slice(0, 2e4)}
+      const out = answer.length > 2e4 ? `${answer.slice(0, 2e4)}
 
-[shortened here; the team sees the full answer]` : body.output;
+[shortened here; the team sees the full answer]` : answer;
       return text(
         `Test run OK (version ${v.version_no}${left === null || left === void 0 ? "" : `, ${left} test runs left today`}). Read it as the visitor would. Is it correct, specific and in the right format? If not, improve ai.system / ai.task and save again.
 
@@ -810,7 +868,7 @@ ${out}`,
     }
   }
 });
-var devAiTools = [devCheckSimilar, devSaveAiApp, devTestRun];
+var devAiTools = [devCheckSimilar, devSaveAiApp, devSaveAiStep, devTestRun];
 
 // src/lib/mcp/tools/dev-import.ts
 import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.23.0";
@@ -1306,9 +1364,107 @@ The publishable key in the command is public; the upload key is the secret part,
   }
 });
 
-// src/lib/mcp/tools/dev-images.ts
+// src/lib/mcp/tools/dev-next.ts
 import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z15 } from "npm:zod@^3.23.8";
+var HINT = {
+  code_secrets: () => ({ step: "remove_keys", tool: null, say: "Remove the key from the app's code (never ask the developer to paste one). If the app needs AI, move the call into the AI step: dev_save_ai_step, and have the page call window.ezyourlife.ai(inputs). Then upload again.", needs_developer: [] }),
+  aicall: () => ({ step: "use_ai_step_in_page", tool: null, say: "Replace the app's old server call (fetch to /api/...) with `await window.ezyourlife.ai(inputs)`, keep the page's own fallback for when it throws, rebuild and upload again.", needs_developer: [] }),
+  aistep: () => ({ step: "save_ai_step", tool: "dev_save_ai_step", say: "Save (or fix) the AI step: system = the instructions from the old server code, task = what to produce and the exact layout, inputs = every value the page sends, fallback = what the page shows without AI, json = true if the page expects an object.", needs_developer: [] }),
+  aitested: () => ({ step: "test_run", tool: "dev_test_run", say: "Run the AI step once with a realistic example (the app's own sample input, exactly as the page sends it). Read the answer: is it correct, specific, in the layout the page expects, free of invented facts? If not, improve ai.system / ai.task with dev_save_ai_step and run again. Checks cannot pass until a run of this exact step succeeded.", needs_developer: [] }),
+  tested: () => ({ step: "test_run", tool: "dev_test_run", say: "Run the definition once with a realistic example and read the answer. Improve the instructions if it is wrong or generic.", needs_developer: [] }),
+  duplicates: () => ({ step: "similar_note", tool: "dev_save_app", say: "A similar app exists. Tell the developer which one, ask how theirs differs (who it is for, what it adds), and save their words as listing.similar_note. The team decides.", needs_developer: ["How is this app different from the similar app(s)? One or two sentences in your own words."] }),
+  images: (f) => ({ step: "screenshots", tool: "dev_add_image", say: `Add real screenshots of the running app (${f.images} so far; 3 or more is best, up to 6, each under 400 KB, png/jpeg/webp). Never mock pictures.`, needs_developer: [] }),
+  promo: () => ({ step: "promo_text", tool: "dev_save_app", say: "Fill in the promo part of the listing (headline, features, how it works, FAQs) from what the app really does.", needs_developer: [] }),
+  listing: () => ({ step: "listing", tool: "dev_save_app", say: "Complete the store listing: name, short and full description, category (from dev_get_standards), support email and charge options.", needs_developer: ["A support email address people can write to."] }),
+  name: () => ({ step: "name", tool: "dev_save_app", say: "Choose a different name; this one is taken or too close to another app.", needs_developer: ["A different app name."] })
+};
+function nextStep(f) {
+  if (f.status === "submitted") return { step: "waiting", tool: "dev_get_status", say: "The version is with the EzYourLife team. Nothing to do but wait; check dev_get_status for their answer.", needs_developer: [] };
+  if (f.status === "approved" && f.live) return { step: "live", tool: null, say: "This version is live. To change the app, upload the new build (that starts the next version).", needs_developer: [] };
+  if (f.kind === "hosted" && !f.hasFile) {
+    return {
+      step: "upload",
+      tool: "dev_import_project",
+      say: "Upload the built app. Best: dev_import_project (a GitHub repo). Otherwise dev_get_upload_link from Claude Code. If this cloud workspace cannot reach EzYourLife: build the app (npm install --legacy-peer-deps, npm run build), zip the dist folder, send it to the developer with the file-sending tool, and tell them to drop it on the app's page (editor link from dev_get_preview_link) under 'Upload a built app'.",
+      needs_developer: []
+    };
+  }
+  if (!f.checks) return { step: "run_checks", tool: "dev_run_checks", say: "Run the checks.", needs_developer: [] };
+  const fails = f.checks.filter((c) => c.status === "fail");
+  const order = ["code_secrets", "aicall", "aistep", "aisecrets", "aitested", "tested", "name", "listing", "images", "promo", "duplicates"];
+  fails.sort((a, b) => (order.indexOf(a.id) + 99) % 99 - (order.indexOf(b.id) + 99) % 99);
+  for (const c of fails) {
+    const h = HINT[c.id]?.(f);
+    if (h) return { ...h, say: `${h.say}
+(Check "${c.label}": ${c.detail})` };
+  }
+  if (fails.length) return { step: "fix", tool: "dev_run_checks", say: `Fix: ${fails.map((c) => `${c.label} (${c.detail})`).join("; ")}. Then run the checks again.`, needs_developer: [] };
+  if (f.passed) {
+    return {
+      step: "preview_then_submit",
+      tool: "dev_get_preview_link",
+      say: "All checks passed. Give the developer the preview link so they can try the real app (the AI part works there, free test runs). Show them what was built and, in plain words, what visitors will pay: nothing to open the app; credits per AI result, set by the EzYourLife team. Ask whether to send it for review; only then call dev_submit_for_review.",
+      needs_developer: ["Try the preview and say whether to send it for review."]
+    };
+  }
+  return { step: "run_checks", tool: "dev_run_checks", say: "Run the checks again.", needs_developer: [] };
+}
+var devNextStep = defineTool17({
+  name: "dev_next_step",
+  title: "What to do next for a developer app",
+  description: "Tells you the exact next action for an app, from where it stands now (nothing uploaded, AI step missing, not test-run yet, listing or screenshots missing, ready for the preview, with the team). Call it after every change and when unsure; do what it says, and stop to ask the developer only for items it lists under needs_developer. It runs the checks itself. It never shows a price: the cost is worked out by EzYourLife and only the admin sees and sets the price.",
+  inputSchema: { app_id: z15.string().uuid() },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ app_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    const sb = devClient(ctx);
+    try {
+      const { data: app, error } = await sb.from("dev_apps").select("tool_id, kind, status, live_version_id").eq("id", app_id).maybeSingle();
+      if (error) return fail(dbMessage(error.message));
+      if (!app) return fail("App not found.");
+      const v = await latestVersion(sb, app_id);
+      if (!v) return fail("App not found.");
+      const [{ count: withFile }, { count: images }] = await Promise.all([
+        sb.from("dev_app_versions").select("id", { count: "exact", head: true }).eq("id", v.id).neq("html", ""),
+        sb.from("dev_app_images").select("id", { count: "exact", head: true }).eq("version_id", v.id)
+      ]);
+      const hasFile = app.kind === "ai" ? !!v.spec : (withFile ?? 0) > 0;
+      let qa = v.qa;
+      const editable = v.status === "draft" || v.status === "changes_requested";
+      if (editable && (hasFile || v.spec)) {
+        const { data, error: qerr } = await sb.rpc("dev_run_qa", { _version_id: v.id });
+        if (qerr) return fail(dbMessage(qerr.message));
+        qa = data;
+      }
+      const facts = {
+        kind: app.kind === "ai" ? "ai" : "hosted",
+        status: v.status,
+        hasFile,
+        hasStep: !!v.spec,
+        images: images ?? 0,
+        checks: qa?.checks ?? null,
+        passed: !!qa?.passed,
+        live: app.live_version_id === v.id
+      };
+      const n = nextStep(facts);
+      const head = `App ${SITE}/tool/${app.tool_id}, version ${v.version_no} (${v.status}). Next: ${n.step}${n.tool ? ` \u2192 ${n.tool}` : ""}`;
+      const ask = n.needs_developer.length ? `
+
+Ask the developer:
+${n.needs_developer.map((x) => `- ${x}`).join("\n")}` : "\n\nNo question for the developer needed: do it, then call dev_next_step again.";
+      return text(`${head}
+
+${n.say}${ask}`, { ...n, version_no: v.version_no, state: v.status, checks_passed: facts.passed });
+    } catch (e) {
+      return fail(dbMessage(e instanceof Error ? e.message : String(e)));
+    }
+  }
+});
+
+// src/lib/mcp/tools/dev-images.ts
+import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@0.23.0";
+import { z as z16 } from "npm:zod@^3.23.8";
 var MAX_IMAGE_BYTES = 400 * 1024;
 var MIMES = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" };
 var toBase64 = (bytes) => {
@@ -1337,17 +1493,17 @@ async function fetchPicture(raw) {
   }
   throw new Error("The picture link redirects too many times.");
 }
-var devAddImage = defineTool17({
+var devAddImage = defineTool18({
   name: "dev_add_image",
   title: "Add a screenshot to a developer app's promo page",
   description: "Adds one real screenshot (png, jpeg or webp, under 400 KB, up to 6 per version) to the app's editable version. Give a public https link, a file in a public GitHub repo, or base64 data. If the latest version is live this starts the next version; the live app does not change until it is approved. Saving clears earlier check results. Only real screenshots of the app: never made-up or mock pictures.",
   inputSchema: {
-    app_id: z15.string().uuid(),
-    url: z15.string().url().optional().describe("Public https link to the picture."),
-    github: z15.object({ repo: z15.string(), path: z15.string(), ref: z15.string().default("main") }).optional().describe("A picture in a PUBLIC GitHub repo (owner/name, path, branch or commit)."),
-    base64: z15.string().max(56e4).optional().describe("The picture as base64 (no data: prefix). Under 400 KB before encoding."),
-    mime: z15.enum(["image/png", "image/jpeg", "image/webp"]).optional().describe("Required with base64."),
-    caption: z15.string().trim().max(140).optional().describe("What the picture shows, in plain words.")
+    app_id: z16.string().uuid(),
+    url: z16.string().url().optional().describe("Public https link to the picture."),
+    github: z16.object({ repo: z16.string(), path: z16.string(), ref: z16.string().default("main") }).optional().describe("A picture in a PUBLIC GitHub repo (owner/name, path, branch or commit)."),
+    base64: z16.string().max(56e4).optional().describe("The picture as base64 (no data: prefix). Under 400 KB before encoding."),
+    mime: z16.enum(["image/png", "image/jpeg", "image/webp"]).optional().describe("Required with base64."),
+    caption: z16.string().trim().max(140).optional().describe("What the picture shows, in plain words.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ app_id, url, github, base64, mime, caption }, ctx) => {
@@ -1376,11 +1532,11 @@ var devAddImage = defineTool17({
     }
   }
 });
-var devRemoveImage = defineTool17({
+var devRemoveImage = defineTool18({
   name: "dev_remove_image",
   title: "Remove a screenshot from a developer app",
   description: "Removes one screenshot (by image_id from dev_get_status) from the app's editable version. Clears earlier check results.",
-  inputSchema: { image_id: z15.string().uuid() },
+  inputSchema: { image_id: z16.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ image_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1400,7 +1556,7 @@ async function latestPromo(sb, appId) {
 }
 
 // src/lib/mcp/tools/dev-apps.ts
-var devGetStandards = defineTool18({
+var devGetStandards = defineTool19({
   name: "dev_get_standards",
   title: "EzYourLife developer rules and categories",
   description: "Returns the rules and the conversion playbook for putting an app on EzYourLife in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude), the step-by-step publishing flow, and the list of valid store categories. Call this first when putting an app on EzYourLife, every session.",
@@ -1416,13 +1572,13 @@ var devGetStandards = defineTool18({
 ${cats.map((c) => `- ${c}`).join("\n")}`, { categories: cats });
   }
 });
-var devCreateApp = defineTool18({
+var devCreateApp = defineTool19({
   name: "dev_create_app",
   title: "Create a developer app on EzYourLife",
   description: "Creates a new app for the signed-in developer with an empty first version. The slug becomes the address /tool/dev-<slug> and cannot be changed later.",
   inputSchema: {
-    slug: z16.string().trim().min(3).max(48).describe("Lowercase letters, numbers and dashes, e.g. 'tip-splitter'."),
-    name: z16.string().trim().min(3).max(60).describe("The app's name in the store.")
+    slug: z17.string().trim().min(3).max(48).describe("Lowercase letters, numbers and dashes, e.g. 'tip-splitter'."),
+    name: z17.string().trim().min(3).max(60).describe("The app's name in the store.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ slug, name }, ctx) => {
@@ -1432,7 +1588,7 @@ var devCreateApp = defineTool18({
     return text(`Created ${name}. app_id: ${data.app_id}. It will live at ${SITE}/tool/${data.tool_id} once approved. Next: AI app: dev_save_ai_app. File app: dev_import_project (or dev_get_upload_link) with the build folder, then dev_save_app with the listing.`, data);
   }
 });
-var devListMyApps = defineTool18({
+var devListMyApps = defineTool19({
   name: "dev_list_my_apps",
   title: "List my EzYourLife developer apps",
   description: "Lists the signed-in developer's apps with their kind (AI app or file app), latest version, its state and whether the app is live. Call before creating an app, so updates never make duplicates.",
@@ -1449,6 +1605,7 @@ var devListMyApps = defineTool18({
       rows.push({
         app_id: a.id,
         kind: a.kind === "ai" ? "ai_app" : "file_app",
+        has_ai_step: a.kind !== "ai" && !!v?.spec,
         name: v?.name ?? "",
         address: `${SITE}/tool/${a.tool_id}`,
         store: a.status,
@@ -1462,12 +1619,12 @@ var devListMyApps = defineTool18({
     return text(rows.length ? JSON.stringify(rows, null, 2) : "No apps yet. Use dev_create_app.", { apps: rows });
   }
 });
-var devSaveApp = defineTool18({
+var devSaveApp = defineTool19({
   name: "dev_save_app",
   title: "Save a file app's store listing",
   description: "FILE APPS: saves the store listing (name, descriptions, category, charge options, promo and so on) to the app's editable version. The app itself is sent as a whole build folder with dev_import_project or dev_get_upload_link; a hand-made single HTML file is not accepted. For an AI app use dev_save_ai_app instead. If the latest version is live, this starts the next version; the live app does not change until that version is approved. Saving clears earlier check results.",
   inputSchema: {
-    app_id: z16.string().uuid(),
+    app_id: z17.string().uuid(),
     listing: listingSchema
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -1482,11 +1639,11 @@ var devSaveApp = defineTool18({
     }
   }
 });
-var devRunChecks = defineTool18({
+var devRunChecks = defineTool19({
   name: "dev_run_checks",
   title: "Run EzYourLife's checks on a developer app",
   description: "Runs the server-side checks on the app's latest version. File apps: the packed app, size, phone fit, keys and passwords, AI calls, own payments, outside addresses, browser storage, listing, name, promo, screenshots and similar apps. AI apps: the definition and its fields, instructions, secrets, a successful test run, listing, name, promo, screenshots and similar apps. Returns each result; 'fail' items must be fixed before submitting. Similar apps without a similar_note in the listing are a 'fail'; with a note they are shown to the admin as 'look'.",
-  inputSchema: { app_id: z16.string().uuid() },
+  inputSchema: { app_id: z17.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1505,11 +1662,11 @@ ${lines.join("\n")}`, data);
     }
   }
 });
-var devGetPreviewLink = defineTool18({
+var devGetPreviewLink = defineTool19({
   name: "dev_get_preview_link",
   title: "Get the live preview link for a developer app",
   description: "Returns the preview link for the app's latest version. The developer opens it while signed in to ezyourlife.com to try the real app as it will look on the site, on a phone-sized or desktop-sized screen. File apps run in the same sandbox the store uses; AI apps run on the real screens and AI (a limited number of free test runs a day). No credits are used.",
-  inputSchema: { app_id: z16.string().uuid() },
+  inputSchema: { app_id: z17.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1525,11 +1682,11 @@ Edit, check and send from: ${editor}`, { preview_url: preview, editor_url: edito
     }
   }
 });
-var devSubmitForReview = defineTool18({
+var devSubmitForReview = defineTool19({
   name: "dev_submit_for_review",
   title: "Send a developer app for EzYourLife review",
   description: "Sends the latest version to the EzYourLife admin queue. Only works after the checks passed on this exact file. Ask the developer before calling it. The version is locked while it waits.",
-  inputSchema: { app_id: z16.string().uuid() },
+  inputSchema: { app_id: z17.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1545,11 +1702,11 @@ var devSubmitForReview = defineTool18({
     }
   }
 });
-var devGetStatus = defineTool18({
+var devGetStatus = defineTool19({
   name: "dev_get_status",
   title: "Status and review feedback for a developer app",
   description: "Returns every version of the app with its state, the team's requested changes, the charge options and similar_note the developer gave, whether it is live and its live address, and the credits per use, per-option credits and share set by the team.",
-  inputSchema: { app_id: z16.string().uuid() },
+  inputSchema: { app_id: z17.string().uuid() },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ app_id }, ctx) => {
     if (!ctx.isAuthenticated()) return notSignedIn();
@@ -1558,9 +1715,11 @@ var devGetStatus = defineTool18({
     if (error) return fail(dbMessage(error.message));
     if (!app) return fail("App not found.");
     const { data: versions } = await sb.from("dev_app_versions").select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed, charge_options, similar_note").eq("app_id", app_id).order("version_no", { ascending: false });
+    const lv = await latestVersion(sb, app_id);
     const out = {
       address: `${SITE}/tool/${app.tool_id}`,
       kind: app.kind === "ai" ? "ai_app" : "file_app",
+      has_ai_step: app.kind !== "ai" && !!lv?.spec,
       store: app.status,
       live_version: (versions ?? []).find((v) => v.id === app.live_version_id)?.version_no ?? null,
       credits_per_use: app.credits,
@@ -1574,6 +1733,7 @@ var devGetStatus = defineTool18({
 });
 var devTools = [
   devGetStandards,
+  devNextStep,
   devCreateApp,
   devListMyApps,
   devSaveApp,
@@ -1593,7 +1753,7 @@ var projectRef = "vrsadzjyugbusfazdgyi";
 var mcp_default = defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",
-  version: "0.4.0",
+  version: "0.5.0",
   instructions: `EZYOURLIFE is a pay-as-you-go AI platform (https://ezyourlife.com) with 440+ live AI apps. You are connected as the signed-in EZYOURLIFE user; every tool call runs as that user, deducts from their credit wallet where applicable, and saves to their account.
 
 **Start by calling \`help\` for the full tool guide with examples.**
@@ -1605,7 +1765,7 @@ Quick reference:
 - Prompt engineering: analyze_prompt (uses Gemini via PromptMaster, charges credits)
 - Catalog & their data: list_tools, get_tool_link, list_my_creations, list_bulk_jobs, get_credit_balance
 - Meta: submit_tool_request (ask the team to build a new tool)
-- Developers publishing their own app to the store, in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude): dev_get_standards first (rules and conversion playbook), then dev_list_my_apps, dev_check_similar, dev_create_app. AI apps: dev_save_ai_app, dev_test_run. File apps (a whole built project): dev_import_project from GitHub, or dev_get_upload_link from Claude Code, then dev_save_app for the listing. Then dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
+- Developers publishing their own app to the store, in any form (AI Studio export, React/Vue/Svelte or other multi-file project, an app built in Claude): dev_get_standards first (rules and conversion playbook), then dev_list_my_apps, dev_check_similar, dev_create_app, then dev_next_step after every change: it names the next action until the app is with the team. AI apps: dev_save_ai_app, dev_test_run. File apps that use AI: dev_save_ai_step, dev_test_run (the page calls window.ezyourlife.ai). File apps (a whole built project): dev_import_project from GitHub, or dev_get_upload_link from Claude Code, then dev_save_app for the listing. Then dev_run_checks, dev_get_preview_link, dev_submit_for_review, dev_get_status
 
 For long-running tools like Startup Analyser or Video Generator that can't run over MCP, use \`get_tool_link\` and send the user to open it on ezyourlife.com.`,
   auth: auth.oauth.issuer({

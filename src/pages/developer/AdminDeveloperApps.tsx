@@ -42,11 +42,12 @@ const inr = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDi
 
 function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void> }) {
   const isAi = item.kind === "ai";
+  const hasStep = isAi || !!item.spec;   // an AI app, or a file app that also has an AI step
   const html = useQuery({ queryKey: ["dev-admin-html", item.version_id], queryFn: () => getVersionHtml(item.version_id), enabled: !isAi });
   const cost = item.cost_estimate ?? null;
   // The least credits that keep the 3x margin: from the file's running cost, or from the AI's cost for an AI app.
-  const minCredits = isAi ? item.ai_cost?.suggested_credits ?? null : cost?.min_credits ?? null;
-  const fewest = isAi ? 2 : 1;
+  const minCredits = hasStep ? Math.max(item.ai_cost?.suggested_credits ?? 0, isAi ? 0 : cost?.min_credits ?? 0) || null : cost?.min_credits ?? null;
+  const fewest = hasStep ? 2 : 1;
   const [credits, setCredits] = useState(item.credits != null ? String(item.credits) : minCredits != null ? String(minCredits) : "");
   const [share, setShare] = useState(item.share_pct != null ? String(Number(item.share_pct)) : "");
   const [notes, setNotes] = useState("");
@@ -116,8 +117,8 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
         <div className="space-y-5">
           <SimilarReview item={item} />
 
-          {isAi && <AiChanges item={item} />}
-          {isAi && <AiDefinition item={item} />}
+          {hasStep && <AiChanges item={item} />}
+          {hasStep && <AiDefinition item={item} />}
 
           {!isAi && item.live && (
             <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
@@ -141,7 +142,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
 
           <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
             <h3 className="font-display text-base font-bold">Decide</h3>
-            {isAi && <AiCost item={item} credits={Number.isInteger(c) && credits !== "" ? c : null} />}
+            {hasStep && <AiCost item={item} credits={Number.isInteger(c) && credits !== "" ? c : null} />}
             {!isAi && cost && (
               <div className="mt-4 rounded-xl border-2 border-dashed border-ink/40 p-3 text-sm">
                 <p className="font-semibold">Hidden costs (only admins see this)</p>
@@ -205,7 +206,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
               <div>
                 <Label htmlFor="a-credits">{options.length ? "Credits charged at Start" : "Credits per use"}</Label>
                 <Input id="a-credits" type="number" min={fewest} max={100} step={1} value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 2" />
-                {isAi && <p className="mt-1 text-xs text-muted-foreground">AI apps need at least 2 credits.</p>}
+                {hasStep && <p className="mt-1 text-xs text-muted-foreground">An app that calls AI needs at least 2 credits.{!isAi && " Visitors pay this per AI result; the app opens free."}</p>}
               </div>
               <div>
                 <Label htmlFor="a-share">Developer share (%)</Label>
@@ -254,6 +255,7 @@ function Review({ item, onDone }: { item: QueueItem; onDone: () => Promise<void>
               title={item.name}
               fullScreenHref={`/developer/preview/${item.version_id}`}
               emptyText={html.isLoading ? "Loading…" : (html.error as Error)?.message}
+              ai={item.spec && item.tool_id ? { toolId: item.tool_id, previewVersionId: item.version_id } : undefined}
             />
           )}
         </div>

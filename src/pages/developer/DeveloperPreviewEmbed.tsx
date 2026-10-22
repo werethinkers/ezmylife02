@@ -1,3 +1,4 @@
+import type { AiSpec } from "@/apps/ai/specToDef";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -30,10 +31,10 @@ export default function DeveloperPreviewEmbed() {
         <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" aria-label="Loading" /></div>
       ) : v.error || !d ? (
         <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">{(v.error as Error)?.message ?? "Preview not found."}</p>
-      ) : d.kind !== "ai" || !d.spec ? (
+      ) : d.kind !== "ai" || !d.spec || d.spec.engine === "api" ? (
         <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">This version has no AI definition yet.</p>
       ) : (
-        <AiAppView toolId={d.tool_id} name={d.name} category={d.category} spec={d.spec} versionId={versionId} />
+        <AiAppView toolId={d.tool_id} name={d.name} category={d.category} spec={d.spec as AiSpec} versionId={versionId} />
       )}
     </div>
   );

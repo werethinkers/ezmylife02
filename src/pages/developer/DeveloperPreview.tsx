@@ -27,12 +27,12 @@ export default function DeveloperPreview() {
           </Button>
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{v.data?.name || "Preview"}</p>
-            <p className="text-xs text-muted-foreground">{v.data ? `Version ${v.data.version_no} · ${v.data.kind === "ai" ? "test runs are free" : "preview, no credits used"}` : ""}</p>
+            <p className="text-xs text-muted-foreground">{v.data ? `Version ${v.data.version_no} · ${v.data.kind === "ai" || v.data.spec ? "test runs are free" : "preview, no credits used"}` : ""}</p>
           </div>
           {v.data && <VersionPill status={v.data.status} />}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {v.data?.kind === "ai" && <RunsLeft />}
+          {(v.data?.kind === "ai" || !!v.data?.spec) && <RunsLeft />}
           <Button size="sm" variant={device === "phone" ? "default" : "outline"} className="h-8" onClick={() => setDevice("phone")} aria-pressed={device === "phone"}>
             <Smartphone className="h-3.5 w-3.5" /> Phone
           </Button>
@@ -62,7 +62,7 @@ export default function DeveloperPreview() {
         ) : !v.data.html.trim() ? (
           <p className="mx-auto max-w-md px-4 pt-20 text-center text-sm text-muted-foreground">This version has no app file yet.</p>
         ) : (
-          <HostedFrame html={v.data.html} title={v.data.name} device={device} reloadKey={reloadKey} />
+          <HostedFrame html={v.data.html} title={v.data.name} device={device} reloadKey={reloadKey} ai={v.data.spec && v.data.tool_id ? { toolId: v.data.tool_id, previewVersionId: versionId } : undefined} />
         )}
       </div>
     </div>

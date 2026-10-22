@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Laptop, RotateCcw, Smartphone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HostedFrame } from "@/apps/hosted/HostedFrame";
-import { PREVIEW_MESSAGE } from "@/apps/lib/preview";
+import type { AiTarget } from "@/apps/hosted/aiBridge";
+import { PREVIEW_MESSAGE, PREVIEW_RUN_EVENT } from "@/apps/lib/preview";
 import { CHECK_TEXT, VERSION_TEXT, imageData, runsLeft, when, type DevImage, type Promo, type QaDuplicate, type QaReport, type VersionStatus } from "@/lib/devApps";
 
 /* Pieces shared by the developer pages and the admin review page. */
@@ -105,8 +106,13 @@ export function RunsLeft() {
     const onMessage = (e: MessageEvent) => {
       if (e.origin === window.location.origin && e.data?.type === PREVIEW_MESSAGE) void qc.invalidateQueries({ queryKey: ["dev-runs-left"] });
     };
+    const onRun = () => void qc.invalidateQueries({ queryKey: ["dev-runs-left"] });
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    window.addEventListener(PREVIEW_RUN_EVENT, onRun);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener(PREVIEW_RUN_EVENT, onRun);
+    };
   }, [qc]);
   if (!q.data) return null;
   const { left, limit } = q.data;
@@ -196,7 +202,7 @@ function DeviceSwitch({ device, onChange }: { device: "phone" | "desktop"; onCha
 }
 
 /** Live preview with a phone / desktop switch, restart, and a full-screen link. */
-export function PreviewPanel({ html, title, fullScreenHref, emptyText }: { html: string | null; title: string; fullScreenHref?: string; emptyText?: string }) {
+export function PreviewPanel({ html, title, fullScreenHref, emptyText, ai }: { html: string | null; title: string; fullScreenHref?: string; emptyText?: string; ai?: AiTarget }) {
   const [device, setDevice] = useState<"phone" | "desktop">("phone");
   const [reloadKey, setReloadKey] = useState(0);
   return (
@@ -236,10 +242,10 @@ export function PreviewPanel({ html, title, fullScreenHref, emptyText }: { html:
       </div>
       {html ? (
         device === "phone" ? (
-          <HostedFrame html={html} title={title} device="phone" reloadKey={reloadKey} />
+          <HostedFrame html={html} title={title} device="phone" reloadKey={reloadKey} ai={ai} />
         ) : (
           <div className="h-[640px] max-h-[75vh] overflow-hidden rounded-xl border-2 border-ink">
-            <HostedFrame html={html} title={title} device="desktop" reloadKey={reloadKey} />
+            <HostedFrame html={html} title={title} device="desktop" reloadKey={reloadKey} ai={ai} />
           </div>
         )
       ) : (
@@ -247,9 +253,18 @@ export function PreviewPanel({ html, title, fullScreenHref, emptyText }: { html:
           {emptyText ?? "Upload the app file to see it here."}
         </div>
       )}
-      <p className="mt-3 text-xs text-muted-foreground">
-        This is the real app, running in the same locked-down frame the store uses. It works here without spending credits.
-      </p>
+      {ai ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <RunsLeft />
+          <p className="text-xs text-muted-foreground">
+            This is the real app in the store's locked-down frame. Its AI step runs for real here as a free test run; the team reads these runs at review.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">
+          This is the real app, running in the same locked-down frame the store uses. It works here without spending credits.
+        </p>
+      )}
     </div>
   );
 }

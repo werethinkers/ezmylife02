@@ -5,12 +5,13 @@ import { STANDARDS } from "./dev-standards";
 import { listingSchema } from "./dev-schemas";
 import { devAiTools } from "./dev-ai";
 import { devGetUploadLink, devImportProject } from "./dev-import";
+import { devNextStep } from "./dev-next";
 import { devAddImage, devRemoveImage, latestPromo } from "./dev-images";
 
 /*
  * Developer tools: let Claude (or any MCP client) put a developer's app on EzYourLife, in any form it arrives.
- * Flow: dev_get_standards → dev_list_my_apps → dev_check_similar → dev_create_app →
- *   AI app: dev_save_ai_app → dev_test_run    |    file app: dev_import_project / dev_get_upload_link (a whole build folder) + dev_save_app (listing)
+ * Flow (dev_next_step says which step is next at any point): dev_get_standards → dev_list_my_apps → dev_check_similar → dev_create_app →
+ *   AI app: dev_save_ai_app → dev_test_run    |    file app (+ dev_save_ai_step → dev_test_run when it uses AI): dev_import_project / dev_get_upload_link (a whole build folder) + dev_save_app (listing)
  * → dev_run_checks → (fix, repeat) → dev_get_preview_link → dev_submit_for_review → dev_get_status.
  * An admin approves on ezyourlife.com/admin/developer-apps; nothing here can approve, publish or set a price.
  * The rules and the conversion playbook are in ./dev-standards.ts (served live by dev_get_standards).
@@ -64,6 +65,7 @@ export const devListMyApps = defineTool({
       rows.push({
         app_id: a.id,
         kind: a.kind === "ai" ? "ai_app" : "file_app",
+        has_ai_step: a.kind !== "ai" && !!v?.spec,
         name: v?.name ?? "",
         address: `${SITE}/tool/${a.tool_id}`,
         store: a.status,
@@ -182,9 +184,11 @@ export const devGetStatus = defineTool({
       .select("id, version_no, status, submitted_at, reviewed_at, review_notes, qa_passed, charge_options, similar_note")
       .eq("app_id", app_id)
       .order("version_no", { ascending: false });
+    const lv = await latestVersion(sb, app_id);
     const out = {
       address: `${SITE}/tool/${app.tool_id}`,
       kind: app.kind === "ai" ? "ai_app" : "file_app",
+      has_ai_step: app.kind !== "ai" && !!lv?.spec,
       store: app.status,
       live_version: (versions ?? []).find((v: { id: string }) => v.id === app.live_version_id)?.version_no ?? null,
       credits_per_use: app.credits,
@@ -199,6 +203,7 @@ export const devGetStatus = defineTool({
 
 export const devTools = [
   devGetStandards,
+  devNextStep,
   devCreateApp,
   devListMyApps,
   devSaveApp,

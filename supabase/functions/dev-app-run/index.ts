@@ -3,6 +3,12 @@
 // the screen (doc, chat or vision), its fields, and the AI instructions. The instructions live in the database
 // and are read here with the service role; the browser only ever sends what the visitor typed.
 //
+// Also runs the AI STEP of a file app (engine "api"): the app has its own screens and calls
+// window.ezyourlife.ai(inputs); the store page (HostedFrame) passes that call here on the visitor's behalf.
+// Inputs in, text or JSON out. The answer comes back as { ok, result } with its own content type so that the
+// "result ready" WhatsApp and email (made for text answers) are not sent for it. Billed per result like every
+// AI app: nothing is charged when the answer is missing or is not the valid JSON the step asked for.
+//
 // Two modes, one body shape (the same as ai-app, so the shared screens work unchanged):
 //   live    { tool_id: "dev-…", inputs, action, previous, instruction, messages, context, images }
 //           → the app's live version. Billed through billed(): sign-in, price from tool_pricing, credits are
@@ -26,6 +32,8 @@ const MAX_INPUTS = 40_000;
 const MAX_CONTEXT = 30_000;
 const MAX_IMAGES = 6;
 const MAX_IMAGE_CHARS = 9_000_000; // ~6.5 MB per data URL
+/** Not application/json on purpose: billed() sends a "your result is ready" message for JSON answers, which suits text apps and not a page's data. */
+const RESULT_TYPE = "application/vnd.ezyl.result+json";
 const ID_RE = /^dev-[a-z0-9][a-z0-9-]{2,47}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -40,8 +48,8 @@ export const PLATFORM_RULES = [
 ].join("\n");
 
 interface Spec {
-  engine: "doc" | "chat" | "vision";
-  ai: { system: string; task?: string; model?: string; maxTokens?: number; maxImages?: number; maxContext?: number };
+  engine: "doc" | "chat" | "vision" | "api";
+  ai: { system: string; task?: string; model?: string; maxTokens?: number; maxImages?: number; maxContext?: number; json?: boolean };
 }
 
 interface Loaded {
@@ -135,6 +143,13 @@ async function generate(app: Loaded, body: Body): Promise<{ output: string; inCh
   const task = spec.ai.task ?? "Help with the request.";
   const userPrompt = [inputs ? `Inputs:\n${inputs}` : "", `Task: ${task}`].filter(Boolean).join("\n\n");
 
+  if (spec.engine === "api") {
+    const asJson = spec.ai.json === true;
+    const prompt = asJson ? `${userPrompt}\n\nReply with one valid JSON object only: no markdown fences, no text before or after it.` : userPrompt;
+    const messages: ChatMessage[] = [{ role: "system", content: system }, { role: "user", content: prompt }];
+    return { output: await chat(messages, { model, maxTokens, json: asJson }), inChars: sizeOf(messages), images: 0 };
+  }
+
   if (spec.engine === "vision") {
     const imgs = cleanImages(body.images).slice(0, clamp(spec.ai.maxImages, 1, 4, 2));
     if (!imgs.length) throw new HttpError(400, "Add at least one image.");
@@ -153,6 +168,22 @@ async function generate(app: Loaded, body: Body): Promise<{ output: string; inCh
     });
   }
   return { output: await chat(messages, { model, maxTokens }), inChars: sizeOf(messages), images: 0 };
+}
+
+/** The JSON object in a model answer: the whole text, or what is inside a ``` fence, or from the first { to the last }. */
+export function parseJsonAnswer(text: string): unknown {
+  const t = text.trim();
+  const tries = [t, t.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, ""), t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)];
+  for (const c of tries) {
+    if (!c) continue;
+    try {
+      const v = JSON.parse(c);
+      if (v && typeof v === "object") return v;
+    } catch {
+      /* try the next shape */
+    }
+  }
+  throw new HttpError(502, "The AI did not return usable data. You were not charged. Please try again.");
 }
 
 class HttpError extends Error {
@@ -206,8 +237,13 @@ const run = billed(
       }
       if (!app) return json({ error: "unknown_app", message: "This app is not available." }, 404);
 
+      if (app.spec.engine === "api" && (body.inputs === undefined || body.inputs === null || typeof body.inputs !== "object" || Array.isArray(body.inputs))) {
+        return json({ error: "Send the inputs as an object." }, 400);
+      }
       const { output, inChars, images } = await generate(app, body);
       if (typeof output !== "string" || !output.trim()) return json({ error: "No result came back. Please try again." }, 502);
+      // A step that promised JSON must deliver it before anything is charged.
+      const parsed = app.spec.engine === "api" && app.spec.ai.json === true ? parseJsonAnswer(output) : undefined;
 
       // Keep a record for the admin (test runs also keep the inputs and the answer). A failure to log never fails the run.
       try {
@@ -227,7 +263,14 @@ const run = billed(
         console.error("dev_ai_log failed", e instanceof Error ? e.message : e);
       }
 
-      return json({ ok: true, output, ...(preview ? { preview: { left: left === null ? null : Math.max(0, left - 1) } } : {}) });
+      const previewInfo = preview ? { preview: { left: left === null ? null : Math.max(0, left - 1) } } : {};
+      if (app.spec.engine === "api") {
+        return new Response(JSON.stringify({ ok: true, result: parsed ?? output, ...previewInfo }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": RESULT_TYPE },
+        });
+      }
+      return json({ ok: true, output, ...previewInfo });
     } catch (e) {
       if (e instanceof HttpError) return json({ error: e.message }, e.status);
       const status = e instanceof ModelError ? e.status : 500;

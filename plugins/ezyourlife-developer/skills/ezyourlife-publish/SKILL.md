@@ -1,9 +1,13 @@
 ---
 name: ezyourlife-publish
-description: Converts any app (a Google AI Studio export, a React, Vue, Svelte or other multi-file project, or an app built inside Claude) into an EzYourLife app the way the store's existing apps were made, checks for similar apps, tests it, and sends it to the EzYourLife store for admin approval, using the EzYourLife connector. Use when someone says "put my app on EzYourLife", "publish this to EzYourLife", "make this live on EzYourLife", "make this work on EzYourLife", "send this app for EzYourLife review", "update my EzYourLife app", or shares a project, zip or export meant for the EzYourLife store.
+description: Converts any app (a Google AI Studio export, a React, Vue, Svelte or other multi-file project, or an app built inside Claude) into an EzYourLife app the way the store's existing apps were made, checks for similar apps, tests it, and sends it to the EzYourLife store for admin approval, using the EzYourLife connector. Use when someone says "put my app on EzYourLife", "publish this to EzYourLife", "make this live on EzYourLife", "make this work on EzYourLife", "send this app for EzYourLife review", "build me this app on EzYourLife", "publish this app on that", "update my EzYourLife app", or shares a project, zip or export meant for the EzYourLife store.
 ---
 
 # Publish an app to EzYourLife
+
+**Do the whole job yourself.** One sentence from the developer ("build me this app over ezyourlife", "publish this on that") is the whole request. Do step 0, then call `dev_next_step(app_id)` after every change: it runs the checks and names the single next action, and lists the few things only the developer can answer. Do what it says and call it again, until it says the app is with the team. Ask the developer only for those listed items (how theirs differs from a similar app, how they want to charge, a support email, screenshots you cannot take, and OK to submit). The preview must really work, including the AI part, before you offer to submit: an app with AI cannot pass the checks until you have run it once with a realistic example (`dev_test_run`) and read the answer.
+
+**Price is not yours or the developer's.** EzYourLife measures what the AI part costs and shows a suggested price to the admin only. Never state, estimate or hint at a price or cost; say the team sets it from the measured cost.
 
 Turn the developer's app, in whatever form it arrives, into an EzYourLife app: either an **AI app** (a definition that runs on EzYourLife's own screens and AI, charged in credits) or a **file app** (a whole built browser project: its build folder with index.html and every file it uses). Send it with the `ezyourlife` connector, test it, get the server checks to pass, show the developer how it will look on the site, and send it for review. An EzYourLife admin then tries it, sets the price and the developer's share, and approves it. Never tell anyone the app is live until `dev_get_status` says so.
 
@@ -20,9 +24,10 @@ Work out: where the app came from, framework and build tool, entry point, every 
 | What the app's value is | Lane | Tools |
 |---|---|---|
 | An AI model: a form that writes a result, a chat assistant, photos or scanned pages read into text | **AI app** | `dev_save_ai_app`, `dev_test_run` |
+| An app with its own screens that matter (cards, tables, charts, a designed flow) and AI inside, typically an AI Studio export with a real UI | **File app + AI step** | upload like a file app, then `dev_save_ai_step`, `dev_test_run`; see `references/ai-step.md` |
 | Browser logic with no AI: calculators, converters, planners, editors, dashboards, games, visual tools | **File app** | `dev_import_project` or `dev_get_upload_link` (the build folder), `dev_save_app` (listing) |
 
-If the AI part is the core, use the AI lane and say plainly which client-only extras cannot come along. If the AI part is a minor extra, drop it and use the file lane. Tell the developer which lane and why, in one sentence.
+If the result is plain written text in a standard form, chat or photo reader, use the AI lane. If the developer's own screens are the product and the AI is a step inside it, use the file lane with an AI step (never drop the AI to fit a lane). Never call an AI provider from the page. Tell the developer which lane and why, in one sentence.
 
 Stop and explain plainly, without changing anything, if the app cannot work without its own server or database that is not just serving an AI call, or chained model calls that cannot fold into one prompt. Those cannot be published yet.
 
@@ -30,8 +35,8 @@ Stop and explain plainly, without changing anything, if the app cannot work with
 
 | Arrives as | What it is | How to read it |
 |---|---|---|
-| Google AI Studio export, or an Express/Node app calling Gemini, OpenAI or Claude, often with its own wallet, credits, free trial or Razorpay | AI app | Each AI call is an app (or a tier). The prompt becomes `ai.system` and `ai.task`; the UI form becomes `fields`; JSON the UI drew becomes Markdown sections. Delete the server, keys, wallet, credits, free trials, payments, login and stored history. |
-| React, Vue, Svelte or other multi-file project that runs in the browser | File app (AI app for any part that calls an AI) | Adapt, run its normal build, send the build folder (usually `dist/`). |
+| Google AI Studio export, or an Express/Node app calling Gemini, OpenAI or Claude, often with its own wallet, credits, free trial or Razorpay | File app + AI step when its UI matters, else AI app | Read `references/ai-step.md` for the first, below for the second. Each AI call is an app (or a tier). The prompt becomes `ai.system` and `ai.task`; the UI form becomes `fields`; JSON the UI drew becomes Markdown sections. Delete the server, keys, wallet, credits, free trials, payments, login and stored history. |
+| React, Vue, Svelte or other multi-file project that runs in the browser | File app; an AI part becomes an AI step (or an AI app if the screens add nothing) | Adapt, run its normal build, send the build folder (usually `dist/`). |
 | Plain HTML, CSS and JS in several files | File app (AI app if it calls an LLM directly) | Send the folder as it is, with `index.html` at its top. Do not merge the files. |
 | Claude artifact (HTML or React) | File app, or AI app if it calls `window.claude.complete` or any AI | Put it in a small Vite project and build it; replace `window.storage`/`localStorage` with try/catch plus memory. If it calls Claude, the prompt it sends becomes `ai.system`/`ai.task`. |
 | A prompt, skill or workflow that lives in a chat or Claude Project | AI app | The instructions that worked become `ai.system`/`ai.task`; what the person gives each time becomes the fields (doc) or the chat. Ask them to run one real example; use it as `sample`. |
@@ -49,6 +54,10 @@ Follow `references/ai-apps.md` (field types, the three screens, how to write `ai
 3. `dev_test_run(app_id, inputs)` with the `sample` or a real example (chat: `messages`; vision: small `images`). Read the answer as a visitor would. If it is wrong, generic, invents facts or is in the wrong format, improve `ai.system`/`ai.task`, save and run again. Test runs are free, limited to 25 a day, and the team reads them. At least one successful run of the exact saved version is required before the app can be sent.
 4. Go to step 3 (listing, promo, screenshots, charging), then step 4.
 
+## 2c. File app with an AI step
+
+Follow `references/ai-step.md`: move the prompt from the server to `dev_save_ai_step`, change the page to call `window.ezyourlife.ai(inputs)` with its own fallback, delete the server and keys, build, upload (step 2b), `dev_save_ai_step`, then `dev_test_run` with the app's own sample until the result is right. The visitor pays per AI result only; opening the app is free.
+
 ## 2b. File app: adapt the code (instead of step 2)
 
 Follow `references/adaptation.md` step by step. In short:
@@ -63,7 +72,7 @@ Follow `references/adaptation.md` step by step. In short:
 Keep the developer's features, look and wording otherwise. Make the smallest changes that satisfy the rules, and list every change for the developer at the end.
 
 ### Build the project
-Run the project's normal build (`npm run build` or the README's command) with default settings. Vite's base must stay `/`; do not add single-file plugins or merge files by hand. The result is a build folder (usually `dist/`) with `index.html` at its top. EzYourLife takes whole projects only: a folder that holds nothing but one HTML file is refused. EzYourLife packs the folder for its sandbox itself (scripts, JavaScript modules and code-split pages, styles, pictures, fonts and data files the code fetches). Up to 600 files and 30 MB in the folder, 10 MB once packed.
+Run the project's normal build (`npm run build` or the README's command; `npm install --legacy-peer-deps` first if peer dependencies conflict) with default settings. Vite's base must stay `/`; do not add single-file plugins or merge files by hand. The result is a build folder (usually `dist/`) with `index.html` at its top. EzYourLife takes whole projects only: a folder that holds nothing but one HTML file is refused. EzYourLife packs the folder for its sandbox itself (scripts, JavaScript modules and code-split pages, styles, pictures, fonts and data files the code fetches). Up to 600 files and 30 MB in the folder, 10 MB once packed.
 
 Before sending, check the build yourself:
 - Run `grep -rnE "sk-|AIza|api\.openai|api\.anthropic|generativelanguage|checkout\.razorpay|js\.stripe" <build-folder>`. It must find nothing.
@@ -76,6 +85,7 @@ New app: `dev_create_app(slug, name)` (confirm the slug first). Pick the route b
 |---|---|
 | Workspace can push to GitHub (claude.ai, Cowork, most Claude Code setups) | Commit the build folder to a GitHub repo (the developer's repo, a branch such as `ezyourlife-build`, folder like `dist`), push, then `dev_import_project(app_id, github: {repo, dir: "dist", ref: <commit SHA>})` |
 | Claude Code on a computer, or a private project EzYourLife cannot read | `dev_get_upload_link(app_id, folder)`, save the returned script as `ezyourlife-upload.mjs` (also in `scripts/`), run the command it gives on the build folder |
+| Cloud workspace that cannot reach EzYourLife or GitHub (uploads fail on the network) | Zip the build folder (`cd dist && zip -r ../app.zip .`), send the zip to the developer, and tell them: open the app's page (the editor link from `dev_get_preview_link`), choose "Upload a built app", drop the zip. Then `dev_next_step` continues. |
 
 Use the commit SHA, not a branch name, so the version on EzYourLife is exactly what was tested. The answer lists any file the app names that is not in the folder, and anything else to fix: fix it, rebuild and send again. If GitHub import says the repo is private and EzYourLife can't read it, use the upload link from a computer, or the EzYourLife team can add a read token on their side.
 
@@ -106,7 +116,7 @@ Ask once: "How do you want to charge: different levels of use, or something you 
 ## 4. Checks, preview, submit
 
 1. Call `dev_run_checks(app_id)`. Fix every `MUST FIX` (in the source and rebuild for a file app; in the definition for an AI app), re-send and re-run until none remain. Similar apps without a `similar_note` are a `MUST FIX`; with one they are a `LOOK` that the admin reads. Mention each `LOOK` item to the developer; the admin sees them too.
-2. Call `dev_get_preview_link(app_id)`. Give the developer the link: it shows the real app as it will look on the site, on a phone-sized or desktop-sized screen, and they can test it (they must be signed in to ezyourlife.com). It uses no credits; an AI app gets a limited number of free test runs a day.
+2. Call `dev_get_preview_link(app_id)`. Give the developer the link: it shows the real app as it will look on the site, on a phone-sized or desktop-sized screen, and they can test it (they must be signed in to ezyourlife.com). It uses no credits; the AI part works there for real, with a limited number of free test runs a day.
 3. Call `dev_submit_for_review(app_id)` only after the developer says it works and agrees to send it.
 
 ## Updating a live app

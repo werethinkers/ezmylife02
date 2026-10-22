@@ -1,4 +1,5 @@
-import { memo } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
+import { injectBridge, serveAiBridge, type AiTarget } from "./aiBridge";
 
 /*
  * The one place a developer's app runs: in previews, in the admin review, and live on /tool/<id>.
@@ -8,6 +9,9 @@ import { memo } from "react";
  * storage, cannot call EzYourLife's APIs as the visitor, and cannot navigate the page around it.
  * Camera, microphone and location are not granted. Charging happens outside the frame
  * (HostedApp), never inside the developer's code.
+ *
+ * An app with an AI step (`ai` set) also gets window.ezyourlife.ai(inputs): the frame asks, this component answers
+ * as the signed-in visitor (see ./aiBridge.ts). Apps without one get the page exactly as sent.
  */
 export const HOSTED_SANDBOX = "allow-scripts allow-forms allow-downloads allow-modals allow-popups allow-popups-to-escape-sandbox";
 
@@ -17,6 +21,7 @@ export const HostedFrame = memo(function HostedFrame({
   device = "fill",
   className = "",
   reloadKey = 0,
+  ai,
 }: {
   html: string;
   title: string;
@@ -25,12 +30,24 @@ export const HostedFrame = memo(function HostedFrame({
   className?: string;
   /** Change it to restart the app from scratch. */
   reloadKey?: number;
+  /** The app has an AI step: set for the live page and for previews, with the version in a preview. */
+  ai?: AiTarget;
 }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  const toolId = ai?.toolId;
+  const previewVersionId = ai?.previewVersionId;
+  useEffect(() => {
+    if (!toolId) return;
+    return serveAiBridge(() => ref.current, { toolId, previewVersionId });
+  }, [toolId, previewVersionId]);
+  const doc = useMemo(() => (toolId ? injectBridge(html) : html), [html, toolId]);
+
   const frame = (
     <iframe
+      ref={ref}
       key={reloadKey}
       title={title}
-      srcDoc={html}
+      srcDoc={doc}
       sandbox={HOSTED_SANDBOX}
       allow=""
       referrerPolicy="no-referrer"

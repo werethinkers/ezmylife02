@@ -1,3 +1,4 @@
+import { packSummary, packZip, ZipProblem } from "@/lib/devZip";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -201,8 +202,24 @@ export default function DeveloperAppEditor() {
   const onFile = async (f: File | undefined) => {
     if (!f) return;
     if (fileRef.current) fileRef.current.value = "";
+    if (/\.zip$/i.test(f.name) || f.type === "application/zip" || f.type === "application/x-zip-compressed") return onZip(f);
     if (f.size > MAX_HTML_BYTES) return toast.error(`The file is ${kb(f.size)}. The limit is 10 MB.`);
     await saveHtml(await f.text(), f.name);
+  };
+
+  /** A built app folder as a .zip: unpacked and packed here, then sent like any file. */
+  const onZip = async (f: File) => {
+    if (f.size > 40_000_000) return toast.error(`The zip is ${kb(f.size)}. The limit is about 30 MB of files.`);
+    let packed;
+    try {
+      setProgress("Reading the zip…");
+      packed = await packZip(f);
+    } catch (e) {
+      setProgress(null);
+      return toast.error(e instanceof ZipProblem ? e.message : "Could not read that zip.");
+    }
+    toast.message(packSummary(packed));
+    await saveHtml(packed.html, f.name);
   };
 
   const onShots = async (files: FileList | null) => {
@@ -296,14 +313,14 @@ export default function DeveloperAppEditor() {
             <Section
               step={1}
               title="App file"
-              hint="One HTML file with its CSS and JavaScript inside, up to 10 MB. Built with React, Vue or Svelte? Build it as a single file first, or ask Claude to adapt and send it."
+              hint="The built app: a .zip of its build folder (index.html with its scripts, styles and images; for Vite, React, Vue or Svelte that is dist after npm run build), or one HTML file. Up to 10 MB once packed. Claude builds it and sends you the zip; just drop it here."
               aside={hasFile ? <span className="text-right text-xs text-muted-foreground">Saved: {kb(new Blob([htmlText]).size)}{latest.source ? <><br />{sourceText(latest.source)}</> : null}</span> : null}
             >
               <div className="flex flex-wrap gap-2">
-                <input ref={fileRef} type="file" accept=".html,.htm,text/html" className="sr-only" id="dev-file" onChange={(e) => void onFile(e.target.files?.[0])} disabled={locked || busy !== null} />
+                <input ref={fileRef} type="file" accept=".html,.htm,.zip,text/html,application/zip" className="sr-only" id="dev-file" onChange={(e) => void onFile(e.target.files?.[0])} disabled={locked || busy !== null} />
                 <Button type="button" onClick={() => fileRef.current?.click()} disabled={locked || busy !== null}>
                   {busy === "file" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-                  {busy === "file" && progress ? progress : hasFile ? "Replace file" : "Upload HTML file"}
+                  {busy === "file" && progress ? progress : hasFile ? "Replace app (.zip or .html)" : "Upload app (.zip or .html)"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setPaste(paste === null ? htmlText : null)} disabled={locked}>
                   {paste === null ? "Paste or edit HTML" : "Close editor"}
@@ -318,6 +335,15 @@ export default function DeveloperAppEditor() {
                 </div>
               )}
             </Section>
+            )}
+
+            {!isAi && latest.spec && (
+              <Section
+                title="AI step"
+                hint="The app calls the store's AI through window.ezyourlife.ai. Your Claude wrote the instructions below and runs test runs for you. Visitors pay per AI result; the team sets that price, and the app opens free."
+              >
+                <DeveloperAiSummary version={latest} />
+              </Section>
             )}
 
             <Section step={2} title="Store listing" hint="What people see in the store. Our team may edit wording before it goes live.">
@@ -548,6 +574,7 @@ export default function DeveloperAppEditor() {
               <PreviewPanel
                 html={hasFile ? htmlText : null}
                 title={latest.name || app.tool_id}
+                ai={hasFile && latest.spec ? { toolId: app.tool_id, previewVersionId: latest.id } : undefined}
                 fullScreenHref={hasFile ? `/developer/preview/${latest.id}` : undefined}
                 emptyText={html.isLoading ? "Loading…" : undefined}
               />

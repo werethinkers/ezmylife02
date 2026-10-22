@@ -16,7 +16,7 @@ An EzYourLife admin then tries the app, sets the credits per use and your share,
 
 | Part | What it does |
 |---|---|
-| `ezyourlife` connector | EzYourLife's own MCP server (sign in with your EzYourLife account). Tools: `dev_get_standards`, `dev_list_my_apps`, `dev_check_similar`, `dev_create_app`, `dev_save_ai_app`, `dev_test_run`, `dev_import_project`, `dev_get_upload_link`, `dev_save_app`, `dev_add_image`, `dev_remove_image`, `dev_run_checks`, `dev_get_preview_link`, `dev_submit_for_review`, `dev_get_status` |
+| `ezyourlife` connector | EzYourLife's own MCP server (sign in with your EzYourLife account). Tools: `dev_get_standards`, `dev_next_step`, `dev_list_my_apps`, `dev_check_similar`, `dev_create_app`, `dev_save_ai_app`, `dev_save_ai_step`, `dev_test_run`, `dev_import_project`, `dev_get_upload_link`, `dev_save_app`, `dev_add_image`, `dev_remove_image`, `dev_run_checks`, `dev_get_preview_link`, `dev_submit_for_review`, `dev_get_status` |
 | `ezyourlife-publish` skill | The step-by-step workflow, how to convert each kind of app, the AI app definition guide (`references/ai-apps.md`), and the file-app adaptation checklist |
 | `scripts/ezyourlife-upload.mjs` | Packs a local build folder and sends it with a one-time upload key (no dependencies) |
 

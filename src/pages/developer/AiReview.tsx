@@ -1,13 +1,13 @@
 import { useState } from "react";
 import type { DevVersion, QueueItem } from "@/lib/devApps";
-import { aiChangesSinceLive, when } from "@/lib/devApps";
+import { aiChangesSinceLive, isStepSpec, when } from "@/lib/devApps";
 import { Pill, SimilarList } from "./parts";
 
 /* Pieces of the admin review that only AI apps and similar-app notes need. All of it is shown to admins only. */
 
 const inr2 = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
-const ENGINE_TEXT = { doc: "Form, then a written result", chat: "Chat", vision: "Photos, then a written result" } as const;
+const ENGINE_TEXT = { doc: "Form, then a written result", chat: "Chat", vision: "Photos, then a written result", api: "The app's own screens, with an AI step" } as const;
 
 const Box = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-block-sm">
@@ -48,7 +48,7 @@ export function SimilarReview({ item }: { item: QueueItem }) {
 
 /** What changed since the live version, for an update of an AI app. */
 export function AiChanges({ item }: { item: QueueItem }) {
-  if (!item.live || item.kind !== "ai") return null;
+  if (!item.live || (!item.spec && !item.live_spec)) return null;
   return (
     <Box title={`What changed since live version ${item.live.version_no}`}>
       <ul className="list-disc space-y-1 pl-5 text-sm">{aiChangesSinceLive(item).map((c) => <li key={c}>{c}</li>)}</ul>
@@ -62,16 +62,37 @@ export function AiDefinition({ item }: { item: QueueItem }) {
   const s = item.spec;
   const [open, setOpen] = useState<number | null>(null);
   if (!s) return <Box title="AI app definition"><p className="text-sm text-muted-foreground">No definition was saved with this version.</p></Box>;
-  const fields = s.fields ?? [];
+  const fields = isStepSpec(s) ? [] : s.fields ?? [];
+  const inputs = isStepSpec(s) ? s.inputs ?? [] : [];
   return (
-    <Box title="AI app definition (read this before approving)">
+    <Box title={isStepSpec(s) ? "AI step (read this before approving)" : "AI app definition (read this before approving)"}>
       <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
         <div><dt className="inline font-semibold">Screen: </dt><dd className="inline">{ENGINE_TEXT[s.engine] ?? s.engine}</dd></div>
         <div><dt className="inline font-semibold">AI model: </dt><dd className="inline">{s.ai.model === "lite" ? "Gemini Flash Lite (cheaper)" : "Gemini Flash"}</dd></div>
         <div><dt className="inline font-semibold">Longest answer: </dt><dd className="inline">{s.ai.maxTokens} tokens</dd></div>
         {s.engine === "vision" && <div><dt className="inline font-semibold">Photos per use: </dt><dd className="inline">up to {s.ai.maxImages ?? 4}</dd></div>}
         {s.engine === "chat" && <div><dt className="inline font-semibold">Document context: </dt><dd className="inline">{s.documents ? "visitor can add text" : "no"}</dd></div>}
+        {isStepSpec(s) && <div><dt className="inline font-semibold">Answer comes back as: </dt><dd className="inline">{s.ai.json ? "JSON the page reads" : "text"}</dd></div>}
       </dl>
+
+      {isStepSpec(s) && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold">What the page sends to the AI ({inputs.length})</p>
+          {inputs.length ? (
+            <ul className="mt-1 divide-y-2 divide-ink/10 rounded-xl border-2 border-ink bg-background text-sm">
+              {inputs.map((f) => (
+                <li key={f.key} className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
+                  <span className="min-w-0 break-words">{f.label}</span>
+                  <span className="text-xs text-muted-foreground">{f.key}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-muted-foreground">The developer did not list the inputs. Read a test run below to see what was sent.</p>
+          )}
+          <p className="mt-2 text-sm"><span className="font-semibold">If the AI is unavailable: </span>{s.fallback || "not said"}</p>
+        </div>
+      )}
 
       {fields.length > 0 && (
         <div className="mt-4">
@@ -157,13 +178,14 @@ export const KindPill = ({ item }: { item: QueueItem }) => <Pill tone={item.kind
 export function DeveloperAiSummary({ version }: { version: DevVersion }) {
   const s = version.spec;
   if (!s) return <p className="text-sm text-muted-foreground">No definition is saved yet. Ask Claude to build and send it.</p>;
-  const fields = s.fields ?? [];
+  const fields = isStepSpec(s) ? [] : s.fields ?? [];
   return (
     <div className="space-y-3 text-sm">
       <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
         <div><dt className="inline font-semibold">Screen: </dt><dd className="inline">{ENGINE_TEXT[s.engine] ?? s.engine}</dd></div>
         <div><dt className="inline font-semibold">AI model: </dt><dd className="inline">{s.ai.model === "lite" ? "Gemini Flash Lite" : "Gemini Flash"}</dd></div>
-        {s.engine !== "chat" && <div><dt className="inline font-semibold">Fields: </dt><dd className="inline">{fields.length ? fields.map((f) => f.label).join(", ") : s.engine === "vision" ? "photos" : "none"}</dd></div>}
+        {s.engine === "api" && <div><dt className="inline font-semibold">Page sends: </dt><dd className="inline">{(s.inputs ?? []).map((i) => i.label).join(", ") || "not listed"}</dd></div>}
+        {s.engine !== "chat" && s.engine !== "api" && <div><dt className="inline font-semibold">Fields: </dt><dd className="inline">{fields.length ? fields.map((f) => f.label).join(", ") : s.engine === "vision" ? "photos" : "none"}</dd></div>}
         <div><dt className="inline font-semibold">Longest answer: </dt><dd className="inline">{s.ai.maxTokens} tokens</dd></div>
       </dl>
       <details className="rounded-xl border-2 border-ink bg-background p-3">

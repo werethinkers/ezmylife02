@@ -73,12 +73,37 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
   runs) gives typical and worst-case rupees and `suggested_credits = max(2, ceil(max(typical, measured) × 3 / 0.376))`.
   Approving an AI app below 2 credits is refused. Tokens are estimated as characters / 4 (+1100 per image): check the real
   bill in the provider dashboard.
-- **Connector tools:** `dev_check_similar`, `dev_save_ai_app`, `dev_test_run` (`src/lib/mcp/tools/dev-ai.ts`).
+- **Connector tools:** `dev_check_similar`, `dev_save_ai_app`, `dev_test_run` (`src/lib/mcp/tools/dev-ai.ts`), `dev_next_step` (`dev-next.ts`).
 - **Limits to state to developers:** Markdown output in the standard result screen; no file upload in a doc app (paste text,
   or use vision for photos/PDF pages); one AI call per use; no scheduled runs; no per-option runtime charging (separate
   tiers = separate apps).
 - An app keeps its kind once it has a live version. Saving a file to an AI app that is not live yet switches it to a file
   app and discards the definition; saving a definition to a file app that is not live yet does the reverse.
+
+## File apps with an AI step
+
+For apps whose own screens matter (typically an AI Studio export): the page stays a sandboxed file app and its AI call becomes
+`await window.ezyourlife.ai(inputs)`.
+
+- **Stored:** `dev_app_versions.spec` = `{engine:"api", inputs[{key,label}] (≤30), fallback, ai:{system, task, model flash|lite, maxTokens, json}}`
+  (≤60 KB). The app's kind stays `hosted`. `dev_save_ai_step(app, spec|null)` saves it on the editable version (clears the checks);
+  a new version inherits the previous step (`dev_inherit_ai_step` trigger). Migration `20261022100000_developer_ai_steps.sql`.
+- **Bridge:** `src/apps/hosted/aiBridge.ts`. `BRIDGE_SCRIPT` is injected at the top of the page (only when the app has a step);
+  it posts `{type:"ezyl:ai", id, inputs}` to the store page, which calls `dev-app-run` as the signed-in visitor and answers
+  `{type:"ezyl:ai-result", id, ok, result|error, code}`. Codes: login, credits, limit, busy, unavailable, failed. The frame never
+  sees a token, a price or the instructions. `result` is the parsed object when `ai.json`, else text.
+- **Charging:** the app opens free (no Start charge). `dev-app-run` charges per AI result through `billed()` (only on 2xx; the
+  content type `application/vnd.ezyl.result+json` avoids the WhatsApp/email result mail). Admin approval of an app with a step
+  needs at least 2 credits. Test runs from the preview or `dev_test_run` are free (same limits as AI apps).
+- **Checks** (`dev_qa_extra`): keys in the packed code (decoded from the bundle's base64 modules), step complete, page really calls
+  `window.ezyourlife.ai`, no keys in the instructions, a successful test run of this exact step (`spec_sha`). Approval refuses if
+  the step changed after the checks.
+- **Price is admin-only:** `admin_dev_queue.ai_cost` carries the estimate and suggested credits; nothing a developer can read
+  (`qa`, `dev_get_status`, `dev_next_step`) contains a cost. Keep it that way.
+- **Upload without network:** `src/lib/devZip.ts` packs a zip of the build in the developer's browser (editor page, "Upload a built
+  app") with the same bundler as the connector, for cloud workspaces that cannot reach the database.
+- **Connector:** `dev_save_ai_step`, `dev_test_run` (file apps with a step: pass `inputs`, answer is `result`), and `dev_next_step`
+  (`dev-next.ts`: runs the checks and returns the one next action, plus what only the developer can answer).
 
 ## Similar apps
 

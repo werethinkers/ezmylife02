@@ -41,10 +41,10 @@ export async function latestVersion(sb: ReturnType<typeof devClient>, appId: str
     version_no: number;
     status: string;
     /** AI apps only: the definition (never returned to the model; used to tell the app kinds apart). */
-    spec: { engine?: string } | null;
+    spec: { engine?: string; inputs?: { key: string; label?: string }[]; ai?: { json?: boolean } } | null;
     similar_note: string | null;
     name: string;
-    qa: { checks: { label: string; status: string; detail: string }[]; passed: boolean } | null;
+    qa: { checks: { id: string; label: string; status: string; detail: string }[]; passed: boolean } | null;
     qa_passed: boolean;
     review_notes: string | null;
   };

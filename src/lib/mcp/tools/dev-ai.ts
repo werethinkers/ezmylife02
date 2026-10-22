@@ -128,11 +128,48 @@ export const devSaveAiApp = defineTool({
   },
 });
 
+
+export const aiStepSchema = z
+  .object({
+    inputs: z
+      .array(z.object({ key: z.string().min(1).max(40).describe("Letters, numbers, underscore: the key the page sends."), label: z.string().max(80).optional().describe("What the visitor typed or chose, in words.") }))
+      .max(30)
+      .describe("Every answer the page sends to window.ezyourlife.ai(inputs). The team reads this to see which of the visitor's answers reach the AI."),
+    fallback: z.string().min(10).max(500).describe("What the page shows when the AI is unavailable or the visitor has no credits. The page must really do this (keep the app's own fallback code)."),
+    ai: z.object({
+      system: z.string().min(80).max(20000).describe("The AI's standing instructions, moved here from the app's old server code: role, rules, tone, what it must never invent. Stored on the server, never shown to visitors."),
+      task: z.string().min(20).max(4000).describe("What to produce from the inputs each time, and the exact layout of the answer. For JSON: every field name and what it holds."),
+      model: z.enum(["flash", "lite"]).optional().describe("flash (default) or lite (cheaper, short simple jobs)."),
+      maxTokens: z.number().int().min(256).max(8192).optional().describe("Longest answer. As small as the output allows."),
+      json: z.boolean().optional().describe("true when the page expects an object: window.ezyourlife.ai then resolves with the parsed JSON object. false: it resolves with text."),
+    }),
+  })
+  .describe("The AI step of a file app.");
+
+export const devSaveAiStep = defineTool({
+  name: "dev_save_ai_step",
+  title: "Save the AI step of a file app",
+  description:
+    "FILE APPS that use AI (for example an AI Studio export that called Gemini from its own server): saves the AI step, the instructions the store runs on its own AI keys when the page calls window.ezyourlife.ai(inputs). The app's own code must call that function instead of its old server call, and keep its own fallback. Upload the app first (dev_import_project or the upload link; a new upload keeps the saved step). The visitor is charged credits per AI result only; the app opens free. EzYourLife works out the cost itself and the team sets the price: the developer does not set one and is not shown one. Pass spec: null to remove the step. Saving clears earlier check results. Next: dev_test_run with a realistic example.",
+  inputSchema: {
+    app_id: z.string().uuid(),
+    spec: aiStepSchema.nullable().describe("The complete AI step, or null to remove it."),
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ app_id, spec }, ctx) => {
+    if (!ctx.isAuthenticated()) return notSignedIn();
+    const { data, error } = await devClient(ctx).rpc("dev_save_ai_step", { _app_id: app_id, _spec: spec === null ? null : { engine: "api", ...spec } });
+    if (error) return fail(dbMessage(error.message));
+    if (!data?.ai_step) return text(`Removed the AI step from version ${data.version_no}. Next: dev_run_checks.`, { version_no: data.version_no, ai_step: false });
+    return text(`Saved the AI step on version ${data.version_no}. Next: dev_test_run with a realistic example (the page's own sample input), then read the answer critically.`, { version_no: data.version_no, ai_step: true });
+  },
+});
+
 export const devTestRun = defineTool({
   name: "dev_test_run",
   title: "Test-run an AI app with the real AI",
   description:
-    "Runs the saved definition of the app's latest version once, on EzYourLife's real AI, exactly as a visitor's run would go. Free for the developer and not charged to anyone. Limited to 25 runs a day per developer. Every run is kept, with its inputs and answer, for the team to read at review, and at least one successful run of the exact version is required before it can be sent. Use realistic inputs (for doc apps: the sample), read the answer critically, and improve the instructions if it is wrong, generic or invents facts. Returns the full answer.",
+    "Runs the saved definition (or, for a file app, its AI step) of the app's latest version once, on EzYourLife's real AI, exactly as a visitor's run would go. Free for the developer and not charged to anyone. Limited to 25 runs a day per developer. Every run is kept, with its inputs and answer, for the team to read at review, and at least one successful run of the exact version is required before it can be sent. Use realistic inputs (for doc apps: the sample), read the answer critically, and improve the instructions if it is wrong, generic or invents facts. Returns the full answer. For a file app with an AI step, pass inputs exactly as the page sends them to window.ezyourlife.ai(inputs); the answer is the parsed JSON or text the page would receive.",
   inputSchema: {
     app_id: z.string().uuid(),
     inputs: z.record(z.string(), z.unknown()).optional().describe("doc apps: the field values keyed by field key (strings; rows fields as arrays of objects). vision apps: an optional note under the key 'Extra instructions' (the pictures go in images)."),
@@ -156,10 +193,15 @@ export const devTestRun = defineTool({
       const { data: app, error } = await sb.from("dev_apps").select("tool_id, kind").eq("id", app_id).maybeSingle();
       if (error) return fail(dbMessage(error.message));
       if (!app) return fail("App not found.");
-      if (app.kind !== "ai") return fail("This is a file app, not an AI app. Test it with dev_get_preview_link instead.");
       const v = await latestVersion(sb, app_id);
       if (!v) return fail("App not found.");
+      const isStep = app.kind !== "ai";
+      if (isStep && !v.spec) return fail("This file app has no AI step. Test it with dev_get_preview_link, or save an AI step with dev_save_ai_step first.");
       if (!v.spec) return fail("This version has no definition yet. Save one with dev_save_ai_app first.");
+      if (isStep && (!inputs || !Object.keys(inputs).length)) {
+        const keys = (v.spec.inputs ?? []).map((i) => i.key).join(", ");
+        return fail(`Pass inputs: a realistic example of what the page sends to window.ezyourlife.ai${keys ? ` (keys: ${keys})` : ""}. Use the app's own sample or example data.`);
+      }
 
       const res = await fetch(`${supabaseUrl()}/functions/v1/dev-app-run`, {
         method: "POST",
@@ -167,6 +209,7 @@ export const devTestRun = defineTool({
         body: JSON.stringify({
           tool_id: app.tool_id,
           preview_version_id: v.id,
+          ...(isStep ? { action: "generate" } : {}),
           ...(inputs ? { inputs } : {}),
           ...(messages ? { messages } : {}),
           ...(context ? { context } : {}),
@@ -175,13 +218,14 @@ export const devTestRun = defineTool({
         }),
         signal: AbortSignal.timeout(110_000),
       });
-      const body = (await res.json().catch(() => null)) as { ok?: boolean; output?: string; error?: string; message?: string; preview?: { left: number | null } } | null;
-      if (!res.ok || !body?.ok || !body.output) {
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; output?: string; result?: unknown; error?: string; message?: string; preview?: { left: number | null } } | null;
+      const answer = isStep ? (body?.result === undefined || body?.result === null ? "" : typeof body.result === "string" ? body.result : JSON.stringify(body.result, null, 2)) : (body?.output ?? "");
+      if (!res.ok || !body?.ok || !answer) {
         const why = body?.message || body?.error || `The test run failed (${res.status}).`;
         return fail(`${why}${res.status >= 500 ? " Nothing was charged. Try once more, and tell the developer if it keeps failing." : ""}`);
       }
       const left = body.preview?.left;
-      const out = body.output.length > 20000 ? `${body.output.slice(0, 20000)}\n\n[shortened here; the team sees the full answer]` : body.output;
+      const out = answer.length > 20000 ? `${answer.slice(0, 20000)}\n\n[shortened here; the team sees the full answer]` : answer;
       return text(
         `Test run OK (version ${v.version_no}${left === null || left === undefined ? "" : `, ${left} test runs left today`}). Read it as the visitor would. Is it correct, specific and in the right format? If not, improve ai.system / ai.task and save again.\n\n--- Answer ---\n${out}`,
         { ok: true, version_no: v.version_no, left: left ?? null },
@@ -192,4 +236,4 @@ export const devTestRun = defineTool({
   },
 });
 
-export const devAiTools = [devCheckSimilar, devSaveAiApp, devTestRun];
+export const devAiTools = [devCheckSimilar, devSaveAiApp, devSaveAiStep, devTestRun];

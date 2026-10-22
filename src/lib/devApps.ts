@@ -109,6 +109,20 @@ export type AiSpecFull = Omit<AiSpec, "ai"> & {
   ai: { system: string; task?: string; model: "flash" | "lite"; maxTokens: number; maxImages?: number; maxContext?: number };
 };
 
+/**
+ * The AI step of a file app (engine "api"): the page keeps its own screens and calls window.ezyourlife.ai(inputs);
+ * the store runs these instructions on the server. Only the developer and admins can read this.
+ */
+export interface AiStepSpec {
+  engine: "api";
+  inputs?: { key: string; label: string }[];
+  fallback?: string;
+  ai: { system: string; task?: string; model: "flash" | "lite"; maxTokens: number; json?: boolean };
+}
+export type AnySpec = AiSpecFull | AiStepSpec;
+export const isStepSpec = (s: AnySpec | null | undefined): s is AiStepSpec => !!s && s.engine === "api";
+export const isScreenSpec = (s: AnySpec | null | undefined): s is AiSpecFull => !!s && s.engine !== "api";
+
 export interface DevApp {
   id: string;
   developer_id: string;
@@ -145,7 +159,7 @@ export interface DevVersion {
   status: VersionStatus;
   source: FileSource | null;
   /** AI apps: the definition (screen + instructions). The developer's own copy; the public reader removes the instructions. */
-  spec: AiSpecFull | null;
+  spec: AnySpec | null;
   /** Why this app is different from a similar one already in the store. */
   similar_note: string | null;
   name: string;
@@ -243,7 +257,7 @@ export async function getVersionHtml(versionId: string): Promise<{
   app_id: string;
   status: VersionStatus;
   category: string | null;
-  spec: AiSpecFull | null;
+  spec: AnySpec | null;
   kind: AppKind;
   tool_id: string;
 }> {
@@ -439,8 +453,10 @@ export interface AiSample {
 export interface QueueItem {
   version_id: string;
   kind?: AppKind;
-  spec?: AiSpecFull | null;
-  live_spec?: AiSpecFull | null;
+  spec?: AnySpec | null;
+  live_spec?: AnySpec | null;
+  /** A file app that also has an AI step. */
+  has_ai_step?: boolean;
   ai_cost?: AiCostEstimate | null;
   samples?: AiSample[];
   /** The developer's note on how this app differs from the similar ones. */
@@ -517,9 +533,22 @@ export function changesSinceLive(item: QueueItem): string[] {
 export function aiChangesSinceLive(item: QueueItem): string[] {
   const n = item.spec;
   const o = item.live_spec;
-  if (!n || !o) return [];
+  if (!n && !o) return [];
+  if (!n) return ["The AI step was removed."];
+  if (!o) return item.kind === "hosted" ? ["This version adds an AI step."] : [];
   const out: string[] = [];
   const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  if (isStepSpec(n) || isStepSpec(o)) {
+    if (isStepSpec(n) !== isStepSpec(o)) return ["The AI step was added or removed."];
+    const a = n as AiStepSpec;
+    const b = o as AiStepSpec;
+    if (a.ai.system !== b.ai.system) out.push("AI instructions (system) changed. Read them below.");
+    if ((a.ai.task ?? "") !== (b.ai.task ?? "")) out.push("AI task (what to produce) changed. Read it below.");
+    if (a.ai.model !== b.ai.model) out.push(`AI model: ${b.ai.model} → ${a.ai.model}`);
+    if (a.ai.maxTokens !== b.ai.maxTokens) out.push(`Longest answer: ${b.ai.maxTokens} → ${a.ai.maxTokens} tokens`);
+    if (!same(a.inputs, b.inputs)) out.push("The inputs the page sends to the AI changed");
+    return out.length ? out : ["The AI step is unchanged."];
+  }
   if (n.engine !== o.engine) out.push(`Type of screen: ${o.engine} → ${n.engine}`);
   if (n.ai.system !== o.ai.system) out.push("AI instructions (system) changed. Read them below.");
   if ((n.ai.task ?? "") !== (o.ai.task ?? "")) out.push("AI task (what to produce) changed. Read it below.");
@@ -554,7 +583,7 @@ export async function isAdmin(): Promise<boolean> {
 
 // ----- published apps -----
 
-export async function getHostedApp(toolId: string): Promise<{ tool_id: string; name: string; html: string; version_no: number } | null> {
+export async function getHostedApp(toolId: string): Promise<{ tool_id: string; name: string; html: string; version_no: number; has_ai?: boolean } | null> {
   const { data, error } = await db.rpc("get_hosted_app", { _tool_id: toolId });
   if (error) return null;
   return data ?? null;

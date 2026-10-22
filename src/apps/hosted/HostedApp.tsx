@@ -18,6 +18,10 @@ import { HostedFrame } from "./HostedFrame";
  * Instead the visitor presses Start, which charges through the same path as UsageGate
  * (runWithCredits → tool-charge → start_tool_run, priced from tool_pricing), with the same
  * 30-minute use window and the same session key, so one charge covers 30 minutes either way.
+ *
+ * An app with an AI step is different: it opens free (no Start) and charges per AI result, on the server, when
+ * the page's call to window.ezyourlife.ai succeeds (see ./aiBridge.ts and the dev-app-run function). The price is
+ * the one the team set at approval. A page that cannot get a result (no credits, signed out) keeps its own fallback.
  */
 
 const USE_WINDOW_MS = 30 * 60 * 1000;
@@ -85,6 +89,18 @@ export default function HostedApp({ toolId }: { toolId: string }) {
         <p className="font-display text-xl font-bold">This app is not available right now</p>
         <p className="mt-2 text-sm text-muted-foreground">It may have been taken down for an update. Browse the other apps meanwhile.</p>
         <Button className="mt-5" variant="outline" onClick={() => (window.location.href = "/ai-apps")}>See all apps</Button>
+      </div>
+    );
+  }
+
+  if (app.data.has_ai) {
+    return (
+      <div className="flex h-full min-h-[600px] flex-col">
+        <p className="shrink-0 border-b-2 border-ink/10 bg-card px-3 py-1.5 text-center text-xs text-muted-foreground">
+          <ShieldCheck className="mr-1 inline h-3.5 w-3.5" />
+          Free to open. The AI part uses {creditCost} credit{creditCost === 1 ? "" : "s"} per result, taken only when a result is made.
+        </p>
+        <HostedFrame html={app.data.html} title={app.data.name} className="min-h-0 flex-1" ai={{ toolId }} />
       </div>
     );
   }
