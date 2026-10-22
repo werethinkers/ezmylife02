@@ -74,7 +74,7 @@ export function eventSteps(l: EventLabels): Step[] {
       fields: [F.list("schedule", l.scheduleTitle ?? "Programme", "item", [F.text("name", "Name", { max: 40 }), F.date("date", "Date"), F.time("time", "Time"), F.text("place", "Where", { max: 50 })], 10)],
     },
     { title: "Details", fields: [F.area("story", l.story ?? "A few words for your guests", { max: 800 }), ...(l.dress ? [F.text("dress_code", "Dress code (optional)", { max: 50 })] : [])] },
-    { title: "Photos", fields: [F.gallery("gallery", "Photos", 8)] },
+    { title: "Photos", hint: "The cover is the big picture at the top. Guests can tap any photo to see it full screen.", fields: [F.photo("cover", "Cover photo"), F.gallery("gallery", "More photos", 8)] },
     { title: "RSVP", fields: [F.phone("rsvp_whatsapp", l.rsvpLabel ?? "WhatsApp for RSVPs", { required: true }), F.toggle("rsvp_form", "Also collect RSVPs in a list I can see")] },
   ];
 }

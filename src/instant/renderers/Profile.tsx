@@ -184,7 +184,7 @@ const CSS = `
 .s-soft .pf-acts .ip-btn{border-radius:999px}
 
 /* bold: huge name, offset portrait */
-.s-bold .pf-h{font-weight:900;text-transform:uppercase;letter-spacing:-.02em;line-height:.92}
+.s-bold .pf-h{font-size:min(var(--hmax),calc(96cqi / var(--fit)),13cqi);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;line-height:.92}
 .s-bold .pf-ttl{display:inline-block;justify-self:start;background:var(--ac);color:var(--on);padding:6px 12px;border-radius:6px;font-size:.95rem}
 .s-bold .pf-por{width:min(64cqi,300px);aspect-ratio:1;border-radius:var(--rad);box-shadow:12px 12px 0 var(--ac2);transform:rotate(-2deg)}
 @container page (min-width:760px){.s-bold .pf-head-in{grid-template-columns:minmax(0,1fr) auto}.s-bold .pf-por{order:2;width:300px}}
