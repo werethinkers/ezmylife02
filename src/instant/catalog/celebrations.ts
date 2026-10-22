@@ -1,6 +1,7 @@
 import type { Content, Product, Theme } from "../types";
 import { celebrationSteps, F, type CelebrationLabels } from "../fields";
-import { pick } from "../themes";
+import { ten } from "../themes";
+import { stockFor, stockPhoto } from "../stock";
 
 interface Def {
   id: string; name: string; tagline: string; description: string; glyph: string; price: number; themes: Theme[];
@@ -25,9 +26,17 @@ interface Def {
 const make = (d: Def): Product => ({
   id: d.id, family: "celebration", category: "celebrations", name: d.name, tagline: d.tagline, description: d.description,
   glyph: d.glyph, price: d.price, popular: d.popular, seasonal: d.seasonal, themes: d.themes,
-  steps: celebrationSteps(d.labels ?? {}), sample: { music: d.opts.music !== "none", ...d.sample }, titleField: "recipient",
+  steps: celebrationSteps(d.labels ?? {}), sample: { music: d.opts.music !== "none", ...withStock(d.id, d.sample) }, titleField: "recipient",
   whatsapp: d.whatsapp, share: d.share, opts: d.opts, indexable: false,
 });
+
+/** Sample memories show real-looking stock photos; the drawn sample art stays as a fallback. */
+function withStock(id: string, sample: Content): Content {
+  const shots = stockFor(id);
+  if (!shots.length) return sample;
+  if (!Array.isArray(sample.memories) || !sample.memories.length) return { ...sample, memories: shots.slice(0, 3).map((x) => ({ caption: "", photo: stockPhoto(x, 900) })) };
+  return { ...sample, memories: sample.memories.map((m: Content, i: number) => (shots[i] ? { ...m, photo: stockPhoto(shots[i], 900) } : m)) };
+}
 
 const mem = (...c: [string, string][]) => c.map(([caption, photo]) => ({ caption, photo: "sample:" + photo }));
 
@@ -36,7 +45,7 @@ export const CELEBRATIONS: Product[] = [
     id: "birthday-surprise", name: "Birthday Surprise", glyph: "🎂", price: 29, popular: true,
     tagline: "A gift they tap open: music, candles, your letter, your photos.",
     description: "A birthday page that unwraps like a present. They blow out the candles, read your note and swipe through your photos together.",
-    themes: pick("fun", "elegant", "romantic", "minimal"),
+    themes: ten("cheer", "fun", "elegant", "romantic", "minimal"),
     labels: { date: "Their birthday", age: true, messageSuggestions: [
       "Happy birthday! Thank you for being the person everyone calls first. Here's to your best year yet.",
       "Another year of you being wonderful. I hope this one is loud, happy and full of everything you keep saying you'll do someday.",
@@ -53,7 +62,7 @@ export const CELEBRATIONS: Product[] = [
     id: "anniversary", name: "Anniversary Love Note", glyph: "💞", price: 29, popular: true,
     tagline: "Your story so far, counted in days, with your photos and a love letter.",
     description: "Counts every day you've been together, opens to a love letter and walks through your memories.",
-    themes: pick("romantic", "elegant", "minimal", "fun"),
+    themes: ten("love", "romantic", "elegant", "minimal", "fun"),
     labels: { recipient: "Your partner's name", date: "The day it all started", messageSuggestions: [
       "Happy anniversary. Every year with you is my favourite year so far.",
       "Thank you for choosing me, every single day. Here's to many more years of us.",
@@ -69,7 +78,7 @@ export const CELEBRATIONS: Product[] = [
     id: "valentine", name: "Valentine's Day", glyph: "🌹", price: 19, seasonal: "Feb", popular: true,
     tagline: "A rose that blooms into your love letter.",
     description: "A Valentine's page with a heart to open, a love letter and a question only they can answer.",
-    themes: pick("romantic", "fun", "elegant"),
+    themes: ten("love", "romantic", "fun", "elegant"),
     labels: { recipient: "Your Valentine's name", messageSuggestions: ["Happy Valentine's Day to the one who makes ordinary days feel like holidays.", "You, me, and every 14th of February from now on."] },
     opts: { opening: "heart", moment: "bouquet", music: "gentle", greeting: "Happy Valentine's Day", openLine: "{sender} sent you something sweet.", cta: "Tap the heart",
       momentTitle: "These are for you.", momentHint: "Tap the bouquet.", momentDone: "A dozen roses, delivered by {sender}.",
@@ -82,7 +91,7 @@ export const CELEBRATIONS: Product[] = [
     id: "proposal", name: "Will You Marry Me?", glyph: "💍", price: 49,
     tagline: "The question, asked beautifully. The 'No' button runs away.",
     description: "A proposal page that builds up with your story and ends with the question. They can only say yes.",
-    themes: pick("romantic", "elegant", "minimal"),
+    themes: ten("love", "romantic", "elegant", "minimal"),
     labels: { recipient: "Their name", messageSuggestions: ["From the first day I met you, I knew. I want every morning, every argument, every adventure to be with you."] },
     opts: { opening: "star", moment: "question", music: "gentle", greeting: "{recipient},", openLine: "{sender} has a question for you.", cta: "Open it",
       momentTitle: "Will you marry me?", momentHint: "", momentDone: "SHE SAID YES! 💍",
@@ -95,7 +104,7 @@ export const CELEBRATIONS: Product[] = [
     id: "friendship", name: "Friendship Day", glyph: "🤝", price: 19, seasonal: "Aug",
     tagline: "For the friend who's family. Inside jokes welcome.",
     description: "A page for your best friend: a letter, your photos and a band only the two of you get.",
-    themes: pick("fun", "sunny", "lilac"),
+    themes: ten("cheer", "fun", "sunny", "lilac"),
     labels: { recipient: "Your friend's name", messageSuggestions: ["Happy Friendship Day to the one person who knows all my secrets and still picks up my calls."] },
     opts: { opening: "gift", moment: "hug", music: "gentle", greeting: "Happy Friendship Day", openLine: "{sender} tied you a friendship band.", cta: "Open it",
       momentTitle: "Your friendship band.", momentHint: "Tap to tie it on.", momentDone: "Tied. No take-backs. Best friends, officially.",
@@ -108,7 +117,7 @@ export const CELEBRATIONS: Product[] = [
     id: "thank-you", name: "Thank You Card", glyph: "🙏", price: 19,
     tagline: "A proper thank-you, better than a text.",
     description: "Say thank you to a teacher, a mentor, a doctor or a friend, with a note they'll keep.",
-    themes: pick("minimal", "sunny", "elegant"),
+    themes: ten("gentle", "minimal", "sunny", "elegant"),
     labels: { recipient: "Who are you thanking?", messageSuggestions: ["Thank you for everything you did. It meant more than you know.", "I wouldn't be where I am without your help. Thank you, truly."] },
     opts: { opening: "envelope", moment: "bouquet", music: "gentle", greeting: "Thank you, {recipient}", openLine: "A thank-you note from {sender}.", cta: "Open the card",
       momentTitle: "Flowers, for you.", momentHint: "Tap to accept.", momentDone: "With gratitude, from {sender}.",
@@ -121,7 +130,7 @@ export const CELEBRATIONS: Product[] = [
     id: "congratulations", name: "Congratulations", glyph: "🏆", price: 19,
     tagline: "For the promotion, the new job, the big win.",
     description: "Celebrate someone's achievement with confetti, a trophy and a note from you.",
-    themes: pick("sunny", "fun", "elegant"),
+    themes: ten("cheer", "sunny", "fun", "elegant"),
     labels: { recipient: "Who are you congratulating?", extra: [F.text("achievement", "What did they achieve?", { max: 50, placeholder: "e.g. The new job at Infosys" })], messageSuggestions: ["So proud of you! You worked so hard for this, and you deserve every bit of it."] },
     opts: { opening: "star", moment: "trophy", music: "gentle", greeting: "Congratulations, {recipient}!", openLine: "{sender} is cheering for you.", cta: "Open it",
       momentTitle: "{achievement}", momentHint: "Tap the trophy.", momentDone: "Champion. Officially.",
@@ -134,7 +143,7 @@ export const CELEBRATIONS: Product[] = [
     id: "farewell", name: "Farewell Wishes", glyph: "👋", price: 29,
     tagline: "Goodbyes from the whole team, in one page.",
     description: "A farewell page for a colleague or friend who's moving on, with your note and the memories.",
-    themes: pick("minimal", "lilac", "elegant"),
+    themes: ten("gentle", "minimal", "lilac", "elegant"),
     labels: { recipient: "Who's leaving?", sender: "From", messageSuggestions: ["The office won't be the same without you. Go show the world what we already know."] },
     opts: { opening: "envelope", moment: "wish", music: "gentle", greeting: "Farewell, {recipient}", openLine: "{sender} wanted to say goodbye properly.", cta: "Open the card",
       momentTitle: "Send them off.", momentHint: "Tap to launch the paper plane.", momentDone: "Off you go. Keep in touch!",
@@ -147,7 +156,7 @@ export const CELEBRATIONS: Product[] = [
     id: "retirement", name: "Happy Retirement", glyph: "🌅", price: 29,
     tagline: "Honour a lifetime of work, with the family's photos and wishes.",
     description: "A warm retirement page with years of service, your note and photos from the journey.",
-    themes: pick("elegant", "sunny", "minimal"),
+    themes: ten("gentle", "elegant", "sunny", "minimal"),
     labels: { recipient: "Who's retiring?", sender: "From", extra: [F.num("years", "Years of service", { max: 2 })], messageSuggestions: ["Thirty-five years of hard work, and now it's time for long mornings, travel and grandchildren. You've earned every bit of it."] },
     opts: { opening: "envelope", moment: "trophy", music: "gentle", greeting: "Happy Retirement", openLine: "{sender} has a message for you.", cta: "Open the card",
       momentTitle: "{years} years of service.", momentHint: "Tap to raise a toast.", momentDone: "Cheers to the next chapter!",
@@ -160,7 +169,7 @@ export const CELEBRATIONS: Product[] = [
     id: "graduation", name: "Graduation Day", glyph: "🎓", price: 19, seasonal: "May–Jul",
     tagline: "Caps in the air for the new graduate.",
     description: "Celebrate a graduate with a cap toss, your note and the photos from the journey.",
-    themes: pick("sunny", "elegant", "fun"),
+    themes: ten("cheer", "sunny", "elegant", "fun"),
     labels: { recipient: "Graduate's name", extra: [F.text("achievement", "Degree / school", { max: 60, placeholder: "e.g. B.Tech, VIT Vellore" })], messageSuggestions: ["Four years of all-nighters and you made it. So proud of you, graduate!"] },
     opts: { opening: "star", moment: "diploma", music: "gentle", greeting: "Congratulations, Graduate!", openLine: "{sender} is so proud of you.", cta: "Open it",
       momentTitle: "{achievement}", momentHint: "Tap to toss your cap.", momentDone: "Class of {year}. Officially.",
@@ -173,7 +182,7 @@ export const CELEBRATIONS: Product[] = [
     id: "mothers-day", name: "Mother's Day", glyph: "💐", price: 19, seasonal: "May",
     tagline: "For Maa. Flowers, a letter and the family photos.",
     description: "A Mother's Day page with a bouquet, a letter from you and the family's favourite photos.",
-    themes: pick("romantic", "sunny", "elegant"),
+    themes: ten("love", "romantic", "sunny", "elegant"),
     labels: { recipient: "What do you call her?", messageSuggestions: ["Maa, thank you for every tiffin, every prayer and every time you waited up. I love you."] },
     opts: { opening: "envelope", moment: "bouquet", music: "gentle", greeting: "Happy Mother's Day, {recipient}", openLine: "{sender} has a letter for you.", cta: "Open the card",
       momentTitle: "These are for you.", momentHint: "Tap the bouquet.", momentDone: "For the best Maa in the world.",
@@ -186,7 +195,7 @@ export const CELEBRATIONS: Product[] = [
     id: "fathers-day", name: "Father's Day", glyph: "👔", price: 19, seasonal: "Jun",
     tagline: "For Papa, who never asks for anything.",
     description: "A Father's Day page with a letter from you, the family photos and a trophy he's earned.",
-    themes: pick("elegant", "minimal", "sunny"),
+    themes: ten("gentle", "elegant", "minimal", "sunny"),
     labels: { recipient: "What do you call him?", messageSuggestions: ["Papa, thank you for every sacrifice you never talked about. You're my hero."] },
     opts: { opening: "envelope", moment: "trophy", music: "gentle", greeting: "Happy Father's Day, {recipient}", openLine: "{sender} has a letter for you.", cta: "Open the card",
       momentTitle: "World's best Papa.", momentHint: "Tap to award the trophy.", momentDone: "Awarded. Unanimously.",
@@ -199,7 +208,7 @@ export const CELEBRATIONS: Product[] = [
     id: "teachers-day", name: "Teacher's Day", glyph: "📚", price: 19, seasonal: "5 Sep",
     tagline: "Thank the teacher who changed things for you.",
     description: "A Teacher's Day card from one student or a whole class.",
-    themes: pick("sunny", "minimal", "lilac"),
+    themes: ten("cheer", "sunny", "minimal", "lilac"),
     labels: { recipient: "Teacher's name", sender: "From (you or your class)", messageSuggestions: ["Thank you for your patience, your encouragement and for making us love learning. Happy Teacher's Day!"] },
     opts: { opening: "envelope", moment: "bouquet", music: "gentle", greeting: "Happy Teacher's Day", openLine: "{sender} made this for you.", cta: "Open the card",
       momentTitle: "An apple for the teacher.", momentHint: "Tap to accept.", momentDone: "With love from {sender}.",
@@ -212,7 +221,7 @@ export const CELEBRATIONS: Product[] = [
     id: "baby-announcement", name: "Baby Announcement", glyph: "🍼", price: 29,
     tagline: "Introduce your little one to the family.",
     description: "Announce a new arrival with the baby's name, birth details and first photos.",
-    themes: pick("lilac", "sunny", "minimal"),
+    themes: ten("cheer", "lilac", "sunny", "minimal"),
     labels: { recipient: "Baby's name", sender: "Proud parents", date: "Date of birth", extra: [F.text("weight", "Weight (optional)", { max: 12, placeholder: "3.2 kg" }), F.text("birth_time", "Time of birth (optional)", { max: 12 })], messageSuggestions: ["Our hearts are full. Please welcome our little one to the world!"] },
     opts: { opening: "star", moment: "baby", music: "gentle", greeting: "Hello, world! I'm {recipient}", openLine: "{sender} have some news.", cta: "Meet our baby",
       momentTitle: "Welcome, little one.", momentHint: "Tap to say hello.", momentDone: "Ten fingers, ten toes, all heart.",
@@ -225,7 +234,7 @@ export const CELEBRATIONS: Product[] = [
     id: "get-well-soon", name: "Get Well Soon", glyph: "🌻", price: 19,
     tagline: "Something warm for someone who's unwell.",
     description: "A gentle get-well page with your wishes and a sunflower to brighten their day.",
-    themes: pick("sunny", "minimal", "lilac"),
+    themes: ten("gentle", "sunny", "minimal", "lilac"),
     labels: { recipient: "Their name", messageSuggestions: ["Rest up and get well soon. We're all thinking of you and can't wait to see you back on your feet."] },
     opts: { opening: "envelope", moment: "bouquet", music: "gentle", greeting: "Get well soon, {recipient}", openLine: "{sender} is thinking of you.", cta: "Open the card",
       momentTitle: "Sunshine, delivered.", momentHint: "Tap the flowers.", momentDone: "Feel better soon. We miss you.",
@@ -238,7 +247,7 @@ export const CELEBRATIONS: Product[] = [
     id: "sorry", name: "I'm Sorry", glyph: "🥺", price: 19,
     tagline: "When a text isn't enough.",
     description: "Say sorry properly, with a heartfelt note and a question they can answer with a tap.",
-    themes: pick("romantic", "minimal", "lilac"),
+    themes: ten("love", "romantic", "minimal", "lilac"),
     labels: { recipient: "Their name", messageSuggestions: ["I was wrong, and I'm sorry. You mean too much to me to let this sit."] },
     opts: { opening: "envelope", moment: "question", music: "gentle", greeting: "{recipient}, I'm sorry", openLine: "{sender} has something to say.", cta: "Please open this",
       momentTitle: "Forgive me?", momentHint: "", momentDone: "Thank you. I'll do better. ❤️",
@@ -251,7 +260,7 @@ export const CELEBRATIONS: Product[] = [
     id: "tribute", name: "In Loving Memory", glyph: "🕯️", price: 49,
     tagline: "A quiet, dignified page to remember someone.",
     description: "A memorial page with their life dates, a tribute, photos and a candle visitors can light.",
-    themes: pick("solemn", "minimal", "elegant"),
+    themes: ten("gentle", "solemn", "minimal", "elegant"),
     labels: { recipient: "Their name", sender: "Shared by", extra: [F.text("life_dates", "Life dates", { max: 30, placeholder: "1948 – 2026" })], messageSuggestions: ["Forever in our hearts. Your kindness and laughter live on in all of us."] },
     opts: { opening: "candle", moment: "candle", music: "none", greeting: "In loving memory of {recipient}", openLine: "Shared by {sender}.", cta: "Enter",
       momentTitle: "Light a candle.", momentHint: "Tap to light a candle in their memory.", momentDone: "Your candle is lit. Om Shanti.",
