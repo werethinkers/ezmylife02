@@ -30,10 +30,14 @@ export interface Step {
   fields: Field[];
 }
 
+/** Layout personality a renderer gives a design: same content, a different arrangement. */
+export type Style = "bold" | "photo" | "split" | "editorial" | "soft" | "minimal";
+
 export interface Theme {
   id: string;
   name: string;
   dark: boolean;
+  s: Style;
   c: { bg: string; sf: string; tx: string; mu: string; ac: string; ac2: string; ac3: string; on: string; line: string };
   f: { d: string; b: string; h: string };   // display, body, handwriting stacks
   fonts: string[];                         // Google Fonts family specs

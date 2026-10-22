@@ -78,11 +78,12 @@ export function safeUrl(u: unknown): string | null {
   try { const url = new URL(s); return url.protocol === "https:" || url.protocol === "http:" ? url.href : null; } catch { return null; }
 }
 
-/** Images must come from our own storage, the builder's local draft, or bundled sample art. */
+/** Images must come from our own storage, the builder's local draft, sample art or our Unsplash stock photos. */
 export function safeImg(src: unknown): string | null {
   const s = String(src ?? "");
   if (s.startsWith("data:image/")) return s;
   if (s.startsWith("sample:")) return s;
+  if (/^https:\/\/images\.unsplash\.com\/photo-[\w-]+\?[\w=&.%-]*$/.test(s)) return s;
   const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
   if (base && s.startsWith(`${base}/storage/v1/object/public/page-media/`)) return s;
   return null;

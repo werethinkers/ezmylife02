@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Field, Loose } from "../types";
 import { shrinkImage } from "../media";
 import { resolveImg } from "../parts";
+import { isStock } from "../stock";
 import { DAYS } from "../util";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +118,7 @@ function PhotoPick({ id, value, onChange }: { id: string; value: Loose; onChange
         {src && <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>Remove</Button>}
         {err && <p className="text-xs text-destructive">{err}</p>}
       </div>
-      <input ref={ref} id={id} type="file" accept="image/*" className="sr-only" onChange={async (e) => { const fl = e.target.files?.[0]; e.target.value = ""; if (!fl) return; try { setErr(""); onChange(await shrinkImage(fl)); } catch (x) { setErr(x instanceof Error ? x.message : "Couldn't use that photo."); } }} />
+      <input ref={ref} id={id} type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={async (e) => { const fl = e.target.files?.[0]; e.target.value = ""; if (!fl) return; try { setErr(""); onChange(await shrinkImage(fl)); } catch (x) { setErr(x instanceof Error ? x.message : "Couldn't use that photo."); } }} />
     </div>
   );
 }
@@ -125,27 +126,42 @@ function PhotoPick({ id, value, onChange }: { id: string; value: Loose; onChange
 function Gallery({ id, list, max, onChange }: { id: string; list: { photo: string; caption?: string }[]; max: number; onChange: (v: Loose) => void }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const move = (i: number, d: number) => { const n = [...list]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); onChange(n); };
   return (
     <div className="grid gap-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {list.map((it, i) => (
           <div key={i} className="rounded-xl border overflow-hidden bg-muted/20">
             <div className="relative aspect-square">
               {resolveImg(it.photo, "m" + i) && <img src={resolveImg(it.photo, "m" + i)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-              <button type="button" onClick={() => onChange(list.filter((_, j) => j !== i))} className="absolute top-1.5 right-1.5 h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center" aria-label="Remove photo"><X className="h-4 w-4" /></button>
+              {isStock(it.photo) && <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">Sample</span>}
+              <button type="button" onClick={() => onChange(list.filter((_, j) => j !== i))} className="absolute top-1.5 right-1.5 h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center" aria-label={`Remove photo ${i + 1}`}><X className="h-4 w-4" /></button>
+              <div className="absolute bottom-1.5 right-1.5 flex gap-1">
+                <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center disabled:opacity-30" aria-label={`Move photo ${i + 1} earlier`}><ChevronLeft className="h-4 w-4" /></button>
+                <button type="button" disabled={i === list.length - 1} onClick={() => move(i, 1)} className="h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center disabled:opacity-30" aria-label={`Move photo ${i + 1} later`}><ChevronRight className="h-4 w-4" /></button>
+              </div>
             </div>
             <input value={it.caption ?? ""} maxLength={40} placeholder="Caption (optional)" onChange={(e) => onChange(list.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} className="w-full px-2 py-2 text-sm bg-background border-t outline-none" aria-label={`Caption for photo ${i + 1}`} />
           </div>
         ))}
       </div>
+      {list.some((x) => isStock(x.photo)) && <p className="text-xs text-muted-foreground">Photos marked Sample are free stock photos to show the look. Replace them with your own for the best result.</p>}
+      {err && <p className="text-sm text-destructive" role="alert">{err}</p>}
       {list.length < max && (
         <Button type="button" variant="outline" className="h-11 rounded-xl" disabled={busy} onClick={() => ref.current?.click()}><ImagePlus className="h-4 w-4 mr-2" /> {busy ? "Adding…" : `Add photos (${list.length}/${max})`}</Button>
       )}
-      <input ref={ref} id={id} type="file" accept="image/*" multiple className="sr-only" onChange={async (e) => {
-        const files = Array.from(e.target.files ?? []).slice(0, max - list.length); e.target.value = "";
-        setBusy(true);
-        try { const shots = await Promise.all(files.map((x) => shrinkImage(x).catch(() => null))); onChange([...list, ...shots.filter(Boolean).map((photo) => ({ photo: photo as string, caption: "" }))]); }
-        finally { setBusy(false); }
+      <input ref={ref} id={id} type="file" accept="image/*,.heic,.heif" multiple className="sr-only" onChange={async (e) => {
+        const all = Array.from(e.target.files ?? []); e.target.value = "";
+        const files = all.slice(0, max - list.length);
+        setBusy(true); setErr("");
+        try {
+          const errs: string[] = [];
+          const shots = await Promise.all(files.map((x) => shrinkImage(x).catch((er) => { errs.push(er instanceof Error ? er.message : "Couldn't use a photo."); return null; })));
+          onChange([...list, ...shots.filter(Boolean).map((photo) => ({ photo: photo as string, caption: "" }))]);
+          const skipped = all.length - files.length;
+          setErr([errs.length ? `${errs.length} photo${errs.length > 1 ? "s" : ""} couldn't be added. ${errs[0]}` : "", skipped > 0 ? `Only ${max} photos fit, so ${skipped} ${skipped > 1 ? "were" : "was"} left out.` : ""].filter(Boolean).join(" "));
+        } finally { setBusy(false); }
       }} />
     </div>
   );

@@ -10,7 +10,9 @@ import { LoginPromptDialog } from "@/components/auth/LoginPromptDialog";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { getProduct } from "@/instant/catalog";
 import { ProductRenderer } from "@/instant/renderers";
+import { DesignRail, styleLabel } from "@/instant/DesignPreview";
 import { FieldInput } from "@/instant/builder/FieldInput";
+import { clearDraft, readDraft, readFullDraft, writeDraft, type Draft } from "@/instant/draftStore";
 import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
 import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages, publishPrepaid } from "@/instant/api";
@@ -20,11 +22,7 @@ import { cn } from "@/lib/utils";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
-interface Draft { variantId: string; content: Content; pageId?: string }
 const SAMPLE_GUARDED = ["reviews", "rating", "reviews_count", "team"];
-const draftKey = (id: string) => `ip-draft:${id}`;
-const readDraft = (id: string): Draft | null => { try { const s = localStorage.getItem(draftKey(id)); return s ? JSON.parse(s) : null; } catch { return null; } };
-const writeDraft = (id: string, d: Draft) => { try { localStorage.setItem(draftKey(id), JSON.stringify(d)); return true; } catch { return false; } };
 
 function validate(p: Product, c: Content): { step: number; errors: Record<string, string> } | null {
   const errors: Record<string, string> = {}; let step = -1;
@@ -76,6 +74,13 @@ function BuilderInner({ product }: { product: Product }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const theme = product.themes.find((t) => t.id === variantId) ?? product.themes[0];
 
+  // A draft with many photos lives in IndexedDB; bring its photos back once it has loaded.
+  useEffect(() => {
+    if (editId || !readDraft(product.id)?.idb) return;
+    readFullDraft(product.id).then((d) => { if (d) { setContent(d.content); setVariantId(wantedDesign && product.themes.some((t) => t.id === wantedDesign) ? wantedDesign : d.variantId); } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id, editId]);
+
   // Editing an existing page: load it from the database.
   useEffect(() => {
     if (!editId || !user) return;
@@ -94,7 +99,7 @@ function BuilderInner({ product }: { product: Product }) {
   // Autosave the draft on this device.
   useEffect(() => {
     if (editId) return;
-    const t = setTimeout(() => writeDraft(product.id, { variantId, content, pageId }), 400);
+    const t = setTimeout(() => { void writeDraft(product.id, { variantId, content, pageId }); }, 400);
     return () => clearTimeout(t);
   }, [product.id, variantId, content, pageId, editId]);
 
@@ -104,7 +109,7 @@ function BuilderInner({ product }: { product: Product }) {
     const bad = validate(product, content);
     if (bad) { setErrors(bad.errors); setStep(bad.step); setTab("edit"); toast({ title: "A few details are missing", description: "Fill the highlighted fields to publish." }); return; }
     if (!user) {
-      writeDraft(product.id, { variantId, content, pageId });
+      await writeDraft(product.id, { variantId, content, pageId });
       try { localStorage.setItem("auth_redirect_to", `/create/${product.id}?publish=1`); } catch { /* ignore */ }
       setLoginOpen(true); return;
     }
@@ -117,7 +122,7 @@ function BuilderInner({ product }: { product: Product }) {
       const uploaded = await uploadContentImages(user.id, id, content);
       setContent(uploaded);
       await savePage(id, variantId, title, uploaded);
-      writeDraft(product.id, { variantId, content: uploaded, pageId: id });
+      void writeDraft(product.id, { variantId, content: uploaded, pageId: id });
 
       if (published) {
         setBusy("Updating your live page…");
@@ -133,14 +138,14 @@ function BuilderInner({ product }: { product: Product }) {
       setBusy("Checking your kit…");
       const prepaid = await publishPrepaid(id);
       if (prepaid?.ok) {
-        try { localStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+        clearDraft(product.id);
         toast({ title: "Published with your kit", description: "This one was already paid for." });
         navigate(`/create/done/${id}`); return;
       }
 
       setBusy("Starting checkout…");
       const order = await checkout({ action: "create", page_id: id, free });
-      if (order.published) { try { localStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ } navigate(`/create/done/${id}`); return; }
+      if (order.published) { clearDraft(product.id); navigate(`/create/done/${id}`); return; }
       if (!(await ensureRazorpay())) throw new Error("Couldn't load the payment window. Check your connection and try again.");
       const pid = id;
       const rzp = new (window as unknown as { Razorpay: new (o: unknown) => { open: () => void; on: (e: string, cb: (r: { error?: { description?: string } }) => void) => void } }).Razorpay({
@@ -150,7 +155,7 @@ function BuilderInner({ product }: { product: Product }) {
           setBusy("Confirming payment…");
           try {
             await checkout({ action: "verify", ...resp });
-            try { localStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+            clearDraft(product.id);
           } catch { /* the webhook will still publish it; the done page waits for it */ }
           navigate(`/create/done/${pid}`);
         },
@@ -200,15 +205,8 @@ function BuilderInner({ product }: { product: Product }) {
           </div>
 
           <div className="grid gap-2">
-            <p className="text-sm font-bold">Choose a style</p>
-            <div className="flex flex-wrap gap-2">
-              {product.themes.map((t) => (
-                <button key={t.id} type="button" onClick={() => setVariantId(t.id)} aria-pressed={t.id === theme.id}
-                  className={cn("flex items-center gap-2 rounded-full border-2 py-1.5 pl-1.5 pr-4 text-sm font-semibold", t.id === theme.id ? "border-ink bg-sun" : "border-ink/30 bg-card hover:border-ink")}>
-                  <span className="h-7 w-7 rounded-full border-2 border-ink" style={{ background: `conic-gradient(${t.c.bg} 0 50%, ${t.c.ac} 50% 75%, ${t.c.ac2} 75%)` }} aria-hidden="true" />{t.name}
-                </button>
-              ))}
-            </div>
+            <p className="text-sm font-bold">Choose a design <span className="font-semibold text-muted-foreground">· {theme.name}, {styleLabel(theme).toLowerCase()} ({product.themes.findIndex((t) => t.id === theme.id) + 1} of {product.themes.length})</span></p>
+            <DesignRail product={product} value={theme.id} onChange={setVariantId} />
           </div>
 
           <ol className="flex gap-2 overflow-x-auto pb-1" aria-label="Steps">
