@@ -230,7 +230,7 @@ export const CELEBRATIONS: Product[] = [
     opts: { opening: "envelope", moment: "bouquet", music: "gentle", greeting: "Get well soon, {recipient}", openLine: "{sender} is thinking of you.", cta: "Open the card",
       momentTitle: "Sunshine, delivered.", momentHint: "Tap the flowers.", momentDone: "Feel better soon. We miss you.",
       letterTitle: "Thinking of you.", memoriesTitle: "Waiting for more of these.", endTitle: "Back on your feet soon.", numbers: null },
-    sample: { recipient: "Nani", sender: "All your grandchildren", message: "Nani, the house is too quiet without your stories.\nRest well, take your medicines on time, and come back home soon.", memories: [] },
+    sample: { recipient: "Nani", sender: "Your whole family", message: "Nani, the house is too quiet without your stories.\nRest well, take your medicines on time, and come back home soon.", memories: [] },
     whatsapp: { reply: "Thank you {sender}, feeling better already ❤️" },
     share: "🌻 Get well soon, {recipient}:\n{link}",
   }),

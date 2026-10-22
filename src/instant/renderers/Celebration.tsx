@@ -4,6 +4,23 @@ import { themeVars } from "../themes";
 import { fill, waShare, waTo, fmtDate } from "../util";
 import { BASE_CSS, Icon, Img, MadeWith, useConfetti, useMusicBox, useThemeFonts } from "../parts";
 
+/** The greeting animates letter by letter, but each word stays whole, so a long greeting wraps between words and never inside one. */
+function Letters({ text }: { text: string }) {
+  let i = 0;
+  return (
+    <>
+      {text.split(/( )/).map((part, pi) => part === " "
+        ? <span key={pi} className="l" style={{ ["--i" as string]: i++ }}> </span>
+        : (
+          <span key={pi} style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+            {[...part].map((ch) => { const k = i++; return <span key={k} className="l" style={{ ["--i" as string]: k }}>{ch}</span>; })}
+          </span>
+        ))}
+    </>
+  );
+}
+
+
 const EMBLEM: Record<string, string> = { wish: "✈️", hug: "🧶", bouquet: "💐", trophy: "🏆", diploma: "🎓", baby: "👶", candle: "🕯️" };
 
 export default function Celebration({ product, theme, content: c, mode }: RenderProps) {
@@ -68,7 +85,7 @@ export default function Celebration({ product, theme, content: c, mode }: Render
         <main>
           <section className="cel-greet">
             <div className="ip-wrap">
-              <h1 className="cel-hb">{[...greeting].map((ch, i) => <span key={i} className="l" style={{ ["--i" as string]: i }}>{ch}</span>)}</h1>
+              <h1 className="cel-hb"><Letters text={greeting} /></h1>
               {!greeting.includes(String(c.recipient || "~")) && c.recipient && (
                 <span className="cel-name" aria-label={c.recipient}>{[...String(c.recipient)].map((ch, i) => <span key={i} className="l" style={{ ["--i" as string]: i + 4, ["--c" as string]: [theme.c.ac, theme.c.ac2, theme.c.ac3][i % 3] }}>{ch}</span>)}</span>
               )}

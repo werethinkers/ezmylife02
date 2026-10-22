@@ -12,6 +12,7 @@ import { inr, pageUrlFor } from "@/instant/util";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
+import { EDITORIAL_PROMOS, EditorialPromo } from "./EditorialPromo";
 
 /** A promotional landing page for one product: what it is, a live sample, price, FAQ, and a way in. */
 export default function ProductPromo() {
@@ -60,6 +61,10 @@ export default function ProductPromo() {
         <FlowSteps flow={isSite ? "website" : "card"} step={1} className="max-w-3xl" />
       </div>
 
+      {EDITORIAL_PROMOS.has(product.id) ? (
+        <EditorialPromo product={product} promo={promo} priceText={priceText} hasPrice={!!price} hosting={hosting} create={create} related={related} />
+      ) : (
+        <>
       <section className="mx-auto max-w-7xl px-4 py-8">
         <div className="overflow-hidden rounded-3xl border-2 border-ink shadow-block-lg" style={{ background: theme.c.bg, color: theme.c.tx }}>
           <div className="grid items-center gap-10 p-6 md:grid-cols-[1.1fr_1fr] md:p-10">
@@ -184,6 +189,8 @@ export default function ProductPromo() {
           </section>
         )}
       </main>
+        </>
+      )}
 
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t-2 border-ink bg-card px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 md:hidden">
         <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{product.name}</p><p className="font-bold">{priceText} <span className="text-xs font-semibold text-muted-foreground">once</span></p></div>
