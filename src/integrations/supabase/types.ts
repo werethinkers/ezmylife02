@@ -3052,6 +3052,7 @@ export type Database = {
         Returns: Json
       }
       dev_clean_ai_spec: { Args: { _s: Json }; Returns: Json }
+      dev_clean_ai_step: { Args: { _s: Json }; Returns: Json }
       dev_clean_charge_options: { Args: { _o: Json }; Returns: Json }
       dev_clean_promo: { Args: { _p: Json }; Returns: Json }
       dev_clean_source: { Args: { _s: Json }; Returns: Json }
@@ -3082,10 +3083,12 @@ export type Database = {
         Returns: Json
       }
       dev_overlap: { Args: { a: string[]; b: string[] }; Returns: number }
+      dev_packed_code: { Args: { _html: string }; Returns: string }
       dev_put_part: {
         Args: { _data: string; _part_no: number; _upload_id: string }
         Returns: undefined
       }
+      dev_qa_extra: { Args: { _qa: Json; _version_id: string }; Returns: Json }
       dev_remove_image: { Args: { _image_id: string }; Returns: Json }
       dev_run_qa: { Args: { _version_id: string }; Returns: Json }
       dev_run_qa_ai: { Args: { _version_id: string }; Returns: Json }
@@ -3093,6 +3096,10 @@ export type Database = {
       dev_run_qa_hosted: { Args: { _version_id: string }; Returns: Json }
       dev_save_ai_app: {
         Args: { _app_id: string; _listing?: Json; _spec?: Json }
+        Returns: Json
+      }
+      dev_save_ai_step: {
+        Args: { _app_id: string; _spec?: Json }
         Returns: Json
       }
       dev_save_draft: {
@@ -3119,6 +3126,7 @@ export type Database = {
         }
         Returns: Json
       }
+      dev_secret_labels: { Args: { _t: string }; Returns: string[] }
       dev_set_similar_note: {
         Args: { _listing: Json; _vid: string }
         Returns: undefined
