@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Content, RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, waShare, waTo, fmtDate } from "../util";
-import { BASE_CSS, Icon, Img, MadeWith, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { isStock } from "../stock";
+import { BASE_CSS, Icon, Img, Lightbox, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
 
 /** The greeting animates letter by letter, but each word stays whole, so a long greeting wraps between words and never inside one. */
 function Letters({ text }: { text: string }) {
@@ -53,18 +55,22 @@ export default function Celebration({ product, theme, content: c, mode }: Render
   const again = () => { setOpened(false); setOpening(false); setMomentDone(false); music.stop(); toTop(); };
 
   const greeting = fill(o.greeting, vars);
-  const memories = (Array.isArray(c.memories) ? c.memories : []).filter((m: { photo?: string }) => m?.photo);
+  const memories = (Array.isArray(c.memories) ? c.memories : []).filter((m: { photo?: string }) => resolveImg(m?.photo, "m"));
+  const sty = theme.s;
+  const cover: string | undefined = sty !== "minimal" ? memories[0]?.photo : undefined;
+  const [view, setView] = useState<number | null>(null);
   const age = parseInt(c.age, 10) || 0;
   const reply = fill(product.whatsapp.reply ?? "", vars);
   const replyHref = c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply);
 
   return (
-    <div ref={root} className={"ipr ipr-cel" + (theme.dark ? " dark" : "") + (solemn ? " solemn" : "")} style={themeVars(theme) as React.CSSProperties}>
+    <div ref={root} className={`ipr ipr-cel s-${sty}` + (theme.dark ? " dark" : "") + (solemn ? " solemn" : "") + (cover ? " has-cover" : "")} style={themeVars(theme) as React.CSSProperties}>
       <style>{BASE_CSS + CSS}</style>
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
 
       {!opened && (
         <section className={"cel-gift" + (opening ? " opening" : "")} aria-label="Your surprise">
+          {cover && sty === "photo" && <div className="cel-bg" aria-hidden="true"><Img src={cover} alt="" sampleKey="m0" sizes="100vw" eager /></div>}
           <div className="cel-gift-in">
             <p className="cel-for">{c.recipient || "You"},</p>
             <p className="cel-from">{fill(o.openLine, vars)}</p>
@@ -84,10 +90,13 @@ export default function Celebration({ product, theme, content: c, mode }: Render
       {opened && (
         <main>
           <section className="cel-greet">
-            <div className="ip-wrap">
-              <h1 className="cel-hb"><Letters text={greeting} /></h1>
+            {cover && sty === "photo" && <div className="cel-bg" aria-hidden="true"><Img src={cover} alt="" sampleKey="m0" sizes="100vw" eager /></div>}
+            <div className="ip-wrap"><div className="cel-greet-in">
+              {cover && sty !== "photo" && <button type="button" className="cel-hero-ph" onClick={() => setView(0)} aria-label="Open photo"><Img src={cover} alt={memories[0]?.caption || ""} sampleKey="m0" sizes="(min-width: 700px) 340px, 70vw" eager /></button>}
+              <div className="cel-greet-t">
+              <h1 className="cel-hb" style={fitWords(greeting)}><Letters text={greeting} /></h1>
               {!greeting.includes(String(c.recipient || "~")) && c.recipient && (
-                <span className="cel-name" aria-label={c.recipient}>{[...String(c.recipient)].map((ch, i) => <span key={i} className="l" style={{ ["--i" as string]: i + 4, ["--c" as string]: [theme.c.ac, theme.c.ac2, theme.c.ac3][i % 3] }}>{ch}</span>)}</span>
+                <span className="cel-name" style={fitWords(String(c.recipient))} aria-label={c.recipient}>{[...String(c.recipient)].map((ch, i) => <span key={i} className="l" style={{ ["--i" as string]: i + 4, ["--c" as string]: [theme.c.ac, theme.c.ac2, theme.c.ac3][i % 3] }}>{ch}</span>)}</span>
               )}
               {(age > 0 || c.life_dates || (o.moment === "baby" && c.date)) && (
                 <div className="cel-chip">
@@ -96,7 +105,8 @@ export default function Celebration({ product, theme, content: c, mode }: Render
                   {o.moment === "baby" && c.date && <span>Born {fmtDate(c.date, { day: "numeric", month: "long", year: "numeric" })}{c.birth_time ? " · " + c.birth_time : ""}{c.weight ? " · " + c.weight : ""}</span>}
                 </div>
               )}
-            </div>
+              </div>
+            </div></div>
           </section>
 
           <Moment kind={o.moment} title={fill(o.momentTitle, vars)} hint={fill(o.momentHint, vars)} doneText={fill(o.momentDone, vars)} age={age} since={c.date}
@@ -123,11 +133,14 @@ export default function Celebration({ product, theme, content: c, mode }: Render
                 <div className="cel-reel" tabIndex={0} aria-label="Photos, swipe sideways">
                   {memories.map((m: { photo: string; caption?: string }, i: number) => (
                     <figure key={i} className="pol" style={{ ["--r" as string]: `${[-3, 2.5, -1.5, 3, -2.5, 1.5][i % 6]}deg` }}>
-                      <Img src={m.photo} alt={m.caption || `Photo ${i + 1}`} sampleKey={"m" + i} />
+                      <button type="button" onClick={() => setView(i)} aria-label={`Open photo ${i + 1} of ${memories.length}${m.caption ? `: ${m.caption}` : ""}`}>
+                        <Img src={m.photo} alt={m.caption || `Photo ${i + 1}`} sampleKey={"m" + i} sizes="(min-width: 700px) 270px, 70vw" />
+                      </button>
                       {m.caption && <figcaption>{m.caption}</figcaption>}
                     </figure>
                   ))}
                 </div>
+                {memories.length > 1 && <p className="cel-hint" aria-hidden="true">Swipe for more · tap a photo to enlarge</p>}
               </div>
             </section>
           )}
@@ -142,11 +155,13 @@ export default function Celebration({ product, theme, content: c, mode }: Render
                 <a className="ip-btn ip-wa" href={replyHref} target="_blank" rel="noopener noreferrer"><Icon.wa /> {solemn ? "Send your condolences" : `Say thank you to ${c.sender || "them"}`}</a>
                 <button type="button" className="ip-btn ip-ghost" onClick={again}>Watch it again</button>
               </div>
+              {memories.some((m: { photo: string }) => isStock(m.photo)) && <p className="cel-cr">Sample photos from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
               <MadeWith product={product} />
             </div>
           </section>
         </main>
       )}
+      {view !== null && root.current && createPortal(<Lightbox photos={memories} start={view} title={fill(o.memoriesTitle, vars)} onClose={() => setView(null)} keyPrefix="m" />, root.current)}
 
       {opened && o.music !== "none" && c.music !== false && (
         <button type="button" className="cel-music ip-fixed" onClick={() => (music.playing ? music.stop() : music.start())} aria-label={music.playing ? "Pause music" : "Play music"}>
@@ -285,10 +300,32 @@ const CSS = `
 .cel-cta{background:var(--tx);color:var(--bg);min-height:58px;padding:0 1.6em;font-size:1.05rem;box-shadow:0 10px 0 -2px rgba(0,0,0,.2)}
 .cel-sound{display:flex;align-items:center;gap:8px;margin:0;font-size:.86rem;color:var(--mu)}
 .cel-sound svg{width:16px;height:16px}
-.cel-greet{padding-block:clamp(56px,12cqi,96px) 24px;text-align:center}
-.cel-hb{font:400 clamp(2.6rem,13cqi,5.4rem)/.95 var(--fd);margin:0;text-wrap:balance}
+.cel-greet{position:relative;padding-block:clamp(56px,12cqi,96px) 24px;text-align:center;overflow:hidden}
+.ipr-cel .ip-wrap{width:100%}
+.cel-greet-in{display:grid;gap:28px;justify-items:center}
+.cel-greet-t{width:100%;min-width:0;container-type:inline-size}
+.cel-bg{position:absolute;inset:0;overflow:hidden}
+.cel-bg img{width:100%;height:100%;object-fit:cover}
+.cel-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 50%,transparent),color-mix(in srgb,var(--bg) 78%,transparent) 50%,var(--bg))}
+.cel-gift .cel-bg img{filter:blur(2px);transform:scale(1.04)}
+.cel-gift-in,.cel-greet-in{position:relative}
+.cel-hero-ph{appearance:none;border:0;padding:0;cursor:zoom-in;overflow:hidden;background:var(--sf);display:block;animation:cel-fade .8s .2s both}
+.cel-hero-ph img{width:100%;height:100%;object-fit:cover}
+.s-split .cel-hero-ph{width:min(86cqi,420px);aspect-ratio:4/3;border-radius:18px;box-shadow:0 30px 50px -28px rgba(0,0,0,.6)}
+@container (min-width:600px){.s-split .cel-greet-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;text-align:left}.s-split .cel-hero-ph{width:100%;aspect-ratio:4/5}}
+.s-editorial .cel-hero-ph{width:min(56cqi,230px);aspect-ratio:3/4;border-radius:999px 999px 8px 8px;box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--line)}
+.s-editorial .cel-card{box-shadow:inset 0 0 0 1px var(--line),0 0 0 6px var(--sf),0 0 0 7px var(--line),0 30px 60px -36px rgba(0,0,0,.5)}
+.s-soft .cel-hero-ph{width:min(56cqi,230px);aspect-ratio:1;border-radius:50%;box-shadow:0 0 0 10px color-mix(in srgb,var(--ac) 18%,transparent)}
+.s-bold .cel-hero-ph{width:min(74cqi,340px);aspect-ratio:1;border-radius:10px;transform:rotate(-3deg);box-shadow:10px 10px 0 var(--ac2)}
+.s-bold .cel-hb{text-transform:uppercase;font-size:min(5rem,calc(92cqi / var(--fit)),13cqi)}
+.s-photo .cel-hb,.s-photo .cel-name{text-shadow:0 2px 20px color-mix(in srgb,var(--bg) 60%,transparent)}
+.s-photo .cel-greet{min-height:min(calc(var(--ip-vh,100svh) * .8),720px);display:grid;align-items:end}
+.cel-hint{margin:0;text-align:center;font-size:.82rem;color:var(--mu)}
+.cel-cr{margin:18px 0 0;font-size:.76rem;color:var(--mu)}
+.cel-cr a{color:inherit}
+.cel-hb{font:400 min(5.4rem,calc(118cqi / var(--fit)),14cqi)/.98 var(--fd);margin:0;text-wrap:balance}
 .cel-hb .l,.cel-name .l{display:inline-block;white-space:pre;animation:cel-pop .7s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i) * 50ms + .15s)}
-.cel-name{display:block;font:400 clamp(4rem,24cqi,9rem)/.95 var(--fd);margin-top:.08em;overflow-wrap:anywhere}
+.cel-name{display:block;font:400 min(9rem,calc(130cqi / var(--fit)),24cqi)/.95 var(--fd);margin-top:.08em}
 .cel-name .l{color:var(--c)}
 .solemn .cel-hb .l,.solemn .cel-name .l{animation-name:cel-fade}
 @keyframes cel-pop{from{opacity:0;transform:translateY(40px) scale(.4) rotate(-12deg)}to{opacity:1;transform:none}}
@@ -334,7 +371,9 @@ const CSS = `
 .cel-reel{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:30px 4px 24px;scrollbar-width:none}
 .cel-reel::-webkit-scrollbar{display:none}
 .pol{flex:none;width:min(70cqi,270px);scroll-snap-align:center;background:#FFFDF8;color:#2A1A33;padding:12px 12px 16px;border-radius:4px;box-shadow:0 24px 40px -22px rgba(0,0,0,.7);transform:rotate(var(--r));margin:0}
-.pol img{width:100%;aspect-ratio:1;object-fit:cover}
+.pol button{appearance:none;border:0;padding:0;margin:0;display:block;width:100%;cursor:zoom-in;background:#eee}
+.pol img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+@container (min-width:600px){.cel-reel{flex-wrap:wrap;justify-content:center;overflow:visible}.pol{width:220px}}
 .pol figcaption{font:700 1.45rem/1.1 var(--fh);text-align:center;margin-top:12px}
 .nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:26px 0 16px;width:100%}
 .nums.five{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}

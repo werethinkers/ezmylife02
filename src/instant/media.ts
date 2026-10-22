@@ -3,19 +3,21 @@
 
 export function shrinkImage(file: File, max = 1400, quality = 0.84): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (!file.type.startsWith("image/")) return reject(new Error("Choose an image file."));
+    if (!file.type.startsWith("image/") && !/\.(heic|heif)$/i.test(file.name)) return reject(new Error("Choose an image file."));
     const fr = new FileReader();
     fr.onerror = () => reject(new Error("Couldn't read that file."));
     fr.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error("That image couldn't be opened."));
+      img.onerror = () => reject(new Error(/heic|heif/i.test(file.type + file.name) ? "iPhone HEIC photos can't be opened here. Choose a JPG or PNG, or share the photo as 'Most compatible'." : "That image couldn't be opened. Try a JPG or PNG."));
       img.onload = () => {
         const s = Math.min(1, max / Math.max(img.width, img.height));
         const c = document.createElement("canvas");
         c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
         c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-        // Re-encoding drops EXIF, including GPS location from phone cameras.
-        resolve(c.toDataURL("image/jpeg", quality));
+        // Re-encoding drops EXIF, including GPS location from phone cameras. WebP is about a third
+        // smaller than JPEG; browsers that can't encode it return PNG, so fall back to JPEG then.
+        const webp = c.toDataURL("image/webp", quality);
+        resolve(webp.startsWith("data:image/webp") ? webp : c.toDataURL("image/jpeg", quality));
       };
       img.src = String(fr.result);
     };
