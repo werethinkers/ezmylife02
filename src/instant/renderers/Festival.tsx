@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
-import { BASE_CSS, Icon, Img, MadeWith, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { isStock } from "../stock";
+import { BASE_CSS, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
 
 const EMBLEM: Record<string, string> = { colours: "🎨", flower: "🌷", modak: "🐘", dandiya: "🪘", kite: "🪁", kalash: "🌾", lotus: "🪷", sun: "🪔", fireworks: "🎆" };
 
@@ -21,11 +22,17 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
   };
   const vars = { ...c };
   const reply = fill(product.whatsapp.reply ?? "", vars);
+  const sty = theme.s;
+  // The minimal design is a plain card; every other design shows the background picture.
+  const cover = sty !== "minimal" && resolveImg(c.cover) ? c.cover : null;
 
   return (
-    <div className={"ipr ipr-fest art-" + o.art + (lit ? " lit" : "")} style={themeVars(theme) as React.CSSProperties} onClick={o.art === "colours" ? tap : undefined}>
+    <div className={`ipr ipr-fest art-${o.art} s-${sty}` + (theme.dark ? " dark" : "") + (lit ? " lit" : "") + (cover ? " has-cover" : "")} style={themeVars(theme) as React.CSSProperties} onClick={o.art === "colours" ? tap : undefined}>
       <style>{BASE_CSS + CSS}</style>
+      {cover && sty === "photo" && <div className="fest-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
+      <div className="fest-page"><div className="fest-in">
+      {cover && sty !== "photo" && <div className="fest-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 50vw, 100vw" eager /></div>}
       <main className="ip-wrap fest">
         <button type="button" className="fest-art" onClick={o.art === "colours" ? undefined : tap} aria-label={o.tap}>
           {o.art === "diya" && <span className="diyas">{[0, 1, 2, 3, 4].map((i) => <span key={i} className="diya" style={{ ["--i" as string]: i }}><span className="fl" /><span className="bowl" /></span>)}</span>}
@@ -43,7 +50,7 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
         </button>
         <p className="fest-tap" aria-live="polite">{lit ? o.tapDone : o.tap}</p>
 
-        <h1 className="fest-h">{o.greeting}</h1>
+        <h1 className="fest-h" style={fitWords(o.greeting)}>{o.greeting}</h1>
         {c.recipient && <p className="fest-to">Dear {c.recipient},</p>}
         <p className="fest-msg">{c.message}</p>
         {c.photo && <figure className="fest-photo"><Img src={c.photo} alt={`From ${c.sender}`} /></figure>}
@@ -52,20 +59,54 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
         <div className="fest-btns">
           <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> Wish {c.sender ? "them" : "back"} on WhatsApp</a>
         </div>
+        {isStock(cover) && <p className="fest-cr">Background photo from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
         <MadeWith product={product} />
       </main>
+      </div></div>
     </div>
   );
 }
 
 const CSS = `
-.ipr-fest{min-height:var(--ip-vh,100svh)}
+.ipr-fest{min-height:var(--ip-vh,100svh);--hmax:5rem;--rad:18px}
+.fest-page{container:page/inline-size;position:relative;z-index:1}
+.ipr-fest .ip-wrap{width:100%}
+.fest-cr{margin:6px 0 0;font-size:.74rem;color:var(--mu)}
+.fest-cr a{color:inherit}
+/* photo: the picture fills the card, tinted with the design's colours */
+.fest-bg{position:absolute;inset:0;overflow:hidden}
+.fest-bg img{width:100%;height:100%;object-fit:cover}
+.fest-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 55%,transparent),color-mix(in srgb,var(--bg) 80%,transparent) 45%,var(--bg) 92%)}
+.s-photo .fest-h{text-shadow:0 2px 24px rgba(0,0,0,.35)}
+/* split: picture as a banner on phones, beside the greeting on wide screens */
+.fest-media{position:relative;overflow:hidden}
+.fest-media img{width:100%;height:100%;object-fit:cover}
+.s-split .fest-media{height:min(38cqi,300px);min-height:170px;border-radius:0 0 var(--rad) var(--rad)}
+.s-split.has-cover .fest{padding-top:20px}
+@container page (min-width:860px){
+  .s-split.has-cover .fest-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:var(--ip-vh,100svh)}
+  .s-split .fest-media{height:var(--ip-vh,100svh);border-radius:0;position:sticky;top:0}
+  .s-split.has-cover .fest{align-content:center}
+}
+/* editorial: framed card with an arched picture */
+.s-editorial .fest-page::before{content:"";position:absolute;inset:12px;border:1.5px solid color-mix(in srgb,var(--ac) 45%,transparent);border-radius:16px;pointer-events:none}
+.s-editorial .fest-media{width:min(52cqi,220px);aspect-ratio:3/4;margin:44px auto 0;border-radius:999px 999px 8px 8px;box-shadow:0 0 0 6px var(--bg),0 0 0 7px var(--line)}
+.s-editorial.has-cover .fest{padding-top:18px}
+.s-editorial.has-cover .fest-art{min-height:150px}
+/* soft: a round picture with a glow */
+.s-soft .fest-media{width:min(58cqi,240px);aspect-ratio:1;margin:40px auto 0;border-radius:50%;box-shadow:0 0 0 10px color-mix(in srgb,var(--ac) 18%,transparent),0 30px 50px -26px rgba(0,0,0,.5)}
+.s-soft.has-cover .fest{padding-top:14px}
+.s-soft.has-cover .fest-art{min-height:150px}
+/* bold: a tilted print and big upright type */
+.s-bold .fest-media{width:min(80cqi,420px);aspect-ratio:4/3;margin:40px auto 0;border-radius:10px;transform:rotate(-2.5deg);box-shadow:10px 10px 0 var(--ac2)}
+.s-bold .fest-h{font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:min(var(--hmax),calc(92cqi / var(--fit)),13cqi)}
+.s-bold.has-cover .fest-art{min-height:150px}
 .ipr-fest::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;background:radial-gradient(circle at 15% 10%,color-mix(in srgb,var(--ac) 40%,transparent),transparent 40%),radial-gradient(circle at 85% 30%,color-mix(in srgb,var(--ac2) 35%,transparent),transparent 40%)}
 .art-colours::before{opacity:.8;background:radial-gradient(circle at 10% 15%,rgba(255,46,136,.35),transparent 30%),radial-gradient(circle at 90% 20%,rgba(22,193,114,.3),transparent 30%),radial-gradient(circle at 20% 85%,rgba(255,183,3,.35),transparent 30%),radial-gradient(circle at 85% 80%,rgba(58,134,255,.3),transparent 30%)}
 .fest{display:grid;justify-items:center;text-align:center;padding-block:44px 40px;gap:14px}
 .fest-art{border:0;background:none;padding:0;cursor:pointer;min-height:220px;display:grid;place-items:center;width:100%;-webkit-tap-highlight-color:transparent}
 .fest-tap{margin:0;font-size:.92rem;color:var(--mu);min-height:1.4em}
-.fest-h{font:400 clamp(2.6rem,13cqi,5rem)/1 var(--fd);margin:8px 0 0;color:var(--ac);text-wrap:balance;text-shadow:0 2px 0 color-mix(in srgb,var(--ac) 30%,transparent)}
+.fest-h{font:400 min(var(--hmax),calc(118cqi / var(--fit)),14cqi)/1.02 var(--fd);margin:8px 0 0;color:var(--ac);text-wrap:balance;overflow-wrap:normal;text-shadow:0 2px 0 color-mix(in srgb,var(--ac) 30%,transparent)}
 .fest-to{font:700 1.7rem/1.1 var(--fh);margin:6px 0 0}
 .fest-msg{font-size:clamp(1.1rem,4.6cqi,1.32rem);line-height:1.6;max-width:30ch;margin:4px 0 0;white-space:pre-line}
 .fest-photo{margin:12px 0 0;padding:10px;background:var(--sf);border-radius:16px;box-shadow:0 20px 40px -24px rgba(0,0,0,.6);transform:rotate(-2deg);max-width:min(84cqi,340px)}

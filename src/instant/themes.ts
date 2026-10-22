@@ -9,6 +9,8 @@ const STYLE: Record<string, Style> = {
   black: "bold", energy: "photo", luxury: "editorial", clean: "split", blush: "soft", fresh: "split", trade: "bold", pro: "editorial", clinic: "split", studio: "photo",
   bistro: "photo", street: "bold", cafe: "editorial", pastel: "soft", dhaba: "bold", boutique: "editorial",
   paper: "minimal", ink: "bold", creator: "photo", navy: "editorial",
+  diwali: "photo", holi: "soft", rakhi: "editorial", christmas: "photo", newyear: "photo", eid: "editorial", tiranga: "minimal",
+  womens: "soft", ganesh: "editorial", navratri: "photo", kite: "split", jain: "editorial", harvest: "split",
 };
 const t = (id: string, name: string, dark: boolean, c: Theme["c"], f: Theme["f"], fonts: string[], s?: Style): Theme => ({ id, name, dark, s: s ?? STYLE[id] ?? "bold", c, f, fonts });
 

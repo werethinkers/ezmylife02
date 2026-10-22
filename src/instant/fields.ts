@@ -50,7 +50,7 @@ export function festivalSteps(l: FestivalLabels): Step[] {
         F.area("message", "Message", { required: true, max: 400, suggestions: l.suggestions }),
       ],
     },
-    { title: "A photo (optional)", hint: "A family photo makes it personal.", fields: [F.photo("photo", "Photo")] },
+    { title: "Photos (optional)", hint: "A family photo makes it personal. The background picture sits behind the greeting; remove it for a plain card.", fields: [F.photo("photo", "Family photo"), F.photo("cover", "Background picture")] },
     { title: "Finishing touches", fields: [F.phone("sender_whatsapp", "Your WhatsApp, for replies (optional)"), F.toggle("music", "Play festive chimes when opened")] },
   ];
 }
