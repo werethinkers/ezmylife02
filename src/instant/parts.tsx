@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { Product, Theme } from "./types";
 import { loadThemeFonts } from "./themes";
 import { sampleArt } from "./media";
+import { stockSrcSet } from "./stock";
 import { fill, isMobile, safeImg, waTo } from "./util";
 import { submitLead } from "./api";
 
@@ -16,10 +18,89 @@ export function resolveImg(src: unknown, key = "x"): string | null {
   return s;
 }
 
-export function Img({ src, alt, className, style, sampleKey }: { src: unknown; alt: string; className?: string; style?: CSSProperties; sampleKey?: string }) {
+/** A lazy image. Stock photos get a srcset so phones download small files; a photo that fails
+ *  to load is hidden instead of showing a broken-image icon. */
+export function Img({ src, alt, className, style, sampleKey, sizes = "(min-width: 900px) 50vw, 100vw", eager }: { src: unknown; alt: string; className?: string; style?: CSSProperties; sampleKey?: string; sizes?: string; eager?: boolean }) {
   const s = resolveImg(src, sampleKey);
-  if (!s) return null;
-  return <img src={s} alt={alt} className={className} style={style} loading="lazy" decoding="async" />;
+  const [bad, setBad] = useState(false);
+  useEffect(() => setBad(false), [s]);
+  if (!s || bad) return null;
+  const set = stockSrcSet(s);
+  return <img src={s} srcSet={set} sizes={set ? sizes : undefined} alt={alt} className={className} style={style} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setBad(true)} />;
+}
+
+/** Shows a fixed action bar only once the element it replaces (usually the hero buttons) has
+ *  scrolled out of view, so the bar never covers them. Works inside the builder's scrolled preview too. */
+export function useRevealBar<T extends Element>() {
+  const ref = useRef<T | null>(null);
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setShow(true); return; }
+    const io = new IntersectionObserver(([e]) => setShow(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return { ref, show };
+}
+
+/** Font size that keeps the longest word of a headline on one line: words never break mid-word. */
+export const fitWords = (text: string) => ({ ["--fit" as string]: String(Math.max(4, ...String(text).split(/\s+/).map((w) => w.length))) }) as CSSProperties;
+
+/* ---------- photo gallery: swipe on phones, a grid on wider screens, tap for full screen ---------- */
+export type Photo = { photo: string; caption?: string };
+export function Gallery({ photos, title, keyPrefix = "g", layout = "auto" }: { photos: Photo[]; title: string; keyPrefix?: string; layout?: "auto" | "grid" | "strip" }) {
+  const [open, setOpen] = useState<number | null>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const list = photos.filter((p) => resolveImg(p.photo));
+  if (!list.length) return null;
+  // The gallery sits inside size containers, which would trap a fixed overlay; render it at the page root.
+  const root = wrap.current?.closest(".ipr") ?? null;
+  return (
+    <>
+      <div ref={wrap} className={"ip-gal ip-gal-" + layout + (list.length === 1 ? " one" : "")} role="list" aria-label={`${title}: ${list.length} photo${list.length > 1 ? "s" : ""}`}>
+        {list.map((g, i) => (
+          <figure key={i} role="listitem">
+            <button type="button" onClick={() => setOpen(i)} aria-label={`Open photo ${i + 1} of ${list.length}${g.caption ? `: ${g.caption}` : ""}`}>
+              <Img src={g.photo} alt={g.caption || `${title} ${i + 1}`} sampleKey={keyPrefix + i} sizes="(min-width: 700px) 40vw, 85vw" />
+            </button>
+            {g.caption && <figcaption>{g.caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+      {list.length > 1 && <p className="ip-gal-hint" aria-hidden="true">Swipe for more · tap to enlarge</p>}
+      {open !== null && root && createPortal(<Lightbox photos={list} start={open} title={title} onClose={() => setOpen(null)} keyPrefix={keyPrefix} />, root)}
+    </>
+  );
+}
+
+export function Lightbox({ photos, start, title, onClose, keyPrefix }: { photos: Photo[]; start: number; title: string; onClose: () => void; keyPrefix: string }) {
+  const [i, setI] = useState(start);
+  const n = photos.length;
+  const go = useCallback((d: number) => setI((x) => (x + d + n) % n), [n]);
+  const touch = useRef<number | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowRight") go(1); if (e.key === "ArrowLeft") go(-1); };
+    window.addEventListener("keydown", k);
+    box.current?.focus();
+    return () => window.removeEventListener("keydown", k);
+  }, [go, onClose]);
+  const p = photos[i];
+  return (
+    <div ref={box} className="ip-lb ip-fixed" role="dialog" aria-modal="true" aria-label={`${title}, photo ${i + 1} of ${n}`} tabIndex={-1}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => { const x0 = touch.current; touch.current = null; if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); }}>
+      <Img key={i} src={p.photo} alt={p.caption || `${title} ${i + 1}`} sampleKey={keyPrefix + photos.indexOf(p)} sizes="100vw" eager />
+      <div className="ip-lb-bar">
+        <span>{p.caption || `${i + 1} / ${n}`}</span>
+        <button type="button" onClick={onClose} aria-label="Close">✕</button>
+      </div>
+      {n > 1 && <><button type="button" className="ip-lb-nav prev" onClick={() => go(-1)} aria-label="Previous photo">‹</button><button type="button" className="ip-lb-nav next" onClick={() => go(1)} aria-label="Next photo">›</button></>}
+      {n > 1 && <div className="ip-lb-dots" aria-hidden="true">{photos.map((_, j) => <i key={j} className={j === i ? "on" : ""} />)}</div>}
+    </div>
+  );
 }
 
 const svg = (d: ReactNode, fill = false) => (
@@ -217,5 +298,34 @@ export const BASE_CSS = `
 .ipr .ip-made b{font-size:1rem}
 .ipr .ip-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 .ipr .ip-fixed{position:fixed}
+.ipr .ip-gal{display:grid;grid-auto-flow:column;grid-auto-columns:82%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;margin-inline:calc(-1 * clamp(16px,5cqi,40px));padding-inline:clamp(16px,5cqi,40px);scroll-padding-inline:clamp(16px,5cqi,40px)}
+.ipr .ip-gal::-webkit-scrollbar{display:none}
+.ipr .ip-gal.one{grid-auto-columns:100%}
+.ipr .ip-gal figure{margin:0;scroll-snap-align:start;border-radius:var(--rad,18px);overflow:hidden;background:var(--sf);box-shadow:inset 0 0 0 1px var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto}
+.ipr .ip-gal button{all:unset;cursor:zoom-in;display:block;aspect-ratio:4/5;position:relative;overflow:hidden}
+.ipr .ip-gal img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.ipr .ip-gal button:hover img{transform:scale(1.04)}
+.ipr .ip-gal button:focus-visible{outline:3px solid var(--ac2);outline-offset:-3px}
+.ipr .ip-gal figcaption{padding:10px 14px;font-size:.88rem;color:var(--mu)}
+.ipr .ip-gal-hint{margin:10px 0 0;font-size:.78rem;color:var(--mu);letter-spacing:.04em}
+@container (min-width:620px){
+  .ipr .ip-gal-auto,.ipr .ip-gal-grid{grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-columns:auto;overflow:visible;margin-inline:0;padding-inline:0}
+  .ipr .ip-gal-auto figure:first-child:not(:only-child){grid-column:span 2;grid-row:span 2}
+  .ipr .ip-gal-auto figure:first-child:not(:only-child) button{aspect-ratio:auto;height:100%}
+  .ipr .ip-gal-auto.one,.ipr .ip-gal-grid.one{grid-template-columns:1fr}
+  .ipr .ip-gal-auto.one button{aspect-ratio:16/9}
+  .ipr .ip-gal-auto~.ip-gal-hint,.ipr .ip-gal-grid~.ip-gal-hint{display:none}
+}
+.ipr .ip-lb{inset:0;z-index:80;background:rgba(6,6,8,.94);display:grid;place-items:center;padding:56px 12px 64px;outline:none;animation:ip-fade .2s ease}
+.ipr .ip-lb img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.ipr .ip-lb-bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 18px;color:#fff;font:600 .9rem/1.3 var(--fb)}
+.ipr .ip-lb-bar button,.ipr .ip-lb-nav{appearance:none;border:0;cursor:pointer;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font:400 1.6rem/1 system-ui;display:grid;place-items:center}
+.ipr .ip-lb-bar button{font-size:1.1rem}
+.ipr .ip-lb-nav{position:absolute;top:50%;transform:translateY(-50%)}
+.ipr .ip-lb-nav.prev{left:10px}.ipr .ip-lb-nav.next{right:10px}
+.ipr .ip-lb-dots{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+.ipr .ip-lb-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35)}
+.ipr .ip-lb-dots i.on{background:#fff;width:18px;border-radius:4px}
+@keyframes ip-fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ipr *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 `;

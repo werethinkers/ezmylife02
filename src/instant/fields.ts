@@ -50,7 +50,7 @@ export function festivalSteps(l: FestivalLabels): Step[] {
         F.area("message", "Message", { required: true, max: 400, suggestions: l.suggestions }),
       ],
     },
-    { title: "A photo (optional)", hint: "A family photo makes it personal.", fields: [F.photo("photo", "Photo")] },
+    { title: "Photos (optional)", hint: "A family photo makes it personal. The background picture sits behind the greeting; remove it for a plain card.", fields: [F.photo("photo", "Family photo"), F.photo("cover", "Background picture")] },
     { title: "Finishing touches", fields: [F.phone("sender_whatsapp", "Your WhatsApp, for replies (optional)"), F.toggle("music", "Play festive chimes when opened")] },
   ];
 }
@@ -74,7 +74,7 @@ export function eventSteps(l: EventLabels): Step[] {
       fields: [F.list("schedule", l.scheduleTitle ?? "Programme", "item", [F.text("name", "Name", { max: 40 }), F.date("date", "Date"), F.time("time", "Time"), F.text("place", "Where", { max: 50 })], 10)],
     },
     { title: "Details", fields: [F.area("story", l.story ?? "A few words for your guests", { max: 800 }), ...(l.dress ? [F.text("dress_code", "Dress code (optional)", { max: 50 })] : [])] },
-    { title: "Photos", fields: [F.gallery("gallery", "Photos", 8)] },
+    { title: "Photos", hint: "The cover is the big picture at the top. Guests can tap any photo to see it full screen.", fields: [F.photo("cover", "Cover photo"), F.gallery("gallery", "More photos", 8)] },
     { title: "RSVP", fields: [F.phone("rsvp_whatsapp", l.rsvpLabel ?? "WhatsApp for RSVPs", { required: true }), F.toggle("rsvp_form", "Also collect RSVPs in a list I can see")] },
   ];
 }
@@ -116,7 +116,7 @@ export function businessSteps(l: BusinessLabels): Step[] {
     },
     { title: l.highlightsTitle, fields: [F.chips("highlights", l.highlightsTitle, l.highlightOptions, { max: 12 })] },
     ...(l.teamTitle ? [{ title: l.teamTitle, fields: [F.list("team", l.teamTitle, "person", [F.text("name", "Name", { max: 40 }), F.text("role", "Role", { max: 50 }), F.photo("photo", "Photo")], 8)] }] : []),
-    { title: "Photos", fields: [F.gallery("gallery", "Photos", 10)] },
+    { title: "Photos", hint: "The cover is the big photo at the top. Sample photos are there so you can see the look: swap in your own.", fields: [F.photo("cover", "Cover photo"), F.gallery("gallery", "More photos", 10)] },
     {
       title: "Offer & reviews",
       fields: [
