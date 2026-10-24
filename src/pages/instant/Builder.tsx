@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
-const SAMPLE_GUARDED = ["reviews", "rating", "reviews_count", "team"];
+const SAMPLE_GUARDED = ["reviews", "rating", "reviews_count", "team", "stats"];
 
 function validate(p: Product, c: Content): { step: number; errors: Record<string, string> } | null {
   const errors: Record<string, string> = {}; let step = -1;

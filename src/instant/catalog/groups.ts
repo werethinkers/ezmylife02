@@ -21,6 +21,9 @@ export const GROUPS: Record<CategoryId, { id: string; name: string; ids: string[
     { id: "work", name: "Business & community", ids: ["corporate-event", "workshop", "meetup", "college-fest", "store-opening", "product-launch", "conference"] },
   ],
   business: [
+    { id: "stores", name: "Shops & stores", ids: ["kirana", "pharmacy", "mobile-shop", "hardware-store", "general-store", "stationery-shop", "optical-shop", "pet-shop", "agri-store", "wholesaler"] },
+    { id: "schools", name: "Schools", ids: ["school", "preschool"] },
+    { id: "stays", name: "Hotels & stays", ids: ["hotel", "hostel-pg", "resort"] },
     { id: "fitness", name: "Fitness & wellness", ids: ["gym-website", "personal-trainer", "yoga-studio", "spa"] },
     { id: "beauty", name: "Beauty", ids: ["salon", "makeup-artist", "mehendi-artist"] },
     { id: "education", name: "Classes & tuition", ids: ["tutor", "coaching-center", "music-teacher", "dance-teacher"] },

@@ -36,6 +36,8 @@ Routes: `/create` (gallery), `/create/:productId` (builder), `/p/:slug` (publish
 2. Add a row to `ip_products` in a new migration (same `id`, family, category, name, price).
 3. That's it. The gallery, builder, renderer, share kit, QR and checkout all pick it up.
 
+Business websites can also turn on extra sections with `extras` (notice ribbon, numbers strip, brands, steps, questions) and `listOrder` (a "send your list on WhatsApp" box). Schools, hotels and shops in `catalog/stores.ts` use them; each section shows only when it has content.
+
 A product that needs a new kind of interaction (for example a new celebration "moment") adds an option to its family renderer, so every product in that family can use it.
 
 ## Known limitation: link previews
