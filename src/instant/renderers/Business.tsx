@@ -21,6 +21,11 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
   const own = gallery.find((g: { photo: string }) => !isStock(g.photo));
   const cover = resolveImg(c.cover) ? c.cover : own ? own.photo : coverFor(product.id);
   const highlights: string[] = Array.isArray(c.highlights) ? c.highlights : [];
+  // Optional sections. Only products that ask for them in their form have them, so older pages are unchanged.
+  const stats = (Array.isArray(c.stats) ? c.stats : []).filter((x: { value?: string }) => x?.value);
+  const how = (Array.isArray(c.how) ? c.how : []).filter((x: { title?: string }) => x?.title);
+  const faqs = (Array.isArray(c.faqs) ? c.faqs : []).filter((x: { q?: string; a?: string }) => x?.q && x?.a);
+  const brands = String(c.brands ?? "").split(",").map((b) => b.trim()).filter(Boolean).slice(0, 30);
   const enquire = waTo(c.whatsapp, fill(product.whatsapp.enquire, vars));
   const place = [c.address, c.area, c.city].filter(Boolean).join(", ");
   const name = String(c.name || product.name).trim();
@@ -45,6 +50,8 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
             {st && <span className={"biz-st" + (st.open ? " open" : "")} title={st.label}><i /><span className="l">{st.label}</span><span className="s">{st.open ? "Open" : "Closed"}</span></span>}
           </div>
         </header>
+
+        {c.notice && <p className="biz-notice"><span className="ip-wrap"><i aria-hidden="true" />{c.notice}</span></p>}
 
         <section className="biz-hero" id="top">
           {s === "photo" && <div className="biz-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
@@ -71,6 +78,14 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </div>
         </section>
 
+        {stats.length > 0 && (
+          <section className="biz-stats-sec" aria-label="At a glance">
+            <div className="ip-wrap">
+              <dl className="biz-stats">{stats.map((x: { value: string; label?: string }, i: number) => <div key={i}><dt>{x.value}</dt>{x.label && <dd>{x.label}</dd>}</div>)}</dl>
+            </div>
+          </section>
+        )}
+
         {services.length > 0 && (
           <section className="biz-sec" id="services">
             <div className="ip-wrap">
@@ -88,11 +103,33 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
+        {o.listOrder && <ListOrder o={o.listOrder} wa={c.whatsapp} tpl={product.whatsapp.order} vars={vars} n={n(++sec)} />}
+
+        {how.length > 0 && (
+          <section className="biz-sec">
+            <div className="ip-wrap">
+              <p className="biz-label">{n(++sec)}{o.howTitle ?? "How it works"}</p>
+              <ol className="biz-how">{how.map((x: { title: string; text?: string }, i: number) => <li key={i}><span className="k" aria-hidden="true">{i + 1}</span><b>{x.title}</b>{x.text && <p>{x.text}</p>}</li>)}</ol>
+            </div>
+          </section>
+        )}
+
         {highlights.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.highlightsTitle}</p>
               <ul className="biz-hl">{highlights.map((h) => <li key={h}><Icon.check />{h}</li>)}</ul>
+            </div>
+          </section>
+        )}
+
+        {brands.length > 0 && (
+          <section className="biz-sec">
+            <div className="ip-wrap">
+              <p className="biz-label">{n(++sec)}{o.brandsTitle ?? "Brands we stock"}</p>
+            </div>
+            <div className="biz-brands" aria-label={brands.join(", ")}>
+              <div className="trk" aria-hidden="true">{[...brands, ...brands].map((b, i) => <span key={i}>{b}</span>)}</div>
             </div>
           </section>
         )}
@@ -134,12 +171,21 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
+        {faqs.length > 0 && (
+          <section className="biz-sec">
+            <div className="ip-wrap">
+              <p className="biz-label">{n(++sec)}Questions people ask</p>
+              <div className="biz-faq">{faqs.map((f: { q: string; a: string }, i: number) => <details key={i} open={i === 0}><summary>{f.q}<Icon.plus /></summary><p>{f.a}</p></details>)}</div>
+            </div>
+          </section>
+        )}
+
         <section className="biz-sec" id="find">
           <div className="ip-wrap biz-find">
             {c.opens && c.closes && (
               <div className="biz-hours">
                 <p className="biz-label">{n(++sec)}Opening hours</p>
-                {DAYS.map((d) => <div key={d} className={"hr" + (d === today ? " today" : "")}><span>{d}</span><span>{openDays.includes(d) ? `${t12(c.opens)} – ${t12(c.closes)}` : "Closed"}</span></div>)}
+                {DAYS.map((d) => <div key={d} className={"hr" + (d === today ? " today" : "")}><span>{d}</span><span>{!openDays.includes(d) ? "Closed" : c.opens === c.closes ? "Open 24 hours" : `${t12(c.opens)} – ${t12(c.closes)}`}</span></div>)}
               </div>
             )}
             <div className="biz-loc">
@@ -185,6 +231,30 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
         {c.offer ? <a className="ip-btn ip-primary" href="#lead" tabIndex={bar.show ? 0 : -1}>{o.bar}</a> : place && <a className="ip-btn ip-ghost" href={mapsDir(place)} target="_blank" rel="noopener noreferrer" tabIndex={bar.show ? 0 : -1}><Icon.map /> Map</a>}
       </nav>
     </div>
+  );
+}
+
+/** A box where a customer types their list (groceries, medicines, materials) and sends it on WhatsApp. */
+function ListOrder({ o, wa, tpl, vars, n }: { o: { title: string; hint?: string; placeholder?: string; button?: string }; wa: unknown; tpl?: string; vars: Record<string, unknown>; n: React.ReactNode }) {
+  const [list, setList] = useState("");
+  const [who, setWho] = useState("");
+  const text = fill(tpl ?? "Hi {name}, here is my order:\n{list}", { ...vars, list: list.trim(), customer: who.trim() || "a customer" });
+  return (
+    <section className="biz-sec" id="order">
+      <div className="ip-wrap">
+        <div className="biz-order">
+          <div>
+            <p className="biz-label">{n}{o.title}</p>
+            {o.hint && <p className="biz-order-hint">{o.hint}</p>}
+          </div>
+          <div className="biz-order-form">
+            <label className="ip-field"><span>Your list</span><textarea value={list} onChange={(e) => setList(e.target.value)} maxLength={900} rows={5} placeholder={o.placeholder} /></label>
+            <label className="ip-field"><span>Your name (optional)</span><input value={who} onChange={(e) => setWho(e.target.value)} maxLength={60} autoComplete="name" /></label>
+            <a className={"ip-btn ip-wa" + (list.trim() ? "" : " off")} href={list.trim() ? waTo(wa, text) : undefined} aria-disabled={!list.trim()} target="_blank" rel="noopener noreferrer"><Icon.wa /> {o.button ?? "Send list on WhatsApp"}</a>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -355,6 +425,55 @@ const CSS = `
 .s-minimal .biz-lead .ip-primary,.s-bold:not(.dark) .biz-lead .ip-primary{box-shadow:inset 0 0 0 2px var(--bg)}
 .biz-lead .ip-fine{color:color-mix(in srgb,var(--bg) 65%,transparent);margin-top:10px}
 .biz-thanks{font-size:1.1rem;margin:0}
+/* optional sections: notice ribbon, numbers strip, list order, steps, brands, questions */
+.biz-notice{margin:0;background:var(--ac);color:var(--on);font:700 .9rem/1.35 var(--fb);text-align:center;padding:10px 0}
+.biz-notice .ip-wrap{display:flex;align-items:center;justify-content:center;gap:10px}
+.biz-notice i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none;animation:biz-pulse 1.6s ease-in-out infinite}
+@keyframes biz-pulse{50%{opacity:.25}}
+.biz-stats-sec{padding-top:clamp(8px,2cqi,16px)}
+.biz-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0;border-radius:var(--rad);overflow:hidden;background:var(--line);gap:1px;box-shadow:0 0 0 1px var(--line)}
+@container page (min-width:760px){.biz-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.biz-stats div{background:var(--sf);padding:clamp(18px,4cqi,30px) 18px;display:grid;gap:4px;align-content:start}
+.biz-stats dt{font:900 clamp(1.8rem,7cqi,2.8rem)/1 var(--fd);color:var(--ac);letter-spacing:-.02em}
+.biz-stats dd{margin:0;color:var(--mu);font-size:.92rem;font-weight:600}
+.s-editorial .biz-stats div,.s-soft .biz-stats div{text-align:center}
+.s-editorial .biz-stats dt,.s-soft .biz-stats dt{font-weight:500}
+.s-minimal .biz-stats{background:none;box-shadow:none;border-top:1px solid var(--tx);border-radius:0}
+.s-minimal .biz-stats div{background:none;padding-inline:0}
+.s-bold .biz-stats{box-shadow:8px 8px 0 var(--ac)}
+.biz-order{display:grid;gap:22px;padding:clamp(22px,5cqi,44px);border-radius:calc(var(--rad) + 6px);background:var(--sf);box-shadow:inset 0 0 0 2px var(--ac)}
+@container page (min-width:860px){.biz-order{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;gap:48px}}
+.biz-order .biz-label{margin-bottom:12px}
+.biz-order-hint{margin:0;color:var(--mu);font-size:1.02rem;max-width:40ch}
+.biz-order-form{display:grid;gap:12px}
+.biz-order-form .ip-btn.off{opacity:.5;pointer-events:none}
+.s-editorial .biz-order .biz-label,.s-soft .biz-order .biz-label{text-align:left}
+.s-editorial .biz-order .biz-label::after{margin-left:0}
+.biz-how{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:how}
+@container page (min-width:760px){.biz-how{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}}
+.biz-how li{position:relative;display:grid;gap:8px;align-content:start;padding:22px;border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1px var(--line)}
+.biz-how .k{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--ac);color:var(--on);font:800 1.1rem/1 var(--fd)}
+.biz-how b{font:800 1.15rem/1.2 var(--fd)}
+.biz-how p{margin:0;color:var(--mu);font-size:.94rem}
+.s-minimal .biz-how li{background:none;box-shadow:none;border-top:1px solid var(--line);border-radius:0;padding:18px 0}
+.s-minimal .biz-how .k{background:none;color:var(--mu);width:auto;height:auto;justify-content:start;font:500 .82rem/1 var(--fb);letter-spacing:.1em}
+.s-editorial .biz-how li,.s-soft .biz-how li{text-align:center;justify-items:center}
+.biz-brands{overflow:hidden;border-block:1px solid var(--line);padding-block:18px;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.biz-brands .trk{display:flex;gap:clamp(28px,6cqi,56px);width:max-content;animation:biz-marq 38s linear infinite}
+.biz-brands span{font:800 clamp(1.3rem,5cqi,2rem)/1 var(--fd);color:var(--tx);opacity:.82;white-space:nowrap;letter-spacing:-.01em}
+.biz-brands span:nth-child(3n+2){color:var(--ac);opacity:1}
+.s-editorial .biz-brands span,.s-soft .biz-brands span{font-weight:500;font-style:italic}
+@keyframes biz-marq{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.biz-brands .trk{animation:none;flex-wrap:wrap;width:auto;padding-inline:16px}.biz-notice i{animation:none}}
+.biz-faq{display:grid;gap:10px;max-width:860px}
+.s-editorial .biz-faq,.s-soft .biz-faq{margin-inline:auto}
+.biz-faq details{border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1px var(--line);padding:0 20px}
+.biz-faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 0;font:700 1.04rem/1.35 var(--fb)}
+.biz-faq summary::-webkit-details-marker{display:none}
+.biz-faq summary svg{flex:none;color:var(--ac);transition:transform .25s ease}
+.biz-faq details[open] summary svg{transform:rotate(45deg)}
+.biz-faq p{margin:0 0 18px;color:var(--mu)}
+.s-minimal .biz-faq details{background:none;box-shadow:none;border-top:1px solid var(--line);border-radius:0;padding:0}
 .biz-foot{display:grid;gap:8px;padding-block:56px 20px;color:var(--mu);font-size:.85rem;text-align:center}
 .biz-foot p{margin:0}
 .biz-foot .cr a{color:inherit}

@@ -84,6 +84,8 @@ export interface BusinessLabels {
   servicesTitle: string; serviceLabel: string; priceHint?: string;
   highlightsTitle: string; highlightOptions: string[];
   teamTitle?: string; leadTitle: string;
+  /** Optional extra sections (schools, stays and shops use them). Each label turns its section on. */
+  extras?: { notice?: string; stats?: boolean; brands?: string; how?: string; faq?: boolean };
 }
 export function businessSteps(l: BusinessLabels): Step[] {
   return [
@@ -117,6 +119,7 @@ export function businessSteps(l: BusinessLabels): Step[] {
     { title: l.highlightsTitle, fields: [F.chips("highlights", l.highlightsTitle, l.highlightOptions, { max: 12 })] },
     ...(l.teamTitle ? [{ title: l.teamTitle, fields: [F.list("team", l.teamTitle, "person", [F.text("name", "Name", { max: 40 }), F.text("role", "Role", { max: 50 }), F.photo("photo", "Photo")], 8)] }] : []),
     { title: "Photos", hint: "The cover is the big photo at the top. Sample photos are there so you can see the look: swap in your own.", fields: [F.photo("cover", "Cover photo"), F.gallery("gallery", "More photos", 10)] },
+    ...(l.extras ? [extraStep(l.extras)] : []),
     {
       title: "Offer & reviews",
       fields: [
@@ -128,6 +131,20 @@ export function businessSteps(l: BusinessLabels): Step[] {
       ],
     },
   ];
+}
+
+function extraStep(x: NonNullable<BusinessLabels["extras"]>): Step {
+  return {
+    title: "More sections",
+    hint: "Each section shows only when it has something in it. Leave one empty to hide it.",
+    fields: [
+      ...(x.notice ? [F.text("notice", x.notice, { max: 90, help: "A ribbon at the very top of your page." })] : []),
+      ...(x.stats ? [F.list("stats", "Numbers to show off", "number", [F.text("value", "Number", { max: 12, placeholder: "e.g. 1,200+" }), F.text("label", "What it counts", { max: 30, placeholder: "e.g. happy customers" })], 4)] : []),
+      ...(x.brands ? [F.area("brands", x.brands, { max: 300, help: "Separate with commas." })] : []),
+      ...(x.how ? [F.list("how", x.how, "step", [F.text("title", "Step", { max: 40 }), F.text("text", "Details", { max: 120 })], 4)] : []),
+      ...(x.faq ? [F.list("faqs", "Questions customers ask", "question", [F.text("q", "Question", { max: 90 }), F.area("a", "Answer", { max: 300 })], 8)] : []),
+    ],
+  };
 }
 
 export interface MenuLabels { nameLabel: string; namePlaceholder: string; itemLabel: string; categories: string[]; diet: boolean; orderLabel: string }

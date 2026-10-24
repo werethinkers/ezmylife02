@@ -1,9 +1,9 @@
 import type { Product, Theme } from "../types";
-import { businessSteps } from "../fields";
+import { businessSteps, type BusinessLabels } from "../fields";
 import { ten } from "../themes";
 import { coverFor, galleryFor } from "../stock";
 
-interface Def {
+export interface Def {
   id: string; name: string; glyph: string; price: number; themes: Theme[]; tagline: string; popular?: boolean;
   noun: string;                        // "gym", "salon": used in copy
   heroVerb: string;                    // "Join", "Book", "Visit", "Hire", "Call"
@@ -12,12 +12,16 @@ interface Def {
   highlightsTitle: string; highlightOptions: string[];
   teamTitle?: string;
   leadTitle: string; leadButton: string;   // section title + submit button
-  wa: { enquire: string; service: string; lead: string };
+  wa: { enquire: string; service: string; lead: string; order?: string };
+  extras?: BusinessLabels["extras"];     // extra form step + page sections
+  listOrder?: { title: string; hint?: string; placeholder?: string; button?: string };   // "send your list" box
+  howTitle?: string; brandsTitle?: string;
   sample: {
     name: string; tagline: string; area?: string; city?: string;
     services: [string, string, string][]; highlights: string[]; team?: [string, string][];
     offer: string; offer_note: string; rating?: string; reviews_count?: string; reviews?: [string, string][];
     open_days?: string[]; opens?: string; closes?: string; address?: string;
+    notice?: string; stats?: [string, string][]; brands?: string; how?: [string, string][]; faqs?: [string, string][];
   };
   stats?: [string, string][];
 }
@@ -25,16 +29,16 @@ interface Def {
 // Short label for the third button in the sticky action bar.
 const BAR: Record<string, string> = { Claim: "Free trial", Book: "Book now", Request: "Request", Get: "Get quote", Check: "Check date", Enquire: "Enquire", Start: "Start", Plan: "Plan trip", "Pre-order": "Order", Order: "Order" };
 
-const ALL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const ALL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MON_SAT = ALL.slice(0, 6);
 
-const make = (d: Def): Product => {
+export const make = (d: Def): Product => {
   const s = d.sample;
   return {
     id: d.id, family: "business", category: "business", name: d.name, glyph: d.glyph, price: d.price, popular: d.popular, tagline: d.tagline,
     description: `A complete ${d.noun} website: ${d.servicesTitle.toLowerCase()} with prices, WhatsApp enquiries already written for your customers, call and map buttons, a lead form and a printable QR.`,
     themes: d.themes,
-    steps: businessSteps({ nameLabel: d.nameLabel ?? `${d.noun[0].toUpperCase()}${d.noun.slice(1)} name`, namePlaceholder: d.namePlaceholder, servicesTitle: d.servicesTitle, serviceLabel: d.serviceLabel, priceHint: d.priceHint, highlightsTitle: d.highlightsTitle, highlightOptions: d.highlightOptions, teamTitle: d.teamTitle, leadTitle: d.leadTitle }),
+    steps: businessSteps({ nameLabel: d.nameLabel ?? `${d.noun[0].toUpperCase()}${d.noun.slice(1)} name`, namePlaceholder: d.namePlaceholder, servicesTitle: d.servicesTitle, serviceLabel: d.serviceLabel, priceHint: d.priceHint, highlightsTitle: d.highlightsTitle, highlightOptions: d.highlightOptions, teamTitle: d.teamTitle, leadTitle: d.leadTitle, extras: d.extras }),
     titleField: "name",
     sample: {
       name: s.name, tagline: s.tagline, area: s.area ?? "Vijay Nagar", city: s.city ?? "Indore",
@@ -44,15 +48,21 @@ const make = (d: Def): Product => {
       highlights: s.highlights, team: (s.team ?? []).map(([name, role]) => ({ name, role })), cover: coverFor(d.id), gallery: galleryFor(d.id),
       offer: s.offer, offer_note: s.offer_note, rating: s.rating ?? "4.8", reviews_count: s.reviews_count ?? "126",
       reviews: (s.reviews ?? []).map(([name, text]) => ({ name, text })),
+      ...(d.extras ? {
+        notice: s.notice ?? "", brands: s.brands ?? "",
+        stats: (s.stats ?? []).map(([value, label]) => ({ value, label })),
+        how: (s.how ?? []).map(([title, text]) => ({ title, text })),
+        faqs: (s.faqs ?? []).map(([q, a]) => ({ q, a })),
+      } : {}),
     },
-    whatsapp: d.wa,
+    whatsapp: d.wa as Record<string, string>,
     share: `✨ Check out {name} in {area}.\n{tagline}\n{link}`,
-    opts: { bar: BAR[d.leadTitle.split(" ")[0]] ?? "Enquire", noun: d.noun, heroVerb: d.heroVerb, servicesTitle: d.servicesTitle, highlightsTitle: d.highlightsTitle, teamTitle: d.teamTitle, leadTitle: d.leadTitle, leadButton: d.leadButton, stats: d.stats },
+    opts: { bar: BAR[d.leadTitle.split(" ")[0]] ?? "Enquire", noun: d.noun, heroVerb: d.heroVerb, servicesTitle: d.servicesTitle, highlightsTitle: d.highlightsTitle, teamTitle: d.teamTitle, leadTitle: d.leadTitle, leadButton: d.leadButton, stats: d.stats, listOrder: d.listOrder, howTitle: d.howTitle, brandsTitle: d.brandsTitle },
     indexable: true,
   };
 };
 
-const R = (a: string, b: string): [string, string] => [a, b];
+export const R = (a: string, b: string): [string, string] => [a, b];
 
 export const BUSINESS: Product[] = [
   make({ id: "gym-website", name: "Gym Website", glyph: "🏋️", price: 299, popular: true, themes: ten("fitness", "black", "energy", "clean", "luxury"), noun: "gym", heroVerb: "Join",
