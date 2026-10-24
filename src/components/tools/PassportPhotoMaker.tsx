@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Download, Printer, User } from "lucide-react";
 import { toast } from "sonner";
+import { GooglePhotosButton } from "@/components/GooglePhotosPicker";
 
 type PhotoSize = {
   name: string;
@@ -165,6 +166,19 @@ export const PassportPhotoMaker = () => {
             <p className="text-lg font-medium text-foreground">Tap here to add a photo, or drop it in</p>
             <p className="text-sm text-muted-foreground mt-2">Use a front-facing portrait photo for best results</p>
           </Card>
+        ) : null}
+        {!image ? (
+          <div className="flex justify-center">
+            <GooglePhotosButton
+              max={1}
+              onFiles={(fs) => new Promise<void>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => { setImage(ev.target?.result as string); resolve(); };
+                reader.onerror = () => { toast.error("Couldn't read that photo."); resolve(); };
+                reader.readAsDataURL(fs[0]);
+              })}
+            />
+          </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-4">

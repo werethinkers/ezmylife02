@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { GooglePhotosButton } from "@/components/GooglePhotosPicker";
 
 export interface AttachedMedia {
   id: string;
@@ -125,6 +126,20 @@ export default function MediaAttacher({
         >
           <ImageIcon size={14} /> Tasveer
         </button>
+        <GooglePhotosButton
+          max={1}
+          disabled={uploading || !sessionId}
+          onFiles={(fs) => upload(fs[0], "image")}
+          trigger={(open, off) => (
+            <button
+              onClick={open}
+              disabled={off}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[hsl(25_40%_45%/0.2)] text-xs text-[hsl(25_40%_45%)] hover:bg-[hsl(25_40%_45%/0.05)] disabled:opacity-40 transition-colors"
+            >
+              <ImageIcon size={14} /> Google Photos
+            </button>
+          )}
+        />
         <button
           onClick={() => videoInput.current?.click()}
           disabled={uploading || !sessionId}

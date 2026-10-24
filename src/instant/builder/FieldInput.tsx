@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import type { Field, Loose } from "../types";
 import { shrinkImage } from "../media";
+import { GooglePhotosButton } from "@/components/GooglePhotosPicker";
 import { resolveImg } from "../parts";
 import { isStock } from "../stock";
 import { DAYS } from "../util";
@@ -115,6 +116,7 @@ function PhotoPick({ id, value, onChange }: { id: string; value: Loose; onChange
       </button>
       <div className="grid gap-1">
         <Button type="button" variant="outline" size="sm" onClick={() => ref.current?.click()}>{src ? "Change photo" : "Add photo"}</Button>
+        <GooglePhotosButton max={1} onFiles={async (fs) => { try { setErr(""); onChange(await shrinkImage(fs[0])); } catch (x) { setErr(x instanceof Error ? x.message : "Couldn't use that photo."); } }} />
         {src && <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>Remove</Button>}
         {err && <p className="text-xs text-destructive">{err}</p>}
       </div>
@@ -128,6 +130,17 @@ function Gallery({ id, list, max, onChange }: { id: string; list: { photo: strin
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const move = (i: number, d: number) => { const n = [...list]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); onChange(n); };
+  const addFiles = async (all: File[]) => {
+    const files = all.slice(0, max - list.length);
+    setBusy(true); setErr("");
+    try {
+      const errs: string[] = [];
+      const shots = await Promise.all(files.map((x) => shrinkImage(x).catch((er) => { errs.push(er instanceof Error ? er.message : "Couldn't use a photo."); return null; })));
+      onChange([...list, ...shots.filter(Boolean).map((photo) => ({ photo: photo as string, caption: "" }))]);
+      const skipped = all.length - files.length;
+      setErr([errs.length ? `${errs.length} photo${errs.length > 1 ? "s" : ""} couldn't be added. ${errs[0]}` : "", skipped > 0 ? `Only ${max} photos fit, so ${skipped} ${skipped > 1 ? "were" : "was"} left out.` : ""].filter(Boolean).join(" "));
+    } finally { setBusy(false); }
+  };
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -149,19 +162,14 @@ function Gallery({ id, list, max, onChange }: { id: string; list: { photo: strin
       {list.some((x) => isStock(x.photo)) && <p className="text-xs text-muted-foreground">Photos marked Sample are free stock photos to show the look. Replace them with your own for the best result.</p>}
       {err && <p className="text-sm text-destructive" role="alert">{err}</p>}
       {list.length < max && (
-        <Button type="button" variant="outline" className="h-11 rounded-xl" disabled={busy} onClick={() => ref.current?.click()}><ImagePlus className="h-4 w-4 mr-2" /> {busy ? "Adding…" : `Add photos (${list.length}/${max})`}</Button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button type="button" variant="outline" className="h-11 rounded-xl" disabled={busy} onClick={() => ref.current?.click()}><ImagePlus className="h-4 w-4 mr-2" /> {busy ? "Adding…" : `Add photos (${list.length}/${max})`}</Button>
+          <GooglePhotosButton max={max - list.length} disabled={busy} size="default" className="h-11 rounded-xl" onFiles={addFiles} />
+        </div>
       )}
       <input ref={ref} id={id} type="file" accept="image/*,.heic,.heif" multiple className="sr-only" onChange={async (e) => {
         const all = Array.from(e.target.files ?? []); e.target.value = "";
-        const files = all.slice(0, max - list.length);
-        setBusy(true); setErr("");
-        try {
-          const errs: string[] = [];
-          const shots = await Promise.all(files.map((x) => shrinkImage(x).catch((er) => { errs.push(er instanceof Error ? er.message : "Couldn't use a photo."); return null; })));
-          onChange([...list, ...shots.filter(Boolean).map((photo) => ({ photo: photo as string, caption: "" }))]);
-          const skipped = all.length - files.length;
-          setErr([errs.length ? `${errs.length} photo${errs.length > 1 ? "s" : ""} couldn't be added. ${errs[0]}` : "", skipped > 0 ? `Only ${max} photos fit, so ${skipped} ${skipped > 1 ? "were" : "was"} left out.` : ""].filter(Boolean).join(" "));
-        } finally { setBusy(false); }
+        await addFiles(all);
       }} />
     </div>
   );
