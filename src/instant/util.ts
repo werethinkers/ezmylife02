@@ -48,6 +48,7 @@ export function openStatus(days: string[] | undefined, opens?: string, closes?: 
   const di = (now.getDay() + 6) % 7, m = now.getHours() * 60 + now.getMinutes();
   const todayOpen = open.includes(DAYS[di]);
   const o = mins(opens), c = mins(closes) <= o ? mins(closes) + 1440 : mins(closes);
+  if (o === mins(closes) && todayOpen) return { open: true, label: "Open 24 hours" };
   if (todayOpen && m >= o && m < c) return { open: true, label: `Open now · till ${t12(closes)}` };
   for (let k = 0; k < 8; k++) {
     const d = (di + k) % 7;
