@@ -26,7 +26,7 @@ const same = (p: SharePrefs) => JSON.stringify([p.image, p.image === "photo" ? p
  */
 export function LinkPreviewEditor({ product, theme, content, url, link, prefs, onSave }: {
   product: Product; theme: Theme; content: Content; url: string; link?: string | null; prefs: SharePrefs;
-  onSave: (draft: SharePrefs) => Promise<{ prefs?: SharePrefs } | unknown>;
+  onSave: (draft: SharePrefs) => Promise<{ prefs?: SharePrefs; link?: string | null } | unknown>;
 }) {
   const own = useMemo(() => describe(product, content), [product, content]);
   const photos = useMemo(() => pagePhotos(content), [content]);
@@ -70,9 +70,11 @@ export function LinkPreviewEditor({ product, theme, content, url, link, prefs, o
   const save = async () => {
     setSaving(true); setError("");
     try {
-      const r = (await onSave(draft)) as { prefs?: SharePrefs } | undefined;
+      const r = (await onSave(draft)) as { prefs?: SharePrefs; link?: string | null } | undefined;
       if (r?.prefs) setDraft((d) => ({ ...r.prefs!, photo: r.prefs!.photo ?? d.photo }));
-      setSaved(true);
+      // The choices are stored, but with no share link there is nothing for WhatsApp to read yet.
+      if (r && "link" in r && !r.link && !link) setError("Your choices are saved, but the preview link could not be made yet, so WhatsApp will still show the plain page. We are fixing this. Try again in a while.");
+      else setSaved(true);
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't update the preview. Try again."); }
     finally { setSaving(false); }
   };
