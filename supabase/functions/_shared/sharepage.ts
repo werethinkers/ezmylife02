@@ -83,7 +83,7 @@ async function ensureSiteFiles(token: string) {
 // at <slug>.ezyourlife.com (a wildcard CNAME at the DNS points there). Its one HTML file carries the
 // page's own preview tags and shows the live page from ezyourlife.com full screen, so forms and buttons
 // work as on the site. The token then needs Administration, Contents and Pages (read and write) on
-// that organisation. Names with their own DNS records are never used. Keep this list in step with
+// that organisation or account. Names with their own DNS records are never used. Keep this list in step with
 // the DNS at Hostinger.
 const PAGE_ROOT = "ezyourlife.com";
 const RESERVED = new Set([
@@ -136,7 +136,10 @@ async function writePageSite(token: string, m: ShareMeta): Promise<string> {
   const org = pagesOrg(), name = `page-${m.slug}`, full = `${org}/${name}`, host = `${m.slug}.${PAGE_ROOT}`;
   const exists = await gh(token, `/repos/${full}`);
   if (exists.status === 404) {
-    const r = await gh(token, `/orgs/${org}/repos`, { method: "POST", body: JSON.stringify({ name, private: false, auto_init: true, description: `${m.title.slice(0, 80)} · made with EZYOURLIFE`, homepage: `https://${host}/`, has_issues: false, has_wiki: false, has_projects: false }) });
+    const spec = JSON.stringify({ name, private: false, auto_init: true, description: `${m.title.slice(0, 80)} · made with EZYOURLIFE`, homepage: `https://${host}/`, has_issues: false, has_wiki: false, has_projects: false });
+    // PAGES_ORG may be an organisation or the token owner's own account (werethinkers is a user).
+    let r = await gh(token, `/orgs/${org}/repos`, { method: "POST", body: spec });
+    if (r.status === 404) r = await gh(token, `/user/repos`, { method: "POST", body: spec });
     if (!r.ok && r.status !== 422) throw new Error(`GitHub repo ${r.status}: ${(await r.text()).slice(0, 200)}`);
   } else if (!exists.ok) throw new Error(`GitHub repo ${exists.status}`);
   await putFile(token, "CNAME", host + "\n", "Page domain", true, full);
