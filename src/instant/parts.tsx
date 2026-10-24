@@ -263,7 +263,7 @@ export function LeadForm(props: {
 
 export function MadeWith({ product, light }: { product: Product; light?: boolean }) {
   return (
-    <a className={"ip-made" + (light ? " light" : "")} href={`/create/${product.id}`}>
+    <a className={"ip-made" + (light ? " light" : "")} href={`/create/${product.id}`} target="_top">
       <small>Made with EZYOURLIFE</small><b>Make your own {product.name.toLowerCase()}</b>
     </a>
   );

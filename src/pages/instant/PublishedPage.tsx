@@ -24,6 +24,17 @@ export default function PublishedPage() {
 
   useEffect(() => { if (page) recordHit(slug); }, [page, slug]);
 
+  // A page with its own subdomain (<slug>.ezyourlife.com, see supabase/functions/_shared/sharepage.ts)
+  // shows this page inside it. Opened directly here, move to the subdomain once it answers, so the
+  // address people copy is the one whose link preview shows the page.
+  useEffect(() => {
+    const own = page?.share_url;
+    if (!own || !/^https:\/\/[a-z0-9-]+\.ezyourlife\.com\/$/.test(own) || window.top !== window.self) return;
+    let live = true;
+    fetch(own, { cache: "no-store" }).then((r) => { if (live && r.ok) location.replace(own + location.search); }, () => undefined);
+    return () => { live = false; };
+  }, [page?.share_url]);
+
   useEffect(() => {
     if (!page || !product || !theme) return;
     const c = page.content ?? {};
