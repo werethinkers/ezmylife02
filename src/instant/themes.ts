@@ -120,6 +120,23 @@ export const THEMES = {
   marigold: t("marigold", "Marigold Night", true, { bg: "#2A1206", sf: "#3A1A0A", tx: "#FFF1DE", mu: "#E3C3A2", ac: "#FFA62B", ac2: "#E8463A", ac3: "#7CC39A", on: "#2A1206", line: "#57301A" }, DESI_F, DESI_FONTS, "photo"),
   peacock: t("peacock", "Peacock", true, { bg: "#062A30", sf: "#0B3A41", tx: "#ECF7F5", mu: "#A8CBC7", ac: "#E5B94E", ac2: "#2EC4B6", ac3: "#7B5CD6", on: "#062A30", line: "#174B53" }, DESI_F, DESI_FONTS, "editorial"),
   blossom: t("blossom", "Blossom", false, { bg: "#FFF1F4", sf: "#FFFFFF", tx: "#3D1424", mu: "#86566A", ac: "#D23A6E", ac2: "#F7B2C4", ac3: "#7A9E7E", on: "#FFFFFF", line: "#F7D3DE" }, SOFT_F, SOFT_FONTS, "photo"),
+  // added October 2026 for schools, stays and shops: each kind of business gets its own signature look
+  campus: t("campus", "Campus", false, { bg: "#F4F6FC", sf: "#FFFFFF", tx: "#0E1F4D", mu: "#4F5D80", ac: "#1D3FA8", ac2: "#F7B500", ac3: "#E2483D", on: "#FFFFFF", line: "#DCE2F1" }, GROT_F, GROT_FONTS, "split"),
+  chalk: t("chalk", "Chalkboard", true, { bg: "#13271E", sf: "#1A3328", tx: "#F3F1E7", mu: "#B5C4B4", ac: "#F6D55C", ac2: "#F29E9E", ac3: "#8FD3F4", on: "#13271E", line: "#2A4839" }, FOOD_F, FOOD_FONTS, "bold"),
+  crayon: t("crayon", "Crayon Box", false, { bg: "#FFF8EE", sf: "#FFFFFF", tx: "#2A2350", mu: "#6A6390", ac: "#FF5A5F", ac2: "#FFC145", ac3: "#2EC4B6", on: "#FFFFFF", line: "#F3E3CC" }, FUN_F, FUN_FONTS, "soft"),
+  heritage: t("heritage", "Haveli", false, { bg: "#F7F1E8", sf: "#FFFCF7", tx: "#2B1E16", mu: "#76614F", ac: "#8C5A2B", ac2: "#C9A45C", ac3: "#3E5C4B", on: "#FFFFFF", line: "#E7DBCA" }, LUXE_F, LUXE_FONTS, "editorial"),
+  lagoon: t("lagoon", "Lagoon", true, { bg: "#082B2E", sf: "#0E3A3E", tx: "#EEF7F4", mu: "#A9C9C4", ac: "#F2C57C", ac2: "#5ED1C4", ac3: "#F28C6B", on: "#082B2E", line: "#1B4D52" }, SOFT_F, SOFT_FONTS, "photo"),
+  dorm: t("dorm", "Dorm Life", false, { bg: "#F3F0FF", sf: "#FFFFFF", tx: "#1E1640", mu: "#5E5785", ac: "#5B3DF5", ac2: "#FF7A59", ac3: "#22C55E", on: "#FFFFFF", line: "#DED7FB" }, GROT_F, GROT_FONTS, "bold"),
+  pharma: t("pharma", "Pharmacy Green", false, { bg: "#F1F9F6", sf: "#FFFFFF", tx: "#082E26", mu: "#47665D", ac: "#0B8A5F", ac2: "#E5484D", ac3: "#2F80ED", on: "#FFFFFF", line: "#D2EAE1" }, CLEAN_F, CLEAN_FONTS, "split"),
+  techno: t("techno", "Techno", true, { bg: "#07090F", sf: "#0F1320", tx: "#F2F5FF", mu: "#9AA3BD", ac: "#3DDCFF", ac2: "#A26BFF", ac3: "#FFCF3D", on: "#07090F", line: "#1D2336" }, GROT_F, GROT_FONTS, "bold"),
+  volt: t("volt", "Volt", false, { bg: "#F4F6FB", sf: "#FFFFFF", tx: "#0B0F1A", mu: "#556079", ac: "#0A5CFF", ac2: "#FFCC00", ac3: "#00C48C", on: "#FFFFFF", line: "#DDE3EF" }, SWISS_F, SWISS_FONTS, "minimal"),
+  grocer: t("grocer", "Fresh Market", false, { bg: "#FFF9EF", sf: "#FFFFFF", tx: "#1F2A12", mu: "#5F6A4C", ac: "#2F8F2F", ac2: "#FF8A00", ac3: "#D7263D", on: "#FFFFFF", line: "#EEE4CC" }, FOOD_F, FOOD_FONTS, "split"),
+  steel: t("steel", "Steel & Spark", true, { bg: "#17191C", sf: "#202327", tx: "#F1F1EE", mu: "#A3A6AA", ac: "#FF6B00", ac2: "#FFC20E", ac3: "#4CC9F0", on: "#17191C", line: "#31353A" }, SPORT_F, SPORT_FONTS, "bold"),
+  kisan: t("kisan", "Kisan", false, { bg: "#F6FAEC", sf: "#FFFFFF", tx: "#1E2B10", mu: "#5A6B45", ac: "#3F7D20", ac2: "#F2B705", ac3: "#A0522D", on: "#FFFFFF", line: "#DDE8C6" }, DESI_F, DESI_FONTS, "editorial"),
+  notebook: t("notebook", "Notebook", false, { bg: "#FDFBF4", sf: "#FFFFFF", tx: "#1B2A4A", mu: "#5A6582", ac: "#E8483B", ac2: "#2D6CDF", ac3: "#F5B700", on: "#FFFFFF", line: "#E6E2D3" }, EDIT_F, EDIT_FONTS, "minimal"),
+  optic: t("optic", "Optic", false, { bg: "#F7F7F9", sf: "#FFFFFF", tx: "#111318", mu: "#5D616C", ac: "#111318", ac2: "#00A3A3", ac3: "#FF6F59", on: "#FFFFFF", line: "#E3E4E8" }, EDIT_F, EDIT_FONTS, "split"),
+  paws: t("paws", "Paws", false, { bg: "#FFF6EC", sf: "#FFFFFF", tx: "#3A2618", mu: "#7D6352", ac: "#F26B3A", ac2: "#2BB3A3", ac3: "#FFC94A", on: "#FFFFFF", line: "#F3DFCB" }, FUN_F, FUN_FONTS, "soft"),
+  depot: t("depot", "Depot", false, { bg: "#EEF2F6", sf: "#FFFFFF", tx: "#0D1B2A", mu: "#4F5F72", ac: "#0D3B66", ac2: "#F4A259", ac3: "#2A9D8F", on: "#FFFFFF", line: "#D7DFE8" }, SWISS_F, SWISS_FONTS, "split"),
 } satisfies Record<string, Theme>;
 
 export type ThemeId = keyof typeof THEMES;
@@ -160,6 +177,21 @@ export const MOODS = {
   love: ["romantic", "elegant", "rose", "blossom", "plum", "fun", "minimal", "ivory", "sunset", "lilac"],
   cheer: ["fun", "sunny", "elegant", "lemon", "mint", "minimal", "cobalt", "blossom", "sunset", "lilac"],
   gentle: ["solemn", "minimal", "elegant", "sage", "ivory", "forest", "sand", "lilac", "ocean", "plum"],
+  school: ["campus", "chalk", "clean", "pro", "cobalt", "navy", "fresh", "slate", "ivory", "ocean"],
+  kids: ["crayon", "playful", "sunny", "lemon", "mint", "blossom", "lilac", "fun", "sunset", "ocean"],
+  stay: ["heritage", "luxury", "lagoon", "ivory", "forest", "sand", "royal", "navy", "ocean", "mono"],
+  hostel: ["dorm", "ocean", "clean", "lemon", "cobalt", "mint", "sunset", "charcoal", "slate", "sage"],
+  resort: ["lagoon", "forest", "heritage", "sunset", "sage", "sand", "luxury", "ocean", "peacock", "ivory"],
+  store: ["sunset", "clean", "lemon", "terracotta", "mono", "ocean", "sage", "charcoal", "saffron", "cobalt"],
+  tech: ["techno", "volt", "neon", "cobalt", "charcoal", "mono", "slate", "black", "clean", "crimson"],
+  pharmacy: ["pharma", "clinic", "mint", "ocean", "clean", "sage", "slate", "fresh", "pro", "cobalt"],
+  grocery: ["grocer", "fresh", "saffron", "lemon", "terracotta", "dhaba", "mint", "sunset", "sage", "marigold"],
+  hardware: ["steel", "trade", "charcoal", "energy", "lemon", "cobalt", "slate", "crimson", "mono", "clean"],
+  agri: ["kisan", "harvest", "fresh", "forest", "saffron", "sage", "terracotta", "sand", "mint", "lemon"],
+  books: ["notebook", "paper", "lemon", "mint", "cobalt", "lilac", "sunset", "mono", "crayon", "ocean"],
+  optical: ["optic", "mono", "slate", "ivory", "ocean", "studio", "clean", "cobalt", "luxury", "sand"],
+  pets: ["paws", "playful", "sunny", "mint", "sunset", "lemon", "sage", "blossom", "ocean", "terracotta"],
+  wholesale: ["depot", "pro", "slate", "charcoal", "cobalt", "trade", "mono", "clean", "navy", "ocean"],
 } satisfies Record<string, ThemeId[]>;
 export type Mood = keyof typeof MOODS;
 export function ten(mood: Mood, ...own: ThemeId[]): Theme[] {
