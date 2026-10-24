@@ -50,9 +50,9 @@ export function shareHtml(m: ShareMeta): string {
 const ghHeaders = (token: string) => ({ Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "User-Agent": "ezyourlife-share" });
 const b64 = (text: string) => { const bytes = new TextEncoder().encode(text); let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b))); return btoa(bin); };
 
-/** Creates or replaces one file in the share repo. create-only skips files that already exist. */
-async function putFile(token: string, path: string, content: string, message: string, createOnly = false) {
-  const api = `https://api.github.com/repos/${repo()}/contents/${path}`;
+/** Creates or replaces one file in a repo (the share repo unless named). create-only skips files that already exist. */
+async function putFile(token: string, path: string, content: string, message: string, createOnly = false, inRepo = repo()) {
+  const api = `https://api.github.com/repos/${inRepo}/contents/${path}`;
   const cur = await fetch(api, { headers: ghHeaders(token) });
   if (cur.ok && createOnly) return;
   const sha = cur.ok ? (await cur.json()).sha : undefined;
@@ -79,10 +79,89 @@ async function ensureSiteFiles(token: string) {
   siteReady = true;
 }
 
-/** Writes (or updates) one share page. Returns its public URL, or null when not configured. */
+// Page sites. With PAGES_ORG set, each published page gets its own GitHub repo, served by GitHub Pages
+// at <slug>.ezyourlife.com (a wildcard CNAME at the DNS points there). Its one HTML file carries the
+// page's own preview tags and shows the live page from ezyourlife.com full screen, so forms and buttons
+// work as on the site. The token then needs Administration, Contents and Pages (read and write) on
+// that organisation. Names with their own DNS records are never used. Keep this list in step with
+// the DNS at Hostinger.
+const PAGE_ROOT = "ezyourlife.com";
+const RESERVED = new Set([
+  "www", "share", "api", "app", "mail", "email", "ftp", "admin", "blog", "shop", "status", "cdn", "static", "m",
+  "abhijay", "tracker", "libertywow", "libertyreview", "linkdeinscraper", "buildtogether", "pimizzhaar", "aeroiq",
+  "kalyanerp", "libertypdp", "mailbrain", "kalyan", "sharkcrm", "libertyvmtool", "contentintelligence",
+  "harshal-atika-wadrobe", "thankyoudad",
+]);
+const pagesOrg = () => Deno.env.get("PAGES_ORG") ?? "";
+export const pageSiteOk = (slug: string) => !!pagesOrg() && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug) && !RESERVED.has(slug);
+
+export function pageSiteHtml(m: ShareMeta): string {
+  const host = `${m.slug}.${PAGE_ROOT}`;
+  const frame = `https://${PAGE_ROOT}/p/${encodeURIComponent(m.slug)}?site=1`;
+  const img = m.image || DEFAULT_IMAGE;
+  const t = esc(m.title.slice(0, 120)), d = esc(m.description.slice(0, 300));
+  return `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${t}</title>
+<meta name="description" content="${d}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${t}">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${d}">
+<meta property="og:url" content="https://${host}/">
+<meta property="og:image" content="${esc(img)}">
+<meta property="og:image:secure_url" content="${esc(img)}">
+<meta property="og:image:alt" content="${t}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${t}">
+<meta name="twitter:description" content="${d}">
+<meta name="twitter:image" content="${esc(img)}">
+<meta name="robots" content="${m.indexable ? "index,follow" : "noindex,nofollow"}">
+<link rel="canonical" href="https://${host}/">
+<link rel="icon" href="https://${PAGE_ROOT}/favicon.png">
+<style>html,body{margin:0;height:100%;background:#fff}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>
+</head><body>
+<iframe src="${esc(frame)}" title="${t}" allow="clipboard-write; web-share; geolocation; fullscreen"></iframe>
+<noscript><p><a href="${esc(frame)}">Open ${t}</a></p></noscript>
+</body></html>`;
+}
+
+const gh = (token: string, path: string, init: RequestInit = {}) =>
+  fetch(`https://api.github.com${path}`, { ...init, headers: { ...ghHeaders(token), "Content-Type": "application/json", ...(init.headers ?? {}) } });
+
+/** Creates the page's repo and GitHub Pages site the first time, then writes its HTML. Returns its address. */
+async function writePageSite(token: string, m: ShareMeta): Promise<string> {
+  const org = pagesOrg(), name = `page-${m.slug}`, full = `${org}/${name}`, host = `${m.slug}.${PAGE_ROOT}`;
+  const exists = await gh(token, `/repos/${full}`);
+  if (exists.status === 404) {
+    const r = await gh(token, `/orgs/${org}/repos`, { method: "POST", body: JSON.stringify({ name, private: false, auto_init: true, description: `${m.title.slice(0, 80)} · made with EZYOURLIFE`, homepage: `https://${host}/`, has_issues: false, has_wiki: false, has_projects: false }) });
+    if (!r.ok && r.status !== 422) throw new Error(`GitHub repo ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  } else if (!exists.ok) throw new Error(`GitHub repo ${exists.status}`);
+  await putFile(token, "CNAME", host + "\n", "Page domain", true, full);
+  await putFile(token, ".nojekyll", "", "Serve files as they are", true, full);
+  await putFile(token, "index.html", pageSiteHtml(m), `Page: ${m.slug}`, false, full);
+  const pages = await gh(token, `/repos/${full}/pages`);
+  if (pages.status === 404) {
+    const r = await gh(token, `/repos/${full}/pages`, { method: "POST", body: JSON.stringify({ source: { branch: "main", path: "/" } }) });
+    if (!r.ok && r.status !== 409) throw new Error(`GitHub Pages ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    await gh(token, `/repos/${full}/pages`, { method: "PUT", body: JSON.stringify({ cname: host }) });
+  } else if (pages.ok && !(await pages.json()).https_enforced) {
+    // GitHub can only force HTTPS once its certificate for the subdomain is ready (minutes to an hour).
+    await gh(token, `/repos/${full}/pages`, { method: "PUT", body: JSON.stringify({ cname: host, https_enforced: true }) });
+  }
+  return `https://${host}/`;
+}
+
+/** Writes (or updates) one share page. Returns its public URL, or null when not configured.
+ *  With page sites on, that is the page's own subdomain; if that fails, the share page as before. */
 export async function writeSharePage(m: ShareMeta): Promise<string | null> {
   const token = Deno.env.get("GITHUB_SHARE_TOKEN");
   if (!token) return null;
+  if (!m.path && pageSiteOk(m.slug)) {
+    try { return await writePageSite(token, m); } catch (e) { console.warn("page site", m.slug, e); }
+  }
   await ensureSiteFiles(token).catch((e) => console.warn("share site files", e));
   await putFile(token, `${m.path ?? `p/${m.slug}`}/index.html`, shareHtml(m), `Share page: ${m.path ?? m.slug}`);
   return `${shareBase()}/${m.path ?? `p/${m.slug}`}/`;
