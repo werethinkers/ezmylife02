@@ -24,4 +24,8 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/admin/developer-apps", page: lazy(() => import("./pages/AdminRedirect")), signedIn: true },
   { path: "/mail-brain", page: lazy(() => import("./pages/MailDesk")), signedIn: true },
   { path: "/mail-desk", page: lazy(() => import("./pages/MailDeskRedirect")) },
+  { path: "/business", page: lazy(() => import("./pages/business/BusinessHome")) },
+  { path: "/business/app", page: lazy(() => import("./pages/business/BusinessApp")) },
+  { path: "/business/print/:billId", page: lazy(() => import("./pages/business/BusinessPrint")) },
+  { path: "/b/:slug", page: lazy(() => import("./pages/business/PublicSite")) },
 ];

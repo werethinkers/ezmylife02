@@ -68,6 +68,17 @@ export const SITE_PAGES: SitePage[] = [
     links: MAIN_LINKS,
   },
   {
+    path: "/business",
+    title: "My Business: orders, bills, stock and GST in one tab",
+    description: "Free business app for shops and services in India. Enter an order once: bill, advance, stock, books, GST and WhatsApp reminders are done for you.",
+    h1: "Your whole business, in one tab",
+    text: [
+      "My Business on EZYOURLIFE runs a shop or service from one screen: orders and appointments, bills, payments and dues, stock and recipes, purchases, expenses, staff attendance and pay, GST, reminders and a website.",
+      "Pick your business from 99 types, from a sabzi thela and kirana store to a salon, clinic, bakery or startup. Entering your data is free, and messages go from your own WhatsApp.",
+    ],
+    links: [["Studios", "/studios"], ...MAIN_LINKS],
+  },
+  {
     path: "/creators",
     title: "Earn as a creator: free website and commission on every sale",
     description: "Creators get a free website and visiting card, their own link to the ₹999 business kit, and commission on every sale, with a live dashboard of clicks and buyers.",
