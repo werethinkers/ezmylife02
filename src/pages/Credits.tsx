@@ -111,6 +111,22 @@ const Credits = () => {
       setCouponBusy(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
+      // Visiting-card codes look like K7M2-9XQP-4TRD and have their own claim function.
+      if (/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/.test(couponCode.trim())) {
+        const { data: card, error: cardErr } = await supabase.functions.invoke("claim-card-promo", {
+          body: { code: couponCode.trim() },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (cardErr) throw cardErr;
+        if (card?.ok) {
+          toast({ title: "Card claimed", description: `${card.credits} gift credits added. Each app can use them ${card.per_app_limit} times.` });
+          setCouponCode("");
+          await refreshWallet();
+        } else {
+          toast({ title: "Card not claimed", description: card?.message || "Could not claim", variant: "destructive" });
+        }
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("redeem-coupon", {
         body: { coupon_code: couponCode },
         headers: { Authorization: `Bearer ${session.access_token}` },

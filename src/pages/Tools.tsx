@@ -10,7 +10,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppCountLabel } from "@/lib/appCount";
-import { GOALS, KIND_TEXT, byCategoryOrder, categoriesOf, categoryInfo, goalById, type GoalId } from "@/data/goals";
+import { GOALS_WITH_MORE, KIND_TEXT, byCategoryOrder, categoriesOf, categoryInfo, goalById, type GoalId } from "@/data/goals";
 import { hasTag, tagCounts } from "@/lib/catalogTags";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { Shelf } from "@/components/store/Shelf";
@@ -74,7 +74,7 @@ const Tools = () => {
   // Goals in display order, each with its categories (admin order first, then largest).
   const goals = useMemo(
     () =>
-      GOALS.map((g) => ({
+      GOALS_WITH_MORE.map((g) => ({
         goal: g,
         cats: [...byCategory.entries()]
           .filter(([c]) => categoryInfo(c).goal === g.id)

@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface Wallet {
   free: number;
   paid: number;
+  /** Card-promo credits: spent first, a few uses per app. */
+  promo: number;
   total: number;
   last_reset: string | null;
   signup_bonus_granted: boolean;
@@ -13,9 +15,11 @@ export interface Wallet {
 
 async function fetchWallet(userId: string): Promise<Wallet> {
   // Direct DB read first (RLS-protected; works without the edge function call).
-  const { data } = await supabase
+  // promo_balance is newer than the generated database types, so read the row untyped.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
     .from("credit_wallets")
-    .select("free_balance, paid_balance, last_free_reset_at, signup_bonus_granted, first_action_bonus_granted")
+    .select("free_balance, paid_balance, promo_balance, last_free_reset_at, signup_bonus_granted, first_action_bonus_granted")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -23,7 +27,8 @@ async function fetchWallet(userId: string): Promise<Wallet> {
     return {
       free: data.free_balance,
       paid: data.paid_balance,
-      total: data.free_balance + data.paid_balance,
+      promo: data.promo_balance ?? 0,
+      total: data.free_balance + data.paid_balance + (data.promo_balance ?? 0),
       last_reset: data.last_free_reset_at,
       signup_bonus_granted: data.signup_bonus_granted,
       first_action_bonus_granted: data.first_action_bonus_granted,
@@ -38,6 +43,7 @@ async function fetchWallet(userId: string): Promise<Wallet> {
   return {
     free: w?.free ?? 0,
     paid: w?.paid ?? 0,
+    promo: w?.promo ?? 0,
     total: w?.total ?? 0,
     last_reset: w?.last_reset ?? null,
     signup_bonus_granted: !!w?.signup_bonus_granted,
@@ -58,6 +64,7 @@ export function useWallet() {
     wallet: q.data,
     free: q.data?.free ?? 0,
     paid: q.data?.paid ?? 0,
+    promo: q.data?.promo ?? 0,
     total: q.data?.total ?? 0,
     isLoading: authLoading || (!!user && q.isLoading),
     refetch: q.refetch,

@@ -101,3 +101,6 @@ verify_jwt = false
 # Mail Desk checks the signed-in user itself; Google's redirect back to it has no sign-in token.
 [functions.mail-desk]
 verify_jwt = false
+
+[functions.claim-card-promo]
+verify_jwt = false

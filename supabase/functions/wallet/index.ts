@@ -27,7 +27,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       free: w?.free_balance ?? 0,
       paid: w?.paid_balance ?? 0,
-      total: (w?.free_balance ?? 0) + (w?.paid_balance ?? 0),
+      promo: w?.promo_balance ?? 0,
+      total: (w?.free_balance ?? 0) + (w?.paid_balance ?? 0) + (w?.promo_balance ?? 0),
       last_reset: w?.last_free_reset_at ?? null,
       signup_bonus_granted: !!w?.signup_bonus_granted,
       first_action_bonus_granted: !!w?.first_action_bonus_granted,

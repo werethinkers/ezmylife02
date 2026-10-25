@@ -1,7 +1,7 @@
 // ProductVision 360 — generates product angles in-house with Gemini image model
 // using our rotating GEMINI_API_KEY secrets. Validates the caller's JWT.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, promoRunsAffordable, startRun, walletBalance } from "../_shared/billing.ts";
 
 // Each generated angle is one AI image (about ₹3.3 at Google's list price), charged per successful
 // angle on the server by the 3x cost rule (docs/pricing.md). Failed angles cost nothing.
@@ -122,9 +122,11 @@ serve(async (req) => {
     // Free credits pay for at most a few AI images per person (image_runs_affordable in the database),
     // so count the angles this wallet can really pay for before any image is made.
     const balance = await walletBalance(ud.user.id);
-    const affordable = await imageRunsAffordable(ud.user.id, perAngle);
+    // Card-promo credits pay for a few angles on top (limited uses per app).
+    const promoRuns = await promoRunsAffordable(ud.user.id, ANGLE_TOOL, perAngle);
+    const affordable = (await imageRunsAffordable(ud.user.id, perAngle)) + promoRuns;
     if (affordable < angles.length) {
-      const freeCapped = affordable < Math.floor(balance / perAngle);
+      const freeCapped = affordable < Math.floor(balance / perAngle) + promoRuns;
       return new Response(JSON.stringify({
         error: "insufficient_credits",
         credits_required: perAngle * angles.length,

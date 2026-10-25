@@ -9,7 +9,7 @@
 //  • Each item's output is stored as it finishes; the ZIP is assembled at the end.
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { corsHeaders, json } from "../_shared/http.ts";
-import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, startRun, walletBalance } from "../_shared/billing.ts";
+import { ensurePrice, finishRun, FREE_IMAGE_LIMIT, identify, imageRunsAffordable, priceOf, promoRunsAffordable, startRun, walletBalance } from "../_shared/billing.ts";
 import { image } from "../_shared/llm.ts";
 import { notifyTaskDone } from "../_shared/notify.ts";
 
@@ -280,9 +280,11 @@ Deno.serve(async (req) => {
       const count = Array.isArray(job.input_manifest) ? job.input_manifest.length : 0;
       const balance = await walletBalance(caller.userId as string);
       // AI images: free credits pay for only a few per person, so count what this wallet can really pay for.
-      const affordable = price.image ? await imageRunsAffordable(caller.userId as string, each) : Math.floor(balance / each);
+      // Card-promo credits add a few runs per app on top (not a whole batch of them).
+      const promoRuns = await promoRunsAffordable(caller.userId as string, price.tool, each);
+      const affordable = (price.image ? await imageRunsAffordable(caller.userId as string, each) : Math.floor(balance / each)) + promoRuns;
       if (affordable < count) {
-        const why = price.image && affordable < Math.floor(balance / each)
+        const why = price.image && affordable < Math.floor(balance / each) + promoRuns
           ? `Free credits cover ${FREE_IMAGE_LIMIT} AI images per person, so ${count} files need ${each * count} bought credits (${each} each); you can do ${affordable} now.`
           : `${count} files need ${each * count} credits (${each} each). You have ${balance}.`;
         await patchJob(job.id, { status: "failed", error_message: `${why} Nothing was charged.` });

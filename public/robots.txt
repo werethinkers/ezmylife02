@@ -2,6 +2,7 @@
 # Do not add a group for a single bot: a bot that has its own group ignores every rule in this one.
 User-agent: *
 Allow: /
+Disallow: /card/
 Disallow: /admin
 Disallow: /auth/callback
 Disallow: /profile

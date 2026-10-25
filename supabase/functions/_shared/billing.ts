@@ -105,6 +105,18 @@ export async function imageRunsAffordable(userId: string, perRun: number): Promi
   }
 }
 
+/**
+ * How many runs of `toolId` (at `perRun` credits) the person's card-promo credits can pay for in full.
+ * Promo credits are limited to a few uses per app (see 20261025100000_card_promos.sql).
+ */
+export async function promoRunsAffordable(userId: string, toolId: string, perRun: number): Promise<number> {
+  try {
+    return await rpc<number>("promo_runs_affordable", { _uid: userId, _tool_id: toolId, _per: perRun });
+  } catch {
+    return 0; // Database function not there yet: no promo credits.
+  }
+}
+
 /** Credit price of an app, or null when it has no pricing row. */
 export async function priceOf(toolId: string): Promise<number | null> {
   const r = await fetch(

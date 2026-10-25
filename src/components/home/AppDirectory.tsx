@@ -6,7 +6,7 @@ import { usePricingMap } from "@/hooks/usePricingMap";
 import { useProducts, type Listed } from "@/instant/useProducts";
 import { CATEGORIES as DESIGN_CATEGORIES } from "@/instant/catalog";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
-import { GOALS, byCategoryOrder, categoriesOf, categoryInfo } from "@/data/goals";
+import { GOALS_WITH_MORE, byCategoryOrder, categoriesOf, categoryInfo } from "@/data/goals";
 import { useQuickLook } from "@/components/store/QuickLook";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -100,7 +100,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       };
     };
 
-    const appBlocks: Block[] = GOALS.map((g) => ({
+    const appBlocks: Block[] = GOALS_WITH_MORE.map((g) => ({
       id: g.id,
       name: g.name,
       line: g.line,
@@ -121,7 +121,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       name: l.product.name,
       to: `/make/${l.product.id}`,
       price: l.price ? `₹${l.price} once` : "Free",
-      text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category}`.toLowerCase(),
+      text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase(),
     });
 
     const designBlock: Block = {

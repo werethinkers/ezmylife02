@@ -27,6 +27,13 @@ export const GOALS: Goal[] = [
   { id: "more", name: "More apps", line: "Everything else in the store.", color: "hsl(var(--coral))" },
 ];
 
+/**
+ * Where apps go when their category belongs to no goal (a category made in admin without one, or a typo).
+ * Lists add it as a last section, so no app is ever hidden from the category view.
+ */
+export const MORE_GOAL: Goal = { id: "more", name: "More apps", line: "Everything else we have.", color: "hsl(var(--card))" };
+export const GOALS_WITH_MORE: Goal[] = [...GOALS, MORE_GOAL];
+
 /** How an app opens: on the same page, or as a full-screen workspace. */
 export type AppKind = "quick" | "photo" | "document" | "sheet" | "file";
 
@@ -176,7 +183,7 @@ export function giveGetFor(
   return { give: info.give, get: info.get };
 }
 export const goalOf = (category?: string | null): Goal => GOALS.find((g) => g.id === categoryInfo(category).goal)!;
-export const goalById = (id?: string | null): Goal | undefined => GOALS.find((g) => g.id === id);
+export const goalById = (id?: string | null): Goal | undefined => GOALS_WITH_MORE.find((g) => g.id === id);
 
 /** Engine type from the app registry → how it opens. */
 export const KIND_BY_ENGINE: Record<string, AppKind> = {
