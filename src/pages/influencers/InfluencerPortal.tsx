@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import KitPicker from "./KitPicker";
+import { isDemoAccount, demoOverlay } from "./demoData";
 import { EarningsEstimate } from "@/components/earn/EarningsEstimate";
 
 // influencer_me() from 20261012170000_influencer_login.sql. It returns only the
@@ -49,6 +51,20 @@ function SignIn() {
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const qc = useQueryClient();
+
+  // Google sign-in. The shared /auth/callback page finishes the sign-in and sends
+  // the creator back here because of auth_redirect_to.
+  const google = async () => {
+    setBusy(true);
+    try { localStorage.setItem("auth_redirect_to", "/influencer"); } catch { /* storage blocked */ }
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/auth/callback`,
+    });
+    if (error) {
+      setBusy(false);
+      toast({ title: "Could not sign in with Google", description: error.message, variant: "destructive" });
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +118,18 @@ function SignIn() {
         {mode === "up" && (
           <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={60} />
         )}
+        <Button type="button" variant="outline" disabled={busy} onClick={google} className="w-full border-2 border-[#121212] bg-white font-semibold">
+          <svg className="mr-2 h-4 w-4" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/>
+            <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/>
+            <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+          </svg>
+          Continue with Google
+        </Button>
+        <div className="flex items-center gap-3 text-xs text-neutral-500" aria-hidden="true">
+          <span className="h-px flex-1 bg-neutral-300" /> or use email <span className="h-px flex-1 bg-neutral-300" />
+        </div>
         <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Input type="password" placeholder={mode === "up" ? "Choose a password (8+ characters)" : "Password"} value={password}
                onChange={(e) => setPassword(e.target.value)} required minLength={mode === "up" ? 8 : undefined} />
@@ -329,7 +357,8 @@ export default function InfluencerPortal() {
   if (me.isLoading) return <div className="p-8">Loading your dashboard…</div>;
   if (me.error) return <div className="p-8 text-red-700">{(me.error as Error).message}</div>;
 
-  const d = me.data;
+  const demo = isDemoAccount(user.email);
+  const d = demo && me.data?.ok ? demoOverlay(me.data) : me.data;
   if (!d?.ok) {
     const meta = (user.user_metadata ?? {}) as { full_name?: string };
     return <Register email={user.email} defaultName={meta.full_name ?? ""} />;
@@ -357,6 +386,7 @@ export default function InfluencerPortal() {
               Your Ezyourlife creator page
               {d.status === "active" ? ` · ${d.commission_pct}% commission on every sale` : ""}
               {d.status !== "active" && d.status !== "paused" && <span className="font-bold"> · campaign {d.status}</span>}
+              {demo && <span className="font-bold"> · demo numbers</span>}
             </p>
           </div>
           <Button variant="outline" className="border-2 border-[#121212]" onClick={() => supabase.auth.signOut()}>
