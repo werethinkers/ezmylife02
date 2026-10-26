@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download, Megaphone, PackageCheck, Undo2, ListChecks, Store, Gift } from "lucide-react";
+import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download, Megaphone, PackageCheck, Undo2, ListChecks, Store, Gift, Mail } from "lucide-react";
+import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import DataExport from "@/components/admin/DataExport";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import AdminSeoIndexing from "@/components/admin/AdminSeoIndexing";
@@ -76,6 +77,8 @@ const AdminDashboard = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [creditsSold, setCreditsSold] = useState<CreditsSold>({ credits: 0, inr_amount: 0 });
+  // Paid website and card orders (ip_orders), split by what was bought.
+  const [designSales, setDesignSales] = useState({ websites: { count: 0, inr: 0 }, cards: { count: 0, inr: 0 } });
   // The open section lives in the address (/admin?tab=influencers) so every admin screen has a link you can share or bookmark.
   const [searchParams, setSearchParams] = useSearchParams();
   const fromUrl = searchParams.get("tab") as TabId | null;
@@ -106,11 +109,23 @@ const AdminDashboard = () => {
   }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
-    const [logsRes, profilesRes, purchasesRes] = await Promise.all([
+    const [logsRes, profilesRes, purchasesRes, ordersRes, productsRes] = await Promise.all([
       supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("credit_purchases").select("credits, inr_amount").eq("status", "paid"),
+      supabase.from("ip_orders").select("product_id, inr_amount").eq("status", "paid"),
+      supabase.from("ip_products").select("id, category"),
     ]);
+    if (ordersRes.data) {
+      const categoryOf = new Map((productsRes.data ?? []).map((p) => [p.id, p.category]));
+      const sales = { websites: { count: 0, inr: 0 }, cards: { count: 0, inr: 0 } };
+      for (const o of ordersRes.data) {
+        const bucket = (WEBSITE_CATEGORIES as readonly string[]).includes(categoryOf.get(o.product_id) ?? "") ? sales.websites : sales.cards;
+        bucket.count += 1;
+        bucket.inr += o.inr_amount || 0;
+      }
+      setDesignSales(sales);
+    }
     if (logsRes.data) setLogs(logsRes.data as ActivityLog[]);
     if (profilesRes.data) setProfiles(profilesRes.data as Profile[]);
     if (purchasesRes.data) {
@@ -259,10 +274,12 @@ const AdminDashboard = () => {
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
         {isViewOnly && <p className="text-sm text-muted-foreground mb-6">View-only access</p>}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[
             { label: "Total Users", value: stats.totalUsers, icon: Users },
             { label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
+            { label: "Websites Sold", value: `${designSales.websites.count} (₹${designSales.websites.inr})`, icon: Globe },
+            { label: "Cards Sold", value: `${designSales.cards.count} (₹${designSales.cards.inr})`, icon: Mail },
             { label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
           ].map(s => (
             <Card key={s.label}>
