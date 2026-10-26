@@ -6,7 +6,7 @@ import { PricePill } from "./PricePill";
 import { useQuickLook } from "./QuickLook";
 import { cn } from "@/lib/utils";
 import { STUDIO_IDS } from "@/data/studios";
-import { StudioThumb } from "./StudioThumb";
+import { GiveGetStrip, StepsBand } from "./GiveGetStrip";
 
 /**
  * Large app card in the Setapp style: icon and name, what you get, the price pill, and the
@@ -51,33 +51,30 @@ export function AppTile({
         className,
       )}
     >
-      <div className="flex items-center gap-3.5 px-5 pt-5">
-        <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="md" className="rounded-2xl" />
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-lg font-bold leading-tight">{tool.name}</p>
-          <p className="mt-0.5 truncate text-[13px] font-medium text-ink/70">{STUDIO_IDS.has(tool.id) ? `Studio · ${goal.name}` : goal.name}</p>
-        </div>
-      </div>
-      <p className="line-clamp-3 min-h-[4.2rem] px-5 pt-3.5 text-[15px] leading-snug text-ink/85">You get {info.get}.</p>
-      <div className="flex items-center gap-2.5 px-5 pb-5 pt-3.5">
-        <span className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-card/60 px-4 text-sm font-bold transition-colors group-hover:bg-card">See what it does</span>
-        <PricePill toolId={tool.id} />
-      </div>
-      <div className="relative mt-auto ml-6 aspect-[16/9] overflow-hidden rounded-tl-2xl border-2 border-b-0 border-r-0 border-ink bg-card transition-transform duration-200 group-hover:-translate-y-2">
-        {media.previewImageUrl ? (
-          <img
-            src={media.previewImageUrl}
-            alt={`${tool.name}: what the app looks like`}
-            loading="lazy"
-            className={cn("h-full w-full", media.previewFit === "contain" ? "object-contain" : "object-cover")}
-          />
-        ) : STUDIO_IDS.has(tool.id) ? (
-          <StudioThumb toolId={tool.id} name={tool.name} />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-card">
-            <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="lg" className="shadow-block-sm" />
+      {media.previewImageUrl ? (
+        <img
+          src={media.previewImageUrl}
+          alt={`${tool.name}: what the app looks like`}
+          loading="lazy"
+          className={cn("aspect-[16/9] w-full border-b-2 border-ink bg-card", media.previewFit === "contain" ? "object-contain" : "object-cover")}
+        />
+      ) : (
+        <StepsBand give={info.give} get={info.get} color={goal.color} />
+      )}
+      <div className="flex flex-1 flex-col gap-2.5 px-4 pb-4 pt-3.5">
+        <div className="flex items-center gap-3">
+          <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="sm" className="rounded-xl" />
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-[17px] font-bold leading-tight">{tool.name}</p>
+            <p className="mt-0.5 truncate text-[12.5px] font-medium text-ink/70">{STUDIO_IDS.has(tool.id) ? `Studio · ${goal.name}` : goal.name}</p>
           </div>
-        )}
+        </div>
+        <p className="line-clamp-2 min-h-[2.6rem] text-[14.5px] leading-snug text-ink/85">{tool.description || `You get ${info.get}.`}</p>
+        {media.previewImageUrl && <GiveGetStrip give={info.give} get={info.get} />}
+        <div className="mt-auto flex items-center gap-2.5 pt-1">
+          <span className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-card/60 px-4 text-sm font-bold transition-colors group-hover:bg-card">See what it does</span>
+          <PricePill toolId={tool.id} />
+        </div>
       </div>
     </div>
   );

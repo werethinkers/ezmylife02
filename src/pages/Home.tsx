@@ -218,7 +218,7 @@ const Home = () => {
             </ul>
           </div>
 
-          <div className="min-w-0 lg:col-span-5">
+          <div className="hidden min-w-0 md:block lg:col-span-5">
             <HeroPicker catalog={catalog} />
           </div>
         </section>
@@ -291,6 +291,11 @@ const Home = () => {
                 ))}
               </Shelf>
             </Section>
+
+            {/* ───────── Websites and cards ───────── */}
+            <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
+              <HomeMakeShelves />
+            </Suspense>
 
             {/* ───────── Shelves ───────── */}
             <div className="mx-auto max-w-7xl space-y-12 px-4 py-10">
@@ -371,11 +376,6 @@ const Home = () => {
             <Section title="App bundles" line="A few apps that work well together, for one job.">
               <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={null} />
             </Section>
-
-            {/* ───────── Websites and cards ───────── */}
-            <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
-              <HomeMakeShelves />
-            </Suspense>
 
             {/* ───────── Earn with us ───────── */}
             <Section id="earn" title="Earn with Ezyourlife" line="Two ways to earn from what you already have: your followers, or an app you built.">

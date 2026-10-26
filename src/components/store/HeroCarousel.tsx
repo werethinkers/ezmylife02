@@ -138,8 +138,14 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
                 ))}
               </div>
             ) : (
-              <div className="mt-5 self-end overflow-hidden rounded-tl-[20px] border-[3px] border-b-0 border-r-0 border-ink bg-card md:mt-10 md:ml-2.5">
-                {s.image && <img src={s.image} alt={`${s.title}: what the app looks like`} className="aspect-[16/9] w-full object-cover" />}
+              <div className="grid place-items-center p-5 md:p-7">
+                {s.image && (
+                  <img
+                    src={s.image}
+                    alt={`${s.title}: what the app looks like`}
+                    className="aspect-[16/9] w-full rounded-2xl border-[3px] border-ink bg-card object-cover shadow-[4px_4px_0_0_hsl(var(--ink))] md:rotate-1 md:shadow-[5px_5px_0_0_hsl(var(--ink))]"
+                  />
+                )}
               </div>
             )}
           </Link>

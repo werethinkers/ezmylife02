@@ -114,11 +114,17 @@ export const COLLECTIONS: Collection[] = [
 ];
 
 /** "Try it in 3 taps" — one real app per everyday task. */
-export const QUICK_TASKS: Array<{ label: string; toolId: string }> = [
+/** `design` rows are a website or card design (opens its /make page); the rest are apps. */
+export const QUICK_TASKS: Array<{ label: string; toolId: string; design?: { name: string } }> = [
   { label: "Remove a background", toolId: "remove-background" },
   { label: "Analyse a startup", toolId: "startup-analyser" },
   { label: "Write a social post", toolId: "social-post-generator" },
   { label: "Make a passport photo", toolId: "passport-photo-maker" },
   { label: "Draft a contract", toolId: "tool-6" },
   { label: "Turn notes into a quiz", toolId: "quiz-maker" },
+  { label: "Write an ebook", toolId: "ebook-writer" },
+  { label: "Work out an EMI", toolId: "emi-calculator" },
+  { label: "Make a carousel", toolId: "carousel-studio" },
+  { label: "Make a cafe menu website", toolId: "cafe-menu", design: { name: "Cafe menu website" } },
+  { label: "Send a birthday invite", toolId: "birthday-party", design: { name: "Birthday party card" } },
 ];
