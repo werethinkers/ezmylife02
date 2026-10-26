@@ -148,12 +148,6 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
       <PageSeo {...seoFor(copy.path, "")} />
       <Navbar section={kind ?? null} />
 
-      {!filtered && spotlight.length >= 3 && (
-        <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-6 md:pt-8">
-          <HeroCarousel slides={spotlight} label="Designs to start with" />
-        </div>
-      )}
-
       <header className="mx-auto max-w-7xl px-4 pt-6 md:pt-10">
         <div className="rounded-3xl border-2 border-ink p-5 shadow-block-lg md:p-8" style={{ background: copy.color }}>
           <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">
@@ -176,6 +170,11 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
         )}
       </header>
 
+      {!filtered && spotlight.length >= 3 && (
+        <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-8">
+          <HeroCarousel slides={spotlight} label="Designs to start with" />
+        </div>
+      )}
 
       {!filtered && featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-10" aria-labelledby="pop-h">

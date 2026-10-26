@@ -126,12 +126,6 @@ const Studios = () => {
       <Navbar />
 
       <main>
-        {spotlightSlides.length >= 3 && (
-          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-6 md:pt-8">
-            <HeroCarousel slides={spotlightSlides} label="Studios to start with" />
-          </div>
-        )}
-
         <header className="mx-auto max-w-7xl px-4 pt-8 md:pt-12">
           <div className="relative grid gap-8 overflow-hidden rounded-[2rem] border-2 border-ink bg-pink p-6 shadow-block-lg md:grid-cols-[1.3fr_1fr] md:p-12">
             <motion.span aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-ink bg-sun" animate={{ y: [0, 10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
@@ -174,6 +168,11 @@ const Studios = () => {
           </div>
         </header>
 
+        {spotlightSlides.length >= 3 && (
+          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-8">
+            <HeroCarousel slides={spotlightSlides} label="Studios to start with" />
+          </div>
+        )}
 
         <nav aria-label="Studio groups" className="sticky top-0 z-30 mt-6 border-y-2 border-ink bg-cream/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl gap-2.5 overflow-x-auto px-4 py-3 no-scrollbar">
