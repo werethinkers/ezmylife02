@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useProducts } from "@/instant/useProducts";
 import { ProductCard } from "@/components/instant/ProductCard";
+import { Shelf } from "@/components/store/Shelf";
 import { Button } from "@/components/ui/button";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
@@ -23,11 +24,11 @@ export default function HomeMakeShelves() {
             <Link to={to}>See all</Link>
           </Button>
         </div>
-        <div className="-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-4 pt-1 no-scrollbar md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 lg:grid-cols-4">
+        <Shelf>
           {items.map((l) => (
-            <ProductCard key={l.product.id} l={l} className="w-[72%] shrink-0 snap-start sm:w-[44%] md:w-auto" />
+            <ProductCard key={l.product.id} l={l} />
           ))}
-        </div>
+        </Shelf>
       </section>
     );
 

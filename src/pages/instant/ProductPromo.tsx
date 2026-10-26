@@ -4,6 +4,8 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
+import { Shelf } from "@/components/store/Shelf";
+import { ProductCard } from "@/components/instant/ProductCard";
 import { Button } from "@/components/ui/button";
 import { getProduct } from "@/instant/catalog";
 import { GROUPS, groupOf } from "@/instant/catalog/groups";
@@ -118,27 +120,27 @@ export default function ProductPromo() {
         <p className="mt-3 text-sm text-muted-foreground">You see the full result before you pay. Sign in is asked only when you publish.</p>
       </section>
 
-      <main className="mx-auto grid max-w-5xl gap-14 px-4 py-10 pb-28">
+      <main className="mx-auto grid max-w-5xl gap-14 px-4 py-10 pb-28 [&>section]:min-w-0">
         <section aria-labelledby="feat-h">
           <h2 id="feat-h" className="text-2xl font-bold md:text-3xl">What you get</h2>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <Shelf className="mt-5">
             {promo.features.map((f) => (
-              <div key={f.title} className="block-card flex gap-4 p-5">
-                <span className="text-3xl" aria-hidden="true">{f.icon}</span>
-                <div><h3 className="font-body text-[17px] font-bold">{f.title}</h3><p className="mt-1 text-[15px] text-muted-foreground">{f.text}</p></div>
+              <div key={f.title} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
+                <span className="text-4xl" aria-hidden="true">{f.icon}</span>
+                <h3 className="font-body text-[18px] font-bold leading-snug">{f.title}</h3><p className="text-[15px] leading-relaxed text-muted-foreground">{f.text}</p>
               </div>
             ))}
-          </div>
+          </Shelf>
         </section>
 
         {product.themes.length > 1 && (
           <section aria-labelledby="style-h">
             <h2 id="style-h" className="text-2xl font-bold md:text-3xl">{product.themes.length} designs to choose from</h2>
             <p className="mt-2 text-muted-foreground">Each one changes the colours, fonts and layout. Tap one to see it live above.</p>
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <Shelf className="mt-5">
               {product.themes.map((t) => (
                 <button key={t.id} type="button" onClick={() => { setDesignId(t.id); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-pressed={t.id === theme.id}
-                  className={"overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block-sm transition-transform hover:-translate-y-0.5" + (t.id === theme.id ? " ring-4 ring-sun" : "")}>
+                  className={"w-[60%] shrink-0 snap-start overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block-sm transition-transform hover:-translate-y-0.5 sm:w-[30%] md:w-[23%]" + (t.id === theme.id ? " ring-4 ring-sun" : "")}>
                   <div className="relative flex h-24 items-end justify-between border-b-2 border-ink p-3" style={{ background: t.c.bg, color: t.c.tx }}>
                     <span className="text-2xl font-bold leading-none" style={{ fontFamily: t.f.d }}>Aa</span>
                     <span className="flex gap-1">{[t.c.ac, t.c.ac2, t.c.ac3].map((c) => <i key={c} className="h-4 w-4 rounded-full border-2 border-ink" style={{ background: c }} />)}</span>
@@ -146,20 +148,20 @@ export default function ProductPromo() {
                   <div className="flex items-center gap-2 px-3 py-2"><Swatch t={t} className="h-5 w-5" /><span className="min-w-0"><span className="block truncate text-sm font-semibold">{t.name}</span><span className="block text-xs text-muted-foreground">{styleLabel(t)}</span></span></div>
                 </button>
               ))}
-            </div>
+            </Shelf>
           </section>
         )}
 
         <section aria-labelledby="how-h">
           <h2 id="how-h" className="text-2xl font-bold md:text-3xl">How it works</h2>
-          <ol className="mt-6 grid gap-5 md:grid-cols-3">
+          <Shelf className="mt-5">
             {promo.steps.map(([t, d], i) => (
-              <li key={t} className="block-card p-5">
+              <div key={t} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
                 <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-sun font-display font-extrabold">{i + 1}</span>
-                <h3 className="mt-3 font-body text-[17px] font-bold">{t}</h3><p className="mt-1 text-[15px] text-muted-foreground">{d}</p>
-              </li>
+                <h3 className="font-body text-[18px] font-bold leading-snug">{t}</h3><p className="text-[15px] leading-relaxed text-muted-foreground">{d}</p>
+              </div>
             ))}
-          </ol>
+          </Shelf>
         </section>
 
         <section aria-labelledby="price-h" className="grid items-center gap-6 rounded-3xl border-2 border-ink bg-ink p-6 text-cream shadow-block-lg md:grid-cols-[1fr_auto] md:p-10">
@@ -172,28 +174,24 @@ export default function ProductPromo() {
 
         <section aria-labelledby="faq-h">
           <h2 id="faq-h" className="text-2xl font-bold md:text-3xl">Questions</h2>
-          <div className="mt-6 grid gap-3">
+          <Shelf className="mt-5">
             {promo.faqs.map(([q, a]) => (
-              <details key={q} className="group rounded-2xl border-2 border-ink bg-card p-5">
-                <summary className="flex cursor-pointer list-none justify-between gap-4 font-bold">{q}<span className="text-xl leading-none transition-transform group-open:rotate-45" aria-hidden="true">+</span></summary>
-                <p className="mt-3 text-muted-foreground">{a}</p>
-              </details>
+              <div key={q} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
+                <h3 className="font-body text-[17px] font-bold leading-snug">{q}</h3>
+                <p className="text-[15px] leading-relaxed text-muted-foreground">{a}</p>
+              </div>
             ))}
-          </div>
+          </Shelf>
         </section>
 
         {related.length > 0 && (
           <section aria-labelledby="rel-h">
             <h2 id="rel-h" className="text-2xl font-bold md:text-3xl">Other designs</h2>
-            <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {related.map(({ product: r, price: rp }) => (
-                <Link key={r.id} to={`/make/${r.id}`} className="block-card block-lift p-4">
-                  <span className="text-3xl" aria-hidden="true">{r.glyph}</span>
-                  <p className="mt-2 font-bold leading-tight">{r.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{rp ? `${inr(rp)} once` : "Free"}</p>
-                </Link>
+            <Shelf className="mt-5">
+              {related.map((r) => (
+                <ProductCard key={r.product.id} l={r} />
               ))}
-            </div>
+            </Shelf>
           </section>
         )}
       </main>

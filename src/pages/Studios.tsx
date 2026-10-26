@@ -7,17 +7,20 @@ import SEOFooter from "@/components/SEOFooter";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { Button } from "@/components/ui/button";
 import { AppTile } from "@/components/store/AppTile";
+import { Shelf } from "@/components/store/Shelf";
+import { HeroCarousel } from "@/components/store/HeroCarousel";
+import { useAppSlides } from "@/components/store/useAppSlides";
+import { APP_PREVIEW_IDS } from "@/data/previewManifest";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
 import { seoFor } from "@/lib/seo/pages";
-import { STUDIO_TABS } from "@/data/studios";
+import { STUDIO_TABS, studioTabOf } from "@/data/studios";
 import { SitesCta } from "@/components/sites/SitesCta";
 import { SiteTile } from "@/components/sites/SiteTile";
 import "./sitewatch/sitewatch.css";
 import { cn } from "@/lib/utils";
 
 const TAB_COLOURS = ["bg-pink", "bg-sun", "bg-teal", "bg-lime", "bg-sky", "bg-coral"];
-const FIRST = 6;
 const POPULAR = ["business-plan-studio", "resume-studio", "catalogue-photo-studio", "ai-headshot-studio", "income-tax-regime-planner", "home-interior-designer", "maa-ki-virasat"];
 
 /** Fades and lifts its children in once, as they scroll into view. */
@@ -50,11 +53,11 @@ function SitesGroup({ index }: { index: number }) {
             <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">1 studio, 2 coming soon</span>
           </div>
         </Reveal>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <SiteTile name="Site Watch" get="problems spotted, tasks sent and proof of work" to="/studios/site-watch" colour="bg-sky" accent="bg-sun" icon="sites" />
-          <SiteTile name="Site Attendance" get="who was on site, when, with proof" colour="bg-lime" accent="bg-pink" icon="build" soon />
-          <SiteTile name="Material Tracker" get="stock counts from photos" colour="bg-coral" accent="bg-sun" icon="roads" soon />
-        </div>
+        <Shelf>
+          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Site Watch" get="problems spotted, tasks sent and proof of work" to="/studios/site-watch" colour="bg-sky" accent="bg-sun" icon="sites" /></div>
+          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Site Attendance" get="who was on site, when, with proof" colour="bg-lime" accent="bg-pink" icon="build" soon /></div>
+          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Material Tracker" get="stock counts from photos" colour="bg-coral" accent="bg-sun" icon="roads" soon /></div>
+        </Shelf>
       </section>
       <SitesCta />
     </>
@@ -62,8 +65,6 @@ function SitesGroup({ index }: { index: number }) {
 }
 
 function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index: number; tools: CatalogTool[] }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? tools : tools.slice(0, FIRST);
   return (
     <section id={tab.id} className="scroll-mt-28 py-8 md:py-12">
       <Reveal>
@@ -75,26 +76,11 @@ function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index
         <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">{tools.length} studios</span>
       </div>
       </Reveal>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {shown.map((t, i) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.4, delay: (i % 3) * 0.06, ease: "easeOut" }}
-          >
-            <AppTile tool={t} layout="grid" />
-          </motion.div>
+      <Shelf>
+        {tools.map((t) => (
+          <AppTile key={t.id} tool={t} />
         ))}
-      </div>
-      {tools.length > FIRST && (
-        <div className="mt-5 text-center">
-          <Button variant="outline" onClick={() => setAll((v) => !v)}>
-            {all ? "Show fewer" : `Show all ${tools.length} in ${tab.label}`}
-          </Button>
-        </div>
-      )}
+      </Shelf>
     </section>
   );
 }
@@ -122,6 +108,10 @@ const Studios = () => {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [groups]);
+  const spotlightSlides = useAppSlides(
+    useMemo(() => [...popular, ...groups.flatMap((g) => g.tools)].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6), [popular, groups]),
+    (t) => studioTabOf(t.id)?.tab.label ?? "Studio",
+  );
   const total = groups.reduce((n, g) => n + g.tools.length, 0);
   const label = total >= 10 ? `${Math.floor(total / 10) * 10}+` : String(total);
 
@@ -178,6 +168,12 @@ const Studios = () => {
           </div>
         </header>
 
+        {spotlightSlides.length >= 3 && (
+          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-8">
+            <HeroCarousel slides={spotlightSlides} label="Studios to start with" />
+          </div>
+        )}
+
         <nav aria-label="Studio groups" className="sticky top-0 z-30 mt-6 border-y-2 border-ink bg-cream/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl gap-2.5 overflow-x-auto px-4 py-3 no-scrollbar">
             {groups.map((g) => (
@@ -213,11 +209,11 @@ const Studios = () => {
                 <h2 className="text-2xl font-extrabold md:text-3xl">Start with a favourite</h2>
                 <p className="mt-1 text-[16px] text-muted-foreground">The studios people open first.</p>
               </Reveal>
-              <div className="-mx-4 mt-6 flex snap-x gap-5 overflow-x-auto px-4 pb-4 no-scrollbar">
+              <Shelf className="mt-4">
                 {popular.map((t) => (
                   <AppTile key={t.id} tool={t} />
                 ))}
-              </div>
+              </Shelf>
             </section>
           )}
           {groups.map((g) => (

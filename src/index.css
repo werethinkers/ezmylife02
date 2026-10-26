@@ -437,3 +437,25 @@ html {
     mix-blend-mode: overlay;
   }
 }
+/* WhatsApp help button: a ring that pulses out, and a small wiggle every few seconds. */
+.wa-fab { animation: wa-wiggle 5s ease-in-out infinite; }
+.wa-fab::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid hsl(var(--teal));
+  animation: wa-ring 2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes wa-ring { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.3, 1.8); opacity: 0; } }
+@keyframes wa-wiggle {
+  0%, 86%, 100% { transform: rotate(0); }
+  89% { transform: rotate(-4deg); }
+  92% { transform: rotate(4deg); }
+  95% { transform: rotate(-3deg); }
+  98% { transform: rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wa-fab, .wa-fab::after { animation: none !important; }
+}

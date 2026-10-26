@@ -9,7 +9,8 @@ import { STUDIO_IDS } from "@/data/studios";
 import { StudioThumb } from "./StudioThumb";
 
 /**
- * Large app card: preview, icon, name, what you get, and the price pill.
+ * Large app card in the Setapp style: icon and name, what you get, the price pill, and the
+ * whole original preview sitting at the bottom edge of a card tinted with the app's goal colour.
  *
  * `layout` picks how the card is sized. On a shelf it is a flex child of a scrolling
  * rail, so it takes a percentage of that rail to peek the next card. In a grid the
@@ -41,37 +42,42 @@ export function AppTile({
         }
       }}
       aria-label={`${tool.name}, quick look`}
+      style={{ background: `color-mix(in srgb, ${goal.color} 38%, hsl(var(--card)))` }}
       className={cn(
-        "block-card block-lift group cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "block-card block-lift group flex cursor-pointer flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         layout === "shelf"
           ? "w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%] xl:w-[23.5%]"
           : "w-full",
         className,
       )}
     >
-      <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-ink" style={{ background: goal.color }}>
+      <div className="flex items-center gap-3.5 px-5 pt-5">
+        <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="md" className="rounded-2xl" />
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-lg font-bold leading-tight">{tool.name}</p>
+          <p className="mt-0.5 truncate text-[13px] font-medium text-ink/70">{STUDIO_IDS.has(tool.id) ? `Studio · ${goal.name}` : goal.name}</p>
+        </div>
+      </div>
+      <p className="line-clamp-3 min-h-[4.2rem] px-5 pt-3.5 text-[15px] leading-snug text-ink/85">You get {info.get}.</p>
+      <div className="flex items-center gap-2.5 px-5 pb-5 pt-3.5">
+        <span className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-card/60 px-4 text-sm font-bold transition-colors group-hover:bg-card">See what it does</span>
+        <PricePill toolId={tool.id} />
+      </div>
+      <div className="relative mt-auto ml-6 aspect-[16/9] overflow-hidden rounded-tl-2xl border-2 border-b-0 border-r-0 border-ink bg-card transition-transform duration-200 group-hover:-translate-y-2">
         {media.previewImageUrl ? (
           <img
             src={media.previewImageUrl}
-            alt=""
+            alt={`${tool.name}: what the app looks like`}
             loading="lazy"
             className={cn("h-full w-full", media.previewFit === "contain" ? "object-contain" : "object-cover")}
           />
         ) : STUDIO_IDS.has(tool.id) ? (
           <StudioThumb toolId={tool.id} name={tool.name} />
         ) : (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full items-center justify-center bg-card">
             <AppIcon toolId={tool.id} category={tool.category} name={tool.name} size="lg" className="shadow-block-sm" />
           </div>
         )}
-        <span className="absolute left-2.5 top-2.5 rounded-full border-2 border-ink bg-card px-2 py-0.5 text-[11px] font-bold">{goal.name}</span>
-      </div>
-      <div className="flex items-start gap-3 p-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-bold leading-tight">{tool.name}</p>
-          <p className="mt-0.5 line-clamp-1 text-[13px] text-muted-foreground">You get {info.get}</p>
-        </div>
-        <PricePill toolId={tool.id} />
       </div>
     </div>
   );

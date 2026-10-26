@@ -15,7 +15,10 @@ import { GOALS_WITH_MORE, KIND_TEXT, byCategoryOrder, categoriesOf, categoryInfo
 import { hasTag, tagCounts } from "@/lib/catalogTags";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { Shelf } from "@/components/store/Shelf";
-import { AppTile, AppRow } from "@/components/store/AppTile";
+import { HeroCarousel } from "@/components/store/HeroCarousel";
+import { useAppSlides } from "@/components/store/useAppSlides";
+import { APP_PREVIEW_IDS } from "@/data/previewManifest";
+import { AppTile } from "@/components/store/AppTile";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
@@ -102,6 +105,9 @@ const Tools = () => {
   );
   // Same picks as the home page's "Most useful to start" (src/data/placements.ts).
   const hot = useMemo(() => placedIn(live, "home-start"), [live]);
+  const spotlightSlides = useAppSlides(
+    useMemo(() => [...hot, ...live].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6), [hot, live]),
+  );
 
   const activeGoal = category ? goalById(categoryInfo(category).goal) : goalById(goalId);
   const visibleGoals = activeGoal ? goals.filter((g) => g.goal.id === activeGoal.id) : goals;
@@ -289,11 +295,11 @@ const Tools = () => {
               </Button>
             </div>
             {results.length > 0 && (
-              <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+              <Shelf>
                 {results.map((t) => (
-                  <AppRow key={t.id} tool={t} />
+                  <AppTile key={t.id} tool={t} />
                 ))}
-              </div>
+              </Shelf>
             )}
             {designResults.length > 0 && (
               <div className={results.length ? "mt-10" : ""}>
@@ -326,11 +332,11 @@ const Tools = () => {
             <h2 className="mb-5 text-xl font-bold">
               {catTools.length} app{catTools.length === 1 ? "" : "s"}
             </h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <Shelf>
               {catTools.map((t) => (
-                <AppTile key={t.id} tool={t} layout="grid" />
+                <AppTile key={t.id} tool={t} />
               ))}
-            </div>
+            </Shelf>
           </section>
         ) : (
           <div className="space-y-12">
@@ -340,6 +346,11 @@ const Tools = () => {
                   <AppTile key={t.id} tool={t} />
                 ))}
               </Shelf>
+            )}
+            {!activeGoal && spotlightSlides.length >= 3 && (
+              <div className="overflow-hidden">
+                <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
+              </div>
             )}
             {!activeGoal && hot.length > 0 && (
               <Shelf title="Most useful to start" subtitle="Picked by our team">
@@ -381,11 +392,11 @@ const Tools = () => {
                           </Button>
                         )}
                       </div>
-                      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      <Shelf>
                         {tools.slice(0, PER_CATEGORY).map((t) => (
-                          <AppTile key={t.id} tool={t} layout="grid" />
+                          <AppTile key={t.id} tool={t} />
                         ))}
-                      </div>
+                      </Shelf>
                     </div>
                   ))}
                 </div>

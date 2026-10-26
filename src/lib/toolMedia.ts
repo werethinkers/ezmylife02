@@ -1,6 +1,7 @@
 // Single source of truth for tool icon + preview image resolution.
-// Order: catalog DB asset → AI-generated icon map → null (component shows placeholder).
+// Order: original preview in public/app-previews (see src/data/previewManifest.ts) → catalog DB asset → AI-generated icon map → null (component shows placeholder).
 import { getToolIconUrl } from "@/data/toolIconMap";
+import { appPreviewUrl } from "@/data/previewManifest";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 
 export interface ToolMedia {
@@ -18,8 +19,8 @@ export function resolveToolMedia(
   const aiIcon = getToolIconUrl(toolId, category ?? "") ?? null;
   return {
     iconUrl: catalog?.icon_url ?? aiIcon,
-    previewImageUrl: catalog?.preview_image_url ?? null,
+    previewImageUrl: appPreviewUrl(toolId) ?? catalog?.preview_image_url ?? null,
     iconFit: (catalog?.icon_fit as "cover" | "contain") ?? "cover",
-    previewFit: (catalog?.preview_image_fit as "cover" | "contain") ?? "cover",
+    previewFit: appPreviewUrl(toolId) ? "cover" : ((catalog?.preview_image_fit as "cover" | "contain") ?? "cover"),
   };
 }

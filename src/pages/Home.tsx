@@ -18,6 +18,9 @@ import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
+import { HeroCarousel } from "@/components/store/HeroCarousel";
+import { useAppSlides } from "@/components/store/useAppSlides";
+import { APP_PREVIEW_IDS } from "@/data/previewManifest";
 import { StudiosShelf } from "@/components/home/StudiosShelf";
 import { TodaySection } from "@/components/home/TodaySection";
 import { CreditValue } from "@/components/home/CreditValue";
@@ -103,6 +106,12 @@ const Home = () => {
 
   // Apps placed on the home page (src/data/placements.ts). A new app that lists a place shows there by itself.
   const editorsPicks = useMemo(() => placedIn(live, "home-start"), [live]);
+  // Big carousel under the hero: apps that have an original preview, our picks first.
+  const spotlight = useMemo(
+    () => [...editorsPicks, ...live].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6),
+    [live, editorsPicks],
+  );
+  const spotlightSlides = useAppSlides(spotlight);
   const oneCredit = useMemo(() => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14), [live, costOf, editorsPicks]);
   // Pinned new apps first, then the latest additions.
   const newest = useMemo(() => {
@@ -219,6 +228,12 @@ const Home = () => {
             <HeroPicker catalog={catalog} />
           </div>
         </section>
+
+        {spotlightSlides.length >= 3 && (
+          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-2">
+            <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
+          </div>
+        )}
 
         {/* ───────── Moving strip of app names ───────── */}
         {marquee.length > 0 && (

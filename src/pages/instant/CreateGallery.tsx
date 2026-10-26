@@ -12,9 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useProducts } from "@/instant/useProducts";
 import type { CategoryId } from "@/instant/types";
 import { cn } from "@/lib/utils";
+import { inr } from "@/instant/util";
 import { CARD_CATEGORIES, WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { ProductCard } from "@/components/instant/ProductCard";
+import { Shelf } from "@/components/store/Shelf";
+import { HeroCarousel, type HeroSlide } from "@/components/store/HeroCarousel";
+import { DESIGN_COLOUR } from "@/data/designColours";
+import { designPreviewUrl } from "@/data/previewManifest";
 import { seoFor } from "@/lib/seo/pages";
 
 type Sort = "recommended" | "price-asc" | "price-desc" | "name";
@@ -99,6 +104,28 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
     return out;
   }, [list, cat, group, priceTest, popular, sort, q]);
   const featured = list.filter((l) => l.featured).slice(0, 8);
+  // Big carousel: popular designs that have a phone picture, with two neighbours from the same kind beside each.
+  const spotlight: HeroSlide[] = useMemo(() => {
+    const withShot = list.filter((l) => designPreviewUrl(l.product.id));
+    const lead = [...withShot.filter((l) => l.featured || l.product.popular), ...withShot].filter((l, i, a) => a.indexOf(l) === i).slice(0, 6);
+    return lead.map((l) => {
+      const sib = withShot.filter((x) => x.product.category === l.product.category);
+      const i = Math.max(0, sib.indexOf(l));
+      const pick = (k: number) => designPreviewUrl(sib[(i + k + sib.length) % sib.length].product.id)!;
+      const site = (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category);
+      return {
+        key: l.product.id,
+        eyebrow: CATEGORIES.find((c) => c.id === l.product.category)?.name ?? "",
+        title: l.product.name,
+        line: l.product.tagline,
+        color: DESIGN_COLOUR[l.product.category] ?? "hsl(var(--sun))",
+        phones: [pick(-1), pick(0), pick(1)],
+        to: `/make/${l.product.id}`,
+        cta: site ? "See the design" : "See the design",
+        price: l.price ? `${inr(l.price)}, paid once` : "Free",
+      };
+    });
+  }, [list]);
   const filtered = cat !== "all" || group !== "all" || price !== "all" || popular || sort !== "recommended" || !!q.trim();
   const clear = () => {
     setQ("");
@@ -147,14 +174,20 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
         )}
       </header>
 
+      {!filtered && spotlight.length >= 3 && (
+        <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-8">
+          <HeroCarousel slides={spotlight} label="Designs to start with" />
+        </div>
+      )}
+
       {!filtered && featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-10" aria-labelledby="pop-h">
           <h2 id="pop-h" className="mb-4 text-2xl font-bold">Most loved</h2>
-          <div className="-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-4 pt-1 no-scrollbar">
+          <Shelf>
             {featured.map((l) => (
-              <ProductCard key={l.product.id} l={l} className="w-[260px] shrink-0 snap-start" />
+              <ProductCard key={l.product.id} l={l} />
             ))}
-          </div>
+          </Shelf>
         </section>
       )}
 
@@ -242,11 +275,11 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
                 </div>
                 <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{sh.items.length}</span>
               </div>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+              <Shelf>
                 {sh.items.map((l) => (
                   <ProductCard key={l.product.id} l={l} />
                 ))}
-              </div>
+              </Shelf>
             </section>
           );
         })}

@@ -14,7 +14,8 @@ export function Shelf({
   children,
   className,
 }: {
-  title: string;
+  /** Leave empty when the page already shows a heading above the shelf. */
+  title?: string;
   subtitle?: string;
   seeAllTo?: string;
   children: ReactNode;
@@ -45,8 +46,8 @@ export function Shelf({
 
   return (
     <section className={cn("min-w-0", className)}>
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div className="min-w-0">
+      <div className={cn("flex items-end justify-between gap-3", title ? "mb-4" : "mb-2 justify-end")}>
+        <div className={cn("min-w-0", !title && "hidden")}>
           <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
           {subtitle && <p className="mt-1 text-[15px] text-muted-foreground">{subtitle}</p>}
         </div>
@@ -59,7 +60,7 @@ export function Shelf({
           <div className="hidden gap-1.5 md:flex">
             <button
               type="button"
-              aria-label={`Scroll ${title} left`}
+              aria-label={`Scroll ${title || "shelf"} left`}
               onClick={() => page(-1)}
               disabled={edge.start}
               className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun disabled:opacity-30"
@@ -68,7 +69,7 @@ export function Shelf({
             </button>
             <button
               type="button"
-              aria-label={`Scroll ${title} right`}
+              aria-label={`Scroll ${title || "shelf"} right`}
               onClick={() => page(1)}
               disabled={edge.end}
               className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun disabled:opacity-30"

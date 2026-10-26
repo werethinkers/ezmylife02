@@ -24,6 +24,8 @@ import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { AppIcon } from "@/components/store/AppIcon";
+import { Shelf } from "@/components/store/Shelf";
+import { AppTile } from "@/components/store/AppTile";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
@@ -352,17 +354,17 @@ export default function PromoPage() {
         {features.length > 0 && (
           <section className="mx-auto max-w-7xl px-4 py-12 md:py-16">
             <h2 className="mb-6 text-2xl font-bold md:text-[2rem]">What you get</h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {features.slice(0, 8).map((f, i) => (
-                <motion.div key={f.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: (i % 4) * 0.05 }} className="block-card p-5">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-ink" style={{ background: goal.color }}>
+            <Shelf>
+              {features.slice(0, 8).map((f) => (
+                <div key={f.title} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] lg:w-[31%] xl:w-[23.5%]" style={{ background: `color-mix(in srgb, ${goal.color} 38%, hsl(var(--card)))` }}>
+                  <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-ink bg-card">
                     <Check className="h-5 w-5" />
                   </div>
-                  <h3 className="font-body text-[17px] font-bold">{f.title}</h3>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{f.body}</p>
-                </motion.div>
+                  <h3 className="font-body text-[18px] font-bold leading-snug">{f.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-ink/85">{f.body}</p>
+                </div>
               ))}
-            </div>
+            </Shelf>
           </section>
         )}
 
@@ -371,17 +373,15 @@ export default function PromoPage() {
           <div className="mx-auto grid max-w-7xl gap-6 px-4 lg:grid-cols-3">
             <div className="block-card min-w-0 p-6 md:p-8 lg:col-span-2">
               <h2 className="text-2xl font-bold md:text-3xl">How it works</h2>
-              <ol className="mt-6 grid gap-5 sm:grid-cols-3">
+              <Shelf className="mt-5">
                 {howSteps.map((s, i) => (
-                  <li key={s.title + i} className="flex gap-4 sm:flex-col sm:gap-3">
+                  <div key={s.title + i} className="flex w-[78%] shrink-0 snap-start flex-col gap-2.5 rounded-2xl border-2 border-ink p-5 sm:w-[44%] md:w-[46%]" style={{ background: `color-mix(in srgb, ${goal.color} 38%, hsl(var(--card)))` }}>
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display text-lg font-extrabold">{i + 1}</span>
-                    <div>
-                      <h3 className="font-body text-[17px] font-bold leading-snug">{s.title}</h3>
-                      <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
-                    </div>
-                  </li>
+                    <h3 className="font-body text-[17px] font-bold leading-snug">{s.title}</h3>
+                    <p className="text-[15px] leading-relaxed text-ink/85">{s.body}</p>
+                  </div>
                 ))}
-              </ol>
+              </Shelf>
             </div>
 
             <div className="flex min-w-0 flex-col rounded-2xl border-2 border-ink bg-ink p-6 text-cream shadow-block md:p-8">
@@ -421,21 +421,11 @@ export default function PromoPage() {
                   </Link>
                 </Button>
               </div>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <Shelf>
                 {related.map((t) => (
-                  <Link
-                    key={t.id}
-                    to={`/promo/${promoSlug(t.name)}`}
-                    className="block-card block-lift flex gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <AppIcon toolId={t.id} category={t.category} name={t.name} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate font-bold">{t.name}</p>
-                      <p className="line-clamp-2 text-sm text-muted-foreground">You get {categoryInfo(t.category).get}</p>
-                    </div>
-                  </Link>
+                  <AppTile key={t.id} tool={t} />
                 ))}
-              </div>
+              </Shelf>
             </div>
           </section>
         )}
@@ -453,9 +443,9 @@ export default function PromoPage() {
               {tryButton("w-full md:w-auto")}
             </div>
 
-            <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ul className="-mx-4 mt-10 flex snap-x gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {GUARANTEES.map(({ Icon, title: t, body }) => (
-                <li key={t} className="flex items-start gap-3">
+                <li key={t} className="flex w-[78%] shrink-0 snap-start items-start gap-3 rounded-2xl border-2 border-ink bg-card p-4 sm:w-[44%] lg:w-[23.5%]">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card">
                     <Icon className="h-5 w-5" />
                   </div>
