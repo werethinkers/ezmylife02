@@ -11,10 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
-import { PERSONAS } from "@/data/personas";
 import { STUDIO_IDS } from "@/data/studios";
 import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
-import { ROLES } from "@/apps/workflows";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
@@ -75,7 +73,6 @@ const Home = () => {
   const { costOf } = usePricingMap();
   const countLabel = useAppCountLabel();
   const [search, setSearch] = useState("");
-  const [personaId, setPersonaId] = useState<string | null>(null);
   const [buyPackId, setBuyPackId] = useState<string | null>(null);
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
@@ -83,7 +80,6 @@ const Home = () => {
   const studioCount = useMemo(() => live.filter((t) => STUDIO_IDS.has(t.id)).length, [live]);
   const hasStudios = studioCount > 0;
   const studioLabel = `${Math.floor(studioCount / 10) * 10}+`;
-  const persona = PERSONAS.find((p) => p.id === personaId) ?? null;
 
   const query = search.trim().toLowerCase();
   // Exact name first, then names that start with the search, then Studios, then everything else.
@@ -128,11 +124,9 @@ const Home = () => {
   }, [live]);
 
   const shelfCategories = useMemo(() => {
-    if (persona) return persona.categories.filter((c) => categories.some(([n]) => n === c));
     return categories.map(([n]) => n).filter((n) => !SKIP_CATEGORY_SHELVES.has(n)).slice(0, 3);
-  }, [persona, categories]);
+  }, [categories]);
 
-  const personaTools = persona ? (persona.toolIds.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[]) : [];
   // The moving strip: apps placed there, then the team's picks, then the newest, so it never shows only the oldest apps.
   const marquee = useMemo(() => {
     const seen = new Set<string>();
@@ -272,7 +266,7 @@ const Home = () => {
           <>
             {/* ───────── Three doors ───────── */}
             <Section title="What do you want to do today?" line={hasStudios ? "Four things you can do here. Pick one." : "Three things you can do here. Pick one."}>
-              <div className={cn("grid gap-5", hasStudios ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3")}>
+              <Shelf>
                 {[
                   { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
                   ...(hasStudios
@@ -281,7 +275,7 @@ const Home = () => {
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
                 ].map((d) => (
-                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex min-h-[250px] flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", d.c)}>
+                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex min-h-[250px] w-[78%] shrink-0 snap-start flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[46%] lg:w-[31%]", hasStudios ? "xl:w-[23.5%]" : "xl:w-[31%]", d.c)}>
                     <div className="flex items-center justify-between">
                       <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", d.c.includes("bg-ink") && "bg-sun text-ink")}>
                         <d.Icon className="h-5 w-5" aria-hidden />
@@ -295,84 +289,7 @@ const Home = () => {
                     </span>
                   </DoorLink>
                 ))}
-              </div>
-            </Section>
-
-            {/* ───────── Business type ───────── */}
-            <Section
-              title="Pick your business type"
-              line="We show the apps and studios people like you use most."
-              action={
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/explore">All business types</Link>
-                </Button>
-              }
-            >
-              <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show apps for">
-                {PERSONAS.map((p) => {
-                  const active = p.id === personaId;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setPersonaId(active ? null : p.id)}
-                      className={cn(
-                        "shrink-0 rounded-full border-2 border-ink px-4 py-2 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        active ? "bg-ink text-cream" : "bg-card hover:bg-sun",
-                      )}
-                    >
-                      <span aria-hidden>{p.emoji} </span>
-                      {p.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <AnimatePresence initial={false}>
-                {persona && personaTools.length > 0 && (
-                  <motion.div
-                    key={persona.id}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                    aria-live="polite"
-                  >
-                    <div className="mt-6 rounded-2xl border-2 border-ink bg-sky/30 p-5 md:p-6">
-                      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-xl font-bold">
-                            <span aria-hidden>{persona.emoji} </span>Picked for {persona.label}
-                          </h3>
-                          <p className="mt-1 text-[15px] text-muted-foreground">{persona.blurb}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            const role = ROLES.find(
-                              (r) => r.id === ({ founders: "founder", ecommerce: "retail", creators: "creator", students: "student" } as Record<string, string>)[persona.id],
-                            );
-                            return role ? (
-                              <Button asChild size="sm">
-                                <Link to={`/tool/${role.steps[0].toolId}`}>Start with the first app</Link>
-                              </Button>
-                            ) : null;
-                          })()}
-                          <Button variant="outline" size="sm" onClick={() => setPersonaId(null)}>
-                            <X className="h-4 w-4" /> Show everything
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {personaTools.map((t) => (
-                          <AppRow key={t.id} tool={t} />
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              </Shelf>
             </Section>
 
             {/* ───────── Shelves ───────── */}
@@ -452,7 +369,7 @@ const Home = () => {
 
             {/* ───────── App bundles ───────── */}
             <Section title="App bundles" line="A few apps that work well together, for one job.">
-              <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={personaId} />
+              <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={null} />
             </Section>
 
             {/* ───────── Websites and cards ───────── */}

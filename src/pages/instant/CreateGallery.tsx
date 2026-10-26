@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Flame, Search, SlidersHorizontal, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import SEOFooter from "@/components/SEOFooter";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/instant/catalog";
 import { GROUPS, groupOf } from "@/instant/catalog/groups";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/instant/useProducts";
 import type { CategoryId } from "@/instant/types";
 import { cn } from "@/lib/utils";
@@ -144,9 +143,6 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
             .filter((g) => group === "all" || g.id === group)
             .map((g) => ({ key: g.id, title: g.name, blurb: "", items: shown.filter((l) => groupOf(l.product.id) === g.id) }));
 
-  const chip = (on: boolean) =>
-    cn("shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold transition-colors", on ? "bg-ink text-cream" : "bg-card hover:bg-sun");
-
   return (
     <div className="min-h-screen bg-background">
       <PageSeo {...seoFor(copy.path, "")} />
@@ -190,76 +186,6 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
           </Shelf>
         </section>
       )}
-
-      <nav className="sticky top-16 z-30 mt-6 border-y-2 border-ink bg-background/95 backdrop-blur" aria-label="Filters">
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 no-scrollbar" role="group" aria-label="Category">
-          {[{ id: "all" as const, name: "All" }, ...CATS].map((c) => (
-            <button key={c.id} type="button" onClick={() => set({ cat: c.id, type: null })} aria-pressed={cat === c.id} className={chip(cat === c.id)}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-        {groups.length > 0 && (
-          <div className="mx-auto -mt-1 flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3 no-scrollbar" role="group" aria-label="Type">
-            {[{ id: "all", name: "All types" }, ...groups].map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => set({ type: g.id })}
-                aria-pressed={group === g.id}
-                className={cn("shrink-0 rounded-full border-2 px-3 py-1 text-[13px] font-semibold", group === g.id ? "border-ink bg-sun" : "border-ink/30 bg-card hover:border-ink")}
-              >
-                {g.name}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="border-t-2 border-ink/10">
-          <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2 no-scrollbar">
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <Select value={price} onValueChange={(v) => set({ price: v })}>
-              <SelectTrigger className="h-9 w-auto min-w-[130px] shrink-0 rounded-full text-sm" aria-label="Price">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRICES.map((x) => (
-                  <SelectItem key={x.id} value={x.id}>
-                    {x.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sort} onValueChange={(v) => set({ sort: v })}>
-              <SelectTrigger className="h-9 w-auto min-w-[150px] shrink-0 rounded-full text-sm" aria-label="Sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORTS.map((x) => (
-                  <SelectItem key={x.id} value={x.id}>
-                    {x.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <button
-              type="button"
-              onClick={() => set({ popular: popular ? null : "1" })}
-              aria-pressed={popular}
-              className={cn("inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border-2 border-ink px-3 text-sm font-semibold", popular ? "bg-sun" : "bg-card hover:bg-sand")}
-            >
-              <Flame className="h-4 w-4" /> Popular
-            </button>
-            <span className="ml-auto shrink-0 text-sm tabular-nums text-muted-foreground">
-              {shown.length} {shown.length === 1 ? "design" : "designs"}
-            </span>
-            {filtered && (
-              <Button type="button" variant="ghost" size="sm" onClick={clear} className="shrink-0">
-                <X className="h-4 w-4" /> Clear
-              </Button>
-            )}
-          </div>
-        </div>
-      </nav>
 
       <main className="mx-auto max-w-7xl px-4 py-10 pb-16">
         {shelves.map((sh) => {
