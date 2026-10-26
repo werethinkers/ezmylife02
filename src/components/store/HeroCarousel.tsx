@@ -99,7 +99,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
       <div
         ref={track}
         onScroll={onScroll}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-[7%] pb-6 pt-1 [scrollbar-width:none] md:gap-5 md:px-[14%] [&::-webkit-scrollbar]:hidden"
+        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-6 pt-1 [scrollbar-width:none] before:w-[calc(7%-12px)] before:shrink-0 before:content-[''] after:w-[calc(7%-12px)] after:shrink-0 after:content-[''] md:gap-5 md:before:w-[calc(14%-20px)] md:after:w-[calc(14%-20px)] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((s, i) => (
           <Link
