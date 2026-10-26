@@ -142,6 +142,12 @@ const Tools = () => {
       <Navbar />
 
       {/* ───────── Header ───────── */}
+      {!query && !category && !activeGoal && spotlightSlides.length >= 3 && (
+        <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-6 md:pt-8">
+          <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
+        </div>
+      )}
+
       <header className="mx-auto max-w-7xl px-4 pt-6 md:pt-10">
         <nav aria-label="Breadcrumb" className="mb-3 text-sm font-medium text-muted-foreground">
           <Link to="/" className="underline underline-offset-4 hover:text-ink">Home</Link>
@@ -346,11 +352,6 @@ const Tools = () => {
                   <AppTile key={t.id} tool={t} />
                 ))}
               </Shelf>
-            )}
-            {!activeGoal && spotlightSlides.length >= 3 && (
-              <div className="overflow-hidden">
-                <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
-              </div>
             )}
             {!activeGoal && hot.length > 0 && (
               <Shelf title="Most useful to start" subtitle="Picked by our team">
