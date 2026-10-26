@@ -23,14 +23,14 @@ export function WhatsAppFab() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Get help on WhatsApp, ${HELP_WHATSAPP_LABEL}`}
-      className="wa-fab fixed bottom-[84px] left-3 z-[55] flex items-center gap-2.5 rounded-full border-2 border-ink bg-teal py-1.5 pl-1.5 pr-4 text-ink shadow-block-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:bottom-6 md:left-6 md:py-2 md:pl-2 md:pr-5"
+      className="wa-fab fixed bottom-[76px] left-3 z-[55] flex items-center gap-0 rounded-full border-2 border-ink bg-teal p-1 text-ink md:gap-2.5 shadow-block-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:bottom-6 md:left-6 md:py-2 md:pl-2 md:pr-5"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-card md:h-10 md:w-10">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ink bg-card">
         <MessageCircle className="h-5 w-5" aria-hidden />
       </span>
-      <span className="flex flex-col leading-tight">
-        <span className="font-display text-[12px] font-extrabold md:text-[13px]">Need help?</span>
-        <span className="hidden text-[13px] font-bold md:block">WhatsApp {HELP_WHATSAPP_LABEL}</span>
+      <span className="hidden flex-col leading-tight md:flex">
+        <span className="font-display text-[13px] font-extrabold">Need help?</span>
+        <span className="text-[13px] font-bold">WhatsApp {HELP_WHATSAPP_LABEL}</span>
       </span>
     </a>
   );
