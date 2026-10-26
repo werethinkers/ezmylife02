@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useProducts, type Listed } from "@/instant/useProducts";
@@ -12,13 +12,12 @@ import { APP_PREVIEW_IDS } from "@/data/previewManifest";
 import { AppTile } from "@/components/store/AppTile";
 import { ProductCard } from "@/components/instant/ProductCard";
 import { DESIGN_COLOUR } from "@/data/designColours";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 /**
  * The whole store on one page: every app and every website and card design, grouped
  * goal → category. Each category shows its first few items and opens to the full list,
- * and the search box filters every list at once. Designs are a goal of their own
+ * and one goal shows at a time, picked from the chips. Designs are a goal of their own
  * ("Websites & cards") so a visitor finds them in the same place as the apps.
  */
 
@@ -91,8 +90,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
   const { costOf } = usePricingMap();
   const { list: designs } = useProducts();
   const { openQuickLook } = useQuickLook();
-  const [goal, setGoal] = useState<string>("all");
-  const [search, setSearch] = useState("");
+  const [goal, setGoal] = useState<string>("");
   // The category chosen inside each goal ("" = all of that goal).
   const [cats, setCats] = useState<Record<string, string>>({});
 
@@ -163,24 +161,15 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       .filter((b) => b.groups.length > 0);
   }, [apps, designs, costOf]);
 
-  const query = search.trim().toLowerCase();
+  // One section at a time: the one the visitor picked, else the first.
   const shown = useMemo(() => {
-    const inGoal = goal === "all" ? blocks : blocks.filter((b) => b.id === goal);
-    if (!query) return inGoal;
-    return inGoal
-      .map((b) => ({
-        ...b,
-        groups: b.groups
-          .map((g) => ({ ...g, items: g.items.filter((i) => i.text.includes(query) || g.name.toLowerCase().includes(query)) }))
-          .filter((g) => g.items.length > 0),
-      }))
-      .filter((b) => b.groups.length > 0);
-  }, [blocks, goal, query]);
+    const one = blocks.find((b) => b.id === goal) ?? blocks[0];
+    return one ? [one] : [];
+  }, [blocks, goal]);
 
   const count = (b: Block) => new Set(b.groups.flatMap((g) => g.items.map((i) => i.key))).size;
   const appCount = new Set(blocks.filter((b) => b.id !== DESIGNS).flatMap((b) => b.groups.flatMap((g) => g.items.map((i) => i.key)))).size;
   const designCount = blocks.find((b) => b.id === DESIGNS) ? count(blocks.find((b) => b.id === DESIGNS)!) : 0;
-  const matches = shown.reduce((n, b) => n + b.groups.reduce((m, g) => m + g.items.length, 0), 0);
 
   const onItem = (e: React.MouseEvent, i: Item) => {
     // Plain click on an app opens the quick look; new tab and crawlers follow the link.
@@ -195,32 +184,10 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
         {appCount} apps · {designCount} website and card designs
       </p>
 
-      {/* Search inside the list */}
-      <div className="relative mb-4 max-w-xl">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Find in this list: salary slip, passport, Diwali…"
-          aria-label="Find an app, website or card in the list"
-          className="h-12 rounded-xl border-2 border-ink bg-card pl-10 pr-10 text-[16px]"
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 hover:bg-muted"
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
       {/* Goal picker */}
       <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show">
-        {[{ id: "all", name: "Everything", color: "hsl(var(--card))", n: appCount + designCount }, ...blocks.map((b) => ({ id: b.id, name: b.name, color: b.color, n: count(b) }))].map((c) => {
-          const active = goal === c.id;
+        {[...blocks.map((b) => ({ id: b.id, name: b.name, color: b.color, n: count(b) }))].map((c) => {
+          const active = (shown[0]?.id ?? "") === c.id;
           return (
             <button
               key={c.id}
@@ -231,31 +198,13 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                 "shrink-0 rounded-full border-2 border-ink px-4 py-2 text-[14px] font-bold transition-transform",
                 active ? "shadow-block-sm -translate-y-0.5" : "bg-card opacity-80 hover:opacity-100",
               )}
-              style={active ? { background: c.id === "all" || c.id === DESIGNS ? "hsl(var(--ink))" : c.color, color: c.id === "all" || c.id === DESIGNS ? "hsl(var(--card))" : undefined } : undefined}
+              style={active ? { background: c.id === DESIGNS ? "hsl(var(--ink))" : c.color, color: c.id === DESIGNS ? "hsl(var(--card))" : undefined } : undefined}
             >
               {c.name} <span className="tabular-nums opacity-70">{c.n}</span>
             </button>
           );
         })}
       </div>
-
-      {query && (
-        <p className="mb-6 text-[15px] text-muted-foreground" aria-live="polite">
-          {matches === 0 ? (
-            <>
-              Nothing called "{search.trim()}" yet.{" "}
-              <a href="#request-tool" className="font-semibold text-foreground underline">
-                Ask us to add it
-              </a>
-              .
-            </>
-          ) : (
-            <>
-              {matches} match{matches === 1 ? "" : "es"} for "{search.trim()}"
-            </>
-          )}
-        </p>
-      )}
 
       <div className="space-y-12">
         {shown.map((b) => {

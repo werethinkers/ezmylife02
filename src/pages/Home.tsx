@@ -151,6 +151,19 @@ const Home = () => {
         />
         <Navbar />
 
+        {/* ───────── Moving strip of app names ───────── */}
+        {marquee.length > 0 && (
+          <div aria-hidden className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-cream">
+            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-display text-lg font-bold motion-reduce:animate-none">
+              {[...marquee, ...marquee].map((n, i) => (
+                <span key={i} className={i % 3 === 0 ? "text-sun" : i % 3 === 1 ? "text-pink" : "text-cream"}>
+                  {n} ✦
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ───────── Hero ───────── */}
         <section className="mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12">
           <div className="min-w-0 lg:col-span-7">
@@ -226,19 +239,6 @@ const Home = () => {
         {spotlightSlides.length >= 3 && (
           <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-2">
             <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
-          </div>
-        )}
-
-        {/* ───────── Moving strip of app names ───────── */}
-        {marquee.length > 0 && (
-          <div aria-hidden className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-cream">
-            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-display text-lg font-bold motion-reduce:animate-none">
-              {[...marquee, ...marquee].map((n, i) => (
-                <span key={i} className={i % 3 === 0 ? "text-sun" : i % 3 === 1 ? "text-pink" : "text-cream"}>
-                  {n} ✦
-                </span>
-              ))}
-            </div>
           </div>
         )}
 
