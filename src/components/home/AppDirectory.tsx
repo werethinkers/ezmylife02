@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { creditsForInr } from "@/lib/creditRate";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
@@ -120,7 +121,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       key: `design-${l.product.id}`,
       name: l.product.name,
       to: `/make/${l.product.id}`,
-      price: l.price ? `₹${l.price} once` : "Free",
+      price: l.price ? `₹${l.price} or ${creditsForInr(l.price).toLocaleString("en-IN")} credits` : "Free",
       text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase(),
     });
 

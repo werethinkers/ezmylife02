@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { creditsForInr } from "@/lib/creditRate";
 import type { Listed } from "@/instant/useProducts";
 import { inr } from "@/instant/util";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
@@ -46,7 +47,7 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
       </Link>
       <div className="mt-auto flex items-center justify-between gap-2 px-3.5 pb-3.5 pt-2">
         <span className="text-[15px] font-bold">
-          {l.price ? inr(l.price) : "Free"}
+          {l.price ? `${inr(l.price)} · ${creditsForInr(l.price).toLocaleString("en-IN")} cr` : "Free"}
           <span className="ml-1 text-xs font-medium text-muted-foreground">{l.price ? "once" : ""}</span>
         </span>
         <Link

@@ -18,6 +18,20 @@ account (or logs in), and 5,000 gift credits are added to that account. Once per
   card; each account still claims once, and `max_claims` can cap the total.
 - **Expiry is optional** (`expires_at`, "Claim by"). It stops new claims; credits already claimed stay.
 
+## Apps that cost us no AI are not capped
+
+Browser-only tools, calculators, file converters and photo presets are listed in `promo_uncapped_tools` (generated from
+`BROWSER_ONLY` without server instructions, plus the `calc`, `convert` and `preset` engines). Gift credits work on them
+until the balance is gone. Add a new browser-only app to that table in a new migration, or it keeps the 3-use cap.
+
+## Websites and cards can be paid with credits
+
+2.2 credits = ₹1 (the ₹1,000 pack rate), rounded up: ₹199 = 438 credits. The builder shows both prices and the person's
+balance in both units. With enough credits the button reads "Pay N credits and publish" and `ip-checkout` action
+`pay_credits` runs `ip_pay_with_credits()`: gift, then free, then bought credits are taken, the order is recorded with
+status `credits`, and the page is published, all in one transaction. With too few credits the Razorpay flow is
+unchanged. `src/lib/creditRate.ts` is only for display; the server number is `ip_credits_for_inr`.
+
 ## Admin: Admin → Growth → Gift cards
 
 1. **Make cards**: a batch of unique codes (up to 2,000) or one shared code. Set credits, uses per app, label,

@@ -15,6 +15,8 @@ import { FieldInput } from "@/instant/builder/FieldInput";
 import { clearDraft, readDraft, readFullDraft, writeDraft, type Draft } from "@/instant/draftStore";
 import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
+import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
+import { creditsForInr, inrForCredits } from "@/lib/creditRate";
 import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages, publishPrepaid } from "@/instant/api";
 import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
@@ -55,6 +57,11 @@ function BuilderInner({ product }: { product: Product }) {
   const { user } = useAuth();
   const { list } = useProducts();
   const price = list.find((l) => l.product.id === product.id)?.price ?? product.price;
+  // Credits and rupees are two ways to pay the same price. With enough credits the page is paid from them.
+  const { total: balance } = useWallet();
+  const refreshWallet = useRefreshWallet();
+  const needCredits = creditsForInr(price);
+  const canPayCredits = !!user && price > 0 && balance >= needCredits;
   // ?design=<theme id> opens a specific design (used by the kit links), unless a saved page is being edited.
   const wantedDesign = params.get("design");
   const initial = useMemo<Draft>(() => {
@@ -143,6 +150,17 @@ function BuilderInner({ product }: { product: Product }) {
         navigate(`/create/done/${id}`); return;
       }
 
+      if (canPayCredits && !free) {
+        setBusy("Paying with credits…");
+        const paid = await checkout({ action: "pay_credits", page_id: id });
+        if (paid.published) {
+          clearDraft(product.id);
+          refreshWallet();
+          toast({ title: `${paid.charged} credits used`, description: "Your page is live." });
+          navigate(`/create/done/${id}`); return;
+        }
+      }
+
       setBusy("Starting checkout…");
       const order = await checkout({ action: "create", page_id: id, free });
       if (order.published) { clearDraft(product.id); navigate(`/create/done/${id}`); return; }
@@ -167,7 +185,7 @@ function BuilderInner({ product }: { product: Product }) {
       setBusy(null);
       toast({ title: "Couldn't publish", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     }
-  }, [product, content, user, variantId, pageId, published, navigate, toast, theme.c.ac]);
+  }, [product, content, user, variantId, pageId, published, navigate, toast, theme.c.ac, canPayCredits, refreshWallet]);
 
   // Coming back from sign-in with ?publish=1 continues straight to checkout.
   useEffect(() => {
@@ -177,7 +195,7 @@ function BuilderInner({ product }: { product: Product }) {
   const s = product.steps[step];
   const last = step === product.steps.length - 1;
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
-  const cta = published ? "Update live page" : price ? `Pay ${inr(price)} and publish` : "Publish free";
+  const cta = published ? "Update live page" : canPayCredits ? `Pay ${needCredits.toLocaleString("en-IN")} credits and publish` : price ? `Pay ${inr(price)} and publish` : "Publish free";
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +205,7 @@ function BuilderInner({ product }: { product: Product }) {
           <Link to={`/make/${product.id}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun" aria-label="Back to the design"><ArrowLeft className="h-5 w-5" /></Link>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold">{product.glyph} {product.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${price ? `${inr(price)}, paid once` : "Free"} · online for a year`}</p>
+            <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${price ? `${inr(price)} = ${needCredits.toLocaleString("en-IN")} credits, paid once${user ? ` · you have ${balance.toLocaleString("en-IN")} credits (${inr(inrForCredits(balance))})` : ""}` : "Free"} · online for a year`}</p>
           </div>
           <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
         </div>

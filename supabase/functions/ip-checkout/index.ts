@@ -85,6 +85,34 @@ serve(async (req) => {
       });
     }
 
+    if (action === "pay_credits") {
+      // Pays for the page with credits (gift, then free, then bought): charge, order and publish happen together in
+      // ip_pay_with_credits(), so a failed publish never keeps the credits. Price is read from ip_products there.
+      const pageId = String(body.page_id ?? "");
+      const { data: res, error: ce } = await supabase.rpc("ip_pay_with_credits", { _uid: user.id, _page_id: pageId });
+      if (ce) throw new Error(ce.message);
+      if (!res?.ok) {
+        if (res?.reason === "insufficient") {
+          return json({ error: `This needs ${res.credits_required} credits. You have ${res.balance}.`, insufficient: true, credits_required: res.credits_required, balance: res.balance }, 402);
+        }
+        return json({ error: `Could not pay with credits (${res?.reason}).` }, 400);
+      }
+      if (!res.noop) {
+        const { data: page } = await supabase.from("ip_pages").select("product_id").eq("id", pageId).maybeSingle();
+        const { data: prod } = await supabase.from("ip_products").select("name").eq("id", page?.product_id ?? "").maybeSingle();
+        const link = `https://ezyourlife.com/p/${res.slug}`;
+        await supabase.from("activity_logs").insert({
+          user_id: user.id, action_type: "payment",
+          action_details: { kind: "instant_page_credits", product_id: page?.product_id, credits: res.charged },
+        });
+        inBackground(notifyTaskDone({
+          userId: user.id, toolId: `page-${page?.product_id}`, runId: `page-${pageId}`, name: prod?.name ?? "page", link, throttle: false,
+          output: `🎉 Your ${(prod?.name ?? "page").toLowerCase()} is live. Share this link on WhatsApp:\n${link}`,
+        }));
+      }
+      return json({ published: true, slug: res.slug, charged: res.charged ?? 0 });
+    }
+
     if (action === "verify") {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
       if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) return json({ error: "Missing payment details." }, 400);

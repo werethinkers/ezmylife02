@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { creditsForInr } from "@/lib/creditRate";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -35,7 +36,7 @@ export default function ProductPromo() {
     .sort((a, b) => Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
   const groupName = GROUPS[product.category].find((x) => x.id === g)?.name;
   const create = `/create/${product.id}?design=${theme.id}`;
-  const priceText = price ? inr(price) : "Free";
+  const priceText = price ? `${inr(price)} or ${creditsForInr(price).toLocaleString("en-IN")} credits` : "Free";
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const home = isSite ? "/websites" : "/cards";
   const hosting = days >= 365 ? `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}` : `${days} days`;
