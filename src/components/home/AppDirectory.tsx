@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { creditsForInr } from "@/lib/creditRate";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useProducts, type Listed } from "@/instant/useProducts";
@@ -9,6 +8,8 @@ import { CATEGORIES as DESIGN_CATEGORIES } from "@/instant/catalog";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { GOALS_WITH_MORE, byCategoryOrder, categoriesOf, categoryInfo } from "@/data/goals";
 import { useQuickLook } from "@/components/store/QuickLook";
+import { AppIcon } from "@/components/store/AppIcon";
+import { DESIGN_COLOUR } from "@/data/designColours";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
  * ("Websites & cards") so a visitor finds them in the same place as the apps.
  */
 
-const SHOWN = 5;
+const ROWS = 3;
 const DESIGNS = "designs";
 
 interface Item {
@@ -31,6 +32,12 @@ interface Item {
   text: string;
   /** App id, to open the quick look instead of leaving the page. */
   appId?: string;
+  /** One line under the name. */
+  sub: string;
+  /** Icon: an app's own artwork, or a design's glyph on its colour. */
+  category?: string;
+  glyph?: string;
+  color?: string;
 }
 
 interface Group {
@@ -81,7 +88,8 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
   const { openQuickLook } = useQuickLook();
   const [goal, setGoal] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [open, setOpen] = useState<Set<string>>(new Set());
+  // The category chosen inside each goal ("" = all of that goal).
+  const [cats, setCats] = useState<Record<string, string>>({});
 
   const blocks = useMemo<Block[]>(() => {
     // Apps: every category an app is listed in, largest category first (or admin order).
@@ -98,6 +106,8 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
         price: `${cost} credit${cost === 1 ? "" : "s"}`,
         text: `${t.name} ${t.description} ${categoriesOf(t).join(" ")}`.toLowerCase(),
         appId: t.id,
+        sub: t.description || categoryInfo(t.category).line,
+        category: t.category,
       };
     };
 
@@ -121,8 +131,11 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       key: `design-${l.product.id}`,
       name: l.product.name,
       to: `/make/${l.product.id}`,
-      price: l.price ? `₹${l.price} or ${creditsForInr(l.price).toLocaleString("en-IN")} credits` : "Free",
+      price: l.price ? `₹${l.price}` : "Free",
       text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase(),
+      sub: l.product.tagline ?? "",
+      glyph: l.product.glyph,
+      color: DESIGN_COLOUR[l.product.category] ?? designColor(l.product.category),
     });
 
     const designBlock: Block = {
@@ -161,14 +174,6 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
   const appCount = new Set(blocks.filter((b) => b.id !== DESIGNS).flatMap((b) => b.groups.flatMap((g) => g.items.map((i) => i.key)))).size;
   const designCount = blocks.find((b) => b.id === DESIGNS) ? count(blocks.find((b) => b.id === DESIGNS)!) : 0;
   const matches = shown.reduce((n, b) => n + b.groups.reduce((m, g) => m + g.items.length, 0), 0);
-
-  const toggle = (k: string) =>
-    setOpen((s) => {
-      const n = new Set(s);
-      if (n.has(k)) n.delete(k);
-      else n.add(k);
-      return n;
-    });
 
   const onItem = (e: React.MouseEvent, i: Item) => {
     // Plain click on an app opens the quick look; new tab and crawlers follow the link.
@@ -245,72 +250,88 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
         </p>
       )}
 
-      <div className="space-y-10">
-        {shown.map((b) => (
-          <div key={b.id}>
-            <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h3 className="font-display text-xl font-bold md:text-2xl">
-                {b.id === DESIGNS ? <Link to="/create" className="hover:underline">{b.name}</Link> : <Link to={`/ai-apps?goal=${b.id}`} className="hover:underline">{b.name}</Link>}
-              </h3>
-              <span className="text-[14px] text-muted-foreground">
-                {count(b)} · {b.line}
-              </span>
+      <div className="space-y-12">
+        {shown.map((b) => {
+          const chosen = b.groups.find((g) => g.name === cats[b.id]);
+          const seen = new Set<string>();
+          const items = (chosen ? chosen.items : b.groups.flatMap((g) => g.items)).filter((i) => !seen.has(i.key) && seen.add(i.key));
+          const columns = Array.from({ length: Math.ceil(items.length / ROWS) }, (_, c) => items.slice(c * ROWS, c * ROWS + ROWS));
+          const designGroup = (g: Group) => DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id ?? "";
+          const seeAll = chosen
+            ? b.id === DESIGNS
+              ? (WEBSITE_CATEGORIES as readonly string[]).includes(designGroup(chosen)) ? "/websites" : `/cards?cat=${designGroup(chosen)}`
+              : `/ai-apps?category=${encodeURIComponent(chosen.name)}`
+            : b.id === DESIGNS ? "/create" : `/ai-apps?goal=${b.id}`;
+          return (
+            <div key={b.id}>
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+                <div className="min-w-0">
+                  <h3 className="font-display text-xl font-bold md:text-2xl">{b.name}</h3>
+                  <p className="text-[14px] text-muted-foreground">
+                    {items.length} · {chosen?.line || b.line}
+                  </p>
+                </div>
+                <Link to={seeAll} className="shrink-0 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun">
+                  See all
+                </Link>
+              </div>
               {b.groups.length > 1 && (
-                <span className="w-full text-[13px] font-semibold text-muted-foreground">
-                  {b.groups.length} categories · swipe to see all →
-                </span>
-              )}
-            </div>
-            {/* One swipeable row per goal, on phones and on larger screens alike. */}
-            <GoalRail label={b.name}>
-              {b.groups.map((g) => {
-                const k = `${b.id}:${g.name}`;
-                const expanded = !!query || open.has(k);
-                const items = expanded ? g.items : g.items.slice(0, SHOWN);
-                const more = g.items.length - SHOWN;
-                const seeAll = b.id === DESIGNS ? (WEBSITE_CATEGORIES as readonly string[]).includes(DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id ?? "") ? "/websites" : `/cards?cat=${DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id}` : `/ai-apps?category=${encodeURIComponent(g.name)}`;
-                return (
-                  <section key={k} className="block-card w-[84%] shrink-0 snap-start overflow-hidden sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]" aria-label={g.name}>
-                    <div className="flex items-start justify-between gap-3 border-b-2 border-ink px-4 py-3" style={{ background: g.color }}>
-                      <div className="min-w-0">
-                        <Link to={seeAll} className="font-bold leading-tight hover:underline">
-                          {g.name}
-                        </Link>
-                        {g.line && <p className="mt-0.5 line-clamp-2 text-[13px] text-ink/80">{g.line}</p>}
-                      </div>
-                      <span className="shrink-0 rounded-full border-2 border-ink bg-card px-2 py-0.5 text-[12px] font-bold tabular-nums">{g.items.length}</span>
-                    </div>
-                    <ul className="divide-y divide-border px-1.5 py-1">
-                      {items.map((i) => (
-                        <li key={i.key}>
-                          <Link
-                            to={i.to}
-                            onClick={(e) => onItem(e, i)}
-                            className="flex items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-[15px] font-semibold hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          >
-                            <span className="min-w-0 truncate">{i.name}</span>
-                            <span className="shrink-0 text-[12px] font-medium text-muted-foreground">{i.price}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                    {!query && more > 0 && (
+                <div className="-mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:px-0" role="group" aria-label={`${b.name} categories`}>
+                  {[{ name: "", label: "All", n: new Set(b.groups.flatMap((g) => g.items.map((i) => i.key))).size }, ...b.groups.map((g) => ({ name: g.name, label: g.name, n: g.items.length }))].map((c) => {
+                    const active = (cats[b.id] ?? "") === c.name;
+                    return (
                       <button
+                        key={c.name || "all"}
                         type="button"
-                        onClick={() => toggle(k)}
-                        aria-expanded={expanded}
-                        className="flex w-full items-center justify-center gap-1.5 border-t-2 border-ink bg-card px-4 py-2.5 text-[14px] font-bold hover:bg-muted"
+                        aria-pressed={active}
+                        onClick={() => setCats((m) => ({ ...m, [b.id]: c.name }))}
+                        className={cn(
+                          "shrink-0 rounded-full border-2 border-ink px-3.5 py-1.5 text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          active ? "bg-ink text-cream" : "bg-card hover:bg-sun",
+                        )}
                       >
-                        {expanded ? "Show fewer" : `Show all ${g.items.length}`}
-                        <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} aria-hidden />
+                        {c.label} <span className="tabular-nums opacity-60">{c.n}</span>
                       </button>
-                    )}
-                  </section>
-                );
-              })}
-            </GoalRail>
-          </div>
-        ))}
+                    );
+                  })}
+                </div>
+              )}
+              {/* App Store style: columns of three rows, swiped sideways. */}
+              <GoalRail label={b.name} key={`${b.id}:${cats[b.id] ?? ""}`}>
+                {columns.map((col, ci) => (
+                  <ul key={ci} className="w-[88%] shrink-0 snap-start divide-y-2 divide-ink/10 sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
+                    {col.map((i) => (
+                      <li key={i.key}>
+                        <Link
+                          to={i.to}
+                          onClick={(e) => onItem(e, i)}
+                          className="flex items-center gap-3.5 rounded-xl py-3 pr-1 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {i.appId ? (
+                            <AppIcon toolId={i.appId} category={i.category} name={i.name} size="md" className="rounded-2xl" />
+                          ) : (
+                            <span
+                              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-ink text-3xl"
+                              style={{ background: `color-mix(in srgb, ${i.color ?? "hsl(var(--sun))"} 55%, hsl(var(--card)))` }}
+                              aria-hidden
+                            >
+                              {i.glyph}
+                            </span>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[16px] font-bold leading-tight">{i.name}</span>
+                            <span className="mt-0.5 block truncate text-[13.5px] text-muted-foreground">{i.sub}</span>
+                          </span>
+                          <span className="shrink-0 whitespace-nowrap rounded-full border-2 border-ink bg-card px-3 py-1 text-[12.5px] font-bold">{i.price}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+              </GoalRail>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
