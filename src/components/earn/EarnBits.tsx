@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { EARN_LINKS } from "@/components/brand/nav";
 import { INSTAGRAM_HANDLE, SUPPORT_EMAIL, instagramDm } from "@/data/social";
 import { cn } from "@/lib/utils";
+import { Shelf } from "@/components/store/Shelf";
 
 /** Section wrapper used on both earn pages. `tone` "card" gives a white band with ink rules. */
 export function EarnSection({ id, title, line, tone, children }: { id?: string; title: string; line?: string; tone?: "card"; children: ReactNode }) {
@@ -90,9 +91,9 @@ export function EarnBand() {
     { ...EARN_LINKS[1], tag: "For builders", h: "Built an app? List it with us.", d: "Say “Put my app on EzYourLife” in Claude. We review it, set the price, and you earn a share when people use it.", go: "List your app", bg: "bg-teal" },
   ];
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <Shelf>
       {cards.map((c) => (
-        <Link key={c.to} to={c.to} className={cn("block-card block-lift flex flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", c.bg)}>
+        <Link key={c.to} to={c.to} className={cn("block-card block-lift flex w-[82%] shrink-0 snap-start flex-col gap-3 p-6 sm:w-[48%] lg:w-[40%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", c.bg)}>
           <div className="flex items-center justify-between gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card">
               <c.Icon className="h-5 w-5" aria-hidden />
@@ -106,6 +107,6 @@ export function EarnBand() {
           </span>
         </Link>
       ))}
-    </div>
+    </Shelf>
   );
 }

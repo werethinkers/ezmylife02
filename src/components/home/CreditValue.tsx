@@ -9,6 +9,7 @@ import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap, RUPEES_PER_CREDIT_MAX, RUPEES_PER_CREDIT_MIN, formatRupees } from "@/hooks/usePricingMap";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import { cn } from "@/lib/utils";
+import { Shelf } from "@/components/store/Shelf";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -71,15 +72,15 @@ export function CreditValue({ catalog, onBuy }: { catalog: CatalogTool[]; onBuy:
   const diff = spend - high;
 
   return (
-    <div className="space-y-10">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6">
+      <Shelf>
         {cards.map((c, i) => (
           <motion.div
             key={c.id}
             {...fadeUp}
             transition={{ ...fadeUp.transition, delay: i * 0.05 }}
             className={cn(
-              "flex flex-col rounded-2xl border-2 border-ink p-5 shadow-block",
+              "flex w-[78%] shrink-0 snap-start flex-col rounded-2xl border-2 border-ink p-5 shadow-block sm:w-[46%] lg:w-[23.5%]",
               c.id === "free" ? "bg-ink text-cream" : "bg-card",
             )}
           >
@@ -118,7 +119,7 @@ export function CreditValue({ catalog, onBuy }: { catalog: CatalogTool[]; onBuy:
             )}
           </motion.div>
         ))}
-      </div>
+      </Shelf>
 
       {!isLoading && stats.total > 0 && (
         <p className="text-center text-sm text-muted-foreground">
@@ -139,9 +140,13 @@ export function CreditValue({ catalog, onBuy }: { catalog: CatalogTool[]; onBuy:
         </p>
       )}
 
+      <details className="group">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border-2 border-ink bg-card px-4 py-2 text-[15px] font-bold shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun [&::-webkit-details-marker]:hidden">
+          Compare with what you pay now <span className="transition-transform group-open:rotate-180">⌄</span>
+        </summary>
       <motion.div
         {...fadeUp}
-        className="grid gap-8 overflow-hidden rounded-2xl border-2 border-ink bg-card p-6 shadow-sm md:p-8 lg:grid-cols-5"
+        className="mt-3 grid gap-6 overflow-hidden rounded-2xl border-2 border-ink bg-card p-5 shadow-block md:p-6 lg:grid-cols-5"
       >
         <div className="space-y-7 lg:col-span-3">
           <div>
@@ -215,6 +220,7 @@ export function CreditValue({ catalog, onBuy }: { catalog: CatalogTool[]; onBuy:
           </div>
         </div>
       </motion.div>
+      </details>
     </div>
   );
 }

@@ -123,10 +123,6 @@ const Home = () => {
     return [...m.entries()].sort(byCategoryOrder);
   }, [live]);
 
-  const shelfCategories = useMemo(() => {
-    return categories.map(([n]) => n).filter((n) => !SKIP_CATEGORY_SHELVES.has(n)).slice(0, 3);
-  }, [categories]);
-
   // The moving strip: apps placed there, then the team's picks, then the newest, so it never shows only the oldest apps.
   const marquee = useMemo(() => {
     const seen = new Set<string>();
@@ -306,24 +302,6 @@ const Home = () => {
                   ))}
                 </Shelf>
               )}
-              {shelfCategories.map((cat) => {
-                // Apps whose main category this is come first, then the ones that are also listed here.
-                const inCat = picturesFirst(live.filter((t) => inCategory(t, cat)).sort((a, b) => Number(b.category === cat) - Number(a.category === cat)));
-                const tools = inCat.slice(0, 14);
-                if (tools.length < 3) return null;
-                return (
-                  <Shelf
-                    key={cat}
-                    title={cat}
-                    subtitle={categoryInfo(cat).line || `${inCat.length} apps`}
-                    seeAllTo={`/ai-apps?category=${encodeURIComponent(cat)}`}
-                  >
-                    {tools.map((t) => (
-                      <AppTile key={t.id} tool={t} />
-                    ))}
-                  </Shelf>
-                );
-              })}
               {oneCredit.length > 0 && (
                 <Shelf title="Cheapest to run" subtitle="1 credit each time — less than ₹1" seeAllTo="/ai-apps">
                   {oneCredit.map((t) => (

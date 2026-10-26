@@ -48,9 +48,9 @@ const RequestToolSection = () => {
           >
             {/* Background accent */}
 
-            <div className="relative grid md:grid-cols-2 gap-0">
+            <div className="relative flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:grid md:grid-cols-2 md:gap-0 [&::-webkit-scrollbar]:hidden">
               {/* Left side - Message */}
-              <div className="p-8 md:p-12 flex flex-col justify-center space-y-6 border-b md:border-b-0 md:border-r border-ink border-b-2 md:border-r-2 bg-sky/40">
+              <div className="flex w-[88%] shrink-0 snap-start flex-col justify-center space-y-6 border-r-2 border-ink bg-sky/40 p-6 md:w-auto md:p-12">
                 <motion.div
                   className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-ink bg-sun"
                   whileHover={{ rotate: 10, scale: 1.1 }}
@@ -73,7 +73,7 @@ const RequestToolSection = () => {
               </div>
 
               {/* Right side - Form */}
-              <div className="p-8 md:p-12">
+              <div className="w-[88%] shrink-0 snap-start p-6 md:w-auto md:p-12">
                 <AnimatePresence mode="wait">
                   {submitted ? (
                     <motion.div
