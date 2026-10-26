@@ -18,7 +18,7 @@ import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
 import { HeroCarousel } from "@/components/store/HeroCarousel";
 import { useAppSlides } from "@/components/store/useAppSlides";
-import { APP_PREVIEW_IDS } from "@/data/previewManifest";
+import { APP_PREVIEW_IDS, picturesFirst } from "@/data/previewManifest";
 import { StudiosShelf } from "@/components/home/StudiosShelf";
 import { TodaySection } from "@/components/home/TodaySection";
 import { CreditValue } from "@/components/home/CreditValue";
@@ -308,7 +308,7 @@ const Home = () => {
               )}
               {shelfCategories.map((cat) => {
                 // Apps whose main category this is come first, then the ones that are also listed here.
-                const inCat = live.filter((t) => inCategory(t, cat)).sort((a, b) => Number(b.category === cat) - Number(a.category === cat));
+                const inCat = picturesFirst(live.filter((t) => inCategory(t, cat)).sort((a, b) => Number(b.category === cat) - Number(a.category === cat)));
                 const tools = inCat.slice(0, 14);
                 if (tools.length < 3) return null;
                 return (

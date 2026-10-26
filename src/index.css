@@ -459,3 +459,7 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .wa-fab, .wa-fab::after { animation: none !important; }
 }
+
+/* The single help button: a ring that pulses out from it. */
+.help-ring { position: absolute; inset: -2px; border-radius: 9999px; border: 2px solid hsl(var(--teal)); animation: wa-ring 2s ease-out infinite; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .help-ring { animation: none !important; } }

@@ -159,3 +159,7 @@ export const DESIGN_PREVIEW_IDS: ReadonlySet<string> = new Set([
 
 export const appPreviewUrl = (id: string): string | null => (APP_PREVIEW_IDS.has(id) ? `/app-previews/${id}.jpg` : null);
 export const designPreviewUrl = (id: string): string | null => (DESIGN_PREVIEW_IDS.has(id) ? `/design-previews/${id}.jpg` : null);
+
+/** Apps that have an original preview first, then the rest, each keeping its order. */
+export const picturesFirst = <T extends { id: string }>(list: T[]): T[] =>
+  [...list].sort((a, b) => Number(APP_PREVIEW_IDS.has(b.id)) - Number(APP_PREVIEW_IDS.has(a.id)));

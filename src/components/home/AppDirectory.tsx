@@ -8,7 +8,9 @@ import { CATEGORIES as DESIGN_CATEGORIES } from "@/instant/catalog";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { GOALS_WITH_MORE, byCategoryOrder, categoriesOf, categoryInfo } from "@/data/goals";
 import { useQuickLook } from "@/components/store/QuickLook";
-import { AppIcon } from "@/components/store/AppIcon";
+import { APP_PREVIEW_IDS } from "@/data/previewManifest";
+import { AppTile } from "@/components/store/AppTile";
+import { ProductCard } from "@/components/instant/ProductCard";
 import { DESIGN_COLOUR } from "@/data/designColours";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -20,7 +22,7 @@ import { cn } from "@/lib/utils";
  * ("Websites & cards") so a visitor finds them in the same place as the apps.
  */
 
-const ROWS = 3;
+const MAX_CARDS = 40;
 const DESIGNS = "designs";
 
 interface Item {
@@ -38,6 +40,9 @@ interface Item {
   category?: string;
   glyph?: string;
   color?: string;
+  /** The real thing, so the slider can show the same card as the rest of the site. */
+  tool?: CatalogTool;
+  design?: Listed;
 }
 
 interface Group {
@@ -74,7 +79,7 @@ function GoalRail({ label, children }: { label: string; children: React.ReactNod
       </div>
       <div
         ref={rail}
-        className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-smooth scroll-px-4 px-4 pb-3 pt-1 no-scrollbar sm:mx-0 sm:gap-4 sm:scroll-px-0 sm:px-1"
+        className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto scroll-smooth scroll-px-4 px-4 pb-3 pt-1 no-scrollbar sm:mx-0 sm:gap-4 sm:scroll-px-0 sm:px-1"
       >
         {children}
       </div>
@@ -108,6 +113,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
         appId: t.id,
         sub: t.description || categoryInfo(t.category).line,
         category: t.category,
+        tool: t,
       };
     };
 
@@ -135,6 +141,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase(),
       sub: l.product.tagline ?? "",
       glyph: l.product.glyph,
+      design: l,
       color: DESIGN_COLOUR[l.product.category] ?? designColor(l.product.category),
     });
 
@@ -254,8 +261,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
         {shown.map((b) => {
           const chosen = b.groups.find((g) => g.name === cats[b.id]);
           const seen = new Set<string>();
-          const items = (chosen ? chosen.items : b.groups.flatMap((g) => g.items)).filter((i) => !seen.has(i.key) && seen.add(i.key));
-          const columns = Array.from({ length: Math.ceil(items.length / ROWS) }, (_, c) => items.slice(c * ROWS, c * ROWS + ROWS));
+          const items = [...(chosen ? chosen.items : b.groups.flatMap((g) => g.items))].sort((x, y) => Number(!!y.tool && APP_PREVIEW_IDS.has(y.tool.id)) - Number(!!x.tool && APP_PREVIEW_IDS.has(x.tool.id))).filter((i) => !seen.has(i.key) && seen.add(i.key));
           const designGroup = (g: Group) => DESIGN_CATEGORIES.find((c) => c.name === g.name)?.id ?? "";
           const seeAll = chosen
             ? b.id === DESIGNS
@@ -296,38 +302,9 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
                   })}
                 </div>
               )}
-              {/* App Store style: columns of three rows, swiped sideways. */}
+              {/* The same cards as the rest of the site, in a slider. */}
               <GoalRail label={b.name} key={`${b.id}:${cats[b.id] ?? ""}`}>
-                {columns.map((col, ci) => (
-                  <ul key={ci} className="w-[88%] shrink-0 snap-start divide-y-2 divide-ink/10 sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
-                    {col.map((i) => (
-                      <li key={i.key}>
-                        <Link
-                          to={i.to}
-                          onClick={(e) => onItem(e, i)}
-                          className="flex items-center gap-3.5 rounded-xl py-3 pr-1 hover:bg-card/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          {i.appId ? (
-                            <AppIcon toolId={i.appId} category={i.category} name={i.name} size="md" className="rounded-2xl" />
-                          ) : (
-                            <span
-                              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-ink text-3xl"
-                              style={{ background: `color-mix(in srgb, ${i.color ?? "hsl(var(--sun))"} 55%, hsl(var(--card)))` }}
-                              aria-hidden
-                            >
-                              {i.glyph}
-                            </span>
-                          )}
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[16px] font-bold leading-tight">{i.name}</span>
-                            <span className="mt-0.5 block truncate text-[13.5px] text-muted-foreground">{i.sub}</span>
-                          </span>
-                          <span className="shrink-0 whitespace-nowrap rounded-full border-2 border-ink bg-card px-3 py-1 text-[12.5px] font-bold">{i.price}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                ))}
+                {items.slice(0, MAX_CARDS).map((i) => (i.tool ? <AppTile key={i.key} tool={i.tool} /> : i.design ? <ProductCard key={i.key} l={i.design} /> : null))}
               </GoalRail>
             </div>
           );

@@ -13,7 +13,6 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import { useRefCapture } from "@/hooks/useRefCapture";
 import { QuickLookProvider } from "@/components/store/QuickLook";
 import { MobileDock } from "@/components/MobileDock";
-import { WhatsAppFab } from "@/components/WhatsAppFab";
 import { featureRoutes } from "./featureRoutes";
 const SmartAssistantChatbot = lazy(() =>
   import("@/components/SmartAssistantChatbot").then((m) => ({
@@ -338,7 +337,6 @@ const App = () => (
           <QuickLookProvider>
             <AnimatedRoutes />
             <MobileDock />
-            <WhatsAppFab />
             <Suspense fallback={null}>
               <SmartAssistantChatbot />
               <CreditPromptHost />

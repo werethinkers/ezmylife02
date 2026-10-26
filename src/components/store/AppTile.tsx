@@ -70,7 +70,7 @@ export function AppTile({
           </div>
         </div>
         <p className="line-clamp-2 min-h-[2.6rem] text-[14.5px] leading-snug text-ink/85">{tool.description || `You get ${info.get}.`}</p>
-        {media.previewImageUrl && <GiveGetStrip give={info.give} get={info.get} />}
+        <GiveGetStrip give={info.give} get={info.get} />
         <div className="mt-auto flex items-center gap-2.5 pt-1">
           <span className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-card/60 px-4 text-sm font-bold transition-colors group-hover:bg-card">See what it does</span>
           <PricePill toolId={tool.id} />

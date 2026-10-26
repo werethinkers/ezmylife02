@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Send, Loader2, Bot } from "lucide-react";
+import { Sparkles, X, Send, Loader2, Bot, MessageCircle, ArrowUpRight } from "lucide-react";
+import { HELP_WHATSAPP, HELP_WHATSAPP_LABEL } from "@/components/WhatsAppFab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,8 @@ const extractLead = (text: string) => {
 export const SmartAssistantChatbot = () => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  // The small sheet with the two ways to get help (WhatsApp, or ask the assistant).
+  const [menu, setMenu] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -145,23 +148,70 @@ export const SmartAssistantChatbot = () => {
 
   return (
     <>
-      {/* Floating launcher */}
+      {/* One help button: opens a small sheet with WhatsApp and the assistant. */}
+      {menu && <button type="button" aria-label="Close help" className="fixed inset-0 z-[58] cursor-default" onClick={() => setMenu(false)} />}
+      <AnimatePresence>
+        {menu && !open && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="fixed bottom-[140px] right-3 z-[60] w-[min(300px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border-2 border-ink bg-card shadow-[5px_5px_0_0_hsl(var(--ink))] md:bottom-24 md:right-6"
+            role="menu"
+            aria-label="Get help"
+          >
+            <a
+              role="menuitem"
+              href={`https://wa.me/${HELP_WHATSAPP}?text=${encodeURIComponent("Hi Ezyourlife, I need help")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMenu(false)}
+              className="flex items-center gap-3 border-b-2 border-ink bg-teal px-4 py-3 text-ink hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-card">
+                <MessageCircle className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block font-display text-[15px] font-extrabold">Chat on WhatsApp</span>
+                <span className="block text-[13px] font-bold">{HELP_WHATSAPP_LABEL}</span>
+              </span>
+              <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden />
+            </a>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenu(false);
+                setOpen(true);
+              }}
+              className="flex w-full items-center gap-3 bg-sun px-4 py-3 text-left text-ink hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-card">
+                <Sparkles className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block font-display text-[15px] font-extrabold">Ask the assistant</span>
+                <span className="block text-[13px] font-semibold">Tell it what you need, get the right app</span>
+              </span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <motion.button
         initial={{ scale: 0, rotate: -45 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 220, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? setOpen(false) : setMenu((v) => !v))}
+        aria-expanded={open || menu}
         className="fixed bottom-[84px] right-3 md:bottom-6 md:right-6 z-[60] h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]"
-        aria-label="Open EZYOURLIFE Assistant"
+        aria-label={open || menu ? "Close help" : "Get help: WhatsApp or the assistant"}
       >
+        {!open && !menu && <span className="help-ring" aria-hidden />}
         <span className="flex h-full w-full items-center justify-center rounded-full">
-          {open ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Sparkles className="h-6 w-6 text-ink" />
-          )}
+          {open || menu ? <X className="h-6 w-6 text-foreground" /> : <MessageCircle className="h-6 w-6 text-ink" />}
         </span>
       </motion.button>
 
