@@ -29,4 +29,5 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/business/print/:billId", page: lazy(() => import("./pages/business/BusinessPrint")) },
   { path: "/b/:slug", page: lazy(() => import("./pages/business/PublicSite")) },
   { path: "/card/:code", page: lazy(() => import("./pages/card/CardLanding")) },
+  { path: "/terms", page: lazy(() => import("./pages/Terms")) },
 ];

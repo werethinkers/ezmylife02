@@ -263,7 +263,7 @@ const Auth = () => {
           </motion.div>
 
           <motion.p variants={fadeInUp} transition={{ duration: 0.4, delay: 0.2 }} className="text-center text-xs text-muted-foreground">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            By continuing, you agree to our <Link to="/terms" className="underline">Terms and conditions</Link> and <Link to="/refund-policy" className="underline">Refund policy</Link>.
           </motion.p>
         </motion.div>
       </div>

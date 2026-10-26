@@ -198,6 +198,14 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Contact support", "/about#contact"]],
   },
   {
+    path: "/terms",
+    title: "Terms and conditions | EZYOURLIFE",
+    description: "The terms for using EZYOURLIFE: accounts, credits, promotional and gift credits, payments, refunds and acceptable use.",
+    h1: "Terms and conditions",
+    text: ["The rules for using EZYOURLIFE, including how credits, gift credits and refunds work."],
+    links: [["Refund policy", "/refund-policy"], ["Contact support", "/about#contact"]],
+  },
+  {
     path: "/startup-analyser",
     title: "AI Startup Analyser: competitors, numbers and team | EZYOURLIFE",
     description: "Describe a startup and get competitor analysis, financial projections, a team assessment and an investor-ready report, made by AI in minutes.",
