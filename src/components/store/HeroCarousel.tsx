@@ -44,7 +44,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
       setProgress(0);
       const el = track.current;
       const s = el?.children[next] as HTMLElement | undefined;
-      if (el && s) el.scrollTo({ left: s.offsetLeft - (el.clientWidth - s.clientWidth) / 2, behavior: "smooth" });
+      if (el && s) el.scrollTo({ left: s.offsetLeft, behavior: "smooth" });
     },
     [n],
   );
@@ -55,11 +55,10 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
     settle.current = window.setTimeout(() => {
       const el = track.current;
       if (!el) return;
-      const mid = el.scrollLeft + el.clientWidth / 2;
       let best = 0;
       let bd = Infinity;
       Array.from(el.children).forEach((c, i) => {
-        const d = Math.abs((c as HTMLElement).offsetLeft + (c as HTMLElement).clientWidth / 2 - mid);
+        const d = Math.abs((c as HTMLElement).offsetLeft - el.scrollLeft);
         if (d < bd) {
           bd = d;
           best = i;
@@ -99,7 +98,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
       <div
         ref={track}
         onScroll={onScroll}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-6 pt-1 [scrollbar-width:none] before:w-[calc(7%-12px)] before:shrink-0 before:content-[''] after:w-[calc(7%-12px)] after:shrink-0 after:content-[''] md:gap-5 md:before:w-[calc(14%-20px)] md:after:w-[calc(14%-20px)] [&::-webkit-scrollbar]:hidden"
+        className="relative flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-6 pt-1 [scrollbar-width:none] after:w-[calc(14%-12px)] after:shrink-0 after:content-[''] md:gap-5 md:after:w-[calc(28%-20px)] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((s, i) => (
           <Link
@@ -108,7 +107,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
             aria-label={`${s.title}: ${s.cta}`}
             aria-current={i === active ? "true" : undefined}
             className={cn(
-              "group grid min-h-[520px] w-[86%] shrink-0 snap-center grid-cols-1 overflow-hidden rounded-[22px] border-[3px] border-ink shadow-[5px_5px_0_0_hsl(var(--ink))] transition-[opacity,transform] duration-500 md:min-h-[430px] md:w-[72%] md:grid-cols-[5fr_6fr] md:rounded-[26px] md:shadow-[8px_8px_0_0_hsl(var(--ink))]",
+              "group grid min-h-[520px] w-[86%] shrink-0 snap-start grid-cols-1 overflow-hidden rounded-[22px] border-[3px] border-ink shadow-[5px_5px_0_0_hsl(var(--ink))] transition-[opacity,transform] duration-500 md:min-h-[430px] md:w-[72%] md:grid-cols-[5fr_6fr] md:rounded-[26px] md:shadow-[8px_8px_0_0_hsl(var(--ink))]",
               i === active ? "opacity-100" : "scale-[.96] opacity-50",
             )}
             style={{ background: s.color }}
@@ -153,7 +152,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
       </div>
 
       {/* Laptop: small pictures with a progress bar. */}
-      <div className="hidden justify-center gap-3 md:flex">
+      <div className="hidden justify-start gap-3 md:flex">
         {slides.map((s, i) => (
           <button
             key={s.key}
@@ -174,7 +173,7 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
       </div>
 
       {/* Phone: dots. */}
-      <div className="flex justify-center gap-2 md:hidden">
+      <div className="flex justify-start gap-2 md:hidden">
         {slides.map((s, i) => (
           <button
             key={s.key}
