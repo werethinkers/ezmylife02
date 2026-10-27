@@ -28,7 +28,7 @@ interface ActivityArchiveProps {
 
 const ACTION_TYPES = ["all", "tool_usage", "login", "signup", "profile_edit", "payment", "subscription"];
 
-const ACTION_CONFIG: Record<string, { icon: typeof User; color: string; label: string }> = {
+export const ACTION_CONFIG: Record<string, { icon: typeof User; color: string; label: string }> = {
   login: { icon: LogIn, color: "bg-blue-500/10 text-blue-600 border-blue-500/20", label: "Login" },
   signup: { icon: UserPlus, color: "bg-green-500/10 text-green-600 border-green-500/20", label: "Signup" },
   tool_usage: { icon: Wrench, color: "bg-purple-500/10 text-purple-600 border-purple-500/20", label: "Tool Used" },
@@ -37,7 +37,7 @@ const ACTION_CONFIG: Record<string, { icon: typeof User; color: string; label: s
   subscription: { icon: CreditCard, color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", label: "Subscription" },
 };
 
-const getHumanDescription = (log: ActivityLog): string => {
+export const getHumanDescription = (log: ActivityLog): string => {
   const details = log.action_details as Record<string, unknown> | null;
   switch (log.action_type) {
     case "tool_usage":

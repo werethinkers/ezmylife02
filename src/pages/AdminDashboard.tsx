@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download, Megaphone, PackageCheck, Undo2, ListChecks, Store, Gift, Mail } from "lucide-react";
+import { ChevronRight, Loader2, Users, Activity, BarChart3, ExternalLink, Wrench, MessageSquarePlus, Archive, Handshake, KeyRound, LineChart, Link as LinkIcon, Ticket, BookHeart, Footprints, Image as ImageIcon, Building2, Zap, LayoutGrid, Globe, Sparkles, Rocket, Download, Megaphone, PackageCheck, Undo2, ListChecks, Store, Gift, Mail } from "lucide-react";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import DataExport from "@/components/admin/DataExport";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
@@ -26,6 +26,7 @@ import CardPromoManager from "@/components/admin/CardPromoManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
 import VisitorsTracker from "@/components/admin/VisitorsTracker";
 import CreditsAdmin from "@/components/admin/CreditsAdmin";
+import StatDrilldown, { STAT_KEYS, type StatKey } from "@/components/admin/StatDrilldown";
 import ToolDemoEditor from "@/components/admin/ToolDemoEditor";
 import PromoPagesManager from "@/components/admin/PromoPagesManager";
 
@@ -82,11 +83,22 @@ const AdminDashboard = () => {
   // The open section lives in the address (/admin?tab=influencers) so every admin screen has a link you can share or bookmark.
   const [searchParams, setSearchParams] = useSearchParams();
   const fromUrl = searchParams.get("tab") as TabId | null;
+  // A clicked stat card opens its breakdown; it lives in the address too (/admin?stat=credits).
+  const statParam = searchParams.get("stat") as StatKey | null;
+  const openStat = statParam && STAT_KEYS.includes(statParam) ? statParam : null;
+  const setOpenStat = (s: StatKey | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (s) next.set("stat", s); else next.delete("stat");
+    setSearchParams(next, { replace: true });
+  };
+  // Counted on the server so it is exact; the 200 newest logs below can miss logins on a busy day.
+  const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
   const [activeTab, setActiveTabState] = useState<TabId>(fromUrl && TAB_IDS.includes(fromUrl) ? fromUrl : "analytics");
   const setActiveTab = (t: TabId) => {
     setActiveTabState(t);
     setSearchParams({ tab: t }, { replace: true });
   };
+  // (switching section clears ?stat, which closes the breakdown)
   useEffect(() => {
     if (fromUrl && TAB_IDS.includes(fromUrl)) setActiveTabState(fromUrl);
   }, [fromUrl]);
@@ -126,6 +138,9 @@ const AdminDashboard = () => {
       }
       setDesignSales(sales);
     }
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+    const { count: loginsToday } = await supabase.from("activity_logs").select("id", { count: "exact", head: true }).eq("action_type", "login").gte("created_at", dayStart.toISOString());
+    if (loginsToday !== null) setTodayLoginCount(loginsToday);
     if (logsRes.data) setLogs(logsRes.data as ActivityLog[]);
     if (profilesRes.data) setProfiles(profilesRes.data as Profile[]);
     if (purchasesRes.data) {
@@ -169,7 +184,7 @@ const AdminDashboard = () => {
     totalLogs: logs.length,
     creditsSold: creditsSold.credits,
     revenueInr: creditsSold.inr_amount,
-    todayLogins: logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
+    todayLogins: todayLoginCount ?? logs.filter(l => l.action_type === "login" && new Date(l.created_at).toDateString() === new Date().toDateString()).length,
   };
 
   const toolUsageLogs = logs.filter(l => l.action_type === "tool_usage");
@@ -276,23 +291,33 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[
-            { label: "Total Users", value: stats.totalUsers, icon: Users },
-            { label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
-            { label: "Websites Sold", value: `${designSales.websites.count} (₹${designSales.websites.inr})`, icon: Globe },
-            { label: "Cards Sold", value: `${designSales.cards.count} (₹${designSales.cards.inr})`, icon: Mail },
-            { label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
+            { key: "users" as StatKey, label: "Total Users", value: stats.totalUsers, icon: Users },
+            { key: "credits" as StatKey, label: "Credits Sold", value: `${stats.creditsSold} (₹${stats.revenueInr})`, icon: Zap },
+            { key: "websites" as StatKey, label: "Websites Sold", value: `${designSales.websites.count} (₹${designSales.websites.inr})`, icon: Globe },
+            { key: "cards" as StatKey, label: "Cards Sold", value: `${designSales.cards.count} (₹${designSales.cards.inr})`, icon: Mail },
+            { key: "logins" as StatKey, label: "Today's Logins", value: stats.todayLogins, icon: BarChart3 },
           ].map(s => (
-            <Card key={s.label}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <s.icon className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setOpenStat(s.key)}
+              aria-label={`${s.label}: open breakdown`}
+              className="group text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Card className="h-full cursor-pointer">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <s.icon className="h-8 w-8 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-2xl font-bold">{s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition" />
+                </CardContent>
+              </Card>
+            </button>
           ))}
         </div>
+        <StatDrilldown stat={openStat} onClose={() => setOpenStat(null)} profiles={profiles} />
 
         <div className="grid md:grid-cols-[220px_1fr] gap-6">
           {/* Mobile: section dropdown */}
