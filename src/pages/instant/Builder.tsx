@@ -17,7 +17,8 @@ import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
 import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
 import { creditsForInr, inrForCredits } from "@/lib/creditRate";
-import { checkout, createPage, getMyPage, republish, savePage, uploadContentImages, publishPrepaid } from "@/instant/api";
+import { checkout, createPage, getMyPage, getShop, rememberShop, republish, savePage, tagShopOnce, uploadContentImages, publishPrepaid } from "@/instant/api";
+import { nameFromParam } from "@/instant/festLang";
 import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,16 @@ function BuilderInner({ product }: { product: Product }) {
   const wantedDesign = params.get("design");
   const initial = useMemo<Draft>(() => {
     const base = readDraft(product.id) ?? { variantId: product.themes[0].id, content: { ...product.sample } };
-    return wantedDesign && !editId && product.themes.some((t) => t.id === wantedDesign) ? { ...base, variantId: wantedDesign } : base;
+    const withDesign = wantedDesign && !editId && product.themes.some((t) => t.id === wantedDesign) ? { ...base, variantId: wantedDesign } : base;
+    if (editId) return withDesign;
+    // From a card ("make your own"): ?sender=<their name>. From a shop's QR: ?shop=<shop slug>, which puts the shop's offer on the card.
+    const sender = nameFromParam(params.get("sender"));
+    const shop = params.get("shop");
+    const hasSender = product.steps.some((st) => st.fields.some((f) => f.id === "sender"));
+    const extra: Content = {};
+    if (sender && hasSender) extra.sender = sender;
+    if (shop && /^[a-z0-9][a-z0-9-]{1,40}$/.test(shop) && product.family === "festival") extra.shop = shop;
+    return Object.keys(extra).length ? { ...withDesign, content: { ...withDesign.content, ...extra } } : withDesign;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
   const [variantId, setVariantId] = useState(initial.variantId);
@@ -80,6 +90,20 @@ function BuilderInner({ product }: { product: Product }) {
   const [loginOpen, setLoginOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const theme = product.themes.find((t) => t.id === variantId) ?? product.themes[0];
+
+  // A shop QR: remember the shop for this person, and show its name so they can keep or remove the offer.
+  const shopSlug = typeof content.shop === "string" ? content.shop : null;
+  const [shopName, setShopName] = useState<string | null>(null);
+  useEffect(() => {
+    const qs = params.get("shop");
+    if (qs && /^[a-z0-9][a-z0-9-]{1,40}$/.test(qs)) rememberShop(qs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { if (user) tagShopOnce(); }, [user]);
+  useEffect(() => {
+    if (!shopSlug) { setShopName(null); return; }
+    getShop(shopSlug).then((s) => setShopName(s?.name ?? null), () => setShopName(null));
+  }, [shopSlug]);
 
   // A draft with many photos lives in IndexedDB; bring its photos back once it has loaded.
   useEffect(() => {
@@ -236,6 +260,13 @@ function BuilderInner({ product }: { product: Product }) {
               <span className="hidden md:inline">Fill the steps on the left. Your {isSite ? "website" : "card"} changes on the right as you type.</span>
             </p>
           </div>
+
+          {shopSlug && shopName && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-sun px-4 py-3">
+              <p className="text-sm font-semibold">Your card will carry {shopName}'s Diwali offer at the bottom.</p>
+              <Button type="button" variant="outline" size="sm" className="border-2 border-ink bg-card" onClick={() => setContent((c) => { const n = { ...c }; delete n.shop; return n; })}>Remove offer</Button>
+            </div>
+          )}
 
           <div className="grid gap-2">
             <p className="text-sm font-bold">Choose a design <span className="font-semibold text-muted-foreground">· {theme.name}, {styleLabel(theme).toLowerCase()} ({product.themes.findIndex((t) => t.id === theme.id) + 1} of {product.themes.length})</span></p>

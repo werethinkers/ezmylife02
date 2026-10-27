@@ -2,12 +2,15 @@ import type { Product, Theme } from "../types";
 import { festivalSteps } from "../fields";
 import { ten } from "../themes";
 import { coverFor } from "../stock";
+import { INDORI_LINES } from "../festLang";
 
 type Art = "diya" | "colours" | "rakhi" | "tree" | "fireworks" | "moon" | "flag" | "flower" | "modak" | "dandiya" | "kite" | "kalash" | "lotus" | "sun";
 
 interface Def {
   id: string; name: string; glyph: string; price?: number; seasonal: string; themes: Theme[]; art: Art;
   greeting: string; sub: string; suggestions: string[]; popular?: boolean; tap: string; tapDone: string;
+  /** langs: the card can be sent in several languages (Diwali). emblem: a small mark above the diyas for the other Diwali-week days. */
+  langs?: boolean; emblem?: string;
 }
 
 const make = (d: Def): Product => ({
@@ -18,13 +21,26 @@ const make = (d: Def): Product => ({
   titleField: "sender",
   whatsapp: { reply: `${d.greeting} to you too, {sender}! 🙏` },
   share: `${d.glyph} ${d.greeting}!\nA little greeting from {sender}:\n{link}`,
-  opts: { art: d.art, greeting: d.greeting, tap: d.tap, tapDone: d.tapDone }, indexable: false,
+  opts: { art: d.art, greeting: d.greeting, tap: d.tap, tapDone: d.tapDone, langs: !!d.langs, emblem: d.emblem }, indexable: false,
 });
 
 export const FESTIVALS: Product[] = [
-  make({ id: "diwali", name: "Diwali Greeting", glyph: "🪔", seasonal: "Oct–Nov", popular: true, themes: ten("festive", "diwali", "royal", "minimal"), art: "diya",
+  make({ id: "diwali", name: "Diwali Greeting", glyph: "🪔", seasonal: "Oct–Nov", popular: true, themes: ten("festive", "diwali", "rajwada", "royal", "minimal"), art: "diya", langs: true,
     greeting: "Happy Diwali", sub: "Light the diyas, send the sweetness.", tap: "Tap the diyas to light them", tapDone: "Shubh Deepavali! May your home glow all year.",
-    suggestions: ["May the light of the diyas fill your home with joy, health and prosperity. Happy Diwali!", "Wishing you and your family a Diwali full of light, laughter and mithai. Shubh Deepavali!", "दीपों का यह पावन त्योहार आपके जीवन में सुख, समृद्धि और खुशियाँ लाए। शुभ दीपावली!"] }),
+    suggestions: ["May the light of the diyas fill your home with joy, health and prosperity. Happy Diwali!", "Wishing you and your family a Diwali full of light, laughter and mithai. Shubh Deepavali!", "दीपों का यह पावन त्योहार आपके जीवन में सुख, समृद्धि और खुशियाँ लाए। शुभ दीपावली!", ...INDORI_LINES] }),
+  // The other days of the Diwali week: same diyas and renderer, their own words.
+  make({ id: "dhanteras", name: "Dhanteras Greeting", glyph: "🪙", seasonal: "Oct–Nov", themes: ten("festive", "diwali", "rajwada", "royal"), art: "diya", emblem: "🪙",
+    greeting: "Shubh Dhanteras", sub: "Dhan, dhanya and a home full of light.", tap: "Tap the diyas to welcome Lakshmi", tapDone: "Shubh Dhanteras! May your home fill with prosperity.",
+    suggestions: ["May this Dhanteras bring wealth, good health and new beginnings to your home. Shubh Dhanteras!", "धनतेरस के इस शुभ अवसर पर आपके घर में सुख, समृद्धि और आरोग्य का वास हो। शुभ धनतेरस!", "Bhiya, Dhanteras ki dher saari shubhkaamnaaein! Ghar mein Lakshmi ji ka vaas rahe."] }),
+  make({ id: "govardhan", name: "Govardhan Puja", glyph: "🛕", seasonal: "Oct–Nov", themes: ten("festive", "diwali", "rajwada", "traditional"), art: "diya", emblem: "🛕",
+    greeting: "Happy Govardhan Puja", sub: "Annakut wishes for the whole family.", tap: "Tap the diyas", tapDone: "Jai Shri Krishna! Happy Govardhan Puja.",
+    suggestions: ["May Shri Krishna protect your family the way he lifted Govardhan for his people. Happy Govardhan Puja!", "गोवर्धन पूजा और अन्नकूट की हार्दिक शुभकामनाएँ। जय श्री कृष्ण!"] }),
+  make({ id: "bhai-dooj", name: "Bhai Dooj", glyph: "🍬", seasonal: "Oct–Nov", themes: ten("festive", "diwali", "rajwada", "rakhi"), art: "diya", emblem: "🍬",
+    greeting: "Happy Bhai Dooj", sub: "Tilak, mithai and a promise, in any city.", tap: "Tap to light the aarti diyas", tapDone: "Happy Bhai Dooj! Always there for each other.",
+    suggestions: ["Tilak on your forehead, mithai in your hand and my wishes always with you. Happy Bhai Dooj!", "भाई दूज के पावन पर्व पर ढेर सारा प्यार और शुभकामनाएँ। हमेशा खुश रहो!"] }),
+  make({ id: "veer-nirvan", name: "Jain Diwali (Veer Nirvan)", glyph: "🪷", seasonal: "Oct–Nov", themes: ten("festive", "jain", "diwali", "rajwada"), art: "diya", emblem: "🪷",
+    greeting: "Jai Jinendra, Shubh Deepawali", sub: "Bhagwan Mahavir's Nirvan, lit with diyas.", tap: "Tap the diyas to light them", tapDone: "Jai Jinendra! May the light of right knowledge stay with you.",
+    suggestions: ["On Bhagwan Mahavir's Nirvan Kalyanak, may the light of right knowledge fill your home. Jai Jinendra!", "भगवान महावीर के निर्वाण कल्याणक पर आपको और आपके परिवार को दीपावली की हार्दिक शुभकामनाएँ। जय जिनेन्द्र!"] }),
   make({ id: "holi", name: "Holi Greeting", glyph: "🎨", seasonal: "Mar", popular: true, themes: ten("party", "holi", "fun", "sunny"), art: "colours",
     greeting: "Happy Holi", sub: "Throw some gulaal, digitally.", tap: "Tap anywhere to throw colours", tapDone: "Bura na mano, Holi hai!",
     suggestions: ["May your life be as colourful as the gulaal in the air today. Happy Holi!", "Rang, gujiya aur dher saari masti. Holi ki hardik shubhkamnayein!"] }),

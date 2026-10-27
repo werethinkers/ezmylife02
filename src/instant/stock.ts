@@ -120,6 +120,7 @@ const STOCK_FOR: Record<string, StockSet[]> = {
   tutor: ["tutor", "coaching-center"],
   "event-planner": ["event-planner", "wedding"],
   "puja-invite": ["diwali", "ganesh-chaturthi"],
+  dhanteras: ["diwali"], govardhan: ["diwali"], "bhai-dooj": ["diwali"], "veer-nirvan": ["diwali"],
   meetup: ["meetup", "workshop", "celebrate-friends"],
   "jewellery-catalogue": ["jewellery-catalogue", "jeweller"],
   "gift-catalogue": ["gift-catalogue", "celebrate-flowers"],
