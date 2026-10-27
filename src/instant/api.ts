@@ -98,12 +98,47 @@ async function token() {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? null;
 }
+/** An error from the checkout function, carrying the server's own reason and HTTP status. */
+export class CheckoutError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) { super(message); this.name = "CheckoutError"; this.status = status; }
+}
+
+/**
+ * When an edge function answers with a non-2xx status, supabase-js hands back a generic
+ * "Edge Function returned a non-2xx status code" and leaves `data` empty; the function's own
+ * `{ error: "..." }` body is only reachable through `error.context`. Read it so people (and we)
+ * see the real reason.
+ */
+async function serverReason(error: unknown): Promise<{ message: string; status?: number }> {
+  const ctx = (error as { context?: unknown } | null)?.context;
+  if (ctx && typeof (ctx as Response).clone === "function") {
+    const res = ctx as Response;
+    try {
+      const body = await res.clone().json();
+      if (body && typeof body.error === "string" && body.error) return { message: body.error, status: res.status };
+    } catch { /* not JSON: fall through to the text */ }
+    try {
+      const text = (await res.clone().text()).trim();
+      if (text) return { message: text.slice(0, 200), status: res.status };
+    } catch { /* ignore */ }
+    return { message: `The payment service answered with an error (${res.status}).`, status: res.status };
+  }
+  return { message: (error as { message?: string } | null)?.message || "The payment service could not be reached." };
+}
+
 export async function checkout(body: Record<string, unknown>) {
   const t = await token();
   if (!t) throw new Error("Sign in to publish.");
   const { data, error } = await supabase.functions.invoke("ip-checkout", { body, headers: { Authorization: `Bearer ${t}` } });
-  if (data?.error) throw new Error(data.error);
-  if (error) throw new Error(error.message);
+  if (error) {
+    const r = await serverReason(error);
+    // An older deployed copy of the function does not know a newer action.
+    const message = /^unknown action/i.test(r.message) ? "The payment service is being updated. Please try again in a few minutes." : r.message;
+    console.warn("ip-checkout", body.action, r.status, r.message);
+    throw new CheckoutError(message, r.status);
+  }
+  if (data?.error) throw new CheckoutError(String(data.error));
   return data;
 }
 

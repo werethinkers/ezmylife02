@@ -1,21 +1,24 @@
-import { useId, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { useId, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Crop, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import type { Field, Loose } from "../types";
+import type { Field, Loose, SuggestionSet } from "../types";
 import { shrinkImage } from "../media";
+import { PhotoAdjust } from "./PhotoAdjust";
 import { GooglePhotosButton } from "@/components/GooglePhotosPicker";
 import { resolveImg } from "../parts";
 import { isStock } from "../stock";
-import { DAYS } from "../util";
+import { DAYS, canAdjust } from "../util";
 import { cn } from "@/lib/utils";
 
 type Props = { field: Field; value: Loose; onChange: (v: Loose) => void; error?: string; compact?: boolean };
 
 export function FieldInput({ field: f, value, onChange, error, compact }: Props) {
   const uid = useId();
+  // What the box held before a suggestion replaced it, so a tap on the wrong line is never a loss.
+  const [undo, setUndo] = useState<string | null>(null);
   const id = "f-" + f.id + "-" + uid.replace(/:/g, "");
   const label = (
     <label htmlFor={id} className="text-sm font-semibold flex items-baseline justify-between gap-2">
@@ -28,19 +31,24 @@ export function FieldInput({ field: f, value, onChange, error, compact }: Props)
   const wrap = (el: React.ReactNode) => <div className="grid gap-1.5">{label}{el}{help}{err}</div>;
 
   switch (f.type) {
-    case "textarea":
+    case "textarea": {
+      const pick = (s: string) => {
+        const cur = String(value ?? "");
+        setUndo(cur.trim() && cur.trim() !== s ? cur : null);
+        onChange(s.slice(0, f.max ?? s.length));
+      };
       return wrap(<>
-        <Textarea id={id} value={value ?? ""} maxLength={f.max} rows={compact ? 2 : 5} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} className="text-base" />
-        {f.suggestions && f.suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {f.suggestions.map((s, i) => (
-              <button key={i} type="button" onClick={() => onChange(s)} className="text-left text-xs rounded-xl border bg-muted/40 hover:bg-muted px-3 py-2 max-w-full">
-                <span className="line-clamp-2">{s}</span>
-              </button>
-            ))}
-          </div>
+        <Textarea id={id} value={value ?? ""} maxLength={f.max} rows={compact ? 2 : 5} placeholder={f.placeholder} onChange={(e) => { setUndo(null); onChange(e.target.value); }} className="text-base" />
+        {undo !== null && (
+          <p className="text-xs text-muted-foreground" role="status">
+            That line replaced what you wrote. <button type="button" className="font-bold text-foreground underline" onClick={() => { onChange(undo); setUndo(null); }}>Undo</button>
+          </p>
+        )}
+        {((f.suggestionSets && f.suggestionSets.length > 0) || (f.suggestions && f.suggestions.length > 0)) && (
+          <SuggestionPicker sets={f.suggestionSets} lines={f.suggestions} onPick={pick} />
         )}
       </>);
+    }
     case "toggle":
       return (
         <div className="flex items-center justify-between gap-4 rounded-xl border px-4 py-3">
@@ -96,11 +104,20 @@ export function FieldInput({ field: f, value, onChange, error, compact }: Props)
     }
     default: {
       const type = f.type === "phone" ? "tel" : f.type === "number" ? "number" : f.type;
-      return wrap(
+      return wrap(<>
         <Input id={id} type={type} value={value ?? ""} maxLength={f.max && f.type !== "number" ? f.max : undefined} placeholder={f.placeholder}
           inputMode={f.type === "phone" ? "numeric" : undefined} className="h-11 text-base"
-          onChange={(e) => onChange(f.type === "phone" ? e.target.value.replace(/[^\d +]/g, "").slice(0, 14) : e.target.value)} />,
-      );
+          onChange={(e) => onChange(f.type === "phone" ? e.target.value.replace(/[^\d +]/g, "").slice(0, 14) : e.target.value)} />
+        {/* A text box can offer quick picks (the greeting line): tap one to fill the box, or just type. */}
+        {f.type === "text" && f.options && f.options.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1" role="group" aria-label={`${f.label}, quick picks`}>
+            {f.options.map((o) => (
+              <button key={o} type="button" aria-pressed={value === o} onClick={() => onChange(o)}
+                className={cn("rounded-full border px-3 py-1.5 text-sm", value === o ? "border-primary bg-primary text-primary-foreground" : "bg-background")}>{o}</button>
+            ))}
+          </div>
+        )}
+      </>);
     }
   }
 }
@@ -108,6 +125,7 @@ export function FieldInput({ field: f, value, onChange, error, compact }: Props)
 function PhotoPick({ id, value, onChange }: { id: string; value: Loose; onChange: (v: Loose) => void }) {
   const ref = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
   const src = resolveImg(value);
   return (
     <div className="flex items-center gap-3">
@@ -117,9 +135,11 @@ function PhotoPick({ id, value, onChange }: { id: string; value: Loose; onChange
       <div className="grid gap-1">
         <Button type="button" variant="outline" size="sm" onClick={() => ref.current?.click()}>{src ? "Change photo" : "Add photo"}</Button>
         <GooglePhotosButton max={1} onFiles={async (fs) => { try { setErr(""); onChange(await shrinkImage(fs[0])); } catch (x) { setErr(x instanceof Error ? x.message : "Couldn't use that photo."); } }} />
+        {src && canAdjust(value) && <Button type="button" variant="outline" size="sm" onClick={() => setAdjusting(true)}><Crop className="h-4 w-4" /> Adjust</Button>}
         {src && <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>Remove</Button>}
         {err && <p className="text-xs text-destructive">{err}</p>}
       </div>
+      <PhotoAdjust open={adjusting} src={src} onClose={() => setAdjusting(false)} onApply={(u) => { onChange(u); setAdjusting(false); }} />
       <input ref={ref} id={id} type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={async (e) => { const fl = e.target.files?.[0]; e.target.value = ""; if (!fl) return; try { setErr(""); onChange(await shrinkImage(fl)); } catch (x) { setErr(x instanceof Error ? x.message : "Couldn't use that photo."); } }} />
     </div>
   );
@@ -129,6 +149,7 @@ function Gallery({ id, list, max, onChange }: { id: string; list: { photo: strin
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [adjustAt, setAdjustAt] = useState<number | null>(null);
   const move = (i: number, d: number) => { const n = [...list]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); onChange(n); };
   const addFiles = async (all: File[]) => {
     const files = all.slice(0, max - list.length);
@@ -150,6 +171,7 @@ function Gallery({ id, list, max, onChange }: { id: string; list: { photo: strin
               {resolveImg(it.photo, "m" + i) && <img src={resolveImg(it.photo, "m" + i)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
               {isStock(it.photo) && <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">Sample</span>}
               <button type="button" onClick={() => onChange(list.filter((_, j) => j !== i))} className="absolute top-1.5 right-1.5 h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center" aria-label={`Remove photo ${i + 1}`}><X className="h-4 w-4" /></button>
+              {canAdjust(it.photo) && <button type="button" onClick={() => setAdjustAt(i)} className="absolute bottom-1.5 left-1.5 flex h-8 items-center gap-1 rounded-full bg-black/60 px-2.5 text-xs font-bold text-white" aria-label={`Adjust photo ${i + 1}`}><Crop className="h-4 w-4" /> Adjust</button>}
               <div className="absolute bottom-1.5 right-1.5 flex gap-1">
                 <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center disabled:opacity-30" aria-label={`Move photo ${i + 1} earlier`}><ChevronLeft className="h-4 w-4" /></button>
                 <button type="button" disabled={i === list.length - 1} onClick={() => move(i, 1)} className="h-8 w-8 rounded-full bg-black/60 text-white grid place-items-center disabled:opacity-30" aria-label={`Move photo ${i + 1} later`}><ChevronRight className="h-4 w-4" /></button>
@@ -159,6 +181,8 @@ function Gallery({ id, list, max, onChange }: { id: string; list: { photo: strin
           </div>
         ))}
       </div>
+      <PhotoAdjust open={adjustAt !== null} src={adjustAt !== null ? resolveImg(list[adjustAt]?.photo) : null} onClose={() => setAdjustAt(null)}
+        onApply={(u) => { if (adjustAt !== null) onChange(list.map((x, j) => (j === adjustAt ? { ...x, photo: u } : x))); setAdjustAt(null); }} />
       {list.some((x) => isStock(x.photo)) && <p className="text-xs text-muted-foreground">Photos marked Sample are free stock photos to show the look. Replace them with your own for the best result.</p>}
       {err && <p className="text-sm text-destructive" role="alert">{err}</p>}
       {list.length < max && (
@@ -193,5 +217,46 @@ function Chips({ id, options, max, value, onChange }: { id: string; options: str
         <Button type="button" variant="outline" onClick={addCustom}>Add</Button>
       </div>
     </>
+  );
+}
+
+/**
+ * Ready-made lines for a message box. With grouped sets it asks who the card is for and in which language
+ * (English, Hinglish or Hindi), then lists full lines to tap; with a plain list it just lists them.
+ */
+function SuggestionPicker({ sets, lines, onPick }: { sets?: SuggestionSet[]; lines?: string[]; onPick: (s: string) => void }) {
+  const whos = useMemo(() => Array.from(new Set((sets ?? []).map((s) => s.who))), [sets]);
+  const langs = useMemo(() => Array.from(new Set((sets ?? []).map((s) => s.lang))), [sets]);
+  const [who, setWho] = useState(whos[0] ?? "");
+  const [lang, setLang] = useState(langs[0] ?? "");
+  const grouped = whos.length > 0;
+  const items = grouped ? (sets ?? []).filter((s) => s.who === who && s.lang === lang).flatMap((s) => s.items) : lines ?? [];
+  const chip = (on: boolean, label: string, set: () => void) => (
+    <button key={label} type="button" aria-pressed={on} onClick={set} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold", on ? "border-ink bg-ink text-cream" : "bg-background")}>{label}</button>
+  );
+  return (
+    <div className="grid gap-2.5 rounded-2xl border bg-muted/30 p-3">
+      <p className="text-xs font-bold">{grouped ? "Need words? Pick who it's for and a language." : "Need words? Tap a line to start."}</p>
+      {grouped && (
+        <>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Who it's for">{whos.map((w) => chip(w === who, w, () => setWho(w)))}</div>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Language">{langs.map((l) => chip(l === lang, l, () => setLang(l)))}</div>
+        </>
+      )}
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No ready-made lines for this mix yet. Try another language.</p>
+      ) : (
+        <ul className="grid gap-2">
+          {items.map((s, i) => (
+            <li key={i}>
+              <button type="button" onClick={() => onPick(s)} className="w-full rounded-xl border bg-background p-3 text-left text-sm leading-snug hover:border-foreground">
+                <span className="block whitespace-pre-line">{s}</span>
+                <span className="mt-1.5 block text-xs font-bold text-primary">Use this line</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

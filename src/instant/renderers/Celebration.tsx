@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Content, RenderProps } from "../types";
 import { themeVars } from "../themes";
-import { fill, waShare, waTo, fmtDate } from "../util";
+import { fill, fitLine, graphemes, greetingOf, waShare, waTo, fmtDate } from "../util";
 import { isStock } from "../stock";
 import { BASE_CSS, Icon, Img, Lightbox, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
 
@@ -15,13 +15,30 @@ function Letters({ text }: { text: string }) {
         ? <span key={pi} className="l" style={{ ["--i" as string]: i++ }}> </span>
         : (
           <span key={pi} style={{ display: "inline-block", whiteSpace: "nowrap" }}>
-            {[...part].map((ch) => { const k = i++; return <span key={k} className="l" style={{ ["--i" as string]: k }}>{ch}</span>; })}
+            {graphemes(part).map((ch) => { const k = i++; return <span key={k} className="l" style={{ ["--i" as string]: k }}>{ch}</span>; })}
           </span>
         ))}
     </>
   );
 }
 
+
+/** The recipient's name, animated letter by letter like the greeting, with each word kept whole so a long name wraps between words. */
+function NameLetters({ text, colors }: { text: string; colors: string[] }) {
+  let k = 0;
+  return (
+    <>
+      {text.trim().split(/\s+/).map((word, wi) => (
+        <span key={wi}>
+          {wi > 0 && " "}
+          <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+            {graphemes(word).map((ch) => { const n = k++; return <span key={n} className="l" style={{ ["--i" as string]: n + 4, ["--c" as string]: colors[n % colors.length] }}>{ch}</span>; })}
+          </span>
+        </span>
+      ))}
+    </>
+  );
+}
 
 const EMBLEM: Record<string, string> = { wish: "✈️", hug: "🧶", bouquet: "💐", trophy: "🏆", diploma: "🎓", baby: "👶", candle: "🕯️" };
 
@@ -54,7 +71,8 @@ export default function Celebration({ product, theme, content: c, mode }: Render
   };
   const again = () => { setOpened(false); setOpening(false); setMomentDone(false); music.stop(); toTop(); };
 
-  const greeting = fill(o.greeting, vars);
+  // The sender can pick a different opening line ("Janmdin Mubarak"); empty means the card's own.
+  const greeting = greetingOf(o.greeting, vars);
   const memories = (Array.isArray(c.memories) ? c.memories : []).filter((m: { photo?: string }) => resolveImg(m?.photo, "m"));
   const sty = theme.s;
   const cover: string | undefined = sty !== "minimal" ? memories[0]?.photo : undefined;
@@ -96,7 +114,7 @@ export default function Celebration({ product, theme, content: c, mode }: Render
               <div className="cel-greet-t">
               <h1 className="cel-hb" style={fitWords(greeting)}><Letters text={greeting} /></h1>
               {!greeting.includes(String(c.recipient || "~")) && c.recipient && (
-                <span className="cel-name" style={fitWords(String(c.recipient))} aria-label={c.recipient}>{[...String(c.recipient)].map((ch, i) => <span key={i} className="l" style={{ ["--i" as string]: i + 4, ["--c" as string]: [theme.c.ac, theme.c.ac2, theme.c.ac3][i % 3] }}>{ch}</span>)}</span>
+                <span className="cel-name" style={fitLine(String(c.recipient))} aria-label={c.recipient}><NameLetters text={String(c.recipient)} colors={[theme.c.ac, theme.c.ac2, theme.c.ac3]} /></span>
               )}
               {(age > 0 || c.life_dates || (o.moment === "baby" && c.date)) && (
                 <div className="cel-chip">
@@ -325,7 +343,7 @@ const CSS = `
 .cel-cr a{color:inherit}
 .cel-hb{font:400 min(5.4rem,calc(118cqi / var(--fit)),14cqi)/.98 var(--fd);margin:0;text-wrap:balance}
 .cel-hb .l,.cel-name .l{display:inline-block;white-space:pre;animation:cel-pop .7s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i) * 50ms + .15s)}
-.cel-name{display:block;font:400 min(9rem,calc(130cqi / var(--fit)),24cqi)/.95 var(--fd);margin-top:.08em}
+.cel-name{display:block;font:400 min(9rem,calc(130cqi / var(--fit)),24cqi)/.95 var(--fd);margin-top:.08em;text-wrap:balance}
 .cel-name .l{color:var(--c)}
 .solemn .cel-hb .l,.solemn .cel-name .l{animation-name:cel-fade}
 @keyframes cel-pop{from{opacity:0;transform:translateY(40px) scale(.4) rotate(-12deg)}to{opacity:1;transform:none}}

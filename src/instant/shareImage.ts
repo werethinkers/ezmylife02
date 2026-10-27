@@ -1,5 +1,5 @@
 import type { Content, Product, Theme } from "./types";
-import { fill, fmtDate } from "./util";
+import { fill, fmtDate, greetingOf } from "./util";
 import { resolveImg } from "./parts";
 
 export const FORMATS = {
@@ -16,7 +16,7 @@ function firstPhoto(c: Content): string | null {
 function copyFor(p: Product, c: Content) {
   const o = p.opts;
   switch (p.family) {
-    case "celebration": { const g = fill(o.greeting, c); return { kick: "", big: g.includes(String(c.recipient)) ? g : `${g}`, name: g.includes(String(c.recipient)) ? "" : `${c.recipient}!`, sub: `From ${c.sender} ❤️`, pill: o.cta }; }
+    case "celebration": { const g = greetingOf(o.greeting, c); return { kick: "", big: g.includes(String(c.recipient)) ? g : `${g}`, name: g.includes(String(c.recipient)) ? "" : `${c.recipient}!`, sub: `From ${c.sender} ❤️`, pill: o.cta }; }
     case "festival": return { kick: "", big: o.greeting, name: "", sub: `From ${c.sender}`, pill: "Open your greeting" };
     case "event": return { kick: o.kicker, big: String(c.hosts ?? ""), name: "", sub: [fmtDate(c.date, { day: "numeric", month: "long", year: "numeric" }), c.venue].filter(Boolean).join(" · "), pill: "View invitation & RSVP" };
     case "business": return { kick: [c.area, c.city].filter(Boolean).join(" · "), big: `${o.heroVerb} ${c.name}`, name: "", sub: String(c.tagline ?? ""), pill: String(c.offer || "Scan or tap to know more") };

@@ -1,14 +1,28 @@
 // Image handling in the browser: shrink uploads before they're stored, and paint sample art
 // for the gallery and builder previews (so samples look finished before real photos are added).
 
-export function shrinkImage(file: File, max = 1400, quality = 0.84): Promise<string> {
+/** iPhone HEIC photos can't be drawn by most browsers, so turn them into JPEG first (the converter is only downloaded when one is chosen). */
+async function readable(file: File): Promise<File> {
+  if (!/heic|heif/i.test(file.type + " " + file.name)) return file;
+  try {
+    const { default: heic2any } = await import("heic2any");
+    const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    const blob = Array.isArray(out) ? out[0] : out;
+    return new File([blob], file.name.replace(/\.(heic|heif)$/i, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file; // the message below then tells the person what to do
+  }
+}
+
+export async function shrinkImage(source: File, max = 1400, quality = 0.84): Promise<string> {
+  const file = await readable(source);
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/") && !/\.(heic|heif)$/i.test(file.name)) return reject(new Error("Choose an image file."));
     const fr = new FileReader();
     fr.onerror = () => reject(new Error("Couldn't read that file."));
     fr.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error(/heic|heif/i.test(file.type + file.name) ? "iPhone HEIC photos can't be opened here. Choose a JPG or PNG, or share the photo as 'Most compatible'." : "That image couldn't be opened. Try a JPG or PNG."));
+      img.onerror = () => reject(new Error(/heic|heif/i.test(file.type + file.name) ? "This iPhone photo couldn't be converted. Try another photo, or share it as 'Most compatible' (JPG)." : "That image couldn't be opened. Try a JPG or PNG."));
       img.onload = () => {
         const s = Math.min(1, max / Math.max(img.width, img.height));
         const c = document.createElement("canvas");

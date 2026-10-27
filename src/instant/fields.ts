@@ -1,4 +1,4 @@
-import type { Field, Step } from "./types";
+import type { Field, Step, SuggestionSet } from "./types";
 
 // Field building blocks shared by the product definitions. Products relabel them so the form
 // speaks the product's language ("Membership plans" for a gym, "Services" for a salon).
@@ -20,7 +20,13 @@ export const F = {
   toggle: (id: string, label: string, o: Partial<Field> = {}): Field => ({ id, label, type: "toggle", ...o }),
 };
 
-export interface CelebrationLabels { recipient?: string; sender?: string; date?: string; age?: boolean; ageLabel?: string; messageSuggestions?: string[]; extra?: Field[] }
+export interface CelebrationLabels {
+  recipient?: string; sender?: string; date?: string; age?: boolean; ageLabel?: string; messageSuggestions?: string[]; extra?: Field[];
+  /** Message lines grouped by recipient and language; shows a picker instead of the plain list. */
+  messageSets?: SuggestionSet[];
+  /** Greeting lines the card can open with; the first is the card's own default. Shows quick picks under a "Greeting line" box. */
+  headlines?: string[];
+}
 export function celebrationSteps(l: CelebrationLabels): Step[] {
   return [
     {
@@ -28,12 +34,13 @@ export function celebrationSteps(l: CelebrationLabels): Step[] {
       fields: [
         F.text("recipient", l.recipient ?? "Their name", { required: true, max: 24, placeholder: "e.g. Priya" }),
         F.text("sender", l.sender ?? "Your name", { required: true, max: 24, placeholder: "e.g. Rahul" }),
+        ...(l.headlines?.length ? [F.text("headline", "Greeting line (optional)", { max: 28, placeholder: l.headlines[0], options: l.headlines, help: "The big words at the top. Pick one or write your own." })] : []),
         ...(l.date ? [F.date("date", l.date)] : []),
         ...(l.age ? [F.num("age", l.ageLabel ?? "Turning (optional)", { max: 3 })] : []),
         ...(l.extra ?? []),
       ],
     },
-    { title: "Your message", hint: "Write it the way you'd say it. Tap a suggestion to start.", fields: [F.area("message", "Message", { required: true, max: 700, suggestions: l.messageSuggestions })] },
+    { title: "Your message", hint: "Write it the way you'd say it, or tap a line below to start. You can change every word.", fields: [F.area("message", "Message", { required: true, max: 700, suggestions: l.messageSuggestions, suggestionSets: l.messageSets })] },
     { title: "Photos together", hint: "Add a caption to each photo. Skip if you don't have any.", fields: [F.gallery("memories", "Photos", 8)] },
     { title: "Finishing touches", fields: [F.phone("sender_whatsapp", "Your WhatsApp, so they can reply (optional)"), F.toggle("music", "Play music when they open it")] },
   ];

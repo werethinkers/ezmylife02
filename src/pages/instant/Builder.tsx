@@ -152,18 +152,26 @@ function BuilderInner({ product }: { product: Product }) {
 
       if (canPayCredits && !free) {
         setBusy("Paying with credits…");
-        const paid = await checkout({ action: "pay_credits", page_id: id });
-        if (paid.published) {
-          clearDraft(product.id);
+        try {
+          const paid = await checkout({ action: "pay_credits", page_id: id });
+          if (paid.published) {
+            clearDraft(product.id);
+            refreshWallet();
+            toast({ title: paid.charged ? `${paid.charged} credits used` : "Your page is live", description: paid.charged ? "Your page is live." : undefined });
+            navigate(`/create/done/${id}`); return;
+          }
+        } catch (e) {
+          // Paying with credits is one database transaction (charge, order, publish), so a failure means
+          // nothing was charged. Say why, then let the person pay in rupees instead of leaving them stuck.
+          // If it did go through and only the answer was lost, the next step sees the page is already live.
           refreshWallet();
-          toast({ title: `${paid.charged} credits used`, description: "Your page is live." });
-          navigate(`/create/done/${id}`); return;
+          toast({ title: "Couldn't pay with credits", description: `${e instanceof Error ? e.message : "Please try again."} Opening the rupee payment instead.` });
         }
       }
 
       setBusy("Starting checkout…");
       const order = await checkout({ action: "create", page_id: id, free });
-      if (order.published) { clearDraft(product.id); navigate(`/create/done/${id}`); return; }
+      if (order.published) { clearDraft(product.id); refreshWallet(); navigate(`/create/done/${id}`); return; }
       if (!(await ensureRazorpay())) throw new Error("Couldn't load the payment window. Check your connection and try again.");
       const pid = id;
       const rzp = new (window as unknown as { Razorpay: new (o: unknown) => { open: () => void; on: (e: string, cb: (r: { error?: { description?: string } }) => void) => void } }).Razorpay({
@@ -196,6 +204,8 @@ function BuilderInner({ product }: { product: Product }) {
   const last = step === product.steps.length - 1;
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const cta = published ? "Update live page" : canPayCredits ? `Pay ${needCredits.toLocaleString("en-IN")} credits and publish` : price ? `Pay ${inr(price)} and publish` : "Publish free";
+  // The phone's bottom bar is narrow, so it gets a shorter label.
+  const ctaShort = published ? "Update live page" : canPayCredits ? `Publish · ${needCredits.toLocaleString("en-IN")} credits` : price ? `Publish · ${inr(price)}` : "Publish free";
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,12 +224,17 @@ function BuilderInner({ product }: { product: Product }) {
         <FlowSteps flow={isSite ? "website" : "card"} step={2} className="max-w-3xl" />
       </div>
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-6 pb-32 md:grid-cols-[minmax(0,1fr)_420px] md:pb-10">
-        <section className={cn("grid gap-6 content-start min-w-0", tab === "preview" && "hidden md:grid")} aria-label="Edit">
+      {/* grid-cols-1 on the section is what keeps it phone-wide: without it the column grows to its widest
+          child's minimum width and the whole page ends up wider than the screen. overflow-x-clip is the safety net. */}
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 overflow-x-clip px-4 py-6 pb-32 md:grid-cols-[minmax(0,1fr)_420px] md:pb-10">
+        <section className={cn("grid grid-cols-1 gap-6 content-start min-w-0", tab === "preview" && "hidden md:grid")} aria-label="Edit">
           <div className="grid gap-2">
             <h1 className="font-display text-2xl font-extrabold md:text-3xl">{product.name}</h1>
             <p className="text-[16px] text-muted-foreground">{product.description}</p>
-            <p className="text-sm font-semibold">Fill the steps on the left. Your {isSite ? "website" : "card"} changes on the right as you type.</p>
+            <p className="text-sm font-semibold">
+              <span className="md:hidden">Fill in each step, then tap Preview to see your {isSite ? "website" : "card"}.</span>
+              <span className="hidden md:inline">Fill the steps on the left. Your {isSite ? "website" : "card"} changes on the right as you type.</span>
+            </p>
           </div>
 
           <div className="grid gap-2">
@@ -227,7 +242,23 @@ function BuilderInner({ product }: { product: Product }) {
             <DesignRail product={product} value={theme.id} onChange={setVariantId} />
           </div>
 
-          <ol className="flex gap-2 overflow-x-auto pb-1" aria-label="Steps">
+          {/* Phone: one line saying where you are, and one tappable bar per step (no sideways scrolling). */}
+          <div className="grid gap-1 md:hidden">
+            <p className="text-sm font-bold">Step {step + 1} of {product.steps.length} <span className="font-semibold text-muted-foreground">· {s.title}</span></p>
+            <ol className="flex gap-1.5" aria-label="Steps">
+              {product.steps.map((st, i) => {
+                const hasErr = st.fields.some((f) => errors[f.id]);
+                return (
+                  <li key={st.title} className="min-w-0 flex-1">
+                    <button type="button" onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined} aria-label={`Step ${i + 1}: ${st.title}`} className="flex h-8 w-full items-center">
+                      <span className={cn("block h-2.5 w-full rounded-full border-2", hasErr ? "border-destructive bg-destructive/30" : i <= step ? "border-ink bg-ink" : "border-ink/40 bg-card")} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+          <ol className="hidden gap-2 overflow-x-auto pb-1 md:flex" aria-label="Steps">
             {product.steps.map((st, i) => {
               const hasErr = st.fields.some((f) => errors[f.id]);
               return (
@@ -241,16 +272,20 @@ function BuilderInner({ product }: { product: Product }) {
             })}
           </ol>
 
-          <FieldMemory className="grid gap-5 rounded-3xl border-2 border-ink bg-card p-5 shadow-block md:p-7">
+          <FieldMemory className="grid grid-cols-1 gap-5 rounded-3xl border-2 border-ink bg-card p-5 shadow-block md:p-7">
             <div>
               <h2 className="text-xl font-bold">{s.title}</h2>
               {s.hint && <p className="text-sm text-muted-foreground mt-1">{s.hint}</p>}
             </div>
             {s.fields.map((f) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />)}
             <div className="flex items-center justify-between gap-3 pt-2">
-              <Button variant="outline" className="h-11" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
+              <Button variant="outline" className="h-11 shrink-0" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
               {last ? (
-                <Button className="h-11" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
+                // On a phone the bottom bar already carries the publish button, so it isn't repeated here.
+                <>
+                  <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{busy ?? cta}</Button>
+                  <p className="min-w-0 text-right text-sm font-semibold text-muted-foreground md:hidden">All set. Check Preview, then publish below.</p>
+                </>
               ) : (
                 <Button className="h-11" onClick={() => setStep(step + 1)}>Next step <ArrowRight className="h-4 w-4" /></Button>
               )}
@@ -278,12 +313,12 @@ function BuilderInner({ product }: { product: Product }) {
         </aside>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[auto_1fr] gap-3 border-t-2 border-ink bg-card px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 md:hidden">
-        <div className="grid grid-cols-2 rounded-xl border-2 border-ink bg-sand p-1">
-          <button type="button" onClick={() => setTab("edit")} aria-pressed={tab === "edit"} className={cn("flex items-center gap-1.5 rounded-lg px-3 text-sm font-bold", tab === "edit" && "bg-ink text-cream")}><PencilLine className="h-4 w-4" /> Edit</button>
-          <button type="button" onClick={() => setTab("preview")} aria-pressed={tab === "preview"} className={cn("flex items-center gap-1.5 rounded-lg px-3 text-sm font-bold", tab === "preview" && "bg-ink text-cream")}><Eye className="h-4 w-4" /> Preview</button>
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t-2 border-ink bg-card px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 md:hidden">
+        <div className="flex shrink-0 rounded-xl border-2 border-ink bg-sand p-1">
+          <button type="button" onClick={() => setTab("edit")} aria-pressed={tab === "edit"} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-bold", tab === "edit" && "bg-ink text-cream")}><PencilLine className="h-4 w-4" /> Edit</button>
+          <button type="button" onClick={() => setTab("preview")} aria-pressed={tab === "preview"} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-bold", tab === "preview" && "bg-ink text-cream")}><Eye className="h-4 w-4" /> Preview</button>
         </div>
-        <Button className="h-12" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}{busy ? "Working…" : cta}</Button>
+        <Button className="h-12 min-w-0 flex-1 px-3" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}<span className="truncate">{busy ? "Working…" : ctaShort}</span></Button>
       </nav>
 
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/create/${product.id}?publish=1`} />

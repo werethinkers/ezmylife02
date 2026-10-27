@@ -10,6 +10,9 @@ export type FieldType =
   | "text" | "textarea" | "phone" | "email" | "url" | "date" | "time" | "number"
   | "select" | "chips" | "days" | "photo" | "gallery" | "list" | "toggle";
 
+/** Ready-made message lines for one kind of recipient in one language ("Friend" in "Hinglish"). */
+export interface SuggestionSet { who: string; lang: string; items: string[] }
+
 export interface Field {
   id: string;
   label: string;
@@ -18,8 +21,9 @@ export interface Field {
   help?: string;
   required?: boolean;
   max?: number;               // max length, max items, or max photos
-  options?: string[];         // select / chips
+  options?: string[];         // select / chips; on a text field, quick-pick values shown under the box
   suggestions?: string[];     // tap-to-use text suggestions
+  suggestionSets?: SuggestionSet[]; // suggestions grouped by recipient and language, with pickers
   item?: Field[];             // list item fields
   itemLabel?: string;         // "plan", "dish", "event"
 }

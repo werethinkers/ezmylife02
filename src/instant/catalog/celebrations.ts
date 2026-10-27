@@ -2,6 +2,7 @@ import type { Content, Product, Theme } from "../types";
 import { celebrationSteps, F, type CelebrationLabels } from "../fields";
 import { ten } from "../themes";
 import { stockFor, stockPhoto } from "../stock";
+import { BIRTHDAY_HEADLINES, BIRTHDAY_SETS, MORE_SUGGESTIONS } from "./messages";
 
 interface Def {
   id: string; name: string; tagline: string; description: string; glyph: string; price: number; themes: Theme[];
@@ -26,7 +27,7 @@ interface Def {
 const make = (d: Def): Product => ({
   id: d.id, family: "celebration", category: "celebrations", name: d.name, tagline: d.tagline, description: d.description,
   glyph: d.glyph, price: d.price, popular: d.popular, seasonal: d.seasonal, themes: d.themes,
-  steps: celebrationSteps(d.labels ?? {}), sample: { music: d.opts.music !== "none", ...withStock(d.id, d.sample) }, titleField: "recipient",
+  steps: celebrationSteps({ ...d.labels, messageSuggestions: [...(d.labels?.messageSuggestions ?? []), ...(MORE_SUGGESTIONS[d.id] ?? [])] }), sample: { music: d.opts.music !== "none", ...withStock(d.id, d.sample) }, titleField: "recipient",
   whatsapp: d.whatsapp, share: d.share, opts: d.opts, indexable: false,
 });
 
@@ -46,11 +47,7 @@ export const CELEBRATIONS: Product[] = [
     tagline: "A gift they tap open: music, candles, your letter, your photos.",
     description: "A birthday page that unwraps like a present. They blow out the candles, read your note and swipe through your photos together.",
     themes: ten("cheer", "fun", "elegant", "romantic", "minimal"),
-    labels: { date: "Their birthday", age: true, messageSuggestions: [
-      "Happy birthday! Thank you for being the person everyone calls first. Here's to your best year yet.",
-      "Another year of you being wonderful. I hope this one is loud, happy and full of everything you keep saying you'll do someday.",
-      "Happy birthday to my favourite human. Cake first, then everything else.",
-    ] },
+    labels: { date: "Their birthday", age: true, messageSets: BIRTHDAY_SETS, headlines: BIRTHDAY_HEADLINES },
     opts: { opening: "gift", moment: "cake", music: "birthday", greeting: "Happy Birthday", openLine: "{sender} sent you a birthday surprise.", cta: "Tap to open your surprise",
       momentTitle: "Make a wish.", momentHint: "Close your eyes, make a wish, then tap the cake to blow out the candles.", momentDone: "Wish made. Don't tell anyone. {sender} is sure it's coming true.",
       letterTitle: "Read this one slowly.", memoriesTitle: "A few of my favourite days.", endTitle: "Have the best year yet.", numbers: "age" },

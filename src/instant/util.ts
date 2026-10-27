@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Content, Product } from "./types";
 
 export const SITE = "https://ezyourlife.com";
@@ -6,6 +7,10 @@ export const pageUrlFor = (slug?: string | null) => (slug ? `${SITE}/p/${slug}` 
 /** Fill {placeholders}; empty values collapse instead of printing the braces. */
 export const fill = (tpl: string, vars: Record<string, unknown>) =>
   tpl.replace(/\{(\w+)\}/g, (_, k) => (vars[k] == null ? "" : String(vars[k]))).replace(/ {2,}/g, " ").trim();
+
+/** The opening line of a celebration card: the sender's own "Greeting line" if they wrote or picked one, else the card's default. */
+export const greetingOf = (defaultGreeting: string, vars: Record<string, unknown>) =>
+  fill((typeof vars.headline === "string" && vars.headline.trim()) || defaultGreeting, vars);
 
 /** Indian mobile → E.164 digits (91XXXXXXXXXX). Leaves other lengths as typed. */
 export function waDigits(p: unknown): string {
@@ -142,3 +147,29 @@ export function vcardBlob(c: Content) {
   lines.push("END:VCARD");
   return new Blob([lines.join("\r\n")], { type: "text/vcard" });
 }
+
+/**
+ * Splits text into what a reader sees as single characters. Spreading a string gives code points, which
+ * would tear Hindi and other Indic text apart (vowel signs and joined letters are separate code points),
+ * so animated text uses the browser's grapheme splitter where it exists.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const segmenter: { segment: (s: string) => Iterable<{ segment: string }> } | null = typeof Intl !== "undefined" && "Segmenter" in Intl ? new (Intl as any).Segmenter(undefined, { granularity: "grapheme" }) : null;
+export const graphemes = (s: string): string[] => (segmenter ? Array.from(segmenter.segment(s), (x) => x.segment) : Array.from(s));
+
+/**
+ * Like fitWords, but a short name or line is sized to stay on ONE line ("Rekha Bhabhi" is 12 characters).
+ * Longer text is sized by its longest word and wraps between words, never inside one. Display fonts run
+ * about half an em per letter, and the sizes are `k / --fit`, so 0.8 x length leaves a safe margin.
+ */
+export const fitLine = (text: string, oneLineMax = 14) => {
+  const t = String(text).trim();
+  const len = graphemes(t).length; // visible letters, so Hindi isn't counted by its invisible joiners and signs
+  const longest = Math.max(4, ...t.split(/\s+/).map((w) => graphemes(w).length));
+  const fit = len <= oneLineMax ? Math.max(4, Math.ceil(len * 0.8)) : longest;
+  return { ["--fit" as string]: String(Math.max(fit, 4)) } as CSSProperties;
+};
+
+/** Only the person's own photos can be adjusted: pictures they added (data URLs) or uploaded to their page. Sample and stock photos are there to be replaced. */
+export const canAdjust = (src: unknown): boolean =>
+  typeof src === "string" && (src.startsWith("data:image/") || src.includes("/storage/v1/object/public/page-media/"));
