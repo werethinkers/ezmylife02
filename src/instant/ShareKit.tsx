@@ -8,19 +8,27 @@ import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
 import { LinkPreviewEditor } from "./LinkPreviewEditor";
 import { composeMessage, type SharePrefs } from "./sharePrefs";
+import { DIWALI_LANGS, langById, withLang, type LangId } from "./festLang";
 import { BulkSend } from "./BulkSend";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
 /** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
 /** prefs + onSavePrefs: the owner's choices for the link preview, and how to save them. Without them only the suggested preview is offered. */
 export function ShareKit({ product, theme, content, url, slug, link, preparing, prefs, onSavePrefs }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean; prefs?: SharePrefs; onSavePrefs?: (draft: SharePrefs) => Promise<unknown> }) {
-  const sendUrl = link || url;
   const { toast } = useToast();
+  // Diwali cards: the sender picks the language here; the person who receives the card is not asked.
+  const pickLang = product.family === "festival" && product.opts.art === "diya";
+  const [lang, setLang] = useState<LangId>("en");
+  const baseUrl = link || url;
+  const sendUrl = pickLang ? withLang(baseUrl, lang) : baseUrl;
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const message = prefs ? composeMessage(product, content, prefs, sendUrl) : fill(product.share, { ...content, link: sendUrl });
+  // The words that go with the link, always. In another language the ready-made greeting follows it; the sender's own written message stays as they wrote it.
+  const ownMessage = prefs?.message !== undefined;
+  const shareTpl = pickLang && lang !== "en" && !ownMessage ? product.share.replace(product.opts.greeting, langById(lang).share) : product.share;
+  const message = prefs && ownMessage ? composeMessage(product, content, prefs, sendUrl) : fill(shareTpl, { ...content, link: sendUrl });
   const qrCanvas = () => qrRef.current?.querySelector("canvas") ?? null;
 
   useEffect(() => {
@@ -31,8 +39,8 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
   }, [product, theme, content, url, fmt]);
 
   const copy = async () => {
-    try { await navigator.clipboard.writeText(sendUrl); toast({ title: "Link copied" }); }
-    catch { toast({ title: "Copy this link", description: sendUrl }); }
+    try { await navigator.clipboard.writeText(message); toast({ title: "Message copied", description: "The greeting and the link, ready to paste." }); }
+    catch { toast({ title: "Copy this message", description: message }); }
   };
   const nativeShare = async () => {
     try {
@@ -57,13 +65,25 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
         </>
       )}
       <div className="grid gap-3">
+        {pickLang && (
+          <div className="grid gap-2">
+            <div className="text-sm font-semibold">Language of the card</div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Card language">
+              {DIWALI_LANGS.map((l) => (
+                <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}
+                  className={"px-3 py-1.5 rounded-full border text-sm font-medium " + (lang === l.id ? "bg-foreground text-background border-foreground" : "bg-background")}>{l.label}</button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">The card opens in this language for everyone you send it to. They don't see a language choice.</p>
+          </div>
+        )}
         <a href={waShare(message)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#25D366] text-[#06260F] font-semibold text-base">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.7.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>
           Share on WhatsApp
         </a>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" className="h-12 rounded-xl" onClick={nativeShare}><Share2 className="h-4 w-4 mr-2" /> More apps</Button>
-          <Button variant="outline" className="h-12 rounded-xl" onClick={copy}><Copy className="h-4 w-4 mr-2" /> Copy link</Button>
+          <Button variant="outline" className="h-12 rounded-xl" onClick={copy}><Copy className="h-4 w-4 mr-2" /> Copy message</Button>
         </div>
         <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm break-all font-mono">{sendUrl}</div>
         {preparing && <p className="text-xs text-muted-foreground flex items-center gap-2"><span className="h-3 w-3 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin" aria-hidden="true" /> Setting up your WhatsApp link preview (about a minute). You can share now; the link updates when it's ready.</p>}
@@ -71,7 +91,7 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 
-      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={sendUrl} /></>)}
+      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} /></>)}
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>

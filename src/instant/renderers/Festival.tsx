@@ -4,7 +4,7 @@ import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
 import { isStock } from "../stock";
 import { BASE_CSS, Gallery, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
-import { DIWALI_LANGS, langById, nameFromParam, type LangId } from "../festLang";
+import { langById, nameFromParam, type LangId } from "../festLang";
 import { useSparks } from "../sparks";
 
 const SPARK_COLOURS = ["#FFC83D", "#FF7A1A", "#FFF1B8", "#FF4D6D", "#7DF9FF"];
@@ -40,7 +40,8 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
   const isDiya = o.art === "diya";
   const qs = useMemo(() => new URLSearchParams(typeof location !== "undefined" ? location.search : ""), []);
   const guest = nameFromParam(qs.get("to"));
-  const [lang, setLang] = useState<LangId>(() => (isDiya ? langById(qs.get("lang")).id : "en"));
+  // The sender picks the language when they share (it travels in the link as ?lang=hi); the person receiving the card is not offered a choice.
+  const lang: LangId = isDiya ? langById(qs.get("lang")).id : "en";
   const L = langById(lang);
   const { ref: sx, burst: spark } = useSparks(SPARK_COLOURS);
   const { ref: fx, burst } = useConfetti(o.art === "colours" ? ["#FF2E88", "#16C172", "#FFB703", "#3A86FF", "#8338EC"] : [theme.c.ac, theme.c.ac2, theme.c.ac3, "#FFFFFF"]);
@@ -93,12 +94,6 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
           {EMBLEM[o.art] && <span className="emb">{EMBLEM[o.art]}</span>}
         </button>
         <p className="fest-tap" aria-live="polite">{isDiya ? (lit ? L.done : L.tap) : lit ? o.tapDone : o.tap}</p>
-        {isDiya && (
-          <div className="fest-lang" role="group" aria-label="Language">
-            {DIWALI_LANGS.map((l) => <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>)}
-          </div>
-        )}
-
         <h1 className="fest-h" lang={lang} style={fitWords(greeting)}>{greeting}</h1>
         {toName && <p className="fest-to" lang={lang}>{isDiya ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
         <p className="fest-msg" lang={lang}>{message}</p>
@@ -171,9 +166,6 @@ const CSS = `
 .diya .glow{opacity:0;filter:blur(10px);transition:opacity .8s;transition-delay:calc(var(--i) * 160ms)}
 .lit .diya .flame{opacity:1;transform:scale(1);filter:drop-shadow(0 0 8px rgba(255,200,61,.9))}
 .lit .diya .glow{opacity:.5}
-.fest-lang{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
-.fest-lang button{border:1.5px solid color-mix(in srgb,var(--ac) 50%,transparent);background:transparent;color:inherit;border-radius:999px;padding:6px 14px;font:600 .9rem var(--fb);cursor:pointer}
-.fest-lang button[aria-pressed=true]{background:var(--ac);color:var(--on);border-color:var(--ac)}
 .fest-wall{width:100%;max-width:520px}
 .fest-wall img{filter:grayscale(1) brightness(.55) blur(3px);transition:filter 1.8s ease .3s}
 .lit .fest-wall img{filter:none}

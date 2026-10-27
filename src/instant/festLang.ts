@@ -38,6 +38,11 @@ export function parsePeople(text: string): Person[] {
   }).filter((p): p is Person => !!p).slice(0, 200);
 }
 
+/** The page link with the sender's chosen language (English is the default, so it adds nothing). */
+export function withLang(link: string, lang: LangId = "en"): string {
+  return lang === "en" ? link : `${link}${link.includes("?") ? "&" : "?"}lang=${lang}`;
+}
+
 /** The page link for one person, with their name (and a language, if not English). */
 export function personalLink(base: string, name: string, lang: LangId = "en"): string {
   const sep = base.includes("?") ? "&" : "?";
