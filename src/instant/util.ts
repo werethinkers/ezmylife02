@@ -173,3 +173,6 @@ export const fitLine = (text: string, oneLineMax = 14) => {
 /** Only the person's own photos can be adjusted: pictures they added (data URLs) or uploaded to their page. Sample and stock photos are there to be replaced. */
 export const canAdjust = (src: unknown): boolean =>
   typeof src === "string" && (src.startsWith("data:image/") || src.includes("/storage/v1/object/public/page-media/"));
+
+/** A product name for the middle of a sentence: "Diwali Greeting" becomes "Diwali greeting", not "diwali greeting". */
+export const plainName = (name: string) => name.replace(/\b(Greeting|Card|Wishes|Page|Website|Menu|Invitation)\b/g, (m) => m.toLowerCase());

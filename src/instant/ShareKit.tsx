@@ -8,6 +8,7 @@ import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
 import { LinkPreviewEditor } from "./LinkPreviewEditor";
 import { composeMessage, type SharePrefs } from "./sharePrefs";
+import { BulkSend } from "./BulkSend";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
 /** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
@@ -69,6 +70,8 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
         {!preparing && link && <p className="text-xs text-muted-foreground">This link shows your own picture and title when shared on WhatsApp.</p>}
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
+
+      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={sendUrl} /></>)}
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>

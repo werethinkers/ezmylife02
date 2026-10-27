@@ -12,7 +12,8 @@ import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { DesignRail, DeviceFrame, DeviceToggle, Swatch, styleLabel } from "@/instant/DesignPreview";
 import { useProducts } from "@/instant/useProducts";
 import { promoFor, promoSeo } from "@/instant/promo";
-import { inr } from "@/instant/util";
+import { inr, plainName } from "@/instant/util";
+import { seasonGap } from "@/instant/season";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
@@ -35,7 +36,7 @@ export default function ProductPromo() {
   const theme = product.themes.find((t) => t.id === designId) ?? product.themes[0];
   const g = groupOf(product.id);
   const related = list.filter((l) => l.product.id !== product.id && l.product.category === product.category)
-    .sort((a, b) => Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
+    .sort((a, b) => seasonGap(a.product.id) - seasonGap(b.product.id) || Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
   const groupName = GROUPS[product.category].find((x) => x.id === g)?.name;
   const create = `/create/${product.id}?design=${theme.id}`;
   const priceText = price ? `${inr(price)} or ${creditsForInr(price).toLocaleString("en-IN")} credits` : "Free";
@@ -167,7 +168,7 @@ export default function ProductPromo() {
         <section aria-labelledby="price-h" className="grid items-center gap-6 rounded-3xl border-2 border-ink bg-ink p-6 text-cream shadow-block-lg md:grid-cols-[1fr_auto] md:p-10">
           <div>
             <h2 id="price-h" className="text-2xl font-bold md:text-3xl">{priceText}, <span className="text-sun">paid once</span></h2>
-            <p className="mt-2 text-cream/85">Your {product.name.toLowerCase()} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away.</p>
+            <p className="mt-2 text-cream/85">Your {plainName(product.name)} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away.</p>
           </div>
           <Button asChild size="lg" className="h-14 px-8 text-base"><Link to={create}>{isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" /></Link></Button>
         </section>

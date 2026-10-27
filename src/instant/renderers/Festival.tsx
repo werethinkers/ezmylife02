@@ -1,9 +1,35 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
 import { isStock } from "../stock";
-import { BASE_CSS, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { BASE_CSS, Gallery, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { DIWALI_LANGS, langById, nameFromParam, type LangId } from "../festLang";
+import { useSparks } from "../sparks";
+
+const SPARK_COLOURS = ["#FFC83D", "#FF7A1A", "#FFF1B8", "#FF4D6D", "#7DF9FF"];
+
+/** A clay diya: rim, oil, wick and a flame that glows once lit. */
+function Diya({ i }: { i: number }) {
+  return (
+    <span className="diya" style={{ ["--i" as string]: i }}>
+      <svg viewBox="0 0 80 100" aria-hidden="true">
+        <defs>
+          <linearGradient id={`clay${i}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D9732B" /><stop offset="1" stopColor="#7A300F" /></linearGradient>
+          <radialGradient id={`fl${i}`} cx="50%" cy="70%" r="60%"><stop offset="0" stopColor="#FFF7D1" /><stop offset=".4" stopColor="#FFC83D" /><stop offset=".8" stopColor="#FF7A1A" /><stop offset="1" stopColor="#FF7A1A" stopOpacity="0" /></radialGradient>
+        </defs>
+        <ellipse className="glow" cx="40" cy="46" rx="34" ry="30" fill="#FFB84D" />
+        <path className="flame" d="M40 14c8 10 11 18 8 27-2 6-6 8-8 8s-6-2-8-8c-3-9 0-17 8-27z" fill={`url(#fl${i})`} />
+        <path d="M39 50h2v-6h-2z" fill="#2B1608" />
+        <path d="M6 58c0 20 14 34 34 34s34-14 34-34z" fill={`url(#clay${i})`} />
+        <ellipse cx="40" cy="58" rx="34" ry="8" fill="#E98A3A" />
+        <ellipse cx="40" cy="58" rx="27" ry="5.5" fill="#4A2208" />
+        <ellipse cx="40" cy="57" rx="22" ry="3.5" fill="#C98A2B" opacity=".85" />
+        <path d="M14 68c8 8 44 8 52 0" stroke="#FFD08A" strokeWidth="2" fill="none" strokeDasharray="1 5" strokeLinecap="round" opacity=".7" />
+      </svg>
+    </span>
+  );
+}
 
 const EMBLEM: Record<string, string> = { colours: "🎨", flower: "🌷", modak: "🐘", dandiya: "🪘", kite: "🪁", kalash: "🌾", lotus: "🪷", sun: "🪔", fireworks: "🎆" };
 
@@ -11,17 +37,34 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const [lit, setLit] = useState(false);
+  const isDiya = o.art === "diya";
+  const qs = useMemo(() => new URLSearchParams(typeof location !== "undefined" ? location.search : ""), []);
+  const guest = nameFromParam(qs.get("to"));
+  const [lang, setLang] = useState<LangId>(() => (isDiya ? langById(qs.get("lang")).id : "en"));
+  const L = langById(lang);
+  const { ref: sx, burst: spark } = useSparks(SPARK_COLOURS);
   const { ref: fx, burst } = useConfetti(o.art === "colours" ? ["#FF2E88", "#16C172", "#FFB703", "#3A86FF", "#8338EC"] : [theme.c.ac, theme.c.ac2, theme.c.ac3, "#FFFFFF"]);
   const music = useMusicBox(c.music === false ? "none" : "festive");
   const tap = (e: React.MouseEvent) => {
     if (!lit) music.start();
     setLit(true);
+    if (isDiya) {
+      spark(e.clientX, e.clientY, 80);
+      [[-90, -110, 420], [100, -150, 760], [-30, -190, 1100]].forEach(([dx, dy, t]) => setTimeout(() => spark(e.clientX + dx, e.clientY + dy, 70), t));
+      return;
+    }
     const n = o.art === "colours" ? 220 : 120;
     burst(e.clientX, e.clientY, n, o.art === "colours" ? 2 : 1.3);
     if (o.art === "fireworks") setTimeout(() => burst(e.clientX + 60, e.clientY - 80, 90, 2), 380);
   };
   const vars = { ...c };
-  const reply = fill(product.whatsapp.reply ?? "", vars);
+  const reply = isDiya ? L.back.replace("{sender}", String(c.sender ?? "").trim()) : fill(product.whatsapp.reply ?? "", vars);
+  const greeting = isDiya ? L.head : o.greeting;
+  // The sender's own words are never replaced; only a ready-made line follows the chosen language.
+  const readyMade = isDiya && (product.steps[0].fields.find((f) => f.id === "message")?.suggestions ?? []).includes(String(c.message ?? "").trim());
+  const message = isDiya && lang !== "en" && readyMade ? L.msg : c.message;
+  const toName = guest || c.recipient;
+  const photos = Array.isArray(c.photos) ? c.photos : [];
   const sty = theme.s;
   // The minimal design is a plain card; every other design shows the background picture.
   const cover = sty !== "minimal" && resolveImg(c.cover) ? c.cover : null;
@@ -31,11 +74,12 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
       <style>{BASE_CSS + CSS}</style>
       {cover && sty === "photo" && <div className="fest-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
+      <canvas ref={sx} className="ip-fx" aria-hidden="true" />
       <div className="fest-page"><div className="fest-in">
       {cover && sty !== "photo" && <div className="fest-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 50vw, 100vw" eager /></div>}
       <main className="ip-wrap fest">
         <button type="button" className="fest-art" onClick={o.art === "colours" ? undefined : tap} aria-label={o.tap}>
-          {o.art === "diya" && <span className="diyas">{[0, 1, 2, 3, 4].map((i) => <span key={i} className="diya" style={{ ["--i" as string]: i }}><span className="fl" /><span className="bowl" /></span>)}</span>}
+          {isDiya && <span className="diyas">{[0, 1, 2, 3, 4].map((i) => <Diya key={i} i={i} />)}</span>}
           {o.art === "flag" && (
             <svg viewBox="0 0 220 200" className="flag" aria-hidden="true">
               <rect x="20" y="10" width="6" height="190" rx="3" fill="#8B6B4A" />
@@ -48,16 +92,22 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
           {o.art === "rakhi" && <span className="rakhi"><span className="thread" /><span className="bloom">{[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <i key={i} style={{ ["--i" as string]: i }} />)}<b /></span></span>}
           {EMBLEM[o.art] && <span className="emb">{EMBLEM[o.art]}</span>}
         </button>
-        <p className="fest-tap" aria-live="polite">{lit ? o.tapDone : o.tap}</p>
+        <p className="fest-tap" aria-live="polite">{isDiya ? (lit ? L.done : L.tap) : lit ? o.tapDone : o.tap}</p>
+        {isDiya && (
+          <div className="fest-lang" role="group" aria-label="Language">
+            {DIWALI_LANGS.map((l) => <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>)}
+          </div>
+        )}
 
-        <h1 className="fest-h" style={fitWords(o.greeting)}>{o.greeting}</h1>
-        {c.recipient && <p className="fest-to">Dear {c.recipient},</p>}
-        <p className="fest-msg">{c.message}</p>
+        <h1 className="fest-h" lang={lang} style={fitWords(greeting)}>{greeting}</h1>
+        {toName && <p className="fest-to" lang={lang}>{isDiya ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
+        <p className="fest-msg" lang={lang}>{message}</p>
+        {photos.length > 0 && <div className="fest-wall"><Gallery photos={photos} title={`Photos from ${c.sender}`} keyPrefix="fw" layout="strip" /></div>}
         {c.photo && <figure className="fest-photo"><Img src={c.photo} alt={`From ${c.sender}`} /></figure>}
-        <p className="fest-from"><span>With love,</span>{c.sender}</p>
+        <p className="fest-from"><span>{isDiya ? L.from : "With love,"}</span>{c.sender}</p>
 
         <div className="fest-btns">
-          <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> Wish {c.sender ? "them" : "back"} on WhatsApp</a>
+          <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> {isDiya ? L.btn : `Wish ${c.sender ? "them" : "back"} on WhatsApp`}</a>
         </div>
         {isStock(cover) && <p className="fest-cr">Background photo from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
         <MadeWith product={product} />
@@ -115,11 +165,18 @@ const CSS = `
 .fest-from span{font:500 .9rem/1 var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
 .fest-btns{display:grid;gap:10px;width:min(100%,380px);margin-top:14px}
 .diyas{display:flex;gap:clamp(8px,3cqi,18px);align-items:flex-end}
-.diya{position:relative;width:clamp(44px,13cqi,64px);height:80px}
-.diya .bowl{position:absolute;left:0;right:0;bottom:0;height:28px;border-radius:0 0 50% 50%/0 0 100% 100%;background:linear-gradient(#E07A2E,#9A3F12);box-shadow:inset 0 4px 0 rgba(255,255,255,.2)}
-.diya .bowl::before{content:"";position:absolute;left:-6%;right:-6%;top:-6px;height:10px;border-radius:50%;background:#C25A1E}
-.diya .fl{position:absolute;left:50%;bottom:26px;width:16px;height:30px;transform:translateX(-50%) scale(.2);opacity:0;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#FFF7D1 0 25%,#FFC83D 45%,#FF7A1A 75%,rgba(255,122,26,0) 76%);filter:drop-shadow(0 0 14px rgba(255,200,61,.95));transition:all .4s;transition-delay:calc(var(--i) * 160ms)}
-.lit .diya .fl{opacity:1;transform:translateX(-50%) scale(1)}
+.diya{position:relative;width:clamp(52px,16cqi,76px);display:block}
+.diya svg{display:block;width:100%;height:auto;overflow:visible}
+.diya .flame{transform-box:fill-box;transform-origin:50% 100%;transform:scale(.15);opacity:0;transition:transform .5s,opacity .4s;transition-delay:calc(var(--i) * 160ms)}
+.diya .glow{opacity:0;filter:blur(10px);transition:opacity .8s;transition-delay:calc(var(--i) * 160ms)}
+.lit .diya .flame{opacity:1;transform:scale(1);filter:drop-shadow(0 0 8px rgba(255,200,61,.9))}
+.lit .diya .glow{opacity:.5}
+.fest-lang{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.fest-lang button{border:1.5px solid color-mix(in srgb,var(--ac) 50%,transparent);background:transparent;color:inherit;border-radius:999px;padding:6px 14px;font:600 .9rem var(--fb);cursor:pointer}
+.fest-lang button[aria-pressed=true]{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.fest-wall{width:100%;max-width:520px}
+.fest-wall img{filter:grayscale(1) brightness(.55) blur(3px);transition:filter 1.8s ease .3s}
+.lit .fest-wall img{filter:none}
 .flag{width:min(70cqi,240px)}
 .flag .cloth{transform:translateY(130px);transition:transform 1.4s cubic-bezier(.2,.8,.2,1)}
 .lit .flag .cloth{transform:none}
@@ -147,8 +204,8 @@ const CSS = `
 .emb{font-size:min(36cqi,150px);line-height:1;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
 .lit .emb{transform:scale(1.15) rotate(-6deg)}
 @media (prefers-reduced-motion:no-preference){
-  .lit .diya .fl{animation:fest-flick .18s ease-in-out infinite alternate}
-  @keyframes fest-flick{to{transform:translateX(-50%) scale(.92,1.08)}}
+  .lit .diya .flame{animation:fest-flick .2s ease-in-out infinite alternate}
+  @keyframes fest-flick{to{transform:scale(.93,1.07)}}
   .art-tree::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 10%,#fff,transparent),radial-gradient(2px 2px at 60% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 80% 70%,#fff,transparent),radial-gradient(2px 2px at 35% 60%,#fff,transparent);background-size:200px 200px;animation:fest-snow 9s linear infinite;opacity:.7}
   @keyframes fest-snow{to{background-position:0 400px,40px 400px,-30px 400px,20px 400px}}
   .emb{animation:fest-bob 3s ease-in-out infinite}

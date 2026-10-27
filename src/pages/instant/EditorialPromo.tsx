@@ -4,7 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { ProductRenderer } from "@/instant/renderers";
-import { inr, pageUrlFor } from "@/instant/util";
+import { inr, pageUrlFor, plainName } from "@/instant/util";
 import type { Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +69,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
   const words = promo.headline.split(" ");
   const last = words.pop();
   const lead = words.join(" ");
-  const cta = `Make your ${product.name.toLowerCase()}`;
+  const cta = `Make your ${plainName(product.name)}`;
 
   return (
     <>
@@ -205,7 +205,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
             </div>
             <div className="min-w-0">
               <h2 id="price-h" className="font-display text-2xl font-bold md:text-3xl">{priceText}, paid once</h2>
-              <p className="mt-2 text-lg">Your {product.name.toLowerCase()} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away.</p>
+              <p className="mt-2 text-lg">Your {plainName(product.name)} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away.</p>
               <GiveGet className="mt-5" give="names, a photo and your message" get={`a card link to send on WhatsApp, live for ${hosting}`} time="about 5 minutes" />
               <Button asChild size="lg" className="mt-6 h-14 w-full px-8 text-base sm:w-auto">
                 <Link to={create}>Start making <ArrowRight className="h-5 w-5" /></Link>

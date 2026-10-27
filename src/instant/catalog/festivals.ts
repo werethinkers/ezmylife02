@@ -12,7 +12,7 @@ interface Def {
 
 const make = (d: Def): Product => ({
   id: d.id, family: "festival", category: "festivals", name: d.name, glyph: d.glyph, price: d.price ?? 11, seasonal: d.seasonal, popular: d.popular,
-  tagline: d.sub, description: `${d.name} greetings with animated ${d.art === "diya" ? "diyas" : "festive art"}, your message and family photo. Share it with everyone at once.`,
+  tagline: d.sub, description: `${d.name} with animated ${d.art === "diya" ? "diyas" : "festive art"}, your message and family photos. Send it to everyone at once, each with their own name on it.`,
   themes: d.themes, steps: festivalSteps({ suggestions: d.suggestions }),
   sample: { sender: "The Sharma Family", recipient: "", message: d.suggestions[0], music: true, cover: coverFor(d.id) },
   titleField: "sender",

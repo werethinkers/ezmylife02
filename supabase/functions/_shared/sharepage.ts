@@ -123,7 +123,8 @@ export function pageSiteHtml(m: ShareMeta): string {
 <link rel="icon" href="https://${PAGE_ROOT}/favicon.png">
 <style>html,body{margin:0;height:100%;background:#fff}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>
 </head><body>
-<iframe src="${esc(frame)}" title="${t}" allow="clipboard-write; web-share; geolocation; fullscreen"></iframe>
+<iframe id="f" src="${esc(frame)}" title="${t}" allow="clipboard-write; web-share; geolocation; fullscreen"></iframe>
+<script>if(location.search){var f=document.getElementById("f");f.src=f.src+(f.src.indexOf("?")<0?location.search:"&"+location.search.slice(1))}</script>
 <noscript><p><a href="${esc(frame)}">Open ${t}</a></p></noscript>
 </body></html>`;
 }
