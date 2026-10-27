@@ -10,8 +10,8 @@ export const GROUPS: Record<CategoryId, { id: string; name: string; ids: string[
     { id: "care", name: "Care & comfort", ids: ["get-well-soon", "sorry", "tribute"] },
   ],
   festivals: [
-    { id: "hindu", name: "Hindu festivals", ids: ["diwali", "holi", "raksha-bandhan", "ganesh-chaturthi", "navratri", "makar-sankranti", "pongal-onam"] },
-    { id: "jain", name: "Jain", ids: ["mahavir-jayanti", "kshamavani"] },
+    { id: "hindu", name: "Hindu festivals", ids: ["diwali", "dhanteras", "govardhan", "bhai-dooj", "holi", "raksha-bandhan", "ganesh-chaturthi", "navratri", "makar-sankranti", "pongal-onam"] },
+    { id: "jain", name: "Jain", ids: ["veer-nirvan", "mahavir-jayanti", "kshamavani"] },
     { id: "faiths", name: "Christmas, Eid & Gurpurab", ids: ["christmas", "eid", "gurpurab"] },
     { id: "national", name: "National & special days", ids: ["independence-day", "republic-day", "womens-day", "new-year"] },
   ],

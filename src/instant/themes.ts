@@ -9,7 +9,7 @@ const STYLE: Record<string, Style> = {
   black: "bold", energy: "photo", luxury: "editorial", clean: "split", blush: "soft", fresh: "split", trade: "bold", pro: "editorial", clinic: "split", studio: "photo",
   bistro: "photo", street: "bold", cafe: "editorial", pastel: "soft", dhaba: "bold", boutique: "editorial",
   paper: "minimal", ink: "bold", creator: "photo", navy: "editorial",
-  diwali: "photo", holi: "soft", rakhi: "editorial", christmas: "photo", newyear: "photo", eid: "editorial", tiranga: "minimal",
+  diwali: "photo", rajwada: "bold", holi: "soft", rakhi: "editorial", christmas: "photo", newyear: "photo", eid: "editorial", tiranga: "minimal",
   womens: "soft", ganesh: "editorial", navratri: "photo", kite: "split", jain: "editorial", harvest: "split",
 };
 const t = (id: string, name: string, dark: boolean, c: Theme["c"], f: Theme["f"], fonts: string[], s?: Style): Theme => ({ id, name, dark, s: s ?? STYLE[id] ?? "bold", c, f, fonts });
@@ -51,6 +51,7 @@ export const THEMES = {
 
   // festivals (one signature palette each)
   diwali: t("diwali", "Diya Night", true, { bg: "#2B0710", sf: "#3D0C18", tx: "#FFF1D6", mu: "#E9C9A6", ac: "#FFB300", ac2: "#FF6B2C", ac3: "#E9407A", on: "#2B0710", line: "#5A1424" }, DESI_F, DESI_FONTS),
+  rajwada: t("rajwada", "Rajwada Raat", true, { bg: "#2A0609", sf: "#3E0B12", tx: "#FFF1DC", mu: "#E8C79F", ac: "#FF9F1C", ac2: "#F7C948", ac3: "#E4572E", on: "#2A0609", line: "#5E1A22" }, DESI_F, DESI_FONTS),
   holi: t("holi", "Gulaal", false, { bg: "#FFFBF4", sf: "#FFFFFF", tx: "#26123A", mu: "#6C5A78", ac: "#FF2E88", ac2: "#16C172", ac3: "#FFB703", on: "#FFFFFF", line: "#F4E3EE" }, DESI_F, DESI_FONTS),
   rakhi: t("rakhi", "Rakhi Thread", false, { bg: "#FFF4E2", sf: "#FFFFFF", tx: "#4A0D0D", mu: "#8A5A3C", ac: "#C8102E", ac2: "#FF8F1F", ac3: "#E2B33C", on: "#FFFFFF", line: "#F3D9B0" }, DESI_F, DESI_FONTS),
   christmas: t("christmas", "Pine & Snow", true, { bg: "#0F3D2E", sf: "#14503C", tx: "#F6F3EA", mu: "#BFD3C7", ac: "#E23B3B", ac2: "#F4D06F", ac3: "#FFFFFF", on: "#FFFFFF", line: "#1F6A50" }, ELEG_F, ELEG_FONTS),
