@@ -1,7 +1,7 @@
 import { useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Download, Database, HardDrive, Github, Loader2 } from "lucide-react";
@@ -117,75 +117,61 @@ Keep this archive secure — it contains personal user data and credentials.
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" /> One-tap full export
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Download every database table plus all storage bucket files as a single ZIP.
-            Source code is downloaded separately from GitHub.
-          </p>
+      <CollapsibleCard title={<><Download className="h-5 w-5 text-primary" /> One-tap full export</>} size="lg" contentClassName="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Download every database table plus all storage bucket files as a single ZIP.
+          Source code is downloaded separately from GitHub.
+        </p>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            <Button
-              size="lg"
-              disabled={busy}
-              onClick={() => runExport(true)}
-              className="h-auto py-4 flex-col gap-1"
-            >
-              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <HardDrive className="h-5 w-5" />}
-              <span>Download Everything</span>
-              <span className="text-xs opacity-80">Tables + Storage files</span>
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              disabled={busy}
-              onClick={() => runExport(false)}
-              className="h-auto py-4 flex-col gap-1"
-            >
-              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Database className="h-5 w-5" />}
-              <span>Database Only</span>
-              <span className="text-xs opacity-70">Fast · JSON dump</span>
-            </Button>
-          </div>
-
-          {busy && (
-            <div className="space-y-2">
-              <Progress value={progress} />
-              <p className="text-xs text-muted-foreground">{status}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Github className="h-4 w-4" /> Source code
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            The deployed website can't ship its own source code. To download the React/TypeScript
-            codebase:
-          </p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>Open your project in Lovable</li>
-            <li>Click the <strong>GitHub</strong> icon in the top bar and push to GitHub (one-time)</li>
-            <li>On GitHub: <strong>Code → Download ZIP</strong></li>
-          </ol>
-          <Button variant="outline" size="sm" asChild className="mt-2">
-            <a href={GITHUB_HINT_URL} target="_blank" rel="noreferrer">
-              <Github className="h-4 w-4 mr-2" /> Open GitHub
-            </a>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Button
+            size="lg"
+            disabled={busy}
+            onClick={() => runExport(true)}
+            className="h-auto py-4 flex-col gap-1"
+          >
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <HardDrive className="h-5 w-5" />}
+            <span>Download Everything</span>
+            <span className="text-xs opacity-80">Tables + Storage files</span>
           </Button>
-        </CardContent>
-      </Card>
+
+          <Button
+            size="lg"
+            variant="outline"
+            disabled={busy}
+            onClick={() => runExport(false)}
+            className="h-auto py-4 flex-col gap-1"
+          >
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Database className="h-5 w-5" />}
+            <span>Database Only</span>
+            <span className="text-xs opacity-70">Fast · JSON dump</span>
+          </Button>
+        </div>
+
+        {busy && (
+          <div className="space-y-2">
+            <Progress value={progress} />
+            <p className="text-xs text-muted-foreground">{status}</p>
+          </div>
+        )}
+      </CollapsibleCard>
+
+      <CollapsibleCard title={<><Github className="h-4 w-4" /> Source code</>} contentClassName="space-y-2 text-sm text-muted-foreground">
+        <p>
+          The deployed website can't ship its own source code. To download the React/TypeScript
+          codebase:
+        </p>
+        <ol className="list-decimal list-inside space-y-1">
+          <li>Open your project in Lovable</li>
+          <li>Click the <strong>GitHub</strong> icon in the top bar and push to GitHub (one-time)</li>
+          <li>On GitHub: <strong>Code → Download ZIP</strong></li>
+        </ol>
+        <Button variant="outline" size="sm" asChild className="mt-2">
+          <a href={GITHUB_HINT_URL} target="_blank" rel="noreferrer">
+            <Github className="h-4 w-4 mr-2" /> Open GitHub
+          </a>
+        </Button>
+      </CollapsibleCard>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -347,31 +348,24 @@ export const ToolManagement = () => {
       <ToolViewChart stats={viewStats ?? new Map()} toolNames={toolNameMap} />
 
       {/* Drag-drop ordering */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <GripVertical className="h-4 w-4" /> Live Tool Order (drag to reorder)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">
-            Drag the cards below to set the order live tools appear in the Featured grid on /tools.
-          </p>
-          {liveToolsOrdered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No live tools yet.</p>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={liveToolsOrdered.map((t) => t.id)} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {liveToolsOrdered.map((t) => (
-                    <SortableToolCard key={t.id} tool={t} />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </CardContent>
-      </Card>
+      <CollapsibleCard title={<><GripVertical className="h-4 w-4" /> Live Tool Order (drag to reorder)</>}>
+        <p className="text-xs text-muted-foreground mb-3">
+          Drag the cards below to set the order live tools appear in the Featured grid on /tools.
+        </p>
+        {liveToolsOrdered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No live tools yet.</p>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={liveToolsOrdered.map((t) => t.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {liveToolsOrdered.map((t) => (
+                  <SortableToolCard key={t.id} tool={t} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </CollapsibleCard>
 
       {/* Controls */}
       <Card>
@@ -402,118 +396,117 @@ export const ToolManagement = () => {
       </Card>
 
       {/* Tools Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Free</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Views</TableHead>
-                <TableHead>Added</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+      <CollapsibleCard title={`All tools (${filteredTools.length})`} size="lg" defaultOpen contentClassName="p-0">
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Free</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Views</TableHead>
+              <TableHead>Added</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTools.map(tool => {
+              const stat = viewStats?.get(tool.id);
+              return (
+              <TableRow key={tool.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{tool.name}</span>
+                    {tool.is_premium && <Crown className="h-3.5 w-3.5 text-yellow-500" />}
+                  </div>
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground font-mono">{tool.id}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Badge variant="outline" className="text-xs">{tool.category}</Badge>
+                    {(tool.extra_categories ?? []).length > 0 && (
+                      <Badge variant="secondary" className="text-xs" title={(tool.extra_categories ?? []).join(", ")}>+{(tool.extra_categories ?? []).length}</Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {tool.has_uploaded_files ? (
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs gap-1">
+                      <Upload className="h-3 w-3" /> Uploaded
+                    </Badge>
+                  ) : tool.dedicated_route ? (
+                    <Badge variant="outline" className="bg-purple-500/10 text-purple-500 text-xs">
+                      Internal App
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">{tool.source}</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Switch checked={tool.is_free} onCheckedChange={() => toggleFree(tool)} />
+                </TableCell>
+                <TableCell>
+                  <button onClick={() => toggleLive(tool)} className="flex items-center gap-1.5">
+                    {tool.is_live ? (
+                      <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 cursor-pointer gap-1">
+                        <Eye className="h-3 w-3" /> Live
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-yellow-600 hover:bg-yellow-500/10 cursor-pointer gap-1">
+                        <EyeOff className="h-3 w-3" /> Draft
+                      </Badge>
+                    )}
+                  </button>
+                </TableCell>
+                <TableCell className="text-right text-xs tabular-nums">
+                  {stat ? (
+                    <div className="leading-tight">
+                      <div className="font-semibold">{stat.view_count.toLocaleString()}</div>
+                      <div className="text-muted-foreground">{stat.unique_visitors.toLocaleString()} unique</div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {format(new Date(tool.created_at), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(tool)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => { setToolToDelete(tool); setDeleteDialogOpen(true); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" asChild>
+                      <a href={`/tool/${tool.id}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTools.map(tool => {
-                const stat = viewStats?.get(tool.id);
-                return (
-                <TableRow key={tool.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{tool.name}</span>
-                      {tool.is_premium && <Crown className="h-3.5 w-3.5 text-yellow-500" />}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground font-mono">{tool.id}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Badge variant="outline" className="text-xs">{tool.category}</Badge>
-                      {(tool.extra_categories ?? []).length > 0 && (
-                        <Badge variant="secondary" className="text-xs" title={(tool.extra_categories ?? []).join(", ")}>+{(tool.extra_categories ?? []).length}</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {tool.has_uploaded_files ? (
-                      <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs gap-1">
-                        <Upload className="h-3 w-3" /> Uploaded
-                      </Badge>
-                    ) : tool.dedicated_route ? (
-                      <Badge variant="outline" className="bg-purple-500/10 text-purple-500 text-xs">
-                        Internal App
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">{tool.source}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Switch checked={tool.is_free} onCheckedChange={() => toggleFree(tool)} />
-                  </TableCell>
-                  <TableCell>
-                    <button onClick={() => toggleLive(tool)} className="flex items-center gap-1.5">
-                      {tool.is_live ? (
-                        <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 cursor-pointer gap-1">
-                          <Eye className="h-3 w-3" /> Live
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-yellow-600 hover:bg-yellow-500/10 cursor-pointer gap-1">
-                          <EyeOff className="h-3 w-3" /> Draft
-                        </Badge>
-                      )}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-right text-xs tabular-nums">
-                    {stat ? (
-                      <div className="leading-tight">
-                        <div className="font-semibold">{stat.view_count.toLocaleString()}</div>
-                        <div className="text-muted-foreground">{stat.unique_visitors.toLocaleString()} unique</div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {format(new Date(tool.created_at), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(tool)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => { setToolToDelete(tool); setDeleteDialogOpen(true); }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={`/tool/${tool.id}`} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-                );
-              })}
-              {filteredTools.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    {loading ? "Loading tools..." : "No tools found"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              );
+            })}
+            {filteredTools.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  {loading ? "Loading tools..." : "No tools found"}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CollapsibleCard>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

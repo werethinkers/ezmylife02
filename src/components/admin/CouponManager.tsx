@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -72,74 +72,68 @@ const CouponManager = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" /> Create Coupon</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Code</Label>
-              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. summer2026" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Internal note" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Access type</Label>
-              <Select value={form.access_type} onValueChange={(v) => setForm({ ...form, access_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{ACCESS_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Duration (days, blank = lifetime)</Label>
-              <Input type="number" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} placeholder="30" />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <Label>Max uses (blank = unlimited)</Label>
-              <Input type="number" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} placeholder="100" />
-            </div>
+      <CollapsibleCard title={<><Plus className="h-4 w-4" /> Create Coupon</>} contentClassName="space-y-4">
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Code</Label>
+            <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. summer2026" />
           </div>
-          <Button onClick={handleCreate} disabled={saving}>Create Coupon</Button>
-        </CardContent>
-      </Card>
+          <div className="space-y-1.5">
+            <Label>Description</Label>
+            <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Internal note" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Access type</Label>
+            <Select value={form.access_type} onValueChange={(v) => setForm({ ...form, access_type: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{ACCESS_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Duration (days, blank = lifetime)</Label>
+            <Input type="number" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} placeholder="30" />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Max uses (blank = unlimited)</Label>
+            <Input type="number" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} placeholder="100" />
+          </div>
+        </div>
+        <Button onClick={handleCreate} disabled={saving}>Create Coupon</Button>
+      </CollapsibleCard>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Ticket className="h-4 w-4" /> All Coupons</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Uses</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead></TableHead>
+      <CollapsibleCard title={<><Ticket className="h-4 w-4" /> All Coupons</>} contentClassName="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Code</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Uses</TableHead>
+              <TableHead>Active</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {coupons.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="font-mono text-sm">{c.code}</TableCell>
+                <TableCell><Badge variant="outline">{c.access_type}</Badge></TableCell>
+                <TableCell className="text-xs">{c.duration_days ? `${c.duration_days} days` : "Lifetime"}</TableCell>
+                <TableCell className="text-xs">{c.use_count}{c.max_uses ? ` / ${c.max_uses}` : ""}</TableCell>
+                <TableCell><Switch checked={c.is_active} onCheckedChange={() => toggle(c)} /></TableCell>
+                <TableCell className="text-xs">{format(new Date(c.created_at), "MMM d, yyyy")}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {coupons.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-sm">{c.code}</TableCell>
-                  <TableCell><Badge variant="outline">{c.access_type}</Badge></TableCell>
-                  <TableCell className="text-xs">{c.duration_days ? `${c.duration_days} days` : "Lifetime"}</TableCell>
-                  <TableCell className="text-xs">{c.use_count}{c.max_uses ? ` / ${c.max_uses}` : ""}</TableCell>
-                  <TableCell><Switch checked={c.is_active} onCheckedChange={() => toggle(c)} /></TableCell>
-                  <TableCell className="text-xs">{format(new Date(c.created_at), "MMM d, yyyy")}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {coupons.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No coupons</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            ))}
+            {coupons.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No coupons</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CollapsibleCard>
     </div>
   );
 };

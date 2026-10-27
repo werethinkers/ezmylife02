@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -185,116 +186,113 @@ const VisitorsTracker = () => {
         <Stat label="Bounce rate" value={`${stats.bounceRate}%`} highlight={stats.bounceRate > 60} />
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Sessions</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-8" />
-                  <TableHead>Visitor</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Entered → Exited</TableHead>
-                  <TableHead className="text-right">Pages</TableHead>
-                  <TableHead className="text-right">Duration</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="text-right">When</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {error && (
-                  <TableRow><TableCell colSpan={9} className="py-6">
-                    <div className="flex items-center gap-2 text-destructive text-sm justify-center">
-                      <AlertCircle className="h-4 w-4" /> Failed to load: {error}
-                    </div>
-                  </TableCell></TableRow>
-                )}
-                {!error && filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No visitors in this range</TableCell></TableRow>
-                )}
-                {filtered.map((s) => (
-                  <Fragment key={s.session_id}>
-                    <TableRow className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id, s.ip_hash)}>
-                      <TableCell>{expanded === s.session_id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TableCell>
-                      <TableCell>
-                        <div className="font-medium text-sm">
-                          {s.user_email ?? <span className="text-muted-foreground">Anonymous</span>}
-                        </div>
-                        <div className="text-xs text-muted-foreground font-mono">{s.ip_address ?? s.ip_hash?.slice(0, 10) ?? "—"}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                          {s.city ? `${s.city}, ` : ""}{s.country ?? "—"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <DeviceIcon d={s.device_type} />
-                          {s.browser ?? "?"} · {s.os ?? "?"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-xs font-mono truncate max-w-[260px]">
-                          <span className="text-primary">{s.entry_path ?? "—"}</span>
-                          {" → "}
-                          <span className={s.is_bounce ? "text-destructive" : ""}>{s.exit_path ?? "—"}</span>
-                        </div>
-                        {s.is_bounce && <Badge variant="destructive" className="mt-1 text-[10px]">Bounce</Badge>}
-                      </TableCell>
-                      <TableCell className="text-right"><Badge variant="outline">{s.page_count}</Badge></TableCell>
-                      <TableCell className="text-right text-sm">{fmtDuration(Number(s.duration_seconds))}</TableCell>
-                      <TableCell>
-                        <div className="text-xs text-muted-foreground truncate max-w-[160px]">
-                          {s.utm_source ? <Badge variant="secondary" className="mr-1">{s.utm_source}</Badge> : null}
-                          {s.referrer ? (() => { try { return new URL(s.referrer).hostname.replace(/^www\./, ""); } catch { return "Direct"; } })() : "Direct"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground" title={format(new Date(s.last_seen), "PPpp")}>
-                        {formatDistanceToNow(new Date(s.last_seen), { addSuffix: true })}
+      <CollapsibleCard defaultOpen title="Sessions" contentClassName="p-0">
+        {loading ? (
+          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8" />
+                <TableHead>Visitor</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Device</TableHead>
+                <TableHead>Entered → Exited</TableHead>
+                <TableHead className="text-right">Pages</TableHead>
+                <TableHead className="text-right">Duration</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead className="text-right">When</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {error && (
+                <TableRow><TableCell colSpan={9} className="py-6">
+                  <div className="flex items-center gap-2 text-destructive text-sm justify-center">
+                    <AlertCircle className="h-4 w-4" /> Failed to load: {error}
+                  </div>
+                </TableCell></TableRow>
+              )}
+              {!error && filtered.length === 0 && (
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No visitors in this range</TableCell></TableRow>
+              )}
+              {filtered.map((s) => (
+                <Fragment key={s.session_id}>
+                  <TableRow className="cursor-pointer hover:bg-muted/40" onClick={() => toggleExpand(s.session_id, s.ip_hash)}>
+                    <TableCell>{expanded === s.session_id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TableCell>
+                    <TableCell>
+                      <div className="font-medium text-sm">
+                        {s.user_email ?? <span className="text-muted-foreground">Anonymous</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">{s.ip_address ?? s.ip_hash?.slice(0, 10) ?? "—"}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                        {s.city ? `${s.city}, ` : ""}{s.country ?? "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <DeviceIcon d={s.device_type} />
+                        {s.browser ?? "?"} · {s.os ?? "?"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs font-mono truncate max-w-[260px]">
+                        <span className="text-primary">{s.entry_path ?? "—"}</span>
+                        {" → "}
+                        <span className={s.is_bounce ? "text-destructive" : ""}>{s.exit_path ?? "—"}</span>
+                      </div>
+                      {s.is_bounce && <Badge variant="destructive" className="mt-1 text-[10px]">Bounce</Badge>}
+                    </TableCell>
+                    <TableCell className="text-right"><Badge variant="outline">{s.page_count}</Badge></TableCell>
+                    <TableCell className="text-right text-sm">{fmtDuration(Number(s.duration_seconds))}</TableCell>
+                    <TableCell>
+                      <div className="text-xs text-muted-foreground truncate max-w-[160px]">
+                        {s.utm_source ? <Badge variant="secondary" className="mr-1">{s.utm_source}</Badge> : null}
+                        {s.referrer ? (() => { try { return new URL(s.referrer).hostname.replace(/^www\./, ""); } catch { return "Direct"; } })() : "Direct"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground" title={format(new Date(s.last_seen), "PPpp")}>
+                      {formatDistanceToNow(new Date(s.last_seen), { addSuffix: true })}
+                    </TableCell>
+                  </TableRow>
+                  {expanded === s.session_id && (
+                    <TableRow className="bg-muted/20">
+                      <TableCell colSpan={9} className="p-4">
+                        <div className="text-xs font-semibold mb-2 text-muted-foreground">CLICK PATH</div>
+                        {!steps[s.session_id] ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : steps[s.session_id].length === 0 ? (
+                          <div className="text-xs text-muted-foreground">No detailed steps recorded.</div>
+                        ) : (
+                          <ol className="space-y-1.5">
+                            {steps[s.session_id].map((p, i) => (
+                              <li key={p.id} className="flex items-center gap-3 text-sm">
+                                <span className="text-muted-foreground tabular-nums w-6">{i + 1}.</span>
+                                <span className="font-mono">{p.path}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(p.created_at), "HH:mm:ss")}
+                                </span>
+                                {p.time_on_page_ms ? (
+                                  <Badge variant="outline" className="text-[10px]">{Math.round(p.time_on_page_ms / 1000)}s on page</Badge>
+                                ) : null}
+                                {i === steps[s.session_id].length - 1 && s.is_bounce && (
+                                  <Badge variant="destructive" className="text-[10px]">Bounced here</Badge>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                        )}
                       </TableCell>
                     </TableRow>
-                    {expanded === s.session_id && (
-                      <TableRow className="bg-muted/20">
-                        <TableCell colSpan={9} className="p-4">
-                          <div className="text-xs font-semibold mb-2 text-muted-foreground">CLICK PATH</div>
-                          {!steps[s.session_id] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : steps[s.session_id].length === 0 ? (
-                            <div className="text-xs text-muted-foreground">No detailed steps recorded.</div>
-                          ) : (
-                            <ol className="space-y-1.5">
-                              {steps[s.session_id].map((p, i) => (
-                                <li key={p.id} className="flex items-center gap-3 text-sm">
-                                  <span className="text-muted-foreground tabular-nums w-6">{i + 1}.</span>
-                                  <span className="font-mono">{p.path}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {format(new Date(p.created_at), "HH:mm:ss")}
-                                  </span>
-                                  {p.time_on_page_ms ? (
-                                    <Badge variant="outline" className="text-[10px]">{Math.round(p.time_on_page_ms / 1000)}s on page</Badge>
-                                  ) : null}
-                                  {i === steps[s.session_id].length - 1 && s.is_bounce && (
-                                    <Badge variant="destructive" className="text-[10px]">Bounced here</Badge>
-                                  )}
-                                </li>
-                              ))}
-                            </ol>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  )}
+                </Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CollapsibleCard>
     </div>
   );
 };

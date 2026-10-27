@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -188,147 +188,130 @@ const UtmLinkBuilder = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Wand2 className="h-4 w-4" /> Campaign Link Generator
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Promote</Label>
-              <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="app">Whole app (Home)</SelectItem>
-                  <SelectItem value="tools">Tools catalog</SelectItem>
-                  <SelectItem value="tool">A specific tool</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {scope === "tool" && (
-              <div className="space-y-1.5 md:col-span-2">
-                <Label>Tool</Label>
-                <Select value={toolId} onValueChange={setToolId}>
-                  <SelectTrigger><SelectValue placeholder="Pick a tool" /></SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {catalog.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label>Channel</Label>
-              <Select value={channel} onValueChange={setChannel}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CHANNELS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {channel === "other" && (
-              <div className="space-y-1.5">
-                <Label>Channel name</Label>
-                <Input value={otherChannel} onChange={(e) => setOtherChannel(e.target.value)} placeholder="reddit, podcast, ..." />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label>Promotion type</Label>
-              <Select value={promo} onValueChange={setPromo}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PROMO_TYPES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {promo === "influencer" && (
-              <div className="space-y-1.5">
-                <Label>Influencer handle</Label>
-                <Input value={influencer} onChange={(e) => setInfluencer(e.target.value)} placeholder="@john" />
-              </div>
-            )}
+      <CollapsibleCard title={<><Wand2 className="h-4 w-4" /> Campaign Link Generator</>} contentClassName="space-y-4">
+        <div className="grid md:grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label>Promote</Label>
+            <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="app">Whole app (Home)</SelectItem>
+                <SelectItem value="tools">Tools catalog</SelectItem>
+                <SelectItem value="tool">A specific tool</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {scope === "tool" && (
             <div className="space-y-1.5 md:col-span-2">
-              <Label>Campaign tag (optional override)</Label>
-              <Input value={campaignOverride} onChange={(e) => setCampaignOverride(e.target.value)} placeholder={previewCampaign} />
+              <Label>Tool</Label>
+              <Select value={toolId} onValueChange={setToolId}>
+                <SelectTrigger><SelectValue placeholder="Pick a tool" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {catalog.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
+          <div className="space-y-1.5">
+            <Label>Channel</Label>
+            <Select value={channel} onValueChange={setChannel}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CHANNELS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
+          {channel === "other" && (
+            <div className="space-y-1.5">
+              <Label>Channel name</Label>
+              <Input value={otherChannel} onChange={(e) => setOtherChannel(e.target.value)} placeholder="reddit, podcast, ..." />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label>Promotion type</Label>
+            <Select value={promo} onValueChange={setPromo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROMO_TYPES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {promo === "influencer" && (
+            <div className="space-y-1.5">
+              <Label>Influencer handle</Label>
+              <Input value={influencer} onChange={(e) => setInfluencer(e.target.value)} placeholder="@john" />
+            </div>
+          )}
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Campaign tag (optional override)</Label>
+            <Input value={campaignOverride} onChange={(e) => setCampaignOverride(e.target.value)} placeholder={previewCampaign} />
+          </div>
+        </div>
 
-          <div className="p-3 bg-muted/50 rounded-md border break-all text-xs font-mono">
-            {previewUrl}
-          </div>
+        <div className="p-3 bg-muted/50 rounded-md border break-all text-xs font-mono">
+          {previewUrl}
+        </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleGenerate} disabled={loading}>
-              <LinkIcon className="h-4 w-4 mr-1.5" /> Generate & Copy
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={handleGenerate} disabled={loading}>
+            <LinkIcon className="h-4 w-4 mr-1.5" /> Generate & Copy
+          </Button>
+        </div>
+      </CollapsibleCard>
 
       {promo === "influencer" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Layers className="h-4 w-4" /> Bulk: One link per influencer
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Label>Influencer handles (one per line or comma separated)</Label>
-            <Textarea
-              rows={4}
-              value={bulkInfluencers}
-              onChange={(e) => setBulkInfluencers(e.target.value)}
-              placeholder="@john&#10;@jane&#10;@creator3"
-            />
-            <Button onClick={handleBulk} disabled={loading} variant="secondary">
-              Generate {bulkInfluencers.split(/[\n,]+/).filter((s) => s.trim()).length || 0} links
-            </Button>
-          </CardContent>
-        </Card>
+        <CollapsibleCard title={<><Layers className="h-4 w-4" /> Bulk: One link per influencer</>} contentClassName="space-y-3">
+          <Label>Influencer handles (one per line or comma separated)</Label>
+          <Textarea
+            rows={4}
+            value={bulkInfluencers}
+            onChange={(e) => setBulkInfluencers(e.target.value)}
+            placeholder="@john&#10;@jane&#10;@creator3"
+          />
+          <Button onClick={handleBulk} disabled={loading} variant="secondary">
+            Generate {bulkInfluencers.split(/[\n,]+/).filter((s) => s.trim()).length || 0} links
+          </Button>
+        </CollapsibleCard>
       )}
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Tracked Links</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Label</TableHead>
-                <TableHead>Campaign</TableHead>
-                <TableHead>URL</TableHead>
-                <TableHead className="text-right">Clicks</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {links.map((l) => {
-                const url = buildUrl(l.target_path, l.utm_source, l.utm_medium, l.utm_campaign);
-                const clicks = campaignCounts[l.utm_campaign] ?? 0;
-                return (
-                  <TableRow key={l.id}>
-                    <TableCell className="text-sm font-medium">{l.label}</TableCell>
-                    <TableCell className="text-xs"><Badge variant="outline">{l.utm_campaign}</Badge></TableCell>
-                    <TableCell className="text-xs font-mono max-w-xs truncate">{url}</TableCell>
-                    <TableCell className="text-right"><Badge>{clicks}</Badge></TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 justify-end">
-                        <Button variant="ghost" size="icon" onClick={() => copy(url)}><Copy className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(l.id)}><Trash2 className="h-4 w-4" /></Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {links.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No tracked links yet</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <CollapsibleCard title="Tracked Links" contentClassName="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Label</TableHead>
+              <TableHead>Campaign</TableHead>
+              <TableHead>URL</TableHead>
+              <TableHead className="text-right">Clicks</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {links.map((l) => {
+              const url = buildUrl(l.target_path, l.utm_source, l.utm_medium, l.utm_campaign);
+              const clicks = campaignCounts[l.utm_campaign] ?? 0;
+              return (
+                <TableRow key={l.id}>
+                  <TableCell className="text-sm font-medium">{l.label}</TableCell>
+                  <TableCell className="text-xs"><Badge variant="outline">{l.utm_campaign}</Badge></TableCell>
+                  <TableCell className="text-xs font-mono max-w-xs truncate">{url}</TableCell>
+                  <TableCell className="text-right"><Badge>{clicks}</Badge></TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 justify-end">
+                      <Button variant="ghost" size="icon" onClick={() => copy(url)}><Copy className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(l.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {links.length === 0 && (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No tracked links yet</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CollapsibleCard>
     </div>
   );
 };

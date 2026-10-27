@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GOALS } from "@/data/goals";
 import { tagCounts } from "@/lib/catalogTags";
@@ -112,108 +112,89 @@ export function CategoriesManager() {
         </div>
       )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-          <div>
-            <CardTitle className="text-base">Categories</CardTitle>
-            <CardDescription>The groups on the home page and the apps page, under each goal. App counts are live apps.</CardDescription>
-          </div>
+      <CollapsibleCard
+        title="Categories"
+        description="The groups on the home page and the apps page, under each goal. App counts are live apps."
+        headerExtra={
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus className="mr-1 h-4 w-4" /> New category
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {GOALS.map((g) => {
-            const cats = categories.filter((c) => c.goal === g.id);
-            if (!cats.length) return null;
-            return (
-              <div key={g.id}>
-                <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
-                  <span className="h-3 w-3 rounded-full border" style={{ background: g.color }} aria-hidden /> {g.name}
-                </div>
-                <div className="divide-y rounded-lg border">
-                  {cats.map((c) => (
-                    <div key={c.name} className="flex items-center gap-3 px-3 py-2 text-sm">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium">
-                          {c.name}
-                          {c.sort_order > 0 && <span className="ml-2 text-xs font-normal text-muted-foreground">position {c.sort_order}</span>}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">{c.line || "No description"}</p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0">
-                        {counts.main.get(c.name) ?? 0} apps{(counts.also.get(c.name) ?? 0) > 0 ? ` + ${counts.also.get(c.name)} also` : ""}
-                      </Badge>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+        }
+        contentClassName="space-y-5"
+      >
+
+        {GOALS.map((g) => {
+          const cats = categories.filter((c) => c.goal === g.id);
+          if (!cats.length) return null;
+          return (
+            <div key={g.id}>
+              <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
+                <span className="h-3 w-3 rounded-full border" style={{ background: g.color }} aria-hidden /> {g.name}
               </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4" /> Needs a look
-            {needsLook.length > 0 && <Badge>{needsLook.length}</Badge>}
-          </CardTitle>
-          <CardDescription>
-            New apps (the last {NEW_DAYS} days), and apps without a set-up category or filter types. Open one to choose where it shows.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : needsLook.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Every app is grouped. 🎉</p>
-          ) : (
-            <div className="divide-y rounded-lg border">
-              {needsLook.slice(0, 60).map(({ t, reasons }) => (
-                <div key={t.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {t.name} <span className="font-mono text-xs font-normal text-muted-foreground">{t.id}</span>
-                      {!t.is_live && <Badge variant="secondary" className="ml-2">draft</Badge>}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {t.category || "—"}
-                      {(t.extra_categories ?? []).length ? ` + ${(t.extra_categories ?? []).join(", ")}` : ""} · {reasons.join(" · ")}
-                    </p>
+              <div className="divide-y rounded-lg border">
+                {cats.map((c) => (
+                  <div key={c.name} className="flex items-center gap-3 px-3 py-2 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">
+                        {c.name}
+                        {c.sort_order > 0 && <span className="ml-2 text-xs font-normal text-muted-foreground">position {c.sort_order}</span>}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{c.line || "No description"}</p>
+                    </div>
+                    <Badge variant="outline" className="shrink-0">
+                      {counts.main.get(c.name) ?? 0} apps{(counts.also.get(c.name) ?? 0) > 0 ? ` + ${counts.also.get(c.name)} also` : ""}
+                    </Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => open(t)}>
-                    Set grouping
-                  </Button>
-                </div>
-              ))}
-              {needsLook.length > 60 && <p className="px-3 py-2 text-xs text-muted-foreground">Showing the first 60 of {needsLook.length}.</p>}
+                ))}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          );
+        })}
+</CollapsibleCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filter types in use</CardTitle>
-          <CardDescription>
-            The "Type" filter on the apps page. A type needs {MIN_APPS_FOR_CHIP} or more live apps to get a chip; types below that are shown dimmed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((t) => (
-              <Badge key={t.key} variant={t.count >= MIN_APPS_FOR_CHIP ? "default" : "outline"} className={t.count >= MIN_APPS_FOR_CHIP ? "" : "opacity-60"}>
-                {t.label} · {t.count}
-              </Badge>
+      <CollapsibleCard title={<><Sparkles className="h-4 w-4" /> Needs a look
+            {needsLook.length > 0 && <Badge>{needsLook.length}</Badge>}</>} description={<>New apps (the last {NEW_DAYS} days), and apps without a set-up category or filter types. Open one to choose where it shows.</>}>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : needsLook.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Every app is grouped. 🎉</p>
+        ) : (
+          <div className="divide-y rounded-lg border">
+            {needsLook.slice(0, 60).map(({ t, reasons }) => (
+              <div key={t.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">
+                    {t.name} <span className="font-mono text-xs font-normal text-muted-foreground">{t.id}</span>
+                    {!t.is_live && <Badge variant="secondary" className="ml-2">draft</Badge>}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {t.category || "—"}
+                    {(t.extra_categories ?? []).length ? ` + ${(t.extra_categories ?? []).join(", ")}` : ""} · {reasons.join(" · ")}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => open(t)}>
+                  Set grouping
+                </Button>
+              </div>
             ))}
-            {tags.length === 0 && <p className="text-sm text-muted-foreground">No filter types yet.</p>}
+            {needsLook.length > 60 && <p className="px-3 py-2 text-xs text-muted-foreground">Showing the first 60 of {needsLook.length}.</p>}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </CollapsibleCard>
+
+      <CollapsibleCard title="Filter types in use" description={<>The "Type" filter on the apps page. A type needs {MIN_APPS_FOR_CHIP} or more live apps to get a chip; types below that are shown dimmed.</>}>
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <Badge key={t.key} variant={t.count >= MIN_APPS_FOR_CHIP ? "default" : "outline"} className={t.count >= MIN_APPS_FOR_CHIP ? "" : "opacity-60"}>
+              {t.label} · {t.count}
+            </Badge>
+          ))}
+          {tags.length === 0 && <p className="text-sm text-muted-foreground">No filter types yet.</p>}
+        </div>
+      </CollapsibleCard>
 
       <CategoryDialog open={creating} onOpenChange={setCreating} knownNames={categories.map((c) => c.name)} />
       <CategoryDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} existing={editing} knownNames={categories.map((c) => c.name)} />

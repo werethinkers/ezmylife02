@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -238,125 +238,111 @@ export default function PromoPagesManager() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-primary/30 bg-sand/70">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Bulk PDP generator</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Generate complete promo (PDP) pages for every tool — AI copy + Gemini hero image + published. Uses your Gemini API keys.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => handleBulkGenerate("missing")} disabled={bulkRunning}>
-              {bulkRunning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-              Generate for missing ({toolsWithoutPage.length})
-            </Button>
-            <Button variant="outline" onClick={() => handleBulkGenerate("all")} disabled={bulkRunning}>
-              <Wand2 className="h-4 w-4 mr-1" /> Regenerate ALL ({tools.length})
-            </Button>
-            <Button variant="outline" onClick={() => handleBulkGenerate("images_only")} disabled={bulkRunning}>
-              <Sparkles className="h-4 w-4 mr-1" /> Backfill missing images ({pages.filter(p => !p.hero_image_url || !Array.isArray(p.gallery_images) || (p.gallery_images?.length ?? 0) < 3).length})
-            </Button>
+      <CollapsibleCard title={<><Wand2 className="h-5 w-5 text-primary" /> Bulk PDP generator</>} size="lg" className="border-primary/30 bg-sand/70" contentClassName="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Generate complete promo (PDP) pages for every tool — AI copy + Gemini hero image + published. Uses your Gemini API keys.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => handleBulkGenerate("missing")} disabled={bulkRunning}>
+            {bulkRunning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+            Generate for missing ({toolsWithoutPage.length})
+          </Button>
+          <Button variant="outline" onClick={() => handleBulkGenerate("all")} disabled={bulkRunning}>
+            <Wand2 className="h-4 w-4 mr-1" /> Regenerate ALL ({tools.length})
+          </Button>
+          <Button variant="outline" onClick={() => handleBulkGenerate("images_only")} disabled={bulkRunning}>
+            <Sparkles className="h-4 w-4 mr-1" /> Backfill missing images ({pages.filter(p => !p.hero_image_url || !Array.isArray(p.gallery_images) || (p.gallery_images?.length ?? 0) < 3).length})
+          </Button>
 
 
-            <Button variant="secondary" onClick={handleExportCSV} disabled={pages.length === 0}>
-              <Download className="h-4 w-4 mr-1" /> Export CSV of links ({pages.length})
-            </Button>
-          </div>
-          {bulkProgress && (
-            <div className="rounded-md border-2 border-ink bg-card p-3 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span>Progress: {bulkProgress.done} / {bulkProgress.total}</span>
-                <span className="text-muted-foreground">✓ {bulkProgress.ok} · ✗ {bulkProgress.failed}</span>
-              </div>
-              <div className="h-1.5 w-full rounded bg-muted overflow-hidden">
-                <div className="h-full bg-primary transition-all" style={{ width: `${bulkProgress.total ? (bulkProgress.done / bulkProgress.total) * 100 : 0}%` }} />
-              </div>
-              {bulkProgress.current && <div className="text-muted-foreground truncate">{bulkProgress.current}</div>}
+          <Button variant="secondary" onClick={handleExportCSV} disabled={pages.length === 0}>
+            <Download className="h-4 w-4 mr-1" /> Export CSV of links ({pages.length})
+          </Button>
+        </div>
+        {bulkProgress && (
+          <div className="rounded-md border-2 border-ink bg-card p-3 text-xs space-y-1">
+            <div className="flex justify-between">
+              <span>Progress: {bulkProgress.done} / {bulkProgress.total}</span>
+              <span className="text-muted-foreground">✓ {bulkProgress.ok} · ✗ {bulkProgress.failed}</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Rocket className="h-5 w-5" /> New Promo Page</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[260px] flex-1">
-            <Label className="text-xs">Tool</Label>
-            <Select value={creatingForTool} onValueChange={(v) => {
-              setCreatingForTool(v);
-              const tool = toolById[v];
-              if (tool) setCreatingSlug(slugify(tool.name));
-            }}>
-              <SelectTrigger><SelectValue placeholder="Pick a tool" /></SelectTrigger>
-              <SelectContent>
-                {toolsWithoutPage.map(t => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="h-1.5 w-full rounded bg-muted overflow-hidden">
+              <div className="h-full bg-primary transition-all" style={{ width: `${bulkProgress.total ? (bulkProgress.done / bulkProgress.total) * 100 : 0}%` }} />
+            </div>
+            {bulkProgress.current && <div className="text-muted-foreground truncate">{bulkProgress.current}</div>}
           </div>
-          <div className="min-w-[220px]">
-            <Label className="text-xs">Slug</Label>
-            <Input value={creatingSlug} onChange={(e) => setCreatingSlug(slugify(e.target.value))} placeholder="anglepro" />
-          </div>
-          <Button onClick={handleCreate}><Plus className="h-4 w-4 mr-1" /> Create</Button>
-          {creatingForTool && (
-            <Button variant="outline" disabled={generating} onClick={() => handleAIGenerate(creatingForTool)}>
-              <Sparkles className="h-4 w-4 mr-1" /> {generating ? "Generating…" : "AI draft & create"}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </CollapsibleCard>
 
-      <Card>
-        <CardHeader><CardTitle>All Promo Pages</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tool</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pages.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No promo pages yet.</TableCell></TableRow>
-              )}
-              {pages.map(p => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{toolById[p.tool_id]?.name ?? p.tool_id}</TableCell>
-                  <TableCell><code className="text-xs">/promo/{p.slug}</code></TableCell>
-                  <TableCell>
-                    {p.is_published
-                      ? <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Live</Badge>
-                      : <Badge variant="secondary">Draft</Badge>}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button size="sm" variant="ghost" onClick={() => togglePublish(p)}>{p.is_published ? "Unpublish" : "Launch"}</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" asChild>
-                      <a href={`/promo/${p.slug}`} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/promo/${p.slug}`);
-                      toast.success("Link copied");
-                    }}><Copy className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </TableCell>
-                </TableRow>
+      <CollapsibleCard title={<><Rocket className="h-5 w-5" /> New Promo Page</>} size="lg" contentClassName="flex flex-wrap items-end gap-3">
+        <div className="min-w-[260px] flex-1">
+          <Label className="text-xs">Tool</Label>
+          <Select value={creatingForTool} onValueChange={(v) => {
+            setCreatingForTool(v);
+            const tool = toolById[v];
+            if (tool) setCreatingSlug(slugify(tool.name));
+          }}>
+            <SelectTrigger><SelectValue placeholder="Pick a tool" /></SelectTrigger>
+            <SelectContent>
+              {toolsWithoutPage.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-[220px]">
+          <Label className="text-xs">Slug</Label>
+          <Input value={creatingSlug} onChange={(e) => setCreatingSlug(slugify(e.target.value))} placeholder="anglepro" />
+        </div>
+        <Button onClick={handleCreate}><Plus className="h-4 w-4 mr-1" /> Create</Button>
+        {creatingForTool && (
+          <Button variant="outline" disabled={generating} onClick={() => handleAIGenerate(creatingForTool)}>
+            <Sparkles className="h-4 w-4 mr-1" /> {generating ? "Generating…" : "AI draft & create"}
+          </Button>
+        )}
+      </CollapsibleCard>
+
+      <CollapsibleCard title="All Promo Pages" size="lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tool</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pages.length === 0 && (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No promo pages yet.</TableCell></TableRow>
+            )}
+            {pages.map(p => (
+              <TableRow key={p.id}>
+                <TableCell className="font-medium">{toolById[p.tool_id]?.name ?? p.tool_id}</TableCell>
+                <TableCell><code className="text-xs">/promo/{p.slug}</code></TableCell>
+                <TableCell>
+                  {p.is_published
+                    ? <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Live</Badge>
+                    : <Badge variant="secondary">Draft</Badge>}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="ghost" onClick={() => togglePublish(p)}>{p.is_published ? "Unpublish" : "Launch"}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" asChild>
+                    <a href={`/promo/${p.slug}`} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/promo/${p.slug}`);
+                    toast.success("Link copied");
+                  }}><Copy className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CollapsibleCard>
 
       {editing && <PromoEditorDialog page={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
     </div>
