@@ -192,7 +192,9 @@ serve(async (req) => {
     if (action === "share") {
       // Writes the page's link-preview file (its own title, text and image) and stores its address.
       const { data: page } = await supabase.from("ip_pages").select("id, owner_id, slug, status, og_image").eq("id", String(body.page_id ?? "")).maybeSingle();
-      if (!page || page.owner_id !== user.id || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
+      // The owner, or an admin editing the link preview on the owner's behalf.
+      const { data: isAdminShare } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (!page || (page.owner_id !== user.id && !isAdminShare) || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
       const { data: product } = await supabase.from("ip_products").select("family").eq("id", body.product_id ?? "").maybeSingle();
       const url = await writeSharePage({
         slug: page.slug, title: String(body.title ?? "").slice(0, 120) || "EZYOURLIFE",

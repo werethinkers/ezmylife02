@@ -142,11 +142,18 @@ export async function checkout(body: Record<string, unknown>) {
   return data;
 }
 
-/** Uploads a data-URL image to the owner's folder in page-media and returns its public URL. */
-export async function uploadDataUrl(ownerId: string, pageId: string, dataUrl: string): Promise<string> {
+/**
+ * Uploads a data-URL image to the signed-in user's folder in page-media and returns its public URL.
+ * The storage rule only allows a folder named after auth.uid(), so an admin editing someone else's
+ * page uploads into their own folder (the bucket is public-read, so the picture still shows for everyone).
+ */
+export async function uploadDataUrl(_ownerId: string, pageId: string, dataUrl: string): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) throw new Error("Sign in to save.");
   const blob = await (await fetch(dataUrl)).blob();
   const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-  const path = `${ownerId}/${pageId}/${crypto.randomUUID()}.${ext}`;
+  const path = `${uid}/${pageId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("page-media").upload(path, blob, { contentType: blob.type, cacheControl: "31536000", upsert: false });
   if (error) throw error;
   return supabase.storage.from("page-media").getPublicUrl(path).data.publicUrl;
