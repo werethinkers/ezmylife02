@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,62 +154,55 @@ export default function VirasatArchive() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookHeart className="h-5 w-5" />
-            Virasat Archive ({sessions.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Child / Storyteller</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Style</TableHead>
-                <TableHead>Mode</TableHead>
-                <TableHead className="text-right">Stories</TableHead>
-                <TableHead className="text-right">Media</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead></TableHead>
+      <CollapsibleCard defaultOpen title={<><BookHeart className="h-5 w-5" />
+            Virasat Archive ({sessions.length})</>} size="lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Child / Storyteller</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Style</TableHead>
+              <TableHead>Mode</TableHead>
+              <TableHead className="text-right">Stories</TableHead>
+              <TableHead className="text-right">Media</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sessions.map((s) => (
+              <TableRow key={s.id}>
+                <TableCell className="text-sm">{userLabel(s.user_id)}</TableCell>
+                <TableCell className="text-sm">
+                  {s.child_name || "—"}
+                  {s.father_name && <span className="text-muted-foreground"> / {s.father_name}</span>}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={s.status === "completed" ? "default" : "outline"}>{s.status}</Badge>
+                </TableCell>
+                <TableCell><Badge variant="outline">{s.book_style}</Badge></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{s.input_mode}</TableCell>
+                <TableCell className="text-right">{s.question_count}</TableCell>
+                <TableCell className="text-right">{mediaCounts[s.id] || 0}</TableCell>
+                <TableCell className="text-xs">{format(new Date(s.updated_at), "MMM d, HH:mm")}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" onClick={() => openSession(s)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sessions.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="text-sm">{userLabel(s.user_id)}</TableCell>
-                  <TableCell className="text-sm">
-                    {s.child_name || "—"}
-                    {s.father_name && <span className="text-muted-foreground"> / {s.father_name}</span>}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={s.status === "completed" ? "default" : "outline"}>{s.status}</Badge>
-                  </TableCell>
-                  <TableCell><Badge variant="outline">{s.book_style}</Badge></TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{s.input_mode}</TableCell>
-                  <TableCell className="text-right">{s.question_count}</TableCell>
-                  <TableCell className="text-right">{mediaCounts[s.id] || 0}</TableCell>
-                  <TableCell className="text-xs">{format(new Date(s.updated_at), "MMM d, HH:mm")}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => openSession(s)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {sessions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    Koi Virasat session abhi tak nahi.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            ))}
+            {sessions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  Koi Virasat session abhi tak nahi.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CollapsibleCard>
 
       <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -67,56 +67,53 @@ export function GrantCreditsForm({ fixedUser, onDone }: { fixedUser?: Profile; o
   };
 
   return (
-    <Card>
-      <CardHeader><CardTitle>Give or remove credits</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        {!fixedUser && (
-          <>
-            <div className="flex gap-2">
-              <Input placeholder="Search by email or name" value={search}
-                onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} />
-              <Button variant="outline" onClick={doSearch}><Search className="h-4 w-4" /></Button>
-            </div>
-            {results.length > 0 && (
-              <div className="border border-border rounded-md divide-y">
-                {results.map((r) => (
-                  <button key={r.id} onClick={() => { setPicked(r); setResults([]); setSearch(r.email || ""); }}
-                    className="w-full text-left p-2 hover:bg-accent text-sm flex justify-between">
-                    <span>{r.full_name || r.display_name || "—"}</span>
-                    <span className="text-muted-foreground">{r.email}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-        {picked && (
-          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-            <strong>{picked.email}</strong>
-            {balance && <span className="text-muted-foreground"> · Lasting {balance.paid.toLocaleString()} · Free {balance.free.toLocaleString()}</span>}
+    <CollapsibleCard title="Give or remove credits" size="lg" contentClassName="space-y-4">
+      {!fixedUser && (
+        <>
+          <div className="flex gap-2">
+            <Input placeholder="Search by email or name" value={search}
+              onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} />
+            <Button variant="outline" onClick={doSearch}><Search className="h-4 w-4" /></Button>
           </div>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={mode === "give" ? "default" : "outline"} onClick={() => setMode("give")}>Give</Button>
-          <Button size="sm" variant={mode === "take" ? "default" : "outline"} onClick={() => setMode("take")}>Take away</Button>
-          <span className="w-px bg-border mx-1" />
-          <Button size="sm" variant={bucket === "paid" ? "default" : "outline"} onClick={() => setBucket("paid")}>Lasting (never expire)</Button>
-          <Button size="sm" variant={bucket === "free" ? "default" : "outline"} onClick={() => setBucket("free")}>Free (resets monthly)</Button>
+          {results.length > 0 && (
+            <div className="border border-border rounded-md divide-y">
+              {results.map((r) => (
+                <button key={r.id} onClick={() => { setPicked(r); setResults([]); setSearch(r.email || ""); }}
+                  className="w-full text-left p-2 hover:bg-accent text-sm flex justify-between">
+                  <span>{r.full_name || r.display_name || "—"}</span>
+                  <span className="text-muted-foreground">{r.email}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {picked && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+          <strong>{picked.email}</strong>
+          {balance && <span className="text-muted-foreground"> · Lasting {balance.paid.toLocaleString()} · Free {balance.free.toLocaleString()}</span>}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {QUICK.map((q) => (
-            <Button key={q} size="sm" variant="secondary" onClick={() => setAmount(String(q))}>{q.toLocaleString()}</Button>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Input type="number" min={1} step={1} placeholder="Any amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <Input placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <Button onClick={submit} disabled={!picked || !valid || busy}>
-          {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
-          {mode === "give" ? "Give" : "Take away"} {valid ? n.toLocaleString() : ""} {label} credits
-        </Button>
-      </CardContent>
-    </Card>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={mode === "give" ? "default" : "outline"} onClick={() => setMode("give")}>Give</Button>
+        <Button size="sm" variant={mode === "take" ? "default" : "outline"} onClick={() => setMode("take")}>Take away</Button>
+        <span className="w-px bg-border mx-1" />
+        <Button size="sm" variant={bucket === "paid" ? "default" : "outline"} onClick={() => setBucket("paid")}>Lasting (never expire)</Button>
+        <Button size="sm" variant={bucket === "free" ? "default" : "outline"} onClick={() => setBucket("free")}>Free (resets monthly)</Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {QUICK.map((q) => (
+          <Button key={q} size="sm" variant="secondary" onClick={() => setAmount(String(q))}>{q.toLocaleString()}</Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Input type="number" min={1} step={1} placeholder="Any amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+      </div>
+      <Button onClick={submit} disabled={!picked || !valid || busy}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+        {mode === "give" ? "Give" : "Take away"} {valid ? n.toLocaleString() : ""} {label} credits
+      </Button>
+    </CollapsibleCard>
   );
 }

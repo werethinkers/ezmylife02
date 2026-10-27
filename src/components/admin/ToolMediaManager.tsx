@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Image as ImageIcon, Save, Crop, Sparkles } from "lucide-react";
@@ -373,37 +373,33 @@ export const ToolMediaManager = () => {
   }, [rows, filter]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tool Media · Icon, Preview Image, Rating & Reviews</CardTitle>
-        <Input placeholder="Filter by name or id..." value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-sm mt-3" />
-      </CardHeader>
-      <CardContent>
-        {!loading && <BulkArtPanel rows={rows} onDone={load} />}
-        {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tool</TableHead>
-                  <TableHead>Icon</TableHead>
-                  <TableHead>Big Preview Image</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Reviews</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((t) => <ToolRow key={t.id} tool={t} onChanged={load} />)}
-              </TableBody>
-            </Table>
-            <p className="text-xs text-muted-foreground mt-3">{filtered.length} tools</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <CollapsibleCard title="Tool Media · Icon, Preview Image, Rating & Reviews" size="lg" defaultOpen>
+      <Input placeholder="Filter by name or id..." value={filter} onChange={(e) => setFilter(e.target.value)} className="mb-4 max-w-sm" />
+
+      {!loading && <BulkArtPanel rows={rows} onDone={load} />}
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tool</TableHead>
+                <TableHead>Icon</TableHead>
+                <TableHead>Big Preview Image</TableHead>
+                <TableHead>Rating</TableHead>
+                <TableHead>Reviews</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((t) => <ToolRow key={t.id} tool={t} onChanged={load} />)}
+            </TableBody>
+          </Table>
+          <p className="text-xs text-muted-foreground mt-3">{filtered.length} tools</p>
+        </div>
+      )}
+</CollapsibleCard>
   );
 };
 export default ToolMediaManager;

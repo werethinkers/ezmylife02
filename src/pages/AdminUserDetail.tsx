@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -207,120 +208,108 @@ const AdminUserDetail = () => {
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader><CardTitle>Profile Information</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {infoItems.map(item => (
-                    <div key={item.label} className="flex items-start gap-3">
-                      <item.icon className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">{item.label}</p>
-                        <p className="text-sm font-medium">{item.value || "—"}</p>
-                      </div>
+          <div className="grid items-start gap-6 md:grid-cols-2">
+            <CollapsibleCard title="Profile Information" size="lg">
+              <div className="space-y-4">
+                {infoItems.map(item => (
+                  <div key={item.label} className="flex items-start gap-3">
+                    <item.icon className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">{item.label}</p>
+                      <p className="text-sm font-medium">{item.value || "—"}</p>
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+              {profile.bio && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-xs text-muted-foreground mb-1">Bio</p>
+                  <p className="text-sm">{profile.bio}</p>
                 </div>
-                {profile.bio && (
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-xs text-muted-foreground mb-1">Bio</p>
-                    <p className="text-sm">{profile.bio}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </CollapsibleCard>
 
-            <Card>
-              <CardHeader><CardTitle>Subscription & Access</CardTitle></CardHeader>
-              <CardContent>
-                {premium ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-amber-500" />
-                      <span className="font-medium">Premium Active</span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Access Type</p>
-                      <p className="text-sm font-medium">{premium.access_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Granted</p>
-                      <p className="text-sm font-medium">{format(new Date(premium.granted_at), "MMM d, yyyy HH:mm")}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Expires</p>
-                      <p className="text-sm font-medium">{premium.expires_at ? format(new Date(premium.expires_at), "MMM d, yyyy HH:mm") : "Never"}</p>
-                    </div>
+            <CollapsibleCard title="Subscription & Access" size="lg">
+              {premium ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-amber-500" />
+                    <span className="font-medium">Premium Active</span>
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No premium access</p>
-                )}
-              </CardContent>
-            </Card>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Access Type</p>
+                    <p className="text-sm font-medium">{premium.access_type}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Granted</p>
+                    <p className="text-sm font-medium">{format(new Date(premium.granted_at), "MMM d, yyyy HH:mm")}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Expires</p>
+                    <p className="text-sm font-medium">{premium.expires_at ? format(new Date(premium.expires_at), "MMM d, yyyy HH:mm") : "Never"}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No premium access</p>
+              )}
+            </CollapsibleCard>
           </div>
         )}
 
         {/* Activity Tab */}
         {activeTab === "activity" && (
-          <Card>
-            <CardHeader><CardTitle>Activity History ({logs.length} events)</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Details</TableHead>
+          <CollapsibleCard title={<>Activity History ({logs.length} events)</>} size="lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map(log => (
+                  <TableRow key={log.id}>
+                    <TableCell className="text-xs whitespace-nowrap">{format(new Date(log.created_at), "MMM d, yyyy HH:mm")}</TableCell>
+                    <TableCell><Badge variant="outline" className={actionTypeColor(log.action_type)}>{log.action_type}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[400px] truncate">{log.action_details ? JSON.stringify(log.action_details) : "—"}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map(log => (
-                    <TableRow key={log.id}>
-                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(log.created_at), "MMM d, yyyy HH:mm")}</TableCell>
-                      <TableCell><Badge variant="outline" className={actionTypeColor(log.action_type)}>{log.action_type}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[400px] truncate">{log.action_details ? JSON.stringify(log.action_details) : "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {logs.length === 0 && (
-                    <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No activity logs</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                ))}
+                {logs.length === 0 && (
+                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No activity logs</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CollapsibleCard>
         )}
 
         {/* Tools Tab */}
         {activeTab === "tools" && (
-          <Card>
-            <CardHeader><CardTitle>Tool Usage Breakdown</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Tool</TableHead>
-                    <TableHead className="text-right">Times Used</TableHead>
-                    <TableHead>Last Used</TableHead>
+          <CollapsibleCard title="Tool Usage Breakdown" size="lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Tool</TableHead>
+                  <TableHead className="text-right">Times Used</TableHead>
+                  <TableHead>Last Used</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedTools.map(([, tool], i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm font-medium">{i + 1}</TableCell>
+                    <TableCell className="text-sm">{tool.name}</TableCell>
+                    <TableCell className="text-right"><Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{format(new Date(tool.lastUsed), "MMM d, yyyy HH:mm")}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedTools.map(([, tool], i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-sm font-medium">{i + 1}</TableCell>
-                      <TableCell className="text-sm">{tool.name}</TableCell>
-                      <TableCell className="text-right"><Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{format(new Date(tool.lastUsed), "MMM d, yyyy HH:mm")}</TableCell>
-                    </TableRow>
-                  ))}
-                  {sortedTools.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No tool usage data</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                ))}
+                {sortedTools.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No tool usage data</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CollapsibleCard>
         )}
       </div>
     </div>

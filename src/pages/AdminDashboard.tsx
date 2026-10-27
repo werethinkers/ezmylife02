@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -376,93 +377,84 @@ const AdminDashboard = () => {
 
         {activeTab === "users" && (
           <>
-            <Card>
-              <CardHeader><CardTitle>All Users ({profiles.length})</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead></TableHead>
+            <CollapsibleCard defaultOpen title={<>All Users ({profiles.length})</>} size="lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Provider</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {profiles.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-sm font-medium">{p.full_name || p.display_name || "—"}</TableCell>
+                      <TableCell className="text-sm">{p.email || "—"}</TableCell>
+                      <TableCell className="text-sm">{p.company || "—"}</TableCell>
+                      <TableCell className="text-sm">{p.job_title || "—"}</TableCell>
+                      <TableCell className="text-sm">{p.location || "—"}</TableCell>
+                      <TableCell><Badge variant="outline">{p.auth_provider || "email"}</Badge></TableCell>
+                      <TableCell className="text-xs">{format(new Date(p.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => window.open(`/admin/user/${p.id}`, '_blank')}>
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {profiles.map(p => (
-                      <TableRow key={p.id}>
-                        <TableCell className="text-sm font-medium">{p.full_name || p.display_name || "—"}</TableCell>
-                        <TableCell className="text-sm">{p.email || "—"}</TableCell>
-                        <TableCell className="text-sm">{p.company || "—"}</TableCell>
-                        <TableCell className="text-sm">{p.job_title || "—"}</TableCell>
-                        <TableCell className="text-sm">{p.location || "—"}</TableCell>
-                        <TableCell><Badge variant="outline">{p.auth_provider || "email"}</Badge></TableCell>
-                        <TableCell className="text-xs">{format(new Date(p.created_at), "MMM d, yyyy")}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => window.open(`/admin/user/${p.id}`, '_blank')}>
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </CollapsibleCard>
           </>
         )}
 
         {activeTab === "credits" && !isViewOnly && <CreditsAdmin />}
 
         {activeTab === "tool-usage" && (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader><CardTitle>Most Used Tools</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>#</TableHead><TableHead>Tool</TableHead><TableHead className="text-right">Uses</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {sortedTools.map(([, tool], i) => (
+          <div className="grid items-start gap-6 md:grid-cols-2">
+            <CollapsibleCard title="Most Used Tools" size="lg">
+              <Table>
+                <TableHeader><TableRow><TableHead>#</TableHead><TableHead>Tool</TableHead><TableHead className="text-right">Uses</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {sortedTools.map(([, tool], i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-sm font-medium">{i + 1}</TableCell>
+                      <TableCell className="text-sm">{tool.name}</TableCell>
+                      <TableCell className="text-right"><Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                  {sortedTools.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </CollapsibleCard>
+            <CollapsibleCard title="User Tool Usage" size="lg">
+              <Table>
+                <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Tools Used</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {sortedUserUsage.map(([user, tools], i) => {
+                    const total = Object.values(tools).reduce((s, v) => s + v, 0);
+                    const topTools = Object.entries(tools).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                    return (
                       <TableRow key={i}>
-                        <TableCell className="text-sm font-medium">{i + 1}</TableCell>
-                        <TableCell className="text-sm">{tool.name}</TableCell>
-                        <TableCell className="text-right"><Badge variant="outline" className="bg-primary/10 text-primary">{tool.count}</Badge></TableCell>
+                        <TableCell className="text-sm">{user}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {topTools.map(([name, count]) => `${name} (${count})`).join(", ")}
+                          {Object.keys(tools).length > 3 && ` +${Object.keys(tools).length - 3} more`}
+                        </TableCell>
+                        <TableCell className="text-right"><Badge variant="outline">{total}</Badge></TableCell>
                       </TableRow>
-                    ))}
-                    {sortedTools.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>User Tool Usage</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Tools Used</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {sortedUserUsage.map(([user, tools], i) => {
-                      const total = Object.values(tools).reduce((s, v) => s + v, 0);
-                      const topTools = Object.entries(tools).sort((a, b) => b[1] - a[1]).slice(0, 3);
-                      return (
-                        <TableRow key={i}>
-                          <TableCell className="text-sm">{user}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {topTools.map(([name, count]) => `${name} (${count})`).join(", ")}
-                            {Object.keys(tools).length > 3 && ` +${Object.keys(tools).length - 3} more`}
-                          </TableCell>
-                          <TableCell className="text-right"><Badge variant="outline">{total}</Badge></TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {sortedUserUsage.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                    );
+                  })}
+                  {sortedUserUsage.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No tool usage data yet</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </CollapsibleCard>
           </div>
         )}
 

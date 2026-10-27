@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -156,101 +157,104 @@ export const AdminSeoIndexing = () => {
         <StatCard label="Unchecked" value={stats.unchecked} tone="muted" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Google Search Console — indexing tracker</CardTitle>
-          <p className="text-sm text-muted-foreground">
+      <CollapsibleCard
+        title="Google Search Console — indexing tracker"
+        description={
+          <>
             Tracks every URL in <code>/sitemap.xml</code>. Google has no public "force index" API for web pages — use
             "Open in GSC" to request indexing manually (one click, prefilled).
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={syncSitemap} disabled={busy} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" /> Sync sitemap → DB
-            </Button>
-            <Button onClick={inspectOldest} disabled={busy || rows.length === 0} variant="outline" size="sm">
-              <Clock className="h-4 w-4 mr-2" /> Inspect 25 oldest
-            </Button>
-            <Button onClick={() => inspectUrls([...selected])} disabled={busy || selected.size === 0} size="sm">
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Inspect selected ({selected.size})
-            </Button>
-            <Button onClick={exportCsv} variant="outline" size="sm" disabled={!rows.length}>
-              <Download className="h-4 w-4 mr-2" /> Export CSV
-            </Button>
-          </div>
+          </>
+        }
+        size="lg"
+        defaultOpen
+        contentClassName="space-y-4"
+      >
 
-          <div className="flex flex-wrap gap-2 items-center">
-            {(["all", "indexed", "not_indexed", "errors", "unchecked"] as Filter[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-full text-xs border transition ${
-                  filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted/60"
-                }`}
-              >
-                {f.replace("_", " ")}
-              </button>
-            ))}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter URLs…" className="pl-9 h-8" />
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={syncSitemap} disabled={busy} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" /> Sync sitemap → DB
+          </Button>
+          <Button onClick={inspectOldest} disabled={busy || rows.length === 0} variant="outline" size="sm">
+            <Clock className="h-4 w-4 mr-2" /> Inspect 25 oldest
+          </Button>
+          <Button onClick={() => inspectUrls([...selected])} disabled={busy || selected.size === 0} size="sm">
+            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+            Inspect selected ({selected.size})
+          </Button>
+          <Button onClick={exportCsv} variant="outline" size="sm" disabled={!rows.length}>
+            <Download className="h-4 w-4 mr-2" /> Export CSV
+          </Button>
+        </div>
 
-          {isLoading ? (
-            <p className="text-center text-muted-foreground py-8">Loading…</p>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-xs uppercase tracking-wide">
-                  <tr>
-                    <th className="p-2 w-8">
-                      <Checkbox checked={selected.size > 0 && selected.size === Math.min(filtered.length, 50)} onCheckedChange={toggleAll} />
-                    </th>
-                    <th className="p-2 text-left">URL</th>
-                    <th className="p-2 text-left">Status</th>
-                    <th className="p-2 text-left">Last crawl</th>
-                    <th className="p-2 text-left">Last checked</th>
-                    <th className="p-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filtered.slice(0, 500).map((r) => {
-                    const v = verdict(r);
-                    return (
-                      <tr key={r.url} className="hover:bg-muted/30">
-                        <td className="p-2"><Checkbox checked={selected.has(r.url)} onCheckedChange={() => toggleSel(r.url)} /></td>
-                        <td className="p-2 max-w-[400px] truncate"><a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{r.url.replace(SITE_RESOURCE.slice(0, -1), "")}</a></td>
-                        <td className="p-2"><VerdictBadge v={v} coverage={r.coverage_state} /></td>
-                        <td className="p-2 text-xs text-muted-foreground">{r.last_crawl_time ? format(new Date(r.last_crawl_time), "MMM d, yyyy") : "—"}</td>
-                        <td className="p-2 text-xs text-muted-foreground">{r.last_checked_at ? format(new Date(r.last_checked_at), "MMM d, HH:mm") : "—"}</td>
-                        <td className="p-2 text-right">
-                          <a
-                            href={gscDeepLink(r.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            Open in GSC <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!filtered.length && (
-                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No URLs. Click "Sync sitemap → DB" to populate.</td></tr>
-                  )}
-                </tbody>
-              </table>
-              {filtered.length > 500 && (
-                <p className="text-xs text-center text-muted-foreground py-2 border-t">Showing first 500 of {filtered.length}. Filter to narrow.</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <div className="flex flex-wrap gap-2 items-center">
+          {(["all", "indexed", "not_indexed", "errors", "unchecked"] as Filter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 rounded-full text-xs border transition ${
+                filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted/60"
+              }`}
+            >
+              {f.replace("_", " ")}
+            </button>
+          ))}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter URLs…" className="pl-9 h-8" />
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="text-center text-muted-foreground py-8">Loading…</p>
+        ) : (
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="p-2 w-8">
+                    <Checkbox checked={selected.size > 0 && selected.size === Math.min(filtered.length, 50)} onCheckedChange={toggleAll} />
+                  </th>
+                  <th className="p-2 text-left">URL</th>
+                  <th className="p-2 text-left">Status</th>
+                  <th className="p-2 text-left">Last crawl</th>
+                  <th className="p-2 text-left">Last checked</th>
+                  <th className="p-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.slice(0, 500).map((r) => {
+                  const v = verdict(r);
+                  return (
+                    <tr key={r.url} className="hover:bg-muted/30">
+                      <td className="p-2"><Checkbox checked={selected.has(r.url)} onCheckedChange={() => toggleSel(r.url)} /></td>
+                      <td className="p-2 max-w-[400px] truncate"><a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{r.url.replace(SITE_RESOURCE.slice(0, -1), "")}</a></td>
+                      <td className="p-2"><VerdictBadge v={v} coverage={r.coverage_state} /></td>
+                      <td className="p-2 text-xs text-muted-foreground">{r.last_crawl_time ? format(new Date(r.last_crawl_time), "MMM d, yyyy") : "—"}</td>
+                      <td className="p-2 text-xs text-muted-foreground">{r.last_checked_at ? format(new Date(r.last_checked_at), "MMM d, HH:mm") : "—"}</td>
+                      <td className="p-2 text-right">
+                        <a
+                          href={gscDeepLink(r.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          Open in GSC <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!filtered.length && (
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No URLs. Click "Sync sitemap → DB" to populate.</td></tr>
+                )}
+              </tbody>
+            </table>
+            {filtered.length > 500 && (
+              <p className="text-xs text-center text-muted-foreground py-2 border-t">Showing first 500 of {filtered.length}. Filter to narrow.</p>
+            )}
+          </div>
+        )}
+</CollapsibleCard>
     </div>
   );
 };

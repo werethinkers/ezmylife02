@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,81 +85,69 @@ const AnalyticsDashboard = () => {
         <StatCard icon={Users} label="Unique visitors" value={uniqueVisitors} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Top Pages</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Path</TableHead><TableHead className="text-right">Views</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {topPages.map(([path, count]) => (
-                  <TableRow key={path}>
-                    <TableCell className="text-sm font-mono">{path}</TableCell>
-                    <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {topPages.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">No data</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <div className="grid items-start gap-6 md:grid-cols-2">
+        <CollapsibleCard title="Top Pages">
+          <Table>
+            <TableHeader><TableRow><TableHead>Path</TableHead><TableHead className="text-right">Views</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {topPages.map(([path, count]) => (
+                <TableRow key={path}>
+                  <TableCell className="text-sm font-mono">{path}</TableCell>
+                  <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
+                </TableRow>
+              ))}
+              {topPages.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">No data</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CollapsibleCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Top Referrers</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Source</TableHead><TableHead className="text-right">Visits</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {topReferrers.map(([ref, count]) => (
-                  <TableRow key={ref}>
-                    <TableCell className="text-sm">{ref}</TableCell>
-                    <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {topReferrers.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">Direct traffic only</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <CollapsibleCard title="Top Referrers">
+          <Table>
+            <TableHeader><TableRow><TableHead>Source</TableHead><TableHead className="text-right">Visits</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {topReferrers.map(([ref, count]) => (
+                <TableRow key={ref}>
+                  <TableCell className="text-sm">{ref}</TableCell>
+                  <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
+                </TableRow>
+              ))}
+              {topReferrers.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">Direct traffic only</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CollapsibleCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Globe className="h-4 w-4" /> Geo Breakdown</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Country</TableHead><TableHead className="text-right">Visits</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {geoBreakdown.map(([country, count]) => (
-                  <TableRow key={country}>
-                    <TableCell className="text-sm">{country}</TableCell>
-                    <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {geoBreakdown.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">No geo data yet</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <CollapsibleCard title={<><Globe className="h-4 w-4" /> Geo Breakdown</>}>
+          <Table>
+            <TableHeader><TableRow><TableHead>Country</TableHead><TableHead className="text-right">Visits</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {geoBreakdown.map(([country, count]) => (
+                <TableRow key={country}>
+                  <TableCell className="text-sm">{country}</TableCell>
+                  <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
+                </TableRow>
+              ))}
+              {geoBreakdown.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-6">No geo data yet</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CollapsibleCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">UTM Campaigns</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Campaign</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Clicks</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {utmCampaigns.map(([camp, count]) => (
-                  <TableRow key={camp}>
-                    <TableCell className="text-sm font-medium">{camp}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {utmSources.find(([s]) => views.some((v) => v.utm_campaign === camp && v.utm_source === s))?.[0] || "—"}
-                    </TableCell>
-                    <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {utmCampaigns.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No UTM traffic yet</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <CollapsibleCard title="UTM Campaigns">
+          <Table>
+            <TableHeader><TableRow><TableHead>Campaign</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Clicks</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {utmCampaigns.map(([camp, count]) => (
+                <TableRow key={camp}>
+                  <TableCell className="text-sm font-medium">{camp}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {utmSources.find(([s]) => views.some((v) => v.utm_campaign === camp && v.utm_source === s))?.[0] || "—"}
+                  </TableCell>
+                  <TableCell className="text-right"><Badge variant="outline">{count}</Badge></TableCell>
+                </TableRow>
+              ))}
+              {utmCampaigns.length === 0 && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No UTM traffic yet</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CollapsibleCard>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,80 +131,80 @@ const GeminiKeysManager = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" /> Gemini API Keys
-          </CardTitle>
+      <CollapsibleCard
+        title={<><KeyRound className="h-5 w-5" /> Gemini API Keys</>}
+        size="lg"
+        defaultOpen
+        headerExtra={
           <Button onClick={() => setDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" /> Add Key
           </Button>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-4">
-            Keys are tried in order. On failure, the system auto-rotates to the next key. Keys are auto-disabled after 5 consecutive failures.
-          </p>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Label</TableHead>
-                <TableHead>Key</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Failures</TableHead>
-                <TableHead>Last Used</TableHead>
-                <TableHead>Added</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keys.map((k) => (
-                <TableRow key={k.id}>
-                  <TableCell className="text-sm">{k.label || "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{mask(k.key_value)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={k.is_active} onCheckedChange={() => toggleActive(k)} />
-                      <Badge variant={k.is_active ? "default" : "outline"} className="text-xs">
-                        {k.is_active ? "Active" : "Disabled"}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={k.failure_count >= 5 ? "destructive" : k.failure_count > 0 ? "outline" : "secondary"} className="text-xs">
-                      {k.failure_count}
+        }
+      >
+
+        <p className="text-xs text-muted-foreground mb-4">
+          Keys are tried in order. On failure, the system auto-rotates to the next key. Keys are auto-disabled after 5 consecutive failures.
+        </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Label</TableHead>
+              <TableHead>Key</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Failures</TableHead>
+              <TableHead>Last Used</TableHead>
+              <TableHead>Added</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {keys.map((k) => (
+              <TableRow key={k.id}>
+                <TableCell className="text-sm">{k.label || "—"}</TableCell>
+                <TableCell className="font-mono text-xs">{mask(k.key_value)}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={k.is_active} onCheckedChange={() => toggleActive(k)} />
+                    <Badge variant={k.is_active ? "default" : "outline"} className="text-xs">
+                      {k.is_active ? "Active" : "Disabled"}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {k.last_used_at ? format(new Date(k.last_used_at), "MMM d, HH:mm") : "Never"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {format(new Date(k.created_at), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1">
-                      {k.failure_count > 0 && (
-                        <Button variant="ghost" size="icon" onClick={() => resetFailures(k)} title="Reset failures">
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteKey(k)}>
-                        <Trash2 className="h-4 w-4" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={k.failure_count >= 5 ? "destructive" : k.failure_count > 0 ? "outline" : "secondary"} className="text-xs">
+                    {k.failure_count}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {k.last_used_at ? format(new Date(k.last_used_at), "MMM d, HH:mm") : "Never"}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {format(new Date(k.created_at), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    {k.failure_count > 0 && (
+                      <Button variant="ghost" size="icon" onClick={() => resetFailures(k)} title="Reset failures">
+                        <RotateCcw className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {keys.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    {loading ? "Loading..." : "No keys yet. Add one to enable AI fallback."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    )}
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteKey(k)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {keys.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  {loading ? "Loading..." : "No keys yet. Add one to enable AI fallback."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+</CollapsibleCard>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

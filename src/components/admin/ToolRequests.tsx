@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/admin/CollapsibleCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,67 +71,62 @@ const ToolRequests = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tool Requests ({requests.length})</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead className="max-w-[300px]">Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead></TableHead>
+    <CollapsibleCard defaultOpen title={<>Tool Requests ({requests.length})</>} size="lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="max-w-[300px]">Description</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {requests.map((req) => (
+            <TableRow key={req.id}>
+              <TableCell className="text-xs whitespace-nowrap">
+                {format(new Date(req.created_at), "MMM d, HH:mm")}
+              </TableCell>
+              <TableCell className="text-sm font-medium">{req.name}</TableCell>
+              <TableCell className="text-sm">{req.email}</TableCell>
+              <TableCell className="text-sm text-muted-foreground max-w-[300px]">
+                <p className="line-clamp-2">{req.tool_description}</p>
+              </TableCell>
+              <TableCell>
+                <Select defaultValue={req.status} onValueChange={(v) => updateStatus(req.id, v)}>
+                  <SelectTrigger className="w-[120px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(statusColors).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        <Badge variant="outline" className={statusColors[s]}>
+                          {s}
+                        </Badge>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                <Button variant="ghost" size="icon" onClick={() => deleteRequest(req.id)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {requests.map((req) => (
-              <TableRow key={req.id}>
-                <TableCell className="text-xs whitespace-nowrap">
-                  {format(new Date(req.created_at), "MMM d, HH:mm")}
-                </TableCell>
-                <TableCell className="text-sm font-medium">{req.name}</TableCell>
-                <TableCell className="text-sm">{req.email}</TableCell>
-                <TableCell className="text-sm text-muted-foreground max-w-[300px]">
-                  <p className="line-clamp-2">{req.tool_description}</p>
-                </TableCell>
-                <TableCell>
-                  <Select defaultValue={req.status} onValueChange={(v) => updateStatus(req.id, v)}>
-                    <SelectTrigger className="w-[120px] h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(statusColors).map((s) => (
-                        <SelectItem key={s} value={s}>
-                          <Badge variant="outline" className={statusColors[s]}>
-                            {s}
-                          </Badge>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => deleteRequest(req.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {requests.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No tool requests yet
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+          ))}
+          {requests.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                No tool requests yet
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </CollapsibleCard>
   );
 };
 
