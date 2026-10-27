@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Product, Theme } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 import { checkout, saveSharePrefs, setOgImage, uploadDataUrl, type PageRow } from "./api";
 import { drawPhotoPreview, drawShareCard } from "./shareImage";
 import { describe } from "./meta";
@@ -10,9 +11,16 @@ import { pageUrlFor } from "./util";
  * Makes a published page's link preview its own: draws the 1200×630 card from what the creator
  * picked, stores it as the page's og_image, and asks the server to (re)write the share page that
  * WhatsApp/Facebook read. Returns the share link, or null when share pages aren't set up yet.
+ *
+ * The owner uses the "share" action. An admin editing someone else's page uses "share_admin", which is
+ * already deployed for the admin backfill. An admin only changes another person's preview on purpose
+ * (opts.manual, from the Save button); just opening the page does not rewrite it.
  */
-export async function refreshLinkPreview(page: PageRow, product: Product, theme: Theme, prefs: SharePrefs = parsePrefs(page.share_prefs)): Promise<string | null> {
+export async function refreshLinkPreview(page: PageRow, product: Product, theme: Theme, prefs: SharePrefs = parsePrefs(page.share_prefs), opts: { manual?: boolean } = {}): Promise<string | null> {
   if (page.status !== "published" || !page.slug) return null;
+  const { data: auth } = await supabase.auth.getUser();
+  const isOwner = auth.user?.id === page.owner_id;
+  if (!isOwner && !opts.manual) return null;
   const content = page.published_content ?? page.content ?? {};
   let og: string;
   if (prefs.image === "upload" && prefs.upload && !prefs.upload.startsWith("data:")) og = prefs.upload;
@@ -24,7 +32,11 @@ export async function refreshLinkPreview(page: PageRow, product: Product, theme:
   }
   await setOgImage(page.id, og);
   const own = describe(product, content);
-  const r = await checkout({ action: "share", page_id: page.id, product_id: product.id, title: prefs.title?.trim() || own.title, description: prefs.description?.trim() || own.desc });
+  const title = prefs.title?.trim() || own.title;
+  const description = prefs.description?.trim() || own.desc;
+  const r = isOwner
+    ? await checkout({ action: "share", page_id: page.id, product_id: product.id, title, description })
+    : await checkout({ action: "share_admin", page_id: page.id, image: og, title, description });
   return (r?.share_url as string | null) ?? null;
 }
 
@@ -37,8 +49,8 @@ export async function applyLinkPreview(page: PageRow, product: Product, theme: T
   let upload = draft.upload;
   if (draft.image === "upload" && upload?.startsWith("data:")) upload = await uploadDataUrl(page.owner_id, page.id, upload);
   const prefs: SharePrefs = { ...draft, upload, rev: (draft.rev ?? 0) + 1 };
-  const link = await refreshLinkPreview(page, product, theme, prefs);
-  await saveSharePrefs(page.id, prefs);
+  const link = await refreshLinkPreview(page, product, theme, prefs, { manual: true });
+  if (!(await saveSharePrefs(page.id, prefs))) throw new Error("Your choices couldn't be saved. Sign in again and try once more.");
   return { prefs, link };
 }
 
