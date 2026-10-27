@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "@/hooks/use-toast";
 import { Search, Plus, Trash2, X, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import {
@@ -78,10 +79,8 @@ export const HomeSectionsManager = () => {
     },
   });
 
-  const currentSection = activeSectionId
-    ? sections.find((s) => s.id === activeSectionId)
-    : sections[0];
-  const currentId = currentSection?.id;
+  // The section whose accordion item is open. Everything starts collapsed.
+  const currentId = sections.find((s) => s.id === activeSectionId)?.id;
 
   // Ordered list of tool IDs assigned to the current section
   const currentOrdered = useMemo(() => {
@@ -247,156 +246,157 @@ export const HomeSectionsManager = () => {
     invalidateAll();
   };
 
+  const assignPanel = (
+    <div className="space-y-4 px-3 pb-3">
+      <p className="text-sm text-muted-foreground">
+        Click any tool to add or remove it from this section. A tool can be in many sections.
+      </p>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search tools…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {currentOrdered.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              In this section · drag to reorder ({currentOrdered.length})
+            </p>
+            <Button size="sm" variant="ghost" onClick={normalizePositions} className="h-7 text-xs">
+              Normalize order
+            </Button>
+          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderTools}>
+            <SortableContext items={currentOrdered.map((a) => a.tool_id)} strategy={verticalListSortingStrategy}>
+              <div className="border rounded-lg divide-y">
+                {currentOrdered.map((a, i) => {
+                  const t = tools.find((tt) => tt.id === a.tool_id);
+                  return (
+                    <SortableToolRow
+                      key={a.tool_id}
+                      id={a.tool_id}
+                      index={i}
+                      name={t?.name ?? a.tool_id}
+                      category={t?.category ?? ""}
+                      isFirst={i === 0}
+                      isLast={i === currentOrdered.length - 1}
+                      onUp={() => moveTool(a.tool_id, -1)}
+                      onDown={() => moveTool(a.tool_id, 1)}
+                      onRemove={() => toggleAssignment(a.tool_id)}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+
+      <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
+        {filtered.map((t) => {
+          const isIn = inCurrent.has(t.id);
+          return (
+            <button
+              key={t.id}
+              onClick={() => toggleAssignment(t.id)}
+              className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/40"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{t.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{t.category} · {t.id}</p>
+              </div>
+              <Badge variant={isIn ? "default" : "outline"}>{isIn ? "In section" : "Add"}</Badge>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Home sections</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Create as many sections as you want (Hot, Trending, etc.). The same tool can live in multiple sections.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Home sections</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Create as many sections as you want (Hot, Trending, etc.). The same tool can live in multiple sections.
+          Open a section to choose and order its tools.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Accordion
+          type="single"
+          collapsible
+          value={currentId ?? ""}
+          onValueChange={(v) => {
+            setActiveSectionId(v || null);
+            setSearch("");
+          }}
+        >
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderSections}>
             <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
               <div className="grid gap-2">
                 {sections.map((s) => (
-                  <SortableSectionRow
+                  <SortableSectionItem
                     key={s.id}
                     section={s}
-                    isCurrent={currentId === s.id}
                     count={countsBySection.get(s.id) ?? 0}
-                    onSelect={() => setActiveSectionId(s.id)}
                     onRename={(title) => renameSection(s.id, title)}
                     onToggleActive={(v) => toggleActive(s.id, v)}
                     onDelete={() => deleteSection(s.id)}
-                  />
+                  >
+                    {assignPanel}
+                  </SortableSectionItem>
                 ))}
               </div>
             </SortableContext>
           </DndContext>
+        </Accordion>
 
-          <div className="flex gap-2 pt-2 border-t">
-            <Input
-              placeholder="slug (e.g. hot)"
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value)}
-              className="max-w-xs"
-            />
-            <Input
-              placeholder="Display title (e.g. Hot Right Now)"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={createSection}>
-              <Plus className="h-4 w-4 mr-2" /> Add section
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {currentSection && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Assign tools to <span className="text-primary">{currentSection.title}</span>
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Click any tool to add or remove it from this section. A tool can be in many sections.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tools…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {currentOrdered.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    In this section · drag to reorder ({currentOrdered.length})
-                  </p>
-                  <Button size="sm" variant="ghost" onClick={normalizePositions} className="h-7 text-xs">
-                    Normalize order
-                  </Button>
-                </div>
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderTools}>
-                  <SortableContext items={currentOrdered.map((a) => a.tool_id)} strategy={verticalListSortingStrategy}>
-                    <div className="border rounded-lg divide-y">
-                      {currentOrdered.map((a, i) => {
-                        const t = tools.find((tt) => tt.id === a.tool_id);
-                        return (
-                          <SortableToolRow
-                            key={a.tool_id}
-                            id={a.tool_id}
-                            index={i}
-                            name={t?.name ?? a.tool_id}
-                            category={t?.category ?? ""}
-                            isFirst={i === 0}
-                            isLast={i === currentOrdered.length - 1}
-                            onUp={() => moveTool(a.tool_id, -1)}
-                            onDown={() => moveTool(a.tool_id, 1)}
-                            onRemove={() => toggleAssignment(a.tool_id)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </div>
-            )}
-
-            <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
-              {filtered.map((t) => {
-                const isIn = inCurrent.has(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => toggleAssignment(t.id)}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/40"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{t.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{t.category} · {t.id}</p>
-                    </div>
-                    <Badge variant={isIn ? "default" : "outline"}>{isIn ? "In section" : "Add"}</Badge>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        <div className="flex gap-2 pt-2 border-t">
+          <Input
+            placeholder="slug (e.g. hot)"
+            value={newSlug}
+            onChange={(e) => setNewSlug(e.target.value)}
+            className="max-w-xs"
+          />
+          <Input
+            placeholder="Display title (e.g. Hot Right Now)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="flex-1"
+          />
+          <Button onClick={createSection}>
+            <Plus className="h-4 w-4 mr-2" /> Add section
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
-interface SortableSectionRowProps {
+interface SortableSectionItemProps {
   section: HomeSection;
-  isCurrent: boolean;
   count: number;
-  onSelect: () => void;
   onRename: (title: string) => void;
   onToggleActive: (v: boolean) => void;
   onDelete: () => void;
+  children: ReactNode;
 }
 
-const SortableSectionRow = ({
+/** One home section as an accordion item. The header keeps drag, rename, active and delete; the body holds the tool picker. */
+const SortableSectionItem = ({
   section: s,
-  isCurrent,
   count,
-  onSelect,
   onRename,
   onToggleActive,
   onDelete,
-}: SortableSectionRowProps) => {
+  children,
+}: SortableSectionItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -405,44 +405,43 @@ const SortableSectionRow = ({
     zIndex: isDragging ? 10 : undefined,
   };
   return (
-    <div
+    <AccordionItem
+      value={s.id}
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-        isCurrent ? "border-primary bg-primary/5" : "hover:bg-muted/40"
-      }`}
+      className="rounded-lg border data-[state=open]:border-primary data-[state=open]:bg-primary/5"
     >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-        className="p-1 -ml-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <button
-        onClick={onSelect}
-        className="flex-1 text-left flex items-center gap-3 min-w-0"
-      >
+      <div className="flex items-center gap-2 p-3">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder"
+          className="p-1 -ml-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <AccordionTrigger
+          aria-label={`Open ${s.title}`}
+          className="flex-none p-1 hover:no-underline"
+        />
         <Input
           value={s.title}
           onChange={(e) => onRename(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
           className="h-8 max-w-xs"
         />
-        <span className="text-xs text-muted-foreground truncate">/{s.slug}</span>
-      </button>
-      <Badge variant="outline">{count} tools</Badge>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Active</span>
-        <Switch checked={s.is_active} onCheckedChange={onToggleActive} />
+        <span className="text-xs text-muted-foreground truncate flex-1">/{s.slug}</span>
+        <Badge variant="outline">{count} tools</Badge>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Active</span>
+          <Switch checked={s.is_active} onCheckedChange={onToggleActive} />
+        </div>
+        <Button size="icon" variant="ghost" onClick={onDelete} aria-label="Delete section">
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-      <Button size="icon" variant="ghost" onClick={onDelete}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    </div>
+      <AccordionContent className="pb-0">{children}</AccordionContent>
+    </AccordionItem>
   );
 };
 
