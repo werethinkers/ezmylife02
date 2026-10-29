@@ -159,7 +159,7 @@ export default function MyPages() {
       <Dialog open={!!sharing} onOpenChange={(o) => !o && setSharing(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Share {sharing?.title}</DialogTitle></DialogHeader>
-          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} link={link} preparing={preparing} prefs={prefs} onSavePrefs={apply} />}
+          {sharing && sp && st && sharing.slug && <ShareKit product={sp} theme={st} content={sharing.published_content ?? sharing.content} url={pageUrlFor(sharing.slug)} slug={sharing.slug} link={link} preparing={preparing} prefs={prefs} onSavePrefs={apply} pageId={sharing.id} />}
         </DialogContent>
       </Dialog>
     </div>

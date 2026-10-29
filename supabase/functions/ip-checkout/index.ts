@@ -7,7 +7,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { settlePayment, verifyHmac } from "../_shared/razorpay.ts";
 import { receiptInBackground } from "../_shared/receipt.ts";
-import { writeSharePage } from "../_shared/sharepage.ts";
+import { writeSharePage, writeSharePagesBatch, type ShareMeta } from "../_shared/sharepage.ts";
 import { inBackground } from "../_shared/whatsapp.ts";
 import { notifyTaskDone } from "../_shared/notify.ts";
 
@@ -203,6 +203,47 @@ serve(async (req) => {
       });
       if (url) await supabase.rpc("ip_set_share_url", { _page_id: page.id, _url: url });
       return json({ share_url: url });
+    }
+
+    if (action === "share_bulk") {
+      // A bulk send's personal WhatsApp previews: one small page per recipient, with their own name
+      // in the title, written in a handful of batched commits (writeSharePagesBatch) rather than one
+      // GitHub API call per person - see _shared/sharepage.ts for why that's the part that needs it.
+      const { data: page } = await supabase.from("ip_pages").select("id, owner_id, slug, status, og_image").eq("id", String(body.page_id ?? "")).maybeSingle();
+      const { data: isAdminBulk } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (!page || (page.owner_id !== user.id && !isAdminBulk) || page.status !== "published" || !page.slug) return json({ error: "Page not found." }, 404);
+      const slug = page.slug;
+
+      const peopleIn = Array.isArray(body.people) ? body.people : [];
+      if (peopleIn.length === 0) return json({ error: "Add at least one person." }, 400);
+      if (peopleIn.length > 500) return json({ error: "Up to 500 people at a time." }, 400);
+      const lang = typeof body.lang === "string" ? body.lang.slice(0, 8) : "en";
+
+      // One path per person under the page's own slug: share.ezyourlife.com/p/<slug>/<person>/. Names
+      // are slugified for the path and de-duplicated (two "Rahul"s don't collide), the name itself
+      // stays in the title and in the ?to= it hands off to the live card.
+      const seen = new Map<string, number>();
+      const batch = (peopleIn as Record<string, unknown>[]).map((p, i) => {
+        const name = String(p.name ?? "").trim().slice(0, 30) || `Guest ${i + 1}`;
+        const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24) || "guest";
+        const n = (seen.get(base) ?? 0) + 1;
+        seen.set(base, n);
+        const personSlug = n > 1 ? `${base}-${n}` : base;
+        const target = `https://ezyourlife.com/p/${slug}?to=${encodeURIComponent(name)}${lang !== "en" ? `&lang=${lang}` : ""}`;
+        const meta: ShareMeta = {
+          slug, path: `p/${slug}/${personSlug}`,
+          title: String(p.title ?? "").slice(0, 120) || "EZYOURLIFE",
+          description: String(p.description ?? "").slice(0, 300),
+          image: page.og_image, indexable: false, target,
+        };
+        return { meta, name };
+      });
+
+      const links = await writeSharePagesBatch(batch.map((b) => b.meta), { message: `Bulk share pages for ${slug}` });
+      if (links.size === 0) return json({ error: "Add the GITHUB_SHARE_TOKEN secret first." }, 400);
+      const out: Record<string, string> = {};
+      for (const { meta, name } of batch) { const u = links.get(meta); if (u) out[name] = u; }
+      return json({ links: out });
     }
 
     return json({ error: "Unknown action" }, 400);

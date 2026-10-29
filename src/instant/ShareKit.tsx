@@ -14,7 +14,7 @@ import { BulkSend } from "./BulkSend";
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
 /** url: the page itself (QR, image). link: what gets sent, the share page with its own preview when set up. */
 /** prefs + onSavePrefs: the owner's choices for the link preview, and how to save them. Without them only the suggested preview is offered. */
-export function ShareKit({ product, theme, content, url, slug, link, preparing, prefs, onSavePrefs }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean; prefs?: SharePrefs; onSavePrefs?: (draft: SharePrefs) => Promise<unknown> }) {
+export function ShareKit({ product, theme, content, url, slug, link, preparing, prefs, onSavePrefs, pageId }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean; prefs?: SharePrefs; onSavePrefs?: (draft: SharePrefs) => Promise<unknown>; pageId?: string }) {
   const { toast } = useToast();
   // Diwali cards: the sender picks the language here; the person who receives the card is not asked.
   const pickLang = product.family === "festival" && product.opts.langs === true;
@@ -91,7 +91,7 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 
-      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} /></>)}
+      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} /></>)}
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>
