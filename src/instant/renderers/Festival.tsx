@@ -4,8 +4,7 @@ import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
 import { isStock } from "../stock";
 import { BASE_CSS, Gallery, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
-import { diyaCount, getShop, lightDiya, type ShopBrand } from "../api";
-import { useProducts } from "../useProducts";
+import { getShop, type ShopBrand } from "../api";
 import { INDORI_LINES, htmlLang, langById, nameFromParam, type LangId } from "../festLang";
 import { useSparks } from "../sparks";
 
@@ -83,22 +82,6 @@ function Mandana({ edge }: { edge: "t" | "b" }) {
   );
 }
 
-/** The live count of diyas lit on Diwali-week cards, and this visitor's light once the card is lit. Real numbers only. */
-function useDiyaCount(on: boolean, lit: boolean, slug?: string) {
-  const [n, setN] = useState<number | null>(null);
-  useEffect(() => {
-    if (!on) return;
-    let gone = false;
-    diyaCount().then((v) => { if (!gone) setN(v); }, () => undefined);
-    return () => { gone = true; };
-  }, [on]);
-  useEffect(() => {
-    if (!on || !lit || !slug) return;
-    lightDiya(slug).then((v) => { if (v != null) setN(v); }, () => undefined);
-  }, [on, lit, slug]);
-  return n;
-}
-
 /** A shop's name, logo and next-visit coupon, for cards made from the shop's QR (content.shop). */
 function useShop(slug: unknown) {
   const [shop, setShop] = useState<ShopBrand | null>(null);
@@ -111,11 +94,9 @@ function useShop(slug: unknown) {
   return shop;
 }
 
-const COUNT_FROM = 100; // below this the line stays hidden: a tiny number is not social proof
-
 const EMBLEM: Record<string, string> = { colours: "🎨", flower: "🌷", modak: "🐘", dandiya: "🪘", kite: "🪁", kalash: "🌾", lotus: "🪷", sun: "🪔", fireworks: "🎆" };
 
-export default function Festival({ product, theme, content: c, mode, slug }: RenderProps) {
+export default function Festival({ product, theme, content: c, mode }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const [lit, setLit] = useState(false);
@@ -156,14 +137,10 @@ export default function Festival({ product, theme, content: c, mode, slug }: Ren
   // The minimal design is a plain card; every other design shows the background picture.
   const cover = sty !== "minimal" && resolveImg(c.cover) ? c.cover : null;
   const live = mode === "live";
-  const diyas = useDiyaCount(isDiya, lit, live ? slug : undefined);
   const shop = useShop(c.shop);
-  const { list } = useProducts();
-  const free = (list.find((l) => l.product.id === product.id)?.price ?? product.price) === 0;
   // The person reading the card makes their own, with their name already filled in as the sender.
   const makeOwn = `/create/${product.id}?` + new URLSearchParams({ ...(toName ? { sender: toName } : {}), ...(typeof c.shop === "string" && c.shop ? { shop: c.shop } : {}), ref: "card" }).toString();
-  const ctaWords = isDiya ? L.cta : "Make one for your people";
-  const cta = free ? `${ctaWords}, ${L.free}` : ctaWords;
+  const cta = isDiya ? L.cta : "Make one for your people";
   const tapWords = palace ? (langs ? L.tapRw : langById("en").tapRw) : isDiya ? (langs ? L.tap : o.tap) : o.tap;
   const doneWords = isDiya && langs ? L.done : o.tapDone;
 
@@ -197,7 +174,6 @@ export default function Festival({ product, theme, content: c, mode, slug }: Ren
           {EMBLEM[o.art] && <span className="emb">{EMBLEM[o.art]}</span>}
         </button>
         <p className="fest-tap" aria-live="polite">{lit ? doneWords : tapWords}</p>
-        {isDiya && diyas != null && diyas >= COUNT_FROM && <p className="fest-count" lang={htmlLang(lang)}>✦ {L.count.replace("{n}", diyas.toLocaleString("en-IN"))}</p>}
         <h1 className="fest-h" lang={htmlLang(lang)} style={fitWords(greeting)}>{greeting}</h1>
         {toName && <p className="fest-to" lang={htmlLang(lang)}>{langs ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
         <p className="fest-msg" lang={htmlLang(lang)}>{message}</p>
@@ -273,7 +249,6 @@ const CSS = `
 .fest-btns{display:grid;gap:10px;width:min(100%,380px);margin-top:14px}
 .fest-stack{display:grid;justify-items:center;gap:6px}
 .fest-emblem{font-size:min(13cqi,52px);line-height:1}
-.fest-count{margin:0;font:600 .86rem/1.3 var(--fb);color:var(--ac2);letter-spacing:.02em}
 .fest-cta{min-height:60px;font-size:1.05rem;box-shadow:0 10px 30px -12px color-mix(in srgb,var(--ac) 80%,transparent)}
 .fest-shop{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;width:min(100%,380px);margin-top:18px;padding:14px 16px;border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1.5px var(--line);text-align:left}
 .fest-shop-logo{width:52px;height:52px;border-radius:12px;object-fit:cover}
