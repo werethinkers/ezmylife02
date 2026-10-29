@@ -82,7 +82,7 @@ export default function ShopManager() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const totals = useMemo(() => Object.values(stats).reduce((a, s) => ({ users: a.users + s.users, cards: a.cards + s.cards, lights: a.lights + s.lights }), { users: 0, cards: 0, lights: 0 }), [stats]);
+  const totals = useMemo(() => Object.values(stats).reduce((a, s) => ({ users: a.users + s.users, cards: a.cards + s.cards }), { users: 0, cards: 0 }), [stats]);
 
   if (missing) {
     return (
@@ -120,11 +120,11 @@ export default function ShopManager() {
       <Card>
         <CardHeader>
           <CardTitle>Shops ({rows.length})</CardTitle>
-          <p className="text-sm text-muted-foreground">So far: {totals.users} people linked to a shop, {totals.cards} live cards carrying a shop, {totals.lights} diyas lit on them.</p>
+          <p className="text-sm text-muted-foreground">So far: {totals.users} people linked to a shop, {totals.cards} live cards carrying a shop.</p>
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>Shop</TableHead><TableHead>Offer</TableHead><TableHead className="text-right">People</TableHead><TableHead className="text-right">Cards</TableHead><TableHead className="text-right">Diyas lit</TableHead><TableHead>QR</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Shop</TableHead><TableHead>Offer</TableHead><TableHead className="text-right">People</TableHead><TableHead className="text-right">Cards</TableHead><TableHead>QR</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {rows.map((r) => (
                 <TableRow key={r.slug}>
@@ -132,12 +132,11 @@ export default function ShopManager() {
                   <TableCell className="max-w-[260px] text-sm">{r.coupon_text ?? "—"}{r.coupon_code && <Badge variant="outline" className="ml-2">{r.coupon_code}</Badge>}</TableCell>
                   <TableCell className="text-right">{stats[r.slug]?.users ?? 0}</TableCell>
                   <TableCell className="text-right">{stats[r.slug]?.cards ?? 0}</TableCell>
-                  <TableCell className="text-right">{stats[r.slug]?.lights ?? 0}</TableCell>
                   <TableCell><ShopQr slug={r.slug} name={r.name} /></TableCell>
                   <TableCell><Button size="sm" variant="ghost" onClick={() => edit(r)}>Edit</Button></TableCell>
                 </TableRow>
               ))}
-              {rows.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground">No shops yet.</TableCell></TableRow>}
+              {rows.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground">No shops yet.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

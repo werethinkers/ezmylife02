@@ -11,7 +11,7 @@ export default function DiwaliHeroCard({ part }: { part: "card" | "price" }) {
   if (!product) return null;
   if (part === "price") {
     const price = list.find((l) => l.product.id === "diwali")?.price ?? product.price;
-    return <span className="text-sm font-bold">{price === 0 ? "Free to send" : `${inr(price)} per card, everyone on your list included`}</span>;
+    return <span className="text-sm font-bold">{`${inr(price)} per card, everyone on your list included`}</span>;
   }
   const theme = product.themes.find((t) => t.id === "rajwada") ?? product.themes[0];
   const content = { ...product.sample, sender: "Aapka naam", message: INDORI_LINES[0], cover: "" };

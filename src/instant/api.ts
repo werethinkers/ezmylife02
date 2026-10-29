@@ -198,28 +198,7 @@ export async function publishPrepaid(pageId: string): Promise<{ ok: true; slug: 
   return { ok: true, slug: data.slug ?? "" };
 }
 
-// ---------- Diwali: live diya counter and shop co-branding (supabase/migrations/20261028120000_diwali_indore.sql) ----------
-
-/** A random id for this browser, so one person lighting the same card twice counts once. */
-function visitorId(): string {
-  try {
-    let v = localStorage.getItem("ez-visitor");
-    if (!v) { v = crypto.randomUUID(); localStorage.setItem("ez-visitor", v); }
-    return v;
-  } catch { return crypto.randomUUID(); }
-}
-
-/** How many diyas have been lit on Diwali-week cards so far. Null when the count can't be read. */
-export async function diyaCount(): Promise<number | null> {
-  const { data, error } = await db.rpc("ip_diya_count");
-  return error || data == null ? null : Number(data);
-}
-
-/** Counts this visitor lighting a live card (once per card per browser) and returns the new total. */
-export async function lightDiya(slug: string): Promise<number | null> {
-  const { data, error } = await db.rpc("ip_light_diya", { _slug: slug, _visitor: visitorId() });
-  return error || data == null ? null : Number(data);
-}
+// ---------- Diwali: shop co-branding (supabase/migrations/20261028120000_diwali_indore.sql) ----------
 
 export interface ShopBrand { slug: string; name: string; logo_url: string | null; coupon_text: string | null; coupon_code: string | null; city: string | null }
 
@@ -244,7 +223,7 @@ export function tagShopOnce() {
 }
 
 export interface ShopRow extends ShopBrand { whatsapp: string | null; is_active: boolean; created_at: string }
-export interface ShopStat { slug: string; users: number; cards: number; lights: number }
+export interface ShopStat { slug: string; users: number; cards: number }
 
 export async function listShops(): Promise<ShopRow[]> {
   const { data, error } = await db.from("ip_shops").select("*").order("created_at", { ascending: false });
@@ -258,5 +237,5 @@ export async function saveShop(row: Partial<ShopRow> & { slug: string; name: str
 export async function shopStats(): Promise<ShopStat[]> {
   const { data, error } = await db.rpc("ip_shop_stats");
   if (error) throw error;
-  return (data ?? []).map((r: ShopStat) => ({ ...r, users: Number(r.users), cards: Number(r.cards), lights: Number(r.lights) }));
+  return (data ?? []).map((r: ShopStat) => ({ ...r, users: Number(r.users), cards: Number(r.cards) }));
 }
