@@ -24,6 +24,7 @@ import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import UtmLinkBuilder from "@/components/admin/UtmLinkBuilder";
 import CouponManager from "@/components/admin/CouponManager";
 import CardPromoManager from "@/components/admin/CardPromoManager";
+import ShopManager from "@/components/admin/ShopManager";
 import VirasatArchive from "@/components/admin/VirasatArchive";
 import VisitorsTracker from "@/components/admin/VisitorsTracker";
 import CreditsAdmin from "@/components/admin/CreditsAdmin";
@@ -42,7 +43,7 @@ const AdminRefunds = lazy(() => import("@/pages/refunds/AdminRefunds"));
 const AdminBulkQA = lazy(() => import("@/pages/AdminBulkQA"));
 const AdminInstant = lazy(() => import("@/pages/instant/AdminInstant"));
 
-const TAB_IDS = ["logs", "users", "credits", "tool-usage", "tool-mgmt", "groupings", "tool-demos", "promo-pages", "home-sections", "tool-requests", "archived-events", "meet-nudge", "api-keys", "analytics", "utm", "coupons", "card-promos", "virasat", "visitors", "tool-media", "enterprise", "seo-indexing", "data-export", "influencers", "app-review", "refunds", "bulk-qa", "instant"] as const;
+const TAB_IDS = ["logs", "users", "credits", "tool-usage", "tool-mgmt", "groupings", "tool-demos", "promo-pages", "home-sections", "tool-requests", "archived-events", "meet-nudge", "api-keys", "analytics", "utm", "coupons", "card-promos", "shops", "virasat", "visitors", "tool-media", "enterprise", "seo-indexing", "data-export", "influencers", "app-review", "refunds", "bulk-qa", "instant"] as const;
 type TabId = (typeof TAB_IDS)[number];
 
 interface ActivityLog {
@@ -257,6 +258,7 @@ const AdminDashboard = () => {
         ...(!isViewOnly ? [{ id: "influencers" as const, label: "Influencers", icon: Megaphone }] : []),
         ...(!isViewOnly ? [{ id: "coupons" as const, label: "Coupons", icon: Ticket }] : []),
         ...(!isViewOnly ? [{ id: "card-promos" as const, label: "Gift cards", icon: Gift }] : []),
+        ...(!isViewOnly ? [{ id: "shops" as const, label: "Diwali shops", icon: Store }] : []),
         { id: "enterprise", label: "Enterprise Leads", icon: Building2 },
         ...(!isViewOnly ? [{ id: "seo-indexing" as const, label: "SEO / Indexing", icon: Globe }] : []),
       ],
@@ -471,6 +473,7 @@ const AdminDashboard = () => {
         {activeTab === "utm" && !isViewOnly && <UtmLinkBuilder />}
         {activeTab === "coupons" && !isViewOnly && <CouponManager />}
         {activeTab === "card-promos" && !isViewOnly && <CardPromoManager />}
+        {activeTab === "shops" && !isViewOnly && <ShopManager />}
         {activeTab === "tool-media" && !isViewOnly && <ToolMediaManager />}
         {activeTab === "enterprise" && <EnterpriseLeads />}
         {activeTab === "seo-indexing" && !isViewOnly && <AdminSeoIndexing />}

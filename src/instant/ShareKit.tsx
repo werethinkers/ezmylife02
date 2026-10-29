@@ -8,7 +8,7 @@ import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
 import { LinkPreviewEditor } from "./LinkPreviewEditor";
 import { composeMessage, type SharePrefs } from "./sharePrefs";
-import { DIWALI_LANGS, langById, withLang, type LangId } from "./festLang";
+import { DIWALI_LANGS, htmlLang, langById, withLang, type LangId } from "./festLang";
 import { BulkSend } from "./BulkSend";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
@@ -17,7 +17,7 @@ import { BulkSend } from "./BulkSend";
 export function ShareKit({ product, theme, content, url, slug, link, preparing, prefs, onSavePrefs }: { product: Product; theme: Theme; content: Content; url: string; slug: string; link?: string | null; preparing?: boolean; prefs?: SharePrefs; onSavePrefs?: (draft: SharePrefs) => Promise<unknown> }) {
   const { toast } = useToast();
   // Diwali cards: the sender picks the language here; the person who receives the card is not asked.
-  const pickLang = product.family === "festival" && product.opts.art === "diya";
+  const pickLang = product.family === "festival" && product.opts.langs === true;
   const [lang, setLang] = useState<LangId>("en");
   const baseUrl = link || url;
   const sendUrl = pickLang ? withLang(baseUrl, lang) : baseUrl;
@@ -70,7 +70,7 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
             <div className="text-sm font-semibold">Language of the card</div>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Card language">
               {DIWALI_LANGS.map((l) => (
-                <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}
+                <button key={l.id} type="button" lang={htmlLang(l.id)} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}
                   className={"px-3 py-1.5 rounded-full border text-sm font-medium " + (lang === l.id ? "bg-foreground text-background border-foreground" : "bg-background")}>{l.label}</button>
               ))}
             </div>

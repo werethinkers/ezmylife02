@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
 import { isStock } from "../stock";
 import { BASE_CSS, Gallery, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
-import { langById, nameFromParam, type LangId } from "../festLang";
+import { getShop, type ShopBrand } from "../api";
+import { INDORI_LINES, htmlLang, langById, nameFromParam, type LangId } from "../festLang";
 import { useSparks } from "../sparks";
 
 const SPARK_COLOURS = ["#FFC83D", "#FF7A1A", "#FFF1B8", "#FF4D6D", "#7DF9FF"];
@@ -31,17 +32,81 @@ function Diya({ i }: { i: number }) {
   );
 }
 
+/** Indore's Rajwada palace front as line art (an original drawing). Tapping lights its windows floor by floor, ground up. */
+const RW_UPPER = Array.from({ length: 9 }, (_, j) => 46 + j * 27);
+const RW_LOWER = [46, 73, 100, 206, 233, 260];
+function Rajwada() {
+  const win = (x: number, y: number, f: number, j: number) => (
+    <path key={`${f}-${j}`} className="rw-win" style={{ ["--f" as string]: f, ["--j" as string]: j }} d={`M${x} ${y + 16}V${y + 6}Q${x + 7} ${y - 3} ${x + 14} ${y + 6}V${y + 16}Z`} />
+  );
+  const dome = (x: number, w: number, k: string) => (
+    <g key={k}><path className="rw-line" d={`M${x - w} 56V48Q${x} ${48 - w * 1.4} ${x + w} 48V56`} /><path className="rw-line" d={`M${x} ${48 - w * 1.2}v-7`} /></g>
+  );
+  return (
+    <svg viewBox="0 0 320 250" className="rw" aria-hidden="true">
+      <defs><radialGradient id="rw-glow"><stop offset="0" stopColor="#FFB84D" /><stop offset="1" stopColor="#FFB84D" stopOpacity="0" /></radialGradient></defs>
+      <ellipse className="rw-glow" cx="160" cy="150" rx="170" ry="120" fill="url(#rw-glow)" />
+      {dome(52, 12, "dl")}{dome(160, 18, "dc")}{dome(268, 12, "dr")}
+      <path className="rw-line" d="M36 56H284V236H36Z" />
+      {[62, 90, 118, 146].map((y) => <path key={y} className="rw-line" d={`M36 ${y}H284`} />)}
+      {[66, 94, 122].map((y) => (
+        <g key={`rail${y}`}><path className="rw-line rw-thin" d={`M36 ${y + 20}H284`} />{RW_UPPER.map((x) => <path key={x} className="rw-line rw-thin" d={`M${x - 6} ${y + 20}v4`} />)}</g>
+      ))}
+      {RW_UPPER.map((x, j) => win(x, 66, 4, j))}
+      {RW_UPPER.map((x, j) => win(x, 94, 3, j))}
+      {RW_UPPER.map((x, j) => win(x, 122, 2, j))}
+      {RW_LOWER.map((x, j) => win(x, 156, 1, j))}
+      {RW_LOWER.map((x, j) => win(x, 194, 0, j))}
+      <path className="rw-gate" d="M132 236V188Q160 150 188 188V236Z" />
+      <path className="rw-line" d="M132 236V188Q160 150 188 188V236" />
+      <path className="rw-line" d="M10 236H310M24 242H296" />
+    </svg>
+  );
+}
+
+/** A thin border in the style of Malwa mandana floor art: chevrons, a diamond with a dot and a row of dots. */
+function Mandana({ edge }: { edge: "t" | "b" }) {
+  return (
+    <svg className={`mandana mandana-${edge}`} aria-hidden="true">
+      <defs>
+        <pattern id="mdn" width="48" height="26" patternUnits="userSpaceOnUse">
+          <path d="M0 4L6 9L12 4L18 9L24 4L30 9L36 4L42 9L48 4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M24 8L31 15L24 22L17 15Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M24 12.5L26.5 15L24 17.5L21.5 15Z" fill="currentColor" />
+          <circle cx="6" cy="15" r="1.6" fill="var(--tx)" /><circle cx="42" cy="15" r="1.6" fill="var(--tx)" />
+          <circle cx="12" cy="22" r="1.1" fill="currentColor" /><circle cx="36" cy="22" r="1.1" fill="currentColor" /><circle cx="0" cy="22" r="1.1" fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#mdn)" />
+    </svg>
+  );
+}
+
+/** A shop's name, logo and next-visit coupon, for cards made from the shop's QR (content.shop). */
+function useShop(slug: unknown) {
+  const [shop, setShop] = useState<ShopBrand | null>(null);
+  useEffect(() => {
+    if (typeof slug !== "string" || !/^[a-z0-9][a-z0-9-]{1,40}$/.test(slug)) { setShop(null); return; }
+    let gone = false;
+    getShop(slug).then((s) => { if (!gone) setShop(s); }, () => undefined);
+    return () => { gone = true; };
+  }, [slug]);
+  return shop;
+}
+
 const EMBLEM: Record<string, string> = { colours: "🎨", flower: "🌷", modak: "🐘", dandiya: "🪘", kite: "🪁", kalash: "🌾", lotus: "🪷", sun: "🪔", fireworks: "🎆" };
 
-export default function Festival({ product, theme, content: c }: RenderProps) {
+export default function Festival({ product, theme, content: c, mode }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const [lit, setLit] = useState(false);
   const isDiya = o.art === "diya";
+  const langs = o.langs === true;
+  const palace = isDiya && theme.id === "rajwada";
   const qs = useMemo(() => new URLSearchParams(typeof location !== "undefined" ? location.search : ""), []);
   const guest = nameFromParam(qs.get("to"));
   // The sender picks the language when they share (it travels in the link as ?lang=hi); the person receiving the card is not offered a choice.
-  const lang: LangId = isDiya ? langById(qs.get("lang")).id : "en";
+  const lang: LangId = langs ? langById(qs.get("lang")).id : "en";
   const L = langById(lang);
   const { ref: sx, burst: spark } = useSparks(SPARK_COLOURS);
   const { ref: fx, burst } = useConfetti(o.art === "colours" ? ["#FF2E88", "#16C172", "#FFB703", "#3A86FF", "#8338EC"] : [theme.c.ac, theme.c.ac2, theme.c.ac3, "#FFFFFF"]);
@@ -59,28 +124,43 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
     if (o.art === "fireworks") setTimeout(() => burst(e.clientX + 60, e.clientY - 80, 90, 2), 380);
   };
   const vars = { ...c };
-  const reply = isDiya ? L.back.replace("{sender}", String(c.sender ?? "").trim()) : fill(product.whatsapp.reply ?? "", vars);
-  const greeting = isDiya ? L.head : o.greeting;
+  const reply = langs ? L.back.replace("{sender}", String(c.sender ?? "").trim()) : fill(product.whatsapp.reply ?? "", vars);
+  const greeting = langs ? L.head : o.greeting;
   // The sender's own words are never replaced; only a ready-made line follows the chosen language.
-  const readyMade = isDiya && (product.steps[0].fields.find((f) => f.id === "message")?.suggestions ?? []).includes(String(c.message ?? "").trim());
-  const message = isDiya && lang !== "en" && readyMade ? L.msg : c.message;
+  // An Indori line the sender picked stays as it is in every language.
+  const said = String(c.message ?? "").trim();
+  const readyMade = langs && (product.steps[0].fields.find((f) => f.id === "message")?.suggestions ?? []).includes(said);
+  const message = readyMade && lang !== "en" && !INDORI_LINES.includes(said) ? L.msg : c.message;
   const toName = guest || c.recipient;
   const photos = Array.isArray(c.photos) ? c.photos : [];
   const sty = theme.s;
   // The minimal design is a plain card; every other design shows the background picture.
   const cover = sty !== "minimal" && resolveImg(c.cover) ? c.cover : null;
+  const live = mode === "live";
+  const shop = useShop(c.shop);
+  // The person reading the card makes their own, with their name already filled in as the sender.
+  const makeOwn = `/create/${product.id}?` + new URLSearchParams({ ...(toName ? { sender: toName } : {}), ...(typeof c.shop === "string" && c.shop ? { shop: c.shop } : {}), ref: "card" }).toString();
+  const cta = isDiya ? L.cta : "Make one for your people";
+  const tapWords = palace ? (langs ? L.tapRw : langById("en").tapRw) : isDiya ? (langs ? L.tap : o.tap) : o.tap;
+  const doneWords = isDiya && langs ? L.done : o.tapDone;
 
   return (
     <div className={`ipr ipr-fest art-${o.art} s-${sty}` + (theme.dark ? " dark" : "") + (lit ? " lit" : "") + (cover ? " has-cover" : "")} style={themeVars(theme) as React.CSSProperties} onClick={o.art === "colours" ? tap : undefined}>
       <style>{BASE_CSS + CSS}</style>
       {cover && sty === "photo" && <div className="fest-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
+      {isDiya && sty !== "minimal" && <><Mandana edge="t" /><Mandana edge="b" /></>}
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
       <canvas ref={sx} className="ip-fx" aria-hidden="true" />
       <div className="fest-page"><div className="fest-in">
       {cover && sty !== "photo" && <div className="fest-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 50vw, 100vw" eager /></div>}
       <main className="ip-wrap fest">
         <button type="button" className="fest-art" onClick={o.art === "colours" ? undefined : tap} aria-label={o.tap}>
-          {isDiya && <span className="diyas">{[0, 1, 2, 3, 4].map((i) => <Diya key={i} i={i} />)}</span>}
+          {isDiya && (
+            <span className="fest-stack">
+              {o.emblem && <span className="fest-emblem" aria-hidden="true">{o.emblem}</span>}
+              {palace ? <Rajwada /> : <span className="diyas">{[0, 1, 2, 3, 4].map((i) => <Diya key={i} i={i} />)}</span>}
+            </span>
+          )}
           {o.art === "flag" && (
             <svg viewBox="0 0 220 200" className="flag" aria-hidden="true">
               <rect x="20" y="10" width="6" height="190" rx="3" fill="#8B6B4A" />
@@ -93,18 +173,26 @@ export default function Festival({ product, theme, content: c }: RenderProps) {
           {o.art === "rakhi" && <span className="rakhi"><span className="thread" /><span className="bloom">{[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <i key={i} style={{ ["--i" as string]: i }} />)}<b /></span></span>}
           {EMBLEM[o.art] && <span className="emb">{EMBLEM[o.art]}</span>}
         </button>
-        <p className="fest-tap" aria-live="polite">{isDiya ? (lit ? L.done : L.tap) : lit ? o.tapDone : o.tap}</p>
-        <h1 className="fest-h" lang={lang} style={fitWords(greeting)}>{greeting}</h1>
-        {toName && <p className="fest-to" lang={lang}>{isDiya ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
-        <p className="fest-msg" lang={lang}>{message}</p>
+        <p className="fest-tap" aria-live="polite">{lit ? doneWords : tapWords}</p>
+        <h1 className="fest-h" lang={htmlLang(lang)} style={fitWords(greeting)}>{greeting}</h1>
+        {toName && <p className="fest-to" lang={htmlLang(lang)}>{langs ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
+        <p className="fest-msg" lang={htmlLang(lang)}>{message}</p>
         {photos.length > 0 && <div className="fest-wall"><Gallery photos={photos} title={`Photos from ${c.sender}`} keyPrefix="fw" layout="strip" /></div>}
         {c.photo && <figure className="fest-photo"><Img src={c.photo} alt={`From ${c.sender}`} /></figure>}
-        <p className="fest-from"><span>{isDiya ? L.from : "With love,"}</span>{c.sender}</p>
+        <p className="fest-from"><span>{langs ? L.from : "With love,"}</span>{c.sender}</p>
 
         <div className="fest-btns">
-          <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> {isDiya ? L.btn : `Wish ${c.sender ? "them" : "back"} on WhatsApp`}</a>
+          {lit && live && <a className="ip-btn ip-primary fest-cta" href={makeOwn} target="_top" lang={htmlLang(lang)}>{cta}</a>}
+          <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> {langs ? L.btn : `Wish ${c.sender ? "them" : "back"} on WhatsApp`}</a>
         </div>
         {isStock(cover) && <p className="fest-cr">Background photo from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
+        {shop && (
+          <aside className="fest-shop" aria-label={`Diwali offer from ${shop.name}`}>
+            {resolveImg(shop.logo_url) && <Img src={shop.logo_url} alt="" className="fest-shop-logo" sizes="64px" />}
+            <div className="fest-shop-who"><small>With sweet wishes from</small><b>{shop.name}</b>{shop.city && <span>{shop.city}</span>}</div>
+            {shop.coupon_text && <p className="fest-shop-coupon"><span>Your next visit</span>{shop.coupon_text}{shop.coupon_code && <code>{shop.coupon_code}</code>}</p>}
+          </aside>
+        )}
         <MadeWith product={product} />
       </main>
       </div></div>
@@ -159,6 +247,32 @@ const CSS = `
 .fest-from{display:grid;gap:2px;font:700 clamp(1.8rem,7cqi,2.4rem)/1.1 var(--fh);margin:10px 0 0;color:var(--ac2)}
 .fest-from span{font:500 .9rem/1 var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
 .fest-btns{display:grid;gap:10px;width:min(100%,380px);margin-top:14px}
+.fest-stack{display:grid;justify-items:center;gap:6px}
+.fest-emblem{font-size:min(13cqi,52px);line-height:1}
+.fest-cta{min-height:60px;font-size:1.05rem;box-shadow:0 10px 30px -12px color-mix(in srgb,var(--ac) 80%,transparent)}
+.fest-shop{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;width:min(100%,380px);margin-top:18px;padding:14px 16px;border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1.5px var(--line);text-align:left}
+.fest-shop-logo{width:52px;height:52px;border-radius:12px;object-fit:cover}
+.fest-shop-who{display:grid;gap:1px;grid-column:span 1}
+.fest-shop-who:first-child{grid-column:1/-1}
+.fest-shop-who small{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
+.fest-shop-who b{font:700 1.15rem/1.2 var(--fd);color:var(--tx)}
+.fest-shop-who span{font-size:.82rem;color:var(--mu)}
+.fest-shop-coupon{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:600}
+.fest-shop-coupon span{width:100%;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);font-weight:500}
+.fest-shop-coupon code{font:700 .95rem/1 ui-monospace,monospace;padding:6px 10px;border-radius:8px;border:1.5px dashed var(--ac2);color:var(--ac2)}
+.rw{width:min(88cqi,340px);height:auto;overflow:visible}
+.rw .rw-line{fill:none;stroke:var(--ac2);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.rw .rw-thin{stroke-width:1;opacity:.75}
+.rw .rw-win{fill:color-mix(in srgb,var(--bg) 70%,#000);stroke:var(--ac2);stroke-width:.9;transition:fill .45s ease,filter .45s ease;transition-delay:calc(var(--f) * 280ms + var(--j) * 35ms)}
+.lit .rw .rw-win{fill:#FFD36B;filter:drop-shadow(0 0 5px rgba(255,190,70,.95))}
+.rw .rw-gate{fill:color-mix(in srgb,var(--bg) 70%,#000);transition:fill .6s ease 1.5s}
+.lit .rw .rw-gate{fill:#FFB347}
+.rw .rw-glow{opacity:0;transition:opacity 1.2s ease 1s}
+.lit .rw .rw-glow{opacity:.4}
+.mandana{position:absolute;left:0;right:0;width:100%;height:26px;z-index:3;pointer-events:none;color:var(--ac2);opacity:.55;transition:opacity .8s}
+.mandana-t{top:0}
+.mandana-b{bottom:0;transform:scaleY(-1)}
+.lit .mandana{opacity:.95}
 .diyas{display:flex;gap:clamp(8px,3cqi,18px);align-items:flex-end}
 .diya{position:relative;width:clamp(52px,16cqi,76px);display:block}
 .diya svg{display:block;width:100%;height:auto;overflow:visible}
@@ -196,6 +310,10 @@ const CSS = `
 .emb{font-size:min(36cqi,150px);line-height:1;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
 .lit .emb{transform:scale(1.15) rotate(-6deg)}
 @media (prefers-reduced-motion:no-preference){
+  .mandana{clip-path:inset(0 50% 0 50%);animation:mdn-in 1.4s cubic-bezier(.2,.8,.2,1) .2s forwards}
+  .lit .mandana{animation:mdn-in 1.4s cubic-bezier(.2,.8,.2,1) .2s forwards,mdn-glow 2.4s ease-in-out 1.6s infinite alternate}
+  @keyframes mdn-in{to{clip-path:inset(0 0 0 0)}}
+  @keyframes mdn-glow{from{opacity:.95}to{opacity:.6}}
   .lit .diya .flame{animation:fest-flick .2s ease-in-out infinite alternate}
   @keyframes fest-flick{to{transform:scale(.93,1.07)}}
   .art-tree::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 10%,#fff,transparent),radial-gradient(2px 2px at 60% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 80% 70%,#fff,transparent),radial-gradient(2px 2px at 35% 60%,#fff,transparent);background-size:200px 200px;animation:fest-snow 9s linear infinite;opacity:.7}

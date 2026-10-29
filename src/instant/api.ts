@@ -197,3 +197,45 @@ export async function publishPrepaid(pageId: string): Promise<{ ok: true; slug: 
   if (error || !data?.ok) return null;
   return { ok: true, slug: data.slug ?? "" };
 }
+
+// ---------- Diwali: shop co-branding (supabase/migrations/20261028120000_diwali_indore.sql) ----------
+
+export interface ShopBrand { slug: string; name: string; logo_url: string | null; coupon_text: string | null; coupon_code: string | null; city: string | null }
+
+/** The public face of a shop for its co-branded cards. Null when the shop is unknown or switched off. */
+export async function getShop(slug: string): Promise<ShopBrand | null> {
+  const { data, error } = await db.rpc("ip_get_shop", { _slug: slug });
+  return error ? null : (data as ShopBrand | null) ?? null;
+}
+
+const SHOP_KEY = "ez-shop";
+/** Remembers the shop whose QR brought this person here (first shop wins). */
+export function rememberShop(slug: string) {
+  try { if (!localStorage.getItem(SHOP_KEY)) localStorage.setItem(SHOP_KEY, slug); } catch { /* storage blocked */ }
+}
+/** Links the signed-in person to the shop that brought them, once. Errors are ignored. */
+export function tagShopOnce() {
+  try {
+    const slug = localStorage.getItem(SHOP_KEY);
+    if (!slug || localStorage.getItem(SHOP_KEY + "-tagged")) return;
+    db.rpc("ip_tag_shop", { _slug: slug }).then(({ error }: { error: unknown }) => { if (!error) localStorage.setItem(SHOP_KEY + "-tagged", "1"); }, () => undefined);
+  } catch { /* storage blocked */ }
+}
+
+export interface ShopRow extends ShopBrand { whatsapp: string | null; is_active: boolean; created_at: string }
+export interface ShopStat { slug: string; users: number; cards: number }
+
+export async function listShops(): Promise<ShopRow[]> {
+  const { data, error } = await db.from("ip_shops").select("*").order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+export async function saveShop(row: Partial<ShopRow> & { slug: string; name: string }) {
+  const { error } = await db.from("ip_shops").upsert(row, { onConflict: "slug" });
+  if (error) throw error;
+}
+export async function shopStats(): Promise<ShopStat[]> {
+  const { data, error } = await db.rpc("ip_shop_stats");
+  if (error) throw error;
+  return (data ?? []).map((r: ShopStat) => ({ ...r, users: Number(r.users), cards: Number(r.cards) }));
+}

@@ -29,6 +29,7 @@ import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { cn } from "@/lib/utils";
 import { seoFor } from "@/lib/seo/pages";
+import { DiwaliHero, showDiwaliHero } from "@/components/home/DiwaliHero";
 
 // Website and card shelves need the design catalogue; load it after the first screen is up.
 const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
@@ -146,6 +147,9 @@ const Home = () => {
           keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, business website maker, gst invoice app"
         />
         <Navbar />
+
+        {/* ───────── Diwali 2026: shown until 12 Nov, then hides itself ───────── */}
+        {showDiwaliHero() && <DiwaliHero />}
 
         {/* ───────── Moving strip of app names ───────── */}
         {marquee.length > 0 && (
