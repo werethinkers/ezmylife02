@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Download, Store } from "lucide-react";
+import { Crop, Download, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listShops, saveShop, shopStats, uploadDataUrl, type ShopRow, type ShopStat } from "@/instant/api";
 import { shrinkImage } from "@/instant/media";
-import { slugify } from "@/instant/util";
+import { canAdjust, slugify } from "@/instant/util";
+import { PhotoAdjust } from "@/instant/builder/PhotoAdjust";
 
 /*
  * Admin: shops for the Diwali gift-box QR. Each shop gets a QR that opens the Diwali card builder with the
@@ -31,6 +32,7 @@ export default function ShopManager() {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [adjustSrc, setAdjustSrc] = useState<string | null>(null);
 
   const load = async () => {
     try {
@@ -47,16 +49,27 @@ export default function ShopManager() {
   const slug = editing ? form.slug : form.slug || slugify(form.name);
   const valid = /^[a-z0-9][a-z0-9-]{1,40}$/.test(slug) && form.name.trim().length >= 2;
 
+  // A fresh pick goes through the same Adjust dialog every other photo in the product uses, so a wide
+  // or tall logo can be positioned and sized (or zoomed out to show the whole thing) before it's saved
+  // into the square box it's shown in — instead of being cropped to fit with no way to fix it.
   const pickLogo = async (f: File | undefined) => {
     if (!f) return;
     try {
+      const data = await shrinkImage(f, 1200, 0.9);
+      setAdjustSrc(data);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't open that photo");
+    }
+  };
+
+  const applyLogo = async (dataUrl: string) => {
+    try {
       setBusy(true);
-      const data = await shrinkImage(f, 400, 0.88);
-      const url = await uploadDataUrl("", `shop-${slug || "new"}`, data);
+      const url = await uploadDataUrl("", `shop-${slug || "new"}`, dataUrl);
       setForm((x) => ({ ...x, logo_url: url }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't upload the logo");
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setAdjustSrc(null); }
   };
 
   const save = async () => {
@@ -106,9 +119,15 @@ export default function ShopManager() {
           <div><Label>Coupon code (optional)</Label><Input value={form.coupon_code} onChange={(e) => setForm({ ...form, coupon_code: e.target.value })} placeholder="DIWALI10" maxLength={24} /></div>
           <div><Label>Logo</Label>
             <div className="flex items-center gap-3">
-              {form.logo_url && <img src={form.logo_url} alt="" className="h-12 w-12 rounded-lg border object-cover" />}
-              <Input type="file" accept="image/*" disabled={busy || !slug} onChange={(e) => void pickLogo(e.target.files?.[0])} />
-            </div></div>
+              {form.logo_url && <img src={form.logo_url} alt="" className="h-12 w-12 rounded-lg border object-contain bg-white" />}
+              <Input type="file" accept="image/*" disabled={busy || !slug} onChange={(e) => { void pickLogo(e.target.files?.[0]); e.target.value = ""; }} />
+              {form.logo_url && canAdjust(form.logo_url) && (
+                <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => setAdjustSrc(form.logo_url)}><Crop className="h-4 w-4" /> Adjust</Button>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">A wide or tall logo: use Adjust to zoom out and show the whole thing, or move and crop it to fit the square.</p>
+          </div>
+          <PhotoAdjust open={adjustSrc !== null} src={adjustSrc} defaultAspect="1:1" onClose={() => setAdjustSrc(null)} onApply={(u) => void applyLogo(u)} />
           <div className="flex items-center gap-2"><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} id="shop-active" /><Label htmlFor="shop-active">Show the offer on cards</Label></div>
           <div className="flex gap-2 md:col-span-2">
             <Button onClick={() => void save()} disabled={!valid || busy}>{editing ? "Save changes" : "Add shop"}</Button>
