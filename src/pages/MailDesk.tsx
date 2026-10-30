@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Inbox, Loader2, Mail, Plus, RefreshCw, Trash2, Wallet } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import SEOFooter from "@/components/SEOFooter";
+import { SEOHead } from "@/components/SEOHead";
+import { seoFor } from "@/lib/seo/pages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -156,6 +158,7 @@ const MailDesk = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead {...seoFor("/mail-brain", "")} />
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
