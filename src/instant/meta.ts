@@ -12,3 +12,13 @@ export function describe(p: Product, c: Content) {
     default: return { title: `${c.name}${c.title ? ` | ${c.title}` : ""}`, desc: String(c.about ?? "").slice(0, 150) };
   }
 }
+
+/**
+ * A festival card's title with the recipient's own name in it, for a bulk send's per-person WhatsApp
+ * preview ("Happy Diwali, Vijay!" instead of just "Happy Diwali from Abhijay"). Only festival cards
+ * are sent to many people at once (see BulkSend), so other families fall back to the shared title.
+ */
+export function describeForRecipient(p: Product, c: Content, name: string) {
+  if (p.family !== "festival") return describe(p, c);
+  return { title: `${p.opts.greeting}, ${name}! ${p.glyph} — from ${c.sender}`, desc: String(c.message ?? "").slice(0, 150) };
+}
