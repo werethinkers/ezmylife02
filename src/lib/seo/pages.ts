@@ -125,6 +125,18 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Studios", "/studios"], ...MAIN_LINKS],
   },
   {
+    path: "/mail-brain",
+    title: "Mail Brain: your Gmail read for you by AI | EZYOURLIFE",
+    description: "Connect Gmail and get every mail read for you: a short summary, tasks, reminders and a reply draft. Reading mail is free; AI reading is 0.08 credits a mail.",
+    h1: "Mail Brain",
+    text: [
+      "Mail Brain connects your Gmail accounts and reads every new mail for you. Each mail comes back with a short summary, the tasks and reminders in it, and a reply draft in your own words.",
+      "Viewing your mail here is free. You pay only when you press Fetch, at 0.08 credits a mail, and you see the price before anything is taken. Failed runs are never charged.",
+    ],
+    signedIn: true,
+    links: [["Business apps", "/ai-apps"], ["Prices and credits", "/credits"], ["Find apps by business type or job", "/explore"]],
+  },
+  {
     path: "/explore",
     title: "Find AI apps by business type or job | EZYOURLIFE",
     description: "Pick your type of business or the job you need done, and see the EZYOURLIFE apps that fit. Pay only for results, credit packs from ₹10.",
