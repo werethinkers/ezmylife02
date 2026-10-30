@@ -20,27 +20,37 @@ const ASPECTS = [
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-type Props = { open: boolean; src: string | null; onClose: () => void; onApply: (dataUrl: string) => void };
+// The slider's low end shrinks the photo smaller than its frame (useful when a wide or tall picture
+// doesn't fit and padding around it, rather than a crop, is what looks right); 1 is "just fills the
+// frame" (or "shows the whole photo" when that's on) and above 1 zooms in, same as before.
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4;
 
-export function PhotoAdjust({ open, src, onClose, onApply }: Props) {
+type Props = {
+  open: boolean; src: string | null; onClose: () => void; onApply: (dataUrl: string) => void;
+  /** Aspect to start on when the dialog opens, e.g. "1:1" for a logo. Defaults to "free" (the photo's own shape). */
+  defaultAspect?: (typeof ASPECTS)[number]["id"];
+};
+
+export function PhotoAdjust({ open, src, onClose, onApply, defaultAspect = "free" }: Props) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [failed, setFailed] = useState(false);
   const [rot, setRot] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [aspect, setAspect] = useState<(typeof ASPECTS)[number]["id"]>("free");
+  const [aspect, setAspect] = useState<(typeof ASPECTS)[number]["id"]>(defaultAspect);
   const [whole, setWhole] = useState(false);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     if (!open || !src) return;
-    setImg(null); setFailed(false); setErr(""); setRot(0); setZoom(1); setPos({ x: 0, y: 0 }); setAspect("free"); setWhole(false);
+    setImg(null); setFailed(false); setErr(""); setRot(0); setZoom(1); setPos({ x: 0, y: 0 }); setAspect(defaultAspect); setWhole(false);
     const im = new Image();
     im.crossOrigin = "anonymous";
     im.onload = () => setImg(im);
     im.onerror = () => setFailed(true);
     im.src = src;
-  }, [open, src]);
+  }, [open, src, defaultAspect]);
 
   // Geometry. "iw x ih" is the photo as shown after turning; the frame is the shape the result will have.
   const g = useMemo(() => {
@@ -78,8 +88,9 @@ export function PhotoAdjust({ open, src, onClose, onApply }: Props) {
       const c = document.createElement("canvas"); c.width = outW; c.height = outH;
       const ctx = c.getContext("2d");
       if (!ctx) throw new Error("no canvas");
-      if (whole) {
-        // Fill the sides with the photo's own colours (blurred where the browser can), not a flat bar.
+      if (whole || g.scale < Math.max(g.fW / g.iw, g.fH / g.ih)) {
+        // Shrunk smaller than the frame (or showing the whole photo): fill the gap with the photo's
+        // own colours, blurred where the browser can, instead of a flat bar or a transparent hole.
         const px1 = document.createElement("canvas"); px1.width = px1.height = 1;
         const p = px1.getContext("2d"); p?.drawImage(img, 0, 0, 1, 1);
         const d = p?.getImageData(0, 0, 1, 1).data;
@@ -109,7 +120,7 @@ export function PhotoAdjust({ open, src, onClose, onApply }: Props) {
       <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>Adjust your photo</DialogTitle>
-          <DialogDescription>Drag to move it, pinch or use the slider to zoom. The card shows exactly this shape.</DialogDescription>
+          <DialogDescription>Drag to move it, pinch or use the slider to zoom in or out — zoom out if the photo doesn't fit. The card shows exactly this shape.</DialogDescription>
         </DialogHeader>
         {failed ? (
           <p className="text-sm text-destructive" role="alert">This photo couldn't be opened for adjusting. Add it again, then try once more.</p>
@@ -123,7 +134,7 @@ export function PhotoAdjust({ open, src, onClose, onApply }: Props) {
               onPointerMove={(e) => {
                 if (!pointers.current.has(e.pointerId)) return;
                 pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-                if (pointers.current.size === 2 && pinch.current) setZoom(clamp(pinch.current.z * (dist() / pinch.current.d), 1, 4));
+                if (pointers.current.size === 2 && pinch.current) setZoom(clamp(pinch.current.z * (dist() / pinch.current.d), MIN_ZOOM, MAX_ZOOM));
                 else if (drag.current) setPos({ x: drag.current.px + (e.clientX - drag.current.x), y: drag.current.py + (e.clientY - drag.current.y) });
               }}
               onPointerUp={(e) => { pointers.current.delete(e.pointerId); rebase(); }}
@@ -145,7 +156,7 @@ export function PhotoAdjust({ open, src, onClose, onApply }: Props) {
 
             <div className="flex w-full items-center gap-3">
               <ZoomOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <Slider min={1} max={4} step={0.01} value={[zoom]} onValueChange={(v) => setZoom(v[0] ?? 1)} aria-label="Zoom" />
+              <Slider min={MIN_ZOOM} max={MAX_ZOOM} step={0.01} value={[zoom]} onValueChange={(v) => setZoom(clamp(v[0] ?? 1, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom" />
               <ZoomIn className="h-5 w-5 shrink-0" aria-hidden="true" />
             </div>
 
