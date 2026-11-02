@@ -179,6 +179,83 @@ export type Database = {
         }
         Relationships: []
       }
+      card_promo_claims: {
+        Row: {
+          claimed_at: string
+          credits: number
+          id: string
+          promo_id: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          credits: number
+          id?: string
+          promo_id: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          credits?: number
+          id?: string
+          promo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_promo_claims_promo_id_fkey"
+            columns: ["promo_id"]
+            isOneToOne: false
+            referencedRelation: "card_promos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_promos: {
+        Row: {
+          claim_count: number
+          code: string
+          created_at: string
+          created_by: string | null
+          credits: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          label: string | null
+          max_claims: number | null
+          per_app_limit: number
+        }
+        Insert: {
+          claim_count?: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          label?: string | null
+          max_claims?: number | null
+          per_app_limit?: number
+        }
+        Update: {
+          claim_count?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          label?: string | null
+          max_claims?: number | null
+          per_app_limit?: number
+        }
+        Relationships: []
+      }
       catalog_categories: {
         Row: {
           created_at: string
@@ -296,6 +373,7 @@ export type Database = {
           id: string
           metadata: Json
           paid_delta: number
+          promo_delta: number
           reason: string
           run_id: string | null
           tool_id: string | null
@@ -309,6 +387,7 @@ export type Database = {
           id?: string
           metadata?: Json
           paid_delta?: number
+          promo_delta?: number
           reason: string
           run_id?: string | null
           tool_id?: string | null
@@ -322,6 +401,7 @@ export type Database = {
           id?: string
           metadata?: Json
           paid_delta?: number
+          promo_delta?: number
           reason?: string
           run_id?: string | null
           tool_id?: string | null
@@ -380,6 +460,8 @@ export type Database = {
           free_balance: number
           last_free_reset_at: string | null
           paid_balance: number
+          promo_balance: number
+          promo_per_app_limit: number
           signup_bonus_granted: boolean
           updated_at: string
           user_id: string
@@ -389,6 +471,8 @@ export type Database = {
           free_balance?: number
           last_free_reset_at?: string | null
           paid_balance?: number
+          promo_balance?: number
+          promo_per_app_limit?: number
           signup_bonus_granted?: boolean
           updated_at?: string
           user_id: string
@@ -398,6 +482,8 @@ export type Database = {
           free_balance?: number
           last_free_reset_at?: string | null
           paid_balance?: number
+          promo_balance?: number
+          promo_per_app_limit?: number
           signup_bonus_granted?: boolean
           updated_at?: string
           user_id?: string
@@ -1222,6 +1308,7 @@ export type Database = {
       ip_orders: {
         Row: {
           created_at: string
+          credits_charged: number | null
           id: string
           inr_amount: number
           page_id: string
@@ -1234,6 +1321,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credits_charged?: number | null
           id?: string
           inr_amount: number
           page_id: string
@@ -1246,6 +1334,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credits_charged?: number | null
           id?: string
           inr_amount?: number
           page_id?: string
@@ -1278,6 +1367,7 @@ export type Database = {
           published_at: string | null
           published_content: Json | null
           published_variant_id: string | null
+          share_prefs: Json | null
           share_url: string | null
           slug: string | null
           status: string
@@ -1297,6 +1387,7 @@ export type Database = {
           published_at?: string | null
           published_content?: Json | null
           published_variant_id?: string | null
+          share_prefs?: Json | null
           share_url?: string | null
           slug?: string | null
           status?: string
@@ -1316,6 +1407,7 @@ export type Database = {
           published_at?: string | null
           published_content?: Json | null
           published_variant_id?: string | null
+          share_prefs?: Json | null
           share_url?: string | null
           slug?: string | null
           status?: string
@@ -1373,6 +1465,71 @@ export type Database = {
           share_overrides?: Json
           sort?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ip_shop_users: {
+        Row: {
+          created_at: string
+          shop_slug: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          shop_slug: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          shop_slug?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_shop_users_shop_slug_fkey"
+            columns: ["shop_slug"]
+            isOneToOne: false
+            referencedRelation: "ip_shops"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      ip_shops: {
+        Row: {
+          city: string | null
+          coupon_code: string | null
+          coupon_text: string | null
+          created_at: string
+          created_by: string | null
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          slug: string
+          whatsapp: string | null
+        }
+        Insert: {
+          city?: string | null
+          coupon_code?: string | null
+          coupon_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          slug: string
+          whatsapp?: string | null
+        }
+        Update: {
+          city?: string | null
+          coupon_code?: string | null
+          coupon_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -2121,6 +2278,36 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_app_uses: {
+        Row: {
+          tool_id: string
+          user_id: string
+          uses: number
+        }
+        Insert: {
+          tool_id: string
+          user_id: string
+          uses?: number
+        }
+        Update: {
+          tool_id?: string
+          user_id?: string
+          uses?: number
+        }
+        Relationships: []
+      }
+      promo_uncapped_tools: {
+        Row: {
+          tool_id: string
+        }
+        Insert: {
+          tool_id: string
+        }
+        Update: {
+          tool_id?: string
+        }
+        Relationships: []
+      }
       promptmaster_sessions: {
         Row: {
           created_at: string
@@ -2505,6 +2692,7 @@ export type Database = {
           id: string
           metadata: Json
           paid_used: number
+          promo_used: number
           started_at: string
           status: string
           tool_id: string
@@ -2520,6 +2708,7 @@ export type Database = {
           id?: string
           metadata?: Json
           paid_used?: number
+          promo_used?: number
           started_at?: string
           status?: string
           tool_id: string
@@ -2535,6 +2724,7 @@ export type Database = {
           id?: string
           metadata?: Json
           paid_used?: number
+          promo_used?: number
           started_at?: string
           status?: string
           tool_id?: string
@@ -2957,6 +3147,38 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_create_card_promos: {
+        Args: {
+          _count: number
+          _credits?: number
+          _expires_at?: string
+          _kind?: string
+          _label: string
+          _max_claims?: number
+          _per_app_limit?: number
+          _shared_code?: string
+        }
+        Returns: {
+          claim_count: number
+          code: string
+          created_at: string
+          created_by: string | null
+          credits: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          label: string | null
+          max_claims: number | null
+          per_app_limit: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "card_promos"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_dev_approve: {
         Args: {
           _credits: number
@@ -2991,6 +3213,8 @@ export type Database = {
         Args: { _order_id: string; _payment_id: string; _purchase_id: string }
         Returns: Json
       }
+      card_promo_status: { Args: { _code: string }; Returns: Json }
+      claim_card_promo: { Args: { _code: string; _uid: string }; Returns: Json }
       complete_tool_run: {
         Args: {
           _error?: string
@@ -3272,18 +3496,32 @@ export type Database = {
         }
         Returns: Json
       }
+      ip_credits_for_inr: { Args: { _inr: number }; Returns: number }
       ip_get_public_page: { Args: { _slug: string }; Returns: Json }
+      ip_get_shop: { Args: { _slug: string }; Returns: Json }
       ip_mark_order_paid: {
         Args: { _payment_id: string; _razorpay_order_id: string }
         Returns: Json
       }
       ip_page_hit: { Args: { _slug: string }; Returns: undefined }
+      ip_pay_with_credits: {
+        Args: { _page_id: string; _uid: string }
+        Returns: Json
+      }
       ip_publish_page: { Args: { _page_id: string }; Returns: Json }
       ip_publish_prepaid: { Args: { _page_id: string }; Returns: Json }
       ip_republish: { Args: { _page_id: string }; Returns: Json }
       ip_set_share_url: {
         Args: { _page_id: string; _url: string }
         Returns: undefined
+      }
+      ip_shop_stats: {
+        Args: never
+        Returns: {
+          cards: number
+          slug: string
+          users: number
+        }[]
       }
       ip_slugify: { Args: { _s: string }; Returns: string }
       ip_submit_lead: {
@@ -3297,6 +3535,7 @@ export type Database = {
         }
         Returns: Json
       }
+      ip_tag_shop: { Args: { _slug: string }; Returns: undefined }
       ip_unpublish: { Args: { _page_id: string }; Returns: Json }
       issue_payment_invoice: {
         Args: {
@@ -3314,6 +3553,14 @@ export type Database = {
       kit_my_entitlements: { Args: never; Returns: Json }
       kit_product_scope: { Args: { _product_id: string }; Returns: string }
       monthly_free_reset: { Args: never; Returns: number }
+      promo_available: {
+        Args: { _tool_id: string; _uid: string }
+        Returns: number
+      }
+      promo_runs_affordable: {
+        Args: { _per: number; _tool_id: string; _uid: string }
+        Returns: number
+      }
       refund_admin_list: { Args: { _status?: string }; Returns: Json }
       refund_approve: {
         Args: { _note: string; _request_id: string }
