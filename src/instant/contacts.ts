@@ -134,6 +134,11 @@ const ROLE_WORDS: Record<string, string> = Object.fromEntries(([
   ["Telecom", "jio airtel vodafone vi bsnl"],
   ["Landlord", "landlord tenant owner rent pg hostel"],
 ] as const).flatMap(([tag, words]) => words.split(" ").map((w) => [w, tag])));
+// Family words stay in the greeting ("Meena Mausi") and only add the Family tag, for one-tap filtering.
+const FAMILY = new Set(("papa mummy mumma mom mother dad daddy father maa mamma bhai bhaiya bhaiyya bro brother didi di sis sister bhabhi bhabhiji " +
+  "jiju jija jijaji chacha chachu chachaji chachi mama mamaji mami mamiji nana nanaji nani dada dadaji dadi bua buaji fufa fufaji mausi masi mausiji " +
+  "mausa masa tauji taiji tau tai uncle aunty auntie beta beti son daughter wife husband hubby cousin family nephew niece bhanja bhanji bhatija " +
+  "bhatiji sasur sasurji saas saasuji jaan").split(" "));
 const NOISE = new Set(["new", "old", "no", "num", "number", "mob", "mobile", "cell", "home", "personal", "whatsapp", "wa", "ph", "phone", "contact", "ii", "iii"]);
 
 export interface GreetName { name: string; tag?: string }
@@ -158,6 +163,7 @@ export function greetingName(saved: string): GreetName {
     if (/\d/.test(w) || w.includes("@") || roleOf(w)) return false;
     return !NOISE.has(lw);
   });
+  if (!tag && words.some((w) => FAMILY.has(w.toLowerCase().replace(/\.$/, "")))) tag = "Family";
   const name = kept.map((w) => (w === w.toUpperCase() && w.length > 3) || w === w.toLowerCase() ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w).join(" ").slice(0, 30);
   return { name: name || saved.trim().slice(0, 30), tag };
 }

@@ -8,7 +8,7 @@ import { fill, waShare } from "./util";
 import { downloadCanvas, drawQrPoster, drawShareCard, FORMATS, type Format } from "./shareImage";
 import { LinkPreviewEditor } from "./LinkPreviewEditor";
 import { composeMessage, type SharePrefs } from "./sharePrefs";
-import { DIWALI_LANGS, htmlLang, langById, withLang, type LangId } from "./festLang";
+import { DIWALI_LANGS, htmlLang, langById, personalLink, withLang, type LangId } from "./festLang";
 import { BulkSend } from "./BulkSend";
 
 /** Everything a creator needs to send their page out: WhatsApp, native share, link, image, QR. */
@@ -20,7 +20,10 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
   const pickLang = product.family === "festival" && product.opts.langs === true;
   const [lang, setLang] = useState<LangId>("en");
   const baseUrl = link || url;
-  const sendUrl = pickLang ? withLang(baseUrl, lang) : baseUrl;
+  // Festival cards: sending to one person can put their name on the card, "Happy Diwali, Arinjay!".
+  const [oneName, setOneName] = useState("");
+  const forOne = product.family === "festival" && oneName.trim().length > 0;
+  const sendUrl = forOne ? personalLink(baseUrl, oneName.trim(), pickLang ? lang : "en", true) : pickLang ? withLang(baseUrl, lang) : baseUrl;
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
@@ -76,6 +79,14 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
             </div>
             <p className="text-xs text-muted-foreground">The card opens in this language for everyone you send it to. They don't see a language choice.</p>
           </div>
+        )}
+        {product.family === "festival" && (
+          <label className="grid gap-1.5">
+            <span className="text-sm font-semibold">Sending to one person? Their name (optional)</span>
+            <input value={oneName} onChange={(e) => setOneName(e.target.value.slice(0, 30))} placeholder="e.g. Arinjay" enterKeyHint="done"
+              className="h-12 rounded-xl border-2 border-ink/30 bg-card px-3 text-base focus:border-ink focus:outline-none" />
+            {forOne && <span className="text-xs text-muted-foreground">Their card will say "{(pickLang ? langById(lang).head : product.opts.greeting).replace(/[!.\s]+$/, "")}, {oneName.trim()}!"</span>}
+          </label>
         )}
         <a href={waShare(message)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#25D366] text-[#06260F] font-semibold text-base">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.7.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>

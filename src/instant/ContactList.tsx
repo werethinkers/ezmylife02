@@ -9,7 +9,10 @@ export interface ContactRow { id: number; name: string; saved: string; phone: st
 /** 919876543210 → +91 98765 43210 (other numbers keep their digits). */
 const prettyPhone = (p: string) => { const d = p.replace(/\D/g, ""); const m = /^(?:91)?([6-9]\d{4})(\d{5})$/.exec(d); return m ? `+91 ${m[1]} ${m[2]}` : d.length > 10 ? `+${d}` : d; };
 
-type View = "all" | "on" | "off" | "work" | "nophone";
+/** A filter: everyone, ticked, skipped, no number, or one tag ("tag:Driver"). */
+type View = "all" | "on" | "off" | "nophone" | `tag:${string}`;
+const TAG_ICON: Record<string, string> = { Family: "👪", Driver: "🚗", Delivery: "📦", Help: "🧹", Service: "🔧", "Milk & veg": "🥛", Guard: "💂", Work: "💼", Shop: "🏪", Bank: "🏦", Telecom: "📶", Landlord: "🏠" };
+const isWork = (r: ContactRow) => !!r.tag && r.tag !== "Family";
 const PAGE = 60;
 
 /**
@@ -26,22 +29,28 @@ export function ContactList({ rows, setRows, reachable }: { rows: ContactRow[]; 
     all: rows.length,
     on: rows.filter((r) => r.on).length,
     off: rows.filter((r) => !r.on).length,
-    work: rows.filter((r) => r.tag).length,
-    workOn: rows.filter((r) => r.tag && r.on).length,
+    workOn: rows.filter((r) => isWork(r) && r.on).length,
     nophone: rows.filter((r) => !reachable(r.phone)).length,
   }), [rows, reachable]);
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return rows.filter((r) =>
-      (view === "all" || (view === "on" && r.on) || (view === "off" && !r.on) || (view === "work" && r.tag) || (view === "nophone" && !reachable(r.phone))) &&
+      (view === "all" || (view === "on" && r.on) || (view === "off" && !r.on) || (view === "nophone" && !reachable(r.phone)) || view === `tag:${r.tag}`) &&
       (!s || r.name.toLowerCase().includes(s) || r.saved.toLowerCase().includes(s) || r.phone.includes(s.replace(/\D/g, "") || "~")));
   }, [rows, q, view, reachable]);
 
   const patch = (id: number, p: Partial<ContactRow>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)));
   const setAll = (on: boolean) => { const ids = new Set(list.map((r) => r.id)); setRows((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, on } : r))); };
-  const skipWork = () => setRows((rs) => rs.map((r) => (r.tag ? { ...r, on: false } : r)));
-  const tags = [...new Set(rows.filter((r) => r.tag).map((r) => r.tag!))].slice(0, 4).join(", ");
+  const skipWork = () => setRows((rs) => rs.map((r) => (isWork(r) ? { ...r, on: false } : r)));
+  const tags = [...new Set(rows.filter(isWork).map((r) => r.tag!))].slice(0, 4).join(", ");
+  // One chip per tag, biggest group first (Family first when present), with how many of them are ticked.
+  const tagGroups = useMemo(() => {
+    const m = new Map<string, { n: number; on: number }>();
+    for (const r of rows) if (r.tag) { const g = m.get(r.tag) ?? { n: 0, on: 0 }; g.n++; if (r.on) g.on++; m.set(r.tag, g); }
+    return [...m.entries()].sort((a, b) => Number(b[0] === "Family") - Number(a[0] === "Family") || b[1].n - a[1].n);
+  }, [rows]);
+  const activeTag = view.startsWith("tag:") ? view.slice(4) : null;
 
   const chip = (v: View, label: string, n: number) => n > 0 || v === "all" ? (
     <button type="button" onClick={() => { setView(v); setShown(PAGE); }} aria-pressed={view === v}
@@ -57,7 +66,7 @@ export function ContactList({ rows, setRows, reachable }: { rows: ContactRow[]; 
           <p className="text-sm"><b>{counts.workOn} {counts.workOn === 1 ? "contact is" : "contacts are"} saved with a job or shop label</b> ({tags}). We took the label out of their greeting.</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={skipWork} className="h-10 rounded-xl border-2 border-ink bg-card px-4 text-sm font-bold shadow-[2px_2px_0_0_hsl(var(--ink))]">Skip all {counts.workOn}</button>
-            <button type="button" onClick={() => { setView("work"); setShown(PAGE); }} className="h-10 rounded-xl px-3 text-sm font-semibold underline">Look through them</button>
+            <button type="button" onClick={() => { setView(`tag:${tagGroups.find(([t]) => t !== "Family")?.[0] ?? ""}`); setShown(PAGE); }} className="h-10 rounded-xl px-3 text-sm font-semibold underline">Look through them</button>
           </div>
         </div>
       )}
@@ -72,15 +81,30 @@ export function ContactList({ rows, setRows, reachable }: { rows: ContactRow[]; 
         {chip("all", "All", counts.all)}
         {chip("on", "Sending", counts.on)}
         {chip("off", "Skipped", counts.off)}
-        {chip("work", "Work", counts.work)}
         {chip("nophone", "No number", counts.nophone)}
       </div>
 
+      {tagGroups.length > 0 && (
+        // Groups, like Snapchat's chat filters: tap one to see only them, then tick or untick them all at once.
+        <div className="grid gap-1.5">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Groups</p>
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {tagGroups.map(([t, g]) => (
+              <button key={t} type="button" onClick={() => { setView(activeTag === t ? "all" : `tag:${t}`); setShown(PAGE); }} aria-pressed={activeTag === t}
+                className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold", activeTag === t ? "border-ink bg-sun shadow-[2px_2px_0_0_hsl(var(--ink))]" : "border-ink/30 bg-card")}>
+                <span aria-hidden="true">{TAG_ICON[t] ?? "🏷️"}</span>{t}
+                <span className="tabular-nums text-xs opacity-70">{g.on === g.n ? g.n : `${g.on}/${g.n}`}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">{list.length === rows.length ? "Tap a name to change it" : `${list.length.toLocaleString("en-IN")} shown`}</span>
-        <span className="flex gap-1">
-          <button type="button" className="h-9 rounded-lg px-2 font-semibold underline" onClick={() => setAll(true)}>Tick all</button>
-          <button type="button" className="h-9 rounded-lg px-2 font-semibold underline" onClick={() => setAll(false)}>Untick all</button>
+        <span className="min-w-0 truncate text-muted-foreground">{activeTag ? <b className="text-foreground">{TAG_ICON[activeTag] ?? ""} {activeTag} · {list.length}</b> : list.length === rows.length ? "Tap a name to change it" : `${list.length.toLocaleString("en-IN")} shown`}</span>
+        <span className="flex shrink-0 gap-1">
+          <button type="button" className="h-9 rounded-lg px-2 font-semibold underline" onClick={() => setAll(true)}>{activeTag ? `Send to all ${list.length}` : "Tick all"}</button>
+          <button type="button" className="h-9 rounded-lg px-2 font-semibold underline" onClick={() => setAll(false)}>{activeTag ? "Skip all" : "Untick all"}</button>
         </span>
       </div>
 

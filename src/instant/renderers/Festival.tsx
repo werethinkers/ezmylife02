@@ -125,7 +125,10 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
   };
   const vars = { ...c };
   const reply = langs ? L.back.replace("{sender}", String(c.sender ?? "").trim()) : fill(product.whatsapp.reply ?? "", vars);
-  const greeting = langs ? L.head : o.greeting;
+  // ?hn=1 (set by the sender when sharing): the big greeting carries the person's name, "Happy Diwali, Arinjay!".
+  const nameInHead = !!guest && qs.get("hn") === "1";
+  const baseGreeting = langs ? L.head : o.greeting;
+  const greeting = nameInHead ? `${String(baseGreeting).replace(/[!.\s]+$/, "")}, ${guest}!` : baseGreeting;
   // The sender's own words are never replaced; only a ready-made line follows the chosen language.
   // An Indori line the sender picked stays as it is in every language.
   const said = String(c.message ?? "").trim();
@@ -175,7 +178,7 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
         </button>
         <p className="fest-tap" aria-live="polite">{lit ? doneWords : tapWords}</p>
         <h1 className="fest-h" lang={htmlLang(lang)} style={fitWords(greeting)}>{greeting}</h1>
-        {toName && <p className="fest-to" lang={htmlLang(lang)}>{langs ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
+        {toName && !nameInHead && <p className="fest-to" lang={htmlLang(lang)}>{langs ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
         <p className="fest-msg" lang={htmlLang(lang)}>{message}</p>
         {photos.length > 0 && <div className="fest-wall"><Gallery photos={photos} title={`Photos from ${c.sender}`} keyPrefix="fw" layout="strip" /></div>}
         {c.photo && <figure className="fest-photo"><Img src={c.photo} alt={`From ${c.sender}`} /></figure>}

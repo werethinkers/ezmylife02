@@ -55,8 +55,9 @@ export function withLang(link: string, lang: LangId = "en"): string {
   return lang === "en" ? link : `${link}${link.includes("?") ? "&" : "?"}lang=${lang}`;
 }
 
-/** The page link for one person, with their name (and a language, if not English). */
-export function personalLink(base: string, name: string, lang: LangId = "en"): string {
+/** The page link for one person, with their name (and a language, if not English).
+ *  nameInHead: festival cards put the name in the big greeting too ("Happy Diwali, Arinjay!"). */
+export function personalLink(base: string, name: string, lang: LangId = "en", nameInHead = false): string {
   const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}to=${paramFromName(name)}${lang !== "en" ? `&lang=${lang}` : ""}`;
+  return `${base}${sep}to=${paramFromName(name)}${lang !== "en" ? `&lang=${lang}` : ""}${nameInHead ? "&hn=1" : ""}`;
 }

@@ -116,7 +116,9 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
   };
   const fromPaste = () => { add(parsePeople(paste), "your list"); setPaste(""); setShowPaste(false); };
 
-  const linkFor = (name: string) => personal[name] ?? personalLink(link, name, lang);
+  // Festival cards: put each person's name in the big greeting on their card ("Happy Diwali, Arinjay!").
+  const [nameInHead, setNameInHead] = useState(true);
+  const linkFor = (name: string) => personal[name] ?? personalLink(link, name, lang, isFestival && nameInHead);
   const msgFor = (name: string) => {
     if (isFestival) {
       const first = isDiwali ? L.share : product.opts.greeting;
@@ -269,7 +271,16 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
             </span>
           </div>
           <ContactList rows={rows} setRows={(f) => { setRows(f); setPersonal({}); }} reachable={reachable} />
-          {people[0] && <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm"><span className="text-muted-foreground">{people[0].name} will get: </span>{msgFor(people[0].name).split("\n")[0]}</p>}
+          {isFestival && (
+            <label className="flex items-start gap-3 rounded-2xl border-2 border-ink bg-card p-3">
+              <Checkbox checked={nameInHead} onCheckedChange={(v) => setNameInHead(v === true)} className="mt-0.5 h-6 w-6 rounded-md border-2" />
+              <span className="grid gap-0.5">
+                <span className="font-bold">Put each name in the big greeting</span>
+                <span className="text-sm text-muted-foreground">{people[0] ? `${people[0].name}'s card will say "${(product.opts.langs === true ? L.head : product.opts.greeting).replace(/[!.\s]+$/, "")}, ${people[0].name}!"` : `Each card says "Happy Diwali, <name>!"`}{nameInHead ? "" : ` Off: the card says "Dear ${people[0]?.name ?? "<name>"}," under the greeting.`}</span>
+              </span>
+            </label>
+          )}
+          {people[0] && <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm"><span className="text-muted-foreground">{people[0].name}'s WhatsApp message starts: </span>{msgFor(people[0].name).split("\n")[0]}</p>}
 
           {isFestival && pageId && !previewsOff && (
             <div className="grid gap-1.5 rounded-xl border bg-muted/30 p-3">
