@@ -51,6 +51,7 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
   const [personal, setPersonal] = useState<Record<string, string>>({});
   const [building, setBuilding] = useState(false);
   const [buildErr, setBuildErr] = useState("");
+  const [previewsOff, setPreviewsOff] = useState(false); // the share-page service isn't deployed yet: hide the option
   const fileRef = useRef<HTMLInputElement>(null);
   const ios = isIOS();
   const isFestival = product.family === "festival";
@@ -133,7 +134,9 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
       const res = await checkout({ action: "share_bulk", page_id: pageId, lang, people: payload });
       setPersonal((res?.links as Record<string, string>) ?? {});
     } catch (e) {
-      setBuildErr(e instanceof Error ? e.message : "Couldn't make the personal links. The normal links still work.");
+      const msg = e instanceof Error ? e.message : "";
+      if (/being updated|failed to send a request|unknown action/i.test(msg)) { setPreviewsOff(true); return; }
+      setBuildErr(msg || "Couldn't make the personal links. The normal links still work.");
     } finally { setBuilding(false); }
   };
 
@@ -269,7 +272,7 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
             ))}
           </ul>
 
-          {isFestival && pageId && (
+          {isFestival && pageId && !previewsOff && (
             <div className="grid gap-1.5 rounded-xl border bg-muted/30 p-3">
               <Button type="button" variant="outline" size="sm" disabled={building} onClick={() => void buildPersonal()} className="justify-self-start">
                 <Sparkles className="h-4 w-4 mr-1" /> {building ? "Setting up each person's preview…" : Object.keys(personal).length ? "Redo personal WhatsApp previews" : "Give everyone their own WhatsApp preview"}
