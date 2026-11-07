@@ -11,6 +11,8 @@ const CreditsSuccess = () => {
   const [params] = useSearchParams();
   const credits = Number(params.get("credits") || 0);
   const { free, paid, total } = useWallet();
+  // Set by /credits?next=… (a page waiting to publish, a card's "Send all").
+  const next = (() => { try { const n = sessionStorage.getItem("credits_next"); return n && n.startsWith("/") && !n.startsWith("//") ? n : null; } catch { return null; } })();
 
   return (
     <>
@@ -32,7 +34,8 @@ const CreditsSuccess = () => {
                 </div>
               </div>
               <div className="mt-8 flex gap-2 justify-center">
-                <Button asChild><Link to="/ai-apps">Browse AI Apps</Link></Button>
+                {next && <Button asChild><Link to={next} onClick={() => { try { sessionStorage.removeItem("credits_next"); } catch { /* ignore */ } }}>Continue where you were</Link></Button>}
+                <Button asChild variant={next ? "outline" : "default"}><Link to="/ai-apps">Browse AI Apps</Link></Button>
                 <Button asChild variant="outline"><Link to="/credits">Buy more</Link></Button>
               </div>
             </CardContent>

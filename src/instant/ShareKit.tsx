@@ -91,7 +91,8 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 
-      {product.family === "festival" && (<><hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} /></>)}
+      {/* Every card and website: send it to many people at once, each by name (credits, after asking). */}
+      <hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} />
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>

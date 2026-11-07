@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { creditsForInr } from "@/lib/creditRate";
+import { fmtCredits } from "@/lib/creditRate";
 import type { Listed } from "@/instant/useProducts";
-import { inr } from "@/instant/util";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { CATEGORIES } from "@/instant/catalog";
 import { designPreviewUrl } from "@/data/previewManifest";
@@ -65,8 +64,8 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
           {isSite ? "Build it" : "Make it"} →
         </Link>
         <span className="text-[15px] font-bold">
-          {l.price ? inr(l.price) : "Free"}
-          <span className="ml-1 text-xs font-medium text-ink/70">{l.price ? `once · ${creditsForInr(l.price).toLocaleString("en-IN")} cr` : ""}</span>
+          {l.credits ? fmtCredits(l.credits) : "Free"}
+          <span className="ml-1 text-xs font-medium text-ink/70">{l.credits ? "once" : ""}</span>
         </span>
       </div>
     </div>

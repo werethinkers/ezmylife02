@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts } from "@/instant/useProducts";
+import { creditsForInr } from "@/lib/creditRate";
 import { ProductRenderer } from "@/instant/renderers";
 import { pageUrlFor } from "@/instant/util";
 import { KIT, kitCardChoices, kitSiteChoices, resolvePick, type KitPicks } from "@/data/kit";
@@ -84,7 +85,7 @@ export default function KitPicker() {
             <button key={p.id} type="button" aria-pressed={on}
                     onClick={() => edit(kind === "site" ? { site_product: p.id, site_theme: p.themes[0].id } : { card_product: p.id, card_theme: p.themes[0].id })}
                     className={`border-2 border-[#121212] px-2.5 py-1.5 text-sm font-semibold ${on ? "bg-[#121212] text-white" : "bg-white"}`}>
-              {p.glyph} {p.name} <span className="opacity-70">₹{priceOf(p)}</span>
+              {p.glyph} {p.name} <span className="opacity-70">{creditsForInr(priceOf(p))} cr</span>
             </button>
           );
         })}
@@ -123,7 +124,7 @@ export default function KitPicker() {
           <p className="text-sm">
             Pick the website and visiting-card designs that suit your people. They are shown on your link and
             opened first when someone buys. The price stays {"₹"}{KIT.inr}, and the buyer can still choose any other design.
-            Only designs up to {"₹"}{KIT.siteMaxInr} (websites) and {"₹"}{KIT.cardMaxInr} (cards) are listed, so the offer
+            Only designs up to {creditsForInr(KIT.siteMaxInr)} credits (websites) and {creditsForInr(KIT.cardMaxInr)} credits (cards) are listed, so the offer
             always stays inside the kit.
           </p>
           <div className="grid md:grid-cols-2 gap-6">

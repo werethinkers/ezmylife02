@@ -11,7 +11,7 @@ import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { useProducts } from "@/instant/useProducts";
 import type { CategoryId } from "@/instant/types";
 import { cn } from "@/lib/utils";
-import { inr } from "@/instant/util";
+import { fmtCredits } from "@/lib/creditRate";
 import { CARD_CATEGORIES, WEBSITE_CATEGORIES } from "@/components/brand/nav";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { ProductCard } from "@/components/instant/ProductCard";
@@ -24,9 +24,10 @@ import { seoFor } from "@/lib/seo/pages";
 type Sort = "recommended" | "price-asc" | "price-desc" | "name";
 const PRICES = [
   { id: "all", name: "Any price", test: () => true },
-  { id: "u50", name: "Under ₹50", test: (n: number) => n < 50 },
-  { id: "50-199", name: "₹50 – ₹199", test: (n: number) => n >= 50 && n < 200 },
-  { id: "200", name: "₹200 and up", test: (n: number) => n >= 200 },
+  // In credits (the ids stay as they were, so old links still filter).
+  { id: "u50", name: "Under 100 credits", test: (n: number) => n < 100 },
+  { id: "50-199", name: "100 – 499 credits", test: (n: number) => n >= 100 && n < 500 },
+  { id: "200", name: "500 credits and up", test: (n: number) => n >= 500 },
 ] as const;
 const SORTS: { id: Sort; name: string }[] = [
   { id: "recommended", name: "Recommended" },
@@ -90,15 +91,15 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     const out = list.filter(
-      ({ product: p, price: n, featured }) =>
+      ({ product: p, credits: n, featured }) =>
         (cat === "all" || p.category === cat) &&
         (group === "all" || groupOf(p.id) === group) &&
         priceTest(n) &&
         (!popular || featured || p.popular) &&
         (!s || `${p.name} ${p.tagline} ${p.category} ${p.seasonal ?? ""}`.toLowerCase().includes(s)),
     );
-    if (sort === "price-asc") out.sort((a, b) => a.price - b.price || a.sort - b.sort);
-    else if (sort === "price-desc") out.sort((a, b) => b.price - a.price || a.sort - b.sort);
+    if (sort === "price-asc") out.sort((a, b) => a.credits - b.credits || a.sort - b.sort);
+    else if (sort === "price-desc") out.sort((a, b) => b.credits - a.credits || a.sort - b.sort);
     else if (sort === "name") out.sort((a, b) => a.product.name.localeCompare(b.product.name));
     return out;
   }, [list, cat, group, priceTest, popular, sort, q]);
@@ -121,7 +122,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
         phones: [pick(-1), pick(0), pick(1)],
         to: `/make/${l.product.id}`,
         cta: site ? "See the design" : "See the design",
-        price: l.price ? `${inr(l.price)}, paid once` : "Free",
+        price: l.credits ? `${fmtCredits(l.credits)}, paid once` : "Free",
       };
     });
   }, [list]);
@@ -130,7 +131,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
     setQ("");
     setParams(new URLSearchParams(), { replace: true });
   };
-  const prices = list.map((l) => l.price).filter((n) => n > 0);
+  const prices = list.map((l) => l.credits).filter((n) => n > 0);
   const from = prices.length ? Math.min(...prices) : null;
 
   // Unsorted views keep the shelves (category, then type); a sort shows one flat, ordered grid.
@@ -151,7 +152,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
       <header className="mx-auto max-w-7xl px-4 pt-6 md:pt-10">
         <div className="rounded-3xl border-2 border-ink p-5 shadow-block-lg md:p-8" style={{ background: copy.color }}>
           <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">
-            {list.length} designs{from ? ` · from ₹${from}, paid once` : ""}
+            {list.length} designs{from ? ` · from ${fmtCredits(from)}, paid once` : ""}
           </span>
           <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">{copy.title}</h1>
           <p className="mt-2 max-w-2xl text-lg text-ink/85">{copy.line}</p>

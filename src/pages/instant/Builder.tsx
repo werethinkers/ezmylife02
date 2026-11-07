@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { LoginPromptDialog } from "@/components/auth/LoginPromptDialog";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { getProduct } from "@/instant/catalog";
@@ -16,10 +15,10 @@ import { clearDraft, readDraft, readFullDraft, writeDraft, type Draft } from "@/
 import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
 import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
-import { creditsForInr, inrForCredits } from "@/lib/creditRate";
+import { fmtCredits } from "@/lib/creditRate";
 import { checkout, createPage, getMyPage, getShop, rememberShop, republish, savePage, tagShopOnce, uploadContentImages, publishPrepaid } from "@/instant/api";
 import { nameFromParam } from "@/instant/festLang";
-import { inr, isMobile, pageUrlFor, titleOf } from "@/instant/util";
+import { isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
 import { FlowSteps } from "@/components/brand/FlowSteps";
@@ -57,12 +56,12 @@ function BuilderInner({ product }: { product: Product }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { list } = useProducts();
-  const price = list.find((l) => l.product.id === product.id)?.price ?? product.price;
-  // Credits and rupees are two ways to pay the same price. With enough credits the page is paid from them.
+  // Websites and cards are paid in credits only. Short of credits, the person buys a pack and comes back.
+  const listed = list.find((l) => l.product.id === product.id);
   const { total: balance } = useWallet();
   const refreshWallet = useRefreshWallet();
-  const needCredits = creditsForInr(price);
-  const canPayCredits = !!user && price > 0 && balance >= needCredits;
+  const needCredits = listed?.credits ?? 0;
+  const canPayCredits = !!user && needCredits > 0 && balance >= needCredits;
   // ?design=<theme id> opens a specific design (used by the kit links), unless a saved page is being edited.
   const wantedDesign = params.get("design");
   const initial = useMemo<Draft>(() => {
@@ -174,50 +173,40 @@ function BuilderInner({ product }: { product: Product }) {
         navigate(`/create/done/${id}`); return;
       }
 
-      if (canPayCredits && !free) {
+      if (needCredits > 0 && !free) {
+        if (!canPayCredits) {
+          // Not enough credits: the page and draft are saved, so after buying it opens here and publishes.
+          setBusy(null);
+          toast({ title: `This needs ${fmtCredits(needCredits)}`, description: `You have ${fmtCredits(balance)}. Buy credits and you'll come straight back to publish.` });
+          navigate(`/credits?next=${encodeURIComponent(`/create/${product.id}?publish=1`)}`); return; // the saved draft carries the page id
+        }
         setBusy("Paying with credits…");
         try {
           const paid = await checkout({ action: "pay_credits", page_id: id });
           if (paid.published) {
             clearDraft(product.id);
             refreshWallet();
-            toast({ title: paid.charged ? `${paid.charged} credits used` : "Your page is live", description: paid.charged ? "Your page is live." : undefined });
+            toast({ title: paid.charged ? `${fmtCredits(paid.charged)} used` : "Your page is live", description: paid.charged ? "Your page is live." : undefined });
             navigate(`/create/done/${id}`); return;
           }
         } catch (e) {
           // Paying with credits is one database transaction (charge, order, publish), so a failure means
-          // nothing was charged. Say why, then let the person pay in rupees instead of leaving them stuck.
-          // If it did go through and only the answer was lost, the next step sees the page is already live.
+          // nothing was charged. If it did go through and only the answer was lost, a retry sees the page is live.
           refreshWallet();
-          toast({ title: "Couldn't pay with credits", description: `${e instanceof Error ? e.message : "Please try again."} Opening the rupee payment instead.` });
+          throw e;
         }
       }
 
-      setBusy("Starting checkout…");
+      // Free products, and admins testing with "Publish free".
+      setBusy("Publishing…");
       const order = await checkout({ action: "create", page_id: id, free });
       if (order.published) { clearDraft(product.id); refreshWallet(); navigate(`/create/done/${id}`); return; }
-      if (!(await ensureRazorpay())) throw new Error("Couldn't load the payment window. Check your connection and try again.");
-      const pid = id;
-      const rzp = new (window as unknown as { Razorpay: new (o: unknown) => { open: () => void; on: (e: string, cb: (r: { error?: { description?: string } }) => void) => void } }).Razorpay({
-        key: order.key_id, amount: order.amount, currency: order.currency, order_id: order.order_id,
-        name: "EZYOURLIFE", description: order.description, prefill: { email: order.user_email }, theme: { color: theme.c.ac },
-        handler: async (resp: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-          setBusy("Confirming payment…");
-          try {
-            await checkout({ action: "verify", ...resp });
-            clearDraft(product.id);
-          } catch { /* the webhook will still publish it; the done page waits for it */ }
-          navigate(`/create/done/${pid}`);
-        },
-        modal: { ondismiss: () => { setBusy(null); toast({ title: "Payment not completed", description: "Your page is saved. Publish it any time from My websites and cards." }); } },
-      });
-      rzp.on("payment.failed", (r) => toast({ title: "Payment failed", description: r.error?.description || "Try again or use another UPI app.", variant: "destructive" }));
-      rzp.open();
+      throw new Error("Couldn't publish. Please try again.");
     } catch (e) {
       setBusy(null);
       toast({ title: "Couldn't publish", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     }
-  }, [product, content, user, variantId, pageId, published, navigate, toast, theme.c.ac, canPayCredits, refreshWallet]);
+  }, [product, content, user, variantId, pageId, published, navigate, toast, canPayCredits, needCredits, balance, refreshWallet]);
 
   // Coming back from sign-in with ?publish=1 continues straight to checkout.
   useEffect(() => {
@@ -227,9 +216,9 @@ function BuilderInner({ product }: { product: Product }) {
   const s = product.steps[step];
   const last = step === product.steps.length - 1;
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
-  const cta = published ? "Update live page" : canPayCredits ? `Pay ${needCredits.toLocaleString("en-IN")} credits and publish` : price ? `Pay ${inr(price)} and publish` : "Publish free";
+  const cta = published ? "Update live page" : needCredits ? `Use ${fmtCredits(needCredits)} and publish` : "Publish free";
   // The phone's bottom bar is narrow, so it gets a shorter label.
-  const ctaShort = published ? "Update live page" : canPayCredits ? `Publish · ${needCredits.toLocaleString("en-IN")} credits` : price ? `Publish · ${inr(price)}` : "Publish free";
+  const ctaShort = published ? "Update live page" : needCredits ? `Publish · ${fmtCredits(needCredits)}` : "Publish free";
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,7 +228,7 @@ function BuilderInner({ product }: { product: Product }) {
           <Link to={`/make/${product.id}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun" aria-label="Back to the design"><ArrowLeft className="h-5 w-5" /></Link>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold">{product.glyph} {product.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${price ? `${inr(price)} = ${needCredits.toLocaleString("en-IN")} credits, paid once${user ? ` · you have ${balance.toLocaleString("en-IN")} credits (${inr(inrForCredits(balance))})` : ""}` : "Free"} · online for a year`}</p>
+            <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${needCredits ? `${fmtCredits(needCredits)}, paid once${user ? ` · you have ${fmtCredits(balance)}` : ""}` : "Free"} · online for a year`}</p>
           </div>
           <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}{busy ?? cta}</Button>
         </div>

@@ -11,7 +11,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "Credits",
-    body: "Apps are paid in credits. Credits are used only when an app gives you a result; if it fails, nothing is used. Websites and cards are paid once and can be paid in rupees or in credits (2.2 credits for every ₹1, rounded up). Bought credits do not expire. Free monthly credits reset on the 1st of each month.",
+    body: "Apps are paid in credits. Credits are used only when an app gives you a result; if it fails, nothing is used. Websites and cards are paid once, in credits. Sending a card or website to many people at once with Send all on WhatsApp also uses credits, shown before you confirm; automatic messages that fail are refunded. Bought credits do not expire. Free monthly credits reset on the 1st of each month.",
   },
   {
     title: "Promotional and gift credits",

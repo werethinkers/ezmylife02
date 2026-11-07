@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { creditsForInr } from "@/lib/creditRate";
+import { creditsForInr, fmtCredits } from "@/lib/creditRate";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -12,7 +12,7 @@ import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { DesignRail, DeviceFrame, DeviceToggle, Swatch, styleLabel } from "@/instant/DesignPreview";
 import { useProducts } from "@/instant/useProducts";
 import { promoFor, promoSeo } from "@/instant/promo";
-import { inr, plainName } from "@/instant/util";
+import { plainName } from "@/instant/util";
 import { seasonGap } from "@/instant/season";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
@@ -30,7 +30,7 @@ export default function ProductPromo() {
 
   const row = rows.get(product.id);
   if (row && !row.is_active) return <Navigate to="/create" replace />;
-  const price = row?.price_inr ?? product.price;
+  const price = row?.price_credits ?? creditsForInr(row?.price_inr ?? product.price); // credits
   const days = row?.hosting_days ?? 365;
   const promo = promoFor(product);
   const theme = product.themes.find((t) => t.id === designId) ?? product.themes[0];
@@ -39,7 +39,7 @@ export default function ProductPromo() {
     .sort((a, b) => seasonGap(a.product.id) - seasonGap(b.product.id) || Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
   const groupName = GROUPS[product.category].find((x) => x.id === g)?.name;
   const create = `/create/${product.id}?design=${theme.id}`;
-  const priceText = price ? `${inr(price)} or ${creditsForInr(price).toLocaleString("en-IN")} credits` : "Free";
+  const priceText = price ? fmtCredits(price) : "Free";
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const home = isSite ? "/websites" : "/cards";
   const hosting = days >= 365 ? `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}` : `${days} days`;
@@ -48,7 +48,6 @@ export default function ProductPromo() {
     {
       "@context": "https://schema.org", "@type": "Product", name: `${product.name} | EZYOURLIFE`, description: promo.pitch,
       brand: { "@type": "Brand", name: "EZYOURLIFE" }, url: `https://ezyourlife.com/make/${product.id}`,
-      offers: { "@type": "Offer", price: String(price), priceCurrency: "INR", availability: "https://schema.org/InStock", url: `https://ezyourlife.com${create}` },
     },
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: promo.faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
   ];

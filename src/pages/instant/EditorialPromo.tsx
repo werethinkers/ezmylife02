@@ -4,7 +4,8 @@ import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { ProductRenderer } from "@/instant/renderers";
-import { inr, pageUrlFor, plainName } from "@/instant/util";
+import { pageUrlFor, plainName } from "@/instant/util";
+import { fmtCredits } from "@/lib/creditRate";
 import type { Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ interface Props {
   hasPrice: boolean;
   hosting: string;
   create: string;
-  related: { product: Product; price: number }[];
+  related: { product: Product; price: number; credits: number }[];
 }
 
 const TICKS = ["Ready in about 5 minutes", "Opens on any phone, no app needed", "Free edits, same link"];
@@ -235,11 +236,11 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
           <section aria-labelledby="rel-h" className="pt-16 md:pt-24">
             <h2 id="rel-h" className="font-display text-3xl font-extrabold md:text-5xl">Other <span className="marker">designs</span></h2>
             <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {related.map(({ product: r, price: rp }) => (
+              {related.map(({ product: r, credits: rp }) => (
                 <Link key={r.id} to={`/make/${r.id}`} className="block-card block-lift p-4">
                   <span className="text-4xl" aria-hidden="true">{r.glyph}</span>
                   <p className="mt-2 font-bold leading-tight">{r.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{rp ? `${inr(rp)} once` : "Free"}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{rp ? `${fmtCredits(rp)} once` : "Free"}</p>
                 </Link>
               ))}
             </div>

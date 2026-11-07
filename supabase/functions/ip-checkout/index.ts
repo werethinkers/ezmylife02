@@ -1,6 +1,7 @@
 // Checkout for Instant Digital Products pages.
-//   action "create": prices the page from ip_products (never from the client), creates a Razorpay order.
-//                    Free products, and admins testing with { free: true }, publish immediately.
+//   action "create": free products, and admins testing with { free: true }, publish immediately. Priced pages
+//                    answer 402 with the credits needed: pages are paid in credits (action "pay_credits").
+//                    The old Razorpay page order only runs with PAGES_RUPEE_CHECKOUT=on.
 //   action "verify": checks the Razorpay signature, confirms the captured amount with Razorpay,
 //                    then publishes through ip_mark_order_paid. The webhook does the same if the tab dies.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -45,7 +46,8 @@ serve(async (req) => {
       if (!product || !product.is_active) return json({ error: "This product isn't available right now." }, 400);
 
       const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (product.price_inr === 0 || (body.free === true && isAdmin)) {
+      const priceCredits = product.price_credits ?? Math.ceil(Math.max(0, product.price_inr) * 2.2);
+      if (priceCredits === 0 || (body.free === true && isAdmin)) {
         await supabase.from("ip_orders").insert({ user_id: user.id, page_id: page.id, product_id: product.id, inr_amount: 0, status: "free", paid_at: new Date().toISOString() });
         const { data: pub, error: perr } = await supabase.rpc("ip_publish_page", { _page_id: page.id });
         if (perr || !pub?.ok) throw new Error(perr?.message ?? pub?.reason ?? "Publish failed");
@@ -55,6 +57,12 @@ serve(async (req) => {
           output: `🎉 Your ${product.name.toLowerCase()} is live. Share this link on WhatsApp:\n${link}`,
         }));
         return json({ published: true, slug: pub.slug });
+      }
+
+      // Websites and cards are paid in credits only (pay_credits). Rupees buy credit packs on /credits.
+      // The Razorpay order below is kept only behind PAGES_RUPEE_CHECKOUT=on, for an emergency switch back.
+      if (Deno.env.get("PAGES_RUPEE_CHECKOUT") !== "on") {
+        return json({ error: `This needs ${priceCredits} credits. Buy credits to publish.`, insufficient: true, credits_required: priceCredits }, 402);
       }
 
       const keyId = Deno.env.get("RAZORPAY_KEY_ID");
