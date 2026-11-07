@@ -79,6 +79,10 @@ verify_jwt = false
 [functions.ip-checkout]
 verify_jwt = false
 
+# Send all on WhatsApp. Signs the caller in itself; its internal "work" action needs the service key.
+[functions.ip-bulk-send]
+verify_jwt = false
+
 # Influencer programme and refunds. Each one checks authorisation in its own
 # code: influencer-track needs none (it only records a click for a live code),
 # and the other three verify the caller holds the admin role before doing

@@ -22,7 +22,7 @@ Routes: `/create` (gallery), `/create/:productId` (builder), `/p/:slug` (publish
 
 ## Rules the engine enforces
 
-- **Prices live in `ip_products`.** The checkout function reads them; the browser never sends an amount. Admins edit them at `/admin/instant`.
+- **Prices live in `ip_products.price_credits`, in credits only.** `ip_pay_with_credits` charges them; the browser never sends an amount. Admins edit them at `/admin/instant`. `price_inr` is kept as an internal value (the ₹999 kit's design limits read it); a product without `price_credits` costs `ip_credits_for_inr(price_inr)`. The old rupee page checkout only runs with the `PAGES_RUPEE_CHECKOUT=on` secret. Short of credits, the builder sends people to `/credits?next=…` and back.
 - **Only the publish functions write `published_content`, `status` and `slug`.** A trigger resets those columns on any owner update. Owners edit `content` (their draft) and push it live with `ip_republish`.
 - **The public reads one function:** `ip_get_public_page(slug)` returns the snapshot of a live, unexpired page and nothing about the owner.
 - **Leads, RSVPs and orders go through `ip_submit_lead`,** which validates the phone number and rate-limits per page and per phone. Only the page owner can read them.
@@ -46,3 +46,15 @@ Lovable hosts the app as a single-page app, so `/p/:slug` sets its title and Ope
 
 - **Page sites (when the `PAGES_ORG` secret is set):** each page gets its own repo `PAGES_ORG/page-<slug>`, served by GitHub Pages at `<slug>.ezyourlife.com`. Its `index.html` holds the preview tags and shows `ezyourlife.com/p/<slug>` full screen in a frame, so forms and buttons work as on the site. `/p/<slug>` moves visitors to the subdomain once it answers. Setup: a GitHub organisation for the pages, with ezyourlife.com verified in its settings (this stops anyone else claiming a subdomain). A wildcard `CNAME *` to `<org>.github.io` at Hostinger. `GITHUB_SHARE_TOKEN` with Administration, Contents and Pages read and write on that organisation, plus `PAGES_ORG`. Names that have their own DNS records are listed in `RESERVED` there and never used.
 - **Otherwise:** one file per page in `werethinkers/ezyourlife-share`, at `share.ezyourlife.com/p/<slug>/`, which forwards to `/p/<slug>`.
+
+## Send all on WhatsApp
+
+Every published card and website has "Send to everyone, each by name" in its share kit (`src/instant/BulkSend.tsx`).
+
+- **People:** the phone's contact book (Contact Picker, Chrome on Android; the person picks who), a contacts file (.vcf from iPhone or Android, .csv from Google Contacts; read on the device only), or a pasted list. Up to 2,000, one per number (`src/instant/contacts.ts`).
+- **Price, asked before anything is sent** (consent checkbox, `ip_bulk_send_start` charges and records the consent time in one transaction):
+  - *From my WhatsApp:* 1 credit per 10 people, rounded up. Each chat opens with that person's message; the sender taps send, and the next person is waiting. Only the count is stored.
+  - *Send automatically:* 4 credits a person with a valid number. `supabase/functions/ip-bulk-send` sends through Wavo in batches of 40, chaining itself until done; failed messages are refunded by `ip_bulk_send_finish`. Names and numbers of delivered messages are wiped when the send ends.
+- Automatic mode stays hidden ("Coming soon") until the Wavo template `card_send_ezyourlife` (or `WAVO_TPL_CARD_SEND`) is approved: body {{1}} recipient name, {{2}} sender name, {{3}} product name; URL button `https://ezyourlife.com/{{1}}`.
+- Each person's link carries `?to=<name>`: festival cards say "Dear Rahul,", invitations say "Dear Rahul, you're invited".
+- Prices are in `ip_bulk_send_price()` (server) and `src/lib/creditRate.ts` (display); keep them the same.

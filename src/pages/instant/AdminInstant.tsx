@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { creditsForInr } from "@/lib/creditRate";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
@@ -73,7 +74,7 @@ export default function AdminInstant({ embedded = false }: { embedded?: boolean 
       {!embedded && <Navbar />}
       <main className={embedded ? "pb-8" : "container mx-auto px-4 py-8 max-w-5xl pb-24"}>
         <h1 className="font-display text-3xl font-bold">Instant products</h1>
-        <p className="text-muted-foreground mb-4">{CATALOG.length} products. Prices are in rupees and apply to new orders immediately.</p>
+        <p className="text-muted-foreground mb-4">{CATALOG.length} products. Prices are in credits and apply to new orders immediately.</p>
         <div className="rounded-2xl border bg-background p-4 mb-6 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[220px]">
             <p className="font-semibold">WhatsApp link previews</p>
@@ -96,8 +97,8 @@ export default function AdminInstant({ embedded = false }: { embedded?: boolean 
                       <span className="text-2xl w-8" aria-hidden="true">{p.glyph}</span>
                       <Link to={`/create/${p.id}`} className="font-medium flex-1 min-w-[160px] hover:underline">{p.name}</Link>
                       {!r ? <span className="text-sm text-amber-700">Not in database yet</span> : <>
-                        <label className="flex items-center gap-1 text-sm">₹<Input className="w-24 h-9" inputMode="numeric" value={prices[p.id] ?? String(r.price_inr)} onChange={(e) => setPrices({ ...prices, [p.id]: e.target.value.replace(/\D/g, "") })} aria-label={`${p.name} price`} /></label>
-                        <Button size="sm" variant="outline" disabled={prices[p.id] == null || Number(prices[p.id]) === r.price_inr} onClick={() => save(p.id, { price_inr: Number(prices[p.id] || 0) })}>Save price</Button>
+                        <label className="flex items-center gap-1 text-sm"><Input className="w-24 h-9" inputMode="numeric" value={prices[p.id] ?? String(r.price_credits ?? creditsForInr(r.price_inr))} onChange={(e) => setPrices({ ...prices, [p.id]: e.target.value.replace(/\D/g, "") })} aria-label={`${p.name} price in credits`} /> credits</label>
+                        <Button size="sm" variant="outline" disabled={prices[p.id] == null || Number(prices[p.id]) === (r.price_credits ?? creditsForInr(r.price_inr))} onClick={() => save(p.id, { price_credits: Number(prices[p.id] || 0) })}>Save price</Button>
                         <label className="flex items-center gap-2 text-sm">Featured <Switch checked={r.is_featured} onCheckedChange={(v) => save(p.id, { is_featured: v })} /></label>
                         <label className="flex items-center gap-2 text-sm">Active <Switch checked={r.is_active} onCheckedChange={(v) => save(p.id, { is_active: v })} /></label>
                       </>}

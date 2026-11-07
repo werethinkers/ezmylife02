@@ -135,7 +135,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
       key: `design-${l.product.id}`,
       name: l.product.name,
       to: `/make/${l.product.id}`,
-      price: l.price ? `₹${l.price}` : "Free",
+      price: l.credits ? `${l.credits.toLocaleString("en-IN")} credits` : "Free",
       text: `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase(),
       sub: l.product.tagline ?? "",
       glyph: l.product.glyph,

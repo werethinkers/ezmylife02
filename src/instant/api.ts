@@ -11,7 +11,7 @@ export interface PageRow {
   content: Content; published_content: Content | null; views: number; published_at: string | null; expires_at: string | null;
   created_at: string; updated_at: string; og_image?: string | null; share_url?: string | null; share_prefs?: unknown;
 }
-export interface ProductRow { id: string; family: string; category: string; name: string; price_inr: number; hosting_days: number; is_active: boolean; is_featured: boolean; sort: number }
+export interface ProductRow { id: string; family: string; category: string; name: string; price_inr: number; price_credits?: number | null; hosting_days: number; is_active: boolean; is_featured: boolean; sort: number }
 export interface LeadRow { id: string; page_id: string; kind: "lead" | "rsvp" | "order"; name: string; phone: string; message: string | null; context: Record<string, unknown>; status: "new" | "contacted" | "converted" | "closed"; created_at: string }
 export interface PublicPage { slug: string; product_id: string; variant_id: string; content: Content; published_at: string; og_image?: string | null; share_url?: string | null }
 
@@ -125,6 +125,19 @@ async function serverReason(error: unknown): Promise<{ message: string; status?:
     return { message: `The payment service answered with an error (${res.status}).`, status: res.status };
   }
   return { message: (error as { message?: string } | null)?.message || "The payment service could not be reached." };
+}
+
+/** "Send all on WhatsApp" (quote, start, status) - see supabase/functions/ip-bulk-send. */
+export async function bulkSend(body: Record<string, unknown>) {
+  const t = await token();
+  if (!t) throw new CheckoutError("Sign in first.", 401);
+  const { data, error } = await supabase.functions.invoke("ip-bulk-send", { body, headers: { Authorization: `Bearer ${t}` } });
+  if (error) {
+    const r = await serverReason(error);
+    throw new CheckoutError(/^unknown action/i.test(r.message) ? "Sending is being updated. Please try again in a few minutes." : r.message, r.status);
+  }
+  if (data?.error) throw new CheckoutError(String(data.error));
+  return data;
 }
 
 export async function checkout(body: Record<string, unknown>) {

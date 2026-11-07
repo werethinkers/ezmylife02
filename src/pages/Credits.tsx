@@ -35,6 +35,12 @@ const Credits = () => {
 
   useEffect(() => { ensureRazorpay(); }, []);
 
+  // ?next=/path: where to send people back after buying (a card's "Send all", a page waiting to publish).
+  useEffect(() => {
+    const next = searchParams.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) { try { sessionStorage.setItem("credits_next", next); } catch { /* ignore */ } }
+  }, [searchParams]);
+
   useEffect(() => {
     const pack = searchParams.get("pack");
     if (pack && user) {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { creditsForInr } from "@/lib/creditRate";
+import { fmtCredits } from "@/lib/creditRate";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
@@ -317,7 +317,7 @@ const Tools = () => {
                             <span className={cn("shrink-0 rounded-full border-2 border-ink px-2 text-[11px] font-bold", site ? "bg-teal" : "bg-sun")}>{site ? "Website" : "Card / invite"}</span>
                           </span>
                           {l.product.tagline && <span className="text-sm text-muted-foreground">{l.product.tagline}</span>}
-                          <span className="mt-auto pt-1 text-sm font-semibold">{l.price ? `₹${l.price} or ${creditsForInr(l.price).toLocaleString("en-IN")} credits` : "Free"}</span>
+                          <span className="mt-auto pt-1 text-sm font-semibold">{l.credits ? `${fmtCredits(l.credits)}, paid once` : "Free"}</span>
                         </Link>
                       </li>
                     );

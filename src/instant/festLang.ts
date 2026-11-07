@@ -41,13 +41,13 @@ export function paramFromName(name: string): string {
 
 export interface Person { name: string; phone: string }
 
-/** "Rahul Sharma, 98xxxxxx12" per line (the number is optional). Up to 200 people. */
+/** "Rahul Sharma, 98xxxxxx12" per line (the number is optional). Up to 2,000 people. */
 export function parsePeople(text: string): Person[] {
   return text.split(/\r?\n/).map((line) => {
     const m = line.match(/^(.*?)[,\t;|]\s*([+\d][\d\s-]{8,})\s*$/);
     const name = (m ? m[1] : line).trim();
     return name ? { name: name.slice(0, 30), phone: m ? m[2].replace(/\D/g, "") : "" } : null;
-  }).filter((p): p is Person => !!p).slice(0, 200);
+  }).filter((p): p is Person => !!p).slice(0, 2000);
 }
 
 /** The page link with the sender's chosen language (English is the default, so it adds nothing). */

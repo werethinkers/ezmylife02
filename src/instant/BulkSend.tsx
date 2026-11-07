@@ -1,53 +1,319 @@
-import { useState } from "react";
-import { Copy } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { BookUser, Check, ClipboardPaste, Copy, FileUp, Loader2, Send, SkipForward, Sparkles, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
+import { fmtCredits, SEND_ALL_AUTO_CREDITS_EACH, SEND_ALL_MAX, SEND_ALL_PEOPLE_PER_CREDIT, sendAllCredits } from "@/lib/creditRate";
+import { cn } from "@/lib/utils";
 import type { Content, Product } from "./types";
-import { langById, parsePeople, personalLink, type LangId } from "./festLang";
-import { fill, isMobile, waTo, waShare } from "./util";
+import { langById, parsePeople, personalLink, type LangId, type Person } from "./festLang";
+import { describeForRecipient } from "./meta";
+import { bulkSend, checkout, CheckoutError } from "./api";
+import { canPickContacts, dedupe, pickFromPhone, readContactsFile } from "./contacts";
+import { fill, isMobile, waDigits, waTo, waShare } from "./util";
 
-/** Send the same card to many people, each with their own name on it: one tap per person on WhatsApp. */
-/** lang: the card language the sender chose in the share kit; every person gets their card in it. */
-export function BulkSend({ product, content, link, lang = "en" }: { product: Product; content: Content; link: string; lang?: LangId }) {
+type Mode = "queue" | "auto";
+/** A number WhatsApp can reach: an Indian mobile, or a full international number. */
+const reachable = (phone: string) => !!phone && (isMobile(phone) || /^(?!91)\d{11,15}$/.test(waDigits(phone)));
+
+interface QueueState { sendId: string; people: Person[]; at: number; done: number[] }
+const queueKey = (pageId: string) => `ip-send-all-${pageId}`;
+const readQueue = (pageId?: string): QueueState | null => {
+  if (!pageId) return null;
+  try { const s = sessionStorage.getItem(queueKey(pageId)); return s ? JSON.parse(s) : null; } catch { return null; }
+};
+
+/**
+ * Send a card or website to many people, each by name. People come from the phone's contact book,
+ * a contacts file, or a pasted list. "Send all" costs credits, asks for permission first, then either
+ * opens each chat on the sender's own WhatsApp in turn (one tap each), or, when switched on, sends
+ * everything automatically from EZYOURLIFE's WhatsApp number.
+ * lang: the card language the sender chose in the share kit; every person gets their card in it.
+ * pageId: needed to charge and to make personal link previews; without it only one-by-one links show.
+ */
+export function BulkSend({ product, content, link, lang = "en", pageId }: { product: Product; content: Content; link: string; lang?: LangId; pageId?: string }) {
   const { toast } = useToast();
-  const [text, setText] = useState("");
-  const [sent, setSent] = useState<Record<number, boolean>>({});
-  const people = parsePeople(text);
+  const { total: balance } = useWallet();
+  const refreshWallet = useRefreshWallet();
+  const [people, setPeople] = useState<Person[]>([]);
+  const [paste, setPaste] = useState("");
+  const [showPaste, setShowPaste] = useState(false);
+  const [mode, setMode] = useState<Mode>("queue");
+  const [autoOn, setAutoOn] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [queue, setQueue] = useState<QueueState | null>(() => readQueue(pageId));
+  const [auto, setAuto] = useState<{ sendId: string; status: string; people: number; sent: number; failed: number; refunded: number; failedNames: string[] } | null>(null);
+  const [personal, setPersonal] = useState<Record<string, string>>({});
+  const [building, setBuilding] = useState(false);
+  const [buildErr, setBuildErr] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const isFestival = product.family === "festival";
   const isDiwali = product.opts.art === "diya";
   const L = langById(lang);
 
-  const msgFor = (name: string) => {
-    const l = personalLink(link, name, lang);
-    const first = isDiwali ? L.share : product.opts.greeting;
-    return `${product.glyph} ${first}, ${name}!\n${fill("A little greeting from {sender}:", content)}\n${l}`;
+  const withPhone = useMemo(() => people.filter((p) => reachable(p.phone)), [people]);
+  const sendCount = mode === "auto" ? withPhone.length : people.length;
+  const need = sendAllCredits(mode, sendCount);
+  const short = Math.max(0, need - balance);
+
+  // Is automatic sending switched on (its WhatsApp template approved)? Asked once.
+  useEffect(() => {
+    if (!pageId) return;
+    bulkSend({ action: "quote", people: 1, with_phone: 1 }).then((q) => setAutoOn(!!q?.auto?.available), () => setAutoOn(false));
+  }, [pageId]);
+  useEffect(() => { if (!autoOn && mode === "auto") setMode("queue"); }, [autoOn, mode]);
+
+  // Remember the queue in this tab, so a refresh or a trip to WhatsApp doesn't lose the place (or charge twice).
+  useEffect(() => {
+    if (!pageId) return;
+    try {
+      if (queue) sessionStorage.setItem(queueKey(pageId), JSON.stringify(queue));
+      else sessionStorage.removeItem(queueKey(pageId));
+    } catch { /* storage blocked */ }
+  }, [queue, pageId]);
+
+  // Automatic send: check progress until it is done.
+  useEffect(() => {
+    if (!auto || auto.status === "done") return;
+    const t = setInterval(() => {
+      bulkSend({ action: "status", send_id: auto.sendId }).then((s) => {
+        setAuto((a) => a && { ...a, status: s.status, people: s.people, sent: s.sent, failed: s.failed, refunded: s.refunded, failedNames: s.failed_names ?? [] });
+        if (s.status === "done") refreshWallet();
+      }, () => undefined);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [auto, refreshWallet]);
+
+  const add = (more: Person[], from: string) => {
+    const before = people.length;
+    const next = dedupe([...people, ...more]);
+    setPeople(next); setPersonal({});
+    const added = next.length - before;
+    toast({ title: added ? `${added} ${added === 1 ? "person" : "people"} added from ${from}` : "No new people found", description: next.length >= SEND_ALL_MAX ? `The list holds up to ${SEND_ALL_MAX.toLocaleString("en-IN")} people.` : undefined });
   };
-  const href = (p: { name: string; phone: string }) => (isMobile(p.phone) ? waTo(p.phone, msgFor(p.name)) : waShare(msgFor(p.name)));
+  const fromPhone = async () => {
+    try { add(await pickFromPhone(), "your contacts"); }
+    catch (e) { if ((e as Error)?.name !== "AbortError" && (e as Error)?.name !== "InvalidStateError") toast({ title: "Couldn't open your contacts", description: "Allow contacts access, or upload a contacts file instead.", variant: "destructive" }); }
+  };
+  const fromFile = async (f: File | undefined) => {
+    if (!f) return;
+    try { add(await readContactsFile(f), f.name); }
+    catch (e) { toast({ title: "Couldn't read that file", description: e instanceof Error ? e.message : "Use a .vcf or .csv contacts file.", variant: "destructive" }); }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+  const fromPaste = () => { add(parsePeople(paste), "your list"); setPaste(""); setShowPaste(false); };
+
+  const linkFor = (name: string) => personal[name] ?? personalLink(link, name, lang);
+  const msgFor = (name: string) => {
+    if (isFestival) {
+      const first = isDiwali ? L.share : product.opts.greeting;
+      return `${product.glyph} ${first}, ${name}!\n${fill("A little greeting from {sender}:", content)}\n${linkFor(name)}`;
+    }
+    // Invitations, websites, menus and profiles: the page's own share message, with a hello by name.
+    return `Hi ${name},\n${fill(product.share, { ...content, link: linkFor(name) })}`;
+  };
+  const href = (p: Person) => (reachable(p.phone) ? waTo(p.phone, msgFor(p.name)) : waShare(msgFor(p.name)));
   const copyAll = async () => {
     const out = people.map((p) => `${p.name}\n${msgFor(p.name)}`).join("\n\n");
-    try { await navigator.clipboard.writeText(out); toast({ title: `${people.length} messages copied`, description: "Each has its greeting and personal link." }); } catch { toast({ title: "Could not copy", description: "Use the WhatsApp button for each person." }); }
+    try { await navigator.clipboard.writeText(out); toast({ title: `${people.length} messages copied`, description: "Each has its greeting and personal link." }); } catch { toast({ title: "Could not copy", description: "Use Send all instead." }); }
   };
 
+  // Festival cards: one small page per person, so the WhatsApp link preview carries their name too.
+  const buildPersonal = async () => {
+    if (!pageId || people.length === 0) return;
+    setBuilding(true); setBuildErr("");
+    try {
+      const payload = people.slice(0, 500).map((p) => { const { title, desc } = describeForRecipient(product, content, p.name); return { name: p.name, title, description: desc }; });
+      const res = await checkout({ action: "share_bulk", page_id: pageId, lang, people: payload });
+      setPersonal((res?.links as Record<string, string>) ?? {});
+    } catch (e) {
+      setBuildErr(e instanceof Error ? e.message : "Couldn't make the personal links. The normal links still work.");
+    } finally { setBuilding(false); }
+  };
+
+  const start = async () => {
+    if (!pageId || !consent) return;
+    setBusy(true);
+    try {
+      const list = mode === "auto" ? withPhone.map((p) => ({ name: p.name, phone: waDigits(p.phone) })) : undefined;
+      const res = await bulkSend({ action: "start", page_id: pageId, mode, lang, consent: true, people: mode === "auto" ? list : people.length });
+      refreshWallet();
+      setConfirmOpen(false); setConsent(false);
+      toast({ title: `${fmtCredits(res.charged)} used`, description: mode === "auto" ? "Sending now. You can leave this page." : "Now tap Send for each person. WhatsApp opens with their message ready." });
+      if (mode === "auto") setAuto({ sendId: res.send_id, status: "sending", people: res.people, sent: 0, failed: 0, refunded: 0, failedNames: [] });
+      else setQueue({ sendId: res.send_id, people, at: 0, done: [] });
+    } catch (e) {
+      refreshWallet();
+      const msg = e instanceof Error ? e.message : "Please try again.";
+      toast({ title: e instanceof CheckoutError && e.status === 402 ? "Not enough credits" : "Couldn't start sending", description: msg, variant: "destructive" });
+    } finally { setBusy(false); }
+  };
+
+  // ---------- sending from the sender's own WhatsApp, one chat at a time ----------
+  if (queue) {
+    const total = queue.people.length;
+    const cur = queue.people[queue.at];
+    const finished = queue.at >= total;
+    const advance = (sent: boolean) => setQueue((q) => q && { ...q, done: sent ? [...q.done, q.at] : q.done, at: q.at + 1 });
+    return (
+      <div className="grid gap-3" aria-live="polite">
+        <div className="font-semibold">Sending to {total.toLocaleString("en-IN")} people from your WhatsApp</div>
+        <div className="h-3 w-full overflow-hidden rounded-full border-2 border-ink bg-card"><div className="h-full bg-[#25D366] transition-all" style={{ width: `${Math.round((Math.min(queue.at, total) / total) * 100)}%` }} /></div>
+        <p className="text-sm text-muted-foreground">{queue.done.length.toLocaleString("en-IN")} sent · {Math.max(0, total - queue.at).toLocaleString("en-IN")} left</p>
+        {finished ? (
+          <div className="grid gap-2 rounded-2xl border-2 border-ink bg-sun/40 p-4">
+            <p className="font-bold">All done 🎉</p>
+            <p className="text-sm">You went through everyone on the list.</p>
+            <Button variant="outline" onClick={() => { setQueue(null); setPeople([]); }}>Send to another list</Button>
+          </div>
+        ) : (
+          <div className="grid gap-2 rounded-2xl border-2 border-ink bg-card p-4">
+            <p className="text-xs font-semibold text-muted-foreground">Person {queue.at + 1} of {total}</p>
+            <p className="truncate text-lg font-bold">{cur.name}{!reachable(cur.phone) && <span className="ml-2 text-xs font-medium text-muted-foreground">no number, you'll choose the chat</span>}</p>
+            <a href={href(cur)} target="_blank" rel="noopener noreferrer" onClick={() => setTimeout(() => advance(true), 300)}
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-base font-semibold text-[#06260F]">
+              <Send className="h-5 w-5" /> Send to {cur.name.split(" ")[0]}
+            </a>
+            <div className="flex justify-between">
+              <Button variant="ghost" size="sm" onClick={() => advance(false)}><SkipForward className="h-4 w-4 mr-1" /> Skip</Button>
+              <Button variant="ghost" size="sm" onClick={() => setQueue(null)}>Stop</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">WhatsApp opens with {cur.name.split(" ")[0]}'s message ready. Tap send there, come back, and the next person is waiting here.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ---------- automatic sending, progress ----------
+  if (auto) {
+    const done = auto.status === "done";
+    return (
+      <div className="grid gap-3" aria-live="polite">
+        <div className="font-semibold">{done ? "Sent" : "Sending automatically"} to {auto.people.toLocaleString("en-IN")} people</div>
+        <div className="h-3 w-full overflow-hidden rounded-full border-2 border-ink bg-card"><div className="h-full bg-[#25D366] transition-all" style={{ width: `${Math.round(((auto.sent + auto.failed) / Math.max(1, auto.people)) * 100)}%` }} /></div>
+        <p className="text-sm">{auto.sent.toLocaleString("en-IN")} delivered to WhatsApp · {auto.failed.toLocaleString("en-IN")} failed{!done && <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />}</p>
+        {done && auto.refunded > 0 && <p className="text-sm font-semibold">{fmtCredits(auto.refunded)} returned for the messages that failed.</p>}
+        {done && auto.failedNames.length > 0 && <p className="text-xs text-muted-foreground">Not sent: {auto.failedNames.join(", ")}{auto.failed > auto.failedNames.length ? "…" : ""}</p>}
+        {!done && <p className="text-xs text-muted-foreground">You can close this page. Sending carries on.</p>}
+        {done && <Button variant="outline" onClick={() => { setAuto(null); setPeople([]); }}>Send to another list</Button>}
+      </div>
+    );
+  }
+
+  // ---------- building the list ----------
   return (
     <div className="grid gap-3">
-      <div className="font-semibold">Send to many people, each with their name</div>
-      <p className="text-sm text-muted-foreground">Add one person per line, like <span className="font-mono">Rahul Sharma, 98xxxxxx12</span>. The phone number is optional. Each person gets "Dear Rahul," on their own card. Up to 200 people.</p>
-      <textarea value={text} onChange={(e) => { setText(e.target.value); setSent({}); }} rows={5} placeholder={"Rahul Sharma, 9876543210\nMeena Aunty\nThe Patels"} className="w-full rounded-xl border bg-background p-3 text-sm" aria-label="People to send to" />
+      <div className="font-semibold">Send to everyone, each by name</div>
+      <p className="text-sm text-muted-foreground">Add people from your contacts. Each one gets a WhatsApp message with their own name{isFestival ? ", and their name on the card" : product.family === "event" ? ", and their name on the invitation" : ""}. Up to {SEND_ALL_MAX.toLocaleString("en-IN")} people.</p>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {canPickContacts() && <Button type="button" className="h-12" onClick={() => void fromPhone()}><BookUser className="h-4 w-4 mr-2" /> Choose from contacts</Button>}
+        <Button type="button" variant="outline" className="h-12" onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-2" /> Upload contacts file</Button>
+        <Button type="button" variant="outline" className="h-12" onClick={() => setShowPaste((v) => !v)}><ClipboardPaste className="h-4 w-4 mr-2" /> Paste a list</Button>
+      </div>
+      <input ref={fileRef} type="file" accept=".vcf,.vcard,.csv,.txt,text/vcard,text/x-vcard,text/csv" className="hidden" onChange={(e) => void fromFile(e.target.files?.[0])} aria-label="Contacts file" />
+      <p className="text-xs text-muted-foreground">
+        {canPickContacts() ? "Choose from contacts opens your phone's contact book; you pick who to add (there's a select-all). " : "On Android in Chrome you can pick straight from your contact book. "}
+        A contacts file works everywhere: iPhone Contacts → Select → Share (.vcf), Android Contacts → Export (.vcf), or Google Contacts → Export (.csv). It is read on this device only.
+      </p>
+      {showPaste && (
+        <div className="grid gap-2">
+          <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={4} placeholder={"Rahul Sharma, 9876543210\nMeena Aunty, 98xxxxxx12"} className="w-full rounded-xl border bg-background p-3 text-sm" aria-label="People to send to, one per line" />
+          <Button type="button" variant="outline" size="sm" className="justify-self-start" disabled={!paste.trim()} onClick={fromPaste}>Add to the list</Button>
+        </div>
+      )}
+
       {people.length > 0 && (
         <>
-          <div className="flex items-center justify-between text-sm"><span>{people.length} {people.length === 1 ? "person" : "people"} · {Object.keys(sent).length} sent</span>
-            <Button variant="outline" size="sm" onClick={copyAll}><Copy className="h-4 w-4 mr-1" /> Copy all messages</Button></div>
-          <ul className="grid gap-2 max-h-80 overflow-auto">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="font-semibold">{people.length.toLocaleString("en-IN")} {people.length === 1 ? "person" : "people"} · {withPhone.length.toLocaleString("en-IN")} with a WhatsApp number</span>
+            <span className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={copyAll}><Copy className="h-4 w-4 mr-1" /> Copy all</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setPeople([]); setPersonal({}); }}>Clear</Button>
+            </span>
+          </div>
+          <ul className="grid max-h-64 gap-1.5 overflow-auto rounded-xl border p-2">
             {people.map((p, i) => (
-              <li key={i} className="flex items-center gap-2 rounded-xl border p-2">
-                <span className="flex-1 min-w-0 truncate text-sm font-medium">{p.name}{p.phone && !isMobile(p.phone) && <span className="ml-2 text-xs text-muted-foreground">number not valid, you will choose the chat</span>}</span>
-                <a href={href(p)} target="_blank" rel="noopener noreferrer" onClick={() => setSent((s) => ({ ...s, [i]: true }))}
-                  className={"inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold " + (sent[i] ? "bg-muted text-muted-foreground" : "bg-[#25D366] text-[#06260F]")}>{sent[i] ? "Sent ✓" : "WhatsApp"}</a>
+              <li key={`${p.name}-${p.phone}-${i}`} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted/50">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+                <span className={cn("shrink-0 font-mono text-xs", reachable(p.phone) ? "text-muted-foreground" : "text-destructive")}>{p.phone ? (reachable(p.phone) ? p.phone : "number not valid") : "no number"}</span>
+                <button type="button" className="shrink-0 rounded p-1 hover:bg-muted" aria-label={`Remove ${p.name}`} onClick={() => { setPeople((l) => l.filter((_, j) => j !== i)); setPersonal({}); }}><X className="h-4 w-4" /></button>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">WhatsApp opens with the message ready for each person. You tap send. Names are kept only on this screen, not saved.</p>
+
+          {isFestival && pageId && (
+            <div className="grid gap-1.5 rounded-xl border bg-muted/30 p-3">
+              <Button type="button" variant="outline" size="sm" disabled={building} onClick={() => void buildPersonal()} className="justify-self-start">
+                <Sparkles className="h-4 w-4 mr-1" /> {building ? "Setting up each person's preview…" : Object.keys(personal).length ? "Redo personal WhatsApp previews" : "Give everyone their own WhatsApp preview"}
+              </Button>
+              <p className="text-xs text-muted-foreground">{Object.keys(personal).length ? `${Object.keys(personal).length} of ${people.length} people now see their own name in the link preview. Free.` : "Optional and free: each person's link preview shows their own name, not just the card."}</p>
+              {buildErr && <p className="text-xs text-destructive" role="alert">{buildErr}</p>}
+            </div>
+          )}
+
+          <div className="grid gap-2" role="radiogroup" aria-label="How to send">
+            <ModeOption active={mode === "queue"} onClick={() => setMode("queue")} icon={<Send className="h-4 w-4" />}
+              title="From my WhatsApp" price={fmtCredits(sendAllCredits("queue", people.length))}
+              text={`1 credit for every ${SEND_ALL_PEOPLE_PER_CREDIT} people. Messages go from your own number; WhatsApp opens each chat ready and you tap send.`} />
+            <ModeOption active={mode === "auto"} disabled={!autoOn} onClick={() => autoOn && setMode("auto")} icon={<Zap className="h-4 w-4" />}
+              title="Send automatically" price={autoOn ? fmtCredits(sendAllCredits("auto", withPhone.length)) : "Coming soon"}
+              text={`${SEND_ALL_AUTO_CREDITS_EACH} credits a person with a number. EZYOURLIFE's WhatsApp sends them all for you, no tapping. Failed ones are refunded.`} />
+          </div>
+
+          {pageId ? (
+            <Button className="h-14 text-base" disabled={sendCount === 0} onClick={() => { setConsent(false); setConfirmOpen(true); }}>
+              <Send className="h-5 w-5 mr-2" /> Send all · {fmtCredits(need)}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">Publish the page to send it to everyone.</p>
+          )}
+          <p className="text-xs text-muted-foreground">You have {fmtCredits(balance)}.</p>
         </>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={(o) => !busy && setConfirmOpen(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send to {sendCount.toLocaleString("en-IN")} {sendCount === 1 ? "person" : "people"}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="grid gap-2 text-sm">
+                <p>{mode === "auto" ? `EZYOURLIFE's WhatsApp number will send each person their own message, with their name and link.${people.length > withPhone.length ? ` ${people.length - withPhone.length} without a valid number are left out.` : ""}` : "WhatsApp opens each person's chat with their message ready, one after the other. You tap send in each."}</p>
+                <p className="font-semibold text-foreground">This uses {fmtCredits(need)}. You have {fmtCredits(balance)}.</p>
+                {short > 0 && <p className="text-destructive">You need {fmtCredits(short)} more.</p>}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="flex items-start gap-3 rounded-xl border p-3 text-sm">
+            <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
+            <span>These are people I know, and they are happy to get this message from me. I allow EZYOURLIFE to use {fmtCredits(need)} for it.</span>
+          </label>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            {short > 0 ? (
+              <Button asChild><Link to={`/credits?next=${encodeURIComponent(location.pathname + location.search)}`}>Buy credits</Link></Button>
+            ) : (
+              <Button disabled={!consent || busy} onClick={() => void start()}>{busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}Use {fmtCredits(need)} and send</Button>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function ModeOption({ active, disabled, onClick, icon, title, price, text }: { active: boolean; disabled?: boolean; onClick: () => void; icon: React.ReactNode; title: string; price: string; text: string }) {
+  return (
+    <button type="button" role="radio" aria-checked={active} aria-disabled={disabled} onClick={onClick}
+      className={cn("grid gap-1 rounded-2xl border-2 p-3 text-left", active ? "border-ink bg-sun/40 shadow-[2px_2px_0_0_hsl(var(--ink))]" : "border-ink/30 bg-card hover:border-ink", disabled && "cursor-not-allowed opacity-60 hover:border-ink/30")}>
+      <span className="flex items-center justify-between gap-2 font-bold"><span className="flex items-center gap-2">{icon}{title}</span><span className="text-sm">{price}</span></span>
+      <span className="text-xs text-muted-foreground">{text}</span>
+    </button>
   );
 }

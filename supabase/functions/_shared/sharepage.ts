@@ -167,3 +167,59 @@ export async function writeSharePage(m: ShareMeta): Promise<string | null> {
   await putFile(token, `${m.path ?? `p/${m.slug}`}/index.html`, shareHtml(m), `Share page: ${m.path ?? m.slug}`);
   return `${shareBase()}/${m.path ?? `p/${m.slug}`}/`;
 }
+
+// Writing many share pages one file at a time (a GET then a PUT per file, the Contents API `putFile`
+// above) costs two GitHub API calls per page: fine for one page at a time, but a one-off bulk send of
+// a few hundred to a few hundred thousand personalised pages (one per recipient, each with their own
+// name in the WhatsApp preview) would mean hundreds of thousands of calls - well past GitHub's rate
+// limit, and fast repeated single-file commits to one repo trip its abuse-detection throttling long
+// before that. The Git Data API avoids this: build the whole batch's worth of files into one tree,
+// one commit, and move the branch pointer once. That is 4-5 calls per batch however many files are in
+// it, so a batch of a few hundred files costs the same handful of calls as a batch of one file.
+const BATCH_SIZE = 400; // files per commit; keeps each request body small and each commit easy to look at
+
+async function currentHead(token: string, branch: string, inRepo: string): Promise<string> {
+  const r = await gh(token, `/repos/${inRepo}/git/ref/heads/${branch}`);
+  if (!r.ok) throw new Error(`GitHub ref ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return (await r.json()).object.sha as string;
+}
+
+/**
+ * Writes many share pages (all path-based, under the shared repo - not a page's own subdomain) in a
+ * handful of commits instead of one API round-trip per file. Returns each page's public URL, keyed by
+ * the ShareMeta it came from (object identity, so callers should iterate the same array to read it back).
+ * Call order matters: each batch's commit is built on the previous one, so batches run one after another,
+ * never in parallel, to avoid two batches racing to move the same branch pointer.
+ */
+export async function writeSharePagesBatch(items: ShareMeta[], opts: { message?: string } = {}): Promise<Map<ShareMeta, string>> {
+  const links = new Map<ShareMeta, string>();
+  if (items.length === 0) return links;
+  const token = Deno.env.get("GITHUB_SHARE_TOKEN");
+  if (!token) return links;
+  const inRepo = repo(), branch = "main";
+  await ensureSiteFiles(token).catch((e) => console.warn("share site files", e));
+
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const chunk = items.slice(i, i + BATCH_SIZE);
+    const headSha = await currentHead(token, branch, inRepo);
+    const commitRes = await gh(token, `/repos/${inRepo}/git/commits/${headSha}`);
+    if (!commitRes.ok) throw new Error(`GitHub commit ${commitRes.status}: ${(await commitRes.text()).slice(0, 200)}`);
+    const baseTreeSha = (await commitRes.json()).tree.sha as string;
+
+    const tree = chunk.map((m) => ({ path: `${m.path ?? `p/${m.slug}`}/index.html`, mode: "100644", type: "blob", content: shareHtml(m) }));
+    const treeRes = await gh(token, `/repos/${inRepo}/git/trees`, { method: "POST", body: JSON.stringify({ base_tree: baseTreeSha, tree }) });
+    if (!treeRes.ok) throw new Error(`GitHub tree ${treeRes.status}: ${(await treeRes.text()).slice(0, 200)}`);
+    const newTreeSha = (await treeRes.json()).sha as string;
+
+    const message = opts.message ? `${opts.message} (${i + 1}-${i + chunk.length} of ${items.length})` : `Share pages: ${chunk.length} pages`;
+    const newCommitRes = await gh(token, `/repos/${inRepo}/git/commits`, { method: "POST", body: JSON.stringify({ message, tree: newTreeSha, parents: [headSha] }) });
+    if (!newCommitRes.ok) throw new Error(`GitHub commit create ${newCommitRes.status}: ${(await newCommitRes.text()).slice(0, 200)}`);
+    const newCommitSha = (await newCommitRes.json()).sha as string;
+
+    const refRes = await gh(token, `/repos/${inRepo}/git/refs/heads/${branch}`, { method: "PATCH", body: JSON.stringify({ sha: newCommitSha }) });
+    if (!refRes.ok) throw new Error(`GitHub ref update ${refRes.status}: ${(await refRes.text()).slice(0, 200)}`);
+
+    for (const m of chunk) links.set(m, `${shareBase()}/${m.path ?? `p/${m.slug}`}/`);
+  }
+  return links;
+}

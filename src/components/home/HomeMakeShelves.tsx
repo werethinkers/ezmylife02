@@ -10,7 +10,7 @@ export default function HomeMakeShelves() {
   const { list } = useProducts();
   const sites = list.filter((l) => (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category)).slice(0, 8);
   const festival = list.filter((l) => l.product.category === "festivals").slice(0, 8);
-  const cheapestSite = Math.min(...list.filter((l) => (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category)).map((l) => l.price).filter((n) => n > 0));
+  const cheapestSite = Math.min(...list.filter((l) => (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category)).map((l) => l.credits).filter((n) => n > 0));
 
   const shelf = (title: string, line: string, to: string, items: typeof list) =>
     items.length > 0 && (
@@ -36,7 +36,7 @@ export default function HomeMakeShelves() {
     <>
       {shelf(
         "Your own website, tonight",
-        `Websites, QR menus and visiting cards with WhatsApp built in. Pay once${Number.isFinite(cheapestSite) ? `, from ₹${cheapestSite}` : ""}, online for a year.`,
+        `Websites, QR menus and visiting cards with WhatsApp built in. Pay once${Number.isFinite(cheapestSite) ? `, from ${cheapestSite.toLocaleString("en-IN")} credits` : ""}, online for a year.`,
         "/websites",
         sites,
       )}

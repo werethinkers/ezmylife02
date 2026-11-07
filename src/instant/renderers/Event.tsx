@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { nameFromParam } from "../festLang";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, fmtDate, gcalLink, mapsDir, mapsLink, t12, waTo } from "../util";
@@ -23,6 +24,8 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
   const cover = resolveImg(c.cover) ? c.cover : gallery[0]?.photo;
   const sty = theme.s;
   const bar = useRevealBar<HTMLDivElement>();
+  // "Send all" gives each guest their own link (?to=Rahul-Sharma), so the invitation greets them by name.
+  const guest = useMemo(() => nameFromParam(typeof location !== "undefined" ? new URLSearchParams(location.search).get("to") : ""), []);
   const usesStock = isStock(cover) || gallery.some((g: { photo: string }) => isStock(g.photo));
 
   return (
@@ -35,6 +38,7 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
           {sty !== "photo" && cover && <div className="ev-media"><Img src={cover} alt={String(c.hosts ?? "")} sizes="(min-width: 860px) 45vw, 90vw" eager /></div>}
           <div className="ev-copy">
             <span className="ev-art" aria-hidden="true">{ART[o.art]}</span>
+            {guest && <p className="ev-kick ev-guest">Dear {guest}, you're invited</p>}
             <p className="ev-kick">{o.kicker}</p>
             <h1 className="ev-h" style={fitWords(String(c.hosts ?? ""))}>{c.hosts}</h1>
             {c.tagline && <p className="ev-tag">{c.tagline}</p>}

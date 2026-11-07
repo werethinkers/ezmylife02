@@ -348,6 +348,15 @@ export async function whatsappTaskDone(t: { userId: string; toolId: string; runI
 }
 
 /** Keeps the worker alive after the response is sent. */
+/** "Send all" automatic mode: is this template approved in Wavo yet? Nothing can be sent without it. */
+export async function templateReady(name: string): Promise<boolean> {
+  return (await approvedTemplates()).has(name);
+}
+/** "Send all" automatic mode: one approved template to one number. Throws on a Wavo error; false if not approved. */
+export async function sendApprovedTemplate(to: string, name: string, body: string[], button?: string | null): Promise<boolean> {
+  return sendTemplate(to, name, { body, button });
+}
+
 export function inBackground(p: Promise<unknown>) {
   // deno-lint-ignore no-explicit-any
   (globalThis as any).EdgeRuntime?.waitUntil?.(p);
