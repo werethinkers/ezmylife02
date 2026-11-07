@@ -10,6 +10,10 @@ import { SEND_ALL_MAX } from "@/lib/creditRate";
 interface PickedContact { name?: string[]; tel?: string[] }
 interface ContactsManager { select(props: string[], opts?: { multiple?: boolean }): Promise<PickedContact[]>; getProperties?(): Promise<string[]> }
 
+/** iPhone and iPad (iPadOS reports itself as a Mac with touch). Safari gives websites no contact-book access there. */
+export const isIOS = () =>
+  typeof navigator !== "undefined" && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+
 export const canPickContacts = () =>
   typeof navigator !== "undefined" && "contacts" in navigator && typeof window !== "undefined" && "ContactsManager" in window;
 

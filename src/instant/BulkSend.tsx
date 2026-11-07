@@ -12,7 +12,7 @@ import type { Content, Product } from "./types";
 import { langById, parsePeople, personalLink, type LangId, type Person } from "./festLang";
 import { describeForRecipient } from "./meta";
 import { bulkSend, checkout, CheckoutError, startQueueSend } from "./api";
-import { canPickContacts, dedupe, pickFromPhone, readContactsFile } from "./contacts";
+import { canPickContacts, dedupe, isIOS, pickFromPhone, readContactsFile } from "./contacts";
 import { fill, isMobile, waDigits, waTo, waShare } from "./util";
 
 type Mode = "queue" | "auto";
@@ -52,6 +52,7 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
   const [building, setBuilding] = useState(false);
   const [buildErr, setBuildErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const ios = isIOS();
   const isFestival = product.family === "festival";
   const isDiwali = product.opts.art === "diya";
   const L = langById(lang);
@@ -213,16 +214,35 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
       <div className="font-semibold">Send to everyone, each by name</div>
       <p className="text-sm text-muted-foreground">Add people from your contacts. Each one gets a WhatsApp message with their own name{isFestival ? ", and their name on the card" : product.family === "event" ? ", and their name on the invitation" : ""}. Up to {SEND_ALL_MAX.toLocaleString("en-IN")} people.</p>
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        {canPickContacts() && <Button type="button" className="h-12" onClick={() => void fromPhone()}><BookUser className="h-4 w-4 mr-2" /> Choose from contacts</Button>}
-        <Button type="button" variant="outline" className="h-12" onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-2" /> Upload contacts file</Button>
-        <Button type="button" variant="outline" className="h-12" onClick={() => setShowPaste((v) => !v)}><ClipboardPaste className="h-4 w-4 mr-2" /> Paste a list</Button>
+      {/* Phone contact book where the browser allows it (Chrome on Android, with select-all). On iPhone no
+          website can read contacts, so the fastest way is exporting "All Contacts" once and importing that file. */}
+      {canPickContacts() ? (
+        <Button type="button" className="h-14 text-base" onClick={() => void fromPhone()}><BookUser className="h-5 w-5 mr-2" /> Import from my contacts</Button>
+      ) : (
+        <div className="grid gap-3 rounded-2xl border-2 border-ink bg-sun/30 p-4">
+          <p className="font-bold">Import all your contacts at once</p>
+          <ol className="grid gap-1.5 text-sm">
+            {(ios ? [
+              <>Open the <b>Contacts</b> app and tap <b>Lists</b> (top left).</>,
+              <>Press and hold <b>All Contacts</b> (or All iCloud), tap <b>Export</b>, then <b>Done</b>, and <b>Save to Files</b>.</>,
+              <>Come back here and tap the button below, then pick that file.</>,
+            ] : [
+              <>Open the <b>Contacts</b> app, go to <b>Settings</b> (or Fix &amp; manage) and tap <b>Export</b>.</>,
+              <>Save the <b>.vcf</b> file to your phone.</>,
+              <>Come back here and tap the button below, then pick that file.</>,
+            ]).map((step, i) => (
+              <li key={i} className="flex gap-2"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-ink bg-card text-xs font-bold">{i + 1}</span><span>{step}</span></li>
+            ))}
+          </ol>
+          <Button type="button" className="h-14 text-base" onClick={() => fileRef.current?.click()}><BookUser className="h-5 w-5 mr-2" /> Import my contacts</Button>
+          <p className="text-xs text-muted-foreground">{ios ? "iPhone doesn't let websites open your contacts directly, so this is the quickest way. " : ""}You do the export once; the file is read on this phone only and never uploaded.</p>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {canPickContacts() && <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-1" /> Import a contacts file</Button>}
+        <Button type="button" variant="ghost" size="sm" onClick={() => setShowPaste((v) => !v)}><ClipboardPaste className="h-4 w-4 mr-1" /> Paste a list</Button>
       </div>
       <input ref={fileRef} type="file" accept=".vcf,.vcard,.csv,.txt,text/vcard,text/x-vcard,text/csv" className="hidden" onChange={(e) => void fromFile(e.target.files?.[0])} aria-label="Contacts file" />
-      <p className="text-xs text-muted-foreground">
-        {canPickContacts() ? "Choose from contacts opens your phone's contact book; you pick who to add (there's a select-all). " : "On Android in Chrome you can pick straight from your contact book. "}
-        A contacts file works everywhere: iPhone Contacts → Select → Share (.vcf), Android Contacts → Export (.vcf), or Google Contacts → Export (.csv). It is read on this device only.
-      </p>
       {showPaste && (
         <div className="grid gap-2">
           <textarea value={paste} onChange={(e) => setPaste(e.target.value)} rows={4} placeholder={"Rahul Sharma, 9876543210\nMeena Aunty, 98xxxxxx12"} className="w-full rounded-xl border bg-background p-3 text-sm" aria-label="People to send to, one per line" />
