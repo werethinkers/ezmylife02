@@ -17,7 +17,7 @@ import { Zap, Loader2, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { seoFor } from "@/lib/seo/pages";
-import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
+import AppleCreditPacks from "@/components/wallet/AppleCreditPacks";
 import { canBuyInThisApp } from "@/lib/nativeApp";
 
 const Credits = () => {
@@ -216,7 +216,18 @@ const Credits = () => {
           </div>
         ) : null}
 
-        {!canBuyInThisApp() && <AppStoreBuyNotice className="mt-8" />}
+        {/* iPhone app: credits are paid with Apple in-app purchase (docs/ios-app.md) */}
+        {!canBuyInThisApp() && (
+          <section className="mt-12">
+            <h2 className="mb-5 text-2xl font-bold md:text-3xl">Credit packs</h2>
+            <div className="max-w-xl rounded-2xl border-2 border-ink bg-card p-5 shadow-block">
+              <AppleCreditPacks
+                onNeedLogin={() => setLoginOpen(true)}
+                onBought={(credits) => navigate(`/credits/success?credits=${credits}`)}
+              />
+            </div>
+          </section>
+        )}
 
         {/* Packs (not in the iOS app: Apple rules, see docs/ios-app.md) */}
         {canBuyInThisApp() && (<>
