@@ -115,3 +115,49 @@ export async function readContactsFile(file: File): Promise<Person[]> {
   const text = await file.text();
   return /BEGIN:VCARD/i.test(text) ? parseVcf(text) : parseCsv(text);
 }
+
+// ---------- names to greet people by ----------
+// Phone books hold labels, not just names: "Rohit Driver", "Sunita Maid", "Amit HDFC", "Neha (Office)".
+// greetingName() drops those labels so the message says "Happy Diwali, Rohit!", and tag says what was dropped,
+// so work contacts can be found and skipped in one tap. Respectful forms (Sir, Aunty, Bhaiya, Ji) are kept:
+// they are how people are actually greeted.
+const ROLE_WORDS: Record<string, string> = Object.fromEntries(([
+  ["Driver", "driver drivr cab taxi auto ola uber rapido"],
+  ["Help", "maid bai cook kaamwali househelp help nanny aaya cleaner"],
+  ["Service", "plumber electrician carpenter painter mechanic tailor dhobi istri press ac repair technician service servicing"],
+  ["Delivery", "delivery courier swiggy zomato blinkit zepto dunzo amazon flipkart"],
+  ["Milk & veg", "milk milkman doodh doodhwala dudhwala sabzi sabziwala vegetable fruit fruitwala kabadi kabadiwala"],
+  ["Guard", "guard watchman security chowkidar gardener mali"],
+  ["Work", "office work colleague client customer vendor supplier dealer distributor hr recruiter boss team"],
+  ["Shop", "shop store kirana mart medical chemist pharmacy gym salon parlour parlor"],
+  ["Bank", "bank hdfc sbi icici axis kotak lic insurance loan ca broker agent"],
+  ["Telecom", "jio airtel vodafone vi bsnl"],
+  ["Landlord", "landlord tenant owner rent pg hostel"],
+] as const).flatMap(([tag, words]) => words.split(" ").map((w) => [w, tag])));
+const NOISE = new Set(["new", "old", "no", "num", "number", "mob", "mobile", "cell", "home", "personal", "whatsapp", "wa", "ph", "phone", "contact", "ii", "iii"]);
+
+export interface GreetName { name: string; tag?: string }
+
+export function greetingName(saved: string): GreetName {
+  let tag: string | undefined;
+  const words = saved
+    .replace(/\(([^)]*)\)|\[([^\]]*)\]/g, (_m, a, b) => { const t = ROLE_WORDS[String(a ?? b).trim().toLowerCase()]; if (t && !tag) tag = t; return " "; })
+    .replace(/\p{Extended_Pictographic}|\u200d|\uFE0F/gu, " ")
+    .split(/[\s_\-,/|:;]+/)
+    .filter(Boolean);
+  const roleOf = (w: string) => {
+    const lw = w.toLowerCase().replace(/\.$/, "");
+    return ROLE_WORDS[lw] ?? (/(wala|wale|wali)$/.test(lw) ? "Service" : undefined);
+  };
+  // After a label comes a place or company ("Ramesh Plumber Indore"), so the rest goes too, unless the label came first.
+  const firstRole = words.findIndex((w) => roleOf(w));
+  const upto = firstRole > 0 ? words.slice(0, firstRole) : words;
+  if (firstRole >= 0 && !tag) tag = roleOf(words[firstRole]);
+  const kept = upto.filter((w) => {
+    const lw = w.toLowerCase().replace(/\.$/, "");
+    if (/\d/.test(w) || w.includes("@") || roleOf(w)) return false;
+    return !NOISE.has(lw);
+  });
+  const name = kept.map((w) => (w === w.toUpperCase() && w.length > 3) || w === w.toLowerCase() ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w).join(" ").slice(0, 30);
+  return { name: name || saved.trim().slice(0, 30), tag };
+}

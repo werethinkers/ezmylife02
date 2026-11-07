@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookUser, Check, ClipboardPaste, Copy, FileUp, Loader2, Send, SkipForward, Sparkles, X, Zap } from "lucide-react";
+import { BookUser, Check, ClipboardPaste, Copy, FileUp, Loader2, Send, SkipForward, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -12,7 +12,8 @@ import type { Content, Product } from "./types";
 import { langById, parsePeople, personalLink, type LangId, type Person } from "./festLang";
 import { describeForRecipient } from "./meta";
 import { bulkSend, checkout, CheckoutError, startQueueSend } from "./api";
-import { canPickContacts, dedupe, isIOS, pickFromPhone, readContactsFile } from "./contacts";
+import { canPickContacts, dedupe, greetingName, isIOS, pickFromPhone, readContactsFile } from "./contacts";
+import { ContactList, type ContactRow } from "./ContactList";
 import { fill, isMobile, waDigits, waTo, waShare } from "./util";
 
 type Mode = "queue" | "auto";
@@ -38,7 +39,9 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
   const { toast } = useToast();
   const { total: balance } = useWallet();
   const refreshWallet = useRefreshWallet();
-  const [people, setPeople] = useState<Person[]>([]);
+  // Everyone imported; only ticked rows are sent, greeted by the (editable) name in the row.
+  const [rows, setRows] = useState<ContactRow[]>([]);
+  const people = useMemo<Person[]>(() => rows.filter((r) => r.on).map((r) => ({ name: r.name.trim() || r.saved, phone: r.phone })), [rows]);
   const [paste, setPaste] = useState("");
   const [showPaste, setShowPaste] = useState(false);
   const [mode, setMode] = useState<Mode>("queue");
@@ -92,10 +95,13 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
   }, [auto, refreshWallet]);
 
   const add = (more: Person[], from: string) => {
-    const before = people.length;
-    const next = dedupe([...people, ...more]);
-    setPeople(next); setPersonal({});
-    const added = next.length - before;
+    const before = rows.length;
+    // Same rules as dedupe() (one per number), keeping any names already edited.
+    const merged = dedupe([...rows.map((r) => ({ name: r.saved, phone: r.phone })), ...more]);
+    const fresh = merged.slice(before).map((p, i) => ({ id: Date.now() + i, saved: p.name, phone: p.phone, on: true, ...greetingName(p.name) }));
+    const next = [...rows, ...fresh];
+    setRows(next); setPersonal({});
+    const added = fresh.length;
     toast({ title: added ? `${added} ${added === 1 ? "person" : "people"} added from ${from}` : "No new people found", description: next.length >= SEND_ALL_MAX ? `The list holds up to ${SEND_ALL_MAX.toLocaleString("en-IN")} people.` : undefined });
   };
   const fromPhone = async () => {
@@ -174,7 +180,7 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
           <div className="grid gap-2 rounded-2xl border-2 border-ink bg-sun/40 p-4">
             <p className="font-bold">All done 🎉</p>
             <p className="text-sm">You went through everyone on the list.</p>
-            <Button variant="outline" onClick={() => { setQueue(null); setPeople([]); }}>Send to another list</Button>
+            <Button variant="outline" onClick={() => { setQueue(null); setRows([]); }}>Send to another list</Button>
           </div>
         ) : (
           <div className="grid gap-2 rounded-2xl border-2 border-ink bg-card p-4">
@@ -206,7 +212,7 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
         {done && auto.refunded > 0 && <p className="text-sm font-semibold">{fmtCredits(auto.refunded)} returned for the messages that failed.</p>}
         {done && auto.failedNames.length > 0 && <p className="text-xs text-muted-foreground">Not sent: {auto.failedNames.join(", ")}{auto.failed > auto.failedNames.length ? "…" : ""}</p>}
         {!done && <p className="text-xs text-muted-foreground">You can close this page. Sending carries on.</p>}
-        {done && <Button variant="outline" onClick={() => { setAuto(null); setPeople([]); }}>Send to another list</Button>}
+        {done && <Button variant="outline" onClick={() => { setAuto(null); setRows([]); }}>Send to another list</Button>}
       </div>
     );
   }
@@ -253,24 +259,17 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
         </div>
       )}
 
-      {people.length > 0 && (
+      {rows.length > 0 && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span className="font-semibold">{people.length.toLocaleString("en-IN")} {people.length === 1 ? "person" : "people"} · {withPhone.length.toLocaleString("en-IN")} with a WhatsApp number</span>
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="font-bold">{rows.length.toLocaleString("en-IN")} contacts</span>
             <span className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={copyAll}><Copy className="h-4 w-4 mr-1" /> Copy all</Button>
-              <Button variant="ghost" size="sm" onClick={() => { setPeople([]); setPersonal({}); }}>Clear</Button>
+              <Button variant="ghost" size="sm" onClick={copyAll} disabled={people.length === 0}><Copy className="h-4 w-4 mr-1" /> Copy messages</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setRows([]); setPersonal({}); }}>Clear list</Button>
             </span>
           </div>
-          <ul className="grid max-h-64 gap-1.5 overflow-auto rounded-xl border p-2">
-            {people.map((p, i) => (
-              <li key={`${p.name}-${p.phone}-${i}`} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted/50">
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
-                <span className={cn("shrink-0 font-mono text-xs", reachable(p.phone) ? "text-muted-foreground" : "text-destructive")}>{p.phone ? (reachable(p.phone) ? p.phone : "number not valid") : "no number"}</span>
-                <button type="button" className="shrink-0 rounded p-1 hover:bg-muted" aria-label={`Remove ${p.name}`} onClick={() => { setPeople((l) => l.filter((_, j) => j !== i)); setPersonal({}); }}><X className="h-4 w-4" /></button>
-              </li>
-            ))}
-          </ul>
+          <ContactList rows={rows} setRows={(f) => { setRows(f); setPersonal({}); }} reachable={reachable} />
+          {people[0] && <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm"><span className="text-muted-foreground">{people[0].name} will get: </span>{msgFor(people[0].name).split("\n")[0]}</p>}
 
           {isFestival && pageId && !previewsOff && (
             <div className="grid gap-1.5 rounded-xl border bg-muted/30 p-3">
@@ -292,13 +291,16 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
           </div>
 
           {pageId ? (
-            <Button className="h-14 text-base" disabled={sendCount === 0} onClick={() => { setConsent(false); setConfirmOpen(true); }}>
-              <Send className="h-5 w-5 mr-2" /> Send all · {fmtCredits(need)}
-            </Button>
+            // Stays at the bottom of the screen while scrolling a long list.
+            <div className="sticky bottom-2 z-10 grid gap-1 rounded-2xl border-2 border-ink bg-card p-2 shadow-[3px_3px_0_0_hsl(var(--ink))]">
+              <Button className="h-14 text-base" disabled={sendCount === 0} onClick={() => { setConsent(false); setConfirmOpen(true); }}>
+                <Send className="h-5 w-5 mr-2" /> Send to {sendCount.toLocaleString("en-IN")} · {fmtCredits(need)}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">{rows.length - people.length > 0 ? `${(rows.length - people.length).toLocaleString("en-IN")} skipped · ` : ""}You have {fmtCredits(balance)}</p>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">Publish the page to send it to everyone.</p>
           )}
-          <p className="text-xs text-muted-foreground">You have {fmtCredits(balance)}.</p>
         </>
       )}
 
