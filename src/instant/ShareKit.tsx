@@ -25,6 +25,9 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
   const forOne = product.family === "festival" && oneName.trim().length > 0;
   // Personal links go through the share page (its own picture and title in WhatsApp), which passes ?to= on to the card.
   const sendUrl = forOne ? personalLink(baseUrl, oneName.trim(), pickLang ? lang : "en", true) : pickLang ? withLang(baseUrl, lang) : baseUrl;
+  // A new share page takes about a minute to come online. Links sent before that get no WhatsApp preview,
+  // and WhatsApp remembers that for the link, so wait until the page is up.
+  const linkReady = useLinkOnline(link && !preparing ? link : null);
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
@@ -98,13 +101,14 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
           <Button variant="outline" className="h-12 rounded-xl" onClick={copy}><Copy className="h-4 w-4 mr-2" /> Copy message</Button>
         </div>
         <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm break-all font-mono">{sendUrl}</div>
+        {!preparing && link && !linkReady && <p className="flex items-center gap-2 rounded-xl bg-sun/40 px-3 py-2 text-sm font-semibold" role="status"><span className="h-3 w-3 rounded-full border-2 border-ink/30 border-t-ink animate-spin" aria-hidden="true" /> Getting your WhatsApp preview ready (about a minute). Send after this, so the picture shows.</p>}
         {preparing && <p className="text-xs text-muted-foreground flex items-center gap-2"><span className="h-3 w-3 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin" aria-hidden="true" /> Setting up your WhatsApp link preview (about a minute). You can share now; the link updates when it's ready.</p>}
-        {!preparing && link && <p className="text-xs text-muted-foreground">This link shows your own picture and title when shared on WhatsApp.</p>}
+        {!preparing && link && linkReady && <p className="text-xs text-muted-foreground">This link shows your own picture and title when shared on WhatsApp.</p>}
         <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">What people receive on WhatsApp</summary><p className="whitespace-pre-wrap mt-2 rounded-xl bg-muted/40 p-3">{message}</p></details>
       </div>
 
       {/* Every card and website: send it to many people at once, each by name (credits, after asking). */}
-      <hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} />
+      <hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} ready={!preparing && linkReady} />
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>
@@ -135,4 +139,33 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
       </div>
     </div>
   );
+}
+
+/**
+ * True once the share page is online. share.ezyourlife.com pages get a tiny ready.gif from the share
+ * repo's Action once they are published; it loads as an image (no cross-site permission needed), checked
+ * every 5 seconds for up to 3 minutes, after which we assume it is up. Other hosts count as ready.
+ */
+function useLinkOnline(link: string | null): boolean {
+  const [ok, setOk] = useState(!link);
+  useEffect(() => {
+    const page = link?.split("?")[0] ?? "";
+    if (!link || !/^https:\/\/share\.ezyourlife\.com\/p\//.test(page)) { setOk(true); return; }
+    setOk(false);
+    let live = true; let timer: ReturnType<typeof setTimeout> | undefined;
+    const start = Date.now();
+    const check = () => {
+      const img = new Image();
+      img.onload = () => { if (live) setOk(true); };
+      img.onerror = () => {
+        if (!live) return;
+        if (Date.now() - start > 180_000) { setOk(true); return; }
+        timer = setTimeout(check, 5000);
+      };
+      img.src = `${page.replace(/\/?$/, "/")}ready.gif?t=${Date.now()}`;
+    };
+    check();
+    return () => { live = false; if (timer) clearTimeout(timer); };
+  }, [link]);
+  return ok;
 }

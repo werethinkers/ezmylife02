@@ -35,7 +35,7 @@ const readQueue = (pageId?: string): QueueState | null => {
  * lang: the card language the sender chose in the share kit; every person gets their card in it.
  * pageId: needed to charge and to make personal link previews; without it only one-by-one links show.
  */
-export function BulkSend({ product, content, link, lang = "en", pageId }: { product: Product; content: Content; link: string; lang?: LangId; pageId?: string }) {
+export function BulkSend({ product, content, link, lang = "en", pageId, ready = true }: { product: Product; content: Content; link: string; lang?: LangId; pageId?: string; ready?: boolean }) {
   const { toast } = useToast();
   const { total: balance } = useWallet();
   const refreshWallet = useRefreshWallet();
@@ -304,8 +304,9 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
           {pageId ? (
             // Stays at the bottom of the screen while scrolling a long list.
             <div className="sticky bottom-2 z-10 grid gap-1 rounded-2xl border-2 border-ink bg-card p-2 shadow-[3px_3px_0_0_hsl(var(--ink))]">
-              <Button className="h-14 text-base" disabled={sendCount === 0} onClick={() => { setConsent(false); setConfirmOpen(true); }}>
-                <Send className="h-5 w-5 mr-2" /> Send to {sendCount.toLocaleString("en-IN")} · {fmtCredits(need)}
+              <Button className="h-14 text-base" disabled={sendCount === 0 || !ready} onClick={() => { setConsent(false); setConfirmOpen(true); }}>
+                {ready ? <Send className="h-5 w-5 mr-2" /> : <Loader2 className="h-5 w-5 mr-2 animate-spin" />}
+                {ready ? <>Send to {sendCount.toLocaleString("en-IN")} · {fmtCredits(need)}</> : "Getting the preview ready…"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">{rows.length - people.length > 0 ? `${(rows.length - people.length).toLocaleString("en-IN")} skipped · ` : ""}You have {fmtCredits(balance)}</p>
             </div>
