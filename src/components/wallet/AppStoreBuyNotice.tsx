@@ -13,7 +13,7 @@ export default function AppStoreBuyNotice({ className = "" }: { className?: stri
   return (
     <div className={`rounded-xl border border-border bg-muted/40 p-4 text-sm ${className}`}>
       <div className="mb-1 flex items-center gap-2 font-semibold">
-        <Zap className="h-4 w-4 text-primary" /> Buying isn't available in the app
+        <Zap className="h-4 w-4 text-primary" /> Not available in the app
       </div>
       <p className="text-muted-foreground">{APP_STORE_BUY_TEXT}</p>
     </div>
