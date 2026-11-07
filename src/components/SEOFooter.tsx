@@ -32,6 +32,7 @@ const COMPANY_LINKS = [
   { to: "/credits", label: "Prices and credits" },
   { to: "/refund-policy", label: "Refund policy" },
   { to: "/terms", label: "Terms and conditions" },
+  { to: "/privacy", label: "Privacy policy" },
   { to: "/get-extension", label: "Browser add-on" },
   { to: "/mobile-shortcuts", label: "Add to your phone" },
   { to: "/explore", label: "Find apps by business" },

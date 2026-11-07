@@ -10,6 +10,8 @@ import { useRefreshWallet } from "@/hooks/useWallet";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { toast } from "sonner";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
+import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
+import { canBuyInThisApp } from "@/lib/nativeApp";
 
 interface Props {
   open: boolean;
@@ -47,6 +49,7 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
   }, [open, autoStart, defaultPackId, user]);
 
   const buy = async (packId: string) => {
+    if (!canBuyInThisApp()) return;
     if (!user) { setLoginOpen(true); return; }
     const pack = CREDIT_PACKS.find((p) => p.id === packId);
     if (!pack) return;
@@ -103,6 +106,26 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
       setBusy(null);
     }
   };
+
+  if (!canBuyInThisApp()) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              {required != null ? "Not enough credits" : "Credits"}
+            </DialogTitle>
+            <DialogDescription>
+              {required != null && balance != null ? `This needs ${required} credits and you have ${balance}.` : "Your credits work everywhere on EZYOURLIFE."}
+            </DialogDescription>
+          </DialogHeader>
+          <AppStoreBuyNotice />
+          <Button className="mt-2 h-12 w-full" variant="outline" onClick={() => onOpenChange(false)}>OK</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>

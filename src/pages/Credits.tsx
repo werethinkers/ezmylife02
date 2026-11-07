@@ -17,6 +17,8 @@ import { Zap, Loader2, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { seoFor } from "@/lib/seo/pages";
+import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
+import { canBuyInThisApp } from "@/lib/nativeApp";
 
 const Credits = () => {
   const { user } = useAuth();
@@ -51,6 +53,7 @@ const Credits = () => {
   }, [searchParams, user]);
 
   const buyPack = async (packId: string) => {
+    if (!canBuyInThisApp()) return;
     const pack = CREDIT_PACKS.find((p) => p.id === packId);
     if (!pack) return;
     if (!user) {
@@ -168,8 +171,9 @@ const Credits = () => {
           <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">No monthly plan</span>
           <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">Pay only for what you use</h1>
           <p className="mt-3 max-w-2xl text-lg text-ink/85">
-            Apps are paid with credits. Buy a pack from ₹10, and an app uses its credits only when it gives you a result. Websites and cards are
-            paid once, on their own page.
+            {canBuyInThisApp()
+              ? "Apps are paid with credits. Buy a pack from ₹10, and an app uses its credits only when it gives you a result. Websites and cards are paid once, on their own page."
+              : "Apps are paid with credits, and an app uses its credits only when it gives you a result."}
           </p>
           <ol className="mt-6 grid gap-3 sm:grid-cols-3">
             {[
@@ -212,7 +216,10 @@ const Credits = () => {
           </div>
         ) : null}
 
-        {/* Packs */}
+        {!canBuyInThisApp() && <AppStoreBuyNotice className="mt-8" />}
+
+        {/* Packs (not in the iOS app: Apple rules, see docs/ios-app.md) */}
+        {canBuyInThisApp() && (<>
         <h2 className="mb-5 mt-12 text-2xl font-bold md:text-3xl">Credit packs</h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CREDIT_PACKS.map((pack) => {
@@ -258,6 +265,7 @@ const Credits = () => {
             </div>
           </CollapsibleContent>
         </Collapsible>
+        </>)}
 
         {/* Websites and cards */}
         <section className="mt-12 grid gap-5 md:grid-cols-2">
@@ -275,7 +283,7 @@ const Credits = () => {
         <div className="mt-10 grid gap-4 text-[15px] sm:grid-cols-3">
           <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> No recurring charges, ever.</div>
           <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Credits are used only when an app works.</div>
-          <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Secure payments with UPI, cards or netbanking.</div>
+          {canBuyInThisApp() && <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Secure payments with UPI, cards or netbanking.</div>}
         </div>
       </main>
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={pendingPack ? `/credits?pack=${pendingPack}` : "/credits"} />
