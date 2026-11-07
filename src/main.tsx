@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initNativeApp } from "./lib/nativeInit";
 
 // After a new deploy, an open tab may request old file names that no longer exist
 // ("Importing a module script failed"). Reload once to pick up the new version.
@@ -26,3 +27,6 @@ window.addEventListener("error", (e) => {
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Inside the iOS app only: downloads, sharing, splash screen. Does nothing in a browser.
+initNativeApp().catch((e) => console.warn("[app] native setup failed", e));

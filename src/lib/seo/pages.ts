@@ -218,6 +218,14 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Refund policy", "/refund-policy"], ["Contact support", "/about#contact"]],
   },
   {
+    path: "/privacy",
+    title: "Privacy policy | EZYOURLIFE",
+    description: "What EZYOURLIFE collects, why, who it is shared with, how long it is kept, and how to see, change or delete your data.",
+    h1: "Privacy policy",
+    text: ["What we collect when you use EZYOURLIFE, how we use it, and how to change or delete your data."],
+    links: [["Terms and conditions", "/terms"], ["Contact support", "/about#contact"]],
+  },
+  {
     path: "/startup-analyser",
     title: "AI Startup Analyser: competitors, numbers and team | EZYOURLIFE",
     description: "Describe a startup and get competitor analysis, financial projections, a team assessment and an investor-ready report, made by AI in minutes.",

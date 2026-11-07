@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>EZYOURLIFE</title>
+  <style>
+    :root { color-scheme: light; }
+    html, body { margin: 0; height: 100%; background: #FFF8EC; color: #121212;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 24px; box-sizing: border-box; text-align: center; }
+    .mark { font-weight: 800; font-size: 28px; letter-spacing: 0.04em; }
+    .tag { font-size: 13px; letter-spacing: 0.2em; margin-top: 4px; color: #555; }
+    h1 { font-size: 20px; margin: 40px 0 8px; }
+    p { margin: 0 0 28px; color: #444; line-height: 1.5; max-width: 300px; }
+    button { appearance: none; border: 0; border-radius: 12px; background: #AC156B; color: #fff;
+      font-size: 17px; font-weight: 600; padding: 14px 32px; min-width: 200px; }
+    button:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark">EZYOURLIFE</div>
+    <div class="tag">THINK IT &rarr; DONE</div>
+    <h1>You're offline</h1>
+    <p>Connect to Wi-Fi or mobile data, then try again. Your apps and credits are safe.</p>
+    <button type="button" id="retry">Try again</button>
+  </main>
+  <script>
+    var retry = document.getElementById("retry");
+    function go() { window.location.href = "https://ezyourlife.com/"; }
+    retry.addEventListener("click", go);
+    window.addEventListener("online", go);
+  </script>
+</body>
+</html>
