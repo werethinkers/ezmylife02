@@ -358,6 +358,21 @@ async function listCards(url: URL) {
   });
 }
 
+// The shared business profile (business name, city, GSTIN…) that prefills app boxes on the site. Read only.
+const PROFILE_KEYS = ["businessName", "ownerName", "industry", "city", "state", "phone", "email", "address", "gstin", "website", "products", "audience", "tone", "language"];
+async function readProfile(who: Who) {
+  const rows = await dbRows<{ session_data: { profile?: Record<string, unknown> } | null }>(
+    `tool_sessions?user_id=eq.${who.userId}&tool_id=eq._workspace&select=session_data`,
+  );
+  const raw = rows[0]?.session_data?.profile ?? {};
+  const profile: Record<string, string> = {};
+  for (const k of PROFILE_KEYS) {
+    const v = raw[k];
+    if (typeof v === "string" && v.trim()) profile[k] = v.trim().slice(0, 500);
+  }
+  return json({ ok: true, profile });
+}
+
 interface Shortcut { key: string; value: string; category?: string; logic?: string }
 async function readShortcuts(userId: string): Promise<{ list: Shortcut[]; exists: boolean; editor: string }> {
   const rows = await dbRows<{ session_shortcuts: Shortcut[] | null; editor_content: string | null }>(
@@ -484,6 +499,7 @@ Deno.serve(async (req) => {
     }
 
     if (m === "GET" && route[0] === "me") return json({ ok: true, user_id: who.userId, via: who.key ? "api_key" : "session", key_id: who.key?.id ?? null });
+    if (m === "GET" && route[0] === "profile") return await readProfile(who);
     if (m === "POST" && route[0] === "apps" && route[2] === "run") return await runApp(who, decodeURIComponent(route[1]), body);
     if (m === "POST" && route[0] === "prompt" && route[1] === "improve") return await improve(who, body);
     if (m === "POST" && route[0] === "prompt" && route[1] === "brainstorm") return await brainstorm(who, body);
