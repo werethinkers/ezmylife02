@@ -62,6 +62,86 @@ export type Database = {
         }
         Relationships: []
       }
+      api_key_runs: {
+        Row: {
+          created_at: string
+          credits: number
+          id: number
+          key_id: string | null
+          run_id: string | null
+          tool_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          id?: number
+          key_id?: string | null
+          run_id?: string | null
+          tool_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: number
+          key_id?: string | null
+          run_id?: string | null
+          tool_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_runs_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          allowed_tools: string[] | null
+          app: string | null
+          created_at: string
+          daily_cap: number
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          prefix: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allowed_tools?: string[] | null
+          app?: string | null
+          created_at?: string
+          daily_cap?: number
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name?: string
+          prefix: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allowed_tools?: string[] | null
+          app?: string | null
+          created_at?: string
+          daily_cap?: number
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          prefix?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bhed_chart_media: {
         Row: {
           chart_id: string
@@ -1258,6 +1338,112 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_bulk_recipients: {
+        Row: {
+          error: string | null
+          id: number
+          name: string
+          phone: string
+          send_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          error?: string | null
+          id?: never
+          name: string
+          phone: string
+          send_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          error?: string | null
+          id?: never
+          name?: string
+          phone?: string
+          send_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_bulk_recipients_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "ip_bulk_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ip_bulk_sends: {
+        Row: {
+          consent_at: string
+          created_at: string
+          credits_charged: number
+          credits_refunded: number
+          failed: number
+          finished_at: string | null
+          free_used: number
+          id: string
+          lang: string
+          mode: string
+          owner_id: string
+          page_id: string
+          paid_used: number
+          people: number
+          promo_used: number
+          sent: number
+          status: string
+        }
+        Insert: {
+          consent_at: string
+          created_at?: string
+          credits_charged?: number
+          credits_refunded?: number
+          failed?: number
+          finished_at?: string | null
+          free_used?: number
+          id?: string
+          lang?: string
+          mode: string
+          owner_id: string
+          page_id: string
+          paid_used?: number
+          people: number
+          promo_used?: number
+          sent?: number
+          status?: string
+        }
+        Update: {
+          consent_at?: string
+          created_at?: string
+          credits_charged?: number
+          credits_refunded?: number
+          failed?: number
+          finished_at?: string | null
+          free_used?: number
+          id?: string
+          lang?: string
+          mode?: string
+          owner_id?: string
+          page_id?: string
+          paid_used?: number
+          people?: number
+          promo_used?: number
+          sent?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_bulk_sends_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ip_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_leads: {
         Row: {
           context: Json
@@ -1435,6 +1621,7 @@ export type Database = {
           is_active: boolean
           is_featured: boolean
           name: string
+          price_credits: number | null
           price_inr: number
           share_overrides: Json
           sort: number
@@ -1448,6 +1635,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           name: string
+          price_credits?: number | null
           price_inr: number
           share_overrides?: Json
           sort?: number
@@ -1461,6 +1649,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           name?: string
+          price_credits?: number | null
           price_inr?: number
           share_overrides?: Json
           sort?: number
@@ -3496,6 +3685,49 @@ export type Database = {
         }
         Returns: Json
       }
+      ip_bulk_claim: {
+        Args: { _limit: number; _send_id: string }
+        Returns: {
+          error: string | null
+          id: number
+          name: string
+          phone: string
+          send_id: string
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ip_bulk_recipients"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      ip_bulk_send_finish: { Args: { _send_id: string }; Returns: Json }
+      ip_bulk_send_price: {
+        Args: { _mode: string; _people: number }
+        Returns: number
+      }
+      ip_bulk_send_queue: {
+        Args: {
+          _consent: boolean
+          _count: number
+          _lang: string
+          _page_id: string
+        }
+        Returns: Json
+      }
+      ip_bulk_send_start: {
+        Args: {
+          _count: number
+          _lang: string
+          _mode: string
+          _page_id: string
+          _people: Json
+          _uid: string
+        }
+        Returns: Json
+      }
       ip_credits_for_inr: { Args: { _inr: number }; Returns: number }
       ip_get_public_page: { Args: { _slug: string }; Returns: Json }
       ip_get_shop: { Args: { _slug: string }; Returns: Json }
@@ -3504,9 +3736,14 @@ export type Database = {
         Returns: Json
       }
       ip_page_hit: { Args: { _slug: string }; Returns: undefined }
+      ip_pay_page_credits: { Args: { _page_id: string }; Returns: Json }
       ip_pay_with_credits: {
         Args: { _page_id: string; _uid: string }
         Returns: Json
+      }
+      ip_product_credits: {
+        Args: { _prod: Database["public"]["Tables"]["ip_products"]["Row"] }
+        Returns: number
       }
       ip_publish_page: { Args: { _page_id: string }; Returns: Json }
       ip_publish_prepaid: { Args: { _page_id: string }; Returns: Json }
