@@ -13,6 +13,8 @@ import { pageUrlFor } from "@/instant/util";
 import { toast } from "sonner";
 import { KIT, resolvePick, type KitPicks } from "@/data/kit";
 import { seoFor } from "@/lib/seo/pages";
+import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
+import { canBuyInThisApp } from "@/lib/nativeApp";
 
 /*
  * The one paid offer, at /kit. Every paid channel (influencer links, ads) lands here.
@@ -157,6 +159,7 @@ export default function Kit() {
   const claimed = o?.offers_claimed ?? 0;
 
   const pay = async () => {
+    if (!canBuyInThisApp()) return;
     if (!user) { setLoginOpen(true); return; }
     setBusy(true);
     try {
@@ -225,6 +228,18 @@ export default function Kit() {
 
   const chip = "rounded-[10px] border-2 border-[#121212] bg-white px-3 py-[5px] text-[13.5px] font-bold text-center";
   const bar = (n: string) => <span className="text-[12.5px] font-bold uppercase tracking-[0.1em]" style={{ color: GREY }}>{n}</span>;
+
+  // The kit is a digital purchase, which Apple doesn't allow outside in-app purchase (docs/ios-app.md).
+  if (!canBuyInThisApp()) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4" style={{ background: CREAM, color: INK }}>
+        <div className="w-full max-w-md space-y-4">
+          <AppStoreBuyNotice />
+          <button type="button" className="h-12 w-full rounded-[10px] border-2 border-[#121212] bg-white font-bold" onClick={() => navigate("/")}>Back to apps</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col text-base leading-normal" style={{ background: CREAM, color: INK, fontFamily: "'Hind', system-ui, sans-serif" }}>

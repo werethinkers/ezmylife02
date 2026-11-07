@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { canBuyInThisApp } from "@/lib/nativeApp";
+import { APP_STORE_BUY_TEXT } from "@/components/wallet/AppStoreBuyNotice";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Eye, Loader2, PencilLine, RotateCcw, Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -177,6 +179,10 @@ function BuilderInner({ product }: { product: Product }) {
         if (!canPayCredits) {
           // Not enough credits: the page and draft are saved, so after buying it opens here and publishes.
           setBusy(null);
+          if (!canBuyInThisApp()) {
+            toast({ title: `This needs ${fmtCredits(needCredits)}`, description: `You have ${fmtCredits(balance)}. Your page is saved. ${APP_STORE_BUY_TEXT}` });
+            return;
+          }
           toast({ title: `This needs ${fmtCredits(needCredits)}`, description: `You have ${fmtCredits(balance)}. Buy credits and you'll come straight back to publish.` });
           navigate(`/credits?next=${encodeURIComponent(`/create/${product.id}?publish=1`)}`); return; // the saved draft carries the page id
         }

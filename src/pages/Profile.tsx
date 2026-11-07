@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, User, Mail, Phone, Building, MapPin, Globe, Briefcase, Lock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import DeleteAccountCard from "@/components/account/DeleteAccountCard";
 
 interface ProfileData {
   display_name: string;
@@ -287,6 +288,10 @@ const Profile = () => {
                 </form>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="mt-8">
+            <DeleteAccountCard />
           </div>
         </div>
       </div>
