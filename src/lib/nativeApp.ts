@@ -13,10 +13,8 @@ export const isNativeApp = (): boolean => Capacitor.isNativePlatform();
 export const isIosApp = (): boolean => Capacitor.getPlatform() === "ios";
 
 /**
- * Apple only allows digital goods (credits, the kit) to be sold inside an iOS app through
- * Apple's in-app purchase. Until that exists, the iOS app neither sells nor links to a sale.
+ * True where the website's Razorpay checkout may be used. Apple only allows digital goods (credits, the kit)
+ * to be sold inside an iOS app through Apple's in-app purchase, so in the iOS app credits are bought with
+ * AppleCreditPacks (src/lib/appleIap.ts) and the kit is not sold. Never link to the web checkout from the app.
  */
 export const canBuyInThisApp = (): boolean => !isIosApp();
-
-/** Google blocks its sign-in inside app web views, so the iOS app offers email and Apple only. */
-export const canUseGoogleSignIn = (): boolean => !isIosApp();

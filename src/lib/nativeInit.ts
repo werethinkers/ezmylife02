@@ -8,6 +8,7 @@
  *   "Save Image" in it.
  * - Sharing: navigator.share opens the native share sheet, files included.
  * - The splash screen and status bar colours.
+ * - Apple purchases that were paid but not credited yet (app closed mid-purchase) are credited on sign-in.
  */
 import { isNativeApp } from "./nativeApp";
 
@@ -83,6 +84,15 @@ export async function initNativeApp() {
     await Share.share({ files: uris, text, title, dialogTitle: title });
     Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
   };
+
+  // Credit any Apple purchase that was paid but not finished, as soon as someone is signed in.
+  const [{ supabase }, { recoverApplePurchases }] = await Promise.all([
+    import("@/integrations/supabase/client"),
+    import("./appleIap"),
+  ]);
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === "INITIAL_SESSION" || event === "SIGNED_IN") setTimeout(() => recoverApplePurchases().catch(() => undefined), 1500);
+  });
 
   // Native share sheet for the site's existing navigator.share calls.
   const nativeShare = async (data: ShareData = {}) => {

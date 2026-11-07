@@ -10,7 +10,7 @@ import { useRefreshWallet } from "@/hooks/useWallet";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { toast } from "sonner";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
-import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
+import AppleCreditPacks from "@/components/wallet/AppleCreditPacks";
 import { canBuyInThisApp } from "@/lib/nativeApp";
 
 interface Props {
@@ -107,23 +107,33 @@ export const BuyCreditsDialog = ({ open, onOpenChange, required, balance, onPurc
     }
   };
 
+  // In the iPhone app, credits are bought with Apple in-app purchase (docs/ios-app.md).
   if (!canBuyInThisApp()) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              {required != null ? "Not enough credits" : "Credits"}
-            </DialogTitle>
-            <DialogDescription>
-              {required != null && balance != null ? `This needs ${required} credits and you have ${balance}.` : "Your credits work everywhere on EZYOURLIFE."}
-            </DialogDescription>
-          </DialogHeader>
-          <AppStoreBuyNotice />
-          <Button className="mt-2 h-12 w-full" variant="outline" onClick={() => onOpenChange(false)}>OK</Button>
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                {required != null ? "Top up to keep going" : "Buy credits"}
+              </DialogTitle>
+              <DialogDescription>
+                {required != null && balance != null
+                  ? `You need ${required} credits but have ${balance}. Pick a pack below.`
+                  : "Pick a pack. Apple's payment sheet opens right here."}
+              </DialogDescription>
+            </DialogHeader>
+            <AppleCreditPacks
+              required={required}
+              defaultPackId={defaultPackId}
+              onNeedLogin={() => setLoginOpen(true)}
+              onBought={() => { onOpenChange(false); onPurchased?.(); }}
+            />
+          </DialogContent>
+        </Dialog>
+        <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      </>
     );
   }
 

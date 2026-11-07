@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { canUseGoogleSignIn } from "@/lib/nativeApp";
+import { googleSignIn } from "@/lib/googleSignIn";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import KitPicker from "./KitPicker";
 import { isDemoAccount, demoOverlay } from "./demoData";
 import { EarningsEstimate } from "@/components/earn/EarningsEstimate";
@@ -58,12 +57,10 @@ function SignIn() {
   const google = async () => {
     setBusy(true);
     try { localStorage.setItem("auth_redirect_to", "/influencer"); } catch { /* storage blocked */ }
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
-    });
-    if (error) {
+    const { error, cancelled } = await googleSignIn(`${window.location.origin}/auth/callback`);
+    if (error || cancelled) {
       setBusy(false);
-      toast({ title: "Could not sign in with Google", description: error.message, variant: "destructive" });
+      if (error) toast({ title: "Could not sign in with Google", description: error.message, variant: "destructive" });
     }
   };
 
@@ -119,7 +116,6 @@ function SignIn() {
         {mode === "up" && (
           <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={60} />
         )}
-        {canUseGoogleSignIn() && (<>
         <Button type="button" variant="outline" disabled={busy} onClick={google} className="w-full border-2 border-[#121212] bg-white font-semibold">
           <svg className="mr-2 h-4 w-4" viewBox="0 0 48 48" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
@@ -132,7 +128,6 @@ function SignIn() {
         <div className="flex items-center gap-3 text-xs text-neutral-500" aria-hidden="true">
           <span className="h-px flex-1 bg-neutral-300" /> or use email <span className="h-px flex-1 bg-neutral-300" />
         </div>
-        </>)}
         <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Input type="password" placeholder={mode === "up" ? "Choose a password (8+ characters)" : "Password"} value={password}
                onChange={(e) => setPassword(e.target.value)} required minLength={mode === "up" ? 8 : undefined} />

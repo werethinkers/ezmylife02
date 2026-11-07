@@ -37,6 +37,10 @@ const config: CapacitorConfig = {
       backgroundColor: '#FFF8EC',
       showSpinner: false,
     },
+    // Credits are added by our server first; only then do we finish the Apple purchase (src/lib/appleIap.ts).
+    NativePurchases: {
+      autoFinishTransactions: false,
+    },
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#FFF8EC',
