@@ -25,6 +25,7 @@ Whoever calls, the person's own wallet pays at the website's prices, through the
 | `POST /prompt/brainstorm` | PromptMaster brainstorm: `{topic, styles?}` | PromptMaster's price |
 | `GET /cards?q=` | Card, invite and website designs, each with its `/create/<id>` link | free, no key |
 | `GET`, `PUT /shortcuts`, `DELETE /shortcuts/{key}` | The person's synced shortcuts (same list as the extension and Speedy Notebook) | free |
+| `GET /profile` | The person's saved business details (name, city, GSTIN…) that prefill app boxes | free |
 | `GET /wallet` | Balance, free and paid split, last 50 charges, packs | free |
 | `POST /wallet/topup` | `{pack_id}` returns `checkout_url` (`/credits?pack=…`, which opens Razorpay) | none |
 | `GET`, `POST /keys`, `DELETE /keys/{id}` | Manage keys (website session only) | free |
