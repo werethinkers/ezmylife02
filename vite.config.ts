@@ -18,6 +18,26 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // One copy of React, always. Two copies make hooks fail with "dispatcher is null" and a blank page.
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+  },
+  optimizeDeps: {
+    // The iPhone app plugins are loaded only inside the app (src/lib/nativeInit.ts). Listing them here makes the
+    // dev server prepare them at start-up, instead of finding them later, re-preparing everything mid-session and
+    // leaving the page with two copies of React.
+    include: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@capacitor/core",
+      "@capacitor/app",
+      "@capacitor/filesystem",
+      "@capacitor/haptics",
+      "@capacitor/share",
+      "@capacitor/splash-screen",
+      "@capacitor/status-bar",
+    ],
   },
   build: {
     target: "es2020",
