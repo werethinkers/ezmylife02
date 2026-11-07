@@ -1,0 +1,513 @@
+// Public Ezyourlife API, version 1. Used by the EzMe Mac app, the browser extension and outside developers.
+//
+//   GET    /v1/apps?q=&category=&limit=&offset=   search the live catalogue (free)
+//   GET    /v1/apps/{id}                           one app, with the inputs it takes (free)
+//   POST   /v1/apps/{id}/run                       run it; charged the app's price on success
+//   POST   /v1/prompt/improve                      PromptMaster "magic write"; charged PromptMaster's price
+//   POST   /v1/prompt/brainstorm                   PromptMaster brainstorm; charged PromptMaster's price
+//   GET    /v1/cards?q=                            card, invite and website designs (open on the site)
+//   GET    /v1/shortcuts   PUT /v1/shortcuts   DELETE /v1/shortcuts/{key}   the person's synced shortcuts
+//   GET    /v1/wallet                              balance and the last charges
+//   POST   /v1/wallet/topup                        a checkout link for a credit pack
+//   GET    /v1/keys   POST /v1/keys   DELETE /v1/keys/{id}   API keys (signed-in session only)
+//   GET    /v1/me                                  who the key or session belongs to
+//
+// Auth: "Authorization: Bearer <token>", where the token is either an ezyourlife.com sign-in token
+// or an API key "ezy_live_…". Either way the person's own wallet pays, at the same prices as the website.
+// Charging uses the same start_tool_run / complete_tool_run as every other app, so failed runs cost nothing.
+import { corsHeaders as baseCors } from "../_shared/http.ts";
+import { ensurePrice, finishRun, startRun, walletBalance } from "../_shared/billing.ts";
+import { API_CATALOG, type ApiApp } from "../_shared/apiCatalog.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SITE = "https://ezyourlife.com";
+const PROMPTMASTER_ID = "promptmaster-ai";
+const PROMPTMASTER_CREDITS = 2;
+const KEY_PREFIX = "ezy_live_";
+const PACKS: Record<string, { inr: number; credits: number }> = {
+  p10: { inr: 10, credits: 15 },
+  p50: { inr: 50, credits: 80 },
+  p100: { inr: 100, credits: 180 },
+  p250: { inr: 250, credits: 500 },
+  p500: { inr: 500, credits: 1100 },
+  p1000: { inr: 1000, credits: 2200 },
+};
+
+const cors: Record<string, string> = {
+  ...baseCors,
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+};
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+}
+const fail = (status: number, error: string, message: string, extra: Record<string, unknown> = {}) =>
+  json({ ok: false, error, message, ...extra }, status);
+
+// ---------- database (service role, PostgREST) ----------
+
+async function db(pathAndQuery: string, init: RequestInit = {}): Promise<Response> {
+  return await fetch(`${SUPABASE_URL}/rest/v1/${pathAndQuery}`, {
+    ...init,
+    headers: {
+      apikey: SERVICE_ROLE,
+      Authorization: `Bearer ${SERVICE_ROLE}`,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+}
+async function dbRows<T>(pathAndQuery: string): Promise<T[]> {
+  const r = await db(pathAndQuery);
+  if (!r.ok) throw new Error(`db ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return (await r.json()) as T[];
+}
+const enc = encodeURIComponent;
+
+// ---------- who is calling ----------
+
+interface ApiKeyRow { id: string; user_id: string; daily_cap: number; allowed_tools: string[] | null; revoked_at: string | null }
+interface Who { userId: string; key: ApiKeyRow | null; session: boolean }
+
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function identify(req: Request): Promise<Who | null> {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim()
+    || (req.headers.get("x-api-key") ?? "").trim();
+  if (!token || token === SERVICE_ROLE) return null;
+  if (token.startsWith(KEY_PREFIX)) {
+    const rows = await dbRows<ApiKeyRow>(
+      `api_keys?key_hash=eq.${await sha256(token)}&select=id,user_id,daily_cap,allowed_tools,revoked_at`,
+    ).catch(() => []);
+    const key = rows[0];
+    if (!key || key.revoked_at) return null;
+    db(`api_keys?id=eq.${key.id}`, { method: "PATCH", body: JSON.stringify({ last_used_at: new Date().toISOString() }) }).catch(() => null);
+    return { userId: key.user_id, key, session: false };
+  }
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { Authorization: `Bearer ${token}`, apikey: SERVICE_ROLE } });
+  if (!r.ok) return null;
+  const u = (await r.json()) as { id?: string };
+  return u?.id ? { userId: u.id, key: null, session: true } : null;
+}
+
+/** Credits this key has spent in the last 24 hours. */
+async function spentToday(keyId: string): Promise<number> {
+  const since = new Date(Date.now() - 86_400_000).toISOString();
+  const rows = await dbRows<{ credits: number }>(`api_key_runs?key_id=eq.${keyId}&created_at=gte.${enc(since)}&select=credits`).catch(() => []);
+  return rows.reduce((n, r) => n + (r.credits ?? 0), 0);
+}
+
+// ---------- catalogue ----------
+
+interface CatalogRow {
+  id: string; name: string; description: string | null; category: string; tool_types: string[] | null;
+  icon_url: string | null; dedicated_route: string | null; is_free: boolean | null; display_order: number | null;
+}
+const CATALOG_COLS = "id,name,description,category,tool_types,icon_url,dedicated_route,is_free,display_order";
+let catalogCache: { at: number; rows: CatalogRow[]; prices: Map<string, number>; colors: Map<string, string> } | null = null;
+
+const GOAL_COLORS: Record<string, string> = {
+  "Get customers": "pink", "Run your business": "sun", "Photos & content": "teal",
+  "Smart helpers": "sky", "Learn & grow": "lime", "More apps": "coral",
+};
+
+async function catalog() {
+  if (catalogCache && Date.now() - catalogCache.at < 600_000) return catalogCache;
+  const [rows, prices, cats] = await Promise.all([
+    dbRows<CatalogRow>(`tools_catalog?is_live=eq.true&select=${CATALOG_COLS}&order=display_order.asc.nullslast,name.asc&limit=5000`),
+    dbRows<{ tool_id: string; credit_cost: number }>("tool_pricing?select=tool_id,credit_cost&limit=5000"),
+    dbRows<{ name: string; goal: string | null }>("catalog_categories?select=name,goal&limit=500").catch(() => []),
+  ]);
+  const colors = new Map<string, string>();
+  for (const c of cats) colors.set(c.name, GOAL_COLORS[c.goal ?? ""] ?? "coral");
+  catalogCache = { at: Date.now(), rows, prices: new Map(prices.map((p) => [p.tool_id, p.credit_cost])), colors };
+  return catalogCache;
+}
+
+function priceFor(id: string, spec: ApiApp | undefined, prices: Map<string, number>): number | null {
+  if (id === PROMPTMASTER_ID) return prices.get(id) ?? PROMPTMASTER_CREDITS;
+  const charge = spec?.charge ?? id;
+  return prices.get(charge) ?? spec?.credits ?? null;
+}
+
+function summary(row: CatalogRow, c: Awaited<ReturnType<typeof catalog>>) {
+  const spec = API_CATALOG[row.id];
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? "",
+    category: row.category,
+    goal_color: c.colors.get(row.category) ?? "coral",
+    types: row.tool_types ?? [],
+    icon_url: row.icon_url,
+    credits: priceFor(row.id, spec, c.prices),
+    runnable: !!spec || row.id === PROMPTMASTER_ID,
+    mode: spec?.mode ?? (row.id === PROMPTMASTER_ID ? "prompt" : "web"),
+    url: `${SITE}${row.dedicated_route ?? `/tool/${row.id}`}`,
+  };
+}
+
+/** Word-overlap ranking: name hits count most, then types, category and description. */
+function score(row: CatalogRow, words: string[]): number {
+  if (!words.length) return 1;
+  const name = row.name.toLowerCase(), desc = (row.description ?? "").toLowerCase();
+  const types = (row.tool_types ?? []).join(" ").toLowerCase(), cat = row.category.toLowerCase();
+  let s = 0;
+  for (const w of words) {
+    if (name.startsWith(w)) s += 6;
+    else if (name.includes(w)) s += 4;
+    if (types.includes(w)) s += 2;
+    if (cat.includes(w)) s += 1.5;
+    if (desc.includes(w)) s += 1;
+  }
+  return s;
+}
+
+async function listApps(url: URL) {
+  const c = await catalog();
+  const words = (url.searchParams.get("q") ?? "").toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/).filter((w) => w.length > 1);
+  const category = url.searchParams.get("category");
+  const runnableOnly = url.searchParams.get("runnable") === "true";
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 50) || 50));
+  const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0) || 0);
+  let rows = c.rows.filter((r) => !category || r.category === category);
+  if (runnableOnly) rows = rows.filter((r) => API_CATALOG[r.id] || r.id === PROMPTMASTER_ID);
+  const ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => x.s > 0);
+  if (words.length) ranked.sort((a, b) => b.s - a.s);
+  return json({
+    ok: true,
+    total: ranked.length,
+    apps: ranked.slice(offset, offset + limit).map((x) => summary(x.r, c)),
+    categories: [...new Set(c.rows.map((r) => r.category))].sort().map((name) => ({ name, goal_color: c.colors.get(name) ?? "coral" })),
+  });
+}
+
+async function getApp(id: string) {
+  const c = await catalog();
+  const row = c.rows.find((r) => r.id === id);
+  if (!row) return fail(404, "unknown_app", `No live app called '${id}'.`);
+  const spec = API_CATALOG[id];
+  const base = summary(row, c);
+  if (id === PROMPTMASTER_ID) {
+    return json({ ok: true, app: { ...base, actions: ["improve", "brainstorm"], fields: [{ key: "prompt", label: "Your words", type: "textarea", required: true }] } });
+  }
+  return json({
+    ok: true,
+    app: {
+      ...base,
+      intro: spec?.intro ?? row.description ?? "",
+      cta: spec?.cta,
+      fields: spec?.fields ?? [],
+      sample: spec?.sample,
+      prompt_label: spec?.promptLabel,
+      styles: spec?.styles,
+      aspects: spec?.aspects,
+      suggestions: spec?.suggestions,
+      variants: spec?.variants,
+    },
+  });
+}
+
+// ---------- running ----------
+
+async function callInternal(fn: string, payload: Record<string, unknown>): Promise<{ status: number; data: Record<string, unknown> }> {
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE, "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const text = await r.text();
+  let data: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(text);
+    data = Array.isArray(parsed) ? { output: parsed } : parsed;
+  } catch {
+    data = { output: text };
+  }
+  return { status: r.status, data };
+}
+
+/** Charges `chargeId` around `work`, exactly like billed() does for the website. */
+async function charged(
+  who: Who, chargeId: string, defaultCredits: number, isImage: boolean, appId: string,
+  work: () => Promise<{ status: number; data: Record<string, unknown> }>,
+): Promise<Response> {
+  if (who.key) {
+    if (who.key.allowed_tools?.length && !who.key.allowed_tools.includes(appId)) {
+      return fail(403, "app_not_allowed", "This API key is not allowed to run this app.");
+    }
+    const c = await catalog();
+    const price = c.prices.get(chargeId) ?? defaultCredits;
+    if ((await spentToday(who.key.id)) + price > who.key.daily_cap) {
+      return fail(429, "daily_cap", `This key's daily limit of ${who.key.daily_cap} credits is reached.`);
+    }
+  }
+  await ensurePrice(chargeId, defaultCredits, isImage);
+  let start;
+  try {
+    start = await startRun(who.userId, chargeId);
+  } catch (e) {
+    console.error("api billing start", e);
+    return fail(503, "billing_unavailable", "Billing is busy. You were not charged.");
+  }
+  if (!start.ok) {
+    return fail(402, "insufficient_credits", `This needs ${start.credits_required ?? "more"} credits. You have ${start.balance ?? 0}.`, {
+      credits_required: start.credits_required,
+      balance: start.balance,
+      topup_url: `${SITE}/credits`,
+    });
+  }
+  const runId = start.run_id as string;
+  let result: { status: number; data: Record<string, unknown> };
+  try {
+    result = await work();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await finishRun(who.userId, runId, false, msg).catch(() => undefined);
+    return fail(500, "failed", msg, { credits_charged: 0 });
+  }
+  if (result.status < 200 || result.status >= 300 || result.data?.error) {
+    await finishRun(who.userId, runId, false, String(result.data?.error ?? `status ${result.status}`)).catch(() => undefined);
+    const status = result.status >= 400 ? result.status : 502;
+    return fail(status, "failed", String(result.data?.message ?? result.data?.error ?? "The app could not finish."), { credits_charged: 0 });
+  }
+  let chargedCredits = 0;
+  try {
+    chargedCredits = (await finishRun(who.userId, runId, true))?.charged ?? 0;
+  } catch (e) {
+    console.error("api billing finish", e);
+  }
+  if (who.key) {
+    db("api_key_runs", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ key_id: who.key.id, user_id: who.userId, tool_id: appId, run_id: runId, credits: chargedCredits }),
+    }).catch(() => null);
+  }
+  const { ok: _ok, ...rest } = result.data;
+  return json({ ok: true, ...rest, run_id: runId, credits_charged: chargedCredits, balance: await walletBalance(who.userId) });
+}
+
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
+
+async function runApp(who: Who, id: string, body: Record<string, unknown>) {
+  const spec = API_CATALOG[id];
+  if (id === PROMPTMASTER_ID) return improve(who, body);
+  if (!spec) {
+    const c = await catalog();
+    const row = c.rows.find((r) => r.id === id);
+    if (!row) return fail(404, "unknown_app", `No live app called '${id}'.`);
+    return fail(409, "web_only", "This app runs only on the website.", { url: `${SITE}${row.dedicated_route ?? `/tool/${id}`}` });
+  }
+  const payload: Record<string, unknown> = {
+    tool_id: id,
+    inputs: typeof body.inputs === "object" && body.inputs ? body.inputs : undefined,
+    messages: Array.isArray(body.messages) ? body.messages : undefined,
+    context: str(body.context, 120_000),
+    images: Array.isArray(body.images) ? body.images : undefined,
+    prompt: str(body.prompt, 2000),
+    style: str(body.style, 200),
+    aspect: str(body.aspect, 10),
+    previous: str(body.previous, 24_000),
+    instruction: str(body.instruction, 1000),
+  };
+  if (spec.runner === "flagship-app") {
+    payload.action = spec.mode === "studio" ? "variant" : "final";
+    payload.variant = str(body.variant, 80);
+  } else if (body.action === "refine") {
+    payload.action = "refine";
+  }
+  return charged(who, spec.charge, spec.credits, spec.kind === "image", id, () => callInternal(spec.runner, payload));
+}
+
+async function improve(who: Who, body: Record<string, unknown>) {
+  const prompt = str(body.prompt, 4000)?.trim();
+  if (!prompt) return fail(400, "missing_prompt", "Send the words to improve as 'prompt'.");
+  const goal = str(body.goal, 500);
+  return charged(who, PROMPTMASTER_ID, PROMPTMASTER_CREDITS, false, PROMPTMASTER_ID, () =>
+    callInternal("promptmaster-ai", { action: "magic_write", format: str(body.format, 20) ?? "text", keywords: goal ? `${prompt}\n\nGoal: ${goal}` : prompt }));
+}
+
+async function brainstorm(who: Who, body: Record<string, unknown>) {
+  const topic = str(body.topic ?? body.prompt, 4000)?.trim();
+  if (!topic) return fail(400, "missing_topic", "Send what to brainstorm about as 'topic'.");
+  const styles = Array.isArray(body.styles) ? body.styles.slice(0, 20).map((s) => String(s).slice(0, 100)) : [];
+  return charged(who, PROMPTMASTER_ID, PROMPTMASTER_CREDITS, false, PROMPTMASTER_ID, () =>
+    callInternal("promptmaster-ai", { action: "brainstorm", format: str(body.format, 20) ?? "text", context: topic, selections: styles }));
+}
+
+// ---------- cards, shortcuts, wallet, keys ----------
+
+async function listCards(url: URL) {
+  const q = (url.searchParams.get("q") ?? "").trim();
+  const filter = q ? `&or=(name.ilike.*${enc(q)}*,category.ilike.*${enc(q)}*)` : "";
+  const rows = await dbRows<{ id: string; family: string | null; category: string | null; name: string; price_inr: number | null; price_credits: number | null }>(
+    `ip_products?is_active=eq.true&select=id,family,category,name,price_inr,price_credits&order=sort.asc.nullslast&limit=300${filter}`,
+  ).catch(() => []);
+  return json({
+    ok: true,
+    cards: rows.map((r) => ({
+      id: r.id, name: r.name, family: r.family, category: r.category,
+      price_inr: r.price_inr, price_credits: r.price_credits,
+      url: `${SITE}/create/${r.id}`,
+    })),
+  });
+}
+
+interface Shortcut { key: string; value: string; category?: string; logic?: string }
+async function readShortcuts(userId: string): Promise<{ list: Shortcut[]; exists: boolean; editor: string }> {
+  const rows = await dbRows<{ session_shortcuts: Shortcut[] | null; editor_content: string | null }>(
+    `notebook_sessions?user_id=eq.${userId}&select=session_shortcuts,editor_content`,
+  );
+  return { list: Array.isArray(rows[0]?.session_shortcuts) ? rows[0].session_shortcuts as Shortcut[] : [], exists: !!rows[0], editor: rows[0]?.editor_content ?? "" };
+}
+async function writeShortcuts(userId: string, list: Shortcut[], editor: string) {
+  const r = await db("notebook_sessions?on_conflict=user_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ user_id: userId, session_shortcuts: list, editor_content: editor }),
+  });
+  if (!r.ok) throw new Error(`save shortcuts ${r.status}: ${(await r.text()).slice(0, 200)}`);
+}
+function cleanShortcut(s: unknown): Shortcut | null {
+  const o = s as Record<string, unknown>;
+  const key = str(o?.key, 64)?.trim(), value = str(o?.value, 20_000);
+  if (!key || value === undefined) return null;
+  const out: Shortcut = { key, value };
+  const cat = str(o.category, 64), logic = str(o.logic, 500);
+  if (cat) out.category = cat;
+  if (logic) out.logic = logic;
+  return out;
+}
+
+async function putShortcuts(who: Who, body: Record<string, unknown>) {
+  const cur = await readShortcuts(who.userId);
+  const incoming = (Array.isArray(body.shortcuts) ? body.shortcuts : [body]).map(cleanShortcut).filter((s): s is Shortcut => !!s).slice(0, 2000);
+  if (!incoming.length) return fail(400, "bad_shortcut", "Send {key, value} or {shortcuts: [{key, value}, …]}.");
+  const list = body.replace === true ? incoming : [...cur.list];
+  if (body.replace !== true) {
+    for (const s of incoming) {
+      const i = list.findIndex((x) => x.key === s.key);
+      if (i >= 0) list[i] = { ...list[i], ...s };
+      else list.push(s);
+    }
+  }
+  await writeShortcuts(who.userId, list, cur.editor);
+  return json({ ok: true, total: list.length });
+}
+
+async function wallet(who: Who) {
+  const [w, ledger] = await Promise.all([
+    dbRows<{ free_balance: number; paid_balance: number; promo_balance: number | null }>(
+      `credit_wallets?user_id=eq.${who.userId}&select=free_balance,paid_balance,promo_balance`,
+    ),
+    dbRows<{ delta: number; reason: string | null; tool_id: string | null; created_at: string }>(
+      `credit_ledger?user_id=eq.${who.userId}&select=delta,reason,tool_id,created_at&order=created_at.desc&limit=50`,
+    ).catch(() => []),
+  ]);
+  const row = w[0] ?? { free_balance: 0, paid_balance: 0, promo_balance: 0 };
+  return json({
+    ok: true,
+    balance: (row.free_balance ?? 0) + (row.paid_balance ?? 0),
+    free: row.free_balance ?? 0,
+    paid: row.paid_balance ?? 0,
+    promo: row.promo_balance ?? 0,
+    recent: ledger,
+    packs: Object.entries(PACKS).map(([id, p]) => ({ id, ...p })),
+  });
+}
+
+function topup(body: Record<string, unknown>) {
+  const pack = str(body.pack_id, 20) ?? "p250";
+  if (!PACKS[pack]) return fail(400, "unknown_pack", `Packs: ${Object.keys(PACKS).join(", ")}.`);
+  return json({ ok: true, pack_id: pack, ...PACKS[pack], checkout_url: `${SITE}/credits?pack=${pack}` });
+}
+
+async function listKeys(who: Who) {
+  const rows = await dbRows(`api_keys?user_id=eq.${who.userId}&revoked_at=is.null&select=id,name,app,prefix,daily_cap,allowed_tools,created_at,last_used_at&order=created_at.desc`);
+  return json({ ok: true, keys: rows });
+}
+
+async function createKey(who: Who, body: Record<string, unknown>) {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  const secret = KEY_PREFIX + [...bytes].map((b) => b.toString(36).padStart(2, "0")).join("").slice(0, 40);
+  const app = str(body.app, 40)?.replace(/[^a-z0-9_-]/gi, "") || null;
+  const row = {
+    user_id: who.userId,
+    name: str(body.name, 80)?.trim() || (app ? `${app} on my Mac` : "API key"),
+    app,
+    prefix: secret.slice(0, 13),
+    key_hash: await sha256(secret),
+    daily_cap: Math.min(100_000, Math.max(1, Number(body.daily_cap) || 500)),
+    allowed_tools: Array.isArray(body.allowed_tools) ? body.allowed_tools.slice(0, 500).map((t) => String(t).slice(0, 120)) : null,
+  };
+  const r = await db("api_keys?select=id,name,app,prefix,daily_cap,created_at", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) });
+  if (!r.ok) return fail(500, "failed", `Could not make the key (${r.status}).`);
+  const [saved] = await r.json();
+  return json({ ok: true, key: secret, ...saved, note: "Copy the key now: it is shown only once." }, 201);
+}
+
+async function revokeKey(who: Who, id: string) {
+  const r = await db(`api_keys?id=eq.${enc(id)}&user_id=eq.${who.userId}`, { method: "PATCH", body: JSON.stringify({ revoked_at: new Date().toISOString() }) });
+  return r.ok ? json({ ok: true }) : fail(500, "failed", "Could not revoke the key.");
+}
+
+// ---------- router ----------
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+  const url = new URL(req.url);
+  // The function is served at /functions/v1/api (or /api behind a custom domain); keep what follows.
+  const path = url.pathname.replace(/^.*?\/api(?=\/|$)/, "").replace(/\/+$/, "") || "/";
+  const parts = path.split("/").filter(Boolean); // ["v1", "apps", id, "run"]
+  if (parts[0] !== "v1") {
+    return json({ ok: true, name: "Ezyourlife API", version: "v1", docs: `${SITE}/developers` });
+  }
+  const m = req.method;
+  const route = parts.slice(1);
+
+  try {
+    // Public, free: browsing the catalogue needs no key.
+    if (m === "GET" && route[0] === "apps" && route.length === 1) return await listApps(url);
+    if (m === "GET" && route[0] === "apps" && route.length === 2) return await getApp(decodeURIComponent(route[1]));
+    if (m === "GET" && route[0] === "cards") return await listCards(url);
+
+    const who = await identify(req);
+    if (!who) return fail(401, "login", "Send a valid ezyourlife.com sign-in token or API key as 'Authorization: Bearer …'.");
+    let body: Record<string, unknown> = {};
+    if (m === "POST" || m === "PUT") {
+      try { body = (await req.json()) ?? {}; } catch { body = {}; }
+    }
+
+    if (m === "GET" && route[0] === "me") return json({ ok: true, user_id: who.userId, via: who.key ? "api_key" : "session", key_id: who.key?.id ?? null });
+    if (m === "POST" && route[0] === "apps" && route[2] === "run") return await runApp(who, decodeURIComponent(route[1]), body);
+    if (m === "POST" && route[0] === "prompt" && route[1] === "improve") return await improve(who, body);
+    if (m === "POST" && route[0] === "prompt" && route[1] === "brainstorm") return await brainstorm(who, body);
+    if (route[0] === "shortcuts") {
+      if (m === "GET") return json({ ok: true, shortcuts: (await readShortcuts(who.userId)).list });
+      if (m === "PUT" || m === "POST") return await putShortcuts(who, body);
+      if (m === "DELETE" && route[1]) {
+        const cur = await readShortcuts(who.userId);
+        const key = decodeURIComponent(route[1]);
+        await writeShortcuts(who.userId, cur.list.filter((s) => s.key !== key), cur.editor);
+        return json({ ok: true });
+      }
+    }
+    if (m === "GET" && route[0] === "wallet" && route.length === 1) return await wallet(who);
+    if (m === "POST" && route[0] === "wallet" && route[1] === "topup") return topup(body);
+    if (route[0] === "keys") {
+      if (!who.session) return fail(403, "session_required", "Keys are managed from your ezyourlife.com account, not with another key.");
+      if (m === "GET") return await listKeys(who);
+      if (m === "POST") return await createKey(who, body);
+      if (m === "DELETE" && route[1]) return await revokeKey(who, decodeURIComponent(route[1]));
+    }
+    return fail(404, "not_found", `No route ${m} ${path}.`);
+  } catch (e) {
+    console.error("api error", e);
+    return fail(500, "failed", e instanceof Error ? e.message : String(e));
+  }
+});
