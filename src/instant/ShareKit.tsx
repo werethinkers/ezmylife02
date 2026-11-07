@@ -23,7 +23,8 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
   // Festival cards: sending to one person can put their name on the card, "Happy Diwali, Arinjay!".
   const [oneName, setOneName] = useState("");
   const forOne = product.family === "festival" && oneName.trim().length > 0;
-  const sendUrl = forOne ? personalLink(baseUrl, oneName.trim(), pickLang ? lang : "en", true) : pickLang ? withLang(baseUrl, lang) : baseUrl;
+  // Personal links go straight to the card (url): the share.ezyourlife.com forwarder drops ?to= on older pages.
+  const sendUrl = forOne ? personalLink(url, oneName.trim(), pickLang ? lang : "en", true) : pickLang ? withLang(baseUrl, lang) : baseUrl;
   const qrRef = useRef<HTMLDivElement>(null);
   const [fmt, setFmt] = useState<Format>(["business", "menu", "profile"].includes(product.family) ? "4:5" : "9:16");
   const [img, setImg] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export function ShareKit({ product, theme, content, url, slug, link, preparing, 
       </div>
 
       {/* Every card and website: send it to many people at once, each by name (credits, after asking). */}
-      <hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={baseUrl} lang={lang} pageId={pageId} />
+      <hr className="border-t-2 border-ink/15" /><BulkSend product={product} content={content} link={url} lang={lang} pageId={pageId} />
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 font-semibold"><ImageIcon className="h-4 w-4" /> Share image</div>

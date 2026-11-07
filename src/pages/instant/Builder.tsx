@@ -16,7 +16,7 @@ import { FieldMemory } from "@/apps/shell/FieldMemory";
 import { useProducts } from "@/instant/useProducts";
 import { useRefreshWallet, useWallet } from "@/hooks/useWallet";
 import { fmtCredits } from "@/lib/creditRate";
-import { checkout, createPage, getMyPage, getShop, rememberShop, republish, savePage, tagShopOnce, uploadContentImages, publishPrepaid } from "@/instant/api";
+import { checkout, createPage, getMyPage, getShop, rememberShop, republish, savePage, tagShopOnce, uploadContentImages, publishPrepaid, payPageWithCredits } from "@/instant/api";
 import { nameFromParam } from "@/instant/festLang";
 import { isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
@@ -182,7 +182,7 @@ function BuilderInner({ product }: { product: Product }) {
         }
         setBusy("Paying with credits…");
         try {
-          const paid = await checkout({ action: "pay_credits", page_id: id });
+          const paid = await payPageWithCredits(id);
           if (paid.published) {
             clearDraft(product.id);
             refreshWallet();

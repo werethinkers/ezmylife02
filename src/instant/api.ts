@@ -127,6 +127,18 @@ async function serverReason(error: unknown): Promise<{ message: string; status?:
   return { message: (error as { message?: string } | null)?.message || "The payment service could not be reached." };
 }
 
+/** Pays for a card or website with credits and publishes it, in one database transaction (ip_pay_page_credits). */
+export async function payPageWithCredits(pageId: string): Promise<{ published: boolean; slug?: string; charged: number }> {
+  const { data, error } = await db.rpc("ip_pay_page_credits", { _page_id: pageId });
+  if (error) throw new CheckoutError(error.message);
+  if (!data?.ok) {
+    if (data?.reason === "insufficient") throw new CheckoutError(`This needs ${data.credits_required} credits. You have ${data.balance}.`, 402);
+    const why: Record<string, string> = { signin: "Sign in first.", not_found: "Page not found.", unavailable: "This design isn't available right now.", free: "This one is free." };
+    throw new CheckoutError(why[data?.reason] ?? `Couldn't pay with credits (${data?.reason}).`);
+  }
+  return { published: true, slug: data.slug, charged: data.charged ?? 0 };
+}
+
 /** "Send all" from the sender's own WhatsApp: charged by a database function (ip_bulk_send_queue), no server function needed. */
 export async function startQueueSend(pageId: string, lang: string, count: number): Promise<{ send_id: string; charged: number; people: number }> {
   const { data, error } = await db.rpc("ip_bulk_send_queue", { _page_id: pageId, _lang: lang, _count: count, _consent: true });
