@@ -127,7 +127,19 @@ async function serverReason(error: unknown): Promise<{ message: string; status?:
   return { message: (error as { message?: string } | null)?.message || "The payment service could not be reached." };
 }
 
-/** "Send all on WhatsApp" (quote, start, status) - see supabase/functions/ip-bulk-send. */
+/** "Send all" from the sender's own WhatsApp: charged by a database function (ip_bulk_send_queue), no server function needed. */
+export async function startQueueSend(pageId: string, lang: string, count: number): Promise<{ send_id: string; charged: number; people: number }> {
+  const { data, error } = await db.rpc("ip_bulk_send_queue", { _page_id: pageId, _lang: lang, _count: count, _consent: true });
+  if (error) throw new CheckoutError(error.message);
+  if (!data?.ok) {
+    if (data?.reason === "insufficient") throw new CheckoutError(`This needs ${data.credits_required} credits. You have ${data.balance}.`, 402);
+    const why: Record<string, string> = { signin: "Sign in first.", not_found: "Page not found.", not_published: "Publish the page first.", bad_count: "That list is too long or empty." };
+    throw new CheckoutError(why[data?.reason] ?? `Couldn't start (${data?.reason}).`);
+  }
+  return data;
+}
+
+/** "Send all on WhatsApp" automatic mode (quote, start, status) - see supabase/functions/ip-bulk-send. */
 export async function bulkSend(body: Record<string, unknown>) {
   const t = await token();
   if (!t) throw new CheckoutError("Sign in first.", 401);

@@ -52,7 +52,7 @@ Lovable hosts the app as a single-page app, so `/p/:slug` sets its title and Ope
 Every published card and website has "Send to everyone, each by name" in its share kit (`src/instant/BulkSend.tsx`).
 
 - **People:** the phone's contact book (Contact Picker, Chrome on Android; the person picks who), a contacts file (.vcf from iPhone or Android, .csv from Google Contacts; read on the device only), or a pasted list. Up to 2,000, one per number (`src/instant/contacts.ts`).
-- **Price, asked before anything is sent** (consent checkbox, `ip_bulk_send_start` charges and records the consent time in one transaction):
+- **Price, asked before anything is sent** (consent checkbox, `ip_bulk_send_start` charges and records the consent time in one transaction; queue sends reach it through the `ip_bulk_send_queue` database function the site calls directly, automatic sends through the function):
   - *From my WhatsApp:* 1 credit per 10 people, rounded up. Each chat opens with that person's message; the sender taps send, and the next person is waiting. Only the count is stored.
   - *Send automatically:* 4 credits a person with a valid number. `supabase/functions/ip-bulk-send` sends through Wavo in batches of 40, chaining itself until done; failed messages are refunded by `ip_bulk_send_finish`. Names and numbers of delivered messages are wiped when the send ends.
 - Automatic mode stays hidden ("Coming soon") until the Wavo template `card_send_ezyourlife` (or `WAVO_TPL_CARD_SEND`) is approved: body {{1}} recipient name, {{2}} sender name, {{3}} product name; URL button `https://ezyourlife.com/{{1}}`.

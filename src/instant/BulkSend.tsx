@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import type { Content, Product } from "./types";
 import { langById, parsePeople, personalLink, type LangId, type Person } from "./festLang";
 import { describeForRecipient } from "./meta";
-import { bulkSend, checkout, CheckoutError } from "./api";
+import { bulkSend, checkout, CheckoutError, startQueueSend } from "./api";
 import { canPickContacts, dedupe, pickFromPhone, readContactsFile } from "./contacts";
 import { fill, isMobile, waDigits, waTo, waShare } from "./util";
 
@@ -140,8 +140,9 @@ export function BulkSend({ product, content, link, lang = "en", pageId }: { prod
     if (!pageId || !consent) return;
     setBusy(true);
     try {
-      const list = mode === "auto" ? withPhone.map((p) => ({ name: p.name, phone: waDigits(p.phone) })) : undefined;
-      const res = await bulkSend({ action: "start", page_id: pageId, mode, lang, consent: true, people: mode === "auto" ? list : people.length });
+      const res = mode === "auto"
+        ? await bulkSend({ action: "start", page_id: pageId, mode, lang, consent: true, people: withPhone.map((p) => ({ name: p.name, phone: waDigits(p.phone) })) })
+        : await startQueueSend(pageId, lang, people.length);
       refreshWallet();
       setConfirmOpen(false); setConsent(false);
       toast({ title: `${fmtCredits(res.charged)} used`, description: mode === "auto" ? "Sending now. You can leave this page." : "Now tap Send for each person. WhatsApp opens with their message ready." });
