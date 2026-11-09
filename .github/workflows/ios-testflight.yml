@@ -112,6 +112,16 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
           echo "Uploaded build ${{ github.run_number }} (version ${{ inputs.version }}). It shows in App Store Connect → TestFlight after Apple finishes processing (usually 10 to 30 minutes)."
 
+      - name: Show why the export failed
+        if: failure()
+        run: |
+          for d in $(find "${TMPDIR:-/tmp}" -maxdepth 2 -name '*.xcdistributionlogs' 2>/dev/null); do
+            for f in "$d"/*.log; do
+              echo "=== $f"
+              grep -iE "error|fail|agreement|forbidden|unauthori|not found|no (app|account|team|profile|cert)|status|code" "$f" | head -60
+            done
+          done
+
       - name: Remove the key
         if: always()
         run: rm -rf "$RUNNER_TEMP/keys"
