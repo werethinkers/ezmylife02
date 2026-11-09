@@ -51,7 +51,14 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
           mkdir -p "$RUNNER_TEMP/keys"
-          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          key="$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          # Pasted keys often lose their line breaks or gain spaces. Keep only the base64 body and rebuild a clean file.
+          body=$(printf '%s' "$ASC_PRIVATE_KEY" | tr -d '\r' | sed -e 's/-----BEGIN PRIVATE KEY-----//' -e 's/-----END PRIVATE KEY-----//' | tr -d ' \n\t')
+          { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$body" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$key"
+          if ! openssl pkey -in "$key" -noout 2>/dev/null; then
+            echo "::error::ASC_PRIVATE_KEY is not a valid .p8 key. Open the AuthKey_XXXX.p8 file in a text editor, copy everything (BEGIN and END lines included) and save it again as the secret."
+            exit 1
+          fi
 
       - name: Build (archive)
         env:
