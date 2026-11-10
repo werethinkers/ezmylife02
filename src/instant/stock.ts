@@ -164,6 +164,11 @@ export function shot(key: string): Shot | null {
 }
 
 /** All stock photos for a product: the first is its cover. */
+/** Lets a catalogue file point its new designs at the photo sets of older ones (ids already listed above win). */
+export function registerStock(map: Record<string, StockSet[]>) {
+  for (const [id, sets] of Object.entries(map)) if (!(id in STOCK_FOR) && !(id in STOCK_SETS)) STOCK_FOR[id] = sets;
+}
+
 export function stockFor(productId: string): readonly Shot[] {
   const sets = STOCK_FOR[productId] ?? [productId as StockSet];
   const all = sets.flatMap((s) => (STOCK_SETS as Record<string, readonly Shot[]>)[s] ?? []);

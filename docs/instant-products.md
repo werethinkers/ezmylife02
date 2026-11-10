@@ -70,3 +70,15 @@ do not change, and a page whose saved version is missing falls back to the old f
 - Done: `business` (`src/instant/renderers/Business.tsx`, the `.s-prime` rules and `CountUp`, `ReviewStack`, `Fold`).
 - To add a family: give its renderer a `prime` layout, then add the family to `SIGNATURE_FAMILIES`.
 - The pictures in `public/design-previews` still show the older first version until they are remade.
+
+## The ideas list (Nov 2026)
+
+Abhijay's list of 1,000 ideas (500 websites, 500 cards) is being built in batches.
+
+- Done: 385 business websites, in `src/instant/catalog/ideas.ts` (17 groups). One line per design; the group
+  supplies the wording. Price ₹229 each (the average of the older business websites). Rows are in
+  `ip_products` (migration `20261110090000_idea_websites.sql`, already run on the live database).
+- Not done: the other 115 website ideas (personal and family sites, event microsites, religious and community,
+  creators, startups and a few one-offs) and all 500 cards. Many of these promise things no layout does yet
+  (guest uploads, live scores, scratch to reveal, certificates), so they need a layout or feature first.
+- The new designs have no picture in `public/design-previews` yet, so their cards show the design's colours and name.

@@ -1,4 +1,5 @@
 import type { CategoryId } from "../types";
+import { IDEA_GROUPS } from "./ideas";
 
 /** Second-level filters inside each category, so a shelf of 30 items stays easy to scan. */
 export const GROUPS: Record<CategoryId, { id: string; name: string; ids: string[] }[]> = {
@@ -45,5 +46,8 @@ export const GROUPS: Record<CategoryId, { id: string; name: string; ids: string[
 };
 
 const BY_PRODUCT = new Map<string, string>();
+// The 385 websites from the ideas list bring their own groups.
+GROUPS.business.push(...IDEA_GROUPS);
+
 Object.values(GROUPS).forEach((gs) => gs.forEach((g) => g.ids.forEach((id) => BY_PRODUCT.set(id, g.id))));
 export const groupOf = (productId: string) => BY_PRODUCT.get(productId) ?? "other";

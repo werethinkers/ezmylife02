@@ -6,6 +6,7 @@ import { BUSINESS } from "./business";
 import { MENUS } from "./menus";
 import { PROFILES } from "./profiles";
 import { STORES } from "./stores";
+import { IDEA_SITES } from "./ideas";
 
 export const CATEGORIES: { id: CategoryId; name: string; blurb: string; engine: "personal" | "business" }[] = [
   { id: "celebrations", name: "Celebrations", blurb: "Birthdays, anniversaries, thank-yous and more", engine: "personal" },
@@ -29,7 +30,7 @@ const withSignature = (p: Product): Product =>
 /** The version a stored page falls back to when its saved version is missing: never the new Signature one. */
 export const fallbackTheme = (p: Product): Theme => p.themes.find((t) => t.id !== SIGNATURE_ID) ?? p.themes[0];
 
-export const CATALOG: Product[] = [...CELEBRATIONS, ...FESTIVALS, ...EVENTS, ...BUSINESS, ...STORES, ...MENUS, ...PROFILES].map(withSignature);
+export const CATALOG: Product[] = [...CELEBRATIONS, ...FESTIVALS, ...EVENTS, ...BUSINESS, ...STORES, ...IDEA_SITES, ...MENUS, ...PROFILES].map(withSignature);
 
 const BY_ID = new Map(CATALOG.map((p) => [p.id, p]));
 export const getProduct = (id?: string | null) => (id ? BY_ID.get(id) : undefined);
