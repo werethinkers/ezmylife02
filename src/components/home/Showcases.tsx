@@ -36,6 +36,32 @@ const roundBtn = "flex h-10 w-10 items-center justify-center rounded-full border
 const pill = "rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold";
 
 /** A wheel of names on the left and a stack of cards on the right. Picking a name brings its card to the front. */
+/** Phones only: one line of full cards you swipe sideways (the desktop stacks and strips do not fit a narrow screen). */
+function PhoneRow({ slides, label }: { slides: HeroSlide[]; label: string }) {
+  return (
+    <div role="list" aria-label={label} className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 no-scrollbar sm:hidden">
+      {slides.map((s) => (
+        <div key={s.key} role="listitem" className="block-card flex w-[78%] shrink-0 snap-center flex-col overflow-hidden" style={{ background: `color-mix(in srgb, ${s.color} 38%, hsl(var(--card)))` }}>
+          {s.image ? (
+            <img src={s.image} alt="" loading="lazy" className="aspect-video w-full border-b-2 border-ink bg-card object-cover" />
+          ) : (
+            <div aria-hidden className="aspect-video w-full border-b-2 border-ink" style={{ background: s.color }} />
+          )}
+          <div className="flex flex-1 flex-col gap-1.5 p-3.5">
+            <p className="font-display text-[17px] font-bold leading-tight">{s.title}</p>
+            <p className="text-[12px] font-semibold text-ink/75">{s.eyebrow}</p>
+            <p className="line-clamp-2 text-[13.5px] leading-snug">{s.line}</p>
+            <div className="mt-auto flex items-center gap-2 pt-2">
+              <Button asChild variant="outline" size="sm"><Link to={s.to}>{s.cta}</Link></Button>
+              {s.price && <span className={pill}>{s.price}</span>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function FeatureCarousel({ slides, label, line }: { slides: HeroSlide[]; label: string; line?: string }) {
   const n = slides.length;
   const { step, setStep, hold } = useAutoStep(n, 3200);
@@ -45,7 +71,8 @@ export function FeatureCarousel({ slides, label, line }: { slides: HeroSlide[]; 
     <section aria-label={label}>
       <h2 className="text-2xl font-bold md:text-[2rem]">{label}</h2>
       {line && <p className="mt-1.5 text-[16px] text-muted-foreground">{line}</p>}
-      <div className="mt-6 flex flex-col overflow-hidden rounded-[28px] border-2 border-ink bg-sand shadow-block-lg lg:flex-row" {...hold}>
+      <div className="mt-6 sm:hidden"><PhoneRow slides={slides} label={label} /></div>
+      <div className="mt-6 hidden flex-col overflow-hidden rounded-[28px] border-2 border-ink bg-sand shadow-block-lg sm:flex lg:flex-row" {...hold}>
         <div className="relative h-[230px] overflow-hidden border-b-2 border-ink bg-pink lg:h-[500px] lg:w-[36%] lg:border-b-0 lg:border-r-2">
           {slides.map((s, i) => {
             const d = dist(i, cur, n);
@@ -125,6 +152,8 @@ export function SqueezeCarousel({ slides, label }: { slides: HeroSlide[]; label:
   const s = slides[cur];
   return (
     <div>
+      <PhoneRow slides={slides} label={label} />
+      <div className="hidden sm:block">
       <div className="no-scrollbar overflow-x-auto pb-1.5">
         <div role="tablist" aria-label={label} className="flex h-[240px] min-w-[720px] gap-3 md:h-[340px]">
           {slides.map((p, i) => (
@@ -165,6 +194,7 @@ export function SqueezeCarousel({ slides, label }: { slides: HeroSlide[]; label:
           <button type="button" className={roundBtn} aria-label="Previous" onClick={() => setAt((x) => x - 1)}><ArrowLeft className="h-[18px] w-[18px]" /></button>
           <button type="button" className={roundBtn} aria-label="Next" onClick={() => setAt((x) => x + 1)}><ArrowRight className="h-[18px] w-[18px]" /></button>
         </div>
+      </div>
       </div>
     </div>
   );
