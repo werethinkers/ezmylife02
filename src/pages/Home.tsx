@@ -16,7 +16,7 @@ import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { HeroPicker } from "@/components/home/HeroPicker";
-import { HeroCarousel } from "@/components/store/HeroCarousel";
+import { FeatureCarousel, SqueezeCarousel, Fold } from "@/components/home/Showcases";
 import { useAppSlides } from "@/components/store/useAppSlides";
 import { APP_PREVIEW_IDS, picturesFirst } from "@/data/previewManifest";
 import { StudiosShelf } from "@/components/home/StudiosShelf";
@@ -75,6 +75,8 @@ const Home = () => {
   const countLabel = useAppCountLabel();
   const [search, setSearch] = useState("");
   const [buyPackId, setBuyPackId] = useState<string | null>(null);
+  // Which door has its steps open. Opening one closes the other.
+  const [door, setDoor] = useState<string | null>(null);
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
   const byId = useMemo(() => new Map(live.map((t) => [t.id, t])), [live]);
@@ -109,6 +111,9 @@ const Home = () => {
     [live, editorsPicks],
   );
   const spotlightSlides = useAppSlides(spotlight);
+  // Studios with a preview, for the squeeze carousel above the studio tabs.
+  const studioPicks = useMemo(() => live.filter((t) => STUDIO_IDS.has(t.id) && APP_PREVIEW_IDS.has(t.id)).slice(0, 7), [live]);
+  const studioSlides = useAppSlides(studioPicks, (t) => `Studio · ${t.category}`);
   const oneCredit = useMemo(() => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14), [live, costOf, editorsPicks]);
   // Pinned new apps first, then the latest additions.
   const newest = useMemo(() => {
@@ -178,52 +183,48 @@ const Home = () => {
               gives you a result. Start with 100 free credits.
             </p>
 
-            <form onSubmit={onSearch} className="mt-7 flex max-w-2xl gap-2.5" role="search">
-              <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="What do you need? GST bill, passport photo…"
-                  aria-label="Search apps"
-                  className="h-14 rounded-2xl pl-12 pr-11 text-base shadow-block-sm"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    aria-label="Clear search"
-                    className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-sand"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <Button type="submit" className="h-14 rounded-2xl px-5 text-base">
+            {/* The Merlin bar: one pill to say what you need. */}
+            <form onSubmit={onSearch} className="mt-7 flex max-w-2xl items-center gap-2.5 rounded-full border-2 border-ink bg-card py-1.5 pl-2.5 pr-1.5 shadow-block focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2" role="search">
+              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun">
+                <Sparkles className="h-[18px] w-[18px]" />
+              </span>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="What do you need? GST bill, passport photo…"
+                aria-label="Search apps"
+                className="h-11 min-w-0 flex-1 border-0 bg-transparent px-1 text-[17px] font-medium shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand hover:bg-sun">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <Button type="submit" className="h-11 shrink-0 rounded-full px-5 text-base shadow-none">
                 Find
               </Button>
             </form>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-muted-foreground">People search:</span>
+            <div className="no-scrollbar mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+              <span className="shrink-0 text-sm font-semibold text-muted-foreground">People search:</span>
               {POPULAR_SEARCHES.map((q) => (
                 <Link
                   key={q}
                   to={`/ai-apps?q=${encodeURIComponent(q)}`}
-                  className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun"
+                  className="shrink-0 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun"
                 >
                   {q}
                 </Link>
               ))}
             </div>
 
-            <ul className="mt-7 grid gap-2.5 text-sm sm:grid-cols-3">
+            <ul className="no-scrollbar mt-7 flex gap-2.5 overflow-x-auto pb-1 text-sm">
               {[
                 { t: "100 free credits", s: "No card needed" },
                 { t: "Pay per result", s: "Packs from ₹10, UPI or card" },
                 { t: "Failed runs are free", s: "Credits only when it works" },
               ].map(({ t, s }) => (
-                <li key={t} className="rounded-xl border-2 border-ink bg-card px-3 py-2.5">
+                <li key={t} className="min-w-[170px] flex-1 rounded-xl border-2 border-ink bg-card px-3 py-2.5">
                   <span className="block font-bold">{t}</span>
                   <span className="block text-[13px] text-muted-foreground">{s}</span>
                 </li>
@@ -237,8 +238,8 @@ const Home = () => {
         </section>
 
         {spotlightSlides.length >= 3 && (
-          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-2">
-            <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
+          <div className="mx-auto max-w-7xl px-4 pt-6">
+            <FeatureCarousel slides={spotlightSlides} label="Apps to start with" line="Picked by our team" />
           </div>
         )}
 
@@ -274,21 +275,32 @@ const Home = () => {
                     : []),
                   { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
                   { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
-                ].map((d) => (
-                  <DoorLink key={d.to} to={d.to} className={cn("block-card block-lift flex min-h-[250px] w-[78%] shrink-0 snap-start flex-col gap-3 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[46%] lg:w-[31%]", hasStudios ? "xl:w-[23.5%]" : "xl:w-[31%]", d.c)}>
-                    <div className="flex items-center justify-between">
-                      <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", d.c.includes("bg-ink") && "bg-sun text-ink")}>
-                        <d.Icon className="h-5 w-5" aria-hidden />
-                      </span>
-                      <span className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold", d.c.includes("bg-ink") ? "bg-sun text-ink" : "bg-card")}>{d.tag}</span>
+                ].map((d) => {
+                  const dark = d.c.includes("bg-ink");
+                  const steps = d.to === "/websites" ? ["Pick a design", "Add your details", "Pay once", "Go live"] : d.to === "/cards" ? ["Pick a design", "Add your details", "Pay once", "Send it"] : ["See what it does", "Use it", "Get your result", "Save or share"];
+                  return (
+                    <div key={d.to} className={cn("block-card flex w-[78%] shrink-0 snap-start flex-col self-start sm:w-[46%] lg:w-[31%]", hasStudios ? "xl:w-[23.5%]" : "xl:w-[31%]", d.c)}>
+                      <DoorLink to={d.to} className="flex min-h-[230px] flex-1 flex-col gap-3 rounded-t-[14px] p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <div className="flex items-center justify-between">
+                          <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", dark && "bg-sun text-ink")}>
+                            <d.Icon className="h-5 w-5" aria-hidden />
+                          </span>
+                          <span className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold", dark ? "bg-sun text-ink" : "bg-card")}>{d.tag}</span>
+                        </div>
+                        <h3 className="text-[22px] font-extrabold leading-tight">{d.h}</h3>
+                        <p className={cn("text-[16px]", dark ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
+                        <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-2 font-bold", dark && "text-sun")}>
+                          {d.go} <ArrowRight className="h-4 w-4" />
+                        </span>
+                      </DoorLink>
+                      <Fold open={door === d.to} onToggle={() => setDoor(door === d.to ? null : d.to)} title="The 4 steps" dark={dark}>
+                        <ol className="list-decimal space-y-0.5 pb-4 pl-11 pr-6 text-[15px] font-semibold">
+                          {steps.map((x) => <li key={x}>{x}</li>)}
+                        </ol>
+                      </Fold>
                     </div>
-                    <h3 className="text-[22px] font-extrabold leading-tight">{d.h}</h3>
-                    <p className={cn("text-[16px]", d.c.includes("bg-ink") ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
-                    <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-2 font-bold", d.c.includes("bg-ink") && "text-sun")}>
-                      {d.go} <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </DoorLink>
-                ))}
+                  );
+                })}
               </Shelf>
             </Section>
 
@@ -334,6 +346,11 @@ const Home = () => {
                   </Button>
                 }
               >
+                {studioSlides.length >= 3 && (
+                  <div className="mb-10">
+                    <SqueezeCarousel slides={studioSlides} label="Studios" />
+                  </div>
+                )}
                 <StudiosShelf apps={live} />
               </Section>
             )}

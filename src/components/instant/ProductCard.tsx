@@ -18,6 +18,7 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
   const t = p.themes[0];
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(p.category);
   const shot = designPreviewUrl(p.id);
+  const sampleTitle = String(p.sample?.[p.titleField] ?? p.name);
   const colour = DESIGN_COLOUR[p.category] ?? "hsl(var(--sun))";
   const catName = CATEGORIES.find((c) => c.id === p.category)?.name ?? "";
   return (
@@ -34,11 +35,19 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
             {shot ? (
               <img src={shot} alt="" loading="lazy" className="h-full w-full object-cover object-top" />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center" style={{ background: t.c.bg, color: t.c.tx }}>
-                <span className="text-5xl">{p.glyph}</span>
-                <span className="line-clamp-3 text-lg font-bold leading-tight" style={{ fontFamily: t.f.d }}>
-                  {p.name}
-                </span>
+              // No picture yet: draw the top of the page from the design's own sample, colours and fonts.
+              <div className="flex h-full flex-col text-left" style={{ background: t.c.bg, color: t.c.tx, fontFamily: t.f.b }}>
+                <div className="flex items-center gap-1.5 px-2.5 py-2" style={{ borderBottom: `1px solid ${t.c.line}` }}>
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] text-[8px] font-bold" style={{ background: t.c.tx, color: t.c.bg }}>{sampleTitle[0]}</span>
+                  <span className="truncate text-[8px] font-bold">{sampleTitle}</span>
+                </div>
+                <div className="flex flex-1 flex-col gap-1.5 px-2.5 pt-3">
+                  {p.opts?.heroVerb && <span className="text-[8px] font-semibold" style={{ color: t.c.mu }}>{p.opts.heroVerb}</span>}
+                  <span className="line-clamp-3 text-[17px] font-extrabold leading-[1.02]" style={{ fontFamily: t.f.d }}>{sampleTitle}</span>
+                  {p.sample?.tagline && <span className="line-clamp-2 text-[8px] leading-snug" style={{ color: t.c.mu }}>{String(p.sample.tagline)}</span>}
+                  <span className="mt-1 rounded-md px-1.5 py-1.5 text-center text-[8px] font-bold" style={{ background: t.c.ac, color: t.c.on }}>{String(p.sample?.offer ?? p.name)}</span>
+                  <span className="rounded-md px-1.5 py-1.5 text-center text-[8px] font-bold" style={{ background: "#25D366", color: "#0b2e17" }}>WhatsApp us</span>
+                </div>
               </div>
             )}
           </div>

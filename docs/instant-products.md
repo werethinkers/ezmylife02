@@ -75,10 +75,18 @@ do not change, and a page whose saved version is missing falls back to the old f
 
 Abhijay's list of 1,000 ideas (500 websites, 500 cards) is being built in batches.
 
-- Done: 385 business websites, in `src/instant/catalog/ideas.ts` (17 groups). One line per design; the group
-  supplies the wording. Price ₹229 each (the average of the older business websites). Rows are in
-  `ip_products` (migration `20261110090000_idea_websites.sql`, already run on the live database).
-- Not done: the other 115 website ideas (personal and family sites, event microsites, religious and community,
-  creators, startups and a few one-offs) and all 500 cards. Many of these promise things no layout does yet
-  (guest uploads, live scores, scratch to reveal, certificates), so they need a layout or feature first.
-- The new designs have no picture in `public/design-previews` yet, so their cards show the design's colours and name.
+- Done: 468 websites, in `src/instant/catalog/ideas.ts` (21 groups). One line per design; the group supplies the
+  wording, sample numbers, sample reviews, steps and questions. Price ₹229 each (the average of the older business
+  websites). Rows are in `ip_products` (migrations `20261110090000_idea_websites.sql` and
+  `20261110130000_idea_websites_2.sql`, both already run on the live database).
+- Not done: 32 website ideas that need something no layout does yet (the personal and family sites such as a family
+  tree, memorial or wish list; a documentation site, a changelog, an affiliate deal site; single listings such as
+  "sell my flat") and all 500 cards.
+- A design with no picture in `public/design-previews` shows a drawn preview from its own sample (`ProductCard`).
+- On `/websites` a category with more than 24 designs folds into its groups (`CreateGallery`).
+
+## Home page (Nov 2026)
+
+The moving showcases are in `src/components/home/Showcases.tsx`: `FeatureCarousel` (apps to start with),
+`SqueezeCarousel` (studios), `RailGallery` (websites) and `OrbitCarousel` (festival cards). The search is the
+Merlin bar (one pill). Each door has a "The 4 steps" fold; opening one closes the other.

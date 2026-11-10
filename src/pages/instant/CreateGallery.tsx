@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import SEOFooter from "@/components/SEOFooter";
 import { PageSeo } from "@/components/seo/PageSeo";
@@ -76,6 +76,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
   const sort = (params.get("sort") as Sort | null) ?? "recommended";
   const popular = params.get("popular") === "1";
   const [q, setQ] = useState("");
+  const [fold, setFold] = useState<string | null>(null);
   const set = (patch: Record<string, string | null>) =>
     setParams(
       (p) => {
@@ -202,11 +203,47 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
                 </div>
                 <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{sh.items.length}</span>
               </div>
+              {sort === "recommended" && cat === "all" && sh.items.length > 24 && GROUPS[sh.key as CategoryId] ? (
+                // A long shelf hides most of what is on it, so a big category folds into its groups.
+                // The folds start closed and opening one closes the other.
+                <div className="grid gap-3">
+                  {[...GROUPS[sh.key as CategoryId], { id: "other", name: "More", ids: [] as string[] }].map((gr) => {
+                    const items = sh.items.filter((l) => groupOf(l.product.id) === gr.id);
+                    if (!items.length) return null;
+                    const fid = `${sh.key}:${gr.id}`;
+                    const open = fold === fid;
+                    return (
+                      <div key={gr.id} className="block-card overflow-hidden">
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          onClick={() => setFold(open ? null : fid)}
+                          className={cn("flex min-h-[60px] w-full items-center gap-3.5 px-5 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring", open ? "bg-teal" : "bg-card hover:bg-sand")}
+                        >
+                          <span className="min-w-0 flex-1 font-display text-lg font-bold leading-snug">{gr.name}</span>
+                          <span className="shrink-0 rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold tabular-nums">{items.length}</span>
+                          <ChevronDown aria-hidden className={cn("h-5 w-5 shrink-0 transition-transform duration-200", open && "rotate-180")} />
+                        </button>
+                        {open && (
+                          <div className="border-t-2 border-ink bg-sand/60 px-5 pb-3 pt-5">
+                            <Shelf>
+                              {items.map((l) => (
+                                <ProductCard key={l.product.id} l={l} />
+                              ))}
+                            </Shelf>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
               <Shelf>
                 {sh.items.map((l) => (
                   <ProductCard key={l.product.id} l={l} />
                 ))}
               </Shelf>
+              )}
             </section>
           );
         })}

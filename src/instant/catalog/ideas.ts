@@ -3,7 +3,7 @@ import { ten, type Mood } from "../themes";
 import { registerStock, type StockSet } from "../stock";
 import { make } from "./business";
 
-// 385 more business websites, from the "1,000 ideas" list (Nov 2026): every idea that fits the business
+// 468 more business websites, from the "1,000 ideas" list (Nov 2026): every idea that fits the business
 // layout as it is (a list with prices, WhatsApp enquiries, call and map buttons, a lead form).
 // Each kind of business shares its group's wording below and has its own name, sample business and
 // three sample lines with prices. An owner replaces all of it in the form.
@@ -531,6 +531,153 @@ umbrella-bag-repair|Umbrella & bag repair|Repair Hut|Umbrella repair:60;Bag zip 
 data-recovery|Laptop data recovery|DataBack Lab|Diagnosis:;Deleted file recovery:2500;Hard disk recovery:6500
 gas-stove-repair|Gas stove repair|Chulha Care|Service visit:250;Burner replacement:350;Pipe and regulator change:450`,
   },
+  {
+    id: "idea-community", name: "Religious & community", mood: "sacred", glyph: "🛕", verb: "Welcome to",
+    servicesTitle: "Timings & programmes", serviceLabel: "programme", highlightsTitle: "Good to know",
+    highlights: ["Open to all", "Daily programmes", "Volunteers welcome", "Receipts for donations", "Festival celebrations", "Parking", "Drinking water", "Updates on WhatsApp"],
+    leadTitle: "Send us a message", leadButton: "Send message", offerNote: "Tell us how you would like to join, help or contribute. We will reply on WhatsApp.",
+    listing: "Your timings, programmes and events, with a simple way for people to reach you on WhatsApp.", line: "A place for everyone, run by the community.", about: "timings and programmes", stock: [],
+    items: `temple|Temple website|Shri Siddhivinayak Mandir|Morning aarti, 6:00 AM:;Evening aarti, 7:30 PM:;Abhishek pooja:501
+jain-mandir|Jain mandir & sangh|Shri Adinath Jain Mandir|Abhishek, 6:30 AM:;Pratikraman, 7:00 PM:;Ayambil shala:
+gurudwara|Gurudwara|Gurudwara Sahib|Morning path, 5:00 AM:;Langar, all day:;Kirtan, 7:00 PM:
+church|Church|St. Mary's Church|Sunday mass, 8:00 AM:;Evening prayer, 6:30 PM:;Sunday school:
+mosque-madrasa|Mosque & madrasa|Jama Masjid|Jumu'ah prayer, 1:30 PM:;Evening Quran class:;Madrasa admission:
+ngo-trust|NGO & charitable trust|Umeed Foundation|Sponsor a child's school year:6000;Monthly ration kit:1500;Volunteer on weekends:
+community-samaj|Community samaj|Agrawal Samaj|Yearly membership:500;Community hall booking:;Annual sammelan:
+housing-society|Housing society (RWA)|Green Park Society|Clubhouse booking:1500;Monthly maintenance:;Visitor parking:
+gaushala|Gaushala|Gopal Gaushala|Feed a cow for a day:150;Adopt a cow for a month:3000;Visiting hours, 7:00 AM to 6:00 PM:
+satsang-group|Satsang group|Anand Satsang Mandal|Weekly satsang, Sunday 9:00 AM:;Monthly pravachan:;Bhajan evening:
+bhajan-mandali|Bhajan mandali|Shyam Bhajan Mandali|Bhajan sandhya:5100;Sundarkand path:3100;Mata ki chowki:7100
+ashram|Ashram|Shanti Ashram|Morning yoga and dhyan, 5:30 AM:;Guest stay, per day:500;Weekend shivir:1500
+alumni-association|Alumni association|DAV Alumni Association|Lifetime membership:1000;Annual reunion:800;Mentor a student:
+animal-shelter|Animal shelter|Second Chance Shelter|Sponsor a dog's food for a month:1200;Adoption visit:;Volunteer shift:
+food-bank|Food bank & roti bank|Roti Bank|Sponsor 50 meals:1500;Donate dry ration:;Volunteer for evening service:
+ladies-club|Ladies' club|Sakhi Ladies Club|Yearly membership:1200;Monthly meet:;Festive mela stall:500
+service-club|Service club chapter|City Service Club|Weekly meeting, Friday 7:00 PM:;Eye check-up camp:;Become a member:
+youth-club|Youth club|Yuva Shakti Club|Yearly membership:300;Sunday sports morning:;Blood donation drive:
+blood-donor-network|Blood donor network|Raktdaan Network|Register as a donor:;Request blood:;Host a donation camp:
+senior-citizens-association|Senior citizens' association|Varishth Nagrik Sangh|Yearly membership:200;Morning walk group, 6:00 AM:;Monthly health camp:
+dharmik-pathshala|Dharmik pathshala|Sanskar Pathshala|Kids class, Sunday 9:00 AM:;Yearly fee:500;Summer shivir:300
+cricket-club|Old students' cricket club|Old Boys Cricket Club|Season membership:1500;Sunday match:;Sponsor the team kit:
+ganesh-mandal|Ganesh mandal / pandal committee|Shri Ganesh Mitra Mandal|Daily aarti, 8:00 PM:;Sponsor a day's prasad:2100;Volunteer for visarjan:
+durga-puja-committee|Durga puja committee|Sarbojanin Durga Puja Samiti|Pushpanjali, Ashtami 9:00 AM:;Bhog coupon:150;Cultural evening:`,
+  },
+  {
+    id: "idea-creators", name: "Creators & personal brands", mood: "makers", glyph: "🎤", verb: "Meet",
+    servicesTitle: "Work with me", serviceLabel: "service", highlightsTitle: "What I do",
+    highlights: ["Original work", "Brand collaborations", "Live shows", "Workshops", "Quick replies", "Travels for work", "Custom projects", "Press kit on request"],
+    leadTitle: "Send an enquiry", leadButton: "Send enquiry", offerNote: "Tell me about your event, brand or project and the date. I will reply on WhatsApp.",
+    listing: "Your work, what people can book you for, your rates and enquiries on WhatsApp.", line: "Original work, made with heart.", about: "work and availability", stock: ["photographer", "freelancer-services"],
+    items: `youtuber-site|YouTuber channel website|Tech with Aman|Brand integration:;Dedicated video:;Channel shout-out:
+podcast-site|Podcast website|Baat Cheet Podcast|Episode sponsorship:;Guest request:;Host-read ad:
+author-site|Author website|Neha Sharma, Author|Signed paperback:399;Book club visit:;Writing workshop:1500
+poet-page|Poet & shayar page|Shayar Faiz Indori|Mushaira booking:;Private mehfil:;Poetry workshop:
+comedian-page|Stand-up comedian|Comic Rahul|Corporate show:;College show:;Private party set:
+artist-gallery|Artist & painter gallery|Studio Meera|Original canvas, from:8000;Custom portrait:5000;Art print:900
+singer-page|Singer & musician|Aarohi Live|Wedding performance:;Corporate show:;Studio recording, per song:8000
+dancer-portfolio|Dancer portfolio|Nritya by Kavya|Stage performance:;Wedding choreography:;Workshop:1200
+influencer-media-kit|Influencer media kit|Riya Creates|Instagram reel:;Story set:;Brand shoot day:
+chef-brand|Chef personal brand|Chef Kunal's Table|Private dinner for 6:9000;Cooking class:1500;Menu consulting:
+life-coach|Life coach|Coach Ananya|Free discovery call:;Single session:2000;8-week programme:14000
+athlete-profile|Athlete profile|Arjun Rao, Sprinter|Brand partnership:;School talk:;Coaching camp:
+model-portfolio|Model portfolio|Tara M.|Fashion shoot, per day:;Brand campaign:;Runway show:
+actor-portfolio|Actor portfolio|Kabir Mehta|Film and web roles:;Ad films:;Voice work:
+voice-over-artist|Voice-over artist|Awaaz by Sameer|Ad voice-over, 30 seconds:3000;Explainer video, per minute:2500;IVR recording:1500
+potter-sculptor|Potter & sculptor|Mitti Studio|Pottery workshop:1500;Handmade mug:450;Custom sculpture:
+filmmaker-page|Filmmaker|Frames by Dev|Ad film:;Corporate film:;Wedding film:60000
+illustrator-page|Illustrator|Doodle by Isha|Custom illustration:2500;Book cover:8000;Art print:600
+leader-page|Local leader public page|Jan Sampark Karyalaya|Office hours, Monday to Saturday 10:00 AM:;Share a problem in your ward:;Request a meeting:
+doctor-brand|Doctor personal brand|Dr. Meera Joshi|Clinic consultation:600;Online consultation:500;Health talk for your group:
+teacher-page|Teacher personal page|Maths with Verma Sir|Class 10 batch, monthly:1500;Class 12 batch, monthly:2000;Doubt session:300
+cartoonist-page|Cartoonist|Toons by Raj|Custom caricature:1200;Wedding caricature stall:15000;Comic strip for brands:
+ghazal-singer|Mehfil & ghazal singer|Sham-e-Ghazal|Private mehfil:;Wedding evening:;Corporate evening:
+photo-walk-host|Photography workshop host|Lens Walks|Photo walk:800;Weekend workshop:2500;One-to-one mentoring:1500
+travel-blogger|Travel blogger|Ghumakkad Diaries|Brand collaboration:;Trip planning call:1000;Group trip:
+gamer-streamer|Gamer & streamer|GG Arnav|Stream sponsorship:;Brand integration:;Coaching session:500`,
+  },
+  {
+    id: "idea-event-sites", name: "Event websites", mood: "lively", glyph: "🎟️", verb: "Join",
+    servicesTitle: "Tickets & categories", serviceLabel: "ticket or category", highlightsTitle: "On the day",
+    highlights: ["Easy registration", "Clear schedule", "Venue map", "Parking", "Food stalls", "Volunteers on site", "First aid", "Updates on WhatsApp"],
+    leadTitle: "Register now", leadButton: "Send my registration", offerNote: "Share your name and how many are coming. We will confirm on WhatsApp.",
+    listing: "Your event's tickets or categories, the date and venue map, and registrations on WhatsApp.", line: "Save the date and bring your friends.", about: "event and registration", stock: ["college-fest", "conference"],
+    items: `marathon-event|Marathon & run event|City Run 2026|5K fun run:400;10K run:700;Half marathon:1200
+cricket-tournament|Cricket tournament|Champions Cup|Team entry:5000;Sponsor a match:;Spectator entry:
+trade-fair|Exhibition & trade fair|Vyapar Expo|Stall booking, 3 by 3 m:15000;Visitor entry:50;Sponsor package:
+garba-night|Garba night tickets|Rangeelo Garba Night|Single pass:300;Couple pass:500;Season pass:1500
+concert-page|Concert page|Sufi Night Live|Silver ticket:499;Gold ticket:999;VIP table for 4:6000
+annual-day|School annual day|Sunrise School Annual Day|Parent pass:;Extra guest pass:100;Recording of the event:300
+science-fair|Science fair|Young Minds Science Fair|Student project entry:100;School team entry:500;Visitor entry:
+hackathon|Hackathon|CodeSprint|Team registration:500;Student team registration:200;Sponsor a prize:
+charity-fundraiser|Charity fundraiser|Run for Education|Donate one school kit:500;Sponsor a child for a year:6000;Volunteer on the day:
+health-camp|Health camp|Free Health Check-up Camp|Sugar and BP check:;Eye check-up:;Dental check-up:
+job-fair|Job fair|Rozgar Mela|Candidate registration:;Company stall:5000;Resume review desk:
+book-fair|Book fair|Pustak Mela|Visitor entry:20;Publisher stall:8000;Author session:
+food-festival|Food festival|Swad Utsav|Entry pass:100;Food stall booking:6000;Family pass for 4:300
+flea-market|Flea market|Sunday Flea|Stall for the day:1500;Visitor entry:;Table for home sellers:700
+art-exhibition|Art exhibition|Rang Art Show|Visitor entry:;Artist wall space:2000;Opening evening:
+katha-event|Katha & pravachan event|Shrimad Bhagwat Katha|Daily katha, 3:00 PM to 6:00 PM:;Be a yajman for a day:11000;Prasad seva:2100
+sports-day|Sports day|Annual Sports Day|Parent entry:;Parents' race entry:;Sponsor medals:
+pitch-event|Startup pitch event|Pitch Night|Startup application:;Audience pass:300;Investor pass:
+blood-donation-camp|Blood donation camp|Raktdaan Shivir|Donor registration:;Volunteer registration:;Bring your company team:
+bhandara-event|Bhandara & langar event|Maha Bhandara|Prasad for all, 12:00 PM onwards:;Sponsor 100 plates:5100;Volunteer for seva:`,
+  },
+  {
+    id: "idea-startups", name: "Startups & online brands", mood: "tech", glyph: "🚀", verb: "Try",
+    servicesTitle: "Plans & pricing", serviceLabel: "plan", highlightsTitle: "Why teams pick us",
+    highlights: ["Free trial", "No setup fee", "Works on your phone", "Support on WhatsApp", "Your data stays safe", "Made in India", "Cancel anytime", "Help getting started"],
+    leadTitle: "Book a demo", leadButton: "Book my demo", offerNote: "Tell us about your team and what you want to solve. We will set up a call.",
+    listing: "What you offer, your plans and pricing, and demo or signup requests on WhatsApp.", line: "Simple tools that save your team time.", about: "product and pricing", stock: ["product-launch", "consultant"],
+    items: `saas-landing|SaaS landing page|BillBook Cloud|Starter, monthly:499;Growth, monthly:1499;Business, monthly:3999
+app-landing|Mobile app landing page|Kharcha App|Free plan:;Premium, yearly:999;Family plan, yearly:1499
+waitlist-page|Waitlist page|QuickKhata|Join the waitlist:;Early access:;Founding member offer:
+d2c-brand|D2C brand store|Nimbu Naturals|Face wash:349;Hair oil:449;Combo pack:699
+crowdfunding-page|Crowdfunding page|Kulhad Coffee Co.|Supporter:500;Early bird pack:1500;Founder's pack:5000
+careers-page|Careers page|Zentro Careers|Sales executive:;Customer support associate:;Software developer:
+investor-page|Investor page|Zentro|Request the deck:;Book a founder call:;Data room access:
+newsletter-page|Newsletter landing page|The Dhandha Letter|Free weekly issue:;Paid, monthly:99;Paid, yearly:999
+handmade-store|Online store for handmade goods|Haath Se|Handmade tote:650;Block-print scarf:850;Gift set:1400
+subscription-box|Subscription box brand|Chai Box Club|One box:599;3-month plan:1599;6-month plan:2999
+membership-community|Community membership site|Founders' Adda|Monthly membership:499;Yearly membership:4999;Guest pass for one meet:300
+ticketing-organiser|Event ticketing for small organisers|PassWala|Ticketing for one event:999;Monthly plan:2499;On-site check-in help:
+resume-service|Resume service|ResumeRight|Fresher resume:499;Experienced resume:999;Resume with LinkedIn profile:1799`,
+  },
+];
+
+// Sample numbers and reviews for each group's sample business, so a new page opens looking complete.
+// Like every sample line they are placeholders: the owner replaces them with their own.
+const SHOW: Record<string, { stats: [string, string][]; reviews: [string, string][] }> = {
+  "idea-doctors": { stats: [["15+", "years of practice"], ["10,000+", "patients seen"], ["6", "days a week"], ["4.8★", "Google rating"]], reviews: [["Sunita Verma", "The doctor listened patiently and explained everything in simple words. Fees were told upfront."], ["Rakesh Jain", "Got an appointment the same day on WhatsApp. Clean clinic and no long wait."]] },
+  "idea-food": { stats: [["12+", "years of taste"], ["500+", "orders a month"], ["100%", "fresh daily"], ["4.8★", "Google rating"]], reviews: [["Pooja Agrawal", "Tastes like home. We order every week and the quality has never dropped."], ["Imran Khan", "Ordered in bulk for a family function. Packed well and delivered on time."]] },
+  "idea-retail": { stats: [["20+", "years in the market"], ["1,000+", "items in stock"], ["50+", "brands"], ["4.7★", "Google rating"]], reviews: [["Anita Sharma", "Good range and fair prices. They sent photos on WhatsApp before I came to the shop."], ["Vikas Patel", "Exchange was easy and the staff helped me pick the right one."]] },
+  "idea-vehicles": { stats: [["10+", "years of service"], ["5,000+", "happy customers"], ["7", "days a week"], ["4.7★", "Google rating"]], reviews: [["Deepak Yadav", "Clear rates, no surprises on the bill. They called back within minutes."], ["Sneha Kulkarni", "On time and careful with my vehicle. Will call again."]] },
+  "idea-home": { stats: [["8+", "years of work"], ["2,500+", "homes served"], ["Same day", "visits"], ["4.8★", "Google rating"]], reviews: [["Meenakshi Rao", "Came on time, finished neatly and cleaned up after the work."], ["Ajay Tiwari", "The rate was told before starting and that is exactly what I paid."]] },
+  "idea-pros": { stats: [["12+", "years of practice"], ["800+", "clients"], ["On time", "every filing"], ["4.9★", "Google rating"]], reviews: [["Nitin Maheshwari", "Explained what was needed in plain language and reminded me before every due date."], ["Farah Sheikh", "Quick, clear and reachable on WhatsApp. No running around."]] },
+  "idea-classes": { stats: [["10+", "years of teaching"], ["1,200+", "students taught"], ["15", "students a batch"], ["4.8★", "Google rating"]], reviews: [["Kavita Joshi", "My daughter looks forward to every class. The teacher sends regular updates."], ["Rohan Gupta", "Small batches made the difference. Doubts get cleared the same day."]] },
+  "idea-sports": { stats: [["6+", "years running"], ["900+", "members"], ["6 AM to 10 PM", "open"], ["4.7★", "Google rating"]], reviews: [["Aditya Singh", "Friendly coaches and well kept equipment. Great place to spend an evening."], ["Priya Nair", "Booked on WhatsApp in a minute. The kids did not want to leave."]] },
+  "idea-beauty": { stats: [["9+", "years of styling"], ["3,000+", "happy clients"], ["15+", "services"], ["4.8★", "Google rating"]], reviews: [["Shreya Bansal", "Exactly the look I asked for. Clean tools and no waiting."], ["Ritu Malhotra", "Booked my slot on WhatsApp and they were ready when I walked in."]] },
+  "idea-stays": { stats: [["7+", "years of hosting"], ["2,000+", "guests hosted"], ["24 hours", "hot water"], ["4.8★", "Google rating"]], reviews: [["Manish Dubey", "Clean rooms, warm people and food that felt like home."], ["Tanvi Shah", "They answered every question on WhatsApp before we booked. No surprises."]] },
+  "idea-events": { stats: [["10+", "years of events"], ["700+", "functions done"], ["Own", "equipment"], ["4.8★", "Google rating"]], reviews: [["Harsh Vyas", "Reached before time and everything worked. Our guests are still talking about it."], ["Nidhi Chouhan", "Understood what we wanted and kept to the budget."]] },
+  "idea-b2b": { stats: [["18+", "years in business"], ["300+", "buyers served"], ["12", "states supplied"], ["GST", "registered"]], reviews: [["Purchase head, Indore", "Consistent quality across every lot and dispatch on the promised date."], ["Sanjay Traders", "Fair rates and proper paperwork. Easy to deal with."]] },
+  "idea-farm": { stats: [["3 generations", "of farming"], ["40", "acres"], ["200+", "regular buyers"], ["Daily", "fresh supply"]], reviews: [["Ramesh Patidar", "Honest weight and honest rates. We have been buying for years."], ["Lata Choudhary", "Fresh every time, and they deliver to our door."]] },
+  "idea-property": { stats: [["15+", "years of work"], ["120+", "projects"], ["Clear", "paperwork"], ["4.7★", "Google rating"]], reviews: [["Alok Saxena", "Everything was shown on site and in writing before we paid anything."], ["Geeta Rathore", "Work finished on the promised date and the quality is solid."]] },
+  "idea-pets": { stats: [["5+", "years with pets"], ["1,500+", "pets cared for"], ["All", "breeds welcome"], ["4.9★", "Google rating"]], reviews: [["Karan Arora", "They handled my nervous dog so gently. Photos came on WhatsApp through the day."], ["Mitali Sen", "Clean, kind and on time. My cat came back relaxed."]] },
+  "idea-makers": { stats: [["4+", "years of making"], ["1,000+", "orders sent"], ["100%", "handmade"], ["4.9★", "customer rating"]], reviews: [["Ishita Jain", "Made exactly what I had in mind and packed it beautifully."], ["Rahul Soni", "Ordered return gifts in bulk. Reached before the date, every piece perfect."]] },
+  "idea-agents": { stats: [["10+", "years of service"], ["50+", "services"], ["7", "days a week"], ["4.7★", "Google rating"]], reviews: [["Mohan Lal", "Told me exactly which papers to bring. The work was done in one visit."], ["Shabana Bi", "Quick, polite and the fee was the same as told on WhatsApp."]] },
+  "idea-community": { stats: [["25+", "years of seva"], ["500+", "families"], ["Daily", "programmes"], ["Open", "to all"]], reviews: [["A regular visitor", "A peaceful place, run with care. Everyone is made to feel welcome."], ["A volunteer", "Clear timings and updates on WhatsApp make it easy to take part."]] },
+  "idea-creators": { stats: [["6+", "years of work"], ["150+", "projects"], ["40+", "cities"], ["2", "languages"]], reviews: [["An event organiser", "Professional from the first message to the last. The audience loved it."], ["A brand partner", "Delivered on time and the work was better than the brief."]] },
+  "idea-event-sites": { stats: [["3rd", "edition"], ["2,000+", "people expected"], ["1 day", "of fun"], ["Free", "parking"]], reviews: [["A visitor last year", "Well organised and easy to register. We are coming back with friends."], ["A stall owner", "Good crowd and helpful volunteers through the day."]] },
+  "idea-startups": { stats: [["5,000+", "users"], ["10 minutes", "to set up"], ["99.9%", "uptime"], ["4.8★", "user rating"]], reviews: [["A shop owner", "Set it up on my phone in one evening. It saves me an hour every day."], ["An operations lead", "Support replies on WhatsApp within minutes. Simple and reliable."]] },
+};
+const HOW: [string, string][] = [
+  ["Tell us what you need", "Send a WhatsApp message or fill the short form on this page."],
+  ["We reply with the details", "You get the price, the timing and anything you should keep ready."],
+  ["Confirm and relax", "We confirm on WhatsApp and take it from there."],
+];
+const FAQS: [string, string][] = [
+  ["How do I reach you?", "Tap the WhatsApp button or call the number on this page. We reply during working hours."],
+  ["When are you open?", "On the days and hours shown under Opening hours on this page."],
+  ["How can I pay?", "UPI, card or cash. We share the details when we confirm."],
 ];
 
 const rows = (g: Group) => g.items.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
@@ -542,8 +689,12 @@ const rows = (g: Group) => g.items.split("\n").map((l) => l.trim()).filter(Boole
 // Photos: each new design borrows the photo sets of the nearest older design in its group.
 registerStock(Object.fromEntries(GROUPS_DATA.flatMap((g) => rows(g).map((r) => [r.id, g.stock]))));
 
-/** "Dental clinic", "Chai brand / tea stall chain", "Pharma franchise (PCD)" → the plain noun used in sentences. */
-const nounOf = (name: string) => name.replace(/\s*\(.*?\)/g, "").split(" / ")[0].trim().replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase());
+/** "Dental clinic", "Chai brand / tea stall chain", "Temple website", "SaaS landing page" → the plain noun used in sentences. */
+const nounOf = (name: string) => {
+  const n = name.replace(/\s*\(.*?\)/g, "").split(" / ")[0].replace(/\s+(website|company site|site|page)$/i, "").trim();
+  // Lower the first letter of an ordinary word ("Dental"), but leave names like "SaaS", "GST" or "D2C" alone.
+  return /^[A-Z][a-z]+(\s|$)/.test(n) ? n[0].toLowerCase() + n.slice(1) : n;
+};
 
 export const IDEA_SITES: Product[] = GROUPS_DATA.flatMap((g) => rows(g).map((r) => {
   const noun = nounOf(r.name);
@@ -552,14 +703,16 @@ export const IDEA_SITES: Product[] = GROUPS_DATA.flatMap((g) => rows(g).map((r) 
     nameLabel: "Business name", namePlaceholder: r.sampleName, tagline: g.listing,
     servicesTitle: g.servicesTitle, serviceLabel: g.serviceLabel, highlightsTitle: g.highlightsTitle, highlightOptions: g.highlights,
     leadTitle: g.leadTitle, leadButton: g.leadButton,
+    extras: { stats: true, how: "How it works", faq: true }, howTitle: "How it works",
     wa: {
       enquire: `Hi {name}, I found your website on EZYOURLIFE and I'd like to know more about your ${g.about}.`,
       service: "Hi {name}, I'm interested in {item} ({price}). Could you please share the details?",
       lead: "Hi {name}, I'm {lead_name}. I just sent a request on your website. When can we talk?",
     },
-    sample: { name: r.sampleName, tagline: g.line, services: r.services, highlights: g.highlights, offer: g.leadTitle, offer_note: g.offerNote },
+    sample: { name: r.sampleName, tagline: g.line, services: r.services, highlights: g.highlights, offer: g.leadTitle, offer_note: g.offerNote, stats: SHOW[g.id]?.stats, reviews: SHOW[g.id]?.reviews, how: HOW, faqs: FAQS },
   });
 }));
 
 /** The groups these designs sit under on the Websites page. */
+// ("idea-…" ids; the older groups keep theirs.)
 export const IDEA_GROUPS: { id: string; name: string; ids: string[] }[] = GROUPS_DATA.map((g) => ({ id: g.id, name: g.name, ids: rows(g).map((r) => r.id) }));
