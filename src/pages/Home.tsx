@@ -30,7 +30,6 @@ import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { cn } from "@/lib/utils";
 import { ShiningText } from "@/components/ui/shining-text";
 import { seoFor } from "@/lib/seo/pages";
-import { DiwaliHero, showDiwaliHero } from "@/components/home/DiwaliHero";
 
 // Website and card shelves need the design catalogue; load it after the first screen is up.
 const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
@@ -154,8 +153,6 @@ const Home = () => {
         />
         <Navbar />
 
-        {/* ───────── Diwali 2026: shown until 12 Nov, then hides itself ───────── */}
-        {showDiwaliHero() && <DiwaliHero />}
 
         {/* ───────── Moving strip of app names ───────── */}
         {marquee.length > 0 && (
