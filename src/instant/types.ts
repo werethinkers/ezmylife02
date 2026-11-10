@@ -35,7 +35,7 @@ export interface Step {
 }
 
 /** Layout personality a renderer gives a design: same content, a different arrangement. */
-export type Style = "bold" | "photo" | "split" | "editorial" | "soft" | "minimal";
+export type Style = "bold" | "photo" | "split" | "editorial" | "soft" | "minimal" | "prime";
 
 export interface Theme {
   id: string;

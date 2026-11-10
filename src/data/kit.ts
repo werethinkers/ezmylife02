@@ -1,4 +1,4 @@
-import { CATALOG, getProduct } from "@/instant/catalog";
+import { CATALOG, fallbackTheme, getProduct } from "@/instant/catalog";
 import type { Product } from "@/instant/types";
 
 /** The one offer sold on /kit. Prices here are only for showing what the parts
@@ -116,6 +116,6 @@ export function resolvePick(kind: "site" | "card", picks?: KitPicks | null) {
   const wantedP = kind === "site" ? picks?.site_product : picks?.card_product;
   const wantedT = kind === "site" ? picks?.site_theme : picks?.card_theme;
   const product = getProduct(wantedP) ?? getProduct(kind === "site" ? KIT.defaultSite : KIT.defaultCard)!;
-  const theme = product.themes.find((t) => t.id === wantedT) ?? product.themes[0];
+  const theme = product.themes.find((t) => t.id === wantedT) ?? fallbackTheme(product);
   return { product, theme };
 }

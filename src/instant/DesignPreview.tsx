@@ -6,7 +6,7 @@ import { ProductRenderer } from "./renderers";
 import { pageUrlFor } from "./util";
 
 const STYLE_LABEL: Record<Theme["s"], string> = {
-  bold: "Bold type", photo: "Full photo", split: "Split screen", editorial: "Editorial", soft: "Soft & rounded", minimal: "Minimal",
+  bold: "Bold type", photo: "Full photo", split: "Split screen", editorial: "Editorial", soft: "Soft & rounded", minimal: "Minimal", prime: "Our best layout",
 };
 export const styleLabel = (t: Theme) => STYLE_LABEL[t.s];
 

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getProduct } from "@/instant/catalog";
+import { fallbackTheme, getProduct } from "@/instant/catalog";
 import { ProductRenderer } from "@/instant/renderers";
 import { getPublicPage, recordHit } from "@/instant/api";
 import { pageUrlFor } from "@/instant/util";
@@ -20,7 +20,7 @@ export default function PublishedPage() {
   const q = useQuery({ queryKey: ["ip-public", slug], queryFn: () => getPublicPage(slug), staleTime: 60_000, retry: 1 });
   const page = q.data;
   const product = page ? getProduct(page.product_id) : undefined;
-  const theme = product ? product.themes.find((t) => t.id === page?.variant_id) ?? product.themes[0] : undefined;
+  const theme = product ? product.themes.find((t) => t.id === page?.variant_id) ?? fallbackTheme(product) : undefined;
 
   useEffect(() => { if (page) recordHit(slug); }, [page, slug]);
 

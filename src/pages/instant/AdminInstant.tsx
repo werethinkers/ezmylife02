@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CATALOG, CATEGORIES, getProduct } from "@/instant/catalog";
+import { CATALOG, CATEGORIES, fallbackTheme, getProduct } from "@/instant/catalog";
 import { checkout, fetchProductRows, updateProductRow, uploadDataUrl, type ProductRow } from "@/instant/api";
 
 import { drawShareCard } from "@/instant/shareImage";
@@ -46,7 +46,7 @@ export default function AdminInstant({ embedded = false }: { embedded?: boolean 
       for (const pg of pages) {
         setBackfill(`Creating link previews… ${made + failures.length + 1} of ${pages.length}`);
         const product = getProduct(pg.product_id);
-        const theme = product?.themes.find((t) => t.id === pg.published_variant_id) ?? product?.themes[0];
+        const theme = product?.themes.find((t) => t.id === pg.published_variant_id) ?? (product && fallbackTheme(product));
         if (!product || !theme) { failures.push(`${pg.slug}: unknown product`); continue; }
         try {
           // The same designed 1200×630 card new pages get, drawn from the live content.

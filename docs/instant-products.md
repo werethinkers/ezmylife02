@@ -58,3 +58,15 @@ Every published card and website has "Send to everyone, each by name" in its sha
 - Automatic mode stays hidden ("Coming soon") until the Wavo template `card_send_ezyourlife` (or `WAVO_TPL_CARD_SEND`) is approved: body {{1}} recipient name, {{2}} sender name, {{3}} product name; URL button `https://ezyourlife.com/{{1}}`.
 - Each person's link carries `?to=<name>`: festival cards say "Dear Rahul,", invitations say "Dear Rahul, you're invited".
 - Prices are in `ip_bulk_send_price()` (server) and `src/lib/creditRate.ts` (display); keep them the same.
+
+## The Signature version (Nov 2026)
+
+Every design whose family is listed in `SIGNATURE_FAMILIES` (`src/instant/catalog/index.ts`) gets one extra
+version in front of its ten: id `signature`, style `prime`, with the colours and fonts of the design's own
+first version. It is the default for new pages. The ten older versions keep their ids, so published pages
+do not change, and a page whose saved version is missing falls back to the old first version
+(`fallbackTheme`), never to Signature.
+
+- Done: `business` (`src/instant/renderers/Business.tsx`, the `.s-prime` rules and `CountUp`, `ReviewStack`, `Fold`).
+- To add a family: give its renderer a `prime` layout, then add the family to `SIGNATURE_FAMILIES`.
+- The pictures in `public/design-previews` still show the older first version until they are remade.

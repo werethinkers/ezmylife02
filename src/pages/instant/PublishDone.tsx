@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { getProduct } from "@/instant/catalog";
+import { fallbackTheme, getProduct } from "@/instant/catalog";
 import { getMyPage, type PageRow } from "@/instant/api";
 import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
@@ -35,7 +35,7 @@ export default function PublishDone() {
   useEffect(() => { if (live) setTimeout(() => burst(undefined, undefined, 160, 1.6), 250); }, [live, burst]);
 
   const product = page ? getProduct(page.product_id) : undefined;
-  const theme = product?.themes.find((t) => t.id === page?.variant_id) ?? product?.themes[0];
+  const theme = product?.themes.find((t) => t.id === page?.variant_id) ?? (product && fallbackTheme(product));
   const content = page?.published_content ?? page?.content ?? {};
   // Every publish or edit lands here, so redraw the link preview from what is live now.
   const { link, preparing, prefs, apply } = useLinkPreview(live ? page : null, product, theme, true);

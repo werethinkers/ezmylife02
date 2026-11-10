@@ -6,7 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getProduct } from "@/instant/catalog";
+import { fallbackTheme, getProduct } from "@/instant/catalog";
 import { deleteDraft, leadCounts, myPages, republish, unpublish, type PageRow } from "@/instant/api";
 import { ShareKit } from "@/instant/ShareKit";
 import { pageUrlFor } from "@/instant/util";
@@ -101,7 +101,7 @@ export default function MyPages() {
   const act = async (fn: () => Promise<unknown>, ok: string) => { try { await fn(); toast({ title: ok }); refresh(); } catch (e) { toast({ title: "Couldn't do that", description: e instanceof Error ? e.message : "", variant: "destructive" }); } };
 
   const sp = sharing ? getProduct(sharing.product_id) : undefined;
-  const st = sp?.themes.find((t) => t.id === sharing?.variant_id) ?? sp?.themes[0];
+  const st = sp?.themes.find((t) => t.id === sharing?.variant_id) ?? (sp && fallbackTheme(sp));
   const { link, preparing, prefs, apply } = useLinkPreview(sharing, sp, st, false);
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { DAYS, fill, fmtPhone, mapsDir, mapsLink, openStatus, priceText, t12, telHref, waTo } from "../util";
@@ -33,6 +33,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
   const today = DAYS[(new Date().getDay() + 6) % 7];
   const openDays: string[] = Array.isArray(c.open_days) && c.open_days.length ? c.open_days : DAYS;
   const s = theme.s;
+  const prime = s === "prime";
   const usesStock = isStock(cover) || gallery.some((g: { photo: string }) => isStock(g.photo));
   const n = (i: number) => (s === "minimal" ? <span className="biz-no">{String(i).padStart(2, "0")}</span> : null);
   let sec = 0;
@@ -55,7 +56,8 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
 
         <section className="biz-hero" id="top">
           {s === "photo" && <div className="biz-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
-          {s === "bold" && <span className="biz-mark" aria-hidden="true">{words[0]?.[0]}</span>}
+          {prime && <div className="biz-grid" aria-hidden="true" />}
+          {(s === "bold" || prime) && <span className="biz-mark" aria-hidden="true">{words[0]?.[0]}</span>}
           <div className="ip-wrap biz-hero-in">
             <div className="biz-copy">
               {(c.area || c.city) && <p className="biz-eye">{[c.area, c.city].filter(Boolean).join(" · ")}</p>}
@@ -81,7 +83,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
         {stats.length > 0 && (
           <section className="biz-stats-sec" aria-label="At a glance">
             <div className="ip-wrap">
-              <dl className="biz-stats">{stats.map((x: { value: string; label?: string }, i: number) => <div key={i}><dt>{x.value}</dt>{x.label && <dd>{x.label}</dd>}</div>)}</dl>
+              <dl className="biz-stats">{stats.map((x: { value: string; label?: string }, i: number) => <div key={i}><dt>{prime ? <CountUp value={x.value} /> : x.value}</dt>{x.label && <dd>{x.label}</dd>}</div>)}</dl>
             </div>
           </section>
         )}
@@ -118,8 +120,14 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.highlightsTitle}</p>
-              <ul className="biz-hl">{highlights.map((h) => <li key={h}><Icon.check />{h}</li>)}</ul>
+              {!(prime && highlights.length >= 5) && <ul className="biz-hl">{highlights.map((h) => <li key={h}><Icon.check />{h}</li>)}</ul>}
             </div>
+            {prime && highlights.length >= 5 && (
+              <div className="biz-hlm" role="img" aria-label={highlights.join(", ")}>
+                <div className="trk" aria-hidden="true">{[...highlights, ...highlights].map((h, i) => <span key={i}>{h}</span>)}</div>
+                <div className="trk rev" aria-hidden="true">{[...highlights, ...highlights].reverse().map((h, i) => <span key={i}>{h}</span>)}</div>
+              </div>
+            )}
           </section>
         )}
 
@@ -166,7 +174,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}Reviews</p>
-              <div className="biz-revs">{reviews.map((r: { name?: string; text: string }, i: number) => <figure key={i}><span className="stars" aria-label="5 stars">{[0, 1, 2, 3, 4].map((k) => <Icon.star key={k} />)}</span><blockquote>{r.text}</blockquote>{r.name && <figcaption>{r.name}</figcaption>}</figure>)}</div>
+              {prime && reviews.length >= 2 ? <ReviewStack reviews={reviews} /> : <div className="biz-revs">{reviews.map((r: { name?: string; text: string }, i: number) => <figure key={i}><span className="stars" aria-label="5 stars">{[0, 1, 2, 3, 4].map((k) => <Icon.star key={k} />)}</span><blockquote>{r.text}</blockquote>{r.name && <figcaption>{r.name}</figcaption>}</figure>)}</div>}
             </div>
           </section>
         )}
@@ -175,7 +183,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}Questions people ask</p>
-              <div className="biz-faq">{faqs.map((f: { q: string; a: string }, i: number) => <details key={i} open={i === 0}><summary>{f.q}<Icon.plus /></summary><p>{f.a}</p></details>)}</div>
+              <div className="biz-faq">{faqs.map((f: { q: string; a: string }, i: number) => <details key={i} open={!prime && i === 0} {...(prime ? { name: "biz-faq" } : {})}><summary>{f.q}<Icon.plus /></summary><p>{f.a}</p></details>)}</div>
             </div>
           </section>
         )}
@@ -184,17 +192,21 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           <div className="ip-wrap biz-find">
             {c.opens && c.closes && (
               <div className="biz-hours">
-                <p className="biz-label">{n(++sec)}Opening hours</p>
+                <Fold on={prime} title="Opening hours">
+                {!prime && <p className="biz-label">{n(++sec)}Opening hours</p>}
                 {DAYS.map((d) => <div key={d} className={"hr" + (d === today ? " today" : "")}><span>{d}</span><span>{!openDays.includes(d) ? "Closed" : c.opens === c.closes ? "Open 24 hours" : `${t12(c.opens)} – ${t12(c.closes)}`}</span></div>)}
+                </Fold>
               </div>
             )}
             <div className="biz-loc">
-              <p className="biz-label">{n(++sec)}Find us</p>
+              <Fold on={prime} title="Find us">
+              {!prime && <p className="biz-label">{n(++sec)}Find us</p>}
               {place && <p className="addr">{place}</p>}
               <div className="row">
                 {place && <a className="ip-btn ip-ghost" href={c.maps_url ? mapsLink(c.maps_url, place) : mapsDir(place)} target="_blank" rel="noopener noreferrer"><Icon.nav /> Directions</a>}
                 {c.phone && <a className="ip-btn ip-ghost" href={telHref(c.phone)}><Icon.phone /> {fmtPhone(c.phone)}</a>}
               </div>
+              </Fold>
             </div>
           </div>
         </section>
@@ -232,6 +244,71 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
       </nav>
     </div>
   );
+}
+
+/** Signature layout: a number that counts up the first time it scrolls into view ("6,000", "40+", "4.8★"). */
+function CountUp({ value }: { value: string }) {
+  const m = /^(\D*)(\d[\d,]*(?:\.\d+)?)(.*)$/.exec(String(value));
+  const ref = useRef<HTMLSpanElement>(null);
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!m || !el) return;
+    if (typeof IntersectionObserver === "undefined" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setT(1); return; }
+    let raf = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const t0 = performance.now();
+      const step = (now: number) => { const p = Math.min(1, (now - t0) / 1400); setT(p); if (p < 1) raf = requestAnimationFrame(step); };
+      raf = requestAnimationFrame(step);
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  if (!m) return <>{value}</>;
+  const raw = m[2];
+  const dec = raw.includes(".") ? raw.split(".")[1].length : 0;
+  const now = Number(raw.replace(/,/g, "")) * (1 - Math.pow(1 - t, 3));
+  const shown = raw.includes(",") ? Math.round(now).toLocaleString("en-IN") : now.toFixed(dec);
+  // Screen readers get the final value; the moving digits are for the eye only.
+  return <span ref={ref} aria-label={String(value)}><span aria-hidden="true">{m[1]}{shown}{m[3]}</span></span>;
+}
+
+/** Signature layout: reviews as a stack of cards. The front card moves to the back every few seconds or on tap. */
+function ReviewStack({ reviews }: { reviews: { name?: string; text: string }[] }) {
+  const [at, setAt] = useState(0);
+  const [hold, setHold] = useState(false);
+  const n = reviews.length;
+  useEffect(() => {
+    if (hold || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => setAt((a) => a + 1), 4500);
+    return () => clearInterval(t);
+  }, [hold]);
+  return (
+    <div onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} onFocusCapture={() => setHold(true)} onBlurCapture={() => setHold(false)}>
+      <div className="biz-stack">
+        {reviews.map((r, i) => {
+          const k = (((i - at) % n) + n) % n;
+          return (
+            <figure key={i} aria-hidden={k !== 0} style={{ transform: `translateY(${-Math.min(k, 2) * 12}px) scale(${1 - Math.min(k, 2) * 0.05})`, opacity: k > 2 ? 0 : 1 - k * 0.3, zIndex: n - k }}>
+              <span className="stars" aria-label="5 stars">{[0, 1, 2, 3, 4].map((x) => <Icon.star key={x} />)}</span>
+              <blockquote>{r.text}</blockquote>
+              {r.name && <figcaption>{r.name}</figcaption>}
+            </figure>
+          );
+        })}
+      </div>
+      <button type="button" className="ip-btn ip-ghost biz-next" onClick={() => setAt((a) => a + 1)}>Next review</button>
+    </div>
+  );
+}
+
+/** Signature layout: a section that folds shut. Opening one closes the others with the same name. */
+function Fold({ on, title, children }: { on: boolean; title: string; children: React.ReactNode }) {
+  if (!on) return <>{children}</>;
+  return <details className="biz-fold" {...{ name: "biz-find" }}><summary>{title}<Icon.plus /></summary>{children}</details>;
 }
 
 /** A box where a customer types their list (groceries, medicines, materials) and sends it on WhatsApp. */
@@ -484,4 +561,49 @@ const CSS = `
 .biz-bar .ip-btn{min-height:52px;padding:0 .4em;font-size:.9rem;border-radius:14px;white-space:nowrap;min-width:0;gap:.4em}
 .biz-bar .ip-btn svg{flex:none;width:18px;height:18px}
 @media (min-width:760px){.biz-bar{left:50%;right:auto;bottom:16px;width:min(560px,calc(100% - 32px));border:1px solid var(--line);border-radius:20px;padding:8px;transform:translate(-50%,140%)}.biz-bar.on{transform:translateX(-50%)}}
+/* prime ("Signature"): the one layout we tune as our best. A grid-lit hero, numbers that count up,
+   rows that stay on one line and swipe, moving chips, stacked reviews and details that fold shut. */
+.ipr-biz.s-prime{--rad:16px;--hmax:5.8rem}
+.s-prime .biz-grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:34px 34px;opacity:.5;-webkit-mask:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 72%);mask:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 72%);pointer-events:none}
+.s-prime .biz-mark{position:absolute;right:-4%;top:-10%;font:900 clamp(15rem,58cqi,32rem)/1 var(--fd);color:var(--sf);pointer-events:none;user-select:none}
+.s-prime .biz-h1 .nm>span{display:inline-block;animation:biz-rise .6s ease both}
+.s-prime .biz-h1 .nm>span:not(:last-child){margin-right:.22em}
+.s-prime .biz-h1 .nm>span:nth-child(2){animation-delay:.12s}
+.s-prime .biz-h1 .nm>span:nth-child(n+3){animation-delay:.24s}
+@keyframes biz-rise{from{opacity:0;transform:translateY(14px)}}
+.s-prime .biz-media{box-shadow:inset 0 0 0 1px var(--line)}
+.s-prime .biz-label{font:700 .78rem/1.2 var(--fb);letter-spacing:.16em;text-transform:uppercase;color:var(--mu);margin:0 0 16px}
+.s-prime .biz-order .biz-label{font:800 clamp(1.5rem,6.5cqi,2.4rem)/1.05 var(--fd);letter-spacing:-.01em;text-transform:none;color:inherit}
+.s-prime .biz-stats{display:flex;overflow-x:auto;scrollbar-width:none;gap:0;background:none;border-radius:0;box-shadow:none;border-block:1px solid var(--line)}
+.s-prime .biz-stats div{flex:1 0 9.5rem;background:none;box-shadow:1px 0 0 var(--line)}
+.s-prime .biz-stats dt{font-variant-numeric:tabular-nums}
+.s-prime .biz-svcs,.s-prime .biz-svcs.many{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:4px 2px 14px;margin-inline:-2px}
+.s-prime .svc{flex:1 0 min(74cqi,17.5rem);scroll-snap-align:start}
+.s-prime .biz-team{display:flex;overflow-x:auto;scrollbar-width:none;padding-bottom:6px}
+.s-prime .tm{flex:1 0 15rem}
+.s-prime .biz-stats::-webkit-scrollbar,.s-prime .biz-svcs::-webkit-scrollbar,.s-prime .biz-team::-webkit-scrollbar{display:none}
+@property --biz-a{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes biz-beam{to{--biz-a:360deg}}
+.s-prime .svc.pop,.s-prime .biz-lead{border:2px solid transparent;box-shadow:none;background:linear-gradient(var(--sf),var(--sf)) padding-box,conic-gradient(from var(--biz-a),var(--line) 0 70%,var(--ac) 85%,var(--line) 100%) border-box;animation:biz-beam 3.2s linear infinite}
+.s-prime .biz-lead{color:var(--tx)}
+.s-prime .biz-lead .ip-field,.s-prime .biz-lead .ip-fine{color:var(--mu)}
+.s-prime .biz-lead .ip-field input,.s-prime .biz-lead .ip-field select,.s-prime .biz-lead .ip-field textarea{background:var(--bg);color:var(--tx);border-color:var(--line)}
+.biz-hlm{overflow:hidden;display:grid;gap:10px;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.biz-hlm .trk{display:flex;gap:10px;width:max-content;animation:biz-marq 30s linear infinite}
+.biz-hlm .trk.rev{animation-direction:reverse;animation-duration:36s}
+.biz-hlm span{padding:10px 18px;border-radius:999px;background:var(--sf);box-shadow:inset 0 0 0 1px var(--line);font-weight:600;font-size:.94rem;white-space:nowrap}
+.biz-hlm .rev span{background:none;box-shadow:inset 0 0 0 1px var(--ac)}
+.biz-stack{display:grid;max-width:640px;padding-top:26px}
+.biz-stack figure{grid-area:1/1;margin:0;padding:22px;border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1px var(--line);display:grid;gap:10px;align-content:start;transform-origin:50% 0;transition:transform .5s cubic-bezier(.2,.9,.3,1.1),opacity .4s ease}
+.biz-stack blockquote{margin:0;font-size:1.02rem}
+.biz-stack figcaption{font-weight:700;font-size:.9rem;color:var(--mu)}
+.biz-next{margin-top:14px;min-height:48px}
+.s-prime .biz-find{grid-template-columns:minmax(0,1fr);gap:10px;max-width:860px}
+.biz-fold{border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1px var(--line);padding:0 20px}
+.biz-fold[open]{padding-bottom:18px}
+.biz-fold summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 0;font:700 1.04rem/1.35 var(--fb)}
+.biz-fold summary::-webkit-details-marker{display:none}
+.biz-fold summary svg{flex:none;color:var(--ac);transition:transform .25s ease}
+.biz-fold[open] summary svg{transform:rotate(45deg)}
+@media (prefers-reduced-motion:reduce){.s-prime .biz-h1 .nm>span,.s-prime .svc.pop,.s-prime .biz-lead{animation:none}.biz-hlm .trk{animation:none;flex-wrap:wrap;width:auto;padding-inline:16px}.biz-stack figure{transition:none}}
 `;
