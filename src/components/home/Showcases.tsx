@@ -153,7 +153,7 @@ export function SqueezeCarousel({ slides, label }: { slides: HeroSlide[]; label:
         <div className="min-w-0 flex-1 basis-[420px]">
           <p className="font-display text-[22px] font-bold leading-tight">{s.title}</p>
           <p className="mt-1.5 max-w-3xl text-[17px] text-muted-foreground">{s.line}</p>
-          <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
+          <div className="mt-3.5 flex items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar [&>*]:shrink-0">
             <Button asChild>
               <Link to={s.to}>{s.cta}</Link>
             </Button>
@@ -251,7 +251,7 @@ export function OrbitCarousel({ items, title, line, seeAllTo, seeAll }: { items:
           <div className="mt-4 rounded-2xl border-2 border-ink bg-card px-3.5 pb-3.5 pt-2.5 shadow-block-sm">
             <FlowSteps flow="card" step={1} />
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+          <div className="mt-5 flex items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar [&>*]:shrink-0">
             <button type="button" className={roundBtn} aria-label="Previous card" onClick={() => setStep((x) => x - 1)}><ArrowLeft className="h-[18px] w-[18px]" /></button>
             <button type="button" className={roundBtn} aria-label="Next card" onClick={() => setStep((x) => x + 1)}><ArrowRight className="h-[18px] w-[18px]" /></button>
             <Button asChild>

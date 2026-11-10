@@ -6,6 +6,7 @@ import { CATEGORIES } from "@/instant/catalog";
 import { designPreviewUrl } from "@/data/previewManifest";
 import { cn } from "@/lib/utils";
 import { DESIGN_COLOUR } from "@/data/designColours";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { GiveGetStrip } from "@/components/store/GiveGetStrip";
 
 /**
@@ -22,7 +23,7 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
   const colour = DESIGN_COLOUR[p.category] ?? "hsl(var(--sun))";
   const catName = CATEGORIES.find((c) => c.id === p.category)?.name ?? "";
   return (
-    <div
+    <SpotlightCard
       className={cn(
         "block-card block-lift group relative flex w-[78%] shrink-0 snap-start flex-col overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 sm:w-[46%] lg:w-[31%] xl:w-[23.5%]",
         className,
@@ -77,6 +78,6 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
           <span className="ml-1 text-xs font-medium text-ink/70">{l.credits ? "once" : ""}</span>
         </span>
       </div>
-    </div>
+    </SpotlightCard>
   );
 }

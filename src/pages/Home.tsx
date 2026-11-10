@@ -28,6 +28,7 @@ import RequestToolSection from "@/components/RequestToolSection";
 import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
 import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
 import { cn } from "@/lib/utils";
+import { ShiningText } from "@/components/ui/shining-text";
 import { seoFor } from "@/lib/seo/pages";
 import { DiwaliHero, showDiwaliHero } from "@/components/home/DiwaliHero";
 
@@ -174,7 +175,7 @@ const Home = () => {
           <div className="min-w-0 lg:col-span-7">
             <span className="inline-flex items-center rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] font-bold">For small businesses in India</span>
             <h1 className="mt-5 text-[2.1rem] font-extrabold leading-[1.06] sm:text-5xl xl:text-[4.1rem]">
-              Run your <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">whole business</span> from{" "}
+              <ShiningText>Run your</ShiningText> <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">whole business</span> from{" "}
               <span className="marker">one place</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">

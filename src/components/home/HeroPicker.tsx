@@ -55,7 +55,7 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
       <div className="relative">
         <p className="inline-flex rounded-full border-2 border-ink bg-sun px-2.5 py-0.5 text-xs font-bold">Try it in 3 taps</p>
         <p className="mt-3 text-lg font-bold">1. What do you need done?</p>
-        <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Pick a task">
+        <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0" role="radiogroup" aria-label="Pick a task">
           {tasks.map((t) => (
             <button
               key={t.toolId}
