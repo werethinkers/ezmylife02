@@ -125,6 +125,8 @@ struct EzyApp: Codable, Hashable {
     var credits: Int?
     var runnable: Bool?
     var url: String?
+    /// "device": a photo tool that runs on the phone (EzyPhoto in the keyboard); the server only charges it.
+    var mode: String?
 
     var link: String { url ?? "\(EzyShared.site)/tool/\(id)" }
     var priceLabel: String {
@@ -255,6 +257,12 @@ enum EzyAPI {
         if let appId { body["app_id"] = appId }
         let json = try await request("/command", method: "POST", body: body)
         return decode(EzyPlan.self, json) ?? EzyPlan(app: nil, message: "No app matched.", fields: nil, fromProfile: nil)
+    }
+
+    /// Charges a photo tool that ran on the phone, at its website price.
+    static func chargeDevice(_ appId: String) async throws {
+        let id = appId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? appId
+        _ = try await request("/apps/\(id)/charge", method: "POST", body: [:])
     }
 
     /// Runs the app, charged at its normal price. Returns the result as text (and an image link for image apps).

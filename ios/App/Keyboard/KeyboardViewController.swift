@@ -1,5 +1,7 @@
 import UIKit
 import ImageIO
+import CoreImage
+import Vision
 
 /*
  * The EZYOURLIFE keyboard: a normal iPhone-style keyboard with one strip on top.
@@ -742,6 +744,10 @@ final class KeyboardViewController: UIInputViewController {
         editingKey = nil
         busy = "Making your \(current.app.name)…"
         afterTyping()
+        if current.app.mode == "device" {
+            runOnDevice(current.app, values: current.values)
+            return
+        }
         Task { [weak self] in
             do {
                 let result = try await EzyAPI.run(plan)
@@ -753,6 +759,36 @@ final class KeyboardViewController: UIInputViewController {
                     self.notice = result.imageURL != nil
                         ? "Image copied. Tap and hold the message box, then Paste."
                         : "✓ \(current.app.name) is in. Tap to close."
+                    self.refreshStrip()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    /// Photo tools: the work happens on the phone, the server only charges the run.
+    private func runOnDevice(_ app: EzyApp, values: [String: String]) {
+        Task { [weak self] in
+            do {
+                let output = try await EzyPhoto.run(app.id, values: values)
+                try await EzyAPI.chargeDevice(app.id)
+                await MainActor.run {
+                    guard let self else { return }
+                    self.busy = nil
+                    switch output {
+                    case let .image(data, type):
+                        UIPasteboard.general.setData(data, forPasteboardType: type)
+                        self.replaceCommand(with: "")
+                        self.notice = "Image copied. Tap and hold the message box, then Paste."
+                    case let .text(text):
+                        self.replaceCommand(with: text)
+                        self.notice = "✓ \(app.name) is in. Tap to close."
+                    }
                     self.refreshStrip()
                 }
             } catch {
@@ -1009,4 +1045,498 @@ final class ChipButton: UIButton {
 /// Lets the keys make the standard keyboard click (when Keyboard Clicks is on in Settings).
 final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
+}
+
+// MARK: - Photo tools that run on the phone
+
+/*
+ * The website's photo tools (resize, file size in KB, exam and passport photos, signatures, crops, blurs,
+ * background removal, metadata…) run here, on the phone, from a copied photo. Nothing is uploaded; the
+ * server only charges the website price (POST /v1/apps/{id}/charge). Boxes for each tool come from
+ * supabase/functions/_shared/nativeApis.ts (DEVICE_APPS). Images are kept small enough for a keyboard's
+ * memory limit (about 2400 px at most).
+ */
+enum EzyPhotoOutput {
+    case image(Data, type: String)
+    case text(String)
+}
+
+enum EzyPhotoError: LocalizedError {
+    case noPhoto, failed(String)
+    var errorDescription: String? {
+        switch self {
+        case .noPhoto: return "Copy a photo first (Photos › Share › Copy), then tap the photo box."
+        case .failed(let why): return why
+        }
+    }
+}
+
+enum EzyPhoto {
+    private static let context = CIContext(options: [.cacheIntermediates: false])
+
+    /// Fixed sizes: (width, height, unit, fit without cropping, file size range in KB).
+    private static let presets: [String: (Double, Double, String, Bool, ClosedRange<Double>?)] = [
+        "resize-image-3.5x4.5": (3.5, 4.5, "cm", false, nil),
+        "resize-600x600": (600, 600, "px", false, nil),
+        "resize-a4": (21, 29.7, "cm150", true, nil),
+        "resize-sign-6x2": (6, 2, "cm", true, nil),
+        "resize-signature-50x20": (50, 20, "mm", true, nil),
+        "resize-35x45mm": (35, 45, "mm", false, nil),
+        "resize-2x2-inch": (2, 2, "inch", false, nil),
+        "resize-3x4-inch": (3, 4, "inch", false, nil),
+        "resize-4x6-inch": (4, 6, "inch", false, nil),
+        "ssc-photo-resize": (3.5, 4.5, "cm", false, 20...50),
+        "pan-card-resize": (2.5, 3.5, "cm", false, 10...50),
+        "upsc-photo-resize": (3.5, 4.5, "cm", false, 20...300),
+        "psc-photo-resize": (3.5, 4.5, "cm", false, 20...100),
+        "whatsapp-dp": (500, 500, "px", true, nil),
+        "instagram-resize": (1080, 1080, "px", true, nil),
+        "youtube-banner": (2560, 1440, "px", false, nil),
+    ]
+
+    static func run(_ id: String, values: [String: String]) async throws -> EzyPhotoOutput {
+        try await Task.detached(priority: .userInitiated) { try work(id, values) }.value
+    }
+
+    private static func work(_ id: String, _ v: [String: String]) throws -> EzyPhotoOutput {
+        switch id {
+        case "generate-signature":
+            return try signature(v["name"] ?? "")
+        case "view-metadata", "check-dpi":
+            return .text(try metadata(detailed: id == "view-metadata"))
+        case "remove-metadata":
+            return try stripMetadata(v)
+        default:
+            break
+        }
+        let input = try photo(v)
+
+        if let p = presets[id] {
+            var kbRange = p.4
+            if let custom = v["kb"], let r = range(custom) { kbRange = r }
+            let dpi: Double = p.2 == "cm150" ? 150 : 300
+            let size = pixels(p.0, p.1, p.2 == "cm150" ? "cm" : p.2, dpi: dpi)
+            let out = p.3 ? fit(input, size, blurredBackground: p.2 == "px") : fill(input, size, faceAware: id.contains("photo") || id.hasPrefix("resize-") && !id.contains("sign"))
+            return .image(try jpeg(out, dpi: dpi, kb: kbRange), type: "public.jpeg")
+        }
+
+        switch id {
+        case "passport-photo-maker":
+            return .image(try jpeg(fill(input, pixels(35, 45, "mm", dpi: 300), faceAware: true), dpi: 300, kb: nil), type: "public.jpeg")
+        case "resize-image-pixel", "resize-image-cm", "resize-image-mm", "resize-image-inch", "resize-signature":
+            let unit = v["unit"] ?? (id == "resize-image-pixel" ? "px" : id == "resize-image-mm" ? "mm" : id == "resize-image-inch" ? "inch" : "cm")
+            let w = Double(v["width"] ?? "") ?? 0, h = Double(v["height"] ?? "") ?? 0
+            guard w > 0, h > 0 else { throw EzyPhotoError.failed("Add the width and height.") }
+            let size = pixels(w, h, unit, dpi: 300)
+            guard size.width <= 4000, size.height <= 4000 else { throw EzyPhotoError.failed("That size is too big for the keyboard. Use the website for very large sizes.") }
+            let out = id == "resize-signature" ? fit(input, size, blurredBackground: false) : fill(input, size, faceAware: false)
+            return .image(try jpeg(out, dpi: 300, kb: nil), type: "public.jpeg")
+        case "reduce-image-size-kb", "increase-image-size-kb":
+            let target = Double(v["kb"] ?? "") ?? 50
+            let r: ClosedRange<Double> = id == "reduce-image-size-kb" ? max(1, target * 0.85)...target : target...(target * 1.15)
+            return .image(try jpeg(input, dpi: nil, kb: r), type: "public.jpeg")
+        case "rotate-image":
+            let a = v["angle"] ?? "90° right"
+            let o: CGImagePropertyOrientation = a.hasPrefix("180") ? .down : a.contains("left") ? .left : .right
+            return .image(try jpeg(input.oriented(o), dpi: nil, kb: nil), type: "public.jpeg")
+        case "flip-image":
+            let o: CGImagePropertyOrientation = (v["direction"] ?? "").hasPrefix("Top") ? .downMirrored : .upMirrored
+            return .image(try jpeg(input.oriented(o), dpi: nil, kb: nil), type: "public.jpeg")
+        case "grayscale-image":
+            return .image(try jpeg(input.applyingFilter("CIPhotoEffectMono"), dpi: nil, kb: nil), type: "public.jpeg")
+        case "black-white":
+            let gray = input.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.6])
+            return .image(try jpeg(gray.applyingFilter("CIColorThreshold", parameters: ["inputThreshold": 0.55]), dpi: nil, kb: nil), type: "public.jpeg")
+        case "blur-image":
+            let r: Double = (v["strength"] ?? "") == "Light" ? 4 : (v["strength"] ?? "") == "Strong" ? 22 : 10
+            return .image(try jpeg(input.clampedToExtent().applyingGaussianBlur(sigma: r).cropped(to: input.extent), dpi: nil, kb: nil), type: "public.jpeg")
+        case "motion-blur":
+            let out = input.clampedToExtent().applyingFilter("CIMotionBlur", parameters: [kCIInputRadiusKey: 20, kCIInputAngleKey: 0]).cropped(to: input.extent)
+            return .image(try jpeg(out, dpi: nil, kb: nil), type: "public.jpeg")
+        case "pixelate-image":
+            return .image(try jpeg(pixelate(input, blocks: 60), dpi: nil, kb: nil), type: "public.jpeg")
+        case "picture-pixel-art":
+            let art = pixelate(input, blocks: 48).applyingFilter("CIColorPosterize", parameters: ["inputLevels": 6])
+            return .image(try png(art), type: "public.png")
+        case "beautify-image":
+            return .image(try jpeg(autoAdjust(input), dpi: nil, kb: nil), type: "public.jpeg")
+        case "ai-photo-enhancer", "increase-image-quality", "unblur-image":
+            return .image(try jpeg(sharpen(autoAdjust(input), amount: id == "unblur-image" ? 1.1 : 0.6), dpi: nil, kb: nil), type: "public.jpeg")
+        case "super-resolution", "upscale-image-ai":
+            let scale = min(2, 3200 / max(input.extent.width, input.extent.height))
+            let up = input.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
+            return .image(try jpeg(sharpen(up, amount: 0.5), dpi: nil, kb: nil), type: "public.jpeg")
+        case "square-crop":
+            let side = min(input.extent.width, input.extent.height)
+            return .image(try jpeg(fill(input, CGSize(width: side, height: side), faceAware: false), dpi: nil, kb: nil), type: "public.jpeg")
+        case "circle-crop":
+            let side = min(input.extent.width, input.extent.height)
+            let square = fill(input, CGSize(width: side, height: side), faceAware: false)
+            let mask = CIFilter(name: "CIRadialGradient", parameters: [
+                "inputCenter": CIVector(x: side / 2, y: side / 2), "inputRadius0": side / 2 - 1, "inputRadius1": side / 2,
+                "inputColor0": CIColor.white, "inputColor1": CIColor(red: 0, green: 0, blue: 0, alpha: 0),
+            ])!.outputImage!.cropped(to: square.extent)
+            let clear = CIImage(color: .clear).cropped(to: square.extent)
+            return .image(try png(square.applyingFilter("CIBlendWithAlphaMask", parameters: [kCIInputBackgroundImageKey: clear, kCIInputMaskImageKey: mask])), type: "public.png")
+        case "zoom-out-image":
+            let side = max(input.extent.width, input.extent.height)
+            return .image(try jpeg(fit(input, CGSize(width: side, height: side), blurredBackground: true), dpi: nil, kb: nil), type: "public.jpeg")
+        case "remove-background":
+            guard let mask = try subjectMask(input) else { throw EzyPhotoError.failed("Couldn't find a person or object to keep.") }
+            let clear = CIImage(color: .clear).cropped(to: input.extent)
+            return .image(try png(input.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: clear, kCIInputMaskImageKey: mask])), type: "public.png")
+        case "blur-background":
+            guard let mask = try subjectMask(input) else { throw EzyPhotoError.failed("Couldn't find a person or object to keep sharp.") }
+            let blurred = input.clampedToExtent().applyingGaussianBlur(sigma: 14).cropped(to: input.extent)
+            return .image(try jpeg(input.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: blurred, kCIInputMaskImageKey: mask]), dpi: nil, kb: nil), type: "public.jpeg")
+        case "blur-face", "pixelate-face", "censor-photo":
+            let faces = try faceRects(input)
+            guard !faces.isEmpty else { throw EzyPhotoError.failed("No face found in this photo.") }
+            var out = input
+            for r in faces {
+                let box = r.insetBy(dx: -r.width * 0.15, dy: -r.height * 0.2).intersection(input.extent)
+                let patch: CIImage
+                switch id {
+                case "blur-face": patch = input.clampedToExtent().applyingGaussianBlur(sigma: max(8, box.width / 10)).cropped(to: box)
+                case "pixelate-face": patch = input.applyingFilter("CIPixellate", parameters: [kCIInputScaleKey: max(8, box.width / 10), kCIInputCenterKey: CIVector(x: box.midX, y: box.midY)]).cropped(to: box)
+                default:
+                    let bar = CGRect(x: box.minX, y: box.minY + box.height * 0.45, width: box.width, height: box.height * 0.22)
+                    patch = CIImage(color: .black).cropped(to: bar)
+                }
+                out = patch.composited(over: out)
+            }
+            return .image(try jpeg(out, dpi: nil, kb: nil), type: "public.jpeg")
+        case "watermark-images", "add-text-image", "add-name-dob-photo":
+            return .image(try overlay(id, input, v), type: "public.jpeg")
+        case "convert-dpi":
+            let dpi = Double(v["dpi"] ?? "") ?? 300
+            return .image(try jpeg(input, dpi: dpi, kb: nil), type: "public.jpeg")
+        case "image-color-picker":
+            return .text(try colours(input))
+        default:
+            throw EzyPhotoError.failed("This tool isn't on the keyboard yet. Open it on ezyourlife.com.")
+        }
+    }
+
+    // MARK: Input
+
+    private static func photo(_ v: [String: String]) throws -> CIImage {
+        guard let url = v["photo"], let comma = url.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(url[url.index(after: comma)...])),
+              let image = CIImage(data: data, options: [.applyOrientationProperty: true]) else { throw EzyPhotoError.noPhoto }
+        return image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
+    }
+
+    private static func copiedData() -> Data? {
+        let board = UIPasteboard.general
+        for t in ["public.jpeg", "public.heic", "public.png", "public.heif", "public.image"] {
+            if let d = board.data(forPasteboardType: t) { return d }
+        }
+        return nil
+    }
+
+    private static func range(_ s: String) -> ClosedRange<Double>? {
+        let nums = s.split(whereSeparator: { !"0123456789.".contains($0) }).compactMap { Double($0) }
+        if nums.count >= 2 { return min(nums[0], nums[1])...max(nums[0], nums[1]) }
+        if let one = nums.first { return max(1, one * 0.85)...one }
+        return nil
+    }
+
+    private static func pixels(_ w: Double, _ h: Double, _ unit: String, dpi: Double) -> CGSize {
+        let f: Double
+        switch unit {
+        case "cm": f = dpi / 2.54
+        case "mm": f = dpi / 25.4
+        case "inch": f = dpi
+        default: f = 1
+        }
+        return CGSize(width: (w * f).rounded(), height: (h * f).rounded())
+    }
+
+    // MARK: Geometry
+
+    /// Scales to cover the size and crops the rest; with faceAware, keeps the face in the upper middle.
+    private static func fill(_ image: CIImage, _ size: CGSize, faceAware: Bool) -> CIImage {
+        let e = image.extent
+        let scale = max(size.width / e.width, size.height / e.height)
+        let scaled = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
+        var cx = scaled.extent.midX, cy = scaled.extent.midY
+        if faceAware, let face = (try? faceRects(image))?.max(by: { $0.width < $1.width }) {
+            cx = face.midX * scale
+            // Face centre about 55% up from the bottom, like passport rules.
+            cy = face.midY * scale - size.height * 0.05
+        }
+        let x = min(max(cx - size.width / 2, scaled.extent.minX), scaled.extent.maxX - size.width)
+        let y = min(max(cy - size.height / 2, scaled.extent.minY), scaled.extent.maxY - size.height)
+        let crop = CGRect(x: x, y: y, width: size.width, height: size.height)
+        return scaled.cropped(to: crop).transformed(by: CGAffineTransform(translationX: -crop.minX, y: -crop.minY))
+    }
+
+    /// Fits the whole image inside the size, on white or on a blurred copy of itself.
+    private static func fit(_ image: CIImage, _ size: CGSize, blurredBackground: Bool) -> CIImage {
+        let e = image.extent
+        let scale = min(size.width / e.width, size.height / e.height)
+        let scaled = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
+        let placed = scaled.transformed(by: CGAffineTransform(translationX: (size.width - scaled.extent.width) / 2 - scaled.extent.minX,
+                                                             y: (size.height - scaled.extent.height) / 2 - scaled.extent.minY))
+        let canvas = CGRect(origin: .zero, size: size)
+        let back: CIImage = blurredBackground
+            ? fill(image, size, faceAware: false).clampedToExtent().applyingGaussianBlur(sigma: 30).cropped(to: canvas)
+            : CIImage(color: .white).cropped(to: canvas)
+        return placed.composited(over: back).cropped(to: canvas)
+    }
+
+    private static func pixelate(_ image: CIImage, blocks: CGFloat) -> CIImage {
+        let scale = max(image.extent.width, image.extent.height) / blocks
+        return image.applyingFilter("CIPixellate", parameters: [kCIInputScaleKey: scale, kCIInputCenterKey: CIVector(x: 0, y: 0)]).cropped(to: image.extent)
+    }
+
+    private static func autoAdjust(_ image: CIImage) -> CIImage {
+        image.autoAdjustmentFilters(options: [.redEye: false]).reduce(image) { img, f in
+            f.setValue(img, forKey: kCIInputImageKey)
+            return f.outputImage ?? img
+        }
+    }
+
+    private static func sharpen(_ image: CIImage, amount: Double) -> CIImage {
+        image.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": 0.02, "inputSharpness": 0.4])
+            .applyingFilter("CISharpenLuminance", parameters: [kCIInputSharpnessKey: amount])
+            .cropped(to: image.extent)
+    }
+
+    // MARK: Vision
+
+    private static func faceRects(_ image: CIImage) throws -> [CGRect] {
+        let request = VNDetectFaceRectanglesRequest()
+        try VNImageRequestHandler(ciImage: image).perform([request])
+        let e = image.extent
+        return (request.results ?? []).map { o in
+            CGRect(x: e.minX + o.boundingBox.minX * e.width, y: e.minY + o.boundingBox.minY * e.height,
+                   width: o.boundingBox.width * e.width, height: o.boundingBox.height * e.height)
+        }
+    }
+
+    /// White where the person or product is, black elsewhere.
+    private static func subjectMask(_ image: CIImage) throws -> CIImage? {
+        if #available(iOS 17.0, *) {
+            let request = VNGenerateForegroundInstanceMaskRequest()
+            let handler = VNImageRequestHandler(ciImage: image)
+            try handler.perform([request])
+            if let result = request.results?.first {
+                let buffer = try result.generateScaledMaskForImage(forInstances: result.allInstances, from: handler)
+                return CIImage(cvPixelBuffer: buffer)
+            }
+            return nil
+        }
+        let request = VNGeneratePersonSegmentationRequest()
+        request.qualityLevel = .balanced
+        try VNImageRequestHandler(ciImage: image).perform([request])
+        guard let buffer = request.results?.first?.pixelBuffer else { return nil }
+        let mask = CIImage(cvPixelBuffer: buffer)
+        return mask.transformed(by: CGAffineTransform(scaleX: image.extent.width / mask.extent.width, y: image.extent.height / mask.extent.height))
+    }
+
+    // MARK: Drawing
+
+    private static func cgImage(_ image: CIImage) throws -> CGImage {
+        guard let cg = context.createCGImage(image, from: image.extent) else { throw EzyPhotoError.failed("Couldn't make the picture.") }
+        return cg
+    }
+
+    private static func overlay(_ id: String, _ input: CIImage, _ v: [String: String]) throws -> Data {
+        let cg = try cgImage(input)
+        let w = CGFloat(cg.width), h = CGFloat(cg.height)
+        let band: CGFloat = id == "add-name-dob-photo" ? h * 0.18 : 0
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: w, height: h + band), format: format).image { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: w, height: h + band))
+            UIImage(cgImage: cg).draw(in: CGRect(x: 0, y: 0, width: w, height: h))
+            let para = NSMutableParagraphStyle()
+            para.alignment = .center
+            switch id {
+            case "add-name-dob-photo":
+                let font = UIFont.boldSystemFont(ofSize: band * 0.32)
+                let text = "\(v["name"] ?? "")\n\(v["dob"] ?? "")"
+                (text as NSString).draw(in: CGRect(x: 4, y: h + band * 0.08, width: w - 8, height: band * 0.9),
+                                        withAttributes: [.font: font, .foregroundColor: UIColor.black, .paragraphStyle: para])
+            case "watermark-images":
+                let text = v["text"] ?? ""
+                let font = UIFont.boldSystemFont(ofSize: max(18, w / 14))
+                let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(0.35)]
+                let g = ctx.cgContext
+                g.saveGState()
+                g.translateBy(x: w / 2, y: h / 2)
+                g.rotate(by: -.pi / 6)
+                let step = font.lineHeight * 3
+                var y = -max(w, h)
+                while y < max(w, h) {
+                    (text as NSString).draw(at: CGPoint(x: -max(w, h), y: y), withAttributes: attrs)
+                    (text as NSString).draw(at: CGPoint(x: 0, y: y + step / 2), withAttributes: attrs)
+                    y += step
+                }
+                g.restoreGState()
+            default:
+                let text = v["text"] ?? ""
+                let font = UIFont.boldSystemFont(ofSize: max(18, w / 16))
+                let shadow = NSShadow()
+                shadow.shadowColor = UIColor.black.withAlphaComponent(0.7)
+                shadow.shadowBlurRadius = 6
+                let height = font.lineHeight * 2.4
+                let pos = v["position"] ?? "Bottom"
+                let y = pos == "Top" ? h * 0.04 : pos == "Middle" ? (h - height) / 2 : h - height - h * 0.04
+                (text as NSString).draw(in: CGRect(x: w * 0.04, y: y, width: w * 0.92, height: height),
+                                        withAttributes: [.font: font, .foregroundColor: UIColor.white, .shadow: shadow, .paragraphStyle: para])
+            }
+        }
+        guard let out = image.cgImage else { throw EzyPhotoError.failed("Couldn't make the picture.") }
+        return try encode(out, type: "public.jpeg", quality: 0.92, dpi: nil)
+    }
+
+    private static func signature(_ name: String) throws -> EzyPhotoOutput {
+        let text = name.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { throw EzyPhotoError.failed("Add your name.") }
+        let size = CGSize(width: 1200, height: 400)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            let font = UIFont(name: "SnellRoundhand-Bold", size: 150) ?? UIFont.italicSystemFont(ofSize: 120)
+            let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: UIColor(red: 0.05, green: 0.1, blue: 0.45, alpha: 1)]
+            let s = (text as NSString).size(withAttributes: attrs)
+            let scale = min(1, (size.width - 80) / s.width)
+            ctx.cgContext.translateBy(x: size.width / 2, y: size.height / 2)
+            ctx.cgContext.scaleBy(x: scale, y: scale)
+            (text as NSString).draw(at: CGPoint(x: -s.width / 2, y: -s.height / 2), withAttributes: attrs)
+        }
+        guard let cg = image.cgImage else { throw EzyPhotoError.failed("Couldn't make the signature.") }
+        return .image(try encode(cg, type: "public.png", quality: 1, dpi: 300), type: "public.png")
+    }
+
+    // MARK: Encoding
+
+    private static func png(_ image: CIImage) throws -> Data {
+        try encode(try cgImage(image), type: "public.png", quality: 1, dpi: nil)
+    }
+
+    /// JPEG, optionally with a DPI and squeezed or padded into a file-size range in KB.
+    private static func jpeg(_ image: CIImage, dpi: Double?, kb: ClosedRange<Double>?) throws -> Data {
+        let cg = try cgImage(image)
+        guard let kb else { return try encode(cg, type: "public.jpeg", quality: 0.9, dpi: dpi) }
+        let maxBytes = Int(kb.upperBound * 1024), minBytes = Int(kb.lowerBound * 1024)
+        var best = try encode(cg, type: "public.jpeg", quality: 0.95, dpi: dpi)
+        if best.count > maxBytes {
+            var lo = 0.05, hi = 0.95
+            var fitting: Data?
+            for _ in 0..<8 {
+                let q = (lo + hi) / 2
+                let d = try encode(cg, type: "public.jpeg", quality: q, dpi: dpi)
+                if d.count <= maxBytes { fitting = d; lo = q } else { hi = q }
+            }
+            if let fitting { best = fitting } else {
+                // Still too big at the lowest quality: make the picture smaller.
+                let smaller = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: 0.7, kCIInputAspectRatioKey: 1])
+                return try jpeg(smaller, dpi: dpi, kb: kb)
+            }
+        }
+        if best.count < minBytes { best = padJPEG(best, to: minBytes + 512) }
+        return best
+    }
+
+    /// Adds a comment block so a JPEG reaches a minimum file size (forms that reject small files).
+    private static func padJPEG(_ data: Data, to target: Int) -> Data {
+        guard data.count >= 2, data[0] == 0xFF, data[1] == 0xD8 else { return data }
+        var out = Data([0xFF, 0xD8])
+        var need = target - data.count
+        while need > 4 {
+            let chunk = min(need - 4, 65_000)
+            out.append(contentsOf: [0xFF, 0xFE, UInt8((chunk + 2) >> 8), UInt8((chunk + 2) & 0xFF)])
+            out.append(Data(repeating: 0x20, count: chunk))
+            need -= chunk + 4
+        }
+        out.append(data.dropFirst(2))
+        return out
+    }
+
+    private static func encode(_ cg: CGImage, type: String, quality: Double, dpi: Double?) throws -> Data {
+        let data = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(data, type as CFString, 1, nil) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        var props: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: quality]
+        if let dpi {
+            props[kCGImagePropertyDPIWidth] = dpi
+            props[kCGImagePropertyDPIHeight] = dpi
+            props[kCGImagePropertyJFIFDictionary] = [kCGImagePropertyJFIFXDensity: dpi, kCGImagePropertyJFIFYDensity: dpi, kCGImagePropertyJFIFDensityUnit: 1]
+        }
+        CGImageDestinationAddImage(dest, cg, props as CFDictionary)
+        guard CGImageDestinationFinalize(dest) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        return data as Data
+    }
+
+    // MARK: Details
+
+    private static func metadata(detailed: Bool) throws -> String {
+        guard let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let p = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { throw EzyPhotoError.noPhoto }
+        let w = p[kCGImagePropertyPixelWidth] as? Double ?? 0, h = p[kCGImagePropertyPixelHeight] as? Double ?? 0
+        let dpi = p[kCGImagePropertyDPIWidth] as? Double ?? 72
+        var lines = [
+            "Size: \(Int(w)) × \(Int(h)) px",
+            "DPI: \(Int(dpi))",
+            String(format: "Print size at %d DPI: %.1f × %.1f cm", Int(dpi), w / dpi * 2.54, h / dpi * 2.54),
+            String(format: "File: %.0f KB", Double(data.count) / 1024),
+        ]
+        if detailed {
+            let tiff = p[kCGImagePropertyTIFFDictionary] as? [CFString: Any] ?? [:]
+            let exif = p[kCGImagePropertyExifDictionary] as? [CFString: Any] ?? [:]
+            if let make = tiff[kCGImagePropertyTIFFMake] as? String { lines.append("Camera: \(make) \(tiff[kCGImagePropertyTIFFModel] as? String ?? "")") }
+            if let date = exif[kCGImagePropertyExifDateTimeOriginal] as? String { lines.append("Taken: \(date)") }
+            lines.append(p[kCGImagePropertyGPSDictionary] != nil ? "Location: saved in the photo" : "Location: none")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func stripMetadata(_ v: [String: String]) throws -> EzyPhotoOutput {
+        // Copy the original without its details when possible (no quality loss), else re-save the photo.
+        if let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil), let type = CGImageSourceGetType(source) {
+            let out = NSMutableData()
+            if let dest = CGImageDestinationCreateWithData(out, type, 1, nil) {
+                let options: [CFString: Any] = [
+                    kCGImageDestinationMetadata: CGImageMetadataCreateMutable(),
+                    kCGImageDestinationMergeMetadata: false,
+                    kCGImageMetadataShouldExcludeGPS: true,
+                    kCGImageMetadataShouldExcludeXMP: true,
+                ]
+                var error: Unmanaged<CFError>?
+                if CGImageDestinationCopyImageSource(dest, source, options as CFDictionary, &error) {
+                    return .image(out as Data, type: type as String)
+                }
+            }
+        }
+        return .image(try jpeg(try photo(v), dpi: nil, kb: nil), type: "public.jpeg")
+    }
+
+    private static func colours(_ image: CIImage) throws -> String {
+        let small = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: 48 / max(image.extent.width, image.extent.height), kCIInputAspectRatioKey: 1])
+        let cg = try cgImage(small)
+        let w = cg.width, h = cg.height
+        var pixels = [UInt8](repeating: 0, count: w * h * 4)
+        guard let ctx = CGContext(data: &pixels, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                  space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw EzyPhotoError.failed("Couldn't read the colours.") }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        var buckets: [Int: (n: Int, r: Int, g: Int, b: Int)] = [:]
+        for i in stride(from: 0, to: pixels.count, by: 4) {
+            let r = Int(pixels[i]), g = Int(pixels[i + 1]), b = Int(pixels[i + 2])
+            let key = (r >> 5) << 6 | (g >> 5) << 3 | (b >> 5)
+            let cur = buckets[key] ?? (0, 0, 0, 0)
+            buckets[key] = (cur.n + 1, cur.r + r, cur.g + g, cur.b + b)
+        }
+        let top = buckets.values.sorted { $0.n > $1.n }.prefix(6)
+        let total = Double(w * h)
+        return "Main colours:\n" + top.map { c in
+            let hex = String(format: "#%02X%02X%02X", c.r / c.n, c.g / c.n, c.b / c.n)
+            return "\(hex)  RGB(\(c.r / c.n), \(c.g / c.n), \(c.b / c.n))  \(Int(Double(c.n) / total * 100))%"
+        }.joined(separator: "\n")
+    }
 }

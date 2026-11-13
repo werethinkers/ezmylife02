@@ -25,7 +25,7 @@ import { NATIVE_APPS, nativeOutput } from "../_shared/nativeApis.ts";
 const APPS: Record<string, ApiApp> = {
   ...API_CATALOG,
   ...Object.fromEntries(Object.entries(NATIVE_APPS).map(([id, n]) => [id, {
-    runner: "ai-app", mode: n.mode, engine: "native", kind: n.isImage ? "image" : "doc", charge: n.charge,
+    runner: "ai-app", mode: n.mode, engine: "native", kind: n.isImage ? "image" : "doc", charge: n.charge || id,
     credits: n.credits, intro: n.intro, cta: n.cta, fields: n.fields,
   } as ApiApp])),
 };
@@ -337,9 +337,19 @@ async function runApp(who: Who, id: string, body: Record<string, unknown>) {
   return charged(who, spec.charge, spec.credits, spec.kind === "image", id, () => callInternal(spec.runner, payload));
 }
 
+/** Charges a photo tool that ran on the phone, at its website price (1 credit unless set otherwise). */
+async function chargeDevice(who: Who, id: string) {
+  const app = NATIVE_APPS[id];
+  if (!app || app.mode !== "device") return fail(404, "not_a_device_app", "Only photo tools that run on the phone are charged this way.");
+  return charged(who, id, app.credits, false, id, async () => ({ status: 200, data: { output: "" } }));
+}
+
 /** Runs one of the older apps that has its own server function (see _shared/nativeApis.ts). */
 async function runNative(who: Who, id: string, body: Record<string, unknown>) {
   const app = NATIVE_APPS[id];
+  if (app.mode === "device") {
+    return fail(409, "runs_on_device", "This photo tool runs on the phone (EZYOURLIFE keyboard) or the website, not on the server.", { url: `${SITE}/tool/${id}` });
+  }
   const raw = typeof body.inputs === "object" && body.inputs ? body.inputs as Record<string, unknown> : {};
   const inputs: Record<string, string> = {};
   for (const f of app.fields) {
@@ -663,6 +673,7 @@ Deno.serve(async (req) => {
     if (m === "GET" && route[0] === "profile") return await readProfile(who);
     if (m === "POST" && route[0] === "command") return await planCommand(who, body);
     if (m === "POST" && route[0] === "apps" && route[2] === "run") return await runApp(who, decodeURIComponent(route[1]), body);
+    if (m === "POST" && route[0] === "apps" && route[2] === "charge") return await chargeDevice(who, decodeURIComponent(route[1]));
     if (m === "POST" && route[0] === "prompt" && route[1] === "improve") return await improve(who, body);
     if (m === "POST" && route[0] === "prompt" && route[1] === "brainstorm") return await brainstorm(who, body);
     if (route[0] === "shortcuts") {
