@@ -766,7 +766,12 @@ final class KeyboardViewController: UIInputViewController {
                 let result = try await EzyAPI.run(plan)
                 if result.imageURL != nil { await EzyClipboard.copy(result) }
                 let wantsPDF = current.format == "pdf" && current.offersPDF && result.imageURL == nil && !result.text.isEmpty
-                let pdf = wantsPDF ? EzyPDF.make(title: current.app.name, markdown: result.text) : nil
+                var pdf: Data?
+                if wantsPDF {
+                    let letter = EzyPDF.template(id: current.app.id, name: current.app.name) == .letter
+                    let profile = letter ? await EzyAPI.profile() : [:]
+                    pdf = EzyPDF.make(appId: current.app.id, title: current.app.name, markdown: result.text, profile: profile)
+                }
                 await MainActor.run {
                     guard let self else { return }
                     self.busy = nil

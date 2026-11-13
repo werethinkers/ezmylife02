@@ -230,6 +230,12 @@ enum EzyAPI {
         return json
     }
 
+    /// The person's saved business details (for the letterhead on Letter PDFs). Empty when none or offline.
+    static func profile() async -> [String: String] {
+        guard let json = try? await request("/profile") else { return [:] }
+        return (json["profile"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
+    }
+
     private static func decode<T: Decodable>(_ type: T.Type, _ object: Any?) -> T? {
         guard let object, JSONSerialization.isValidJSONObject(object),
               let data = try? JSONSerialization.data(withJSONObject: object) else { return nil }
@@ -437,49 +443,98 @@ enum EzyChat {
 
 #if canImport(UIKit)
 // MARK: - A clean A4 PDF from an app's answer
+// Matches the website's PDF templates (src/apps/output/choice.ts and render.ts, docs/output-formats.md):
+// Letter (business letterhead), Plan, Document; A4, ink #121212, accent bar per template, a title bar with the
+// app name as a kicker, and "App · Made with ezyourlife.com" / "Page x of n" on every page.
 
 enum EzyPDF {
-    static let coral = UIColor(red: 1.0, green: 0.42, blue: 0.29, alpha: 1)
-    static let ink = UIColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1)
+    enum Template { case letter, plan, document }
 
-    /// Lays the answer out on A4 pages: an EZYOURLIFE header with the app's name and date, headings,
-    /// bullets, tables as aligned columns, page numbers in the footer.
-    static func make(title: String, markdown: String) -> Data {
+    static let ink = UIColor(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255, alpha: 1)
+    static let sun = UIColor(red: 1, green: 0xcc / 255, blue: 0, alpha: 1)
+    static let lime = UIColor(red: 0xb6 / 255, green: 0xf2 / 255, blue: 0x2e / 255, alpha: 1)
+
+    /// Same rule as the website: names like letter, notice, invoice or contract get the Letter; plans and
+    /// schedules get the Plan; everything else is a Document.
+    static func template(id: String, name: String) -> Template {
+        let s = (id + " " + name).lowercased().replacingOccurrences(of: "-", with: " ")
+        if s.range(of: #"\b(comparison|register|calendar)\b"#, options: .regularExpression) == nil,
+           s.range(of: #"\b(letter|notice|agreement|invoice|quotation|quote|slip|certificate|application|nda|contract|deed|receipt|proforma|offer|undertaking|affidavit|declaration|resignation|appointment|reference|memo)\b"#, options: .regularExpression) != nil {
+            return .letter
+        }
+        if s.range(of: #"\b(plan|planner|schedule|timetable|itinerary|routine|roadmap)\b"#, options: .regularExpression) != nil { return .plan }
+        return .document
+    }
+
+    // Headings: a heavy rounded face, the nearest built-in to the site's Unbounded. Body: the system face
+    // (Devanagari falls back to Apple's Hindi fonts).
+    static func heading(_ size: CGFloat) -> UIFont {
+        let base = UIFont.systemFont(ofSize: size, weight: .heavy)
+        if let d = base.fontDescriptor.withDesign(.rounded) { return UIFont(descriptor: d, size: size) }
+        return base
+    }
+
+    /// `profile` is the person's saved business details (letterhead on Letter templates).
+    static func make(appId: String, title: String, markdown: String, profile: [String: String] = [:]) -> Data {
+        let kind = template(id: appId, name: title)
+        let accent = kind == .plan ? lime : sun
         let page = CGRect(x: 0, y: 0, width: 595, height: 842)
         let body = page.insetBy(dx: 48, dy: 0)
-        let top: CGFloat = 112, bottom: CGFloat = 60
-        let text = attributed(markdown, width: body.width)
+        let headerHeight: CGFloat = kind == .letter && !(profile["businessName"] ?? "").isEmpty ? 132 : 112
+        let bottom: CGFloat = 60
+        let text = attributed(markdown, width: body.width, accent: accent)
         let setter = CTFramesetterCreateWithAttributedString(text as CFAttributedString)
+        let frameRect = CGRect(x: body.minX, y: bottom, width: body.width, height: page.height - headerHeight - bottom)
+
+        // Pass 1: where each page starts, so the footer can say "Page x of n".
+        var starts: [Int] = []
+        var at = 0
+        repeat {
+            starts.append(at)
+            let frame = CTFramesetterCreateFrame(setter, CFRange(location: at, length: 0), CGPath(rect: frameRect, transform: nil), nil)
+            at += max(CTFrameGetVisibleStringRange(frame).length, 1)
+        } while at < text.length && starts.count < 60
         let date = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
+        let grey = UIColor(white: 0.45, alpha: 1)
 
         return UIGraphicsPDFRenderer(bounds: page).pdfData { ctx in
-            var start = 0, number = 1
-            repeat {
+            for (n, start) in starts.enumerated() {
                 ctx.beginPage()
                 let cg = ctx.cgContext
-                // Header
-                coral.setFill()
-                cg.fill(CGRect(x: 0, y: 0, width: page.width, height: 6))
-                ("EZYOURLIFE" as NSString).draw(at: CGPoint(x: body.minX, y: 26), withAttributes: [.font: UIFont.systemFont(ofSize: 11, weight: .heavy), .foregroundColor: coral, .kern: 1.6])
-                (date as NSString).draw(in: CGRect(x: body.midX, y: 26, width: body.width / 2, height: 16), withAttributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: UIColor.gray, .paragraphStyle: right()])
-                (title as NSString).draw(in: CGRect(x: body.minX, y: 46, width: body.width, height: 34), withAttributes: [.font: UIFont.systemFont(ofSize: 22, weight: .bold), .foregroundColor: ink])
-                UIColor(white: 0.88, alpha: 1).setFill()
-                cg.fill(CGRect(x: body.minX, y: 90, width: body.width, height: 1))
+                accent.setFill()
+                cg.fill(CGRect(x: 0, y: 0, width: page.width, height: 8))
+                if kind == .letter, let business = profile["businessName"], !business.isEmpty {
+                    // Letterhead: name, industry as tagline, then address, phone · email, GSTIN, website.
+                    (business as NSString).draw(in: CGRect(x: body.minX, y: 26, width: body.width * 0.6, height: 26), withAttributes: [.font: heading(18), .foregroundColor: ink])
+                    if let tag = profile["industry"], !tag.isEmpty {
+                        (tag as NSString).draw(in: CGRect(x: body.minX, y: 52, width: body.width * 0.6, height: 16), withAttributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: grey])
+                    }
+                    let contact = [profile["address"], [profile["phone"], profile["email"]].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "), profile["gstin"].map { "GSTIN \($0)" }, profile["website"]]
+                        .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "\n")
+                    (contact as NSString).draw(in: CGRect(x: body.minX + body.width * 0.55, y: 26, width: body.width * 0.45, height: 64), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: grey, .paragraphStyle: right()])
+                    UIColor(white: 0.85, alpha: 1).setFill()
+                    cg.fill(CGRect(x: body.minX, y: 94, width: body.width, height: 1))
+                    (title.uppercased() as NSString).draw(at: CGPoint(x: body.minX, y: 104), withAttributes: [.font: heading(11), .foregroundColor: ink, .kern: 1.2])
+                    (date as NSString).draw(in: CGRect(x: body.midX, y: 104, width: body.width / 2, height: 14), withAttributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: grey, .paragraphStyle: right()])
+                } else {
+                    // Title bar: the app name as a small kicker above the title, the date at right.
+                    (title.uppercased() as NSString).draw(at: CGPoint(x: body.minX, y: 28), withAttributes: [.font: UIFont.systemFont(ofSize: 9, weight: .bold), .foregroundColor: grey, .kern: 1.4])
+                    (date as NSString).draw(in: CGRect(x: body.midX, y: 28, width: body.width / 2, height: 14), withAttributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: grey, .paragraphStyle: right()])
+                    (title as NSString).draw(in: CGRect(x: body.minX, y: 44, width: body.width, height: 34), withAttributes: [.font: heading(22), .foregroundColor: ink])
+                    accent.setFill()
+                    cg.fill(CGRect(x: body.minX, y: 86, width: 56, height: 4))
+                }
                 // Footer
-                ("Made with EZYOURLIFE · ezyourlife.com" as NSString).draw(at: CGPoint(x: body.minX, y: page.height - 36), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: UIColor.gray])
-                ("Page \(number)" as NSString).draw(in: CGRect(x: body.midX, y: page.height - 36, width: body.width / 2, height: 14), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: UIColor.gray, .paragraphStyle: right()])
+                ("\(title) · Made with ezyourlife.com" as NSString).draw(at: CGPoint(x: body.minX, y: page.height - 36), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: grey])
+                ("Page \(n + 1) of \(starts.count)" as NSString).draw(in: CGRect(x: body.midX, y: page.height - 36, width: body.width / 2, height: 14), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: grey, .paragraphStyle: right()])
                 // Body (CoreText draws with a flipped y axis)
-                let frameRect = CGRect(x: body.minX, y: bottom, width: body.width, height: page.height - top - bottom)
                 cg.saveGState()
                 cg.translateBy(x: 0, y: page.height)
                 cg.scaleBy(x: 1, y: -1)
                 let frame = CTFramesetterCreateFrame(setter, CFRange(location: start, length: 0), CGPath(rect: frameRect, transform: nil), nil)
                 CTFrameDraw(frame, cg)
                 cg.restoreGState()
-                let shown = CTFrameGetVisibleStringRange(frame).length
-                start += max(shown, 1)
-                number += 1
-            } while start < text.length && number < 60
+            }
         }
     }
 
@@ -498,7 +553,7 @@ enum EzyPDF {
         return out
     }
 
-    private static func attributed(_ markdown: String, width: CGFloat) -> NSAttributedString {
+    private static func attributed(_ markdown: String, width: CGFloat, accent: UIColor) -> NSAttributedString {
         let out = NSMutableAttributedString()
         let regular = UIFont.systemFont(ofSize: 11)
         let strong = UIFont.systemFont(ofSize: 11, weight: .semibold)
@@ -518,8 +573,8 @@ enum EzyPDF {
             if let r = line.range(of: #"^#{1,6}\s+"#, options: .regularExpression) {
                 let level = line[..<r.upperBound].filter { $0 == "#" }.count
                 line = String(line[r.upperBound...]).replacingOccurrences(of: "**", with: "")
-                let font = UIFont.systemFont(ofSize: level <= 1 ? 16 : level == 2 ? 14 : 12, weight: .bold)
-                piece = NSMutableAttributedString(string: line, attributes: [.font: font, .foregroundColor: level <= 2 ? coral : ink])
+                let font = level <= 2 ? heading(level <= 1 ? 15 : 13) : UIFont.systemFont(ofSize: 12, weight: .bold)
+                piece = NSMutableAttributedString(string: line, attributes: [.font: font, .foregroundColor: ink, .underlineStyle: level <= 2 ? NSUnderlineStyle.thick.rawValue : 0, .underlineColor: accent])
                 piece.addAttribute(.paragraphStyle, value: para(spacingBefore: 10, after: 5), range: NSRange(location: 0, length: piece.length))
             } else if line.hasPrefix("|") {
                 let cells = line.trimmingCharacters(in: CharacterSet(charactersIn: "|")).components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
