@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { AppShell } from "../shell/AppShell";
 import { OutputPanel } from "../shell/OutputPanel";
+import { OutputChoice } from "../output/OutputChoice";
 import { HistoryList, addHistory, type HistoryItem } from "../shell/HistoryList";
 import { useAppStore, uid } from "../lib/store";
 import { runApp, NeedsCredits, errorText } from "../lib/api";
@@ -136,6 +137,7 @@ export default function VisionApp({ toolId, def }: { toolId: string; def: Vision
               <Label htmlFor={`${toolId}-note`} className="text-xs">{def.instructionsLabel ?? "Anything specific? (optional)"}</Label>
               <Input id={`${toolId}-note`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. only the table on page 2; keep Hindi as is" />
             </div>
+            <OutputChoice toolId={toolId} className="mt-4" compact />
             <Button className="mt-4 w-full gap-2" onClick={run} disabled={busy || loading || !images.length}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanText className="h-4 w-4" />}
               {def.cta}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownUp, Download, FileUp, Loader2, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowDownUp, Download, FileText, FileUp, Loader2, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ import {
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { AppShell } from "../shell/AppShell";
 import { OutputPanel } from "../shell/OutputPanel";
+import { useWorkspace } from "../lib/workspace";
+import { docFromRows } from "../output/buildDoc";
+import { usePreparedPdf } from "../output/usePreparedPdf";
+import { saveFile } from "../output/save";
 import { FieldInput, serializeValues } from "../shell/Fields";
 import { useAppStore, uid } from "../lib/store";
 import { runApp, NeedsCredits, errorText } from "../lib/api";
@@ -106,6 +110,29 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
     });
     setRows([...added, ...rows]);
     toast.success(`Imported ${added.length} ${def.itemName}${added.length === 1 ? "" : "s"} ${label}`);
+  };
+
+  const { profile } = useWorkspace();
+  const register = useMemo(() => {
+    if (!rows.length) return null;
+    const columns = def.columns.filter((c) => !c.minor || def.columns.length <= 8).map((c) => ({ key: c.key, label: c.label }));
+    const data = rows.map((r) => Object.fromEntries(def.columns.map((c) => [c.key, c.computed ? c.computed(r) : r[c.key] ?? ""])));
+    const totals = def.summary?.(rows) ?? [];
+    const head = totals.length ? totals.map((t) => `**${t.label}:** ${t.value}`).join(" · ") : "";
+    return docFromRows({
+      appName,
+      fileName: `${def.fileName}-${today()}`,
+      profile,
+      columns,
+      rows: data,
+      summary: [head, store.data.insights ?? ""].filter(Boolean).join("\n\n"),
+    });
+  }, [rows, def, appName, profile, store.data.insights]);
+  // Made in the background whenever the rows settle, so the PDF button is instant.
+  const registerPdf = usePreparedPdf(register, { wait: 1500 });
+  const saveRegister = () => {
+    if (registerPdf.state === "ready" && register) void saveFile(registerPdf.pdf.blob, `${register.fileName}.pdf`, appName);
+    else toast.info("Your PDF is nearly ready — try again in a moment.");
   };
 
   const exportCsv = () => {
@@ -277,6 +304,9 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
         <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={exportCsv} disabled={!rows.length}>
           <Download className="h-3.5 w-3.5" /> Export
         </Button>
+        <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={saveRegister} disabled={!rows.length}>
+          {registerPdf.state === "making" && !registerPdf.previous ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />} PDF register
+        </Button>
         {!rows.length && (
           <Button size="sm" variant="ghost" className="h-9" onClick={() => setRows(def.sample.map((s) => ({ id: uid(), ...s }) as TrackerRow))}>
             Load sample data
@@ -409,6 +439,7 @@ export default function TrackerApp({ toolId, def }: { toolId: string; def: Track
               onRefine={(i) => insights(i)}
               refining={busy === "refine"}
               sendTo={def.related}
+              pdfDoc={register ?? undefined}
             />
           ) : (
             <div className="flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">

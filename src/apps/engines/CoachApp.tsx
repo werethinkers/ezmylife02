@@ -16,6 +16,7 @@ import type { FormValues } from "../types";
 import type { CoachDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
 import { FieldGrid, ResultView, VoiceButton, YouGet, card, emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
 
 interface Msg {
@@ -132,6 +133,7 @@ export default function CoachApp({ toolId, def }: { toolId: string; def: CoachDe
             >
               <StepLabel n={2}>Set up your session</StepLabel>
               <FieldGrid toolId={toolId} fields={def.fields} values={values} onChange={setValues} sample={def.sample} disabled={!!busy} />
+              <OutputChoice toolId={toolId} className="mt-5" />
               <Button type="submit" className="mt-5 gap-2" disabled={!!busy}>
                 {busy === "start" ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
                 {def.cta} · {def.credits} credits

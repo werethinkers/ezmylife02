@@ -15,6 +15,7 @@ import type { FormValues } from "../types";
 import type { InterviewDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
 import { FieldGrid, ResultView, VoiceButton, YouGet, card, emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
 
 interface Msg {
@@ -188,6 +189,7 @@ export default function InterviewApp({ toolId, def }: { toolId: string; def: Int
               </form>
             </div>
           )}
+          {started && <OutputChoice toolId={toolId} className={`${card} !p-4`} />}
           {started && (
             <Button className="w-full gap-2" size="lg" onClick={() => void finish()} disabled={!canFinish || !!busy}>
               {busy === "final" ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />}

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { AppShell } from "../shell/AppShell";
 import { OutputPanel } from "../shell/OutputPanel";
+import { OutputChoice } from "../output/OutputChoice";
 import { FieldInput, serializeValues } from "../shell/Fields";
 import { WorkspaceCard } from "../shell/WorkspaceCard";
 import { ResultPlaceholder, StepLabel } from "../shell/StepLabel";
@@ -149,6 +150,7 @@ export default function DocApp({ toolId, def }: { toolId: string; def: DocAppDef
               ))}
             </div>
             {def.preview && <div className="mt-4">{def.preview(values)}</div>}
+            <OutputChoice toolId={toolId} className="mt-5" />
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button type="submit" className="gap-2" disabled={!!busy}>
                 {busy === "generate" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
