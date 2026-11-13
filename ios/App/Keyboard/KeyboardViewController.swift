@@ -66,8 +66,16 @@ final class KeyboardViewController: UIInputViewController {
         var commandText: String
         /// "text" (typed into the chat) or "pdf" (a PDF copied for pasting). Only for apps that answer in words.
         var format: String = "text"
-        var offersPDF: Bool { !["device", "image", "images"].contains(app.mode ?? "") }
+        var offersPDF: Bool { !["device", "image", "images", "coach"].contains(app.mode ?? "") && coach == nil }
+        /// A coaching session in progress: its ticket and the conversation so far.
+        var coach: Coach?
     }
+    private struct Coach {
+        var ticket: String
+        var messages: [[String: String]]
+        var waiting = false
+    }
+    private static let replyKey = "__reply"
     private static let promptKey = "__prompt"
     // Short enough to fit the strip on a small iPhone.
     private static let pasteImage = "✓ Image copied · hold the message box › Paste"
@@ -76,6 +84,12 @@ final class KeyboardViewController: UIInputViewController {
     private var editingKey: String?
     /// The photo box whose picker (recent photos from the library) is showing in the card.
     private var pickingKey: String?
+    /// Photos ticked so far when a box takes several photos.
+    private var pickedAssets: [PHAsset] = []
+    private var pickingMany: Bool {
+        guard let key = pickingKey else { return false }
+        return card?.fields.first(where: { $0.key == key })?.type == "images"
+    }
     private let cardView = UIView()
     private var planTask: Task<Void, Never>?
     private var suggestion: (text: String, plan: EzyPlan)?
@@ -676,6 +690,7 @@ final class KeyboardViewController: UIInputViewController {
         }
         for field in fields where (values[field.key] ?? "").isEmpty {
             if let d = field.defaultValue, !d.isEmpty { values[field.key] = d }
+            else if field.type == "date" { values[field.key] = Self.today() }
         }
         planTask?.cancel()
         suggestion = nil
@@ -684,6 +699,12 @@ final class KeyboardViewController: UIInputViewController {
         card?.format = EzyShared.store.string(forKey: "format.\(app.id)") ?? "text"
         page = .letters
         afterTyping()
+    }
+
+    private static func today() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
     }
 
     private func closeCard() {
@@ -761,6 +782,10 @@ final class KeyboardViewController: UIInputViewController {
             runOnDevice(current.app, values: current.values)
             return
         }
+        if current.app.mode == "coach" {
+            startCoach(current)
+            return
+        }
         Task { [weak self] in
             do {
                 let result = try await EzyAPI.run(plan)
@@ -781,7 +806,11 @@ final class KeyboardViewController: UIInputViewController {
                         self.notice = Self.pastePDF
                     } else {
                         self.replaceCommand(with: EzyChat.forChat(result.text))
-                        self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
+                        if let many = result.images, many.count > 1 {
+                            self.notice = "✓ \(many.count) images copied · hold the message box › Paste"
+                        } else {
+                            self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
+                        }
                     }
                     self.refreshStrip()
                 }
@@ -810,6 +839,10 @@ final class KeyboardViewController: UIInputViewController {
                         else { UIPasteboard.general.setData(data, forPasteboardType: type) }
                         self.replaceCommand(with: "")
                         self.notice = type == "com.adobe.pdf" ? Self.pastePDF : Self.pasteImage
+                    case let .images(list, type):
+                        UIPasteboard.general.setItems(list.map { [type: $0] })
+                        self.replaceCommand(with: "")
+                        self.notice = "✓ \(list.count) images copied · hold the message box › Paste"
                     case let .text(text):
                         self.replaceCommand(with: text)
                         self.notice = "✓ \(app.name) is in. Tap to close."
@@ -862,6 +895,10 @@ final class KeyboardViewController: UIInputViewController {
         guard let card else { return }
         if let key = pickingKey {
             renderPhotoPicker(for: key)
+            return
+        }
+        if card.coach != nil {
+            renderCoach(card)
             return
         }
 
@@ -938,6 +975,13 @@ final class KeyboardViewController: UIInputViewController {
 
     /// Shrinks a picture while decoding it and stores it in the photo box as a JPEG.
     private func usePhoto(_ raw: Data?, for key: String) {
+        // Detail tools need the original file: shrinking it would lose the camera, date and DPI.
+        if let raw, raw.count < 12_000_000, ["view-metadata", "check-dpi", "remove-metadata"].contains(card?.app.id ?? "") {
+            card?.values[key] = "data:application/octet-stream;base64," + raw.base64EncodedString()
+            card?.edited.insert(key)
+            afterTyping()
+            return
+        }
         var small: UIImage?
         if let raw, let source = CGImageSourceCreateWithData(raw as CFData, nil) {
             let options: [CFString: Any] = [
@@ -983,6 +1027,7 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         pickingKey = key
+        pickedAssets = []
         afterTyping()
         renderCard()
     }
@@ -1015,10 +1060,20 @@ final class KeyboardViewController: UIInputViewController {
         pasted.setTitleColor(keyTextColor, for: .normal)
         pasted.backgroundColor = chipColor
         pasted.layer.cornerRadius = 8
-        pasted.handler = { [weak self] in
-            self?.pickingKey = nil
-            self?.takeCopiedPhoto(for: key)
-            self?.renderCard()
+        if pickingMany {
+            pasted.setTitle(pickedAssets.isEmpty ? "Tick up to 10 photos" : "✓ Use \(pickedAssets.count) photo\(pickedAssets.count == 1 ? "" : "s")", for: .normal)
+            pasted.backgroundColor = pickedAssets.isEmpty ? chipColor : brand
+            pasted.setTitleColor(pickedAssets.isEmpty ? keyTextColor : .white, for: .normal)
+            pasted.handler = { [weak self] in
+                guard let self, !self.pickedAssets.isEmpty else { return }
+                self.pickMany(self.pickedAssets, for: key)
+            }
+        } else {
+            pasted.handler = { [weak self] in
+                self?.pickingKey = nil
+                self?.takeCopiedPhoto(for: key)
+                self?.renderCard()
+            }
         }
         pasted.addTarget(pasted, action: #selector(ChipButton.tapped), for: .touchUpInside)
 
@@ -1073,7 +1128,20 @@ final class KeyboardViewController: UIInputViewController {
                 guard let image else { return }
                 DispatchQueue.main.async { cell?.setImage(image, for: .normal) }
             }
-            cell.handler = { [weak self] in self?.pickAsset(asset, for: key) }
+            if pickedAssets.contains(asset) {
+                cell.layer.borderWidth = 3
+                cell.layer.borderColor = brand.cgColor
+            }
+            cell.handler = { [weak self] in
+                guard let self else { return }
+                if self.pickingMany {
+                    if let i = self.pickedAssets.firstIndex(of: asset) { self.pickedAssets.remove(at: i) }
+                    else if self.pickedAssets.count < 10 { self.pickedAssets.append(asset) }
+                    self.renderCard()
+                } else {
+                    self.pickAsset(asset, for: key)
+                }
+            }
             cell.addTarget(cell, action: #selector(ChipButton.tapped), for: .touchUpInside)
             row?.addArrangedSubview(cell)
         }
@@ -1118,6 +1186,209 @@ final class KeyboardViewController: UIInputViewController {
                 self.renderCard()
                 self.refreshStrip()
             }
+        }
+    }
+
+    /// Several photos for one box: each is shrunk while decoding and kept as one line of data links.
+    private func pickMany(_ assets: [PHAsset], for key: String) {
+        busy = "Getting \(assets.count) photos…"
+        pickingKey = nil
+        afterTyping()
+        Task { [weak self] in
+            var links: [String] = []
+            for asset in assets {
+                let data: Data? = await withCheckedContinuation { done in
+                    let options = PHImageRequestOptions()
+                    options.isNetworkAccessAllowed = true
+                    options.deliveryMode = .highQualityFormat
+                    PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { d, _, _, _ in done.resume(returning: d) }
+                }
+                if let link = data.flatMap({ Self.smallJPEGLink($0, maxSide: 1600) }) { links.append(link) }
+            }
+            await MainActor.run {
+                guard let self else { return }
+                self.busy = nil
+                self.card?.values[key] = links.joined(separator: "\n")
+                self.card?.edited.insert(key)
+                self.renderCard()
+                self.afterTyping()
+            }
+        }
+    }
+
+    private static func smallJPEGLink(_ raw: Data, maxSide: Int) -> String? {
+        guard let source = CGImageSourceCreateWithData(raw as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxSide,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let data = UIImage(cgImage: cg).jpegData(compressionQuality: 0.85) else { return nil }
+        return "data:image/jpeg;base64," + data.base64EncodedString()
+    }
+
+    // MARK: Coaching sessions in the keyboard
+
+    private func startCoach(_ current: Card) {
+        busy = "Starting \(current.app.name)…"
+        afterTyping()
+        let inputs = current.values.filter { !$0.value.isEmpty && $0.key != Self.promptKey }
+        Task { [weak self] in
+            do {
+                let (text, ticket) = try await EzyAPI.coach(current.app.id, action: "start", inputs: inputs)
+                await MainActor.run {
+                    guard let self else { return }
+                    self.busy = nil
+                    var next = current
+                    next.coach = Coach(ticket: ticket ?? "", messages: [["role": "assistant", "content": text]])
+                    next.fields = [EzyField(key: Self.replyKey, label: "Your answer", type: "textarea", required: false, placeholder: "Type or dictate your answer", options: nil)]
+                    next.values = [:]
+                    self.card = next
+                    self.afterTyping()
+                    self.renderCard()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func sendCoach(wrap: Bool) {
+        guard var current = card, var coach = current.coach else { return }
+        let answer = (current.values[Self.replyKey] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !wrap {
+            guard !answer.isEmpty else { editingKey = Self.replyKey; afterTyping(); return }
+            coach.messages.append(["role": "user", "content": answer])
+        }
+        coach.waiting = true
+        current.coach = coach
+        current.values[Self.replyKey] = ""
+        card = current
+        renderCard()
+        let id = current.app.id
+        Task { [weak self] in
+            do {
+                let (text, _) = try await EzyAPI.coach(id, action: wrap ? "wrap" : "turn", ticket: coach.ticket, messages: coach.messages)
+                await MainActor.run {
+                    guard let self else { return }
+                    if wrap {
+                        self.card = nil
+                        self.replaceCommand(with: EzyChat.forChat(text))
+                        self.notice = "✓ Session summary is in. Tap to close."
+                        self.refreshStrip()
+                        return
+                    }
+                    coach.messages.append(["role": "assistant", "content": text])
+                    coach.waiting = false
+                    self.card?.coach = coach
+                    self.renderCard()
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self else { return }
+                    coach.waiting = false
+                    if !wrap { coach.messages.removeLast() ; self.card?.values[Self.replyKey] = answer }
+                    self.card?.coach = coach
+                    self.notice = error.localizedDescription
+                    self.renderCard()
+                    self.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func renderCoach(_ card: Card) {
+        guard let coach = card.coach else { return }
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        let list = UIStackView()
+        list.axis = .vertical
+        list.spacing = 6
+        list.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(list)
+
+        // The last few messages, newest at the bottom.
+        for m in coach.messages.suffix(4) {
+            let mine = m["role"] == "user"
+            let bubble = UILabel()
+            bubble.numberOfLines = 0
+            bubble.font = .systemFont(ofSize: 14)
+            bubble.text = (mine ? "You: " : "🧑‍🏫 ") + EzyChat.forChat(m["content"] ?? "").replacingOccurrences(of: "*", with: "")
+            bubble.textColor = keyTextColor
+            bubble.backgroundColor = mine ? chipColor : brand.withAlphaComponent(0.12)
+            bubble.layer.cornerRadius = 8
+            bubble.clipsToBounds = true
+            let wrap = UIView()
+            wrap.addSubview(bubble)
+            bubble.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                bubble.topAnchor.constraint(equalTo: wrap.topAnchor),
+                bubble.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
+                bubble.leadingAnchor.constraint(equalTo: wrap.leadingAnchor, constant: 4),
+                bubble.trailingAnchor.constraint(equalTo: wrap.trailingAnchor, constant: -4),
+            ])
+            list.addArrangedSubview(wrap)
+        }
+        if coach.waiting {
+            let thinking = UILabel()
+            thinking.text = "Thinking…"
+            thinking.font = .italicSystemFont(ofSize: 14)
+            thinking.textColor = keyTextColor
+            list.addArrangedSubview(thinking)
+        } else if let reply = card.fields.first {
+            list.addArrangedSubview(fieldRow(reply, card: card))
+        }
+
+        func button(_ title: String, primary: Bool = false, _ action: @escaping () -> Void) -> ChipButton {
+            let b = ChipButton(type: .system)
+            b.setTitle(title, for: .normal)
+            b.titleLabel?.font = .systemFont(ofSize: 15, weight: primary ? .semibold : .regular)
+            b.setTitleColor(primary ? .white : keyTextColor, for: .normal)
+            b.backgroundColor = primary ? brand : functionKeyColor
+            b.layer.cornerRadius = 8
+            b.handler = action
+            b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            return b
+        }
+        let last = coach.messages.last(where: { $0["role"] == "assistant" })?["content"] ?? ""
+        let bar = UIStackView(arrangedSubviews: [
+            button("End") { [weak self] in self?.closeCard() },
+            button("Paste reply") { [weak self] in self?.textDocumentProxy.insertText(EzyChat.forChat(last)) },
+            button("Summary") { [weak self] in self?.sendCoach(wrap: true) },
+            button("Send ➤", primary: true) { [weak self] in self?.sendCoach(wrap: false) },
+        ])
+        bar.axis = .horizontal
+        bar.spacing = 6
+        bar.distribution = .fillProportionally
+        bar.translatesAutoresizingMaskIntoConstraints = false
+
+        cardView.addSubview(scroll)
+        cardView.addSubview(bar)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: cardView.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: bar.topAnchor, constant: -6),
+            list.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            list.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            list.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            list.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            list.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+            bar.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            bar.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+            bar.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        // Show the newest message.
+        DispatchQueue.main.async {
+            scroll.layoutIfNeeded()
+            let bottom = max(0, scroll.contentSize.height - scroll.bounds.height)
+            scroll.setContentOffset(CGPoint(x: 0, y: bottom), animated: false)
         }
     }
 
@@ -1182,7 +1453,11 @@ final class KeyboardViewController: UIInputViewController {
             title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
         }
         title.append(NSAttributedString(string: "\n"))
-        if field.type == "pdf" {
+        if field.type == "images" {
+            let count = value.isEmpty ? 0 : value.components(separatedBy: "\n").count
+            let shown = count == 0 ? "Tap to pick photos" : "📷 \(count) photo\(count == 1 ? "" : "s") added (tap to change)"
+            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: count == 0 ? .semibold : .regular), .foregroundColor: count == 0 ? brand : keyTextColor]))
+        } else if field.type == "pdf" {
             let shown = value.isEmpty ? "Copy a PDF, then tap here" : "📄 PDF added (tap to use the one you copied now)"
             title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
         } else if field.type == "image" {
@@ -1211,7 +1486,7 @@ final class KeyboardViewController: UIInputViewController {
             row.layer.borderColor = brand.cgColor
         }
         row.handler = { [weak self] in
-            if field.type == "image" {
+            if field.type == "image" || field.type == "images" {
                 self?.choosePhoto(for: field.key)
                 return
             }
@@ -1319,6 +1594,8 @@ final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
  */
 enum EzyPhotoOutput {
     case image(Data, type: String)
+    /// Several files at once (exam photo sets, grids, pages): copied together, pasted together.
+    case images([Data], type: String)
     case text(String)
 }
 
@@ -1364,7 +1641,15 @@ enum EzyPhoto {
         case "generate-signature":
             return try signature(v["name"] ?? "")
         case "view-metadata", "check-dpi":
-            return .text(try metadata(detailed: id == "view-metadata"))
+            return .text(try metadata(v, detailed: id == "view-metadata"))
+        case "edit-metadata":
+            return try editMetadata(v)
+        case "nta-photo-signature", "sbi-clerk-photo-signature", "gate-photo-signature", "oci-photo-signature":
+            return try examSet(id, v)
+        case "bulk-image-resizer":
+            return try bulkResize(v)
+        case "pdf-chart-image-extractor":
+            return try pdfPages(v)
         case "remove-metadata":
             return try stripMetadata(v)
         case "pdf-to-text", "pdf-to-jpg", "rotate-pdf", "split-pdf", "merge-pdf":
@@ -1476,8 +1761,44 @@ enum EzyPhoto {
             return .image(try jpeg(input, dpi: dpi, kb: nil), type: "public.jpeg")
         case "image-color-picker":
             return .text(try colours(input))
-        case "merge-photo-signature", "join-images", "add-logo":
+        case "merge-photo-signature", "join-images", "add-logo-image":
             return .image(try twoPictures(id, input, try photo(v, "photo2"), v), type: "public.jpeg")
+        case "us-visa-photo", "india-evisa-photo":
+            let kb: ClosedRange<Double> = id == "us-visa-photo" ? 20...235 : 12...1000
+            return .image(try jpeg(fill(input, CGSize(width: 600, height: 600), faceAware: true), dpi: 300, kb: kb), type: "public.jpeg")
+        case "ai-id-photo-generator":
+            var base = input
+            if let mask = try subjectMask(input) {
+                let white = CIImage(color: .white).cropped(to: input.extent)
+                base = input.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: white, kCIInputMaskImageKey: mask])
+            }
+            let choice = v["size"] ?? ""
+            let size = choice.hasPrefix("Passport") ? pixels(35, 45, "mm", dpi: 300) : CGSize(width: 600, height: 600)
+            return .image(try jpeg(fill(autoAdjust(base), size, faceAware: true), dpi: 300, kb: nil), type: "public.jpeg")
+        case "ai-face-generator", "retouch-image":
+            let soft = smoothSkin(autoAdjust(input), amount: id == "retouch-image" ? 0.3 : 0.2)
+            return .image(try jpeg(sharpen(soft, amount: 0.4), dpi: nil, kb: nil), type: "public.jpeg")
+        case "blemish-remover":
+            return .image(try jpeg(smoothSkin(input, amount: 0.5), dpi: nil, kb: nil), type: "public.jpeg")
+        case "unblur-face":
+            return .image(try jpeg(sharpen(autoAdjust(input), amount: 1.3), dpi: nil, kb: nil), type: "public.jpeg")
+        case "remove-object-photo":
+            return try work("remove-background", v)
+        case "freehand-crop":
+            let shape = v["shape"] ?? ""
+            let r: CGFloat = shape.contains("4:5") ? 0.8 : shape.contains("3:4") ? 0.75 : shape.contains("9:16") ? 9.0 / 16 : shape.contains("16:9") ? 16.0 / 9 : 1
+            let e = input.extent
+            let size = e.width / e.height > r ? CGSize(width: (e.height * r).rounded(), height: e.height) : CGSize(width: e.width, height: (e.width / r).rounded())
+            return .image(try jpeg(fill(input, size, faceAware: true), dpi: nil, kb: nil), type: "public.jpeg")
+        case "split-image":
+            let p = v["pieces"] ?? ""
+            let (cols, rows) = p.hasPrefix("2 side") ? (2, 1) : p.hasPrefix("2 top") ? (1, 2) : p.hasPrefix("4") ? (2, 2) : (3, 1)
+            return .images(try tiles(input, cols: cols, rows: rows, tile: nil).map { try jpeg($0, dpi: nil, kb: nil) }, type: "public.jpeg")
+        case "instagram-grid":
+            let rows = (v["grid"] ?? "").hasSuffix("1") ? 1 : (v["grid"] ?? "").hasSuffix("2") ? 2 : 3
+            // Instagram shows the newest post first, so the last piece goes up first.
+            let pieces = try tiles(input, cols: 3, rows: rows, tile: CGSize(width: 1080, height: 1440)).reversed()
+            return .images(try pieces.map { try jpeg($0, dpi: nil, kb: nil) }, type: "public.jpeg")
         case "heic-to-jpg", "webp-to-jpg", "png-to-jpg":
             return .image(try jpeg(input, dpi: nil, kb: nil), type: "public.jpeg")
         case "jpg-to-pdf":
@@ -1485,6 +1806,96 @@ enum EzyPhoto {
         default:
             throw EzyPhotoError.failed("This tool isn't on the keyboard yet. Open it on ezyourlife.com.")
         }
+    }
+
+    // MARK: Sets of pictures
+
+    /// Exam forms: every picture the form asks for, each in its size and KB limit, in upload order.
+    private static func examSet(_ id: String, _ v: [String: String]) throws -> EzyPhotoOutput {
+        typealias Spec = (key: String, w: CGFloat, h: CGFloat, kb: ClosedRange<Double>, ink: Bool)
+        let specs: [Spec]
+        switch id {
+        case "nta-photo-signature": specs = [("photo", 350, 450, 12...190, false), ("signature", 300, 100, 12...48, true)]
+        case "sbi-clerk-photo-signature": specs = [("photo", 200, 230, 22...48, false), ("signature", 140, 60, 11...19, true),
+                                                   ("thumb", 240, 240, 22...48, true), ("declaration", 800, 400, 52...98, true)]
+        case "gate-photo-signature": specs = [("photo", 413, 531, 8...550, false), ("signature", 480, 150, 5...280, true)]
+        default: specs = [("photo", 600, 600, 12...190, false), ("signature", 600, 200, 5...190, true)]
+        }
+        var out: [Data] = []
+        for s in specs {
+            guard v[s.key] != nil else {
+                if s.key == "photo" || s.key == "signature" { throw EzyPhotoError.failed("Pick the \(s.key) too.") }
+                continue
+            }
+            let image = try photo(v, s.key)
+            let size = CGSize(width: s.w, height: s.h)
+            let picture = s.ink ? fit(ink(image), size, blurredBackground: false) : fill(autoAdjust(image), size, faceAware: true)
+            out.append(try jpeg(picture, dpi: 200, kb: s.kb))
+        }
+        return .images(out, type: "public.jpeg")
+    }
+
+    /// Signatures and thumb prints: grey, high contrast, paper turned white.
+    private static func ink(_ image: CIImage) -> CIImage {
+        image.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.8, kCIInputBrightnessKey: 0.12])
+            .cropped(to: image.extent)
+    }
+
+    /// Softens skin by mixing in a blurred copy.
+    private static func smoothSkin(_ image: CIImage, amount: Double) -> CIImage {
+        let soft = image.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": 0.05, "inputSharpness": 0.2])
+            .clampedToExtent().applyingGaussianBlur(sigma: max(2, image.extent.width / 400)).cropped(to: image.extent)
+        return soft.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: image, kCIInputTimeKey: 1 - amount])
+            .cropped(to: image.extent)
+    }
+
+    /// Cuts a picture into a grid, read left to right, top to bottom.
+    private static func tiles(_ image: CIImage, cols: Int, rows: Int, tile: CGSize?) throws -> [CIImage] {
+        let whole = tile.map { CGSize(width: $0.width * CGFloat(cols), height: $0.height * CGFloat(rows)) }
+        let source = whole.map { fill(image, $0, faceAware: false) } ?? image
+        let e = source.extent
+        let w = (e.width / CGFloat(cols)).rounded(.down), h = (e.height / CGFloat(rows)).rounded(.down)
+        var out: [CIImage] = []
+        for r in 0..<rows {
+            for c in 0..<cols {
+                let rect = CGRect(x: e.minX + CGFloat(c) * w, y: e.maxY - CGFloat(r + 1) * h, width: w, height: h)
+                out.append(source.cropped(to: rect).transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY)))
+            }
+        }
+        return out
+    }
+
+    private static func bulkResize(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let links = (v["photos"] ?? "").split(separator: "\n").map(String.init).prefix(10)
+        guard !links.isEmpty else { throw EzyPhotoError.noPhoto }
+        let longest = CGFloat(Double(v["size"] ?? "") ?? 1080)
+        var out: [Data] = []
+        for link in links {
+            guard let image = try? photo(["photo": link]) else { continue }
+            let scale = min(1, longest / max(image.extent.width, image.extent.height))
+            let resized = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
+            out.append(try jpeg(resized, dpi: nil, kb: nil))
+        }
+        guard !out.isEmpty else { throw EzyPhotoError.noPhoto }
+        return .images(out, type: "public.jpeg")
+    }
+
+    private static func pdfPages(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let doc = try pdf(v)
+        guard doc.pageCount > 0 else { throw EzyPhotoError.failed("This PDF has no pages.") }
+        let asked = (v["pages"] ?? "").trimmingCharacters(in: .whitespaces)
+        let pages = Array((asked.isEmpty ? Array(0..<doc.pageCount) : pageList(asked, count: doc.pageCount)).prefix(10))
+        guard !pages.isEmpty else { throw EzyPhotoError.failed("Name the pages, like 1-5. This PDF has \(doc.pageCount) pages.") }
+        var out: [Data] = []
+        for i in pages {
+            guard let page = doc.page(at: i) else { continue }
+            let box = page.bounds(for: .mediaBox)
+            let scale = min(1800 / max(box.width, box.height), 3)
+            if let data = page.thumbnail(of: CGSize(width: box.width * scale, height: box.height * scale), for: .mediaBox).jpegData(compressionQuality: 0.85) {
+                out.append(data)
+            }
+        }
+        return .images(out, type: "public.jpeg")
     }
 
     // MARK: Two pictures
@@ -1496,7 +1907,7 @@ enum EzyPhoto {
     private static func twoPictures(_ id: String, _ a: CIImage, _ b: CIImage, _ v: [String: String]) throws -> Data {
         let white = CIImage(color: .white)
         switch id {
-        case "add-logo":
+        case "add-logo-image":
             let side = min(a.extent.width, a.extent.height)
             let logo = scaled(b, by: side * 0.2 / max(b.extent.width, b.extent.height))
             let pad = side * 0.03
@@ -1875,8 +2286,32 @@ enum EzyPhoto {
 
     // MARK: Details
 
-    private static func metadata(detailed: Bool) throws -> String {
-        guard let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil),
+    /// The picked photo's original file, or the copied one.
+    private static func rawPhoto(_ v: [String: String]) -> Data? {
+        if let url = v["photo"], let comma = url.firstIndex(of: ","), let data = Data(base64Encoded: String(url[url.index(after: comma)...])) { return data }
+        return copiedData()
+    }
+
+    private static func editMetadata(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let cg = try cgImage(try photo(v))
+        var tiff: [CFString: Any] = [:], iptc: [CFString: Any] = [:]
+        if let t = v["title"], !t.isEmpty { tiff[kCGImagePropertyTIFFImageDescription] = t; iptc[kCGImagePropertyIPTCObjectName] = t }
+        if let a = v["author"], !a.isEmpty { tiff[kCGImagePropertyTIFFArtist] = a; iptc[kCGImagePropertyIPTCByline] = [a] }
+        if let c = v["copyright"], !c.isEmpty {
+            let line = c.contains("©") ? c : "© \(Calendar.current.component(.year, from: Date())) \(c)"
+            tiff[kCGImagePropertyTIFFCopyright] = line; iptc[kCGImagePropertyIPTCCopyrightNotice] = line
+        }
+        guard !tiff.isEmpty else { throw EzyPhotoError.failed("Add a title, author or copyright.") }
+        let data = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(data, "public.jpeg" as CFString, 1, nil) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        let props: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 0.92, kCGImagePropertyTIFFDictionary: tiff, kCGImagePropertyIPTCDictionary: iptc]
+        CGImageDestinationAddImage(dest, cg, props as CFDictionary)
+        guard CGImageDestinationFinalize(dest) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        return .image(data as Data, type: "public.jpeg")
+    }
+
+    private static func metadata(_ v: [String: String], detailed: Bool) throws -> String {
+        guard let data = rawPhoto(v), let source = CGImageSourceCreateWithData(data as CFData, nil),
               let p = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { throw EzyPhotoError.noPhoto }
         let w = p[kCGImagePropertyPixelWidth] as? Double ?? 0, h = p[kCGImagePropertyPixelHeight] as? Double ?? 0
         let dpi = p[kCGImagePropertyDPIWidth] as? Double ?? 72
@@ -1898,7 +2333,7 @@ enum EzyPhoto {
 
     private static func stripMetadata(_ v: [String: String]) throws -> EzyPhotoOutput {
         // Copy the original without its details when possible (no quality loss), else re-save the photo.
-        if let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil), let type = CGImageSourceGetType(source) {
+        if let data = rawPhoto(v), let source = CGImageSourceCreateWithData(data as CFData, nil), let type = CGImageSourceGetType(source) {
             let out = NSMutableData()
             if let dest = CGImageDestinationCreateWithData(out, type, 1, nil) {
                 let options: [CFString: Any] = [

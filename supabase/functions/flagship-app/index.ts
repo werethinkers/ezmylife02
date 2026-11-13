@@ -137,7 +137,8 @@ Deno.serve(
       const f = spec.flagship;
       const system = `${spec.system}\n\n${COMMON_RULES}`;
       const inputs = renderInputs(body.inputs);
-      const userId = ctx.caller.userId;
+      // The public API (keyboard, Siri) calls with the service key and names the person it already checked and charged.
+      const userId = ctx.caller.internal && typeof (body as Record<string, unknown>).user_id === "string" ? String((body as Record<string, unknown>).user_id) : ctx.caller.userId;
 
       try {
         switch (body.action) {

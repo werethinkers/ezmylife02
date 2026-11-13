@@ -40,8 +40,21 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
   PDFKit). The picture or PDF is read from what the person copied and the result is copied back for
   pasting. Nothing is uploaded: the keyboard only calls `POST /v1/apps/{id}/charge` to charge the run at
   the tool's usual price. Server list: `DEVICE_APPS` in `nativeApis.ts` (mode `device`).
-- Still website only: coaching sessions, trackers, AI-only photo tools (AI ID photo, object removal,
-  retouch, face generator), and the few apps that need several files at once (Instagram grid, bulk resize).
+- **More phone-run tools** (Nov 2026): exam photo + signature sets (NTA, SBI Clerk, GATE, OCI), US visa and
+  India e-Visa photos, ID photo on white, retouch, blemish and unblur, object removal, shape crop, edit
+  metadata, split image, Instagram grid, bulk resize (pick up to 10 photos) and PDF pages to pictures.
+- **Several outputs.** Apps that make more than one picture (exam sets, grids, splits, bulk resize, PDF
+  pages, ProductVision 360 angles) copy them all at once, in order, as separate images; one Paste in
+  WhatsApp or Mail puts in every one. Instagram grid pieces come last-first, the order to post them.
+- **PDFs** are copied as a named file (`<App name>.pdf`) plus the raw PDF data, so WhatsApp pastes them as a
+  document and Notes or Mail as a PDF.
+- **Coaching sessions** run as a chat inside the card: Start (the app's price) gives the first message,
+  replies and the closing summary are free. Paste reply puts the coach's last message in the text box.
+- **Trackers** add one entry per run to the same saved list the website shows (`tool_sessions`), charged
+  at the tracker's price per entry.
+- **Content Workflow** runs its 4 steps on the server (4 credits each, 16 in all).
+- Still website only: Image to WebP (iOS can't write WebP), Mail Brain (needs Gmail), Virasat (needs voice
+  recording) and outside-developer apps without code in this repo.
 
 ## How it fits together
 

@@ -139,6 +139,22 @@ function aiDoc(id: string, intro: string, fields: ApiField[], charge = id): Nati
 }
 
 Object.assign(NATIVE_APPS, {
+  "bhed-prabhed": aiDoc("bhed-prabhed", "Splits a topic into parts and finer parts, with a short note on each.", [
+    { key: "Topic", label: "Topic", type: "text", required: true, placeholder: "Photosynthesis" },
+    { key: "Level", label: "Level", type: "select", options: ["School", "College", "Competitive exam", "Simple"], default: "School" },
+  ], "bhed-prabhed-ai"),
+  "google-business-kit": aiDoc("google-business-kit", "Google Business Profile kit: categories, description, local keywords, posts and review requests.", [
+    { key: "Business", label: "Business name", type: "text", required: true, profile: "businessName" },
+    { key: "What you sell", label: "What you sell", type: "textarea", required: true, profile: "products" },
+    { key: "City", label: "City / area", type: "text", required: true, profile: "city" },
+  ], "google-business-kit-ai"),
+  // Run step by step by the api function (runWorkflow): 4 steps at the usual step price.
+  "content-workflow": { fn: "content-generator", charge: "content-workflow-step", credits: 16, mode: "form", intro: "A ready post in one go: an idea, the post, a caption and hashtags.", fields: [
+    { key: "niche", label: "Niche or topic", type: "text", required: true, profile: "industry", placeholder: "Home bakery in Indore" },
+    { key: "platform", label: "Platform", type: "select", options: ["Instagram", "LinkedIn", "Facebook", "X", "YouTube"], default: "Instagram" },
+  ], build: () => ({}) },
+  // Meet Nudge's business-card scanner: a copied card photo becomes a contact.
+  "meet-nudge": { fn: "scan-business-card", charge: "meet-nudge", credits: 2, mode: "form", intro: "Reads a business card photo into a contact: name, company, phone, email, address.", fields: [{ key: "photo", label: "Business card", type: "image", required: true, help: "Pick the card photo" }], build: (i) => ({ images: [i.photo] }) },
   "tool-1": aiDoc("tool-1", "A GST tax invoice with every sum worked out, ready to send.", [
     { key: "Business", label: "Business name", type: "text", profile: "businessName" },
     { key: "Business GSTIN", label: "Your GSTIN", type: "text", profile: "gstin" },
@@ -225,6 +241,7 @@ Object.assign(NATIVE_APPS, {
 // 1-credit price as the website, charged through POST /v1/apps/{id}/charge). The keyboard knows each one's
 // operation by id; these are the boxes it shows.
 const PDF: ApiField = { key: "pdf", label: "PDF", type: "pdf", required: true, help: "Copy a PDF first (Files › Share › Copy), then tap here" };
+const SIGN: ApiField = { key: "signature", label: "Signature", type: "image", required: true, help: "Pick a photo of your signature on white paper" };
 const PHOTO: ApiField = { key: "photo", label: "Photo", type: "image", required: true, help: "Copy a photo first, then tap here" };
 const size = (w: string, h: string, unit: string): ApiField[] => [
   PHOTO,
@@ -295,7 +312,26 @@ const DEVICE_APPS: Record<string, NativeApp> = {
   // Two pictures: each box takes the picture copied when it is tapped.
   "merge-photo-signature": device("Puts your photo above your signature in one picture, as exam forms ask.", [PHOTO, { ...PHOTO, key: "photo2", label: "Signature", help: "Copy your signature picture, then tap here" }]),
   "join-images": device("Joins two photos side by side or one above the other.", [PHOTO, { ...PHOTO, key: "photo2", label: "Second photo" }, { key: "layout", label: "Layout", type: "select", options: ["Side by side", "One above the other"], default: "Side by side" }]),
-  "add-logo": device("Puts your logo in a corner of a photo.", [PHOTO, { ...PHOTO, key: "photo2", label: "Logo", help: "Copy your logo, then tap here" }, { key: "corner", label: "Corner", type: "select", options: ["Bottom right", "Bottom left", "Top right", "Top left"], default: "Bottom right" }]),
+  "add-logo-image": device("Puts your logo in a corner of a photo.", [PHOTO, { ...PHOTO, key: "photo2", label: "Logo", help: "Copy your logo, then tap here" }, { key: "corner", label: "Corner", type: "select", options: ["Bottom right", "Bottom left", "Top right", "Top left"], default: "Bottom right" }]),
+  // Exam and visa photo sets (sizes and KB limits from src/apps/defs/exam-presets.ts). Several files come out.
+  "nta-photo-signature": device("NEET, JEE and CUET photo (350 × 450, 10-200 KB) and signature (300 × 100, 10-50 KB).", [PHOTO, SIGN]),
+  "sbi-clerk-photo-signature": device("SBI Clerk photo, signature, thumb impression and declaration in the sizes and KB limits SBI sets.", [PHOTO, SIGN, { ...PHOTO, key: "thumb", label: "Left thumb impression", required: false }, { ...PHOTO, key: "declaration", label: "Hand-written declaration", required: false }]),
+  "gate-photo-signature": device("GATE photo and signature inside IIT Madras's pixel, shape and KB limits.", [PHOTO, SIGN]),
+  "oci-photo-signature": device("OCI card square photo and 1:3 signature.", [PHOTO, SIGN]),
+  "us-visa-photo": device("Square US visa photo, 600 × 600, under 240 KB.", [PHOTO]),
+  "india-evisa-photo": device("Square India e-Visa photo, 600 × 600, 10 KB-1 MB.", [PHOTO]),
+  "ai-id-photo-generator": device("An ID photo on a white background, cropped around the face.", [PHOTO, { key: "size", label: "Size", type: "select", options: ["Passport 35 × 45 mm", "2 × 2 inch", "Square 600 × 600"], default: "Passport 35 × 45 mm" }]),
+  "ai-face-generator": device("Brightens, smooths and sharpens a face photo.", [PHOTO]),
+  "blemish-remover": device("Softens spots and blemishes on skin.", [PHOTO]),
+  "retouch-image": device("Gently retouches a portrait: smoother skin, balanced light.", [PHOTO]),
+  "unblur-face": device("Sharpens a slightly blurry face photo.", [PHOTO]),
+  "remove-object-photo": device("Keeps the main person or object and removes the rest of the background.", [PHOTO]),
+  "freehand-crop": device("Crops a photo to the shape you pick, around the face when there is one.", [PHOTO, { key: "shape", label: "Shape", type: "select", options: ["Square 1:1", "Portrait 4:5", "Portrait 3:4", "Story 9:16", "Wide 16:9"], default: "Square 1:1" }]),
+  "edit-metadata": device("Writes a title, author and copyright into a photo's details (and removes location).", [PHOTO, { key: "title", label: "Title", type: "text" }, { key: "author", label: "Author", type: "text", profile: "ownerName" }, { key: "copyright", label: "Copyright", type: "text", profile: "businessName" }]),
+  "split-image": device("Cuts a photo into equal pieces.", [PHOTO, { key: "pieces", label: "Pieces", type: "select", options: ["2 side by side", "3 side by side", "2 top and bottom", "4 (2 × 2)"], default: "3 side by side" }]),
+  "instagram-grid": device("Cuts a photo into an Instagram grid, ready to post in order.", [PHOTO, { key: "grid", label: "Grid", type: "select", options: ["3 × 1", "3 × 2", "3 × 3"], default: "3 × 3" }]),
+  "bulk-image-resizer": device("Resizes several photos at once.", [{ key: "photos", label: "Photos", type: "images", required: true, help: "Pick up to 10 photos" }, { key: "size", label: "Longest side (pixels)", type: "select", options: ["1080", "1600", "800", "600"], default: "1080" }]),
+  "pdf-chart-image-extractor": device("Saves each page of a PDF as a picture (up to 10 pages).", [PDF, { key: "pages", label: "Pages", type: "text", placeholder: "1-5" }]),
   // File converters: the PDF is read from what the person copied (Files › Share › Copy).
   "jpg-to-pdf": device("Puts a photo or scan on an A4 PDF page.", [PHOTO, { key: "pageSize", label: "Page size", type: "select", options: ["A4", "Same as image"], default: "A4" }]),
   "pdf-to-jpg": device("Saves one page of a PDF as a JPG picture.", [PDF, { key: "page", label: "Page", type: "number", default: "1" }]),
