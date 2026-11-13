@@ -18,7 +18,22 @@ enum EzyShared {
     static let api = URL(string: "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/api/v1")!
     static let site = "https://ezyourlife.com"
 
-    static var store: UserDefaults { UserDefaults(suiteName: appGroup) ?? .standard }
+    /// Opened once: the keyboard reads this on every key press, so it must stay cheap.
+    static let store: UserDefaults = UserDefaults(suiteName: appGroup) ?? .standard
+
+    /// Decoded copies kept in memory (the keyboard checks them on every key press). `reload()` drops them,
+    /// for when the app or Siri may have changed the shared store from their own process.
+    private static var cachedShortcuts: [EzyShortcut]?
+    private static var cachedLastResult: EzyResult??
+    private static var cachedRecentApps: [EzyApp]?
+    private static var cachedApiKey: String??
+
+    static func reload() {
+        cachedShortcuts = nil
+        cachedLastResult = nil
+        cachedRecentApps = nil
+        cachedApiKey = nil
+    }
 
     private enum Key {
         static let apiKey = "ezy.apiKey"
@@ -29,18 +44,26 @@ enum EzyShared {
     }
 
     static var apiKey: String? {
-        get { store.string(forKey: Key.apiKey).flatMap { $0.isEmpty ? nil : $0 } }
-        set { store.set(newValue, forKey: Key.apiKey) }
+        get {
+            if let cached = cachedApiKey { return cached }
+            let key = store.string(forKey: Key.apiKey).flatMap { $0.isEmpty ? nil : $0 }
+            cachedApiKey = .some(key)
+            return key
+        }
+        set { store.set(newValue, forKey: Key.apiKey); cachedApiKey = .some(newValue) }
     }
 
     static var isConnected: Bool { apiKey != nil }
 
     static var shortcuts: [EzyShortcut] {
         get {
-            guard let data = store.data(forKey: Key.shortcuts) else { return [] }
-            return (try? JSONDecoder().decode([EzyShortcut].self, from: data)) ?? []
+            if let cached = cachedShortcuts { return cached }
+            let list = store.data(forKey: Key.shortcuts).flatMap { try? JSONDecoder().decode([EzyShortcut].self, from: $0) } ?? []
+            cachedShortcuts = list
+            return list
         }
         set {
+            cachedShortcuts = newValue
             store.set(try? JSONEncoder().encode(newValue), forKey: Key.shortcuts)
             store.set(Date(), forKey: Key.shortcutsAt)
         }
@@ -53,19 +76,27 @@ enum EzyShared {
 
     static var lastResult: EzyResult? {
         get {
-            guard let data = store.data(forKey: Key.lastResult) else { return nil }
-            return try? JSONDecoder().decode(EzyResult.self, from: data)
+            if let cached = cachedLastResult { return cached }
+            let result = store.data(forKey: Key.lastResult).flatMap { try? JSONDecoder().decode(EzyResult.self, from: $0) }
+            cachedLastResult = .some(result)
+            return result
         }
-        set { store.set(try? JSONEncoder().encode(newValue), forKey: Key.lastResult) }
+        set { store.set(try? JSONEncoder().encode(newValue), forKey: Key.lastResult); cachedLastResult = .some(newValue) }
     }
 
     /// Apps the person ran from the keyboard or Siri, newest first. Shown when they type just "/".
     static var recentApps: [EzyApp] {
         get {
-            guard let data = store.data(forKey: Key.recentApps) else { return [] }
-            return (try? JSONDecoder().decode([EzyApp].self, from: data)) ?? []
+            if let cached = cachedRecentApps { return cached }
+            let list = store.data(forKey: Key.recentApps).flatMap { try? JSONDecoder().decode([EzyApp].self, from: $0) } ?? []
+            cachedRecentApps = list
+            return list
         }
-        set { store.set(try? JSONEncoder().encode(Array(newValue.prefix(8))), forKey: Key.recentApps) }
+        set {
+            let list = Array(newValue.prefix(8))
+            cachedRecentApps = list
+            store.set(try? JSONEncoder().encode(list), forKey: Key.recentApps)
+        }
     }
 
     static func remember(_ app: EzyApp) {
