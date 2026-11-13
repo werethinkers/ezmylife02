@@ -28,6 +28,7 @@ import { useCredits } from '@/hooks/useCredits';
 import { BuyCreditsDialog } from '@/components/wallet/BuyCreditsDialog';
 import LoginPromptDialog from '@/components/auth/LoginPromptDialog';
 import { CreditCostBadge } from '@/components/tools/CreditCostBadge';
+import { SaveBar } from '@/apps/output/SaveBar';
 
 declare global {
   interface Window {
@@ -170,6 +171,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const resultRef = useRef<HTMLElement>(null);
   const [rawJsonError, setRawJsonError] = useState<string | null>(null);
   const [highlightEnabled, setHighlightEnabled] = useState(true);
 
@@ -686,7 +688,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
               <h3 className="text-2xl font-bold text-center mb-6">Founding Team</h3>
               <TeamDisplay founders={structuredData.executiveSummaryData.team?.founders} onUpdate={handleDataChange} keywords={allKeywords} highlightEnabled={highlightEnabled} />
             </div>
-            <div>
+            <div data-pdf-skip>
               <h3 className="text-2xl font-bold text-center mb-6">Raw JSON Data</h3>
               <textarea className="w-full h-96 font-mono text-xs p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={JSON.stringify(structuredData, null, 2)} onChange={(e) => handleRawJsonChange(e.target.value)} />
               {rawJsonError && <p className="text-red-500 text-sm mt-2">{rawJsonError}</p>}
@@ -781,7 +783,12 @@ export default function StartupAnalyserApp(): React.ReactNode {
           </div>
         </nav>
       </header>
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      {activeTab !== 'chat' && (
+        <div className="max-w-7xl mx-auto px-4 pt-4 sm:px-6 lg:px-8">
+          <SaveBar toolId="startup-analyser" appName="Startup Analyser" template="report" target={resultRef} />
+        </div>
+      )}
+      <main ref={resultRef} className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {renderContent()}
       </main>
       <BuyCreditsDialog {...analysisDialog} />

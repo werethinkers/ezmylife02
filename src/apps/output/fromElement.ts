@@ -192,6 +192,9 @@ export function blocksToMarkdown(title: string | undefined, blocks: PdfBlock[]):
       case "hr":
         out.push("---");
         break;
+      case "img":
+      case "break":
+        break;
     }
   }
   return out.join("\n\n");

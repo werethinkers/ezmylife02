@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileUp, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { useRun } from "../lib/api";
 import { downloadText, fileText, toCsv } from "../lib/files";
 import { takeHandoff } from "../lib/handoff";
 import { APPS } from "../registry";
+import { useWorkspace } from "../lib/workspace";
+import { docFromBlocks } from "../output/buildDoc";
+import { SaveBar } from "../output/SaveBar";
 
 interface Term {
   term: string;
@@ -25,6 +28,21 @@ export default function Glossary({ toolId }: { toolId: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { busy, run } = useRun(toolId);
   const terms = store.data.terms ?? [];
+  const { profile } = useWorkspace();
+  const doc = useMemo(
+    () =>
+      store.data.terms?.length
+        ? docFromBlocks({
+            appName: "Glossary Maker",
+            template: "document",
+            title: "Glossary",
+            subtitle: `${store.data.terms.length} terms`,
+            profile,
+            blocks: [{ t: "table", head: ["Term", "Meaning", "Example"], rows: store.data.terms.map((t) => [`**${t.term}**`, t.definition, t.example ?? ""]) }],
+          })
+        : null,
+    [store.data.terms, profile],
+  );
 
   useEffect(() => {
     const h = takeHandoff(toolId);
@@ -70,6 +88,7 @@ export default function Glossary({ toolId }: { toolId: string }) {
           </dl>
         </div>
       </div>
+      {terms.length > 0 && <SaveBar toolId={toolId} appName="Glossary Maker" doc={doc} className="mt-4" />}
     </AppShell>
   );
 }

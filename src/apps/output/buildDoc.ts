@@ -218,3 +218,89 @@ export function docFromInvoice(v: {
     fileName: `invoice-${v.invoiceNumber.replace(/[^\w-]+/g, "")}`,
   };
 }
+
+/** A purchase order on the buyer's letterhead: supplier, delivery, items with GST, totals, terms, signature. */
+export function docFromPurchaseOrder(v: {
+  number: string;
+  date: string;
+  deliveryDate: string;
+  supplier: string;
+  supplierGstin: string;
+  supplierAddress: string;
+  deliverTo: string;
+  terms: string;
+  notes: string;
+  items: { item: string; hsn: string; qty: number; unit: string; rate: number; gst: number }[];
+  profile: WorkspaceProfile;
+}): PdfDoc {
+  const fmtDate = (d: string) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
+  const subtotal = v.items.reduce((s, i) => s + i.qty * i.rate, 0);
+  const gst = v.items.reduce((s, i) => s + (i.qty * i.rate * i.gst) / 100, 0);
+  const total = subtotal + gst;
+  const buyer = v.profile.businessName?.trim() || "Buyer";
+  const blocks: PdfBlock[] = [
+    {
+      t: "kv",
+      rows: [
+        ["Supplier", [v.supplier, v.supplierAddress].filter(Boolean).join("\n")],
+        ["PO no.", v.number],
+        ["Supplier GSTIN", v.supplierGstin || "Not given"],
+        ["PO date", fmtDate(v.date)],
+        ["Deliver to", v.deliverTo || "—"],
+        ["Deliver by", fmtDate(v.deliveryDate) || "As agreed"],
+      ],
+    },
+    {
+      t: "table",
+      head: ["#", "Item", "HSN", "Qty", "Rate (₹)", "GST", "Amount (₹)"],
+      rows: v.items.map((i, n) => [String(n + 1), i.item, i.hsn, `${i.qty} ${i.unit}`.trim(), money(i.rate), `${i.gst}%`, money(i.qty * i.rate)]),
+      foot: ["", "Taxable value", "", "", "", "", money(subtotal)],
+    },
+    {
+      t: "tiles",
+      items: [
+        { label: "Taxable value", value: `₹${money(subtotal)}` },
+        { label: "GST", value: `₹${money(gst)}` },
+        { label: "Order total", value: `₹${money(total)}`, main: true },
+      ],
+    },
+    { t: "p", text: `**Amount in words:** ${rupeesInWords(total)}` },
+  ];
+  const terms = [v.terms && `**Payment terms:** ${v.terms}`, v.notes.trim()].filter(Boolean).join("\n\n");
+  if (terms) blocks.push({ t: "box", label: "Terms and notes", tint: true, blocks: markdownToBlocks(terms).blocks });
+  blocks.push({ t: "sign", lines: [`Accepted by supplier`, `For ${buyer}\nAuthorised signatory`] });
+  return {
+    template: "letter",
+    title: "Purchase order",
+    kicker: "Purchase Order",
+    date: fmtDate(v.date) || todayText(),
+    accent: TEMPLATE_ACCENT.letter,
+    letterhead: letterheadFrom(v.profile),
+    blocks,
+    fileName: `purchase-order-${v.number.replace(/[^\w-]+/g, "")}`,
+  };
+}
+
+/** Ready blocks as a document in one of the looks: for apps that build their own result. */
+export function docFromBlocks(opts: {
+  appName: string;
+  template: TemplateId;
+  blocks: PdfBlock[];
+  profile: WorkspaceProfile;
+  title?: string;
+  subtitle?: string;
+  fileName?: string;
+}): PdfDoc {
+  return {
+    template: opts.template,
+    title: opts.title || opts.appName,
+    kicker: opts.appName,
+    subtitle: opts.subtitle,
+    date: todayText(),
+    accent: TEMPLATE_ACCENT[opts.template],
+    landscape: opts.template === "register",
+    letterhead: letterheadFrom(opts.profile),
+    blocks: opts.blocks,
+    fileName: opts.fileName || `${opts.appName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${new Date().toISOString().slice(0, 10)}`,
+  };
+}
