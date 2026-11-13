@@ -775,7 +775,7 @@ final class KeyboardViewController: UIInputViewController {
                         self.replaceCommand(with: "")
                         self.notice = Self.pastePDF
                     } else {
-                        self.replaceCommand(with: EzyText.forChat(result.text))
+                        self.replaceCommand(with: EzyChat.forChat(result.text))
                         self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
                     }
                     self.refreshStrip()

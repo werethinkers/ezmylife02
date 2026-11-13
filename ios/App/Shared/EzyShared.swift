@@ -403,7 +403,7 @@ enum EzyClipboard {
 
 // MARK: - Answers for a chat box
 
-enum EzyText {
+enum EzyChat {
     /// Markdown from the apps, made right for WhatsApp and other chats: *bold* instead of **bold**,
     /// headings as bold lines, and lines that only hold blanks like "[Bank Name]" left out.
     static func forChat(_ text: String) -> String {
