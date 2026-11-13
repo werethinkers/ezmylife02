@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          email: string | null
+          handled_at: string | null
+          reason: string | null
+          requested_at: string
+          source: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          email?: string | null
+          handled_at?: string | null
+          reason?: string | null
+          requested_at?: string
+          source?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          email?: string | null
+          handled_at?: string | null
+          reason?: string | null
+          requested_at?: string
+          source?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action_details: Json | null
@@ -138,6 +168,39 @@ export type Database = {
           name?: string
           prefix?: string
           revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apple_purchases: {
+        Row: {
+          created_at: string
+          credits: number
+          environment: string
+          original_transaction_id: string | null
+          pack_id: string
+          product_id: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          environment: string
+          original_transaction_id?: string | null
+          pack_id: string
+          product_id: string
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          environment?: string
+          original_transaction_id?: string | null
+          pack_id?: string
+          product_id?: string
+          transaction_id?: string
           user_id?: string
         }
         Relationships: []
@@ -3398,6 +3461,18 @@ export type Database = {
         Returns: Json
       }
       app_secret: { Args: { _name: string }; Returns: string }
+      apply_apple_purchase: {
+        Args: {
+          _credits: number
+          _environment: string
+          _original_transaction_id: string
+          _pack_id: string
+          _product_id: string
+          _transaction_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       apply_credit_purchase: {
         Args: { _order_id: string; _payment_id: string; _purchase_id: string }
         Returns: Json
