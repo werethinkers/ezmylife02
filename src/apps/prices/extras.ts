@@ -24,6 +24,8 @@ export const extras: Record<string, number> = {
   "bulk-ai-beautify": 31,
   // AI versions of browser tools, run from the iPhone keyboard and Siri (the browser versions keep their own price).
   "tool-1-ai": 2,
+  "bhed-prabhed-ai": 2,
+  "google-business-kit-ai": 2,
   "tool-2-ai": 2,
   "tool-3-ai": 2,
   "tool-4-ai": 2,
