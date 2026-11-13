@@ -23,6 +23,7 @@ A new App Store build is needed only when the shell itself changes: `capacitor.c
 | `src/lib/googleSignIn.ts` | Google sign-in: normal in browsers, through Safari's secure window inside the app |
 | `src/lib/nativeInit.ts` | Runs only in the app: downloads and `navigator.share` open the iPhone share sheet; splash and status bar |
 | `.github/workflows/ios-testflight.yml` | Builds the app on GitHub's Macs and uploads it to TestFlight |
+| `ios/App/Keyboard/`, `ios/App/App/AskEzyourlifeIntent.swift` | The EZYOURLIFE keyboard and the "Ask EZYOURLIFE" Siri command: `docs/ios-keyboard.md` |
 | `public/manifest.webmanifest`, `public/app-icons/` | "Add to Home Screen" for everyone, no App Store needed |
 
 ## How the site behaves inside the app
