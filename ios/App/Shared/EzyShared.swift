@@ -115,6 +115,25 @@ struct EzyPlan: Codable {
     var missing: [EzyMissing]?
     var ready: Bool?
     var message: String?
+    /// Every box the app takes, shown in the keyboard for checking before it runs.
+    var fields: [EzyField]?
+    /// Boxes filled from the person's saved business details on ezyourlife.com.
+    var fromProfile: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case app, inputs, prompt, missing, ready, message, fields
+        case fromProfile = "from_profile"
+    }
+}
+
+/// One box of an app (customer, amount, items…).
+struct EzyField: Codable, Hashable {
+    var key: String
+    var label: String
+    var type: String?
+    var required: Bool?
+    var placeholder: String?
+    var options: [String]?
 }
 
 /// A finished result, kept so the keyboard can offer it (Siri runs it while the person stays in their chat).
@@ -197,7 +216,7 @@ enum EzyAPI {
         var body: [String: Any] = ["text": text]
         if let appId { body["app_id"] = appId }
         let json = try await request("/command", method: "POST", body: body)
-        return decode(EzyPlan.self, json) ?? EzyPlan(app: nil, message: "No app matched.")
+        return decode(EzyPlan.self, json) ?? EzyPlan(app: nil, message: "No app matched.", fields: nil, fromProfile: nil)
     }
 
     /// Runs the app, charged at its normal price. Returns the result as text (and an image link for image apps).

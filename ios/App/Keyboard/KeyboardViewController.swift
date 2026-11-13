@@ -5,11 +5,13 @@ import UIKit
  *
  * Type "/" (or "\") and a few letters in any app, and the strip shows your shortcuts and Ezyourlife apps:
  *   /pm             -> tap "pm" and its text replaces "/pm"
- *   /invo           -> tap "Proforma Invoice", type the details, tap "Run"
- *   /invo Rahul 5000 -> tap "Run Proforma Invoice · 2 credits" and the result replaces the command
+ *   /invo           -> tap "Proforma Invoice": a details card opens with your saved business details filled in
+ *   / + the mic     -> say "proforma invoice for Rahul Traders, 2 chairs at 1500": the card opens filled from your words
+ * On the card: tap a box to type in it (or say more after the command), then Generate: the result replaces the command.
  * A result made with Siri or the Action Button ("Ask EZYOURLIFE") shows first, ready to tap in.
  *
- * Apple rules this follows: a keyboard can't use the microphone (voice is the Siri command instead),
+ * Apple rules this follows: a keyboard can't record audio itself (iOS's own dictation mic types into the
+ * box, and the card reads what it typed; Siri is the hands-free way),
  * needs "Allow Full Access" to reach the internet and the app's shared data, and can't put a photo
  * straight into another app's box (images are copied for the person to paste).
  * Shared code: ios/App/Shared/EzyShared.swift. Guide: docs/ios-keyboard.md.
@@ -39,9 +41,29 @@ final class KeyboardViewController: UIInputViewController {
     private var appResults: [EzyApp] = []
     private var lastQuery = ""
     private var searchTask: Task<Void, Never>?
-    private var selectedApp: EzyApp?
     private var busy: String?
     private var notice: String?
+
+    // MARK: Details card state
+
+    /// The app chosen for the command, with its boxes, while the person checks them before it runs.
+    private struct Card {
+        var plan: EzyPlan
+        var app: EzyApp
+        var fields: [EzyField]
+        var values: [String: String]
+        var fromProfile: Set<String>
+        var edited: Set<String> = []
+        var commandText: String
+    }
+    private static let promptKey = "__prompt"
+    private var card: Card?
+    private var editingKey: String?
+    private let cardView = UIView()
+    private var planTask: Task<Void, Never>?
+    private var suggestion: (text: String, plan: EzyPlan)?
+    private var plannedText = ""
+    private var lastWordCount = 0
 
     // MARK: Colours (close to Apple's own keyboard)
 
@@ -79,8 +101,12 @@ final class KeyboardViewController: UIInputViewController {
         keysStack.distribution = .fillEqually
         keysStack.translatesAutoresizingMaskIntoConstraints = false
 
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        cardView.isHidden = true
+
         container.addSubview(strip)
         container.addSubview(keysStack)
+        container.addSubview(cardView)
 
         NSLayoutConstraint.activate([
             strip.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
@@ -98,6 +124,11 @@ final class KeyboardViewController: UIInputViewController {
             keysStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 3),
             keysStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -3),
             keysStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
+
+            cardView.topAnchor.constraint(equalTo: strip.bottomAnchor, constant: 4),
+            cardView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 6),
+            cardView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
+            cardView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
         ])
         let h = container.heightAnchor.constraint(equalToConstant: 270)
         h.priority = UILayoutPriority(999)
@@ -123,6 +154,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
+        if card != nil && editingKey == nil { cardFollowsText() }
         updateAutoShift()
         buildKeys()
         refreshStrip()
@@ -269,6 +301,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func returnTitle() -> String {
+        if editingKey != nil { return currentFieldIsList ? "new line" : "done" }
         switch textDocumentProxy.returnKeyType ?? .default {
         case .go: return "go"
         case .search, .google, .yahoo: return "search"
@@ -324,42 +357,74 @@ final class KeyboardViewController: UIInputViewController {
             page = .letters; buildKeys()
         case "space":
             let now = Date()
-            let before = textDocumentProxy.documentContextBeforeInput ?? ""
+            let before = contextBefore
             if now.timeIntervalSince(lastSpaceTap) < 0.4, before.hasSuffix(" "), let c = before.dropLast().last, c.isLetter || c.isNumber {
-                textDocumentProxy.deleteBackward()
-                textDocumentProxy.insertText(". ")
+                removeOne()
+                type(". ")
             } else {
-                textDocumentProxy.insertText(" ")
+                type(" ")
                 if page != .letters { page = .letters }
             }
             lastSpaceTap = now
             afterTyping()
         case "return":
-            textDocumentProxy.insertText("\n")
-            afterTyping()
+            if editingKey != nil && !currentFieldIsList {
+                finishEditing()
+            } else {
+                type("\n")
+                afterTyping()
+            }
         default:
             var text = key.keyValue
             if page == .letters && shift != .off { text = text.uppercased() }
-            textDocumentProxy.insertText(text)
+            type(text)
             if page == .letters && shift == .once { shift = .off }
             if page != .letters && (text == "'" ) { page = .letters }
             afterTyping()
         }
     }
 
+    /// Where typing goes: into the box being edited on the details card, otherwise into the app's text box.
+    private func type(_ text: String) {
+        if let key = editingKey, card != nil {
+            card!.values[key, default: ""] += text
+            card!.edited.insert(key)
+            card!.fromProfile.remove(key)
+        } else {
+            textDocumentProxy.insertText(text)
+        }
+    }
+
+    private func removeOne() {
+        if let key = editingKey, card != nil {
+            var value = card!.values[key] ?? ""
+            if !value.isEmpty { value.removeLast() }
+            card!.values[key] = value
+            card!.edited.insert(key)
+            card!.fromProfile.remove(key)
+        } else {
+            textDocumentProxy.deleteBackward()
+        }
+    }
+
+    private var contextBefore: String {
+        if let key = editingKey, let card { return card.values[key] ?? "" }
+        return textDocumentProxy.documentContextBeforeInput ?? ""
+    }
+
     private func deleteBackward() {
-        textDocumentProxy.deleteBackward()
+        removeOne()
         afterTyping()
     }
 
     private func deleteWord() {
-        let before = textDocumentProxy.documentContextBeforeInput ?? ""
+        let before = contextBefore
         var count = 0
         for ch in before.reversed() {
             if ch.isWhitespace && count > 0 { break }
             count += 1
         }
-        for _ in 0..<max(count, 1) { textDocumentProxy.deleteBackward() }
+        for _ in 0..<max(count, 1) { removeOne() }
         afterTyping()
     }
 
@@ -371,10 +436,10 @@ final class KeyboardViewController: UIInputViewController {
 
     private func updateAutoShift() {
         guard shift != .locked, page == .letters else { return }
-        let type = textDocumentProxy.autocapitalizationType ?? .sentences
+        let type = editingKey != nil ? UITextAutocapitalizationType.sentences : (textDocumentProxy.autocapitalizationType ?? .sentences)
         if type == UITextAutocapitalizationType.none { shift = .off; return }
         if type == .allCharacters { shift = .once; return }
-        let before = textDocumentProxy.documentContextBeforeInput ?? ""
+        let before = contextBefore
         let trimmed = before.trimmingCharacters(in: .whitespaces)
         if before.isEmpty || before.hasSuffix("\n") {
             shift = .once
@@ -391,6 +456,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private func refreshStrip() {
         guard isViewLoaded else { return }
+        applyMode()
         stripStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         if let busy {
@@ -410,14 +476,44 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
 
+        // The details card is open.
+        if let card {
+            if let key = editingKey, let field = card.fields.first(where: { $0.key == key }) {
+                addChip("Done", style: .primary) { [weak self] in self?.finishEditing() }
+                let value = card.values[key] ?? ""
+                addChip("\(field.label): \(value.isEmpty ? (field.placeholder ?? "") : value)▏", style: .note, truncateHead: true)
+                for option in field.options ?? [] {
+                    addChip(option, style: .plain) { [weak self] in
+                        self?.card?.values[key] = option
+                        self?.card?.edited.insert(key)
+                        self?.finishEditing()
+                    }
+                }
+                if !value.isEmpty {
+                    addChip("Clear", style: .plain) { [weak self] in
+                        self?.card?.values[key] = ""
+                        self?.card?.edited.insert(key)
+                        self?.card?.fromProfile.remove(key)
+                        self?.afterTyping()
+                    }
+                }
+            } else {
+                let price = card.app.priceLabel.isEmpty ? "" : " · \(card.app.priceLabel)"
+                addChip("\(card.app.name)\(price)", style: .note)
+                addChip("Tap a box to change it, or say more after the command", style: .note)
+            }
+            return
+        }
+
         guard let command = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput) else {
-            selectedApp = nil
+            lastWordCount = 0
+            suggestion = nil
             if let last = EzyShared.lastResult, last.isFresh {
                 addChip("Insert: \(last.title)", style: .primary) { [weak self] in self?.insertLastResult(last) }
             }
             addChip("Type / for shortcuts and apps", style: .note)
             addChip("🎙 Voice", style: .plain) { [weak self] in
-                self?.notice = "Voice: press the Action Button or say “Hey Siri, ask EZYOURLIFE”. The result shows here."
+                self?.notice = "Type /, then tap the mic below and say what you need, like “proforma invoice for Rahul Traders”."
                 self?.refreshStrip()
             }
             return
@@ -426,19 +522,16 @@ final class KeyboardViewController: UIInputViewController {
         let words = command.text.split(separator: " ", omittingEmptySubsequences: true)
         let first = words.first.map(String.init) ?? ""
         let details = words.dropFirst().joined(separator: " ")
+        // Several words arriving at once means dictation (or a paste): open the card by itself when it's ready.
+        let jumped = words.count - lastWordCount >= 2
+        lastWordCount = words.count
 
-        // A chosen app with details typed after it: offer to run it.
-        if let app = selectedApp {
+        // A sentence after "/": the best app, ready to check and run.
+        if let suggestion, suggestion.text == command.text, let app = suggestion.plan.app {
             let price = app.priceLabel.isEmpty ? "" : " · \(app.priceLabel)"
-            if details.isEmpty && words.count <= 1 {
-                addChip("\(app.name): type the details, then Run", style: .note)
-            } else {
-                addChip("▶ Run \(app.name)\(price)", style: .primary) { [weak self] in
-                    self?.run(app: app, text: command.text, length: command.length)
-                }
+            addChip("✨ \(app.name)\(price)", style: .primary) { [weak self] in
+                self?.openCard(suggestion.plan, text: command.text)
             }
-            addChip("✕", style: .plain) { [weak self] in self?.selectedApp = nil; self?.refreshStrip() }
-            return
         }
 
         // Shortcuts first (instant, from the saved copy), then apps (searched online).
@@ -446,29 +539,28 @@ final class KeyboardViewController: UIInputViewController {
         for s in shortcutHits {
             let preview = s.value.replacingOccurrences(of: "\n", with: " ").prefix(28)
             addChip("\(s.key) · \(preview)", style: .shortcut) { [weak self] in
-                self?.replaceCommand(length: command.length, with: s.value)
+                self?.replaceCommand(with: s.value)
             }
         }
         let apps = first.isEmpty ? EzyShared.recentApps : appResults
-        for app in apps.prefix(6) {
+        for app in apps.prefix(6) where app.id != suggestion?.plan.app?.id {
             let price = app.priceLabel.isEmpty ? "" : " · \(app.priceLabel)"
             addChip("\(app.name)\(price)", style: .app) { [weak self] in
                 guard let self else { return }
                 if app.runnable == false {
-                    self.replaceCommand(length: command.length, with: app.link)
-                } else if details.isEmpty {
-                    self.selectedApp = app
-                    if !command.text.hasSuffix(" ") { self.textDocumentProxy.insertText(" ") }
-                    self.refreshStrip()
+                    self.replaceCommand(with: app.link)
                 } else {
-                    self.run(app: app, text: details, length: command.length)
+                    self.prepare(app: app, text: details.isEmpty ? app.name : details)
                 }
             }
         }
-        if shortcutHits.isEmpty && apps.isEmpty {
+        if shortcutHits.isEmpty && apps.isEmpty && suggestion == nil {
             addChip(first.isEmpty ? "Type a shortcut or an app name" : "Searching…", style: .note)
         }
         search(first)
+        if words.count >= 2 && !shortcutHits.contains(where: { $0.key.lowercased() == command.text.lowercased() }) {
+            planSoon(command.text, open: jumped)
+        }
     }
 
     private func search(_ word: String) {
@@ -487,10 +579,164 @@ final class KeyboardViewController: UIInputViewController {
         }
     }
 
-    private func replaceCommand(length: Int, with text: String) {
+    /// Works out the app for the words after "/" once the person pauses (free; nothing runs).
+    private func planSoon(_ text: String, open: Bool) {
+        guard text != plannedText else { return }
+        plannedText = text
+        planTask?.cancel()
+        planTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: open ? 300_000_000 : 1_000_000_000)
+            if Task.isCancelled { return }
+            guard let plan = try? await EzyAPI.plan(text), plan.app != nil else { return }
+            await MainActor.run {
+                guard let self, self.card == nil,
+                      EzyMatch.command(in: self.textDocumentProxy.documentContextBeforeInput)?.text == text else { return }
+                self.suggestion = (text, plan)
+                if open { self.openCard(plan, text: text) } else { self.refreshStrip() }
+            }
+        }
+    }
+
+    /// An app chip was tapped: open its card with what is already known.
+    private func prepare(app: EzyApp, text: String) {
+        busy = "Getting \(app.name) ready…"
+        refreshStrip()
+        let command = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.text ?? text
+        Task { [weak self] in
+            do {
+                let plan = try await EzyAPI.plan(text, appId: app.id)
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.openCard(plan, text: command)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func openCard(_ plan: EzyPlan, text: String) {
+        guard let app = plan.app else { return }
+        var fields = plan.fields ?? []
+        var values = plan.inputs ?? [:]
+        if fields.isEmpty {
+            // Apps without boxes take one request.
+            fields = [EzyField(key: Self.promptKey, label: "What to make", type: "text", required: true, placeholder: nil, options: nil)]
+            values[Self.promptKey] = plan.prompt ?? text
+        }
+        planTask?.cancel()
+        suggestion = nil
+        editingKey = nil
+        card = Card(plan: plan, app: app, fields: fields, values: values, fromProfile: Set(plan.fromProfile ?? []), commandText: text)
+        page = .letters
+        afterTyping()
+    }
+
+    private func closeCard() {
+        card = nil
+        editingKey = nil
+        plannedText = ""
+        afterTyping()
+    }
+
+    private func finishEditing() {
+        editingKey = nil
+        page = .letters
+        afterTyping()
+    }
+
+    private var currentFieldIsList: Bool {
+        guard let key = editingKey, let field = card?.fields.first(where: { $0.key == key }) else { return false }
+        return field.type == "rows" || field.type == "textarea" || field.type == "longtext"
+    }
+
+    /// The person said or typed more after the command while the card is open: fill the boxes they haven't touched.
+    private func cardFollowsText() {
+        guard let current = card else { return }
+        guard let command = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput) else {
+            // The message was sent or the command deleted.
+            card = nil
+            return
+        }
+        guard command.text != current.commandText else { return }
+        card?.commandText = command.text
+        let appId = current.app.id
+        planTask?.cancel()
+        planTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            if Task.isCancelled { return }
+            guard let plan = try? await EzyAPI.plan(command.text, appId: appId) else { return }
+            await MainActor.run {
+                guard let self, var card = self.card, card.app.id == appId else { return }
+                for (key, value) in plan.inputs ?? [:] where !card.edited.contains(key) && !value.isEmpty {
+                    if card.values[key] != value {
+                        card.values[key] = value
+                        if (plan.fromProfile ?? []).contains(key) { card.fromProfile.insert(key) } else { card.fromProfile.remove(key) }
+                    }
+                }
+                if card.fields.first?.key == Self.promptKey, !card.edited.contains(Self.promptKey) {
+                    card.values[Self.promptKey] = plan.prompt ?? command.text
+                }
+                self.card = card
+                self.afterTyping()
+            }
+        }
+    }
+
+    private func generate() {
+        guard let current = card else { return }
+        let empty: (EzyField) -> Bool = { ($0.required ?? false) && (current.values[$0.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        if let missing = current.fields.first(where: empty) {
+            editingKey = missing.key
+            afterTyping()
+            return
+        }
+        var plan = current.plan
+        if current.fields.first?.key == Self.promptKey {
+            plan.prompt = current.values[Self.promptKey]
+            plan.inputs = nil
+        } else {
+            plan.inputs = current.values.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        }
+        card = nil
+        editingKey = nil
+        busy = "Making your \(current.app.name)…"
+        afterTyping()
+        Task { [weak self] in
+            do {
+                let result = try await EzyAPI.run(plan)
+                if result.imageURL != nil { await EzyClipboard.copy(result) }
+                await MainActor.run {
+                    guard let self else { return }
+                    self.busy = nil
+                    self.replaceCommand(with: result.text)
+                    self.notice = result.imageURL != nil
+                        ? "Image copied. Tap and hold the message box, then Paste."
+                        : "✓ \(current.app.name) is in. Tap to close."
+                    self.refreshStrip()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    /// Replaces "/command…" (everything from the slash to the cursor) with the text.
+    private func replaceCommand(with text: String) {
+        let length = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.length ?? 0
         for _ in 0..<length { textDocumentProxy.deleteBackward() }
         textDocumentProxy.insertText(text)
-        selectedApp = nil
+        plannedText = ""
+        suggestion = nil
+        lastWordCount = 0
         afterTyping()
     }
 
@@ -504,49 +750,125 @@ final class KeyboardViewController: UIInputViewController {
         afterTyping()
     }
 
-    private func run(app: EzyApp, text: String, length: Int) {
-        busy = "Working on \(app.name)…"
-        refreshStrip()
-        Task { [weak self] in
-            do {
-                let plan = try await EzyAPI.plan(text, appId: app.id)
-                if let missing = plan.missing, !missing.isEmpty {
-                    let list = missing.map(\.label).joined(separator: ", ")
-                    await MainActor.run {
-                        self?.busy = nil
-                        self?.notice = "\(app.name) also needs: \(list). Add them and tap Run again."
-                        self?.refreshStrip()
-                    }
-                    return
-                }
-                let result = try await EzyAPI.run(plan)
-                if result.imageURL != nil { await EzyClipboard.copy(result) }
-                await MainActor.run {
-                    guard let self else { return }
-                    self.busy = nil
-                    self.replaceCommand(length: length, with: result.text)
-                    if result.imageURL != nil { self.notice = "Image copied. Tap and hold the message box, then Paste." }
-                    self.refreshStrip()
-                }
-            } catch {
-                await MainActor.run {
-                    self?.busy = nil
-                    self?.notice = error.localizedDescription
-                    self?.refreshStrip()
-                }
-            }
+    // MARK: The details card
+
+    private func applyMode() {
+        let showCard = card != nil && editingKey == nil
+        cardView.isHidden = !showCard
+        keysStack.isHidden = showCard
+        heightConstraint?.constant = showCard ? 320 : 270
+        if showCard { renderCard() }
+    }
+
+    private func renderCard() {
+        cardView.subviews.forEach { $0.removeFromSuperview() }
+        guard let card else { return }
+
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        let list = UIStackView()
+        list.axis = .vertical
+        list.spacing = 6
+        list.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(list)
+
+        for field in card.fields {
+            list.addArrangedSubview(fieldRow(field, card: card))
         }
+
+        let cancel = ChipButton(type: .system)
+        cancel.setTitle("Cancel", for: .normal)
+        cancel.titleLabel?.font = .systemFont(ofSize: 16)
+        cancel.setTitleColor(keyTextColor, for: .normal)
+        cancel.backgroundColor = functionKeyColor
+        cancel.layer.cornerRadius = 8
+        cancel.handler = { [weak self] in self?.closeCard() }
+        cancel.addTarget(cancel, action: #selector(ChipButton.tapped), for: .touchUpInside)
+
+        let go = ChipButton(type: .system)
+        let price = card.app.priceLabel.isEmpty ? "" : " · \(card.app.priceLabel)"
+        go.setTitle("✨ Generate\(price)", for: .normal)
+        go.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        go.setTitleColor(.white, for: .normal)
+        go.backgroundColor = brand
+        go.layer.cornerRadius = 8
+        go.handler = { [weak self] in self?.generate() }
+        go.addTarget(go, action: #selector(ChipButton.tapped), for: .touchUpInside)
+
+        let bar = UIStackView(arrangedSubviews: [cancel, go])
+        bar.axis = .horizontal
+        bar.spacing = 8
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        cancel.widthAnchor.constraint(equalToConstant: 92).isActive = true
+
+        cardView.addSubview(scroll)
+        cardView.addSubview(bar)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: cardView.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: bar.topAnchor, constant: -6),
+
+            list.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            list.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            list.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            list.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            list.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+
+            bar.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            bar.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+            bar.heightAnchor.constraint(equalToConstant: 46),
+        ])
+    }
+
+    private func fieldRow(_ field: EzyField, card: Card) -> UIView {
+        let value = (card.values[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let required = field.required ?? false
+        let muted = dark ? UIColor(white: 0.75, alpha: 1) : UIColor(white: 0.35, alpha: 1)
+
+        let title = NSMutableAttributedString(string: field.label, attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: muted])
+        if card.fromProfile.contains(field.key) {
+            title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
+        }
+        title.append(NSAttributedString(string: "\n"))
+        if value.isEmpty {
+            let hint = required ? "Tap to add" : (field.placeholder.map { "Optional, e.g. \($0)" } ?? "Optional")
+            title.append(NSAttributedString(string: hint, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: required ? .semibold : .regular), .foregroundColor: required ? brand : muted]))
+        } else {
+            title.append(NSAttributedString(string: value, attributes: [.font: UIFont.systemFont(ofSize: 15), .foregroundColor: keyTextColor]))
+        }
+
+        let row = ChipButton(type: .custom)
+        row.setAttributedTitle(title, for: .normal)
+        row.titleLabel?.numberOfLines = 3
+        row.titleLabel?.lineBreakMode = .byTruncatingTail
+        row.contentHorizontalAlignment = .leading
+        row.contentEdgeInsets = UIEdgeInsets(top: 7, left: 12, bottom: 7, right: 12)
+        row.backgroundColor = chipColor
+        row.layer.cornerRadius = 8
+        if required && value.isEmpty {
+            row.layer.borderWidth = 1
+            row.layer.borderColor = brand.cgColor
+        }
+        row.handler = { [weak self] in
+            self?.editingKey = field.key
+            self?.page = field.type == "number" || field.type == "money" ? .numbers : .letters
+            self?.afterTyping()
+        }
+        row.addTarget(row, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        return row
     }
 
     // MARK: Chips
 
     private enum ChipStyle { case primary, shortcut, app, plain, note }
 
-    private func addChip(_ title: String, style: ChipStyle, action: (() -> Void)? = nil) {
+    private func addChip(_ title: String, style: ChipStyle, truncateHead: Bool = false, action: (() -> Void)? = nil) {
         let chip = ChipButton(type: .system)
         chip.setTitle(title, for: .normal)
         chip.titleLabel?.font = .systemFont(ofSize: 15, weight: style == .primary ? .semibold : .regular)
-        chip.titleLabel?.lineBreakMode = .byTruncatingTail
+        chip.titleLabel?.lineBreakMode = truncateHead ? .byTruncatingHead : .byTruncatingTail
         chip.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
         chip.layer.cornerRadius = 15
         switch style {
