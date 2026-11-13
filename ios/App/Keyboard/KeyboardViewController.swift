@@ -1249,12 +1249,60 @@ enum EzyPhoto {
             return .image(try jpeg(input, dpi: dpi, kb: nil), type: "public.jpeg")
         case "image-color-picker":
             return .text(try colours(input))
+        case "merge-photo-signature", "join-images", "add-logo":
+            return .image(try twoPictures(id, input, try photo(v, "photo2"), v), type: "public.jpeg")
         case "heic-to-jpg", "webp-to-jpg", "png-to-jpg":
             return .image(try jpeg(input, dpi: nil, kb: nil), type: "public.jpeg")
         case "jpg-to-pdf":
             return .image(try imagePDF(input, a4: (v["pageSize"] ?? "A4") == "A4"), type: "com.adobe.pdf")
         default:
             throw EzyPhotoError.failed("This tool isn't on the keyboard yet. Open it on ezyourlife.com.")
+        }
+    }
+
+    // MARK: Two pictures
+
+    private static func scaled(_ image: CIImage, by k: CGFloat) -> CIImage {
+        image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: k, kCIInputAspectRatioKey: 1])
+    }
+
+    private static func twoPictures(_ id: String, _ a: CIImage, _ b: CIImage, _ v: [String: String]) throws -> Data {
+        let white = CIImage(color: .white)
+        switch id {
+        case "add-logo":
+            let side = min(a.extent.width, a.extent.height)
+            let logo = scaled(b, by: side * 0.2 / max(b.extent.width, b.extent.height))
+            let pad = side * 0.03
+            let c = v["corner"] ?? "Bottom right"
+            let x = c.hasSuffix("left") ? pad : a.extent.width - logo.extent.width - pad
+            let y = c.hasPrefix("Top") ? a.extent.height - logo.extent.height - pad : pad
+            let placed = logo.transformed(by: CGAffineTransform(translationX: x - logo.extent.minX, y: y - logo.extent.minY))
+            return try jpeg(placed.composited(over: a), dpi: nil, kb: nil)
+        case "merge-photo-signature":
+            // Photo on top, signature underneath, same width, on white.
+            let width = min(a.extent.width, 1200)
+            let top = scaled(a, by: width / a.extent.width)
+            let sign = scaled(b, by: width / b.extent.width)
+            let cropTop = top.transformed(by: CGAffineTransform(translationX: -top.extent.minX, y: sign.extent.height - top.extent.minY))
+            let cropSign = sign.transformed(by: CGAffineTransform(translationX: -sign.extent.minX, y: -sign.extent.minY))
+            let canvas = CGRect(x: 0, y: 0, width: width, height: cropTop.extent.maxY)
+            return try jpeg(cropTop.composited(over: cropSign.composited(over: white)).cropped(to: canvas), dpi: 300, kb: nil)
+        default: // join-images
+            let beside = (v["layout"] ?? "Side by side") == "Side by side"
+            if beside {
+                let h = min(a.extent.height, b.extent.height, 1600)
+                let l = scaled(a, by: h / a.extent.height), r = scaled(b, by: h / b.extent.height)
+                let left = l.transformed(by: CGAffineTransform(translationX: -l.extent.minX, y: -l.extent.minY))
+                let right = r.transformed(by: CGAffineTransform(translationX: left.extent.width - r.extent.minX, y: -r.extent.minY))
+                let canvas = CGRect(x: 0, y: 0, width: right.extent.maxX, height: max(left.extent.height, right.extent.height))
+                return try jpeg(right.composited(over: left.composited(over: white)).cropped(to: canvas), dpi: nil, kb: nil)
+            }
+            let w = min(a.extent.width, b.extent.width, 1600)
+            let t = scaled(a, by: w / a.extent.width), u = scaled(b, by: w / b.extent.width)
+            let lower = u.transformed(by: CGAffineTransform(translationX: -u.extent.minX, y: -u.extent.minY))
+            let upper = t.transformed(by: CGAffineTransform(translationX: -t.extent.minX, y: lower.extent.height - t.extent.minY))
+            let canvas = CGRect(x: 0, y: 0, width: max(upper.extent.width, lower.extent.width), height: upper.extent.maxY)
+            return try jpeg(upper.composited(over: lower.composited(over: white)).cropped(to: canvas), dpi: nil, kb: nil)
         }
     }
 
@@ -1344,8 +1392,8 @@ enum EzyPhoto {
 
     // MARK: Input
 
-    private static func photo(_ v: [String: String]) throws -> CIImage {
-        guard let url = v["photo"], let comma = url.firstIndex(of: ","),
+    private static func photo(_ v: [String: String], _ key: String = "photo") throws -> CIImage {
+        guard let url = v[key], let comma = url.firstIndex(of: ","),
               let data = Data(base64Encoded: String(url[url.index(after: comma)...])),
               let image = CIImage(data: data, options: [.applyOrientationProperty: true]) else { throw EzyPhotoError.noPhoto }
         return image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))

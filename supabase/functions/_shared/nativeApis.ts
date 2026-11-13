@@ -292,6 +292,10 @@ const DEVICE_APPS: Record<string, NativeApp> = {
   "resize-2x2-inch": device("A 2 × 2 inch photo (US visa size).", [PHOTO]),
   "resize-3x4-inch": device("A 3 × 4 inch photo.", [PHOTO]),
   "resize-4x6-inch": device("A 4 × 6 inch print.", [PHOTO]),
+  // Two pictures: each box takes the picture copied when it is tapped.
+  "merge-photo-signature": device("Puts your photo above your signature in one picture, as exam forms ask.", [PHOTO, { ...PHOTO, key: "photo2", label: "Signature", help: "Copy your signature picture, then tap here" }]),
+  "join-images": device("Joins two photos side by side or one above the other.", [PHOTO, { ...PHOTO, key: "photo2", label: "Second photo" }, { key: "layout", label: "Layout", type: "select", options: ["Side by side", "One above the other"], default: "Side by side" }]),
+  "add-logo": device("Puts your logo in a corner of a photo.", [PHOTO, { ...PHOTO, key: "photo2", label: "Logo", help: "Copy your logo, then tap here" }, { key: "corner", label: "Corner", type: "select", options: ["Bottom right", "Bottom left", "Top right", "Top left"], default: "Bottom right" }]),
   // File converters: the PDF is read from what the person copied (Files › Share › Copy).
   "jpg-to-pdf": device("Puts a photo or scan on an A4 PDF page.", [PHOTO, { key: "pageSize", label: "Page size", type: "select", options: ["A4", "Same as image"], default: "A4" }]),
   "pdf-to-jpg": device("Saves one page of a PDF as a JPG picture.", [PDF, { key: "page", label: "Page", type: "number", default: "1" }]),
