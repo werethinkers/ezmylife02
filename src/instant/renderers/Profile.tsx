@@ -4,15 +4,18 @@ import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { isStock } from "../stock";
 import { fill, fmtPhone, safeUrl, telHref, vcardBlob, waTo } from "../util";
-import { BASE_CSS, Icon, Img, Lightbox, MadeWith, fitWords, resolveImg, useThemeFonts } from "../parts";
+import { BASE_CSS, Icon, Img, LeadForm, Lightbox, MadeWith, fitWords, resolveImg, useThemeFonts } from "../parts";
+import { Backdrop, FormFold, Marquee, SIG_CSS, sigClass, usePointerFx } from "../signature";
 
 type Project = { title: string; note?: string; url?: string; photo?: string };
 
-export default function Profile({ product, theme, content: c }: RenderProps) {
+export default function Profile({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const layout: "resume" | "portfolio" | "links" | "card" = o.layout;
   const sty = theme.s;
+  const prime = sty === "prime";
+  const fxRef = usePointerFx<HTMLDivElement>();
   const root = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState<number | null>(null);
   const photo = resolveImg(c.photo);
@@ -46,20 +49,20 @@ export default function Profile({ product, theme, content: c }: RenderProps) {
     <section className="pf-sec">
       {layout !== "links" && <h2><span>Links</span></h2>}
       <div className={"pf-links" + (layout === "links" ? " big" : "")}>
-        {links.map((l: { label: string; href: string }, i: number) => <a key={i} href={l.href} target="_blank" rel="noopener noreferrer"><Icon.link /><span>{l.label}</span></a>)}
+        {links.map((l: { label: string; href: string }, i: number) => <a key={i} className={prime && layout !== "links" ? "sig-fx" : undefined} href={l.href} target="_blank" rel="noopener noreferrer"><Icon.link /><span>{l.label}</span></a>)}
       </div>
     </section>
   );
   const work = projects.length > 0 && (
     <section className="pf-sec">
       <h2><span>{o.workTitle ?? "Work"}</span></h2>
-      <div className={"pf-work" + (projects.length === 1 ? " one" : "")}>
+      <div className={"pf-work" + (projects.length === 1 ? " one" : "") + (prime && projects.length > 1 ? " sig-row" : "")}>
         {projects.map((p, i) => {
           const href = safeUrl(p.url);
           const ph = resolveImg(p.photo);
           const at = ph ? shots.findIndex((s) => s.photo === p.photo) : -1;
           return (
-            <article key={i} className="wk">
+            <article key={i} className={"wk" + (prime ? " sig-fx" : "")}>
               {ph ? <button type="button" className="wk-img" onClick={() => setOpen(at)} aria-label={`Open photo: ${p.title}`}><Img src={p.photo} alt={p.title} sizes="(min-width: 760px) 33vw, 90vw" /></button>
                 : <span className="wk-img ph" aria-hidden="true">{p.title.slice(0, 1)}</span>}
               <div className="wk-t">
@@ -81,16 +84,28 @@ export default function Profile({ product, theme, content: c }: RenderProps) {
   const skillList = skills.length > 0 && (
     <section className="pf-sec">
       <h2><span>{o.skillsTitle ?? "Skills"}</span></h2>
-      <ul className="pf-skills">{skills.map((s) => <li key={s}>{s}</li>)}</ul>
+      {prime && skills.length >= 4 ? <Marquee items={skills} label={o.skillsTitle ?? "Skills"} /> : <ul className="pf-skills">{skills.map((s) => <li key={s}>{s}</li>)}</ul>}
+    </section>
+  );
+
+  const first = String(c.name || "").trim().split(/\s+/)[0] || "me";
+  const message = prime && (c.whatsapp || c.phone) && (
+    <section className="pf-sec pf-msg">
+      <FormFold title={`Send ${first} a message`} hint="Your name and number. Goes straight to their inbox." icon={<Icon.mail />}>
+        <LeadForm slug={slug} mode={mode} kind="lead" button="Send message" ownerWa={c.whatsapp} waTemplate={product.whatsapp.contact} vars={c}
+          messageLabel="What is it about?" context={{ profile: product.id }}
+          done={(n) => <p className="pf-thanks">Thanks, {n.split(" ")[0]}. {first} will get back to you.</p>} />
+      </FormFold>
     </section>
   );
 
   return (
-    <div ref={root} className={`ipr ipr-pf lay-${layout} s-${sty}` + (theme.dark ? " dark" : "")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS}</style>
-      <div className="pf-page">
+    <div ref={root} className={`ipr ipr-pf lay-${layout} s-${sty}` + (theme.dark ? " dark" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <div className="pf-page" ref={fxRef}>
         {layout === "card" ? (
-          <div className="ip-wrap pf-top">
+          <div className={"ip-wrap pf-top" + (prime ? " sig-hero" : "")}>
+            {prime && <Backdrop id={product.id} />}
             <section className="pf-cardwrap">
               <div className="pf-card">
                 <div className="ph">{photo ? <Img src={c.photo} alt={c.name} sizes="200px" eager /> : <span>{initials}</span>}</div>
@@ -102,18 +117,19 @@ export default function Profile({ product, theme, content: c }: RenderProps) {
                 <span className="chip" aria-hidden="true" />
               </div>
             </section>
-            <h1 className="pf-cardname">{c.name}</h1>
+            <h1 className={"pf-cardname" + (prime ? " sig-h" : "")}>{c.name}</h1>
             {c.title && <p className="pf-cardrole">{c.title}{c.company ? ` · ${c.company}` : ""}</p>}
             {c.about && <p className="pf-about">{c.about}</p>}
             {actions}
           </div>
         ) : (
-          <header className="pf-head">
+          <header className={"pf-head" + (prime ? " sig-hero" : "")}>
+            {prime && <Backdrop id={product.id} />}
             <div className="ip-wrap pf-head-in">
               {portrait}
               <div className="pf-who">
                 {c.location && <p className="pf-loc"><Icon.map /> {c.location}</p>}
-                <h1 className="pf-h" style={fitWords(String(c.name ?? ""))}>{c.name}</h1>
+                <h1 className={"pf-h" + (prime ? " sig-h" : "")} style={fitWords(String(c.name ?? ""))}>{c.name}</h1>
                 {c.title && <p className="pf-ttl">{c.title}{c.company ? ` · ${c.company}` : ""}</p>}
                 {c.about && <p className="pf-about">{c.about}</p>}
                 {actions}
@@ -123,10 +139,10 @@ export default function Profile({ product, theme, content: c }: RenderProps) {
         )}
 
         <main className="ip-wrap pf-body">
-          {layout === "links" || layout === "card" ? <>{linkList}{work}{expList}{skillList}</> : (
+          {layout === "links" || layout === "card" ? <>{linkList}{work}{expList}{skillList}{message}</> : (
             <div className="pf-cols">
               <div className="pf-main">{work}{expList}</div>
-              <aside className="pf-side">{skillList}{linkList}</aside>
+              <aside className="pf-side">{skillList}{linkList}{message}</aside>
             </div>
           )}
           {usesStock && <p className="pf-cr">Sample photos from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
@@ -267,4 +283,16 @@ const CSS = `
 .pf-cardrole{margin:8px 0 0;color:var(--ac);font-weight:700}
 .lay-card .pf-about{margin-top:14px}
 @media (prefers-reduced-motion:no-preference){.pf-card{animation:pf-in 1.2s cubic-bezier(.2,.8,.2,1) both}@keyframes pf-in{from{transform:translateY(40px) rotateX(40deg);opacity:0}}}
+/* prime ("Signature"): a backdrop per design behind the header, a portrait ringed by a turning light, work as one
+   swiping row of cards, skills drifting on one line, and a folded "send a message" form. */
+.ipr-pf.s-prime{--rad:20px}
+.s-prime .pf-cols>*,.s-prime .pf-sec{min-width:0}
+.s-prime .pf-top{position:relative;padding-block:24px 8px}
+.s-prime .pf-por{border-radius:28px;box-shadow:0 0 0 1px var(--line),0 30px 60px -30px rgba(0,0,0,.55)}
+.s-prime .pf-por::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--sig-a),transparent 0 70%,var(--ac) 85%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:sig-beam 4s linear infinite;pointer-events:none}
+.s-prime .pf-acts .ip-btn{border-radius:999px}
+.s-prime .pf-sec h2{font-size:.78rem;font-family:var(--fb);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--mu)}
+.s-prime .pf-work.sig-row>.wk{flex-basis:min(78cqi,20rem)}
+.pf-thanks{margin:0;font-weight:600}
+@media (prefers-reduced-motion:reduce){.s-prime .pf-por::after{animation:none}}
 `;

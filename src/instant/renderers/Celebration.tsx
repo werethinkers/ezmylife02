@@ -4,7 +4,8 @@ import type { Content, RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, fitLine, graphemes, greetingOf, waShare, waTo, fmtDate } from "../util";
 import { isStock } from "../stock";
-import { BASE_CSS, Icon, Img, Lightbox, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { BASE_CSS, Icon, Img, LeadForm, Lightbox, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { Backdrop, FormFold, SIG_CSS, sigClass, usePointerFx } from "../signature";
 
 /** The greeting animates letter by letter, but each word stays whole, so a long greeting wraps between words and never inside one. */
 function Letters({ text }: { text: string }) {
@@ -42,7 +43,7 @@ function NameLetters({ text, colors }: { text: string; colors: string[] }) {
 
 const EMBLEM: Record<string, string> = { wish: "✈️", hug: "🧶", bouquet: "💐", trophy: "🏆", diploma: "🎓", baby: "👶", candle: "🕯️" };
 
-export default function Celebration({ product, theme, content: c, mode }: RenderProps) {
+export default function Celebration({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const solemn = o.opening === "candle";
@@ -75,6 +76,8 @@ export default function Celebration({ product, theme, content: c, mode }: Render
   const greeting = greetingOf(o.greeting, vars);
   const memories = (Array.isArray(c.memories) ? c.memories : []).filter((m: { photo?: string }) => resolveImg(m?.photo, "m"));
   const sty = theme.s;
+  const prime = sty === "prime";
+  const fxRef = usePointerFx<HTMLElement>();
   const cover: string | undefined = sty !== "minimal" ? memories[0]?.photo : undefined;
   const [view, setView] = useState<number | null>(null);
   const age = parseInt(c.age, 10) || 0;
@@ -82,12 +85,13 @@ export default function Celebration({ product, theme, content: c, mode }: Render
   const replyHref = c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply);
 
   return (
-    <div ref={root} className={`ipr ipr-cel s-${sty}` + (theme.dark ? " dark" : "") + (solemn ? " solemn" : "") + (cover ? " has-cover" : "")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS}</style>
+    <div ref={root} className={`ipr ipr-cel s-${sty}` + (theme.dark ? " dark" : "") + (solemn ? " solemn" : "") + (cover ? " has-cover" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
 
       {!opened && (
-        <section className={"cel-gift" + (opening ? " opening" : "")} aria-label="Your surprise">
+        <section className={"cel-gift" + (opening ? " opening" : "") + (prime ? " sig-hero" : "")} aria-label="Your surprise">
+          {prime && <Backdrop id={product.id} />}
           {cover && sty === "photo" && <div className="cel-bg" aria-hidden="true"><Img src={cover} alt="" sampleKey="m0" sizes="100vw" eager /></div>}
           <div className="cel-gift-in">
             <p className="cel-for">{c.recipient || "You"},</p>
@@ -106,8 +110,9 @@ export default function Celebration({ product, theme, content: c, mode }: Render
       )}
 
       {opened && (
-        <main>
-          <section className="cel-greet">
+        <main ref={fxRef}>
+          <section className={"cel-greet" + (prime ? " sig-hero" : "")}>
+            {prime && <Backdrop id={product.id + "-in"} />}
             {cover && sty === "photo" && <div className="cel-bg" aria-hidden="true"><Img src={cover} alt="" sampleKey="m0" sizes="100vw" eager /></div>}
             <div className="ip-wrap"><div className="cel-greet-in">
               {cover && sty !== "photo" && <button type="button" className="cel-hero-ph" onClick={() => setView(0)} aria-label="Open photo"><Img src={cover} alt={memories[0]?.caption || ""} sampleKey="m0" sizes="(min-width: 700px) 340px, 70vw" eager /></button>}
@@ -133,8 +138,8 @@ export default function Celebration({ product, theme, content: c, mode }: Render
           <section className="cel-sec">
             <div className="ip-wrap">
               <p className="cel-kick">A note for you</p>
-              <h2 className="cel-h2">{fill(o.letterTitle, vars)}</h2>
-              <article className="cel-card">
+              <h2 className={"cel-h2" + (prime ? " sig-h" : "")}>{fill(o.letterTitle, vars)}</h2>
+              <article className={"cel-card" + (prime ? " sig-fx" : "")}>
                 <span className="tape" aria-hidden="true" />
                 <p className="dear">Dear {c.recipient || "you"},</p>
                 <p className="letter">{c.message}</p>
@@ -167,12 +172,21 @@ export default function Celebration({ product, theme, content: c, mode }: Render
 
           <section className="cel-end">
             <div className="ip-wrap">
-              <h2>{fill(o.endTitle, vars)}</h2>
+              <h2 className={prime ? "sig-h" : undefined}>{fill(o.endTitle, vars)}</h2>
               <p>{c.sender} made this just for you.</p>
               <div className="btns">
                 <a className="ip-btn ip-wa" href={replyHref} target="_blank" rel="noopener noreferrer"><Icon.wa /> {solemn ? "Send your condolences" : `Say thank you to ${c.sender || "them"}`}</a>
                 <button type="button" className="ip-btn ip-ghost" onClick={again}>Watch it again</button>
               </div>
+              {prime && (
+                <div className="cel-reply">
+                  <FormFold title={`Write back to ${c.sender || "them"}`} hint="A few words and your number. They see it on their page." icon={<Icon.mail />}>
+                    <LeadForm slug={slug} mode={mode} kind="lead" button={solemn ? "Send my message" : "Send my thank-you"} ownerWa={c.sender_whatsapp} waTemplate={reply} vars={vars}
+                      messageLabel="Your message" context={{ card: product.id }}
+                      done={(n) => <p className="cel-thanks">Sent, {n.split(" ")[0]}! {c.sender} will see it.</p>} />
+                  </FormFold>
+                </div>
+              )}
               {memories.some((m: { photo: string }) => isStock(m.photo)) && <p className="cel-cr">Sample photos from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
               <MadeWith product={product} />
             </div>
@@ -411,4 +425,13 @@ const CSS = `
   .cake:not(.out) .flame,.cel-candle .flame{animation:cel-flick .18s ease-in-out infinite alternate}
   @keyframes cel-flick{from{transform:translateX(-50%) scale(1,1) rotate(-2deg)}to{transform:translateX(-50%) scale(.92,1.08) rotate(2deg)}}
 }
+/* prime ("Signature"): a backdrop picked per design behind the gift and the greeting, a finish on the headings,
+   the letter that leans or glows under the finger, and a folded "write back" form at the end. */
+.ipr-cel.s-prime .cel-card{transform:rotate(-1deg)}
+.ipr-cel.s-prime.sig-card-tilt .cel-card{transform:perspective(900px) rotate(-1deg) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
+.ipr-cel.s-prime.sig-card-beam .cel-card{background:linear-gradient(#FFFDF8,#FFFDF8) padding-box,conic-gradient(from var(--sig-a),#eadfce 0 72%,var(--ac) 86%,#eadfce 100%) border-box!important}
+.ipr-cel.s-prime.sig-card-spot .cel-card{background-color:#FFFDF8}
+.ipr-cel.s-prime .cel-end .btns .ip-btn{border-radius:999px}
+.cel-reply{width:min(100%,420px);margin:16px auto 0}
+.cel-thanks{margin:0;font-weight:600}
 `;

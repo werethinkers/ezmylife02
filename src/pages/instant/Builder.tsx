@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Eye, Loader2, PencilLine, RotateCcw, Eraser } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Eye, Loader2, PencilLine, RotateCcw, Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,7 +82,13 @@ function BuilderInner({ product }: { product: Product }) {
   const [content, setContent] = useState<Content>(initial.content);
   const [pageId, setPageId] = useState<string | undefined>(editId ?? initial.pageId);
   const [published, setPublished] = useState<{ slug: string } | null>(null);
-  const [step, setStep] = useState(0);
+  // -1: every step closed (how the form starts).
+  const [step, setStep] = useState(-1);
+  // Open one step and bring it into view (opening it closes the one that was open).
+  const openStep = useCallback((i: number) => {
+    setStep(i);
+    if (i >= 0) requestAnimationFrame(() => document.getElementById(`step-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [busy, setBusy] = useState<string | null>(null);
@@ -137,7 +143,7 @@ function BuilderInner({ product }: { product: Product }) {
 
   const publish = useCallback(async (free = false) => {
     const bad = validate(product, content);
-    if (bad) { setErrors(bad.errors); setStep(bad.step); setTab("edit"); toast({ title: "A few details are missing", description: "Fill the highlighted fields to publish." }); return; }
+    if (bad) { setErrors(bad.errors); openStep(bad.step); setTab("edit"); toast({ title: "A few details are missing", description: "Fill the highlighted fields to publish." }); return; }
     if (!user) {
       await writeDraft(product.id, { variantId, content, pageId });
       try { localStorage.setItem("auth_redirect_to", `/create/${product.id}?publish=1`); } catch { /* ignore */ }
@@ -206,15 +212,13 @@ function BuilderInner({ product }: { product: Product }) {
       setBusy(null);
       toast({ title: "Couldn't publish", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     }
-  }, [product, content, user, variantId, pageId, published, navigate, toast, canPayCredits, needCredits, balance, refreshWallet]);
+  }, [product, content, user, variantId, pageId, published, navigate, toast, canPayCredits, needCredits, balance, refreshWallet, openStep]);
 
   // Coming back from sign-in with ?publish=1 continues straight to checkout.
   useEffect(() => {
     if (params.get("publish") === "1" && user && !busy) { params.delete("publish"); setParams(params, { replace: true }); publish(); }
   }, [params, user, busy, publish, setParams]);
 
-  const s = product.steps[step];
-  const last = step === product.steps.length - 1;
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const cta = published ? "Update live page" : needCredits ? `Use ${fmtCredits(needCredits)} and publish` : "Publish free";
   // The phone's bottom bar is narrow, so it gets a shorter label.
@@ -245,8 +249,8 @@ function BuilderInner({ product }: { product: Product }) {
             <h1 className="font-display text-2xl font-extrabold md:text-3xl">{product.name}</h1>
             <p className="text-[16px] text-muted-foreground">{product.description}</p>
             <p className="text-sm font-semibold">
-              <span className="md:hidden">Fill in each step, then tap Preview to see your {isSite ? "website" : "card"}.</span>
-              <span className="hidden md:inline">Fill the steps on the left. Your {isSite ? "website" : "card"} changes on the right as you type.</span>
+              <span className="md:hidden">Open each step to fill it, then tap Preview to see your {isSite ? "website" : "card"}.</span>
+              <span className="hidden md:inline">Open a step on the left to fill it. Your {isSite ? "website" : "card"} changes on the right as you type.</span>
             </p>
           </div>
 
@@ -262,58 +266,53 @@ function BuilderInner({ product }: { product: Product }) {
             <DesignRail product={product} value={theme.id} onChange={setVariantId} />
           </div>
 
-          {/* Phone: one line saying where you are, and one tappable bar per step (no sideways scrolling). */}
-          <div className="grid gap-1 md:hidden">
-            <p className="text-sm font-bold">Step {step + 1} of {product.steps.length} <span className="font-semibold text-muted-foreground">· {s.title}</span></p>
-            <ol className="flex gap-1.5" aria-label="Steps">
-              {product.steps.map((st, i) => {
-                const hasErr = st.fields.some((f) => errors[f.id]);
-                return (
-                  <li key={st.title} className="min-w-0 flex-1">
-                    <button type="button" onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined} aria-label={`Step ${i + 1}: ${st.title}`} className="flex h-8 w-full items-center">
-                      <span className={cn("block h-2.5 w-full rounded-full border-2", hasErr ? "border-destructive bg-destructive/30" : i <= step ? "border-ink bg-ink" : "border-ink/40 bg-card")} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-          <ol className="hidden gap-2 overflow-x-auto pb-1 md:flex" aria-label="Steps">
+          {/* The steps are an accordion: all closed at first so the form never feels long, one open at a time,
+              Next opens the following step, and a missing field opens the step it is in. */}
+          <FieldMemory className="grid grid-cols-1 gap-3">
+            <p className="text-sm font-bold">{product.steps.length} steps <span className="font-semibold text-muted-foreground">· tap a step to fill it</span></p>
             {product.steps.map((st, i) => {
-              const hasErr = st.fields.some((f) => errors[f.id]);
+              const isOpen = i === step;
+              const errs = st.fields.filter((f) => errors[f.id]).length;
+              const filled = st.fields.filter((f) => { const v = content[f.id]; return Array.isArray(v) ? v.length > 0 : v != null && String(v).trim() !== ""; }).length;
+              const isLast = i === product.steps.length - 1;
               return (
-                <li key={st.title} className="shrink-0">
-                  <button type="button" onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
-                    className={cn("flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-sm font-semibold", i === step ? "border-ink bg-ink text-cream" : "border-ink/30 bg-card hover:border-ink", hasErr && "border-destructive text-destructive")}>
-                    <span className="tabular-nums font-semibold">{i + 1}</span>{st.title}
+                <div key={st.title} id={`step-${i}`} className={cn("scroll-mt-24 rounded-3xl border-2 bg-card transition-shadow", errs ? "border-destructive" : "border-ink", isOpen ? "shadow-block" : "shadow-[2px_2px_0_0_hsl(var(--ink))]")}>
+                  <button type="button" aria-expanded={isOpen} aria-controls={`step-body-${i}`} onClick={() => openStep(isOpen ? -1 : i)}
+                    className="flex w-full items-center gap-3 rounded-3xl px-4 py-4 text-left md:px-5">
+                    <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-ink text-sm font-bold tabular-nums", errs ? "bg-destructive text-white" : isOpen ? "bg-ink text-cream" : filled === st.fields.length && filled > 0 ? "bg-lime" : "bg-card")}>
+                      {errs ? "!" : filled === st.fields.length && filled > 0 && !isOpen ? <Check className="h-4 w-4" /> : i + 1}
+                    </span>
+                    <span className="grid min-w-0 flex-1">
+                      <span className="truncate font-bold">{st.title}</span>
+                      <span className={cn("truncate text-xs font-semibold", errs ? "text-destructive" : "text-muted-foreground")}>{errs ? `${errs} to fix` : st.hint ?? `${filled} of ${st.fields.length} filled`}</span>
+                    </span>
+                    <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
                   </button>
-                </li>
+                  {isOpen && (
+                    <div id={`step-body-${i}`} className="grid grid-cols-1 gap-5 border-t-2 border-ink/15 px-4 pb-5 pt-4 md:px-5">
+                      {st.hint && <p className="-mt-1 text-sm text-muted-foreground">{st.hint}</p>}
+                      {st.fields.map((f) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />)}
+                      <div className="flex items-center justify-between gap-3 pt-1">
+                        <Button variant="outline" className="h-11 shrink-0" onClick={() => openStep(-1)}>Close</Button>
+                        {isLast ? (
+                          // On a phone the bottom bar already carries the publish button, so it isn't repeated here.
+                          <>
+                            <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{busy ?? cta}</Button>
+                            <p className="min-w-0 text-right text-sm font-semibold text-muted-foreground md:hidden">All set. Check Preview, then publish below.</p>
+                          </>
+                        ) : (
+                          <Button className="h-11" onClick={() => openStep(i + 1)}>Next step <ArrowRight className="h-4 w-4" /></Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
-          </ol>
-
-          <FieldMemory className="grid grid-cols-1 gap-5 rounded-3xl border-2 border-ink bg-card p-5 shadow-block md:p-7">
-            <div>
-              <h2 className="text-xl font-bold">{s.title}</h2>
-              {s.hint && <p className="text-sm text-muted-foreground mt-1">{s.hint}</p>}
-            </div>
-            {s.fields.map((f) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />)}
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <Button variant="outline" className="h-11 shrink-0" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
-              {last ? (
-                // On a phone the bottom bar already carries the publish button, so it isn't repeated here.
-                <>
-                  <Button className="hidden h-11 md:inline-flex" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{busy ?? cta}</Button>
-                  <p className="min-w-0 text-right text-sm font-semibold text-muted-foreground md:hidden">All set. Check Preview, then publish below.</p>
-                </>
-              ) : (
-                <Button className="h-11" onClick={() => setStep(step + 1)}>Next step <ArrowRight className="h-4 w-4" /></Button>
-              )}
-            </div>
           </FieldMemory>
 
           <div className="flex flex-wrap gap-2 text-sm">
-            <Button variant="ghost" size="sm" onClick={() => { setContent(blank(product)); setStep(0); }}><Eraser className="h-4 w-4" /> Clear the example text</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setContent(blank(product)); openStep(0); }}><Eraser className="h-4 w-4" /> Clear the example text</Button>
             <Button variant="ghost" size="sm" onClick={() => { setContent({ ...product.sample }); setErrors({}); }}><RotateCcw className="h-4 w-4" /> Bring back the example</Button>
             {isAdmin && !published && <Button variant="outline" size="sm" disabled={!!busy} onClick={() => publish(true)}>Publish free (admin test)</Button>}
           </div>

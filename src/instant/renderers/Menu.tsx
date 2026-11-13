@@ -4,6 +4,7 @@ import { themeVars } from "../themes";
 import { fill, inr, mapsDir, mapsLink, openStatus, priceText, telHref, waTo } from "../util";
 import { BASE_CSS, Icon, Img, MadeWith, fitWords, resolveImg, useThemeFonts } from "../parts";
 import { coverFor, isStock } from "../stock";
+import { Backdrop, SIG_CSS, sigClass, usePointerFx } from "../signature";
 
 type Item = { category?: string; name: string; price?: string; desc?: string; diet?: string; photo?: string };
 const num = (p?: string) => { const n = Number(String(p ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) && /^\s*[₹]?\s*[\d,]+(\.\d+)?\s*$/.test(String(p ?? "")) ? n : null; };
@@ -21,6 +22,8 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
   const st = openStatus(c.open_days, c.opens, c.closes);
   const cover = resolveImg(c.cover) ? c.cover : coverFor(product.id);
   const sty = theme.s;
+  const prime = sty === "prime";
+  const fxRef = usePointerFx<HTMLDivElement>();
   const place = [c.address].filter(Boolean).join(", ");
   const vars = { ...c };
 
@@ -33,16 +36,17 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
   const shown = items.map((it, i) => ({ it, i })).filter(({ it }) => (!cat || (it.category || "Menu") === cat) && (!vegOnly || ["Veg", "Jain"].includes(it.diet || "")));
 
   return (
-    <div className={`ipr ipr-menu s-${sty}` + (theme.dark ? " dark" : "")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS}</style>
-      <div className="mn-page">
-      <header className="mn-head">
+    <div className={`ipr ipr-menu s-${sty}` + (theme.dark ? " dark" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <div className="mn-page" ref={fxRef}>
+      <header className={"mn-head" + (prime ? " sig-hero" : "")}>
+        {prime && <Backdrop id={product.id} />}
         {sty === "photo" && cover && <div className="mn-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
         <div className="ip-wrap mn-head-in">
           <div className="mn-copy">
             {resolveImg(c.logo) && <Img src={c.logo} alt="" className="mn-logo" eager sizes="80px" />}
             <p className="mn-eye">{o.noun}</p>
-            <h1 className="mn-h" style={fitWords(String(c.name ?? ""))}>{c.name}</h1>
+            <h1 className={"mn-h" + (prime ? " sig-h" : "")} style={fitWords(String(c.name ?? ""))}>{c.name}</h1>
             {c.tagline && <p className="mn-tag">{c.tagline}</p>}
             <p className="mn-meta">{st && <span className={"st" + (st.open ? " open" : "")}><i />{st.label}</span>}{c.area && <span>{c.area}</span>}</p>
             <div className="mn-acts">
@@ -74,7 +78,7 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
               {group.map(({ it, i }) => {
                 const q = cart[i] ?? 0; const ph = resolveImg(it.photo);
                 return (
-                  <article key={i} className={"mn-item" + (ph ? " ph" : "")}>
+                  <article key={i} className={"mn-item" + (ph ? " ph" : "") + (prime ? " sig-fx" : "")}>
                     <div className="txt">
                       {o.diet && it.diet && <span className={"dm " + it.diet.toLowerCase().replace(/[^a-z]/g, "")} title={it.diet} aria-label={it.diet} />}
                       <h3>{it.name}</h3>
@@ -234,4 +238,15 @@ const CSS = `
 .mn-sheet ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .mn-sheet li,.mn-sheet .tot{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
 .mn-sheet .tot{margin:0;padding-top:10px;border-top:1px solid var(--line);font-size:1.1rem}
+/* prime ("Signature"): a backdrop per design behind the header, the dishes as cards that light up or lean
+   under the finger, two columns on wide screens, and round category chips on one swiping line. */
+.ipr-menu.s-prime{--rad:20px}
+.s-prime .mn-media{border-radius:26px;aspect-ratio:16/11;box-shadow:0 0 0 1px var(--line),0 30px 60px -30px rgba(0,0,0,.55)}
+@container page (min-width:860px){.s-prime .mn-head-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.s-prime .mn-copy{justify-items:start;text-align:left}}
+.s-prime .mn-acts .ip-btn{border-radius:999px}
+.s-prime .mn-tabs button{border-radius:999px}
+.s-prime .mn-cat{gap:10px}
+.s-prime .mn-cat h2{margin:36px 0 4px}
+.s-prime .mn-item{padding:16px;border:0;border-radius:var(--rad);background-color:var(--sf);box-shadow:inset 0 0 0 1px var(--line)}
+@container page (min-width:760px){.s-prime .mn-cat{grid-template-columns:repeat(2,minmax(0,1fr))}.s-prime .mn-cat h2{grid-column:1/-1}}
 `;

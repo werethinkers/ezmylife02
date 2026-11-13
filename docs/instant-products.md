@@ -67,8 +67,25 @@ first version. It is the default for new pages. The ten older versions keep thei
 do not change, and a page whose saved version is missing falls back to the old first version
 (`fallbackTheme`), never to Signature.
 
-- Done: `business` (`src/instant/renderers/Business.tsx`, the `.s-prime` rules and `CountUp`, `ReviewStack`, `Fold`).
+- Done: all six families. `business` (`Business.tsx`: `CountUp`, `ReviewStack`, `Fold`), and since 13 Nov 2026 `event`,
+  `festival`, `celebration`, `menu` and `profile`, each with its own `.s-prime` rules.
+- The Signature kit is `src/instant/signature.tsx`: our own plain React and CSS re-builds of free open-source component
+  patterns (aurora, meteors, grid, dots, light rays, orbs, ripple, waves; shimmer, gradient and underline headlines;
+  spotlight, tilt and border-beam cards; a flip countdown with seconds; a drifting chip row). No new packages.
+- Every design looks different: `signatureOf(product.id)` picks one backdrop of eight, one headline finish of four and
+  one card finish of three from the product id, on top of the design's own colours and fonts.
+- Signature extras: invitations get the flip countdown and the programme as one swiping row; profiles get skills on a
+  drifting line, work as a swiping row and a "Send a message" form; celebration and festival cards get a "Write back"
+  form. These forms use `ip_submit_lead`, so replies show in the owner's Leads list.
 - To add a family: give its renderer a `prime` layout, then add the family to `SIGNATURE_FAMILIES`.
+
+## Forms fold shut (Nov 2026)
+
+Every form on a published page sits in `FormFold` (`src/instant/signature.tsx`): closed at first, and opening one
+closes any other (`<details name>`). This covers the business lead form and list order, the invitation RSVP (all
+versions, not only Signature) and the Signature write-back and message forms. The menu's order sheet is already a
+pop-up, so it is unchanged. In the builder (`src/pages/instant/Builder.tsx`) the steps are an accordion too: all
+closed at first, one open at a time, Next opens the next step, and a missing field opens its step.
 - The pictures in `public/design-previews` still show the older first version until they are remade.
 
 ## The ideas list (Nov 2026)

@@ -4,6 +4,7 @@ import { themeVars } from "../themes";
 import { DAYS, fill, fmtPhone, mapsDir, mapsLink, openStatus, priceText, t12, telHref, waTo } from "../util";
 import { BASE_CSS, Gallery, Icon, Img, LeadForm, MadeWith, fitWords, resolveImg, useRevealBar, useThemeFonts } from "../parts";
 import { coverFor, isStock } from "../stock";
+import { Backdrop, FormFold, SIG_CSS, sigClass, usePointerFx } from "../signature";
 
 export default function Business({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
@@ -11,6 +12,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 60000); return () => clearInterval(t); }, []);
   const bar = useRevealBar<HTMLDivElement>();
+  const fxRef = usePointerFx<HTMLDivElement>();
   const vars = { ...c };
   const st = openStatus(c.open_days, c.opens, c.closes);
   const services = (Array.isArray(c.services) ? c.services : []).filter((s: { name?: string }) => s?.name);
@@ -39,9 +41,9 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
   let sec = 0;
 
   return (
-    <div className={`ipr ipr-biz s-${s}` + (theme.dark ? " dark" : "")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS}</style>
-      <div className="biz-page">
+    <div className={`ipr ipr-biz s-${s}` + (theme.dark ? " dark" : "") + sigClass(product.id, s === "prime")} style={themeVars(theme) as React.CSSProperties}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <div className="biz-page" ref={fxRef}>
         <header className="biz-top">
           <div className="ip-wrap biz-top-in">
             <a className="biz-logo" href="#top">
@@ -54,16 +56,16 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
 
         {c.notice && <p className="biz-notice"><span className="ip-wrap"><i aria-hidden="true" />{c.notice}</span></p>}
 
-        <section className="biz-hero" id="top">
+        <section className={"biz-hero" + (prime ? " sig-hero" : "")} id="top">
           {s === "photo" && <div className="biz-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
-          {prime && <div className="biz-grid" aria-hidden="true" />}
+          {prime && <Backdrop id={product.id} />}
           {(s === "bold" || prime) && <span className="biz-mark" aria-hidden="true">{words[0]?.[0]}</span>}
           <div className="ip-wrap biz-hero-in">
             <div className="biz-copy">
               {(c.area || c.city) && <p className="biz-eye">{[c.area, c.city].filter(Boolean).join(" · ")}</p>}
               <h1 className="biz-h1" style={fitWords(name)}>
                 <span className="a">{o.heroVerb}</span>{" "}
-                <span className="nm">{words.map((w, i) => <span key={i} className={i % 2 ? "c" : "b"}>{w}{i < words.length - 1 ? " " : ""}</span>)}</span>
+                <span className={"nm" + (prime ? " sig-h" : "")}>{words.map((w, i) => <span key={i} className={i % 2 ? "c" : "b"}>{w}{i < words.length - 1 ? " " : ""}</span>)}</span>
               </h1>
               {c.tagline && <p className="biz-tag">{c.tagline}</p>}
               <div className="biz-cta" ref={bar.ref}>
@@ -94,7 +96,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
               <p className="biz-label">{n(++sec)}{o.servicesTitle}</p>
               <div className={"biz-svcs" + (services.length >= 3 ? " many" : "")}>
                 {services.map((sv: { name: string; price?: string; note?: string }, i: number) => (
-                  <article key={i} className={"svc" + (i === 1 && services.length > 2 ? " pop" : "")}>
+                  <article key={i} className={"svc" + (i === 1 && services.length > 2 ? " pop" : "") + (prime ? " sig-fx" : "")}>
                     <div className="svc-top"><h3>{sv.name}</h3>{priceText(sv.price) && <b>{priceText(sv.price)}</b>}</div>
                     {sv.note && <p>{sv.note}</p>}
                     <a className="ip-btn ip-ghost" href={waTo(c.whatsapp, fill(product.whatsapp.service, { ...vars, item: sv.name, price: priceText(sv.price) || "price on request" }))} target="_blank" rel="noopener noreferrer"><Icon.wa /> Ask about this</a>
@@ -159,7 +161,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
                 {team.map((m: { name: string; role?: string; photo?: string }, i: number) => {
                   const ph = resolveImg(m.photo);
                   return (
-                    <div key={i} className="tm">
+                    <div key={i} className={"tm" + (prime ? " sig-fx" : "")}>
                       <span className="av" aria-hidden="true">{ph ? <Img src={ph} alt="" sizes="120px" /> : m.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>
                       <div><b>{m.name}</b>{m.role && <span>{m.role}</span>}</div>
                     </div>
@@ -220,10 +222,12 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
                   {c.offer_note && <p>{c.offer_note}</p>}
                 </div>
                 <div>
-                  <LeadForm slug={slug} mode={mode} kind="lead" button={o.leadButton} ownerWa={c.whatsapp} waTemplate={product.whatsapp.lead} vars={vars}
-                    messageLabel="Anything we should know? (optional)" context={{ offer: c.offer }}
-                    done={(nm) => <p className="biz-thanks"><b>Done, {nm.split(" ")[0]}.</b> {name} will call you soon.</p>} />
-                  <p className="ip-fine">By sending, you agree to be contacted by {name} about this request.</p>
+                  <FormFold title={o.leadButton} hint="Your name and number. Takes 20 seconds." icon={<Icon.phone />}>
+                    <LeadForm slug={slug} mode={mode} kind="lead" button={o.leadButton} ownerWa={c.whatsapp} waTemplate={product.whatsapp.lead} vars={vars}
+                      messageLabel="Anything we should know? (optional)" context={{ offer: c.offer }}
+                      done={(nm) => <p className="biz-thanks"><b>Done, {nm.split(" ")[0]}.</b> {name} will call you soon.</p>} />
+                    <p className="ip-fine">By sending, you agree to be contacted by {name} about this request.</p>
+                  </FormFold>
                 </div>
               </div>
             </div>
@@ -324,11 +328,13 @@ function ListOrder({ o, wa, tpl, vars, n }: { o: { title: string; hint?: string;
             <p className="biz-label">{n}{o.title}</p>
             {o.hint && <p className="biz-order-hint">{o.hint}</p>}
           </div>
+          <FormFold title={o.button ?? "Send list on WhatsApp"} hint="Type your list, we reply on WhatsApp." icon={<Icon.bag />}>
           <div className="biz-order-form">
             <label className="ip-field"><span>Your list</span><textarea value={list} onChange={(e) => setList(e.target.value)} maxLength={900} rows={5} placeholder={o.placeholder} /></label>
             <label className="ip-field"><span>Your name (optional)</span><input value={who} onChange={(e) => setWho(e.target.value)} maxLength={60} autoComplete="name" /></label>
             <a className={"ip-btn ip-wa" + (list.trim() ? "" : " off")} href={list.trim() ? waTo(wa, text) : undefined} aria-disabled={!list.trim()} target="_blank" rel="noopener noreferrer"><Icon.wa /> {o.button ?? "Send list on WhatsApp"}</a>
           </div>
+          </FormFold>
         </div>
       </div>
     </section>
@@ -501,6 +507,8 @@ const CSS = `
 .biz-lead .ip-primary{background:var(--ac);color:var(--on)}
 .s-minimal .biz-lead .ip-primary,.s-bold:not(.dark) .biz-lead .ip-primary{box-shadow:inset 0 0 0 2px var(--bg)}
 .biz-lead .ip-fine{color:color-mix(in srgb,var(--bg) 65%,transparent);margin-top:10px}
+.biz-lead .ip-fold .ip-fine{margin-top:0}
+.biz-lead .ip-fold .biz-thanks{color:var(--tx)}
 .biz-thanks{font-size:1.1rem;margin:0}
 /* optional sections: notice ribbon, numbers strip, list order, steps, brands, questions */
 .biz-notice{margin:0;background:var(--ac);color:var(--on);font:700 .9rem/1.35 var(--fb);text-align:center;padding:10px 0}

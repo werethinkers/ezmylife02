@@ -3,7 +3,8 @@ import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { fill, waShare, waTo } from "../util";
 import { isStock } from "../stock";
-import { BASE_CSS, Gallery, Icon, Img, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { BASE_CSS, Gallery, Icon, Img, LeadForm, MadeWith, fitWords, resolveImg, useConfetti, useMusicBox, useThemeFonts } from "../parts";
+import { Backdrop, FormFold, SIG_CSS, sigClass } from "../signature";
 import { getShop, type ShopBrand } from "../api";
 import { INDORI_LINES, htmlLang, langById, nameFromParam, type LangId } from "../festLang";
 import { useSparks } from "../sparks";
@@ -96,7 +97,7 @@ function useShop(slug: unknown) {
 
 const EMBLEM: Record<string, string> = { colours: "🎨", flower: "🌷", modak: "🐘", dandiya: "🪘", kite: "🪁", kalash: "🌾", lotus: "🪷", sun: "🪔", fireworks: "🎆" };
 
-export default function Festival({ product, theme, content: c, mode }: RenderProps) {
+export default function Festival({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const [lit, setLit] = useState(false);
@@ -137,6 +138,7 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
   const toName = guest || c.recipient;
   const photos = Array.isArray(c.photos) ? c.photos : [];
   const sty = theme.s;
+  const prime = sty === "prime";
   // The minimal design is a plain card; every other design shows the background picture.
   const cover = sty !== "minimal" && resolveImg(c.cover) ? c.cover : null;
   const live = mode === "live";
@@ -148,8 +150,9 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
   const doneWords = isDiya && langs ? L.done : o.tapDone;
 
   return (
-    <div className={`ipr ipr-fest art-${o.art} s-${sty}` + (theme.dark ? " dark" : "") + (lit ? " lit" : "") + (cover ? " has-cover" : "")} style={themeVars(theme) as React.CSSProperties} onClick={o.art === "colours" ? tap : undefined}>
-      <style>{BASE_CSS + CSS}</style>
+    <div className={`ipr ipr-fest art-${o.art} s-${sty}` + (theme.dark ? " dark" : "") + (lit ? " lit" : "") + (cover ? " has-cover" : "") + (prime ? " sig-hero" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties} onClick={o.art === "colours" ? tap : undefined}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      {prime && <Backdrop id={product.id} />}
       {cover && sty === "photo" && <div className="fest-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
       {isDiya && sty !== "minimal" && <><Mandana edge="t" /><Mandana edge="b" /></>}
       <canvas ref={fx} className="ip-fx" aria-hidden="true" />
@@ -177,9 +180,9 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
           {EMBLEM[o.art] && <span className="emb">{EMBLEM[o.art]}</span>}
         </button>
         <p className="fest-tap" aria-live="polite">{lit ? doneWords : tapWords}</p>
-        <h1 className="fest-h" lang={htmlLang(lang)} style={fitWords(greeting)}>{greeting}</h1>
+        <h1 className={"fest-h" + (prime ? " sig-h" : "")} lang={htmlLang(lang)} style={fitWords(greeting)}>{greeting}</h1>
         {toName && !nameInHead && <p className="fest-to" lang={htmlLang(lang)}>{langs ? L.dear.replace("{n}", toName) : `Dear ${toName},`}</p>}
-        <p className="fest-msg" lang={htmlLang(lang)}>{message}</p>
+        <p className={"fest-msg" + (prime ? " sig-glass" : "")} lang={htmlLang(lang)}>{message}</p>
         {photos.length > 0 && <div className="fest-wall"><Gallery photos={photos} title={`Photos from ${c.sender}`} keyPrefix="fw" layout="strip" /></div>}
         {c.photo && <figure className="fest-photo"><Img src={c.photo} alt={`From ${c.sender}`} /></figure>}
         <p className="fest-from"><span>{langs ? L.from : "With love,"}</span>{c.sender}</p>
@@ -188,6 +191,15 @@ export default function Festival({ product, theme, content: c, mode }: RenderPro
           {lit && live && <a className="ip-btn ip-primary fest-cta" href={makeOwn} target="_top" lang={htmlLang(lang)}>{cta}</a>}
           <a className="ip-btn ip-wa" href={c.sender_whatsapp ? waTo(c.sender_whatsapp, reply) : waShare(reply)} target="_blank" rel="noopener noreferrer"><Icon.wa /> {langs ? L.btn : `Wish ${c.sender ? "them" : "back"} on WhatsApp`}</a>
         </div>
+        {prime && (
+          <div className="fest-reply" onClick={(e) => e.stopPropagation()}>
+            <FormFold title={`Write back to ${String(c.sender || "them").trim() || "them"}`} hint="A few words and your number. They see it on their page." icon={<Icon.mail />}>
+              <LeadForm slug={slug} mode={mode} kind="lead" button="Send my wishes" ownerWa={c.sender_whatsapp} waTemplate={reply} vars={vars}
+                messageLabel="Your wishes" context={{ card: product.id }}
+                done={(n) => <p className="fest-thanks">Sent, {n.split(" ")[0]}! {c.sender} will love it.</p>} />
+            </FormFold>
+          </div>
+        )}
         {isStock(cover) && <p className="fest-cr">Background photo from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
         {shop && (
           <aside className="fest-shop" aria-label={`Diwali offer from ${shop.name}`}>
@@ -324,4 +336,14 @@ const CSS = `
   .emb{animation:fest-bob 3s ease-in-out infinite}
   @keyframes fest-bob{50%{transform:translateY(-8px)}}
 }
+/* prime ("Signature"): one of eight backdrops per design behind the art, the greeting in shimmer, gradient or underline,
+   the message on frosted glass, and a folded "write back" form. Uses the cover as a soft banner if there is one. */
+.ipr-fest.s-prime{--rad:22px}
+.s-prime .fest-media{width:min(86cqi,460px);aspect-ratio:16/10;margin:36px auto 0;border-radius:24px;box-shadow:0 0 0 1px var(--line),0 30px 60px -30px rgba(0,0,0,.6)}
+.s-prime.has-cover .fest-art{min-height:160px}
+.s-prime .fest-h{text-shadow:none}
+.s-prime .fest-msg{padding:20px 22px;border-radius:22px;max-width:min(100%,32ch)}
+.s-prime .fest-btns .ip-btn{border-radius:999px}
+.fest-reply{width:min(100%,380px);margin-top:4px}
+.fest-thanks{margin:0;font-weight:600}
 `;

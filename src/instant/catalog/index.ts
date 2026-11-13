@@ -21,7 +21,7 @@ export const CATEGORIES: { id: CategoryId; name: string; blurb: string; engine: 
 // It borrows the colours and fonts of the design's own first version. The other versions keep their
 // ids and order, so pages already published look exactly as before.
 export const SIGNATURE_ID = "signature";
-const SIGNATURE_FAMILIES = new Set<Family>(["business"]);
+const SIGNATURE_FAMILIES = new Set<Family>(["business", "event", "festival", "celebration", "menu", "profile"]);
 const withSignature = (p: Product): Product =>
   SIGNATURE_FAMILIES.has(p.family) && p.themes.length
     ? { ...p, themes: [{ ...p.themes[0], id: SIGNATURE_ID, name: "Signature", s: "prime" } as Theme, ...p.themes] }

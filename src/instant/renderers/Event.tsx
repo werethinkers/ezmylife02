@@ -5,6 +5,7 @@ import { themeVars } from "../themes";
 import { fill, fmtDate, gcalLink, mapsDir, mapsLink, t12, waTo } from "../util";
 import { isStock } from "../stock";
 import { BASE_CSS, Gallery, Icon, Img, LeadForm, MadeWith, fitWords, resolveImg, useRevealBar, useThemeFonts } from "../parts";
+import { Backdrop, FlipCount, FormFold, SIG_CSS, sigClass, usePointerFx } from "../signature";
 
 const ART: Record<string, string> = { rings: "💍", floral: "🌸", mic: "🎤", ribbon: "🎀", home: "🏡", baby: "🍼", diya: "🪔", balloon: "🎈", spark: "✦" };
 
@@ -24,28 +25,32 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
   const cover = resolveImg(c.cover) ? c.cover : gallery[0]?.photo;
   const sty = theme.s;
   const bar = useRevealBar<HTMLDivElement>();
+  const prime = sty === "prime";
+  const fxRef = usePointerFx<HTMLDivElement>();
   // "Send all" gives each guest their own link (?to=Rahul-Sharma), so the invitation greets them by name.
   const guest = useMemo(() => nameFromParam(typeof location !== "undefined" ? new URLSearchParams(location.search).get("to") : ""), []);
   const usesStock = isStock(cover) || gallery.some((g: { photo: string }) => isStock(g.photo));
 
   return (
-    <div className={`ipr ipr-ev art-${o.art} s-${sty}` + (theme.dark ? " dark" : "")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS}</style>
-      <div className="ev-page">
-      <header className="ev-hero">
+    <div className={`ipr ipr-ev art-${o.art} s-${sty}` + (theme.dark ? " dark" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties}>
+      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <div className="ev-page" ref={fxRef}>
+      <header className={"ev-hero" + (prime ? " sig-hero" : "")}>
+        {prime && <Backdrop id={product.id} />}
         {sty === "photo" && cover && <div className="ev-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
         <div className="ip-wrap ev-hero-in">
           {sty !== "photo" && cover && <div className="ev-media"><Img src={cover} alt={String(c.hosts ?? "")} sizes="(min-width: 860px) 45vw, 90vw" eager /></div>}
-          <div className="ev-copy">
+          <div className={"ev-copy" + (prime ? " sig-glass" : "")}>
             <span className="ev-art" aria-hidden="true">{ART[o.art]}</span>
             {guest && <p className="ev-kick ev-guest">Dear {guest}, you're invited</p>}
             <p className="ev-kick">{o.kicker}</p>
-            <h1 className="ev-h" style={fitWords(String(c.hosts ?? ""))}>{c.hosts}</h1>
+            <h1 className={"ev-h" + (prime ? " sig-h" : "")} style={fitWords(String(c.hosts ?? ""))}>{c.hosts}</h1>
             {c.tagline && <p className="ev-tag">{c.tagline}</p>}
             <div className="ev-rule" aria-hidden="true"><i /><b /><i /></div>
             {c.date && <p className="ev-date">{fmtDate(c.date)}{c.time ? ` · ${t12(c.time)}` : ""}</p>}
             {c.venue && <p className="ev-venue">{c.venue}</p>}
-            {when && left > 0 && (
+            {when && left > 0 && prime && <FlipCount to={when.getTime()} />}
+            {when && left > 0 && !prime && (
               <div className="ev-count" aria-label="Countdown">
                 {[[Math.floor(left / 86400000), "days"], [Math.floor(left / 3600000) % 24, "hours"], [Math.floor(left / 60000) % 60, "mins"]].map(([n, l]) => <div key={l}><b>{n}</b><span>{l}</span></div>)}
               </div>
@@ -72,9 +77,9 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
         <section className="ev-sec">
           <div className="ip-wrap">
             <p className="ev-label">{product.steps.find((s) => s.fields.some((f) => f.id === "schedule"))?.title ?? "Programme"}</p>
-            <ol className="ev-line">
+            <ol className={"ev-line" + (prime ? " sig-row" : "")}>
               {schedule.map((s: { name: string; date?: string; time?: string; place?: string }, i: number) => (
-                <li key={i}>
+                <li key={i} className={prime ? "sig-fx" : undefined}>
                   <span className="dot" aria-hidden="true" />
                   <div>
                     <b>{s.name}</b>
@@ -92,7 +97,7 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
         <section className="ev-sec">
           <div className="ip-wrap">
             <p className="ev-label">Venue</p>
-            <a className="ev-map" href={mapsLink(c.maps_url, place)} target="_blank" rel="noopener noreferrer">
+            <a className={"ev-map" + (prime ? " sig-fx" : "")} href={mapsLink(c.maps_url, place)} target="_blank" rel="noopener noreferrer">
               <span className="pin" aria-hidden="true"><Icon.map /></span>
               <span><b>{c.venue}</b>{c.address && <small>{c.address}</small>}</span>
             </a>
@@ -116,9 +121,11 @@ export default function Event({ product, theme, content: c, mode, slug }: Render
             <div className="ev-rsvp">
               <h2>Will you join us?</h2>
               {c.rsvp_form ? (
-                <LeadForm slug={slug} mode={mode} kind="rsvp" button="Send RSVP" ownerWa={c.rsvp_whatsapp} waTemplate={product.whatsapp.rsvp} vars={vars}
-                  extra={{ id: "guests", label: "Guests (including you)", options: ["1", "2", "3", "4", "5", "6+"] }} messageLabel="Message for the hosts (optional)"
-                  done={(n) => <p className="ev-thanks">Thank you, {n.split(" ")[0]}! {c.hosts} will be glad to see you.</p>} />
+                <FormFold title="Send your RSVP" hint="Your name, number and how many are coming." icon={<Icon.check />}>
+                  <LeadForm slug={slug} mode={mode} kind="rsvp" button="Send RSVP" ownerWa={c.rsvp_whatsapp} waTemplate={product.whatsapp.rsvp} vars={vars}
+                    extra={{ id: "guests", label: "Guests (including you)", options: ["1", "2", "3", "4", "5", "6+"] }} messageLabel="Message for the hosts (optional)"
+                    done={(n) => <p className="ev-thanks">Thank you, {n.split(" ")[0]}! {c.hosts} will be glad to see you.</p>} />
+                </FormFold>
               ) : rsvpHref && <a className="ip-btn ip-primary" href={rsvpHref} target="_blank" rel="noopener noreferrer"><Icon.wa /> {o.rsvpWord}</a>}
             </div>
           </div>
@@ -247,4 +254,22 @@ const CSS = `
 .ev-bar{left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:1.4fr 1fr;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);transform:translateY(130%);transition:transform .35s cubic-bezier(.2,.8,.2,1);pointer-events:none}
 .ev-bar.on{transform:none;pointer-events:auto}
 @media (min-width:760px){.ev-bar{left:50%;right:auto;transform:translate(-50%,160%);bottom:16px;width:min(460px,calc(100% - 32px));border:1px solid var(--line);border-radius:999px;padding:8px}.ev-bar.on{transform:translateX(-50%)}}
+.ev-rsvp .ip-fold{background:var(--bg)}
+/* prime ("Signature"): a backdrop picked per design, the details on a glass card, a flip countdown with seconds,
+   the programme as one swipeable row of cards, and the RSVP folded shut until it is wanted. */
+.ipr-ev.s-prime{--rad:22px;--hmax:5.2rem}
+.s-prime .ev-hero{padding-block:clamp(40px,9cqi,96px) 48px}
+.s-prime .ev-copy{padding:clamp(26px,7cqi,44px) clamp(18px,5cqi,40px);border-radius:28px}
+.s-prime .ev-h{font-style:normal;font-weight:600;letter-spacing:-.01em}
+.s-prime .ev-media{aspect-ratio:4/5;max-width:420px;border-radius:28px;box-shadow:0 0 0 1px var(--line),0 40px 80px -40px rgba(0,0,0,.6)}
+@container page (min-width:860px){.s-prime .ev-hero-in{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}.s-prime .ev-media{max-width:none}}
+.s-prime .ev-actions .ip-btn{border-radius:999px}
+.s-prime .ev-line{max-width:none}
+.s-prime .ev-line li{grid-template-columns:minmax(0,1fr)!important;gap:10px;padding:18px!important;border-radius:var(--rad);background:var(--sf);box-shadow:inset 0 0 0 1px var(--line)}
+.s-prime .ev-line li::before{display:none}
+.s-prime .ev-line .dot{width:22px;height:22px}
+.s-prime .ev-line .dot::after{inset:6px}
+.s-prime .ev-map{max-width:640px}
+.s-prime .ev-rsvp{background:none;box-shadow:none;padding:0;max-width:640px}
+.s-prime .ev-rsvp .ip-fold{background:var(--sf)}
 `;
