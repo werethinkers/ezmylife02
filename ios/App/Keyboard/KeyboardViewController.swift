@@ -2,6 +2,7 @@ import UIKit
 import ImageIO
 import CoreImage
 import Vision
+import PDFKit
 
 /*
  * The EZYOURLIFE keyboard: a normal iPhone-style keyboard with one strip on top.
@@ -784,7 +785,9 @@ final class KeyboardViewController: UIInputViewController {
                     case let .image(data, type):
                         UIPasteboard.general.setData(data, forPasteboardType: type)
                         self.replaceCommand(with: "")
-                        self.notice = "Image copied. Tap and hold the message box, then Paste."
+                        self.notice = type == "com.adobe.pdf"
+                            ? "PDF copied. Tap and hold the message box, then Paste."
+                            : "Image copied. Tap and hold the message box, then Paste."
                     case let .text(text):
                         self.replaceCommand(with: text)
                         self.notice = "✓ \(app.name) is in. Tap to close."
@@ -915,8 +918,32 @@ final class KeyboardViewController: UIInputViewController {
             afterTyping()
             return
         }
-        guard let data = resized.jpegData(compressionQuality: 0.85) else { return }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let flat = UIGraphicsImageRenderer(size: resized.size, format: format).image { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(origin: .zero, size: resized.size))
+            resized.draw(at: .zero)
+        }
+        guard let data = flat.jpegData(compressionQuality: 0.9) else { return }
         card?.values[key] = "data:image/jpeg;base64," + data.base64EncodedString()
+        card?.edited.insert(key)
+        afterTyping()
+    }
+
+    /// PDF tools read the PDF the person copied (Files › Share › Copy).
+    private func takeCopiedPDF(for key: String) {
+        guard let data = UIPasteboard.general.data(forPasteboardType: "com.adobe.pdf"), PDFDocument(data: data) != nil else {
+            notice = "No PDF copied. In Files, tap and hold the PDF, tap Share › Copy, then tap the box again."
+            afterTyping()
+            return
+        }
+        guard data.count <= 15_000_000 else {
+            notice = "That PDF is over 15 MB, too big for the keyboard. Use ezyourlife.com for it."
+            afterTyping()
+            return
+        }
+        card?.values[key] = "data:application/pdf;base64," + data.base64EncodedString()
         card?.edited.insert(key)
         afterTyping()
     }
@@ -931,7 +958,10 @@ final class KeyboardViewController: UIInputViewController {
             title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
         }
         title.append(NSAttributedString(string: "\n"))
-        if field.type == "image" {
+        if field.type == "pdf" {
+            let shown = value.isEmpty ? "Copy a PDF, then tap here" : "📄 PDF added (tap to use the one you copied now)"
+            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
+        } else if field.type == "image" {
             let shown = value.isEmpty ? "Copy a photo, then tap here" : "📷 Photo added (tap to use the one you copied now)"
             title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
         } else if value.isEmpty {
@@ -956,6 +986,10 @@ final class KeyboardViewController: UIInputViewController {
         row.handler = { [weak self] in
             if field.type == "image" {
                 self?.takeCopiedPhoto(for: field.key)
+                return
+            }
+            if field.type == "pdf" {
+                self?.takeCopiedPDF(for: field.key)
                 return
             }
             self?.editingKey = field.key
@@ -1106,6 +1140,8 @@ enum EzyPhoto {
             return .text(try metadata(detailed: id == "view-metadata"))
         case "remove-metadata":
             return try stripMetadata(v)
+        case "pdf-to-text", "pdf-to-jpg", "rotate-pdf", "split-pdf", "merge-pdf":
+            return try pdfTool(id, v)
         default:
             break
         }
@@ -1213,8 +1249,96 @@ enum EzyPhoto {
             return .image(try jpeg(input, dpi: dpi, kb: nil), type: "public.jpeg")
         case "image-color-picker":
             return .text(try colours(input))
+        case "heic-to-jpg", "webp-to-jpg", "png-to-jpg":
+            return .image(try jpeg(input, dpi: nil, kb: nil), type: "public.jpeg")
+        case "jpg-to-pdf":
+            return .image(try imagePDF(input, a4: (v["pageSize"] ?? "A4") == "A4"), type: "com.adobe.pdf")
         default:
             throw EzyPhotoError.failed("This tool isn't on the keyboard yet. Open it on ezyourlife.com.")
+        }
+    }
+
+    // MARK: PDFs
+
+    private static func pdf(_ v: [String: String], _ key: String = "pdf") throws -> PDFDocument {
+        guard let url = v[key], let comma = url.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(url[url.index(after: comma)...])),
+              let doc = PDFDocument(data: data) else { throw EzyPhotoError.failed("Copy a PDF first, then tap the PDF box.") }
+        if doc.isLocked { throw EzyPhotoError.failed("This PDF has a password. Open it on ezyourlife.com instead.") }
+        return doc
+    }
+
+    /// "1-3, 5, 8-" → zero-based page indexes, in order, within the page count.
+    private static func pageList(_ s: String, count: Int) -> [Int] {
+        var out: [Int] = []
+        for part in s.split(separator: ",") {
+            let bits = part.split(separator: "-", omittingEmptySubsequences: false).map { Int($0.trimmingCharacters(in: .whitespaces)) }
+            guard let first = bits.first else { continue }
+            let lo = first ?? 1
+            let hi = bits.count > 1 ? (bits[1] ?? count) : lo
+            if lo > hi { continue }
+            for n in lo...hi where n >= 1 && n <= count && !out.contains(n - 1) { out.append(n - 1) }
+        }
+        return out
+    }
+
+    private static func pdfTool(_ id: String, _ v: [String: String]) throws -> EzyPhotoOutput {
+        let doc = try pdf(v)
+        guard doc.pageCount > 0 else { throw EzyPhotoError.failed("This PDF has no pages.") }
+        switch id {
+        case "pdf-to-text":
+            var parts: [String] = []
+            for i in 0..<doc.pageCount {
+                let text = (doc.page(at: i)?.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty { parts.append(doc.pageCount > 1 ? "Page \(i + 1)\n\(text)" : text) }
+            }
+            guard !parts.isEmpty else { throw EzyPhotoError.failed("No text found: this PDF is a scan. Use Image to Text on ezyourlife.com.") }
+            return .text(parts.joined(separator: "\n\n"))
+        case "pdf-to-jpg":
+            let n = min(max(1, Int(v["page"] ?? "") ?? 1), doc.pageCount)
+            guard let page = doc.page(at: n - 1) else { throw EzyPhotoError.failed("That page isn't in the PDF.") }
+            let box = page.bounds(for: .mediaBox)
+            let scale = min(2400 / max(box.width, box.height), 3)
+            let picture = page.thumbnail(of: CGSize(width: box.width * scale, height: box.height * scale), for: .mediaBox)
+            guard let data = picture.jpegData(compressionQuality: 0.9) else { throw EzyPhotoError.failed("Couldn't save the page.") }
+            return .image(data, type: "public.jpeg")
+        case "rotate-pdf":
+            let t = v["turn"] ?? ""
+            let by = t.hasPrefix("Left") ? 270 : t.hasPrefix("Upside") ? 180 : 90
+            for i in 0..<doc.pageCount { if let p = doc.page(at: i) { p.rotation = (p.rotation + by) % 360 } }
+            return .image(try pdfData(doc), type: "com.adobe.pdf")
+        case "split-pdf":
+            let keep = pageList(v["pages"] ?? "", count: doc.pageCount)
+            guard !keep.isEmpty else { throw EzyPhotoError.failed("Name the pages to keep, like 1-3, 5. This PDF has \(doc.pageCount) pages.") }
+            let out = PDFDocument()
+            for (n, i) in keep.enumerated() { if let p = doc.page(at: i)?.copy() as? PDFPage { out.insert(p, at: n) } }
+            return .image(try pdfData(out), type: "com.adobe.pdf")
+        default: // merge-pdf
+            let second = try pdf(v, "pdf2")
+            for i in 0..<second.pageCount { if let p = second.page(at: i)?.copy() as? PDFPage { doc.insert(p, at: doc.pageCount) } }
+            return .image(try pdfData(doc), type: "com.adobe.pdf")
+        }
+    }
+
+    private static func pdfData(_ doc: PDFDocument) throws -> Data {
+        guard let data = doc.dataRepresentation() else { throw EzyPhotoError.failed("Couldn't save the PDF.") }
+        return data
+    }
+
+    /// One picture on one page: A4 with a small margin, or the picture's own size.
+    private static func imagePDF(_ input: CIImage, a4: Bool) throws -> Data {
+        let picture = UIImage(cgImage: try cgImage(input))
+        let px = picture.size
+        let landscape = px.width > px.height
+        let page: CGSize = a4 ? (landscape ? CGSize(width: 842, height: 595) : CGSize(width: 595, height: 842)) : CGSize(width: px.width * 72 / 150, height: px.height * 72 / 150)
+        let margin: CGFloat = a4 ? 24 : 0
+        let area = CGRect(origin: .zero, size: page).insetBy(dx: margin, dy: margin)
+        let k = min(area.width / px.width, area.height / px.height)
+        let drawn = CGSize(width: px.width * k, height: px.height * k)
+        let rect = CGRect(x: area.midX - drawn.width / 2, y: area.midY - drawn.height / 2, width: drawn.width, height: drawn.height)
+        return UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: page)).pdfData { ctx in
+            ctx.beginPage()
+            picture.draw(in: rect)
         }
     }
 

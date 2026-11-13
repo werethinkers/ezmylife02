@@ -224,6 +224,7 @@ Object.assign(NATIVE_APPS, {
 // Photo tools that run in the browser on the website run on the phone in the keyboard (no upload, same
 // 1-credit price as the website, charged through POST /v1/apps/{id}/charge). The keyboard knows each one's
 // operation by id; these are the boxes it shows.
+const PDF: ApiField = { key: "pdf", label: "PDF", type: "pdf", required: true, help: "Copy a PDF first (Files › Share › Copy), then tap here" };
 const PHOTO: ApiField = { key: "photo", label: "Photo", type: "image", required: true, help: "Copy a photo first, then tap here" };
 const size = (w: string, h: string, unit: string): ApiField[] => [
   PHOTO,
@@ -291,6 +292,16 @@ const DEVICE_APPS: Record<string, NativeApp> = {
   "resize-2x2-inch": device("A 2 × 2 inch photo (US visa size).", [PHOTO]),
   "resize-3x4-inch": device("A 3 × 4 inch photo.", [PHOTO]),
   "resize-4x6-inch": device("A 4 × 6 inch print.", [PHOTO]),
+  // File converters: the PDF is read from what the person copied (Files › Share › Copy).
+  "jpg-to-pdf": device("Puts a photo or scan on an A4 PDF page.", [PHOTO, { key: "pageSize", label: "Page size", type: "select", options: ["A4", "Same as image"], default: "A4" }]),
+  "pdf-to-jpg": device("Saves one page of a PDF as a JPG picture.", [PDF, { key: "page", label: "Page", type: "number", default: "1" }]),
+  "pdf-to-text": device("Copies all the text out of a PDF.", [PDF]),
+  "rotate-pdf": device("Turns every page of a PDF the right way up.", [PDF, { key: "turn", label: "Turn", type: "select", options: ["Right (clockwise)", "Left (anticlockwise)", "Upside down"], default: "Right (clockwise)" }]),
+  "split-pdf": device("Keeps only the pages you name from a PDF.", [PDF, { key: "pages", label: "Pages", type: "text", required: true, placeholder: "1-3, 5" }]),
+  "merge-pdf": device("Joins two PDFs into one.", [PDF, { ...PDF, key: "pdf2", label: "Second PDF" }]),
+  "heic-to-jpg": device("Turns an iPhone HEIC photo into a JPG.", [PHOTO]),
+  "webp-to-jpg": device("Turns a WebP picture into a JPG.", [PHOTO]),
+  "png-to-jpg": device("Turns a PNG into a smaller JPG with a white background.", [PHOTO]),
 };
 Object.assign(NATIVE_APPS, DEVICE_APPS);
 
