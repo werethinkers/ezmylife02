@@ -386,6 +386,29 @@ enum EzyMatch {
 
 #if canImport(UIKit)
 enum EzyClipboard {
+    /// Copies a PDF as a named file, the way the Files app does, so chat apps such as
+    /// WhatsApp paste it as a document. Notes and Mail still read the raw PDF data.
+    static func copyPDF(_ data: Data, name: String) {
+        let clean = name.components(separatedBy: CharacterSet(charactersIn: "/\\:?*\"<>|")).joined()
+        let file = (clean.isEmpty ? "EZYOURLIFE" : clean) + ".pdf"
+        let folder = (FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: EzyShared.appGroup)
+            ?? FileManager.default.temporaryDirectory).appendingPathComponent("Paste", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent(file)
+        try? data.write(to: url, options: .atomic)
+        let provider = NSItemProvider()
+        provider.suggestedName = file
+        provider.registerFileRepresentation(forTypeIdentifier: "com.adobe.pdf", fileOptions: [], visibility: .all) { done in
+            done(url, false, nil)
+            return nil
+        }
+        provider.registerDataRepresentation(forTypeIdentifier: "com.adobe.pdf", visibility: .all) { done in
+            done(data, nil)
+            return nil
+        }
+        UIPasteboard.general.setItemProviders([provider], localOnly: false, expirationDate: nil)
+    }
+
     /// Copies a result: the text, or the image itself when the app made one.
     static func copy(_ result: EzyResult) async {
         if let link = result.imageURL, let image = await loadImage(link) {

@@ -776,7 +776,7 @@ final class KeyboardViewController: UIInputViewController {
                     guard let self else { return }
                     self.busy = nil
                     if let pdf {
-                        UIPasteboard.general.setData(pdf, forPasteboardType: "com.adobe.pdf")
+                        EzyClipboard.copyPDF(pdf, name: current.app.name)
                         self.replaceCommand(with: "")
                         self.notice = Self.pastePDF
                     } else {
@@ -806,7 +806,8 @@ final class KeyboardViewController: UIInputViewController {
                     self.busy = nil
                     switch output {
                     case let .image(data, type):
-                        UIPasteboard.general.setData(data, forPasteboardType: type)
+                        if type == "com.adobe.pdf" { EzyClipboard.copyPDF(data, name: app.name) }
+                        else { UIPasteboard.general.setData(data, forPasteboardType: type) }
                         self.replaceCommand(with: "")
                         self.notice = type == "com.adobe.pdf" ? Self.pastePDF : Self.pasteImage
                     case let .text(text):
