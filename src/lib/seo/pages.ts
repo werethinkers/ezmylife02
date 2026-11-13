@@ -218,6 +218,17 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Refund policy", "/refund-policy"], ["Contact support", "/about#contact"]],
   },
   {
+    path: "/keyboard",
+    title: "iPhone keyboard and voice shortcuts | EZYOURLIFE",
+    description: "Type / in WhatsApp, Instagram or Mail to use your shortcuts and EZYOURLIFE apps, or say what you need to Siri and tap the result in.",
+    h1: "Your shortcuts and apps in every app on your iPhone",
+    text: [
+      "The EZYOURLIFE keyboard puts your saved shortcuts and apps in every app on your iPhone. Type / and a few letters, then tap a shortcut or run an app.",
+      "Say \"Hey Siri, ask EZYOURLIFE\" or press the Action Button to ask by voice. The result is copied and ready to tap in from the keyboard.",
+    ],
+    links: [["Business apps", "/ai-apps"], ["Prices and credits", "/credits"], ["Privacy policy", "/privacy"]],
+  },
+  {
     path: "/privacy",
     title: "Privacy policy | EZYOURLIFE",
     description: "What EZYOURLIFE collects, why, who it is shared with, how long it is kept, and how to see, change or delete your data.",

@@ -11,6 +11,7 @@
 //   POST   /v1/wallet/topup                        a checkout link for a credit pack
 //   GET    /v1/keys   POST /v1/keys   DELETE /v1/keys/{id}   API keys (signed-in session only)
 //   GET    /v1/me                                  who the key or session belongs to
+//   POST   /v1/command                             {text}: picks the app and fills its boxes from one sentence (free, runs nothing)
 //
 // Auth: "Authorization: Bearer <token>", where the token is either an ezyourlife.com sign-in token
 // or an API key "ezy_live_…". Either way the person's own wallet pays, at the same prices as the website.
@@ -18,6 +19,7 @@
 import { corsHeaders as baseCors } from "../_shared/http.ts";
 import { ensurePrice, finishRun, startRun, walletBalance } from "../_shared/billing.ts";
 import { API_CATALOG, type ApiApp } from "../_shared/apiCatalog.ts";
+import { chat, parseJson } from "../_shared/llm.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -471,6 +473,79 @@ async function revokeKey(who: Who, id: string) {
   return r.ok ? json({ ok: true }) : fail(500, "failed", "Could not revoke the key.");
 }
 
+// ---------- one-sentence commands (iPhone keyboard, Siri, EzMe) ----------
+
+// "invoice for Rahul, 5000 rupees" -> the best app and its boxes filled in. Nothing is run and nothing is
+// charged here: the caller shows the app and its price, and runs it with POST /apps/{id}/run after a tap.
+// One small Flash-Lite call per command. A soft per-person limit keeps a stuck client from looping.
+const COMMAND_DAILY_LIMIT = 300;
+const commandCounts = new Map<string, { day: string; n: number }>();
+
+async function planCommand(who: Who, body: Record<string, unknown>) {
+  const text = str(body.text, 1000)?.trim();
+  if (!text) return fail(400, "missing_text", "Send what you need as 'text'.");
+  const day = new Date().toISOString().slice(0, 10);
+  const used = commandCounts.get(who.userId);
+  const n = used?.day === day ? used.n + 1 : 1;
+  commandCounts.set(who.userId, { day, n });
+  if (n > COMMAND_DAILY_LIMIT) return fail(429, "daily_limit", "That's a lot of commands today. Try again tomorrow.");
+
+  const c = await catalog();
+  const words = text.toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/).filter((w) => w.length > 1);
+  const wanted = str(body.app_id, 120);
+  let rows = c.rows.filter((r) => API_CATALOG[r.id]);
+  if (wanted) rows = rows.filter((r) => r.id === wanted);
+  const ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => wanted || x.s > 0).sort((a, b) => b.s - a.s).slice(0, 8);
+  if (!ranked.length) return json({ ok: true, app: null, message: "No app matched. Try other words." });
+
+  const candidates = ranked.map(({ r }) => {
+    const spec = API_CATALOG[r.id];
+    return {
+      id: r.id,
+      name: r.name,
+      about: (spec.intro || r.description || "").slice(0, 160),
+      fields: (spec.fields ?? []).map((f) => ({ key: f.key, label: f.label, type: f.type, required: !!f.required, options: f.options })),
+      prompt: spec.fields?.length ? undefined : (spec.promptLabel ?? "prompt"),
+    };
+  });
+  let pick: { app_id?: string | null; inputs?: Record<string, unknown>; prompt?: string } = {};
+  try {
+    const out = await chat([
+      {
+        role: "system",
+        content:
+          "You turn one spoken or typed request into an app run. Pick the single best app from the list, or null if none fits. " +
+          "Fill its fields only with facts in the request (keep the person's language; numbers as digits; select fields must use one of the options). " +
+          "Never invent names, amounts or dates. Apps with no fields take the whole request, cleaned up, as 'prompt'. " +
+          'Answer JSON only: {"app_id": string|null, "inputs": {fieldKey: value}, "prompt": string|null}.',
+      },
+      { role: "user", content: JSON.stringify({ request: text, apps: candidates }) },
+    ], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 800, temperature: 0 });
+    pick = parseJson(out);
+  } catch (e) {
+    console.error("command plan", e);
+    pick = { app_id: ranked[0].r.id, inputs: {} };
+  }
+  const chosen = ranked.find((x) => x.r.id === pick.app_id)?.r;
+  if (!chosen) return json({ ok: true, app: null, message: "No app matched. Try other words." });
+  const spec = API_CATALOG[chosen.id];
+  const fields = spec.fields ?? [];
+  const inputs: Record<string, string> = {};
+  for (const f of fields) {
+    const v = pick.inputs?.[f.key];
+    if (v !== undefined && v !== null && String(v).trim()) inputs[f.key] = String(v).slice(0, 4000);
+  }
+  const missing = fields.filter((f) => f.required && !inputs[f.key]).map((f) => ({ key: f.key, label: f.label }));
+  return json({
+    ok: true,
+    app: summary(chosen, c),
+    inputs,
+    prompt: fields.length ? undefined : (str(pick.prompt, 2000) || text),
+    missing,
+    ready: missing.length === 0,
+  });
+}
+
 // ---------- router ----------
 
 Deno.serve(async (req) => {
@@ -500,6 +575,7 @@ Deno.serve(async (req) => {
 
     if (m === "GET" && route[0] === "me") return json({ ok: true, user_id: who.userId, via: who.key ? "api_key" : "session", key_id: who.key?.id ?? null });
     if (m === "GET" && route[0] === "profile") return await readProfile(who);
+    if (m === "POST" && route[0] === "command") return await planCommand(who, body);
     if (m === "POST" && route[0] === "apps" && route[2] === "run") return await runApp(who, decodeURIComponent(route[1]), body);
     if (m === "POST" && route[0] === "prompt" && route[1] === "improve") return await improve(who, body);
     if (m === "POST" && route[0] === "prompt" && route[1] === "brainstorm") return await brainstorm(who, body);

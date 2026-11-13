@@ -1,0 +1,50 @@
+# Compile check for the iOS app, its EZYOURLIFE keyboard and the Siri command, on every pull request
+# that touches ios/ (no Apple secrets needed, nothing is uploaded). It also prints the entitlements
+# (App Group) stamped into the archive, which the TestFlight export keeps when it signs for the App Store.
+name: iOS build check
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - "capacitor.config.ts"
+      - ".github/workflows/ios-build-check.yml"
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-package-lock --no-audit --no-fund
+      - run: npx cap sync ios
+      - name: Archive (unsigned, like the TestFlight workflow)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION=1.1 \
+            CURRENT_PROJECT_VERSION=1 2>&1 | tee "$RUNNER_TEMP/build.log" | grep -E "error:|warning: .*(Keyboard|Ezy|AskEzy)|ARCHIVE (SUCCEEDED|FAILED)" || true
+          grep -q "ARCHIVE SUCCEEDED" "$RUNNER_TEMP/build.log" || { grep -B2 -A6 "error:" "$RUNNER_TEMP/build.log" | head -150; exit 1; }
+      - name: Stamp the entitlements (App Group) into the archive
+        run: ios/stamp-entitlements.sh "$RUNNER_TEMP/App.xcarchive"
+      - name: Show what the archive contains
+        run: |
+          app="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
+          ls "$app/PlugIns"
+          echo "== App entitlements"; codesign -d --entitlements - "$app" 2>&1 | tail -20
+          echo "== Keyboard entitlements"; codesign -d --entitlements - "$app/PlugIns/Keyboard.appex" 2>&1 | tail -20
+          /usr/libexec/PlistBuddy -c "Print :NSExtension" "$app/PlugIns/Keyboard.appex/Info.plist"
+          ls "$app/Metadata.appintents" 2>/dev/null && echo "Siri command metadata present"
