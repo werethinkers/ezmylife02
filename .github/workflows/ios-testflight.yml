@@ -82,6 +82,9 @@ jobs:
             MARKETING_VERSION="${{ inputs.version }}" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}"
 
+      - name: Stamp the entitlements (App Group shared with the keyboard)
+        run: ios/stamp-entitlements.sh "$RUNNER_TEMP/App.xcarchive"
+
       - name: Upload to TestFlight
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

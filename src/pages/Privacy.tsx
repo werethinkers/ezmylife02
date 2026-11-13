@@ -34,6 +34,10 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     body: "If you sign in with Google, or connect Google Photos or Gmail inside an app, we only use the access you approve, only for that app's feature, and never to show ads. Google Photos gives us only the photos you pick. Gmail access in Mail Brain only reads mail to make your summaries, tasks and drafts; nothing is sent for you. Our use of information received from Google APIs follows the Google API Services User Data Policy, including the Limited Use requirements.",
   },
   {
+    title: "The EZYOURLIFE keyboard and voice",
+    body: "The EZYOURLIFE keyboard on iPhone does not store, log or send what you type. Only the words you type after / are sent to us, to find your shortcuts and apps, and the details of an app you choose to run. \"Ask EZYOURLIFE\" with Siri sends us the request Siri hears from you, to pick and run the app. Apple handles the speech itself. Full Access lets the keyboard reach the internet and your shortcuts saved by the app; you can turn the keyboard off in Settings at any time.",
+  },
+  {
     title: "Cookies and storage",
     body: "We use your browser's storage to keep you signed in and remember your settings, and analytics cookies to count visits. You can clear them in your browser at any time.",
   },
@@ -73,7 +77,7 @@ const Privacy = () => (
       <div className="mx-auto max-w-3xl">
         <div className="mb-12 text-center">
           <h1 className="mb-4 font-display text-3xl font-semibold md:text-4xl lg:text-5xl">Privacy policy</h1>
-          <p className="text-muted-foreground">Last updated on Nov 7, 2026</p>
+          <p className="text-muted-foreground">Last updated on Nov 14, 2026</p>
         </div>
         <div className="space-y-6">
           {SECTIONS.map((s) => (
