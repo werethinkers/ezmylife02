@@ -132,6 +132,94 @@ export const NATIVE_APPS: Record<string, NativeApp> = {
   },
 };
 
+/** A website app that runs in the browser, run on the server through ai-app with its AI spec (appSpecs/extras.ts). */
+function aiDoc(id: string, intro: string, fields: ApiField[], charge = id): NativeApp {
+  return { fn: "ai-app", charge, credits: 2, mode: "form", intro, fields, build: (inputs) => ({ tool_id: id, inputs }) };
+}
+
+Object.assign(NATIVE_APPS, {
+  "tool-1": aiDoc("tool-1", "A GST tax invoice with every sum worked out, ready to send.", [
+    { key: "Business", label: "Business name", type: "text", profile: "businessName" },
+    { key: "Business GSTIN", label: "Your GSTIN", type: "text", profile: "gstin" },
+    { key: "Business address", label: "Your address", type: "text", profile: "address" },
+    { key: "Customer", label: "Customer", type: "text", required: true, placeholder: "Rahul Traders" },
+    { key: "Customer GSTIN", label: "Customer GSTIN", type: "text" },
+    { key: "Items", label: "Items (qty, rate, GST %)", type: "rows", required: true, placeholder: "2 x Steel chair @ 1500, GST 18%" },
+    { key: "Invoice number", label: "Invoice number", type: "text" },
+  ], "tool-1-ai"),
+  "tool-2": aiDoc("tool-2", "Your expenses sorted into categories with totals and where to save.", [
+    { key: "Expenses", label: "Expenses", type: "textarea", required: true, placeholder: "Rent 15000, groceries 6200, petrol 3000…" },
+    { key: "Period", label: "Period", type: "text", placeholder: "November 2026" },
+  ], "tool-2-ai"),
+  "tool-3": aiDoc("tool-3", "Profit, margin, markup and break-even from your numbers.", [
+    { key: "Selling price", label: "Selling price per unit (₹)", type: "money", required: true },
+    { key: "Cost price", label: "Cost per unit (₹)", type: "money", required: true },
+    { key: "Quantity", label: "Units sold", type: "number" },
+    { key: "Fixed costs", label: "Fixed costs (₹)", type: "money" },
+  ], "tool-3-ai"),
+  "tool-4": aiDoc("tool-4", "Your income tax under the new and old regime, with the working.", [
+    { key: "Income", label: "Yearly income (₹)", type: "money", required: true },
+    { key: "Deductions", label: "Deductions (80C, HRA, 80D…)", type: "text", placeholder: "80C 150000, 80D 25000" },
+    { key: "Financial year", label: "Financial year", type: "text", placeholder: "2026-27" },
+  ], "tool-4-ai"),
+  "tool-6": aiDoc("tool-6", "An agreement drafted with numbered clauses under Indian law.", [
+    { key: "Agreement type", label: "Agreement type", type: "text", required: true, placeholder: "Service agreement" },
+    { key: "Parties", label: "Parties", type: "text", required: true, placeholder: "ABC Pvt Ltd and Rahul Sharma" },
+    { key: "Scope and payment", label: "Scope, dates and payment", type: "textarea", placeholder: "Website design, 3 months, ₹60,000 in 3 parts" },
+    { key: "City", label: "City for disputes", type: "text", profile: "city" },
+  ]),
+  "tool-28": aiDoc("tool-28", "A job post for your opening, plus a short WhatsApp version.", [
+    { key: "Role", label: "Role", type: "text", required: true, placeholder: "Sales executive" },
+    { key: "Business", label: "Business", type: "text", profile: "businessName" },
+    { key: "Location", label: "Location", type: "text", profile: "city" },
+    { key: "Salary", label: "Salary", type: "text" },
+    { key: "Requirements", label: "Requirements", type: "text" },
+  ]),
+  "tool-30": aiDoc("tool-30", "Your salary broken down into take-home pay, PF, tax and allowances.", [
+    { key: "Salary", label: "CTC or gross salary", type: "text", required: true, placeholder: "12 lakh CTC" },
+    { key: "State", label: "State", type: "text", profile: "state" },
+  ], "tool-30-ai"),
+  "quiz": aiDoc("quiz", "A multiple-choice quiz with answers and explanations.", [
+    { key: "Topic", label: "Topic", type: "text", required: true, placeholder: "Photosynthesis" },
+    { key: "Questions", label: "Number of questions", type: "number", default: "10" },
+    { key: "Level", label: "Level", type: "select", options: ["Easy", "Medium", "Hard"], default: "Medium" },
+  ]),
+  "quiz-maker": aiDoc("quiz-maker", "A multiple-choice quiz with an answer key, ready to share.", [
+    { key: "Topic", label: "Topic", type: "text", required: true, placeholder: "Indian freedom struggle" },
+    { key: "Questions", label: "Number of questions", type: "number", default: "10" },
+    { key: "Level", label: "Level", type: "select", options: ["Easy", "Medium", "Hard"], default: "Medium" },
+  ]),
+  "grade-calculator": aiDoc("grade-calculator", "Percentage, CGPA and grade from your marks, with the working.", [
+    { key: "Marks", label: "Subjects and marks", type: "textarea", required: true, placeholder: "Maths 86/100, Physics 78/100, Chemistry 91/100" },
+    { key: "Credits", label: "Credits or weights", type: "text" },
+    { key: "Target", label: "Target", type: "text" },
+  ], "grade-calculator-ai"),
+  "study-planner": aiDoc("study-planner", "A day-by-day study plan up to your exam.", [
+    { key: "Subjects", label: "Subjects", type: "text", required: true },
+    { key: "Exam date", label: "Exam date", type: "text", required: true },
+    { key: "Hours per day", label: "Hours per day", type: "number", default: "4" },
+  ]),
+  "flashcard-maker": aiDoc("flashcard-maker", "Flashcards on any topic, front and back.", [
+    { key: "Topic", label: "Topic", type: "text", required: true },
+    { key: "Cards", label: "Number of cards", type: "number", default: "15" },
+  ]),
+  "assignment-tracker": aiDoc("assignment-tracker", "Your assignments in a tracker sorted by due date, with this week's plan.", [
+    { key: "Assignments", label: "Assignments and due dates", type: "textarea", required: true },
+  ], "assignment-tracker-ai"),
+  "bibliography-generator": aiDoc("bibliography-generator", "References formatted in APA, MLA or the style you need.", [
+    { key: "Sources", label: "Sources", type: "textarea", required: true, placeholder: "Book title, author, year…" },
+    { key: "Style", label: "Style", type: "select", options: ["APA 7", "MLA 9", "Chicago", "Harvard", "IEEE"], default: "APA 7" },
+  ], "bibliography-generator-ai"),
+  "exam-scheduler": aiDoc("exam-scheduler", "A preparation timetable around your exam dates.", [
+    { key: "Exams", label: "Exams and dates", type: "textarea", required: true },
+  ]),
+  "lesson-planner": aiDoc("lesson-planner", "A lesson plan with timings, activity and homework.", [
+    { key: "Topic", label: "Topic", type: "text", required: true },
+    { key: "Grade", label: "Class / grade", type: "text", required: true },
+    { key: "Duration", label: "Duration (minutes)", type: "number", default: "40" },
+  ]),
+});
+
 /** Turns what a native function answered into the API's usual { output, image } shape. */
 export function nativeOutput(id: string, data: Record<string, unknown>): Record<string, unknown> {
   // Startup Analyser streams its report (OpenAI-style server-sent events): join the pieces.
