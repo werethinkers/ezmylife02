@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Copy, Download, ExternalLink, Loader2, MessageCircle, RotateCcw, Sparkles, Wand2 } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, FileText, Loader2, MessageCircle, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
@@ -7,6 +7,10 @@ import { useToolPricing } from "@/hooks/useToolPricing";
 import { cn } from "@/lib/utils";
 import { AppShell } from "../shell/AppShell";
 import { OutputPanel } from "../shell/OutputPanel";
+import { useWorkspace } from "../lib/workspace";
+import { docFromCalc } from "../output/buildDoc";
+import { usePreparedPdf } from "../output/usePreparedPdf";
+import { saveFile } from "../output/save";
 import { FieldInput } from "../shell/Fields";
 import { StepLabel } from "../shell/StepLabel";
 import { HistoryList, addHistory, type HistoryItem } from "../shell/HistoryList";
@@ -122,6 +126,22 @@ export default function CalcApp({ toolId, def }: { toolId: string; def: CalcDef 
     }
   };
 
+  const { profile } = useWorkspace();
+  const statement = useMemo(
+    () =>
+      ok
+        ? docFromCalc({ toolId, appName, fileName: def.fileName, profile, fields: def.fields, values, out, explanation })
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ok, out, explanation, appName, profile],
+  );
+  // The Statement PDF is made in the background once typing stops, so the button is instant.
+  const statementPdf = usePreparedPdf(statement, { wait: 1200 });
+  const savePdf = () => {
+    if (statementPdf.state === "ready") void saveFile(statementPdf.pdf.blob, `${def.fileName}.pdf`, appName);
+    else if (statementPdf.state === "error") toast.error("The PDF could not be made on this device.");
+    else toast.info("Your PDF is nearly ready — try again in a moment.");
+  };
   const rows = ok && out.table ? (allRows ? out.table.rows : out.table.rows.slice(0, 10)) : [];
   const splitTotal = ok && out.split ? out.split.reduce((a, s) => a + Math.max(0, s.value), 0) : 0;
   const main = ok ? out.results.find((r) => r.main) : undefined;
@@ -223,6 +243,9 @@ export default function CalcApp({ toolId, def }: { toolId: string; def: CalcDef 
                   <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => void copy()}>
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? "Copied" : "Copy"}
                   </Button>
+                  <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={savePdf}>
+                    {statementPdf.state === "making" && !statementPdf.previous ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />} PDF
+                  </Button>
                   <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={whatsapp}>
                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                   </Button>
@@ -277,7 +300,7 @@ export default function CalcApp({ toolId, def }: { toolId: string; def: CalcDef 
 
           {explanation && (
             <div id={`${toolId}-explain`} className="scroll-mt-24">
-              <OutputPanel toolId={toolId} text={explanation} title={appName} fileName={`${def.fileName}-explained`} sendTo={def.related} />
+              <OutputPanel toolId={toolId} text={explanation} title={appName} fileName={`${def.fileName}-explained`} sendTo={def.related} pdfDoc={statement ?? undefined} />
             </div>
           )}
         </div>

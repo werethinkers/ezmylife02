@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Download, Printer, User } from "lucide-react";
+import { Upload, Download, FileText, Printer, User } from "lucide-react";
 import { toast } from "sonner";
 import { GooglePhotosButton } from "@/components/GooglePhotosPicker";
+import { makePhotoSheetPdf, sheetFit, type Paper } from "@/apps/output/photoSheet";
+import { saveFile } from "@/apps/output/save";
 
 type PhotoSize = {
   name: string;
@@ -140,6 +142,51 @@ export const PassportPhotoMaker = () => {
     img.src = image;
   };
 
+  /** One photo at 300 dpi on the chosen background, then laid out on a printable PDF sheet. */
+  const photoSheet = (paper: Paper) => {
+    if (!image) return;
+    const toMm = (v: number) => (selectedSize.unit === "inch" ? v * 25.4 : v);
+    const wMm = toMm(selectedSize.width);
+    const hMm = toMm(selectedSize.height);
+    const c = document.createElement("canvas");
+    c.width = Math.round((wMm / 25.4) * 300);
+    c.height = Math.round((hMm / 25.4) * 300);
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    const img = new Image();
+    img.onload = async () => {
+      ctx.fillStyle = backgroundColor === "custom" ? customColor : backgroundColors[backgroundColor];
+      ctx.fillRect(0, 0, c.width, c.height);
+      const target = c.width / c.height;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (img.width / img.height > target) {
+        sw = img.height * target;
+        sx = (img.width - sw) / 2;
+      } else {
+        sh = img.width / target;
+        sy = (img.height - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      const t = toast.loading("Making your print sheet…");
+      try {
+        const fit = sheetFit(paper, wMm, hMm);
+        const blob = await makePhotoSheetPdf({
+          photo: c.toDataURL("image/jpeg", 0.95),
+          wMm,
+          hMm,
+          copies: Math.max(copies, fit.per),
+          paper,
+          label: selectedSize.name.replace(/\s*\(.*\)/, "") + " photo",
+        });
+        await saveFile(blob, `${selectedSize.name.split(" ")[0].toLowerCase()}-photos-${paper}.pdf`, "Photo print sheet");
+        toast.success(`Print sheet ready: ${fit.per} photos on ${paper === "a4" ? "A4" : "4 × 6 inch"} paper`, { id: t });
+      } catch {
+        toast.error("The PDF could not be made on this device.", { id: t });
+      }
+    };
+    img.src = image;
+  };
+
   return (
     <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -270,6 +317,14 @@ export const PassportPhotoMaker = () => {
                   <Printer className="h-4 w-4 mr-2" />
                   Download Print-Ready (High Quality)
                 </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => photoSheet("a4")} variant="outline" className="w-full gap-1.5">
+                    <FileText className="h-4 w-4" /> PDF sheet (A4)
+                  </Button>
+                  <Button onClick={() => photoSheet("4x6")} variant="outline" className="w-full gap-1.5">
+                    <FileText className="h-4 w-4" /> PDF sheet (4×6 in)
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>

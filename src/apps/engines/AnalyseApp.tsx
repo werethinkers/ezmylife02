@@ -14,6 +14,7 @@ import type { FormValues } from "../types";
 import type { AnalyseDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
 import { FieldGrid, ResultView, YouGet, card, emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
 
 interface Item {
@@ -209,6 +210,7 @@ export default function AnalyseApp({ toolId, def }: { toolId: string; def: Analy
                 <FieldGrid toolId={toolId} fields={def.fields} values={values} onChange={setValues} sample={def.sample} disabled={!!busy} />
               </div>
             )}
+            <OutputChoice toolId={toolId} className="mt-5" />
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button type="submit" className="gap-2" disabled={!!busy || !!reading}>
                 {busy === "final" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}

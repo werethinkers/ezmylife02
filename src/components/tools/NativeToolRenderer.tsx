@@ -1,9 +1,12 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import AppRenderer from "@/apps/AppRenderer";
 import { hasEngineApp } from "@/apps/registry";
 import { USAGE_GATED } from "@/apps/prices";
 import { UsageGate } from "@/apps/shell/UsageGate";
+import { SaveBar } from "@/apps/output/SaveBar";
+import type { TemplateId } from "@/apps/output/types";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 
 // Each tool loads only when it is opened (keeps the tool page fast).
 const ImageColorPicker = lazy(() => import("./ImageColorPicker").then((m) => ({ default: m.ImageColorPicker })));
@@ -216,6 +219,52 @@ const nativeTools: Record<string, React.ComponentType> = {
   "ai-video-generator": VideoMaker,
 };
 
+/*
+ * Apps on this page that make a document (not a picture): they get "Get your result as:
+ * PDF · Word · WhatsApp · Text" under them, read from what the app shows (docs/output-formats.md).
+ * Invoice Generator builds its own PDF, so it is not listed.
+ */
+const DOC_OUTPUT = new Map<React.ComponentType, TemplateId>([
+  [ExpenseTracker, "register"],
+  [ProfitCalculator, "statement"],
+  [TaxEstimator, "statement"],
+  [SalaryCalculator, "statement"],
+  [GradeCalculator, "statement"],
+  [ContractDrafter, "letter"],
+  [JobPostGenerator, "document"],
+  [QuizMaker, "document"],
+  [FlashcardMaker, "document"],
+  [BibliographyGenerator, "document"],
+  [LessonPlanner, "plan"],
+  [StudyPlanner, "plan"],
+  [ExamScheduler, "plan"],
+  [AssignmentTracker, "register"],
+  [SocialPostGenerator, "document"],
+  [CaptionGenerator, "document"],
+  [HashtagGenerator, "document"],
+  [ContentIdeaGenerator, "document"],
+  [VideoScriptWriter, "document"],
+  [ContentWorkflow, "document"],
+]);
+
+/** Whether an app with its own page offers PDF, Word and WhatsApp output. */
+export const hasDocOutput = (toolId: string) => {
+  const C = nativeTools[toolId];
+  return !!C && (DOC_OUTPUT.has(C) || C === InvoiceGenerator);
+};
+
+function WithSaveBar({ toolId, template, children }: { toolId: string; template: TemplateId; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { data: catalog = [] } = useToolsCatalog();
+  const appName = catalog.find((t) => t.id === toolId)?.name ?? "Your result";
+  return (
+    <>
+      <div ref={ref}>{children}</div>
+      <SaveBar toolId={toolId} appName={appName} template={template} target={ref} className="mx-auto mt-4 max-w-6xl" />
+    </>
+  );
+}
+
 interface NativeToolRendererProps {
   toolId: string;
 }
@@ -234,13 +283,23 @@ export const NativeToolRenderer = ({ toolId }: NativeToolRendererProps) => {
   return (
     <Suspense fallback={<Loading />}>
       <div className="py-3 md:py-6">
-        {USAGE_GATED.has(toolId) ? (
-          <UsageGate toolId={toolId}>
+        {(() => {
+          const tool = USAGE_GATED.has(toolId) ? (
+            <UsageGate toolId={toolId}>
+              <ToolComponent />
+            </UsageGate>
+          ) : (
             <ToolComponent />
-          </UsageGate>
-        ) : (
-          <ToolComponent />
-        )}
+          );
+          const template = DOC_OUTPUT.get(ToolComponent);
+          return template ? (
+            <WithSaveBar toolId={toolId} template={template}>
+              {tool}
+            </WithSaveBar>
+          ) : (
+            tool
+          );
+        })()}
       </div>
     </Suspense>
   );
