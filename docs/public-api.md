@@ -24,6 +24,7 @@ Whoever calls, the person's own wallet pays at the website's prices, through the
 | `POST /prompt/improve` | PromptMaster magic write: `{prompt, goal?}` | PromptMaster's price |
 | `POST /prompt/brainstorm` | PromptMaster brainstorm: `{topic, styles?}` | PromptMaster's price |
 | `POST /command` | `{text, app_id?}`: the best app for one sentence, with `inputs` filled (from the sentence, then from the saved business profile, listed in `from_profile`), every box in `fields`, `missing` required boxes and `ready`. Runs nothing; run it with `POST /apps/{id}/run`. Used by the iPhone keyboard and Siri | free (soft limit 300 a day) |
+| `POST /apps/{id}/charge` | Charges one run of a tool that ran on the person's phone (mode `device`, like the photo and PDF tools in the iPhone keyboard). Nothing is uploaded | the tool's price |
 | `GET /cards?q=` | Card, invite and website designs, each with its `/create/<id>` link | free, no key |
 | `GET`, `PUT /shortcuts`, `DELETE /shortcuts/{key}` | The person's synced shortcuts (same list as the extension and Speedy Notebook) | free |
 | `GET /profile` | The person's saved business details (name, city, GSTIN…) that prefill app boxes | free |
@@ -35,6 +36,10 @@ Apps the API runs are listed in `supabase/functions/_shared/apiCatalog.ts`, gene
 `node scripts/gen-api-catalog.mjs` (296 apps on 7 Nov 2026). Calculators, converters, photo presets, trackers and
 coaching sessions run only on the site: `run` answers `409 web_only` with the app's link. Run the generator again
 after adding apps.
+
+Apps outside that catalogue that the API also runs are in `supabase/functions/_shared/nativeApis.ts`: older AI
+apps with their own server function, browser text tools (through `ai-app`), and phone-run tools (mode `device`:
+`run` answers `409 runs_on_device`; the app does the work and calls `charge`).
 
 ## Going live
 

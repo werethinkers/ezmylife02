@@ -91,12 +91,16 @@ serve(async (req) => {
 
     // Signed-in users only (the public anon key is rejected).
     const caller = await identify(req);
-    if (!caller?.userId) {
+    // The public API (api function, used by the iPhone keyboard) runs this for a person with the service
+    // key and names them; the per-angle charge below then comes from that person's wallet as usual.
+    const peek = await req.clone().json().catch(() => ({}));
+    const userId = caller?.internal && typeof peek?.user_id === "string" ? peek.user_id : caller?.userId;
+    if (!userId) {
       return new Response(JSON.stringify({ error: "sign_in_required", message: "Please sign in to use this app." }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const ud = { user: { id: caller.userId } };
+    const ud = { user: { id: userId } };
 
     const body = await req.json().catch(() => ({}));
     const imageBase64 = String(body.imageBase64 || "");

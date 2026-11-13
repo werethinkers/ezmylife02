@@ -125,6 +125,8 @@ struct EzyApp: Codable, Hashable {
     var credits: Int?
     var runnable: Bool?
     var url: String?
+    /// "device": a photo tool that runs on the phone (EzyPhoto in the keyboard); the server only charges it.
+    var mode: String?
 
     var link: String { url ?? "\(EzyShared.site)/tool/\(id)" }
     var priceLabel: String {
@@ -165,6 +167,13 @@ struct EzyField: Codable, Hashable {
     var required: Bool?
     var placeholder: String?
     var options: [String]?
+    var defaultValue: String?
+    var help: String?
+
+    enum CodingKeys: String, CodingKey {
+        case key, label, type, required, placeholder, options, help
+        case defaultValue = "default"
+    }
 }
 
 /// A finished result, kept so the keyboard can offer it (Siri runs it while the person stays in their chat).
@@ -196,7 +205,7 @@ enum EzyError: LocalizedError {
 enum EzyAPI {
     private static func request(_ path: String, method: String = "GET", body: [String: Any]? = nil, auth: Bool = true) async throws -> [String: Any] {
         guard let url = URL(string: EzyShared.api.absoluteString + path) else { throw EzyError.server("Bad address.") }
-        var req = URLRequest(url: url, timeoutInterval: 60)
+        var req = URLRequest(url: url, timeoutInterval: 150) // image apps can take a minute or two
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if auth {
@@ -248,6 +257,12 @@ enum EzyAPI {
         if let appId { body["app_id"] = appId }
         let json = try await request("/command", method: "POST", body: body)
         return decode(EzyPlan.self, json) ?? EzyPlan(app: nil, message: "No app matched.", fields: nil, fromProfile: nil)
+    }
+
+    /// Charges a photo tool that ran on the phone, at its website price.
+    static func chargeDevice(_ appId: String) async throws {
+        let id = appId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? appId
+        _ = try await request("/apps/\(id)/charge", method: "POST", body: [:])
     }
 
     /// Runs the app, charged at its normal price. Returns the result as text (and an image link for image apps).
