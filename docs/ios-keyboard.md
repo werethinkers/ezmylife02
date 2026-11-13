@@ -1,0 +1,71 @@
+# The EZYOURLIFE keyboard and "Ask EZYOURLIFE" voice (iPhone)
+
+ezme's `/pm` and `/invo` on the iPhone alone, in any app, plus voice through Siri and the Action Button.
+Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store build (version 1.1 or later).
+
+## What people get
+
+- **Keyboard.** An iPhone-style keyboard with one strip on top and a coral `/` key. In any app, `/` and a
+  few letters show the person's synced shortcuts (the same list as Speedy Notebook, EzMe and the Chrome
+  extension) and Ezyourlife apps.
+  - Tap a shortcut: its text replaces `/pm`.
+  - Tap an app, type the details (`/invo Rahul Traders 5000`), tap **Run · 2 credits**: the result
+    replaces the command. Image results are copied for the person to paste (iOS doesn't let a keyboard
+    put a photo into another app's box).
+  - The last Siri result shows first as **Insert: …** for 15 minutes.
+- **Ask EZYOURLIFE.** "Hey Siri, ask EZYOURLIFE", the Action Button, Back Tap or the Shortcuts app. Siri asks
+  "What do you need?". A shortcut's name copies that shortcut for free. Otherwise Siri names the app and its
+  price and asks before running it, then copies the result. It runs in the background, so the person stays
+  in their chat. Keyboards can never use the microphone (Apple's rule), so voice lives here.
+- **Setup page** `/keyboard` (works in browsers too, as an explainer): Connect, Settings steps, voice steps.
+
+## How it fits together
+
+| Path | What it is |
+| --- | --- |
+| `ios/App/Keyboard/KeyboardViewController.swift` | The keyboard: keys, auto-capitals, double-space full stop, delete-repeat, and the strip |
+| `ios/App/Keyboard/Info.plist` | Keyboard extension settings (`RequestsOpenAccess` = Full Access) |
+| `ios/App/App/AskEzyourlifeIntent.swift` | The Siri / Action Button command (App Intents, iOS 16+) and its Siri phrases |
+| `ios/App/App/EzyKeyboardPlugin.swift` | Capacitor plugin `EzyKeyboard`: the website hands the keyboard its API key |
+| `ios/App/Shared/EzyShared.swift` | Shared by both targets: App Group storage, the API client, matching `/` commands |
+| `ios/App/App/App.entitlements`, `ios/App/Keyboard/Keyboard.entitlements` | App Group `group.com.ezyourlife.app` |
+| `ios/stamp-entitlements.sh` | Puts the App Group into the unsigned archive before Apple signs it at export |
+| `src/pages/KeyboardSetup.tsx`, `src/lib/ezyKeyboard.ts` | The `/keyboard` page and its bridge to the plugin |
+| `supabase/functions/api` `POST /v1/command` | One sentence to the best app with its boxes filled. Free, runs nothing |
+| `.github/workflows/ios-build-check.yml` | Compiles the app and keyboard on GitHub's Macs for every PR touching `ios/` |
+
+Connecting makes an API key named "EZYOURLIFE keyboard on iPhone" (daily limit 500 credits) through the
+existing `/v1/keys` route. The person sees and removes it under `/developers/keys`. Runs are charged by the
+existing `POST /v1/apps/{id}/run` at the website's prices, only after a tap or Siri's confirmation.
+
+## Abhi's Apple steps (once, before the 1.1 build)
+
+1. developer.apple.com → Certificates, Identifiers & Profiles → Identifiers → **+** → **App Groups** →
+   description "EZYOURLIFE shared", identifier `group.com.ezyourlife.app`.
+2. Identifiers → `com.ezyourlife.app` → tick **App Groups** → Configure → tick `group.com.ezyourlife.app` → Save.
+3. Identifiers → **+** → App IDs → App → description "EZYOURLIFE Keyboard", bundle ID explicit
+   `com.ezyourlife.app.keyboard` → tick **App Groups** → Configure → `group.com.ezyourlife.app` → Register.
+4. Run Actions → "iOS app to TestFlight" with version `1.1` on the release that contains this work.
+   (Xcode may register steps 1 to 3 by itself during the export; doing them by hand first is the safe path.)
+5. App Store Connect → the 1.1 version → App Review notes: "The app includes a custom keyboard. Full Access is
+   used only to reach the person's own shortcuts and apps on ezyourlife.com; typed text is not stored or sent,
+   except the words after '/' when the person looks up a shortcut or app. Privacy policy: https://ezyourlife.com/privacy."
+   Add the demo account. In App Privacy nothing new is collected beyond what is already declared.
+
+## Testing on TestFlight
+
+1. Install, sign in, open Menu → `/keyboard` (or https://ezyourlife.com/keyboard in the app) → **Connect**.
+2. Settings → Apps → EZYOURLIFE → Keyboards → turn on EZYOURLIFE and Allow Full Access.
+3. In WhatsApp: globe key → EZYOURLIFE → type `/` and a shortcut's first letters → tap it.
+4. `/invo` → tap Proforma Invoice → type the details → **Run** → the invoice text replaces the command.
+5. "Hey Siri, ask EZYOURLIFE" → say a shortcut's name, then an app request. Check the price question,
+   then the result in the keyboard strip.
+6. Action Button: Settings → Action Button → Shortcut → EZYOURLIFE → Ask EZYOURLIFE.
+
+## Known limits
+
+- No Apple autocorrect, word predictions, swipe typing or other languages in the keyboard itself (Apple
+  doesn't share them with other keyboards). People switch with the globe key when they need those.
+- iOS uses Apple's own keyboard in password and phone-number boxes.
+- Without Full Access the keyboard types normally but the strip only shows how to turn it on.
+- Siri's trigger phrase can't carry free words, so Siri always asks "What do you need?" first.
