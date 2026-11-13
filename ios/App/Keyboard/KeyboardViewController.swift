@@ -64,8 +64,14 @@ final class KeyboardViewController: UIInputViewController {
         var fromProfile: Set<String>
         var edited: Set<String> = []
         var commandText: String
+        /// "text" (typed into the chat) or "pdf" (a PDF copied for pasting). Only for apps that answer in words.
+        var format: String = "text"
+        var offersPDF: Bool { !["device", "image", "images"].contains(app.mode ?? "") }
     }
     private static let promptKey = "__prompt"
+    // Short enough to fit the strip on a small iPhone.
+    private static let pasteImage = "✓ Image copied · hold the message box › Paste"
+    private static let pastePDF = "✓ PDF copied · hold the message box › Paste"
     private var card: Card?
     private var editingKey: String?
     /// The photo box whose picker (recent photos from the library) is showing in the card.
@@ -581,10 +587,11 @@ final class KeyboardViewController: UIInputViewController {
                 self?.replaceCommand(with: s.value)
             }
         }
-        let apps = first.isEmpty ? EzyShared.recentApps : appResults
+        let apps = first.isEmpty ? EzyShared.recentApps : EzyMatch.rank(appResults, for: first)
         for app in apps.prefix(6) where app.id != suggestion?.plan.app?.id {
             let price = app.priceLabel.isEmpty ? "" : " · \(app.priceLabel)"
-            addChip("\(app.name)\(price)", style: .app) { [weak self] in
+            let title = app.runnable == false ? "\(app.name) ↗ website" : "\(app.name)\(price)"
+            addChip(title, style: app.runnable == false ? .plain : .app) { [weak self] in
                 guard let self else { return }
                 if app.runnable == false {
                     self.replaceCommand(with: app.link)
@@ -674,6 +681,7 @@ final class KeyboardViewController: UIInputViewController {
         suggestion = nil
         editingKey = nil
         card = Card(plan: plan, app: app, fields: fields, values: values, fromProfile: Set(plan.fromProfile ?? []), commandText: text)
+        card?.format = EzyShared.store.string(forKey: "format.\(app.id)") ?? "text"
         page = .letters
         afterTyping()
     }
@@ -757,13 +765,19 @@ final class KeyboardViewController: UIInputViewController {
             do {
                 let result = try await EzyAPI.run(plan)
                 if result.imageURL != nil { await EzyClipboard.copy(result) }
+                let wantsPDF = current.format == "pdf" && current.offersPDF && result.imageURL == nil && !result.text.isEmpty
+                let pdf = wantsPDF ? EzyPDF.make(title: current.app.name, markdown: result.text) : nil
                 await MainActor.run {
                     guard let self else { return }
                     self.busy = nil
-                    self.replaceCommand(with: result.text)
-                    self.notice = result.imageURL != nil
-                        ? "Image copied. Tap and hold the message box, then Paste."
-                        : "✓ \(current.app.name) is in. Tap to close."
+                    if let pdf {
+                        UIPasteboard.general.setData(pdf, forPasteboardType: "com.adobe.pdf")
+                        self.replaceCommand(with: "")
+                        self.notice = Self.pastePDF
+                    } else {
+                        self.replaceCommand(with: EzyChat.forChat(result.text))
+                        self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
+                    }
                     self.refreshStrip()
                 }
             } catch {
@@ -789,9 +803,7 @@ final class KeyboardViewController: UIInputViewController {
                     case let .image(data, type):
                         UIPasteboard.general.setData(data, forPasteboardType: type)
                         self.replaceCommand(with: "")
-                        self.notice = type == "com.adobe.pdf"
-                            ? "PDF copied. Tap and hold the message box, then Paste."
-                            : "Image copied. Tap and hold the message box, then Paste."
+                        self.notice = type == "com.adobe.pdf" ? Self.pastePDF : Self.pasteImage
                     case let .text(text):
                         self.replaceCommand(with: text)
                         self.notice = "✓ \(app.name) is in. Tap to close."
@@ -822,7 +834,7 @@ final class KeyboardViewController: UIInputViewController {
     private func insertLastResult(_ result: EzyResult) {
         if result.imageURL != nil {
             Task { await EzyClipboard.copy(result) }
-            notice = "Image copied. Tap and hold the message box, then Paste."
+            notice = Self.pasteImage
         }
         if !result.text.isEmpty { textDocumentProxy.insertText(result.text) }
         EzyShared.lastResult = nil
@@ -855,6 +867,9 @@ final class KeyboardViewController: UIInputViewController {
         list.translatesAutoresizingMaskIntoConstraints = false
         scroll.addSubview(list)
 
+        if card.offersPDF {
+            list.addArrangedSubview(formatRow(card))
+        }
         for field in card.fields {
             list.addArrangedSubview(fieldRow(field, card: card))
         }
@@ -1115,6 +1130,40 @@ final class KeyboardViewController: UIInputViewController {
         card?.values[key] = "data:application/pdf;base64," + data.base64EncodedString()
         card?.edited.insert(key)
         afterTyping()
+    }
+
+    /// "How do you want it?": typed into the chat, or as a PDF to paste. Remembered per app.
+    private func formatRow(_ card: Card) -> UIView {
+        let label = UILabel()
+        label.text = "Get it as"
+        label.font = .systemFont(ofSize: 13)
+        label.textColor = dark ? UIColor(white: 0.75, alpha: 1) : UIColor(white: 0.35, alpha: 1)
+        var buttons: [UIView] = [label]
+        for (value, title) in [("text", "💬 Text in chat"), ("pdf", "📄 PDF")] {
+            let b = ChipButton(type: .system)
+            b.setTitle(title, for: .normal)
+            b.titleLabel?.font = .systemFont(ofSize: 15, weight: card.format == value ? .semibold : .regular)
+            let on = card.format == value
+            b.backgroundColor = on ? brand : chipColor
+            b.setTitleColor(on ? .white : keyTextColor, for: .normal)
+            b.layer.cornerRadius = 8
+            b.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
+            b.handler = { [weak self] in
+                guard let self, self.card != nil else { return }
+                self.card?.format = value
+                EzyShared.store.set(value, forKey: "format.\(card.app.id)")
+                self.renderCard()
+            }
+            b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            buttons.append(b)
+        }
+        buttons.append(UIView())
+        let row = UIStackView(arrangedSubviews: buttons)
+        row.axis = .horizontal
+        row.spacing = 8
+        row.alignment = .center
+        row.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        return row
     }
 
     private func fieldRow(_ field: EzyField, card: Card) -> UIView {

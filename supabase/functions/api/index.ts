@@ -18,7 +18,7 @@
 // Charging uses the same start_tool_run / complete_tool_run as every other app, so failed runs cost nothing.
 import { corsHeaders as baseCors } from "../_shared/http.ts";
 import { ensurePrice, finishRun, startRun, walletBalance } from "../_shared/billing.ts";
-import { API_CATALOG, type ApiApp } from "../_shared/apiCatalog.ts";
+import { API_CATALOG, type ApiApp, type ApiField } from "../_shared/apiCatalog.ts";
 import { NATIVE_APPS, nativeOutput } from "../_shared/nativeApis.ts";
 
 /** Every app the API can run: the shared-engine apps plus the older apps with their own function. */
@@ -171,7 +171,8 @@ function score(row: CatalogRow, words: string[]): number {
   let s = 0;
   for (const w of words) {
     if (name.startsWith(w)) s += 6;
-    else if (name.includes(w)) s += 4;
+    else if (name.split(/[^a-z0-9ऀ-ॿ]+/).some((part) => part.startsWith(w))) s += 5;
+    else if (name.includes(w)) s += 3;
     if (types.includes(w)) s += 2;
     if (cat.includes(w)) s += 1.5;
     if (desc.includes(w)) s += 1;
@@ -609,8 +610,21 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   const fields = spec.fields ?? [];
   const inputs: Record<string, string> = {};
   const fromProfile: string[] = [];
+  // Small models sometimes echo a box's own label ("Customer", "Items (qty, rate, GST %)") as its value,
+  // or fill boxes from nothing. Keep a value only when the request really says it.
+  const said = text.toLowerCase();
+  const echoed = (f: ApiField, v: string) => {
+    const n = v.trim().toLowerCase();
+    return [f.label, f.key, f.placeholder, f.help].some((x) => x && x.trim().toLowerCase() === n);
+  };
+  const inRequest = (f: ApiField, v: string) => {
+    if (f.type === "select" || /\d/.test(v)) return true;
+    const words = v.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3);
+    return !words.length || words.some((w) => said.includes(w));
+  };
   for (const f of fields) {
-    const v = asText(pick.inputs?.[f.key]);
+    const raw = asText(pick.inputs?.[f.key]);
+    const v = raw && !echoed(f, raw) && inRequest(f, raw) ? raw : "";
     if (v) inputs[f.key] = v.slice(0, 4000);
     // Details the person already saved on ezyourlife.com (their business name, GSTIN, address…).
     else if (f.profile && profile[f.profile]) {
