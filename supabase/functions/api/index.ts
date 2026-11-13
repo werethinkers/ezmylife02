@@ -362,9 +362,10 @@ async function listCards(url: URL) {
 
 // The shared business profile (business name, city, GSTIN…) that prefills app boxes on the site. Read only.
 const PROFILE_KEYS = ["businessName", "ownerName", "industry", "city", "state", "phone", "email", "address", "gstin", "website", "products", "audience", "tone", "language"];
-async function readProfile(who: Who) {
+/** The person's saved business details (the website's workspace profile: name, GSTIN, address…). */
+async function loadProfile(userId: string): Promise<Record<string, string>> {
   const rows = await dbRows<{ session_data: { profile?: Record<string, unknown> } | null }>(
-    `tool_sessions?user_id=eq.${who.userId}&tool_id=eq._workspace&select=session_data`,
+    `tool_sessions?user_id=eq.${userId}&tool_id=eq._workspace&select=session_data`,
   );
   const raw = rows[0]?.session_data?.profile ?? {};
   const profile: Record<string, string> = {};
@@ -372,7 +373,10 @@ async function readProfile(who: Who) {
     const v = raw[k];
     if (typeof v === "string" && v.trim()) profile[k] = v.trim().slice(0, 500);
   }
-  return json({ ok: true, profile });
+  return profile;
+}
+async function readProfile(who: Who) {
+  return json({ ok: true, profile: await loadProfile(who.userId) });
 }
 
 interface Shortcut { key: string; value: string; category?: string; logic?: string }
@@ -490,7 +494,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   commandCounts.set(who.userId, { day, n });
   if (n > COMMAND_DAILY_LIMIT) return fail(429, "daily_limit", "That's a lot of commands today. Try again tomorrow.");
 
-  const c = await catalog();
+  const [c, profile] = await Promise.all([catalog(), loadProfile(who.userId).catch(() => ({} as Record<string, string>))]);
   const words = text.toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/).filter((w) => w.length > 1);
   const wanted = str(body.app_id, 120);
   let rows = c.rows.filter((r) => API_CATALOG[r.id]);
@@ -515,7 +519,8 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
         role: "system",
         content:
           "You turn one spoken or typed request into an app run. Pick the single best app from the list, or null if none fits. " +
-          "Fill its fields only with facts in the request (keep the person's language; numbers as digits; select fields must use one of the options). " +
+          "Fill its fields only with facts in the request (keep the person's language; numbers as digits; select fields must use one of the options; " +
+          "a 'rows' field is one plain-text line per item, like '2 x Steel chair @ 1500, GST 18%'). " +
           "Never invent names, amounts or dates. Apps with no fields take the whole request, cleaned up, as 'prompt'. " +
           'Answer JSON only: {"app_id": string|null, "inputs": {fieldKey: value}, "prompt": string|null}.',
       },
@@ -531,9 +536,15 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   const spec = API_CATALOG[chosen.id];
   const fields = spec.fields ?? [];
   const inputs: Record<string, string> = {};
+  const fromProfile: string[] = [];
   for (const f of fields) {
-    const v = pick.inputs?.[f.key];
-    if (v !== undefined && v !== null && String(v).trim()) inputs[f.key] = String(v).slice(0, 4000);
+    const v = asText(pick.inputs?.[f.key]);
+    if (v) inputs[f.key] = v.slice(0, 4000);
+    // Details the person already saved on ezyourlife.com (their business name, GSTIN, address…).
+    else if (f.profile && profile[f.profile]) {
+      inputs[f.key] = profile[f.profile];
+      fromProfile.push(f.key);
+    }
   }
   const missing = fields.filter((f) => f.required && !inputs[f.key]).map((f) => ({ key: f.key, label: f.label }));
   return json({
@@ -543,7 +554,20 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
     prompt: fields.length ? undefined : (str(pick.prompt, 2000) || text),
     missing,
     ready: missing.length === 0,
+    // Every box the app takes, so a keyboard or assistant can show them for checking before it runs.
+    fields: fields.map((f) => ({ key: f.key, label: f.label, type: f.type, required: !!f.required, placeholder: f.placeholder, options: f.options })),
+    from_profile: fromProfile,
   });
+}
+
+/** A model answer for one box as plain text (lists of items become one line each). */
+function asText(v: unknown): string {
+  if (v === undefined || v === null) return "";
+  if (typeof v === "string") return v.trim();
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return v.map(asText).filter(Boolean).join("\n");
+  if (typeof v === "object") return Object.values(v as Record<string, unknown>).map(asText).filter(Boolean).join(" · ");
+  return "";
 }
 
 // ---------- router ----------

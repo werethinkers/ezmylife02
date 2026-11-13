@@ -9,9 +9,15 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
   few letters show the person's synced shortcuts (the same list as Speedy Notebook, EzMe and the Chrome
   extension) and Ezyourlife apps.
   - Tap a shortcut: its text replaces `/pm`.
-  - Tap an app, type the details (`/invo Rahul Traders 5000`), tap **Run · 2 credits**: the result
-    replaces the command. Image results are copied for the person to paste (iOS doesn't let a keyboard
-    put a photo into another app's box).
+  - Tap an app (`/invo` → Proforma Invoice): a **details card** opens in place of the keys, with the
+    person's saved business details (name, GSTIN, address… from the website's workspace profile) already
+    filled and marked "from your profile". Required boxes still empty say **Tap to add**.
+  - Or type `/`, tap iOS's own mic under the keyboard and say the whole thing ("proforma invoice for Rahul
+    Traders, 2 chairs at 1500"). The words land after the `/`, the keyboard picks the app and opens the card
+    filled from them. Saying more while the card is open fills the boxes not yet touched.
+  - Tap a box to type in it (the keys come back and type into that box; **Done** returns to the card).
+  - **Generate · 2 credits**: the result replaces the command in the text box. Image results are copied for
+    the person to paste (iOS doesn't let a keyboard put a photo into another app's box).
   - The last Siri result shows first as **Insert: …** for 15 minutes.
 - **Ask EZYOURLIFE.** "Hey Siri, ask EZYOURLIFE", the Action Button, Back Tap or the Shortcuts app. Siri asks
   "What do you need?". A shortcut's name copies that shortcut for free. Otherwise Siri names the app and its
@@ -69,3 +75,5 @@ existing `POST /v1/apps/{id}/run` at the website's prices, only after a tap or S
 - iOS uses Apple's own keyboard in password and phone-number boxes.
 - Without Full Access the keyboard types normally but the strip only shows how to turn it on.
 - Siri's trigger phrase can't carry free words, so Siri always asks "What do you need?" first.
+- No app can make itself the default keyboard. People drag EZYOURLIFE to the top of Settings › General ›
+  Keyboard › Keyboards › Edit; iOS then opens it first and remembers it per app.

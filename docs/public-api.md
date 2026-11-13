@@ -23,7 +23,7 @@ Whoever calls, the person's own wallet pays at the website's prices, through the
 | `POST /apps/{id}/run` | `{inputs}`, or `{messages}` for chat, `{images}` for photo readers, `{prompt, style, aspect}` for images, `{action:"refine", previous, instruction}` | the app's price |
 | `POST /prompt/improve` | PromptMaster magic write: `{prompt, goal?}` | PromptMaster's price |
 | `POST /prompt/brainstorm` | PromptMaster brainstorm: `{topic, styles?}` | PromptMaster's price |
-| `POST /command` | `{text, app_id?}`: the best app for one sentence, with `inputs` filled, `missing` required boxes and `ready`. Runs nothing; run it with `POST /apps/{id}/run`. Used by the iPhone keyboard and Siri | free (soft limit 300 a day) |
+| `POST /command` | `{text, app_id?}`: the best app for one sentence, with `inputs` filled (from the sentence, then from the saved business profile, listed in `from_profile`), every box in `fields`, `missing` required boxes and `ready`. Runs nothing; run it with `POST /apps/{id}/run`. Used by the iPhone keyboard and Siri | free (soft limit 300 a day) |
 | `GET /cards?q=` | Card, invite and website designs, each with its `/create/<id>` link | free, no key |
 | `GET`, `PUT /shortcuts`, `DELETE /shortcuts/{key}` | The person's synced shortcuts (same list as the extension and Speedy Notebook) | free |
 | `GET /profile` | The person's saved business details (name, city, GSTIN…) that prefill app boxes | free |
