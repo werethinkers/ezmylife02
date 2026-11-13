@@ -13,6 +13,7 @@ import type { FormValues } from "../types";
 import type { PlanDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
 import { FieldGrid, ResultView, YouGet, card, emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
 
 /** Plan builder and pack maker: a few short pages of questions, then one full result. */
@@ -75,6 +76,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
               ))}
             </div>
             <FieldGrid toolId={toolId} fields={pageFields} values={values} onChange={setValues} sample={page === 0 ? def.sample : undefined} disabled={!!busy} />
+            {last && <OutputChoice toolId={toolId} className="mt-5" />}
             <div className="mt-5 flex flex-wrap items-center gap-2">
               {page > 0 && (
                 <Button type="button" variant="outline" className="gap-1.5" onClick={() => setPage((p) => p - 1)} disabled={!!busy}>

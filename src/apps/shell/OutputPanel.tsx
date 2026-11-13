@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Copy, Download, FileText, Loader2, Mail, Printer, Send, Share2, Wand2 } from "lucide-react";
+import { Check, Copy, Download, FileText, FileType2, Loader2, Mail, Send, Share2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Markdown } from "@/components/common/Markdown";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
-import { downloadText, downloadWord, printMarkdown } from "../lib/files";
+import { downloadText, downloadWord } from "../lib/files";
+import { useWorkspace } from "../lib/workspace";
+import { useOutputChoice } from "../output/choice";
+import { docFromText } from "../output/buildDoc";
+import { usePreparedPdf } from "../output/usePreparedPdf";
+import { PdfView } from "../output/PdfView";
+import { saveFile } from "../output/save";
+import type { PdfDoc } from "../output/types";
 import { sendHandoff } from "../lib/handoff";
 import { useWorkContext } from "../lib/context";
 import { cn } from "@/lib/utils";
@@ -35,8 +42,10 @@ function plainText(md: string): string {
 const MAILTO_BODY_LIMIT = 1800;
 
 /**
- * Shows an AI result with the same actions everywhere: copy, Word, Markdown, print/PDF,
+ * Shows an AI result with the same actions everywhere: copy, PDF, Word, Markdown,
  * WhatsApp, email, refine with an instruction, and send it on to another app.
+ * The PDF is made in the background as soon as the result is there, so every format is
+ * ready at once; the person's "How do you want your result?" choice decides what opens first.
  */
 export function OutputPanel({
   toolId,
@@ -50,6 +59,7 @@ export function OutputPanel({
   className,
   editable,
   onEdit,
+  pdfDoc,
 }: {
   toolId: string;
   text: string;
@@ -62,6 +72,8 @@ export function OutputPanel({
   className?: string;
   editable?: boolean;
   onEdit?: (t: string) => void;
+  /** A ready-made PDF document (calculators build theirs from numbers). Default: made from `text`. */
+  pdfDoc?: PdfDoc;
 }) {
   const [copied, setCopied] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -72,6 +84,23 @@ export function OutputPanel({
   const targets = (sendTo ?? []).map((id) => catalog.find((t) => t.id === id && t.is_live)).filter(Boolean) as typeof catalog;
   const fromName = catalog.find((t) => t.id === toolId)?.name ?? "another app";
   const clientEmail = ctx.client?.email?.trim() || undefined;
+  const { profile } = useWorkspace();
+  const [choice] = useOutputChoice(toolId);
+  // Any written result can be a PDF, including apps that don't ask the question up front.
+  const offersPdf = true;
+  const doc = useMemo(
+    () => (offersPdf ? pdfDoc ?? docFromText({ toolId, text, appName: title, fileName, profile }) : null),
+    [offersPdf, pdfDoc, toolId, text, title, fileName, profile],
+  );
+  const prepared = usePreparedPdf(doc);
+  const [view, setView] = useState<"text" | "pdf">(choice === "pdf" && offersPdf ? "pdf" : "text");
+  useEffect(() => setView(choice === "pdf" && offersPdf ? "pdf" : "text"), [choice, offersPdf]);
+  const showPdf = view === "pdf" && !editing;
+  const savePdf = () => {
+    if (prepared.state === "ready") void saveFile(prepared.pdf.blob, `${fileName}.pdf`, title);
+    else if (prepared.state === "error") toast.error("The PDF could not be made on this device. Use Word instead.");
+    else toast.info("Your PDF is nearly ready — try again in a moment.");
+  };
 
   const copy = async () => {
     try {
@@ -131,6 +160,24 @@ export function OutputPanel({
         </p>
         <div className="flex flex-wrap items-center gap-1" aria-label="Save or share">
           <span className="mr-1 hidden items-center gap-1.5 text-xs font-bold lg:inline-flex"><span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink bg-card text-[10px]" aria-hidden>4</span>Save or share:</span>
+          {offersPdf && (
+            <Button
+              size="sm"
+              variant={choice === "pdf" ? "default" : "ghost"}
+              className="h-8 gap-1.5"
+              onClick={savePdf}
+              aria-label="Download PDF"
+            >
+              {prepared.state === "making" && !prepared.previous ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+          )}
+          {choice === "word" && (
+            <Button size="sm" className="h-8 gap-1.5" onClick={() => downloadWord(text, fileName, title)}>
+              <FileType2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Word</span>
+            </Button>
+          )}
           <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={copy}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
@@ -150,18 +197,16 @@ export function OutputPanel({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => downloadWord(text, fileName, title)}>Word document (.doc)</DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  if (!printMarkdown(text, title)) toast.error("Allow pop-ups to print or save as PDF.");
-                }}
-              >
-                <Printer className="mr-2 h-3.5 w-3.5" /> Print / Save as PDF
-              </DropdownMenuItem>
+              {offersPdf && (
+                <DropdownMenuItem onClick={savePdf}>
+                  <FileText className="mr-2 h-3.5 w-3.5" /> PDF document
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => downloadText(text, `${fileName}.md`, "text/markdown")}>Markdown (.md)</DropdownMenuItem>
               <DropdownMenuItem onClick={() => downloadText(text.replace(/[*#`]/g, ""), `${fileName}.txt`)}>Plain text (.txt)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={whatsapp}>
+          <Button size="sm" variant={choice === "whatsapp" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={whatsapp}>
             <Share2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">WhatsApp</span>
           </Button>
@@ -211,8 +256,29 @@ export function OutputPanel({
         </div>
       </div>
 
+      {offersPdf && !editing && (
+        <div className="flex gap-1 border-b-2 border-ink/10 px-4 pt-3 sm:px-6" role="tablist" aria-label="Show the result as">
+          {(["text", "pdf"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => setView(v)}
+              className={cn(
+                "-mb-0.5 rounded-t-lg border-2 border-b-0 px-3 py-1 text-xs font-bold",
+                view === v ? "border-ink bg-card" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {v === "text" ? "Text" : "PDF pages"}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="max-h-[70vh] overflow-y-auto px-4 py-4 sm:px-6">
-        {editing && onEdit ? (
+        {showPdf ? (
+          <PdfView prepared={prepared} fileName={fileName} title={title} />
+        ) : editing && onEdit ? (
           <textarea
             className="min-h-[50vh] w-full resize-y rounded-xl border-2 border-ink bg-background p-3 font-mono text-xs leading-relaxed"
             value={text}
