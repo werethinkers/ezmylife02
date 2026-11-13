@@ -22,4 +22,13 @@ export const extras: Record<string, number> = {
   "bulk-ai-background": 31,
   "bulk-ai-passport": 31,
   "bulk-ai-beautify": 31,
+  // AI versions of browser tools, run from the iPhone keyboard and Siri (the browser versions keep their own price).
+  "tool-1-ai": 2,
+  "tool-2-ai": 2,
+  "tool-3-ai": 2,
+  "tool-4-ai": 2,
+  "tool-30-ai": 2,
+  "grade-calculator-ai": 2,
+  "assignment-tracker-ai": 2,
+  "bibliography-generator-ai": 2,
 };

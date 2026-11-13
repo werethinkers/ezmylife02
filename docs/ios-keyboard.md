@@ -25,6 +25,21 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
   in their chat. Keyboards can never use the microphone (Apple's rule), so voice lives here.
 - **Setup page** `/keyboard` (works in browsers too, as an explainer): Connect, Settings steps, voice steps.
 
+- **Older AI apps** with their own server function (captions, hashtags, social posts, content ideas, video
+  scripts, Startup Analyser, Speedy Notebook, Thumbnail Maker, Video Maker, ProductVision 360) run through
+  `supabase/functions/_shared/nativeApis.ts`, charged at their website prices. ProductVision 360 takes a
+  **copied photo** (Photos › Share › Copy, then tap the photo box) and charges per angle in its own function.
+- **Browser text tools** (study, writing and teaching helpers) run through `ai-app` on the server.
+- **Photo and PDF tools run on the phone** (about 70: ID and exam photo sizes, KB size, resize, crop,
+  signature, background removal and blur, face blur, watermark, text, DPI, metadata, JPG to PDF, PDF to
+  JPG or text, rotate, split and merge PDFs, HEIC/WebP/PNG to JPG, photo + signature, join photos, logo).
+  The code is `EzyPhoto` in `ios/App/Keyboard/KeyboardViewController.swift` (CoreImage, Vision, ImageIO,
+  PDFKit). The picture or PDF is read from what the person copied and the result is copied back for
+  pasting. Nothing is uploaded: the keyboard only calls `POST /v1/apps/{id}/charge` to charge the run at
+  the tool's usual price. Server list: `DEVICE_APPS` in `nativeApis.ts` (mode `device`).
+- Still website only: coaching sessions, trackers, AI-only photo tools (AI ID photo, object removal,
+  retouch, face generator), and the few apps that need several files at once (Instagram grid, bulk resize).
+
 ## How it fits together
 
 | Path | What it is |
@@ -74,6 +89,7 @@ existing `POST /v1/apps/{id}/run` at the website's prices, only after a tap or S
   doesn't share them with other keyboards). People switch with the globe key when they need those.
 - iOS uses Apple's own keyboard in password and phone-number boxes.
 - Without Full Access the keyboard types normally but the strip only shows how to turn it on.
+- The keyboard can use roughly 2,400-pixel pictures and PDFs up to 15 MB (iOS caps keyboard memory).
 - Siri's trigger phrase can't carry free words, so Siri always asks "What do you need?" first.
 - No app can make itself the default keyboard. People drag EZYOURLIFE to the top of Settings › General ›
   Keyboard › Keyboards › Edit; iOS then opens it first and remembers it per app.
