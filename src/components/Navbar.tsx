@@ -11,7 +11,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, BadgeCheck } from "lucide-react";
+import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, BadgeCheck, Keyboard } from "lucide-react";
+import { isIosApp } from "@/lib/nativeApp";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { Logo } from "@/components/brand/Logo";
 import { EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
@@ -122,8 +123,13 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                   <Link to="/subscription" className="cursor-pointer"><BadgeCheck className="mr-2 h-4 w-4" /> Subscription</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>
+                  <Link to="/keyboard" className="cursor-pointer"><Keyboard className="mr-2 h-4 w-4" /> {isIosApp() ? "Keyboard and voice" : "iPhone keyboard and voice"}</Link>
                 </DropdownMenuItem>
+                {!isIosApp() && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
