@@ -154,7 +154,7 @@ Object.assign(NATIVE_APPS, {
     { key: "platform", label: "Platform", type: "select", options: ["Instagram", "LinkedIn", "Facebook", "X", "YouTube"], default: "Instagram" },
   ], build: () => ({}) },
   // Meet Nudge's business-card scanner: a copied card photo becomes a contact.
-  "meet-nudge": { fn: "scan-business-card", charge: "meet-nudge", credits: 2, mode: "form", intro: "Reads a business card photo into a contact: name, company, phone, email, address.", fields: [{ key: "photo", label: "Business card", type: "image", required: true, help: "Pick the card photo" }], build: (i) => ({ images: [i.photo] }) },
+  "meet-nudge": { fn: "scan-business-card", charge: "meet-nudge", credits: 2, mode: "form", intro: "Reads a business card photo into a contact: name, company, phone, email, address.", fields: [{ key: "photo", label: "Business card", type: "image", required: true, help: "Pick the card photo" }], build: (i: Record<string, string>) => ({ images: [i.photo] }) },
   "tool-1": aiDoc("tool-1", "A GST tax invoice with every sum worked out, ready to send.", [
     { key: "Business", label: "Business name", type: "text", profile: "businessName" },
     { key: "Business GSTIN", label: "Your GSTIN", type: "text", profile: "gstin" },
