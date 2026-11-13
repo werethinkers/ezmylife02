@@ -123,7 +123,7 @@ const KeyboardSetup = () => {
             <Button variant="outline" onClick={() => openAppSettings()}>Open Settings</Button>
           )}
           <p className="text-sm text-muted-foreground">
-            The keyboard never stores or sends what you type. Only the words after <code>/</code> are sent, to find shortcuts and apps,
+            The keyboard keeps no record of your typing. It sends only the words after <code>/</code>, to find shortcuts and apps,
             and an app runs only when you tap Run, at its usual price.
           </p>
         </section>

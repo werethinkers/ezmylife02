@@ -35,7 +35,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "The EZYOURLIFE keyboard and voice",
-    body: "The EZYOURLIFE keyboard on iPhone does not store, log or send what you type. Only the words you type after / are sent to us, to find your shortcuts and apps, and the details of an app you choose to run. \"Ask EZYOURLIFE\" with Siri sends us the request Siri hears from you, to pick and run the app. Apple handles the speech itself. Full Access lets the keyboard reach the internet and your shortcuts saved by the app; you can turn the keyboard off in Settings at any time.",
+    body: "The EZYOURLIFE keyboard on iPhone keeps no record of what you type and sends us only two things: the words you type after /, to find your shortcuts and apps, and the details of an app you choose to run. Everything else you type stays on your iPhone. \"Ask EZYOURLIFE\" with Siri sends us the request Siri hears from you, to pick and run the app. Apple handles the speech itself. Full Access lets the keyboard reach the internet and your shortcuts saved by the app; you can turn the keyboard off in Settings at any time.",
   },
   {
     title: "Cookies and storage",

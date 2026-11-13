@@ -48,8 +48,8 @@ existing `POST /v1/apps/{id}/run` at the website's prices, only after a tap or S
 4. Run Actions → "iOS app to TestFlight" with version `1.1` on the release that contains this work.
    (Xcode may register steps 1 to 3 by itself during the export; doing them by hand first is the safe path.)
 5. App Store Connect → the 1.1 version → App Review notes: "The app includes a custom keyboard. Full Access is
-   used only to reach the person's own shortcuts and apps on ezyourlife.com; typed text is not stored or sent,
-   except the words after '/' when the person looks up a shortcut or app. Privacy policy: https://ezyourlife.com/privacy."
+   used only to reach the person's own shortcuts and apps on ezyourlife.com; the keyboard keeps no record of typing and sends only the words after '/'
+   (to look up a shortcut or app) and the details of an app the person chooses to run. Privacy policy: https://ezyourlife.com/privacy."
    Add the demo account. In App Privacy nothing new is collected beyond what is already declared.
 
 ## Testing on TestFlight
