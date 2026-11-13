@@ -30,7 +30,11 @@ final class KeyboardViewController: UIInputViewController {
 
     private let strip = UIScrollView()
     private let stripStack = UIStackView()
-    private let keysStack = UIStackView()
+    private let keysStack = KeysStack()
+    /// What the keys were last drawn for; they are redrawn only when this changes, not on every press.
+    private var keysSignature = ""
+    /// What the strip was last drawn for, for the same reason.
+    private var stripSignature = ""
     private var heightConstraint: NSLayoutConstraint?
 
     private var deleteTimer: Timer?
@@ -87,6 +91,9 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         let container = view!
+        // Two thumbs overlap when typing fast: without this, the second key's touch is dropped.
+        container.isMultipleTouchEnabled = true
+        keysStack.isMultipleTouchEnabled = true
 
         strip.showsHorizontalScrollIndicator = false
         strip.translatesAutoresizingMaskIntoConstraints = false
@@ -141,9 +148,10 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        EzyShared.reload() // the app or Siri may have saved something new
         updateAutoShift()
-        buildKeys()
-        refreshStrip()
+        buildKeys(force: true)
+        refreshStrip(force: true)
         if hasFullAccess, EzyShared.isConnected, EzyShared.shortcutsAge > 300 {
             Task { [weak self] in
                 _ = try? await EzyAPI.refreshShortcuts()
@@ -188,12 +196,16 @@ final class KeyboardViewController: UIInputViewController {
         }
     }
 
-    private func buildKeys() {
+    private func buildKeys(force: Bool = false) {
         guard isViewLoaded else { return }
+        let signature = "\(page)|\(shift)|\(returnTitle())|\(dark)|\(needsInputModeSwitchKey)"
+        if !force && signature == keysSignature { return }
+        keysSignature = signature
         keysStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         view.backgroundColor = .clear
         for (index, row) in rows().enumerated() {
             let rowStack = UIStackView()
+            rowStack.isMultipleTouchEnabled = true
             rowStack.axis = .horizontal
             rowStack.spacing = 6
             rowStack.distribution = .fill
@@ -214,6 +226,7 @@ final class KeyboardViewController: UIInputViewController {
             if index == 1 && page == .letters {
                 // The middle letter row is inset by half a key on both sides.
                 let wrapper = UIStackView()
+                wrapper.isMultipleTouchEnabled = true
                 wrapper.axis = .horizontal
                 let left = UIView(), right = UIView()
                 wrapper.addArrangedSubview(left)
@@ -294,8 +307,9 @@ final class KeyboardViewController: UIInputViewController {
         key.tintColor = keyTextColor
         if title != "🌐" {
             key.addTarget(self, action: #selector(keyDown(_:)), for: .touchDown)
-            key.addTarget(self, action: #selector(keyUp(_:)), for: [.touchUpInside])
-            key.addTarget(self, action: #selector(keyCancel(_:)), for: [.touchUpOutside, .touchCancel])
+            // A finger that drifts off the key before lifting still means that key (Apple's keyboard works the same way).
+            key.addTarget(self, action: #selector(keyUp(_:)), for: [.touchUpInside, .touchUpOutside])
+            key.addTarget(self, action: #selector(keyCancel(_:)), for: [.touchCancel])
         }
         return key
     }
@@ -454,9 +468,20 @@ final class KeyboardViewController: UIInputViewController {
 
     // MARK: - The strip
 
-    private func refreshStrip() {
+    private func refreshStrip(force: Bool = false) {
         guard isViewLoaded else { return }
         applyMode()
+        // Typing ordinary text changes nothing in the strip: skip the redraw.
+        let command = card == nil ? EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.text : nil
+        let editingValue = editingKey.flatMap { card?.values[$0] } ?? ""
+        let signature = [
+            busy ?? "", notice ?? "", String(hasFullAccess), String(EzyShared.isConnected),
+            command ?? "∅", appResults.map(\.id).joined(separator: ","), suggestion?.text ?? "",
+            card.map { "\($0.app.id)|\($0.values.count)" } ?? "", editingKey ?? "", editingValue,
+            String(EzyShared.lastResult?.isFresh ?? false),
+        ].joined(separator: "¦")
+        if !force && signature == stripSignature { return }
+        stripSignature = signature
         stripStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         if let busy {
@@ -896,6 +921,31 @@ final class KeyboardViewController: UIInputViewController {
 }
 
 // MARK: - Small views
+
+/// The keys area. A touch that lands in the gap between keys goes to the nearest key,
+/// so no tap is lost (Apple's keyboard has no dead space either).
+final class KeysStack: UIStackView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hit = super.hitTest(point, with: event)
+        if hit is KeyButton || isHidden || !self.point(inside: point, with: event) { return hit }
+        var best: (KeyButton, CGFloat)?
+        func visit(_ view: UIView) {
+            for sub in view.subviews where !sub.isHidden {
+                if let key = sub as? KeyButton {
+                    let frame = key.convert(key.bounds, to: self)
+                    let dx = max(frame.minX - point.x, 0, point.x - frame.maxX)
+                    let dy = max(frame.minY - point.y, 0, point.y - frame.maxY)
+                    let d = dx * dx + dy * dy
+                    if best == nil || d < best!.1 { best = (key, d) }
+                } else {
+                    visit(sub)
+                }
+            }
+        }
+        visit(self)
+        return best?.0 ?? hit
+    }
+}
 
 final class KeyButton: UIButton {
     var keyValue = ""
