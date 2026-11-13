@@ -25,6 +25,11 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
   in their chat. Keyboards can never use the microphone (Apple's rule), so voice lives here.
 - **Setup page** `/keyboard` (works in browsers too, as an explainer): Connect, Settings steps, voice steps.
 
+- **Older AI apps** with their own server function (captions, hashtags, social posts, content ideas, video
+  scripts, Startup Analyser, Speedy Notebook, Thumbnail Maker, Video Maker, ProductVision 360) run through
+  `supabase/functions/_shared/nativeApis.ts`, charged at their website prices. ProductVision 360 takes a
+  **copied photo** (Photos › Share › Copy, then tap the photo box) and charges per angle in its own function.
+
 ## How it fits together
 
 | Path | What it is |

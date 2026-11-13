@@ -1,4 +1,5 @@
 import UIKit
+import ImageIO
 
 /*
  * The EZYOURLIFE keyboard: a normal iPhone-style keyboard with one strip on top.
@@ -660,6 +661,9 @@ final class KeyboardViewController: UIInputViewController {
             fields = [EzyField(key: Self.promptKey, label: "What to make", type: "text", required: true, placeholder: nil, options: nil)]
             values[Self.promptKey] = plan.prompt ?? text
         }
+        for field in fields where (values[field.key] ?? "").isEmpty {
+            if let d = field.defaultValue, !d.isEmpty { values[field.key] = d }
+        }
         planTask?.cancel()
         suggestion = nil
         editingKey = nil
@@ -854,6 +858,33 @@ final class KeyboardViewController: UIInputViewController {
         ])
     }
 
+    /// Photo boxes (ProductVision 360): a keyboard can't open the photo library, so it uses a copied photo.
+    private func takeCopiedPhoto(for key: String) {
+        // Read the copied file and shrink it while decoding: a full photo decoded at once would use
+        // more memory than iOS allows a keyboard.
+        let board = UIPasteboard.general
+        let types = ["public.jpeg", "public.png", "public.heic", "public.heif", "public.image"]
+        let raw = types.lazy.compactMap { board.data(forPasteboardType: $0) }.first
+        var small: UIImage?
+        if let raw, let source = CGImageSourceCreateWithData(raw as CFData, nil) {
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 1600,
+            ]
+            if let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) { small = UIImage(cgImage: cg) }
+        }
+        guard let resized = small else {
+            notice = "No photo copied. In Photos, tap Share › Copy, then come back and tap the box again."
+            afterTyping()
+            return
+        }
+        guard let data = resized.jpegData(compressionQuality: 0.85) else { return }
+        card?.values[key] = "data:image/jpeg;base64," + data.base64EncodedString()
+        card?.edited.insert(key)
+        afterTyping()
+    }
+
     private func fieldRow(_ field: EzyField, card: Card) -> UIView {
         let value = (card.values[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let required = field.required ?? false
@@ -864,7 +895,10 @@ final class KeyboardViewController: UIInputViewController {
             title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
         }
         title.append(NSAttributedString(string: "\n"))
-        if value.isEmpty {
+        if field.type == "image" {
+            let shown = value.isEmpty ? "Copy a photo, then tap here" : "📷 Photo added (tap to use the one you copied now)"
+            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
+        } else if value.isEmpty {
             let hint = required ? "Tap to add" : (field.placeholder.map { "Optional, e.g. \($0)" } ?? "Optional")
             title.append(NSAttributedString(string: hint, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: required ? .semibold : .regular), .foregroundColor: required ? brand : muted]))
         } else {
@@ -884,6 +918,10 @@ final class KeyboardViewController: UIInputViewController {
             row.layer.borderColor = brand.cgColor
         }
         row.handler = { [weak self] in
+            if field.type == "image" {
+                self?.takeCopiedPhoto(for: field.key)
+                return
+            }
             self?.editingKey = field.key
             self?.page = field.type == "number" || field.type == "money" ? .numbers : .letters
             self?.afterTyping()

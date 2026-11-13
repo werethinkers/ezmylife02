@@ -165,6 +165,13 @@ struct EzyField: Codable, Hashable {
     var required: Bool?
     var placeholder: String?
     var options: [String]?
+    var defaultValue: String?
+    var help: String?
+
+    enum CodingKeys: String, CodingKey {
+        case key, label, type, required, placeholder, options, help
+        case defaultValue = "default"
+    }
 }
 
 /// A finished result, kept so the keyboard can offer it (Siri runs it while the person stays in their chat).
@@ -196,7 +203,7 @@ enum EzyError: LocalizedError {
 enum EzyAPI {
     private static func request(_ path: String, method: String = "GET", body: [String: Any]? = nil, auth: Bool = true) async throws -> [String: Any] {
         guard let url = URL(string: EzyShared.api.absoluteString + path) else { throw EzyError.server("Bad address.") }
-        var req = URLRequest(url: url, timeoutInterval: 60)
+        var req = URLRequest(url: url, timeoutInterval: 150) // image apps can take a minute or two
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if auth {

@@ -19,6 +19,16 @@
 import { corsHeaders as baseCors } from "../_shared/http.ts";
 import { ensurePrice, finishRun, startRun, walletBalance } from "../_shared/billing.ts";
 import { API_CATALOG, type ApiApp } from "../_shared/apiCatalog.ts";
+import { NATIVE_APPS, nativeOutput } from "../_shared/nativeApis.ts";
+
+/** Every app the API can run: the shared-engine apps plus the older apps with their own function. */
+const APPS: Record<string, ApiApp> = {
+  ...API_CATALOG,
+  ...Object.fromEntries(Object.entries(NATIVE_APPS).map(([id, n]) => [id, {
+    runner: "ai-app", mode: n.mode, engine: "native", kind: n.isImage ? "image" : "doc", charge: n.charge,
+    credits: n.credits, intro: n.intro, cta: n.cta, fields: n.fields,
+  } as ApiApp])),
+};
 import { chat, parseJson } from "../_shared/llm.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -137,7 +147,7 @@ function priceFor(id: string, spec: ApiApp | undefined, prices: Map<string, numb
 }
 
 function summary(row: CatalogRow, c: Awaited<ReturnType<typeof catalog>>) {
-  const spec = API_CATALOG[row.id];
+  const spec = APPS[row.id];
   return {
     id: row.id,
     name: row.name,
@@ -177,7 +187,7 @@ async function listApps(url: URL) {
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 50) || 50));
   const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0) || 0);
   let rows = c.rows.filter((r) => !category || r.category === category);
-  if (runnableOnly) rows = rows.filter((r) => API_CATALOG[r.id] || r.id === PROMPTMASTER_ID);
+  if (runnableOnly) rows = rows.filter((r) => APPS[r.id] || r.id === PROMPTMASTER_ID);
   const ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => x.s > 0);
   if (words.length) ranked.sort((a, b) => b.s - a.s);
   return json({
@@ -192,7 +202,7 @@ async function getApp(id: string) {
   const c = await catalog();
   const row = c.rows.find((r) => r.id === id);
   if (!row) return fail(404, "unknown_app", `No live app called '${id}'.`);
-  const spec = API_CATALOG[id];
+  const spec = APPS[id];
   const base = summary(row, c);
   if (id === PROMPTMASTER_ID) {
     return json({ ok: true, app: { ...base, actions: ["improve", "brainstorm"], fields: [{ key: "prompt", label: "Your words", type: "textarea", required: true }] } });
@@ -297,6 +307,7 @@ async function charged(
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
 
 async function runApp(who: Who, id: string, body: Record<string, unknown>) {
+  if (NATIVE_APPS[id]) return runNative(who, id, body);
   const spec = API_CATALOG[id];
   if (id === PROMPTMASTER_ID) return improve(who, body);
   if (!spec) {
@@ -324,6 +335,57 @@ async function runApp(who: Who, id: string, body: Record<string, unknown>) {
     payload.action = "refine";
   }
   return charged(who, spec.charge, spec.credits, spec.kind === "image", id, () => callInternal(spec.runner, payload));
+}
+
+/** Runs one of the older apps that has its own server function (see _shared/nativeApis.ts). */
+async function runNative(who: Who, id: string, body: Record<string, unknown>) {
+  const app = NATIVE_APPS[id];
+  const raw = typeof body.inputs === "object" && body.inputs ? body.inputs as Record<string, unknown> : {};
+  const inputs: Record<string, string> = {};
+  for (const f of app.fields) {
+    const v = raw[f.key];
+    if (typeof v === "string" && v.trim()) inputs[f.key] = v.slice(0, f.type === "image" ? 14_000_000 : 30_000);
+    else if (typeof v === "number") inputs[f.key] = String(v);
+    else if (f.default) inputs[f.key] = f.default;
+  }
+  if (typeof body.prompt === "string" && !inputs[app.fields[0].key]) inputs[app.fields[0].key] = body.prompt.slice(0, 30_000);
+  const missing = app.fields.filter((f) => f.required && !inputs[f.key]).map((f) => f.label);
+  if (missing.length) return fail(400, "missing_inputs", `Add: ${missing.join(", ")}.`);
+  const payload = app.build(inputs);
+
+  if (app.selfCharging) {
+    // The function charges per item from this person's wallet; keep the key's own limits.
+    if (who.key) {
+      if (who.key.allowed_tools?.length && !who.key.allowed_tools.includes(id)) {
+        return fail(403, "app_not_allowed", "This API key is not allowed to run this app.");
+      }
+      const c = await catalog();
+      const items = Array.isArray(payload.angles) ? payload.angles.length : 6;
+      const price = (c.prices.get(app.charge) ?? app.credits) * items;
+      if ((await spentToday(who.key.id)) + price > who.key.daily_cap) {
+        return fail(429, "daily_cap", `This key's daily limit of ${who.key.daily_cap} credits is reached.`);
+      }
+    }
+    const r = await callInternal(app.fn, { ...payload, user_id: who.userId });
+    if (r.status < 200 || r.status >= 300 || r.data?.error) {
+      return fail(r.status >= 400 ? r.status : 502, String(r.data?.error ?? "failed"), String(r.data?.message ?? r.data?.error ?? "The app could not finish."), { credits_charged: 0 });
+    }
+    const out = nativeOutput(id, r.data);
+    if (who.key) {
+      db("api_key_runs", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ key_id: who.key.id, user_id: who.userId, tool_id: id, credits: Number(out.credits_charged ?? 0) }),
+      }).catch(() => null);
+    }
+    return json({ ok: true, ...out, balance: await walletBalance(who.userId) });
+  }
+
+  return charged(who, app.charge, app.credits, !!app.isImage, id, async () => {
+    const r = await callInternal(app.fn, payload);
+    if (r.status < 200 || r.status >= 300 || r.data?.error) return r;
+    return { status: r.status, data: nativeOutput(id, r.data) };
+  });
 }
 
 async function improve(who: Who, body: Record<string, unknown>) {
@@ -497,13 +559,13 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   const [c, profile] = await Promise.all([catalog(), loadProfile(who.userId).catch(() => ({} as Record<string, string>))]);
   const words = text.toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/).filter((w) => w.length > 1);
   const wanted = str(body.app_id, 120);
-  let rows = c.rows.filter((r) => API_CATALOG[r.id]);
+  let rows = c.rows.filter((r) => APPS[r.id]);
   if (wanted) rows = rows.filter((r) => r.id === wanted);
   const ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => wanted || x.s > 0).sort((a, b) => b.s - a.s).slice(0, 8);
   if (!ranked.length) return json({ ok: true, app: null, message: "No app matched. Try other words." });
 
   const candidates = ranked.map(({ r }) => {
-    const spec = API_CATALOG[r.id];
+    const spec = APPS[r.id];
     return {
       id: r.id,
       name: r.name,
@@ -533,7 +595,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   }
   const chosen = ranked.find((x) => x.r.id === pick.app_id)?.r;
   if (!chosen) return json({ ok: true, app: null, message: "No app matched. Try other words." });
-  const spec = API_CATALOG[chosen.id];
+  const spec = APPS[chosen.id];
   const fields = spec.fields ?? [];
   const inputs: Record<string, string> = {};
   const fromProfile: string[] = [];
@@ -555,7 +617,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
     missing,
     ready: missing.length === 0,
     // Every box the app takes, so a keyboard or assistant can show them for checking before it runs.
-    fields: fields.map((f) => ({ key: f.key, label: f.label, type: f.type, required: !!f.required, placeholder: f.placeholder, options: f.options })),
+    fields: fields.map((f) => ({ key: f.key, label: f.label, type: f.type, required: !!f.required, placeholder: f.placeholder, options: f.options, default: f.default, help: f.help })),
     from_profile: fromProfile,
   });
 }
