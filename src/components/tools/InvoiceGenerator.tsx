@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,11 @@ import { toast } from "sonner";
 import { Plus, Trash2, Download, FileText, Calculator } from "lucide-react";
 import { usePrefill, useWriteBack } from "@/apps/lib/context";
 import { ContextBanner } from "@/apps/shell/ContextBanner";
+import { useWorkspace } from "@/apps/lib/workspace";
+import { docFromInvoice } from "@/apps/output/buildDoc";
+import { makePdf } from "@/apps/output/render";
+import { saveFile } from "@/apps/output/save";
+import { SaveBar } from "@/apps/output/SaveBar";
 
 interface InvoiceItem {
   id: number;
@@ -18,6 +23,7 @@ interface InvoiceItem {
 }
 
 export const InvoiceGenerator = () => {
+  const { profile } = useWorkspace();
   const [companyName, setCompanyName] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
   const [companyGST, setCompanyGST] = useState("");
@@ -31,7 +37,6 @@ export const InvoiceGenerator = () => {
     { id: 1, description: "", quantity: 1, rate: 0, gstRate: 18 }
   ]);
   const [notes, setNotes] = useState("");
-  const printRef = useRef<HTMLDivElement>(null);
 
   // Workspace: your business details and the current client fill in automatically, and the
   // client + invoice totals flow on to Expense Tracker, Tax Estimator, Profit Calculator and
@@ -88,120 +93,24 @@ export const InvoiceGenerator = () => {
     return calculateSubtotal() + calculateTotalGST();
   };
 
-  const generateInvoice = () => {
-    if (!companyName || !clientName || items.some(item => !item.description || item.rate <= 0)) {
-      toast.error("Please fill in all required fields");
+  const ready = !!companyName && !!clientName && items.every((item) => item.description && item.rate > 0);
+  const invoiceDoc = ready
+    ? docFromInvoice({ companyName, companyAddress, companyGST, clientName, clientAddress, clientGST, invoiceNumber, invoiceDate, dueDate, items, notes, profile })
+    : null;
+
+  const generateInvoice = async () => {
+    if (!invoiceDoc) {
+      toast.error("Please fill in your business name, the customer and every item's description and rate");
       return;
     }
-
-    const invoiceContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Invoice ${invoiceNumber}</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; border-bottom: 3px solid #4f46e5; padding-bottom: 20px; margin-bottom: 30px; }
-    .company-info h1 { color: #4f46e5; margin: 0; font-size: 28px; }
-    .invoice-title { text-align: right; }
-    .invoice-title h2 { color: #1f2937; margin: 0; font-size: 32px; }
-    .invoice-details { display: flex; justify-content: space-between; margin-bottom: 30px; }
-    .bill-to, .invoice-info { width: 45%; }
-    .section-title { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-    th { background: #4f46e5; color: white; padding: 12px; text-align: left; }
-    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
-    .totals { text-align: right; }
-    .totals table { width: 300px; margin-left: auto; }
-    .totals td { padding: 8px 12px; }
-    .total-row { font-weight: bold; font-size: 18px; background: #f3f4f6; }
-    .notes { margin-top: 30px; padding: 20px; background: #f9fafb; border-radius: 8px; }
-    .footer { margin-top: 40px; text-align: center; color: #6b7280; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="company-info">
-      <h1>${companyName}</h1>
-      <p>${companyAddress}</p>
-      ${companyGST ? `<p>GSTIN: ${companyGST}</p>` : ''}
-    </div>
-    <div class="invoice-title">
-      <h2>INVOICE</h2>
-      <p>#${invoiceNumber}</p>
-    </div>
-  </div>
-  
-  <div class="invoice-details">
-    <div class="bill-to">
-      <div class="section-title">Bill To</div>
-      <strong>${clientName}</strong>
-      <p>${clientAddress}</p>
-      ${clientGST ? `<p>GSTIN: ${clientGST}</p>` : ''}
-    </div>
-    <div class="invoice-info">
-      <div class="section-title">Invoice Details</div>
-      <p><strong>Date:</strong> ${invoiceDate}</p>
-      ${dueDate ? `<p><strong>Due Date:</strong> ${dueDate}</p>` : ''}
-    </div>
-  </div>
-  
-  <table>
-    <thead>
-      <tr>
-        <th>Description</th>
-        <th>Qty</th>
-        <th>Rate (₹)</th>
-        <th>GST %</th>
-        <th>Amount (₹)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${items.map(item => `
-        <tr>
-          <td>${item.description}</td>
-          <td>${item.quantity}</td>
-          <td>${item.rate.toFixed(2)}</td>
-          <td>${item.gstRate}%</td>
-          <td>${(item.quantity * item.rate).toFixed(2)}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-  
-  <div class="totals">
-    <table>
-      <tr>
-        <td>Subtotal:</td>
-        <td>₹${calculateSubtotal().toFixed(2)}</td>
-      </tr>
-      <tr>
-        <td>GST:</td>
-        <td>₹${calculateTotalGST().toFixed(2)}</td>
-      </tr>
-      <tr class="total-row">
-        <td>Total:</td>
-        <td>₹${calculateTotal().toFixed(2)}</td>
-      </tr>
-    </table>
-  </div>
-  
-  ${notes ? `<div class="notes"><strong>Notes:</strong><br/>${notes}</div>` : ''}
-  
-  <div class="footer">
-    <p>Thank you for your business!</p>
-  </div>
-</body>
-</html>`;
-
-    const blob = new Blob([invoiceContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Invoice-${invoiceNumber}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Invoice downloaded successfully!");
+    const t = toast.loading("Making your invoice PDF…");
+    try {
+      const { blob } = await makePdf(invoiceDoc);
+      await saveFile(blob, `${invoiceDoc.fileName}.pdf`, `Invoice ${invoiceNumber}`);
+      toast.success("Invoice PDF ready", { id: t });
+    } catch {
+      toast.error("The PDF could not be made on this device.", { id: t });
+    }
   };
 
   return (
@@ -399,11 +308,12 @@ export const InvoiceGenerator = () => {
             />
           </div>
 
-          <Button onClick={generateInvoice} className="w-full" size="lg">
-            <Download className="h-5 w-5 mr-2" /> Download Invoice
+          <Button onClick={() => void generateInvoice()} className="w-full" size="lg">
+            <Download className="h-5 w-5 mr-2" /> Download invoice PDF
           </Button>
         </CardContent>
       </Card>
+      <SaveBar toolId="invoice-generator" appName="Invoice Generator" doc={invoiceDoc} />
     </div>
   );
 };

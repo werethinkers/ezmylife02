@@ -39,7 +39,7 @@ export function docFromText(opts: {
     title: title ? plainLine(title) : opts.appName,
     kicker: opts.appName,
     subtitle: template === "report" ? summaryOf(blocks) : undefined,
-    date: todayText(),
+    date: /[\u0900-\u097F]/.test(opts.text) ? new Date().toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" }) : todayText(),
     accent: TEMPLATE_ACCENT[template],
     landscape: template === "register",
     letterhead: letterheadFrom(opts.profile),
@@ -125,5 +125,96 @@ export function docFromRows(opts: {
     letterhead: letterheadFrom(opts.profile),
     blocks,
     fileName: opts.fileName,
+  };
+}
+
+const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const twoDigits = (n: number) => (n < 20 ? ONES[n] : `${TENS[Math.floor(n / 10)]}${n % 10 ? `-${ONES[n % 10]}` : ""}`);
+const threeDigits = (n: number) => [n >= 100 ? `${ONES[Math.floor(n / 100)]} hundred` : "", twoDigits(n % 100)].filter(Boolean).join(" ");
+
+/** 123456.5 → "Rupees one lakh twenty-three thousand four hundred fifty-six and fifty paise only". */
+export function rupeesInWords(amount: number): string {
+  const r = Math.floor(Math.abs(amount));
+  const p = Math.round((Math.abs(amount) - r) * 100);
+  const parts: string[] = [];
+  const crore = Math.floor(r / 1e7);
+  const lakh = Math.floor((r % 1e7) / 1e5);
+  const thousand = Math.floor((r % 1e5) / 1e3);
+  const rest = r % 1e3;
+  if (crore) parts.push(`${crore >= 100 ? rupeesInWords(crore).replace(/^Rupees | only$/g, "") : twoDigits(crore)} crore`);
+  if (lakh) parts.push(`${twoDigits(lakh)} lakh`);
+  if (thousand) parts.push(`${twoDigits(thousand)} thousand`);
+  if (rest) parts.push(threeDigits(rest));
+  const words = parts.join(" ") || "zero";
+  return `Rupees ${words}${p ? ` and ${twoDigits(p)} paise` : ""} only`;
+}
+
+const money = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** An invoice on the seller's letterhead: bill-to, items with GST, totals, amount in words, signature. */
+export function docFromInvoice(v: {
+  companyName: string;
+  companyAddress: string;
+  companyGST: string;
+  clientName: string;
+  clientAddress: string;
+  clientGST: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  items: { description: string; quantity: number; rate: number; gstRate: number }[];
+  notes: string;
+  profile: WorkspaceProfile;
+}): PdfDoc {
+  const fmtDate = (d: string) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
+  const items = v.items.filter((i) => i.description.trim());
+  const subtotal = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+  const gst = items.reduce((s, i) => s + (i.quantity * i.rate * i.gstRate) / 100, 0);
+  const total = subtotal + gst;
+  const fromProfile = letterheadFrom(v.profile);
+  const contact = [v.profile.phone, v.profile.email].map((s) => s?.trim()).filter(Boolean).join(" · ");
+  const blocks: PdfBlock[] = [
+    {
+      t: "kv",
+      rows: [
+        ["Bill to", [v.clientName, v.clientAddress].filter(Boolean).join("\n")],
+        ["Invoice no.", v.invoiceNumber],
+        ["Customer GSTIN", v.clientGST || "Not given"],
+        ["Invoice date", fmtDate(v.invoiceDate)],
+        ...(v.dueDate ? ([["", ""], ["Due date", fmtDate(v.dueDate)]] as [string, string][]) : []),
+      ],
+    },
+    {
+      t: "table",
+      head: ["#", "Item or service", "Qty", "Rate (₹)", "GST", "Amount (₹)"],
+      rows: items.map((i, n) => [String(n + 1), i.description, String(i.quantity), money(i.rate), `${i.gstRate}%`, money(i.quantity * i.rate)]),
+      foot: ["", "Taxable value", "", "", "", money(subtotal)],
+    },
+    {
+      t: "tiles",
+      items: [
+        { label: "Taxable value", value: `₹${money(subtotal)}` },
+        { label: "GST", value: `₹${money(gst)}` },
+        { label: "Invoice total", value: `₹${money(total)}`, main: true },
+      ],
+    },
+    { t: "p", text: `**Amount in words:** ${rupeesInWords(total)}` },
+  ];
+  if (v.notes.trim()) blocks.push({ t: "box", label: "Notes and payment details", tint: true, blocks: [{ t: "p", text: v.notes.trim() }] });
+  blocks.push({ t: "sign", lines: [`Customer's signature`, `For ${v.companyName}\nAuthorised signatory`] });
+  return {
+    template: "letter",
+    title: "Tax invoice",
+    kicker: "Invoice Generator",
+    date: fmtDate(v.invoiceDate) || todayText(),
+    accent: TEMPLATE_ACCENT.letter,
+    letterhead: {
+      name: v.companyName,
+      tagline: fromProfile?.name === v.companyName ? fromProfile?.tagline : undefined,
+      lines: [v.companyAddress, contact, v.companyGST ? `GSTIN ${v.companyGST}` : ""].filter(Boolean),
+    },
+    blocks,
+    fileName: `invoice-${v.invoiceNumber.replace(/[^\w-]+/g, "")}`,
   };
 }

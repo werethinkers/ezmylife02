@@ -56,6 +56,7 @@ export const PDF_CSS = `
 .ezpdf-page th{font-weight:600;text-align:left;background:#f3ebdd;border-bottom:1.6px solid #121212;padding:7px 8px;vertical-align:bottom}
 .ezpdf-page td{padding:6px 8px;border-bottom:1px solid #e1dbd0;vertical-align:top}
 .ezpdf-page tfoot td{font-weight:700;border-top:1.6px solid #121212;border-bottom:none}
+.ezpdf-page .ezpdf-kvt td:first-child{width:34%;color:#5d574d}
 .ezpdf-page .num{text-align:right;white-space:nowrap}
 .ezpdf-box{border:1.8px solid #121212;border-radius:11px;padding:13px 17px;margin:8px 0 16px}
 .ezpdf-box.tint{background:#fff8ec}
@@ -112,7 +113,8 @@ function tableHtml(b: Extract<PdfBlock, { t: "table" }>): string {
     return i > 0 && vals.length > 0 && vals.filter((v) => NUMERIC.test(v)).length / vals.length >= 0.7;
   });
   const cls = (i: number) => (numeric[i] ? ' class="num"' : "");
-  return `<table><thead><tr>${b.head.map((h, i) => `<th${cls(i)}>${inline(h)}</th>`).join("")}</tr></thead><tbody>${b.rows
+  const head = b.head.some((h) => h.trim()) ? `<thead><tr>${b.head.map((h, i) => `<th${cls(i)}>${inline(h)}</th>`).join("")}</tr></thead>` : "";
+  return `<table${head ? "" : ' class="ezpdf-kvt"'}>${head}<tbody>${b.rows
     .map((r) => `<tr>${r.map((c, i) => `<td${cls(i)}>${inline(c)}</td>`).join("")}</tr>`)
     .join("")}</tbody>${b.foot ? `<tfoot><tr>${b.foot.map((c, i) => `<td${cls(i)}>${inline(c.replace(/\*\*/g, ""))}</td>`).join("")}</tr></tfoot>` : ""}</table>`;
 }
