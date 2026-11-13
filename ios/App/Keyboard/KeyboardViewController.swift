@@ -474,12 +474,19 @@ final class KeyboardViewController: UIInputViewController {
         // Typing ordinary text changes nothing in the strip: skip the redraw.
         let command = card == nil ? EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.text : nil
         let editingValue = editingKey.flatMap { card?.values[$0] } ?? ""
-        let signature = [
-            busy ?? "", notice ?? "", String(hasFullAccess), String(EzyShared.isConnected),
-            command ?? "∅", appResults.map(\.id).joined(separator: ","), suggestion?.text ?? "",
-            card.map { "\($0.app.id)|\($0.values.count)" } ?? "", editingKey ?? "", editingValue,
-            String(EzyShared.lastResult?.isFresh ?? false),
-        ].joined(separator: "¦")
+        var parts: [String] = []
+        parts.append(busy ?? "")
+        parts.append(notice ?? "")
+        parts.append(hasFullAccess ? "fa" : "")
+        parts.append(EzyShared.isConnected ? "on" : "")
+        parts.append(command ?? "∅")
+        parts.append(appResults.map { $0.id }.joined(separator: ","))
+        parts.append(suggestion?.text ?? "")
+        if let card { parts.append(card.app.id + "|" + String(card.values.count)) }
+        parts.append(editingKey ?? "")
+        parts.append(editingValue)
+        parts.append((EzyShared.lastResult?.isFresh ?? false) ? "last" : "")
+        let signature = parts.joined(separator: "¦")
         if !force && signature == stripSignature { return }
         stripSignature = signature
         stripStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
