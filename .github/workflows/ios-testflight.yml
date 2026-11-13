@@ -76,7 +76,7 @@ jobs:
             asn = OpenSSL::ASN1.decode(der)
             sig = asn.value.map { |i| i.value.to_s(2).rjust(32, "\x00")[-32..] }.join
             print "#{head}.#{body}.#{b64.(sig)}"' "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8")
-          code=$(curl -s -o "$RUNNER_TEMP/ids.json" -w '%{http_code}' -H "Authorization: Bearer $token" "https://api.appstoreconnect.apple.com/v1/bundleIds?limit=200&fields[bundleIds]=identifier,name")
+          code=$(curl -sg -o "$RUNNER_TEMP/ids.json" -w '%{http_code}' -H "Authorization: Bearer $token" "https://api.appstoreconnect.apple.com/v1/bundleIds?limit=200&fields[bundleIds]=identifier,name")
           echo "App Store Connect answered $code"
           if [ "$code" != "200" ]; then
             cat "$RUNNER_TEMP/ids.json"; echo
