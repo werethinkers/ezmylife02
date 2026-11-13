@@ -33,9 +33,11 @@ Whoever calls, the person's own wallet pays at the website's prices, through the
 | `GET`, `POST /keys`, `DELETE /keys/{id}` | Manage keys (website session only) | free |
 
 Apps the API runs are listed in `supabase/functions/_shared/apiCatalog.ts`, generated from `src/apps/defs` by
-`node scripts/gen-api-catalog.mjs` (296 apps on 7 Nov 2026). Calculators, converters, photo presets, trackers and
-coaching sessions run only on the site: `run` answers `409 web_only` with the app's link. Run the generator again
-after adding apps.
+`node scripts/gen-api-catalog.mjs` (326 apps on 14 Nov 2026). Calculators, converters and photo presets run only
+on the site: `run` answers `409 web_only` with the app's link. Trackers (`runner: "tracker"`) add one entry per
+`run` to the person's saved list, at the tracker's price. Coaching sessions (`mode: "coach"`) take
+`{action:"start", inputs}` (charged, returns `ticket`), then `{action:"turn"|"wrap", ticket, messages}` (free).
+Run the generator again after adding apps.
 
 Apps outside that catalogue that the API also runs are in `supabase/functions/_shared/nativeApis.ts`: older AI
 apps with their own server function, browser text tools (through `ai-app`), and phone-run tools (mode `device`:

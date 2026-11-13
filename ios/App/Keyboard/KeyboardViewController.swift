@@ -975,6 +975,13 @@ final class KeyboardViewController: UIInputViewController {
 
     /// Shrinks a picture while decoding it and stores it in the photo box as a JPEG.
     private func usePhoto(_ raw: Data?, for key: String) {
+        // Detail tools need the original file: shrinking it would lose the camera, date and DPI.
+        if let raw, raw.count < 12_000_000, ["view-metadata", "check-dpi", "remove-metadata"].contains(card?.app.id ?? "") {
+            card?.values[key] = "data:application/octet-stream;base64," + raw.base64EncodedString()
+            card?.edited.insert(key)
+            afterTyping()
+            return
+        }
         var small: UIImage?
         if let raw, let source = CGImageSourceCreateWithData(raw as CFData, nil) {
             let options: [CFString: Any] = [
@@ -1634,7 +1641,15 @@ enum EzyPhoto {
         case "generate-signature":
             return try signature(v["name"] ?? "")
         case "view-metadata", "check-dpi":
-            return .text(try metadata(detailed: id == "view-metadata"))
+            return .text(try metadata(v, detailed: id == "view-metadata"))
+        case "edit-metadata":
+            return try editMetadata(v)
+        case "nta-photo-signature", "sbi-clerk-photo-signature", "gate-photo-signature", "oci-photo-signature":
+            return try examSet(id, v)
+        case "bulk-image-resizer":
+            return try bulkResize(v)
+        case "pdf-chart-image-extractor":
+            return try pdfPages(v)
         case "remove-metadata":
             return try stripMetadata(v)
         case "pdf-to-text", "pdf-to-jpg", "rotate-pdf", "split-pdf", "merge-pdf":
@@ -1746,8 +1761,44 @@ enum EzyPhoto {
             return .image(try jpeg(input, dpi: dpi, kb: nil), type: "public.jpeg")
         case "image-color-picker":
             return .text(try colours(input))
-        case "merge-photo-signature", "join-images", "add-logo":
+        case "merge-photo-signature", "join-images", "add-logo-image":
             return .image(try twoPictures(id, input, try photo(v, "photo2"), v), type: "public.jpeg")
+        case "us-visa-photo", "india-evisa-photo":
+            let kb: ClosedRange<Double> = id == "us-visa-photo" ? 20...235 : 12...1000
+            return .image(try jpeg(fill(input, CGSize(width: 600, height: 600), faceAware: true), dpi: 300, kb: kb), type: "public.jpeg")
+        case "ai-id-photo-generator":
+            var base = input
+            if let mask = try subjectMask(input) {
+                let white = CIImage(color: .white).cropped(to: input.extent)
+                base = input.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: white, kCIInputMaskImageKey: mask])
+            }
+            let choice = v["size"] ?? ""
+            let size = choice.hasPrefix("Passport") ? pixels(35, 45, "mm", dpi: 300) : CGSize(width: 600, height: 600)
+            return .image(try jpeg(fill(autoAdjust(base), size, faceAware: true), dpi: 300, kb: nil), type: "public.jpeg")
+        case "ai-face-generator", "retouch-image":
+            let soft = smoothSkin(autoAdjust(input), amount: id == "retouch-image" ? 0.3 : 0.2)
+            return .image(try jpeg(sharpen(soft, amount: 0.4), dpi: nil, kb: nil), type: "public.jpeg")
+        case "blemish-remover":
+            return .image(try jpeg(smoothSkin(input, amount: 0.5), dpi: nil, kb: nil), type: "public.jpeg")
+        case "unblur-face":
+            return .image(try jpeg(sharpen(autoAdjust(input), amount: 1.3), dpi: nil, kb: nil), type: "public.jpeg")
+        case "remove-object-photo":
+            return try work("remove-background", v)
+        case "freehand-crop":
+            let shape = v["shape"] ?? ""
+            let r: CGFloat = shape.contains("4:5") ? 0.8 : shape.contains("3:4") ? 0.75 : shape.contains("9:16") ? 9.0 / 16 : shape.contains("16:9") ? 16.0 / 9 : 1
+            let e = input.extent
+            let size = e.width / e.height > r ? CGSize(width: (e.height * r).rounded(), height: e.height) : CGSize(width: e.width, height: (e.width / r).rounded())
+            return .image(try jpeg(fill(input, size, faceAware: true), dpi: nil, kb: nil), type: "public.jpeg")
+        case "split-image":
+            let p = v["pieces"] ?? ""
+            let (cols, rows) = p.hasPrefix("2 side") ? (2, 1) : p.hasPrefix("2 top") ? (1, 2) : p.hasPrefix("4") ? (2, 2) : (3, 1)
+            return .images(try tiles(input, cols: cols, rows: rows, tile: nil).map { try jpeg($0, dpi: nil, kb: nil) }, type: "public.jpeg")
+        case "instagram-grid":
+            let rows = (v["grid"] ?? "").hasSuffix("1") ? 1 : (v["grid"] ?? "").hasSuffix("2") ? 2 : 3
+            // Instagram shows the newest post first, so the last piece goes up first.
+            let pieces = try tiles(input, cols: 3, rows: rows, tile: CGSize(width: 1080, height: 1440)).reversed()
+            return .images(try pieces.map { try jpeg($0, dpi: nil, kb: nil) }, type: "public.jpeg")
         case "heic-to-jpg", "webp-to-jpg", "png-to-jpg":
             return .image(try jpeg(input, dpi: nil, kb: nil), type: "public.jpeg")
         case "jpg-to-pdf":
@@ -1755,6 +1806,96 @@ enum EzyPhoto {
         default:
             throw EzyPhotoError.failed("This tool isn't on the keyboard yet. Open it on ezyourlife.com.")
         }
+    }
+
+    // MARK: Sets of pictures
+
+    /// Exam forms: every picture the form asks for, each in its size and KB limit, in upload order.
+    private static func examSet(_ id: String, _ v: [String: String]) throws -> EzyPhotoOutput {
+        typealias Spec = (key: String, w: CGFloat, h: CGFloat, kb: ClosedRange<Double>, ink: Bool)
+        let specs: [Spec]
+        switch id {
+        case "nta-photo-signature": specs = [("photo", 350, 450, 12...190, false), ("signature", 300, 100, 12...48, true)]
+        case "sbi-clerk-photo-signature": specs = [("photo", 200, 230, 22...48, false), ("signature", 140, 60, 11...19, true),
+                                                   ("thumb", 240, 240, 22...48, true), ("declaration", 800, 400, 52...98, true)]
+        case "gate-photo-signature": specs = [("photo", 413, 531, 8...550, false), ("signature", 480, 150, 5...280, true)]
+        default: specs = [("photo", 600, 600, 12...190, false), ("signature", 600, 200, 5...190, true)]
+        }
+        var out: [Data] = []
+        for s in specs {
+            guard v[s.key] != nil else {
+                if s.key == "photo" || s.key == "signature" { throw EzyPhotoError.failed("Pick the \(s.key) too.") }
+                continue
+            }
+            let image = try photo(v, s.key)
+            let size = CGSize(width: s.w, height: s.h)
+            let picture = s.ink ? fit(ink(image), size, blurredBackground: false) : fill(autoAdjust(image), size, faceAware: true)
+            out.append(try jpeg(picture, dpi: 200, kb: s.kb))
+        }
+        return .images(out, type: "public.jpeg")
+    }
+
+    /// Signatures and thumb prints: grey, high contrast, paper turned white.
+    private static func ink(_ image: CIImage) -> CIImage {
+        image.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.8, kCIInputBrightnessKey: 0.12])
+            .cropped(to: image.extent)
+    }
+
+    /// Softens skin by mixing in a blurred copy.
+    private static func smoothSkin(_ image: CIImage, amount: Double) -> CIImage {
+        let soft = image.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": 0.05, "inputSharpness": 0.2])
+            .clampedToExtent().applyingGaussianBlur(sigma: max(2, image.extent.width / 400)).cropped(to: image.extent)
+        return soft.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: image, kCIInputTimeKey: 1 - amount])
+            .cropped(to: image.extent)
+    }
+
+    /// Cuts a picture into a grid, read left to right, top to bottom.
+    private static func tiles(_ image: CIImage, cols: Int, rows: Int, tile: CGSize?) throws -> [CIImage] {
+        let whole = tile.map { CGSize(width: $0.width * CGFloat(cols), height: $0.height * CGFloat(rows)) }
+        let source = whole.map { fill(image, $0, faceAware: false) } ?? image
+        let e = source.extent
+        let w = (e.width / CGFloat(cols)).rounded(.down), h = (e.height / CGFloat(rows)).rounded(.down)
+        var out: [CIImage] = []
+        for r in 0..<rows {
+            for c in 0..<cols {
+                let rect = CGRect(x: e.minX + CGFloat(c) * w, y: e.maxY - CGFloat(r + 1) * h, width: w, height: h)
+                out.append(source.cropped(to: rect).transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY)))
+            }
+        }
+        return out
+    }
+
+    private static func bulkResize(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let links = (v["photos"] ?? "").split(separator: "\n").map(String.init).prefix(10)
+        guard !links.isEmpty else { throw EzyPhotoError.noPhoto }
+        let longest = CGFloat(Double(v["size"] ?? "") ?? 1080)
+        var out: [Data] = []
+        for link in links {
+            guard let image = try? photo(["photo": link]) else { continue }
+            let scale = min(1, longest / max(image.extent.width, image.extent.height))
+            let resized = image.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
+            out.append(try jpeg(resized, dpi: nil, kb: nil))
+        }
+        guard !out.isEmpty else { throw EzyPhotoError.noPhoto }
+        return .images(out, type: "public.jpeg")
+    }
+
+    private static func pdfPages(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let doc = try pdf(v)
+        guard doc.pageCount > 0 else { throw EzyPhotoError.failed("This PDF has no pages.") }
+        let asked = (v["pages"] ?? "").trimmingCharacters(in: .whitespaces)
+        let pages = Array((asked.isEmpty ? Array(0..<doc.pageCount) : pageList(asked, count: doc.pageCount)).prefix(10))
+        guard !pages.isEmpty else { throw EzyPhotoError.failed("Name the pages, like 1-5. This PDF has \(doc.pageCount) pages.") }
+        var out: [Data] = []
+        for i in pages {
+            guard let page = doc.page(at: i) else { continue }
+            let box = page.bounds(for: .mediaBox)
+            let scale = min(1800 / max(box.width, box.height), 3)
+            if let data = page.thumbnail(of: CGSize(width: box.width * scale, height: box.height * scale), for: .mediaBox).jpegData(compressionQuality: 0.85) {
+                out.append(data)
+            }
+        }
+        return .images(out, type: "public.jpeg")
     }
 
     // MARK: Two pictures
@@ -1766,7 +1907,7 @@ enum EzyPhoto {
     private static func twoPictures(_ id: String, _ a: CIImage, _ b: CIImage, _ v: [String: String]) throws -> Data {
         let white = CIImage(color: .white)
         switch id {
-        case "add-logo":
+        case "add-logo-image":
             let side = min(a.extent.width, a.extent.height)
             let logo = scaled(b, by: side * 0.2 / max(b.extent.width, b.extent.height))
             let pad = side * 0.03
@@ -2145,8 +2286,32 @@ enum EzyPhoto {
 
     // MARK: Details
 
-    private static func metadata(detailed: Bool) throws -> String {
-        guard let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil),
+    /// The picked photo's original file, or the copied one.
+    private static func rawPhoto(_ v: [String: String]) -> Data? {
+        if let url = v["photo"], let comma = url.firstIndex(of: ","), let data = Data(base64Encoded: String(url[url.index(after: comma)...])) { return data }
+        return copiedData()
+    }
+
+    private static func editMetadata(_ v: [String: String]) throws -> EzyPhotoOutput {
+        let cg = try cgImage(try photo(v))
+        var tiff: [CFString: Any] = [:], iptc: [CFString: Any] = [:]
+        if let t = v["title"], !t.isEmpty { tiff[kCGImagePropertyTIFFImageDescription] = t; iptc[kCGImagePropertyIPTCObjectName] = t }
+        if let a = v["author"], !a.isEmpty { tiff[kCGImagePropertyTIFFArtist] = a; iptc[kCGImagePropertyIPTCByline] = [a] }
+        if let c = v["copyright"], !c.isEmpty {
+            let line = c.contains("©") ? c : "© \(Calendar.current.component(.year, from: Date())) \(c)"
+            tiff[kCGImagePropertyTIFFCopyright] = line; iptc[kCGImagePropertyIPTCCopyrightNotice] = line
+        }
+        guard !tiff.isEmpty else { throw EzyPhotoError.failed("Add a title, author or copyright.") }
+        let data = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(data, "public.jpeg" as CFString, 1, nil) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        let props: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 0.92, kCGImagePropertyTIFFDictionary: tiff, kCGImagePropertyIPTCDictionary: iptc]
+        CGImageDestinationAddImage(dest, cg, props as CFDictionary)
+        guard CGImageDestinationFinalize(dest) else { throw EzyPhotoError.failed("Couldn't save the picture.") }
+        return .image(data as Data, type: "public.jpeg")
+    }
+
+    private static func metadata(_ v: [String: String], detailed: Bool) throws -> String {
+        guard let data = rawPhoto(v), let source = CGImageSourceCreateWithData(data as CFData, nil),
               let p = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { throw EzyPhotoError.noPhoto }
         let w = p[kCGImagePropertyPixelWidth] as? Double ?? 0, h = p[kCGImagePropertyPixelHeight] as? Double ?? 0
         let dpi = p[kCGImagePropertyDPIWidth] as? Double ?? 72
@@ -2168,7 +2333,7 @@ enum EzyPhoto {
 
     private static func stripMetadata(_ v: [String: String]) throws -> EzyPhotoOutput {
         // Copy the original without its details when possible (no quality loss), else re-save the photo.
-        if let data = copiedData(), let source = CGImageSourceCreateWithData(data as CFData, nil), let type = CGImageSourceGetType(source) {
+        if let data = rawPhoto(v), let source = CGImageSourceCreateWithData(data as CFData, nil), let type = CGImageSourceGetType(source) {
             let out = NSMutableData()
             if let dest = CGImageDestinationCreateWithData(out, type, 1, nil) {
                 let options: [CFString: Any] = [
