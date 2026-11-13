@@ -3,6 +3,7 @@ import ImageIO
 import CoreImage
 import Vision
 import PDFKit
+import Photos
 
 /*
  * The EZYOURLIFE keyboard: a normal iPhone-style keyboard with one strip on top.
@@ -67,6 +68,8 @@ final class KeyboardViewController: UIInputViewController {
     private static let promptKey = "__prompt"
     private var card: Card?
     private var editingKey: String?
+    /// The photo box whose picker (recent photos from the library) is showing in the card.
+    private var pickingKey: String?
     private let cardView = UIView()
     private var planTask: Task<Void, Never>?
     private var suggestion: (text: String, plan: EzyPlan)?
@@ -678,6 +681,7 @@ final class KeyboardViewController: UIInputViewController {
     private func closeCard() {
         card = nil
         editingKey = nil
+        pickingKey = nil
         plannedText = ""
         afterTyping()
     }
@@ -838,6 +842,10 @@ final class KeyboardViewController: UIInputViewController {
     private func renderCard() {
         cardView.subviews.forEach { $0.removeFromSuperview() }
         guard let card else { return }
+        if let key = pickingKey {
+            renderPhotoPicker(for: key)
+            return
+        }
 
         let scroll = UIScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -904,6 +912,11 @@ final class KeyboardViewController: UIInputViewController {
         let board = UIPasteboard.general
         let types = ["public.jpeg", "public.png", "public.heic", "public.heif", "public.image"]
         let raw = types.lazy.compactMap { board.data(forPasteboardType: $0) }.first
+        usePhoto(raw, for: key)
+    }
+
+    /// Shrinks a picture while decoding it and stores it in the photo box as a JPEG.
+    private func usePhoto(_ raw: Data?, for key: String) {
         var small: UIImage?
         if let raw, let source = CGImageSourceCreateWithData(raw as CFData, nil) {
             let options: [CFString: Any] = [
@@ -929,6 +942,162 @@ final class KeyboardViewController: UIInputViewController {
         card?.values[key] = "data:image/jpeg;base64," + data.base64EncodedString()
         card?.edited.insert(key)
         afterTyping()
+    }
+
+    // MARK: Photo picker (recent photos inside the keyboard)
+
+    /// Photos access is asked for in the EZYOURLIFE app; the keyboard (with Full Access) uses the same answer.
+    static var photoAccess: Bool {
+        let s = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        return s == .authorized || s == .limited
+    }
+
+    private func choosePhoto(for key: String) {
+        guard Self.photoAccess else {
+            takeCopiedPhoto(for: key)
+            if card?.values[key]?.isEmpty ?? true {
+                notice = "Tip: open the EZYOURLIFE app once and allow Photos, then pick photos right here."
+                afterTyping()
+            }
+            return
+        }
+        pickingKey = key
+        afterTyping()
+        renderCard()
+    }
+
+    private func closePicker() {
+        pickingKey = nil
+        afterTyping()
+        renderCard()
+    }
+
+    private func renderPhotoPicker(for key: String) {
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        options.fetchLimit = 60
+        options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+        let assets = PHAsset.fetchAssets(with: options)
+
+        let back = ChipButton(type: .system)
+        back.setTitle("‹ Back", for: .normal)
+        back.titleLabel?.font = .systemFont(ofSize: 16)
+        back.setTitleColor(keyTextColor, for: .normal)
+        back.backgroundColor = functionKeyColor
+        back.layer.cornerRadius = 8
+        back.handler = { [weak self] in self?.closePicker() }
+        back.addTarget(back, action: #selector(ChipButton.tapped), for: .touchUpInside)
+
+        let pasted = ChipButton(type: .system)
+        pasted.setTitle("📋 Use copied photo", for: .normal)
+        pasted.titleLabel?.font = .systemFont(ofSize: 16)
+        pasted.setTitleColor(keyTextColor, for: .normal)
+        pasted.backgroundColor = chipColor
+        pasted.layer.cornerRadius = 8
+        pasted.handler = { [weak self] in
+            self?.pickingKey = nil
+            self?.takeCopiedPhoto(for: key)
+            self?.renderCard()
+        }
+        pasted.addTarget(pasted, action: #selector(ChipButton.tapped), for: .touchUpInside)
+
+        let bar = UIStackView(arrangedSubviews: [back, pasted])
+        bar.axis = .horizontal
+        bar.spacing = 8
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        back.widthAnchor.constraint(equalToConstant: 92).isActive = true
+
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        let grid = UIStackView()
+        grid.axis = .vertical
+        grid.spacing = 3
+        grid.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(grid)
+
+        let perRow = 4
+        let side: CGFloat = 200
+        let thumbOptions = PHImageRequestOptions()
+        thumbOptions.deliveryMode = .opportunistic
+        thumbOptions.resizeMode = .fast
+        thumbOptions.isNetworkAccessAllowed = true
+        var row: UIStackView?
+        if assets.count == 0 {
+            let empty = UILabel()
+            empty.text = "No photos to show. Use a copied photo instead."
+            empty.textColor = keyTextColor
+            empty.font = .systemFont(ofSize: 15)
+            empty.numberOfLines = 0
+            grid.addArrangedSubview(empty)
+        }
+        for i in 0..<assets.count {
+            if i % perRow == 0 {
+                let r = UIStackView()
+                r.axis = .horizontal
+                r.spacing = 3
+                r.distribution = .fillEqually
+                grid.addArrangedSubview(r)
+                row = r
+            }
+            let asset = assets.object(at: i)
+            let cell = ChipButton(type: .custom)
+            cell.imageView?.contentMode = .scaleAspectFill
+            cell.contentHorizontalAlignment = .fill
+            cell.contentVerticalAlignment = .fill
+            cell.clipsToBounds = true
+            cell.layer.cornerRadius = 4
+            cell.backgroundColor = chipColor
+            cell.heightAnchor.constraint(equalTo: cell.widthAnchor).isActive = true
+            PHImageManager.default().requestImage(for: asset, targetSize: CGSize(width: side, height: side), contentMode: .aspectFill, options: thumbOptions) { [weak cell] image, _ in
+                guard let image else { return }
+                DispatchQueue.main.async { cell?.setImage(image, for: .normal) }
+            }
+            cell.handler = { [weak self] in self?.pickAsset(asset, for: key) }
+            cell.addTarget(cell, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            row?.addArrangedSubview(cell)
+        }
+        // Keep the last row's cells the same size as the others.
+        if let row, assets.count % perRow != 0 {
+            for _ in 0..<(perRow - assets.count % perRow) { row.addArrangedSubview(UIView()) }
+        }
+
+        cardView.addSubview(scroll)
+        cardView.addSubview(bar)
+        NSLayoutConstraint.activate([
+            bar.topAnchor.constraint(equalTo: cardView.topAnchor),
+            bar.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            bar.heightAnchor.constraint(equalToConstant: 40),
+
+            scroll.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 6),
+            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+
+            grid.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            grid.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            grid.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            grid.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            grid.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+        ])
+    }
+
+    private func pickAsset(_ asset: PHAsset, for key: String) {
+        busy = "Getting your photo…"
+        afterTyping()
+        let options = PHImageRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.deliveryMode = .highQualityFormat
+        PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { [weak self] data, _, _, _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.busy = nil
+                self.pickingKey = nil
+                self.usePhoto(data, for: key)
+                self.renderCard()
+                self.refreshStrip()
+            }
+        }
     }
 
     /// PDF tools read the PDF the person copied (Files › Share › Copy).
@@ -962,7 +1131,10 @@ final class KeyboardViewController: UIInputViewController {
             let shown = value.isEmpty ? "Copy a PDF, then tap here" : "📄 PDF added (tap to use the one you copied now)"
             title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
         } else if field.type == "image" {
-            let shown = value.isEmpty ? "Copy a photo, then tap here" : "📷 Photo added (tap to use the one you copied now)"
+            let library = Self.photoAccess
+            let shown = value.isEmpty
+                ? (library ? "Tap to pick a photo" : "Copy a photo, then tap here")
+                : (library ? "📷 Photo added (tap to change)" : "📷 Photo added (tap to use the one you copied now)")
             title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
         } else if value.isEmpty {
             let hint = required ? "Tap to add" : (field.placeholder.map { "Optional, e.g. \($0)" } ?? "Optional")
@@ -985,7 +1157,7 @@ final class KeyboardViewController: UIInputViewController {
         }
         row.handler = { [weak self] in
             if field.type == "image" {
-                self?.takeCopiedPhoto(for: field.key)
+                self?.choosePhoto(for: field.key)
                 return
             }
             if field.type == "pdf" {

@@ -1,6 +1,7 @@
 import Foundation
 import Capacitor
 import UIKit
+import Photos
 
 /// Lets the website (the /keyboard page, inside the app only) hand the keyboard its API key and shortcuts.
 /// JavaScript side: src/lib/ezyKeyboard.ts. Registered in MainViewController. See docs/ios-keyboard.md.
@@ -31,6 +32,10 @@ public class EzyKeyboardPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         EzyShared.apiKey = key
+        // Lets the keyboard show recent photos to pick from (a keyboard can't ask for Photos itself).
+        if PHPhotoLibrary.authorizationStatus(for: .readWrite) == .notDetermined {
+            PHPhotoLibrary.requestAuthorization(for: .readWrite) { _ in }
+        }
         Task {
             let count = (try? await EzyAPI.refreshShortcuts().count) ?? 0
             call.resolve(["connected": true, "shortcuts": count])
