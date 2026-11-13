@@ -32,9 +32,9 @@ type Row = Record<string, any>;
 const fail = (status: number, error: string, extra: Row = {}) => json({ error, message: extra.message ?? error, ...extra }, status);
 
 function hex(b: ArrayBuffer | Uint8Array): string { return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
-function fromHex(h: string): Uint8Array { return new Uint8Array(h.match(/../g)!.map((x) => parseInt(x, 16))); }
+function fromHex(h: string): Uint8Array<ArrayBuffer> { return new Uint8Array(h.match(/../g)!.map((x) => parseInt(x, 16))); }
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
-const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const unb64 = (s: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 async function aesKey() {
   if (!/^[0-9a-f]{64}$/i.test(TOKEN_KEY)) throw new Error("MAIL_DESK_TOKEN_KEY is not set (64 hex characters)");

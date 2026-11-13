@@ -5,7 +5,7 @@ import { billed } from "../_shared/billing.ts";
 // Every request is signed-in-checked and, for paid actions, charged on the server.
 const serve = (handler: (req: Request) => Promise<Response>) =>
   stdServe(billed({ tool: () => null, allowAnonymous: true }, (req) => handler(req)));
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +24,7 @@ function getEnvFallbackKeys(): string[] {
   return keys;
 }
 
-async function fetchDbKeys(sb: ReturnType<typeof createClient>): Promise<DbKey[]> {
+async function fetchDbKeys(sb: SupabaseClient): Promise<DbKey[]> {
   try {
     const { data, error } = await sb
       .from("gemini_api_keys")
@@ -63,13 +63,13 @@ function closestApps(rows: CatalogRow[], asked: string, n: number): CatalogRow[]
     .map((x) => x.t);
 }
 
-async function recordKeySuccess(sb: ReturnType<typeof createClient>, id: string) {
+async function recordKeySuccess(sb: SupabaseClient, id: string) {
   try {
     await sb.from("gemini_api_keys").update({ last_used_at: new Date().toISOString(), failure_count: 0 }).eq("id", id);
   } catch (_) { /* ignore */ }
 }
 
-async function recordKeyFailure(sb: ReturnType<typeof createClient>, id: string, currentCount: number) {
+async function recordKeyFailure(sb: SupabaseClient, id: string, currentCount: number) {
   try {
     const newCount = currentCount + 1;
     await sb.from("gemini_api_keys").update({ failure_count: newCount, is_active: newCount < 5 }).eq("id", id);

@@ -151,7 +151,8 @@ export async function hostFile(path: string, bytes: Uint8Array, type: string, da
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/wa-media/${path}`, {
     method: "POST",
     headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": type, "x-upsert": "true" },
-    body: bytes,
+    // The upload body must be backed by a plain ArrayBuffer; a view over a shared buffer is rejected.
+    body: new Uint8Array(bytes),
   });
   if (!up.ok) return null;
   const s = await sb(`/storage/v1/object/sign/wa-media/${path}`, { method: "POST", body: JSON.stringify({ expiresIn: days * 86400 }) });

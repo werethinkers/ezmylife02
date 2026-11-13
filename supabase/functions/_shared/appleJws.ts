@@ -11,17 +11,19 @@
 export const APPLE_ROOT_G3_SHA256 = "63343abfb89a6a03ebb57e9b3f5fa7be7c4f5c756f3017b3a8c488c3653e9179";
 
 const enc = new TextEncoder();
+// WebCrypto only accepts byte views backed by a plain ArrayBuffer in this runtime.
+type Bytes = Uint8Array<ArrayBuffer>;
 const hex = (b: ArrayBuffer | Uint8Array) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
 
-export function b64uToBytes(s: string): Uint8Array {
+export function b64uToBytes(s: string): Bytes {
   const b64 = s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4);
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
-const b64ToBytes = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const b64ToBytes = (s: string): Bytes => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 // ---- a very small DER reader: enough to take a certificate apart ----
 type Node = { tag: number; start: number; hdr: number; len: number; end: number };
-function node(d: Uint8Array, pos: number): Node {
+function node(d: Bytes, pos: number): Node {
   const tag = d[pos];
   let len = d[pos + 1];
   let hdr = 2;
@@ -36,15 +38,15 @@ function node(d: Uint8Array, pos: number): Node {
   if (end > d.length) throw new Error("DER overrun");
   return { tag, start: pos, hdr, len, end };
 }
-const children = (d: Uint8Array, n: Node): Node[] => {
+const children = (d: Bytes, n: Node): Node[] => {
   const out: Node[] = [];
   let p = n.start + n.hdr;
   while (p < n.end) { const c = node(d, p); out.push(c); p = c.end; }
   return out;
 };
-const body = (d: Uint8Array, n: Node) => d.slice(n.start + n.hdr, n.end);
-const whole = (d: Uint8Array, n: Node) => d.slice(n.start, n.end);
-const oidHex = (d: Uint8Array, n: Node) => hex(body(d, n));
+const body = (d: Bytes, n: Node) => d.slice(n.start + n.hdr, n.end);
+const whole = (d: Bytes, n: Node) => d.slice(n.start, n.end);
+const oidHex = (d: Bytes, n: Node) => hex(body(d, n));
 
 const OID_ECDSA_SHA256 = "2a8648ce3d040302";
 const OID_ECDSA_SHA384 = "2a8648ce3d040303";
@@ -54,9 +56,9 @@ const OID_P384 = "2b81040022";
 const OID_APPLE_LEAF = "2a864886f76364060b01";
 const OID_APPLE_INTERMEDIATE = "2a864886f76364060201";
 
-type Cert = { der: Uint8Array; tbs: Uint8Array; sigAlg: string; sig: Uint8Array; spki: Uint8Array; curve: "P-256" | "P-384" };
+type Cert = { der: Bytes; tbs: Bytes; sigAlg: string; sig: Bytes; spki: Bytes; curve: "P-256" | "P-384" };
 
-function parseCert(der: Uint8Array): Cert {
+function parseCert(der: Bytes): Cert {
   const top = node(der, 0);
   const [tbsN, algN, sigN] = children(der, top);
   const alg = children(der, algN)[0];
@@ -71,7 +73,7 @@ function parseCert(der: Uint8Array): Cert {
 }
 
 // ECDSA signature DER {r, s} -> raw r||s
-function derSigToRaw(sig: Uint8Array, size: number): Uint8Array {
+function derSigToRaw(sig: Bytes, size: number): Bytes {
   const seq = node(sig, 0);
   const [r, s] = children(sig, seq);
   const fix = (n: Node) => {
