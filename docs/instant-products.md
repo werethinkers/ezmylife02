@@ -85,7 +85,10 @@ Every form on a published page sits in `FormFold` (`src/instant/signature.tsx`):
 closes any other (`<details name>`). This covers the business lead form and list order, the invitation RSVP (all
 versions, not only Signature) and the Signature write-back and message forms. The menu's order sheet is already a
 pop-up, so it is unchanged. In the builder (`src/pages/instant/Builder.tsx`) the steps are an accordion too: all
-closed at first, one open at a time, Next opens the next step, and a missing field opens its step.
+closed at first, one open at a time, Next opens the next step, and a missing field opens its step. Inside a step, a
+step with more than five fields shows its first four plus anything required or wrong, and folds the other optional
+fields into "More details". Repeating lists (services, plans, dishes, reviews, team) fold each item to one line that
+shows what it holds; one item opens at a time and a new item opens by itself (`ListField` in `FieldInput.tsx`).
 - The pictures in `public/design-previews` still show the older first version until they are remade.
 
 ## The ideas list (Nov 2026)

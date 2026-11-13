@@ -84,9 +84,12 @@ function BuilderInner({ product }: { product: Product }) {
   const [published, setPublished] = useState<{ slug: string } | null>(null);
   // -1: every step closed (how the form starts).
   const [step, setStep] = useState(-1);
+  // Which step has its "More details" fold open (it closes when another step opens).
+  const [moreOpen, setMoreOpen] = useState(-1);
   // Open one step and bring it into view (opening it closes the one that was open).
   const openStep = useCallback((i: number) => {
     setStep(i);
+    setMoreOpen(-1);
     if (i >= 0) requestAnimationFrame(() => document.getElementById(`step-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -284,14 +287,38 @@ function BuilderInner({ product }: { product: Product }) {
                     </span>
                     <span className="grid min-w-0 flex-1">
                       <span className="truncate font-bold">{st.title}</span>
-                      <span className={cn("truncate text-xs font-semibold", errs ? "text-destructive" : "text-muted-foreground")}>{errs ? `${errs} to fix` : st.hint ?? `${filled} of ${st.fields.length} filled`}</span>
+                      <span className={cn("truncate text-xs font-semibold", errs ? "text-destructive" : "text-muted-foreground")}>{errs ? `${errs} to fix` : `${filled} of ${st.fields.length} filled`}</span>
                     </span>
                     <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
                   </button>
                   {isOpen && (
                     <div id={`step-body-${i}`} className="grid grid-cols-1 gap-5 border-t-2 border-ink/15 px-4 pb-5 pt-4 md:px-5">
                       {st.hint && <p className="-mt-1 text-sm text-muted-foreground">{st.hint}</p>}
-                      {st.fields.map((f) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />)}
+                      {(() => {
+                        // A long step shows its first fields and anything required or wrong; the other optional
+                        // fields sit in one "More details" fold, so the step never feels like a long form.
+                        const long = st.fields.length > 5;
+                        const main = st.fields.filter((f, k) => !long || k < 4 || f.required || errors[f.id]);
+                        const more = st.fields.filter((f) => !main.includes(f));
+                        const input = (f: Field) => <FieldInput key={f.id} field={f} value={content[f.id]} onChange={(v) => set(f.id, v)} error={errors[f.id]} />;
+                        return (
+                          <>
+                            {main.map(input)}
+                            {more.length > 0 && (
+                              <details className="group rounded-2xl border bg-muted/20" onToggle={(e) => { const o = (e.currentTarget as HTMLDetailsElement).open; setMoreOpen((m) => (o ? i : m === i ? -1 : m)); }} open={moreOpen === i}>
+                                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                                  <span className="grid min-w-0 flex-1">
+                                    <span className="text-sm font-bold">More details <span className="font-semibold text-muted-foreground">· optional</span></span>
+                                    <span className="truncate text-xs text-muted-foreground">{more.map((f) => f.label).join(", ")}</span>
+                                  </span>
+                                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+                                </summary>
+                                <div className="grid gap-5 border-t px-4 pb-4 pt-4">{more.map(input)}</div>
+                              </details>
+                            )}
+                          </>
+                        );
+                      })()}
                       <div className="flex items-center justify-between gap-3 pt-1">
                         <Button variant="outline" className="h-11 shrink-0" onClick={() => openStep(-1)}>Close</Button>
                         {isLast ? (

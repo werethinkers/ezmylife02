@@ -1,5 +1,5 @@
 import { useId, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Crop, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Crop, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -79,29 +79,8 @@ export function FieldInput({ field: f, value, onChange, error, compact }: Props)
       const list: { photo: string; caption?: string }[] = Array.isArray(value) ? value : [];
       return wrap(<Gallery id={id} list={list} max={f.max ?? 8} onChange={onChange} />);
     }
-    case "list": {
-      const list: Record<string, Loose>[] = Array.isArray(value) ? value : [];
-      const set = (i: number, k: string, v: Loose) => onChange(list.map((it, j) => (j === i ? { ...it, [k]: v } : it)));
-      const move = (i: number, d: number) => { const n = [...list]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); onChange(n); };
-      return wrap(<div className="grid gap-3">
-        {list.map((it, i) => (
-          <div key={i} className="rounded-2xl border bg-muted/20 p-3 grid gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{f.itemLabel} {i + 1}</span>
-              <div className="flex gap-1">
-                <Button type="button" size="icon" variant="ghost" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up"><ArrowUp className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" disabled={i === list.length - 1} onClick={() => move(i, 1)} aria-label="Move down"><ArrowDown className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" onClick={() => onChange(list.filter((_, j) => j !== i))} aria-label={`Remove ${f.itemLabel}`}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            </div>
-            {f.item?.map((sub) => <FieldInput key={sub.id} compact field={sub} value={it[sub.id]} onChange={(v) => set(i, sub.id, v)} />)}
-          </div>
-        ))}
-        {list.length < (f.max ?? 12) && (
-          <Button type="button" variant="outline" className="h-11 rounded-xl" onClick={() => onChange([...list, {}])}><Plus className="h-4 w-4 mr-2" /> Add {f.itemLabel}</Button>
-        )}
-      </div>);
-    }
+    case "list":
+      return wrap(<ListField f={f} value={value} onChange={onChange} />);
     default: {
       const type = f.type === "phone" ? "tel" : f.type === "number" ? "number" : f.type;
       return wrap(<>
@@ -256,6 +235,59 @@ function SuggestionPicker({ sets, lines, onPick }: { sets?: SuggestionSet[]; lin
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/** A repeating list (services, plans, reviews, dishes, team). Each item folds into one line showing what it holds:
+ *  all closed at first, one open at a time, and a new item opens by itself, so a long list stays short. */
+function ListField({ f, value, onChange }: { f: Field; value: Loose; onChange: (v: Loose) => void }) {
+  const list: Record<string, Loose>[] = Array.isArray(value) ? value : [];
+  const [open, setOpen] = useState(-1);
+  const set = (i: number, k: string, v: Loose) => onChange(list.map((it, j) => (j === i ? { ...it, [k]: v } : it)));
+  const move = (i: number, d: number) => { const n = [...list]; const [x] = n.splice(i, 1); n.splice(i + d, 0, x); onChange(n); if (open === i) setOpen(i + d); };
+  const remove = (i: number) => { onChange(list.filter((_, j) => j !== i)); setOpen(-1); };
+  const summary = (it: Record<string, Loose>) => {
+    const words = (f.item ?? []).filter((sub) => ["text", "textarea", "number", "select", "date", "time"].includes(sub.type)).map((sub) => String(it[sub.id] ?? "").trim()).filter(Boolean);
+    return words.slice(0, 2).join(" · ");
+  };
+  return (
+    <div className="grid gap-2">
+      {list.length > 0 && <p className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? f.itemLabel?.toLowerCase() : "items"} · tap one to edit it</p>}
+      {list.map((it, i) => {
+        const isOpen = open === i;
+        const sum = summary(it);
+        return (
+          <div key={i} className={cn("rounded-2xl border bg-muted/20", isOpen && "border-foreground/40 bg-background shadow-sm")}>
+            <div className="flex items-center gap-1 pr-1">
+              <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? -1 : i)} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border bg-background text-xs font-bold tabular-nums">{i + 1}</span>
+                <span className="grid min-w-0 flex-1">
+                  <span className="truncate text-sm font-semibold">{sum || `${f.itemLabel} ${i + 1}`}</span>
+                  {!sum && <span className="truncate text-xs text-muted-foreground">Empty · tap to fill</span>}
+                </span>
+                <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
+              </button>
+              {isOpen && (
+                <>
+                  <Button type="button" size="icon" variant="ghost" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up"><ArrowUp className="h-4 w-4" /></Button>
+                  <Button type="button" size="icon" variant="ghost" disabled={i === list.length - 1} onClick={() => move(i, 1)} aria-label="Move down"><ArrowDown className="h-4 w-4" /></Button>
+                </>
+              )}
+              <Button type="button" size="icon" variant="ghost" onClick={() => remove(i)} aria-label={`Remove ${f.itemLabel} ${i + 1}`}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+            {isOpen && (
+              <div className="grid gap-3 border-t px-3 pb-3 pt-3">
+                {f.item?.map((sub) => <FieldInput key={sub.id} compact field={sub} value={it[sub.id]} onChange={(v) => set(i, sub.id, v)} />)}
+                <Button type="button" variant="outline" size="sm" className="justify-self-end" onClick={() => setOpen(-1)}>Done</Button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {list.length < (f.max ?? 12) && (
+        <Button type="button" variant="outline" className="h-11 rounded-xl" onClick={() => { onChange([...list, {}]); setOpen(list.length); }}><Plus className="h-4 w-4 mr-2" /> Add {f.itemLabel}</Button>
       )}
     </div>
   );
