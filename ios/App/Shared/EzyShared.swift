@@ -1,6 +1,7 @@
 import Foundation
 #if canImport(UIKit)
 import UIKit
+import CoreText
 #endif
 
 /*
@@ -329,6 +330,23 @@ enum EzyText {
 // MARK: - Matching what the person typed
 
 enum EzyMatch {
+    /// Orders app results for the strip: apps that run in the keyboard first, then names that start with
+    /// (or have a word starting with) what was typed. Also keeps older results sensible while a newer search runs.
+    static func rank(_ apps: [EzyApp], for word: String) -> [EzyApp] {
+        let w = word.lowercased()
+        func score(_ a: EzyApp) -> Int {
+            let name = a.name.lowercased()
+            var s = 0
+            if name.hasPrefix(w) { s += 6 } else if name.split(separator: " ").contains(where: { $0.hasPrefix(w) }) { s += 4 } else if name.contains(w) { s += 2 }
+            if a.runnable != false { s += 3 }
+            return s
+        }
+        return apps.enumerated().sorted { l, r in
+            let (a, b) = (score(l.element), score(r.element))
+            return a != b ? a > b : l.offset < r.offset
+        }.map(\.element)
+    }
+
     /// The command being typed: everything after the last "/" or "\" on the current line, if it started a word.
     /// "Hi /inv" -> "inv". "Send /invo Rahul 5000" -> "invo Rahul 5000". "a/b" -> nil (a slash inside a word).
     static func command(in before: String?) -> (text: String, length: Int)? {
@@ -378,6 +396,150 @@ enum EzyClipboard {
         }
         guard let url = URL(string: link), let pair = try? await URLSession.shared.data(from: url) else { return nil }
         return UIImage(data: pair.0)
+    }
+}
+#endif
+
+
+// MARK: - Answers for a chat box
+
+enum EzyText {
+    /// Markdown from the apps, made right for WhatsApp and other chats: *bold* instead of **bold**,
+    /// headings as bold lines, and lines that only hold blanks like "[Bank Name]" left out.
+    static func forChat(_ text: String) -> String {
+        var out: [String] = []
+        for raw in text.components(separatedBy: "\n") {
+            var line = raw
+            if line.range(of: #"\[[A-Za-z][A-Za-z /&()'-]{1,40}\]"#, options: .regularExpression) != nil,
+               line.range(of: #"\]\("#, options: .regularExpression) == nil {
+                continue // an unfilled blank: better left out than sent
+            }
+            if let r = line.range(of: #"^\s{0,3}#{1,6}\s+"#, options: .regularExpression) {
+                let title = line[r.upperBound...].replacingOccurrences(of: "**", with: "").trimmingCharacters(in: .whitespaces)
+                line = title.isEmpty ? "" : "*\(title)*"
+            } else {
+                line = line.replacingOccurrences(of: "**", with: "*").replacingOccurrences(of: "__", with: "_")
+                if let r = line.range(of: #"^\s*[-*]\s+"#, options: .regularExpression), !line.hasPrefix("*") || line.hasPrefix("* ") {
+                    line = "• " + line[r.upperBound...]
+                }
+            }
+            if line.range(of: #"^\s*\|?\s*:?-{3,}"#, options: .regularExpression) != nil { continue } // table rule
+            if line.hasPrefix("|") {
+                line = line.trimmingCharacters(in: CharacterSet(charactersIn: "| ")).replacingOccurrences(of: " | ", with: " · ").replacingOccurrences(of: "|", with: " · ")
+            }
+            if line.trimmingCharacters(in: .whitespaces) == "---" { continue }
+            if line.isEmpty && (out.last?.isEmpty ?? true) { continue }
+            out.append(line)
+        }
+        return out.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+#if canImport(UIKit)
+// MARK: - A clean A4 PDF from an app's answer
+
+enum EzyPDF {
+    static let coral = UIColor(red: 1.0, green: 0.42, blue: 0.29, alpha: 1)
+    static let ink = UIColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1)
+
+    /// Lays the answer out on A4 pages: an EZYOURLIFE header with the app's name and date, headings,
+    /// bullets, tables as aligned columns, page numbers in the footer.
+    static func make(title: String, markdown: String) -> Data {
+        let page = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let body = page.insetBy(dx: 48, dy: 0)
+        let top: CGFloat = 112, bottom: CGFloat = 60
+        let text = attributed(markdown, width: body.width)
+        let setter = CTFramesetterCreateWithAttributedString(text as CFAttributedString)
+        let date = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
+
+        return UIGraphicsPDFRenderer(bounds: page).pdfData { ctx in
+            var start = 0, number = 1
+            repeat {
+                ctx.beginPage()
+                let cg = ctx.cgContext
+                // Header
+                coral.setFill()
+                cg.fill(CGRect(x: 0, y: 0, width: page.width, height: 6))
+                ("EZYOURLIFE" as NSString).draw(at: CGPoint(x: body.minX, y: 26), withAttributes: [.font: UIFont.systemFont(ofSize: 11, weight: .heavy), .foregroundColor: coral, .kern: 1.6])
+                (date as NSString).draw(in: CGRect(x: body.midX, y: 26, width: body.width / 2, height: 16), withAttributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: UIColor.gray, .paragraphStyle: right()])
+                (title as NSString).draw(in: CGRect(x: body.minX, y: 46, width: body.width, height: 34), withAttributes: [.font: UIFont.systemFont(ofSize: 22, weight: .bold), .foregroundColor: ink])
+                UIColor(white: 0.88, alpha: 1).setFill()
+                cg.fill(CGRect(x: body.minX, y: 90, width: body.width, height: 1))
+                // Footer
+                ("Made with EZYOURLIFE · ezyourlife.com" as NSString).draw(at: CGPoint(x: body.minX, y: page.height - 36), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: UIColor.gray])
+                ("Page \(number)" as NSString).draw(in: CGRect(x: body.midX, y: page.height - 36, width: body.width / 2, height: 14), withAttributes: [.font: UIFont.systemFont(ofSize: 9), .foregroundColor: UIColor.gray, .paragraphStyle: right()])
+                // Body (CoreText draws with a flipped y axis)
+                let frameRect = CGRect(x: body.minX, y: bottom, width: body.width, height: page.height - top - bottom)
+                cg.saveGState()
+                cg.translateBy(x: 0, y: page.height)
+                cg.scaleBy(x: 1, y: -1)
+                let frame = CTFramesetterCreateFrame(setter, CFRange(location: start, length: 0), CGPath(rect: frameRect, transform: nil), nil)
+                CTFrameDraw(frame, cg)
+                cg.restoreGState()
+                let shown = CTFrameGetVisibleStringRange(frame).length
+                start += max(shown, 1)
+                number += 1
+            } while start < text.length && number < 60
+        }
+    }
+
+    private static func right() -> NSParagraphStyle {
+        let p = NSMutableParagraphStyle()
+        p.alignment = .right
+        return p
+    }
+
+    private static func inline(_ line: String, font: UIFont, bold: UIFont, color: UIColor) -> NSMutableAttributedString {
+        let out = NSMutableAttributedString()
+        let parts = line.components(separatedBy: "**")
+        for (i, part) in parts.enumerated() {
+            out.append(NSAttributedString(string: part, attributes: [.font: i % 2 == 1 ? bold : font, .foregroundColor: color]))
+        }
+        return out
+    }
+
+    private static func attributed(_ markdown: String, width: CGFloat) -> NSAttributedString {
+        let out = NSMutableAttributedString()
+        let regular = UIFont.systemFont(ofSize: 11)
+        let strong = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        func para(spacingBefore: CGFloat = 0, after: CGFloat = 4, indent: CGFloat = 0, tabs: [NSTextTab] = []) -> NSParagraphStyle {
+            let p = NSMutableParagraphStyle()
+            p.paragraphSpacingBefore = spacingBefore
+            p.paragraphSpacing = after
+            p.lineSpacing = 2
+            p.headIndent = indent
+            p.tabStops = tabs
+            return p
+        }
+        for raw in markdown.components(separatedBy: "\n") {
+            var line = raw.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line == "---" || line.range(of: #"^\|?\s*:?-{3,}"#, options: .regularExpression) != nil { continue }
+            var piece: NSMutableAttributedString
+            if let r = line.range(of: #"^#{1,6}\s+"#, options: .regularExpression) {
+                let level = line[..<r.upperBound].filter { $0 == "#" }.count
+                line = String(line[r.upperBound...]).replacingOccurrences(of: "**", with: "")
+                let font = UIFont.systemFont(ofSize: level <= 1 ? 16 : level == 2 ? 14 : 12, weight: .bold)
+                piece = NSMutableAttributedString(string: line, attributes: [.font: font, .foregroundColor: level <= 2 ? coral : ink])
+                piece.addAttribute(.paragraphStyle, value: para(spacingBefore: 10, after: 5), range: NSRange(location: 0, length: piece.length))
+            } else if line.hasPrefix("|") {
+                let cells = line.trimmingCharacters(in: CharacterSet(charactersIn: "|")).components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+                let step = width / CGFloat(max(cells.count, 1))
+                let tabs = (1..<max(cells.count, 2)).map { NSTextTab(textAlignment: .left, location: CGFloat($0) * step) }
+                piece = inline(cells.joined(separator: "\t"), font: regular, bold: strong, color: ink)
+                piece.addAttribute(.paragraphStyle, value: para(after: 3, tabs: tabs), range: NSRange(location: 0, length: piece.length))
+            } else if let r = line.range(of: #"^([-*•]|\d+[.)])\s+"#, options: .regularExpression) {
+                let mark = line[..<r.upperBound].trimmingCharacters(in: .whitespaces)
+                let bullet = mark.first?.isNumber == true ? mark : "•"
+                piece = inline("\(bullet)\t" + line[r.upperBound...], font: regular, bold: strong, color: ink)
+                piece.addAttribute(.paragraphStyle, value: para(after: 3, indent: 16, tabs: [NSTextTab(textAlignment: .left, location: 16)]), range: NSRange(location: 0, length: piece.length))
+            } else {
+                piece = inline(line, font: regular, bold: strong, color: ink)
+                piece.addAttribute(.paragraphStyle, value: para(after: 6), range: NSRange(location: 0, length: piece.length))
+            }
+            piece.append(NSAttributedString(string: "\n"))
+            out.append(piece)
+        }
+        return out
     }
 }
 #endif
