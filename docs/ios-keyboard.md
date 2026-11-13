@@ -33,6 +33,9 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
 - **Photo and PDF tools run on the phone** (about 70: ID and exam photo sizes, KB size, resize, crop,
   signature, background removal and blur, face blur, watermark, text, DPI, metadata, JPG to PDF, PDF to
   JPG or text, rotate, split and merge PDFs, HEIC/WebP/PNG to JPG, photo + signature, join photos, logo).
+  Photo boxes open a grid of the person's recent photos inside the keyboard (Photos access is asked for in
+  the app once the keyboard is connected, because a keyboard can't ask; without it they fall back to the
+  copied photo).
   The code is `EzyPhoto` in `ios/App/Keyboard/KeyboardViewController.swift` (CoreImage, Vision, ImageIO,
   PDFKit). The picture or PDF is read from what the person copied and the result is copied back for
   pasting. Nothing is uploaded: the keyboard only calls `POST /v1/apps/{id}/charge` to charge the run at

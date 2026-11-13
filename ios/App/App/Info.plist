@@ -73,7 +73,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>EZYOURLIFE uses the microphone when you choose to record a voice note or video in an app.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>EZYOURLIFE opens your photos when you choose a picture to use in an app.</string>
+	<string>EZYOURLIFE opens your photos when you choose a picture to use in an app, and shows your recent photos in the EZYOURLIFE keyboard so you can pick one without leaving your chat.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>EZYOURLIFE saves images you choose to save, such as photos, cards and designs you made.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
