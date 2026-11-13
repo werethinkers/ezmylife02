@@ -183,6 +183,8 @@ struct EzyResult: Codable {
     var text: String
     var imageURL: String?
     var at: Date
+    /// Apps that make several pictures at once (ProductVision 360's angles): all of them, in order.
+    var images: [String]? = nil
 
     var isFresh: Bool { Date().timeIntervalSince(at) < 15 * 60 }
 }
@@ -287,8 +289,33 @@ enum EzyAPI {
             image = s
             text = ""
         }
+        // Several pictures: plain links or { image } objects.
+        let many = (json["images"] as? [Any] ?? []).compactMap { item -> String? in
+            if let s = item as? String { return s }
+            if let d = item as? [String: Any] { return (d["image"] ?? d["url"]) as? String }
+            return nil
+        }
+        if image == nil { image = many.first }
         if text.isEmpty { text = image != nil ? "" : app.link }
-        return EzyResult(title: app.name, text: text, imageURL: image, at: Date())
+        // A video can't be pasted as a picture: hand over its link.
+        if let link = image, link.hasPrefix("http"), link.range(of: #"\.(mp4|mov|webm)(\?|$)"#, options: .regularExpression) != nil {
+            return EzyResult(title: app.name, text: link, imageURL: nil, at: Date())
+        }
+        var result = EzyResult(title: app.name, text: text, imageURL: image, at: Date())
+        if many.count > 1 { result.images = many }
+        return result
+    }
+
+    /// Coaching apps, one message at a time. "start" is charged (the session price) and returns a ticket;
+    /// "turn" and "wrap" send the ticket and the conversation and are free.
+    static func coach(_ appId: String, action: String, inputs: [String: String] = [:], ticket: String? = nil, messages: [[String: String]] = []) async throws -> (text: String, ticket: String?) {
+        var body: [String: Any] = ["action": action]
+        if !inputs.isEmpty { body["inputs"] = inputs }
+        if let ticket { body["ticket"] = ticket }
+        if !messages.isEmpty { body["messages"] = messages }
+        let id = appId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? appId
+        let json = try await request("/apps/\(id)/run", method: "POST", body: body)
+        return (EzyText.flatten(json["output"]), json["ticket"] as? String)
     }
 }
 
@@ -386,8 +413,39 @@ enum EzyMatch {
 
 #if canImport(UIKit)
 enum EzyClipboard {
+    /// Copies a PDF as a named file, the way the Files app does, so chat apps such as
+    /// WhatsApp paste it as a document. Notes and Mail still read the raw PDF data.
+    static func copyPDF(_ data: Data, name: String) {
+        let clean = name.components(separatedBy: CharacterSet(charactersIn: "/\\:?*\"<>|")).joined()
+        let file = (clean.isEmpty ? "EZYOURLIFE" : clean) + ".pdf"
+        let folder = (FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: EzyShared.appGroup)
+            ?? FileManager.default.temporaryDirectory).appendingPathComponent("Paste", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent(file)
+        try? data.write(to: url, options: .atomic)
+        let provider = NSItemProvider()
+        provider.suggestedName = file
+        provider.registerFileRepresentation(forTypeIdentifier: "com.adobe.pdf", fileOptions: [], visibility: .all) { done in
+            done(url, false, nil)
+            return nil
+        }
+        provider.registerDataRepresentation(forTypeIdentifier: "com.adobe.pdf", visibility: .all) { done in
+            done(data, nil)
+            return nil
+        }
+        UIPasteboard.general.setItemProviders([provider], localOnly: false, expirationDate: nil)
+    }
+
     /// Copies a result: the text, or the image itself when the app made one.
     static func copy(_ result: EzyResult) async {
+        if let many = result.images, many.count > 1 {
+            var pictures: [UIImage] = []
+            for link in many { if let image = await loadImage(link) { pictures.append(image) } }
+            if !pictures.isEmpty {
+                await MainActor.run { UIPasteboard.general.images = pictures }
+                return
+            }
+        }
         if let link = result.imageURL, let image = await loadImage(link) {
             await MainActor.run { UIPasteboard.general.image = image }
         } else if !result.text.isEmpty {

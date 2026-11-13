@@ -66,8 +66,16 @@ final class KeyboardViewController: UIInputViewController {
         var commandText: String
         /// "text" (typed into the chat) or "pdf" (a PDF copied for pasting). Only for apps that answer in words.
         var format: String = "text"
-        var offersPDF: Bool { !["device", "image", "images"].contains(app.mode ?? "") }
+        var offersPDF: Bool { !["device", "image", "images", "coach"].contains(app.mode ?? "") && coach == nil }
+        /// A coaching session in progress: its ticket and the conversation so far.
+        var coach: Coach?
     }
+    private struct Coach {
+        var ticket: String
+        var messages: [[String: String]]
+        var waiting = false
+    }
+    private static let replyKey = "__reply"
     private static let promptKey = "__prompt"
     // Short enough to fit the strip on a small iPhone.
     private static let pasteImage = "✓ Image copied · hold the message box › Paste"
@@ -76,6 +84,12 @@ final class KeyboardViewController: UIInputViewController {
     private var editingKey: String?
     /// The photo box whose picker (recent photos from the library) is showing in the card.
     private var pickingKey: String?
+    /// Photos ticked so far when a box takes several photos.
+    private var pickedAssets: [PHAsset] = []
+    private var pickingMany: Bool {
+        guard let key = pickingKey else { return false }
+        return card?.fields.first(where: { $0.key == key })?.type == "images"
+    }
     private let cardView = UIView()
     private var planTask: Task<Void, Never>?
     private var suggestion: (text: String, plan: EzyPlan)?
@@ -676,6 +690,7 @@ final class KeyboardViewController: UIInputViewController {
         }
         for field in fields where (values[field.key] ?? "").isEmpty {
             if let d = field.defaultValue, !d.isEmpty { values[field.key] = d }
+            else if field.type == "date" { values[field.key] = Self.today() }
         }
         planTask?.cancel()
         suggestion = nil
@@ -684,6 +699,12 @@ final class KeyboardViewController: UIInputViewController {
         card?.format = EzyShared.store.string(forKey: "format.\(app.id)") ?? "text"
         page = .letters
         afterTyping()
+    }
+
+    private static func today() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
     }
 
     private func closeCard() {
@@ -761,6 +782,10 @@ final class KeyboardViewController: UIInputViewController {
             runOnDevice(current.app, values: current.values)
             return
         }
+        if current.app.mode == "coach" {
+            startCoach(current)
+            return
+        }
         Task { [weak self] in
             do {
                 let result = try await EzyAPI.run(plan)
@@ -776,12 +801,16 @@ final class KeyboardViewController: UIInputViewController {
                     guard let self else { return }
                     self.busy = nil
                     if let pdf {
-                        UIPasteboard.general.setData(pdf, forPasteboardType: "com.adobe.pdf")
+                        EzyClipboard.copyPDF(pdf, name: current.app.name)
                         self.replaceCommand(with: "")
                         self.notice = Self.pastePDF
                     } else {
                         self.replaceCommand(with: EzyChat.forChat(result.text))
-                        self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
+                        if let many = result.images, many.count > 1 {
+                            self.notice = "✓ \(many.count) images copied · hold the message box › Paste"
+                        } else {
+                            self.notice = result.imageURL != nil ? Self.pasteImage : "✓ \(current.app.name) is in. Tap to close."
+                        }
                     }
                     self.refreshStrip()
                 }
@@ -806,9 +835,14 @@ final class KeyboardViewController: UIInputViewController {
                     self.busy = nil
                     switch output {
                     case let .image(data, type):
-                        UIPasteboard.general.setData(data, forPasteboardType: type)
+                        if type == "com.adobe.pdf" { EzyClipboard.copyPDF(data, name: app.name) }
+                        else { UIPasteboard.general.setData(data, forPasteboardType: type) }
                         self.replaceCommand(with: "")
                         self.notice = type == "com.adobe.pdf" ? Self.pastePDF : Self.pasteImage
+                    case let .images(list, type):
+                        UIPasteboard.general.setItems(list.map { [type: $0] })
+                        self.replaceCommand(with: "")
+                        self.notice = "✓ \(list.count) images copied · hold the message box › Paste"
                     case let .text(text):
                         self.replaceCommand(with: text)
                         self.notice = "✓ \(app.name) is in. Tap to close."
@@ -861,6 +895,10 @@ final class KeyboardViewController: UIInputViewController {
         guard let card else { return }
         if let key = pickingKey {
             renderPhotoPicker(for: key)
+            return
+        }
+        if card.coach != nil {
+            renderCoach(card)
             return
         }
 
@@ -982,6 +1020,7 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         pickingKey = key
+        pickedAssets = []
         afterTyping()
         renderCard()
     }
@@ -1014,10 +1053,20 @@ final class KeyboardViewController: UIInputViewController {
         pasted.setTitleColor(keyTextColor, for: .normal)
         pasted.backgroundColor = chipColor
         pasted.layer.cornerRadius = 8
-        pasted.handler = { [weak self] in
-            self?.pickingKey = nil
-            self?.takeCopiedPhoto(for: key)
-            self?.renderCard()
+        if pickingMany {
+            pasted.setTitle(pickedAssets.isEmpty ? "Tick up to 10 photos" : "✓ Use \(pickedAssets.count) photo\(pickedAssets.count == 1 ? "" : "s")", for: .normal)
+            pasted.backgroundColor = pickedAssets.isEmpty ? chipColor : brand
+            pasted.setTitleColor(pickedAssets.isEmpty ? keyTextColor : .white, for: .normal)
+            pasted.handler = { [weak self] in
+                guard let self, !self.pickedAssets.isEmpty else { return }
+                self.pickMany(self.pickedAssets, for: key)
+            }
+        } else {
+            pasted.handler = { [weak self] in
+                self?.pickingKey = nil
+                self?.takeCopiedPhoto(for: key)
+                self?.renderCard()
+            }
         }
         pasted.addTarget(pasted, action: #selector(ChipButton.tapped), for: .touchUpInside)
 
@@ -1072,7 +1121,20 @@ final class KeyboardViewController: UIInputViewController {
                 guard let image else { return }
                 DispatchQueue.main.async { cell?.setImage(image, for: .normal) }
             }
-            cell.handler = { [weak self] in self?.pickAsset(asset, for: key) }
+            if pickedAssets.contains(asset) {
+                cell.layer.borderWidth = 3
+                cell.layer.borderColor = brand.cgColor
+            }
+            cell.handler = { [weak self] in
+                guard let self else { return }
+                if self.pickingMany {
+                    if let i = self.pickedAssets.firstIndex(of: asset) { self.pickedAssets.remove(at: i) }
+                    else if self.pickedAssets.count < 10 { self.pickedAssets.append(asset) }
+                    self.renderCard()
+                } else {
+                    self.pickAsset(asset, for: key)
+                }
+            }
             cell.addTarget(cell, action: #selector(ChipButton.tapped), for: .touchUpInside)
             row?.addArrangedSubview(cell)
         }
@@ -1117,6 +1179,209 @@ final class KeyboardViewController: UIInputViewController {
                 self.renderCard()
                 self.refreshStrip()
             }
+        }
+    }
+
+    /// Several photos for one box: each is shrunk while decoding and kept as one line of data links.
+    private func pickMany(_ assets: [PHAsset], for key: String) {
+        busy = "Getting \(assets.count) photos…"
+        pickingKey = nil
+        afterTyping()
+        Task { [weak self] in
+            var links: [String] = []
+            for asset in assets {
+                let data: Data? = await withCheckedContinuation { done in
+                    let options = PHImageRequestOptions()
+                    options.isNetworkAccessAllowed = true
+                    options.deliveryMode = .highQualityFormat
+                    PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { d, _, _, _ in done.resume(returning: d) }
+                }
+                if let link = data.flatMap({ Self.smallJPEGLink($0, maxSide: 1600) }) { links.append(link) }
+            }
+            await MainActor.run {
+                guard let self else { return }
+                self.busy = nil
+                self.card?.values[key] = links.joined(separator: "\n")
+                self.card?.edited.insert(key)
+                self.renderCard()
+                self.afterTyping()
+            }
+        }
+    }
+
+    private static func smallJPEGLink(_ raw: Data, maxSide: Int) -> String? {
+        guard let source = CGImageSourceCreateWithData(raw as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxSide,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let data = UIImage(cgImage: cg).jpegData(compressionQuality: 0.85) else { return nil }
+        return "data:image/jpeg;base64," + data.base64EncodedString()
+    }
+
+    // MARK: Coaching sessions in the keyboard
+
+    private func startCoach(_ current: Card) {
+        busy = "Starting \(current.app.name)…"
+        afterTyping()
+        let inputs = current.values.filter { !$0.value.isEmpty && $0.key != Self.promptKey }
+        Task { [weak self] in
+            do {
+                let (text, ticket) = try await EzyAPI.coach(current.app.id, action: "start", inputs: inputs)
+                await MainActor.run {
+                    guard let self else { return }
+                    self.busy = nil
+                    var next = current
+                    next.coach = Coach(ticket: ticket ?? "", messages: [["role": "assistant", "content": text]])
+                    next.fields = [EzyField(key: Self.replyKey, label: "Your answer", type: "textarea", required: false, placeholder: "Type or dictate your answer", options: nil)]
+                    next.values = [:]
+                    self.card = next
+                    self.afterTyping()
+                    self.renderCard()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.busy = nil
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func sendCoach(wrap: Bool) {
+        guard var current = card, var coach = current.coach else { return }
+        let answer = (current.values[Self.replyKey] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !wrap {
+            guard !answer.isEmpty else { editingKey = Self.replyKey; afterTyping(); return }
+            coach.messages.append(["role": "user", "content": answer])
+        }
+        coach.waiting = true
+        current.coach = coach
+        current.values[Self.replyKey] = ""
+        card = current
+        renderCard()
+        let id = current.app.id
+        Task { [weak self] in
+            do {
+                let (text, _) = try await EzyAPI.coach(id, action: wrap ? "wrap" : "turn", ticket: coach.ticket, messages: coach.messages)
+                await MainActor.run {
+                    guard let self else { return }
+                    if wrap {
+                        self.card = nil
+                        self.replaceCommand(with: EzyChat.forChat(text))
+                        self.notice = "✓ Session summary is in. Tap to close."
+                        self.refreshStrip()
+                        return
+                    }
+                    coach.messages.append(["role": "assistant", "content": text])
+                    coach.waiting = false
+                    self.card?.coach = coach
+                    self.renderCard()
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self else { return }
+                    coach.waiting = false
+                    if !wrap { coach.messages.removeLast() ; self.card?.values[Self.replyKey] = answer }
+                    self.card?.coach = coach
+                    self.notice = error.localizedDescription
+                    self.renderCard()
+                    self.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func renderCoach(_ card: Card) {
+        guard let coach = card.coach else { return }
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        let list = UIStackView()
+        list.axis = .vertical
+        list.spacing = 6
+        list.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(list)
+
+        // The last few messages, newest at the bottom.
+        for m in coach.messages.suffix(4) {
+            let mine = m["role"] == "user"
+            let bubble = UILabel()
+            bubble.numberOfLines = 0
+            bubble.font = .systemFont(ofSize: 14)
+            bubble.text = (mine ? "You: " : "🧑‍🏫 ") + EzyChat.forChat(m["content"] ?? "").replacingOccurrences(of: "*", with: "")
+            bubble.textColor = keyTextColor
+            bubble.backgroundColor = mine ? chipColor : brand.withAlphaComponent(0.12)
+            bubble.layer.cornerRadius = 8
+            bubble.clipsToBounds = true
+            let wrap = UIView()
+            wrap.addSubview(bubble)
+            bubble.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                bubble.topAnchor.constraint(equalTo: wrap.topAnchor),
+                bubble.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
+                bubble.leadingAnchor.constraint(equalTo: wrap.leadingAnchor, constant: 4),
+                bubble.trailingAnchor.constraint(equalTo: wrap.trailingAnchor, constant: -4),
+            ])
+            list.addArrangedSubview(wrap)
+        }
+        if coach.waiting {
+            let thinking = UILabel()
+            thinking.text = "Thinking…"
+            thinking.font = .italicSystemFont(ofSize: 14)
+            thinking.textColor = keyTextColor
+            list.addArrangedSubview(thinking)
+        } else if let reply = card.fields.first {
+            list.addArrangedSubview(fieldRow(reply, card: card))
+        }
+
+        func button(_ title: String, primary: Bool = false, _ action: @escaping () -> Void) -> ChipButton {
+            let b = ChipButton(type: .system)
+            b.setTitle(title, for: .normal)
+            b.titleLabel?.font = .systemFont(ofSize: 15, weight: primary ? .semibold : .regular)
+            b.setTitleColor(primary ? .white : keyTextColor, for: .normal)
+            b.backgroundColor = primary ? brand : functionKeyColor
+            b.layer.cornerRadius = 8
+            b.handler = action
+            b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            return b
+        }
+        let last = coach.messages.last(where: { $0["role"] == "assistant" })?["content"] ?? ""
+        let bar = UIStackView(arrangedSubviews: [
+            button("End") { [weak self] in self?.closeCard() },
+            button("Paste reply") { [weak self] in self?.textDocumentProxy.insertText(EzyChat.forChat(last)) },
+            button("Summary") { [weak self] in self?.sendCoach(wrap: true) },
+            button("Send ➤", primary: true) { [weak self] in self?.sendCoach(wrap: false) },
+        ])
+        bar.axis = .horizontal
+        bar.spacing = 6
+        bar.distribution = .fillProportionally
+        bar.translatesAutoresizingMaskIntoConstraints = false
+
+        cardView.addSubview(scroll)
+        cardView.addSubview(bar)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: cardView.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: bar.topAnchor, constant: -6),
+            list.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            list.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            list.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            list.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            list.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+            bar.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            bar.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+            bar.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        // Show the newest message.
+        DispatchQueue.main.async {
+            scroll.layoutIfNeeded()
+            let bottom = max(0, scroll.contentSize.height - scroll.bounds.height)
+            scroll.setContentOffset(CGPoint(x: 0, y: bottom), animated: false)
         }
     }
 
@@ -1181,7 +1446,11 @@ final class KeyboardViewController: UIInputViewController {
             title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
         }
         title.append(NSAttributedString(string: "\n"))
-        if field.type == "pdf" {
+        if field.type == "images" {
+            let count = value.isEmpty ? 0 : value.components(separatedBy: "\n").count
+            let shown = count == 0 ? "Tap to pick photos" : "📷 \(count) photo\(count == 1 ? "" : "s") added (tap to change)"
+            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: count == 0 ? .semibold : .regular), .foregroundColor: count == 0 ? brand : keyTextColor]))
+        } else if field.type == "pdf" {
             let shown = value.isEmpty ? "Copy a PDF, then tap here" : "📄 PDF added (tap to use the one you copied now)"
             title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
         } else if field.type == "image" {
@@ -1210,7 +1479,7 @@ final class KeyboardViewController: UIInputViewController {
             row.layer.borderColor = brand.cgColor
         }
         row.handler = { [weak self] in
-            if field.type == "image" {
+            if field.type == "image" || field.type == "images" {
                 self?.choosePhoto(for: field.key)
                 return
             }
@@ -1318,6 +1587,8 @@ final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
  */
 enum EzyPhotoOutput {
     case image(Data, type: String)
+    /// Several files at once (exam photo sets, grids, pages): copied together, pasted together.
+    case images([Data], type: String)
     case text(String)
 }
 

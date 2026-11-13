@@ -307,7 +307,43 @@ async function charged(
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
 
+/**
+ * Content Workflow in one go: idea, then the post, hashtags and caption. Each step is one
+ * "content-workflow-step" run at its usual price, exactly as the website charges the four steps.
+ */
+async function runWorkflow(who: Who, body: Record<string, unknown>) {
+  const raw = typeof body.inputs === "object" && body.inputs ? body.inputs as Record<string, unknown> : {};
+  const platform = String(raw.platform ?? "Instagram").slice(0, 60);
+  const niche = String(raw.niche ?? body.prompt ?? "").slice(0, 500).trim();
+  if (!niche) return fail(400, "missing_inputs", "Add: Niche or topic.");
+  let spent = 0;
+  const step = async (type: string, extra: Record<string, unknown>) => {
+    const res = await charged(who, "content-workflow-step", 4, false, "content-workflow", () => callInternal("content-generator", { type, platform, ...extra }));
+    const data = await res.json();
+    if (!data.ok) throw new Error(String(data.message ?? "A step failed."));
+    spent += Number(data.credits_charged ?? 0);
+    return data as Record<string, unknown>;
+  };
+  try {
+    const ideaRes = await step("workflow-idea", { niche });
+    const idea = (ideaRes.idea ?? {}) as { title?: string; hook?: string; format?: string };
+    const ideaText = [idea.title, idea.hook].filter(Boolean).join(" — ") || niche;
+    const format = idea.format ?? "Post";
+    const contentRes = await step("workflow-content", { format, idea: ideaText });
+    const content = String(contentRes.content ?? "");
+    const tagsRes = await step("workflow-hashtags", { count: 15, topic: ideaText });
+    const tags = (Array.isArray(tagsRes.hashtags) ? tagsRes.hashtags : []).map(String);
+    const capRes = await step("workflow-caption", { idea: ideaText, content, hashtags: tags });
+    const caption = String(capRes.caption ?? capRes.content ?? "");
+    const output = `## Idea\n**${idea.title ?? niche}**${idea.hook ? `\nHook: ${idea.hook}` : ""}\nFormat: ${format}\n\n## Post\n${content}\n\n## Caption\n${caption}\n\n## Hashtags\n${tags.join(" ")}`;
+    return json({ ok: true, output, credits_charged: spent, balance: await walletBalance(who.userId) });
+  } catch (e) {
+    return fail(502, "failed", `${e instanceof Error ? e.message : String(e)} (charged ${spent} credits for the steps that finished)`, { credits_charged: spent });
+  }
+}
+
 async function runApp(who: Who, id: string, body: Record<string, unknown>) {
+  if (id === "content-workflow") return runWorkflow(who, body);
   if (NATIVE_APPS[id]) return runNative(who, id, body);
   const spec = API_CATALOG[id];
   if (id === PROMPTMASTER_ID) return improve(who, body);
@@ -329,6 +365,8 @@ async function runApp(who: Who, id: string, body: Record<string, unknown>) {
     previous: str(body.previous, 24_000),
     instruction: str(body.instruction, 1000),
   };
+  if (spec.runner === "tracker") return addTrackerEntry(who, id, spec, body);
+  if (spec.mode === "coach") return coachTurn(who, id, spec, body, payload);
   if (spec.runner === "flagship-app") {
     payload.action = spec.mode === "studio" ? "variant" : "final";
     payload.variant = str(body.variant, 80);
@@ -336,6 +374,52 @@ async function runApp(who: Who, id: string, body: Record<string, unknown>) {
     payload.action = "refine";
   }
   return charged(who, spec.charge, spec.credits, spec.kind === "image", id, () => callInternal(spec.runner, payload));
+}
+
+/** Adds one entry to the person's own log for a tracker app (the same saved copy the website uses). */
+async function addTrackerEntry(who: Who, id: string, spec: ApiApp, body: Record<string, unknown>) {
+  const raw = typeof body.inputs === "object" && body.inputs ? body.inputs as Record<string, unknown> : {};
+  const row: Record<string, string> = { id: crypto.randomUUID() };
+  for (const f of spec.fields ?? []) {
+    const v = raw[f.key];
+    const text = typeof v === "string" ? v.trim() : typeof v === "number" ? String(v) : "";
+    row[f.key] = (text || (f.type === "date" ? new Date().toISOString().slice(0, 10) : f.options?.[0] ?? "")).slice(0, 2000);
+  }
+  const missing = (spec.fields ?? []).filter((f) => f.required && !row[f.key]).map((f) => f.label);
+  if (missing.length) return fail(400, "missing_inputs", `Add: ${missing.join(", ")}.`);
+  const c = await catalog();
+  const name = c.rows.find((r) => r.id === id)?.name ?? "your log";
+  return charged(who, spec.charge, spec.credits, false, id, async () => {
+    const found = await dbRows<{ session_data: Record<string, unknown> | null }>(
+      `tool_sessions?user_id=eq.${who.userId}&tool_id=eq.${enc(id)}&select=session_data`,
+    );
+    const data = (found[0]?.session_data ?? {}) as { rows?: Record<string, string>[]; settings?: unknown };
+    const rows = [row, ...(Array.isArray(data.rows) ? data.rows : [])].slice(0, 5000);
+    const r = await db("tool_sessions?on_conflict=user_id,tool_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ user_id: who.userId, tool_id: id, session_data: { ...data, rows, settings: data.settings ?? {}, savedAt: Date.now() } }),
+    });
+    if (!r.ok) return { status: 502, data: { error: "save_failed", message: "Couldn't save the entry. Try again." } };
+    const shown = (spec.fields ?? []).filter((f) => row[f.key]).slice(0, 4).map((f) => `${f.label}: ${row[f.key]}`).join(", ");
+    return { status: 200, data: { output: `✓ Added to ${name}: ${shown}. ${rows.length} ${spec.itemName ?? "entr"}${rows.length === 1 ? "y" : "ies"} saved. See them all at ${SITE}/tool/${id}` } };
+  });
+}
+
+/**
+ * Coaching apps, one message at a time. "start" opens a paid session (its usual price) and gives the first
+ * reply plus a ticket; later turns send the ticket and the conversation so far and are free, as on the website.
+ * "wrap" closes the session with its scored summary.
+ */
+async function coachTurn(who: Who, id: string, spec: ApiApp, body: Record<string, unknown>, payload: Record<string, unknown>) {
+  const action = body.action === "turn" || body.action === "wrap" ? body.action : "start";
+  const call = { ...payload, action, ticket: str(body.ticket, 2000), user_id: who.userId };
+  if (action === "start") return charged(who, spec.charge, spec.credits, false, id, () => callInternal("flagship-app", call));
+  const r = await callInternal("flagship-app", call);
+  if (r.status < 200 || r.status >= 300 || r.data?.error) {
+    return fail(r.status >= 400 ? r.status : 502, String(r.data?.error ?? "failed"), String(r.data?.message ?? r.data?.error ?? "The coach could not answer."));
+  }
+  return json({ ok: true, output: r.data.output });
 }
 
 /** Charges a photo tool that ran on the phone, at its website price (1 credit unless set otherwise). */
