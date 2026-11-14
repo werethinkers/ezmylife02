@@ -1,6 +1,19 @@
 {
  "items": [
   {
+   "id": 10392,
+   "key": "Shatlyk1011__team-member-card",
+   "author": "Shatlyk1011",
+   "slug": "team-member-card",
+   "name": "Team Member Card",
+   "description": "An animated team member card with hover effects revealing social links and role details.",
+   "url": "https://21st.dev/@Shatlyk1011/components/team-member-card",
+   "preview": "https://cdn.21st.dev/user_Shatlyk1011/team-member-card/default/preview.1789062711082.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24355
+  },
+  {
    "id": 2318,
    "key": "TomIsLoading__squishy-card",
    "author": "TomIsLoading",
@@ -791,6 +804,19 @@
    "bytes": 28645
   },
   {
+   "id": 7794,
+   "key": "ravikatiyar162__menu-item-card",
+   "author": "ravikatiyar162",
+   "slug": "menu-item-card",
+   "name": "Menu Item Card",
+   "description": "Menu Item Card\nThis component displays a food item with its image, price, name, and an interactive \"ADD\" button. It's designed to be highly reusable and customizable through props.",
+   "url": "https://21st.dev/@ravikatiyar162/components/menu-item-card",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/menu-item-card/default/preview.1758278928941.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25572
+  },
+  {
    "id": 8218,
    "key": "ravikatiyar162__workout-card",
    "author": "ravikatiyar162",
@@ -900,6 +926,21 @@
    "bytes": 26952
   },
   {
+   "id": 28564,
+   "key": "shadcnspace__team-01",
+   "author": "shadcnspace",
+   "slug": "team-01",
+   "name": "Creative Team Showcase",
+   "description": "A grid of animated profile cards for showcasing a team's members, roles, and social links, useful for agency or startup \"about us\" pages.",
+   "url": "https://21st.dev/@shadcnspace/components/team-01",
+   "preview": "https://cdn.21st.dev/shadcnspace/team-01/default/preview.1789988644310-cd8dd42d-d02b-4979-beee-826085faf610.png",
+   "kind": "",
+   "deps": [
+    "class-variance-authority"
+   ],
+   "bytes": 26023
+  },
+  {
    "id": 30554,
    "key": "ssychui__project-index",
    "author": "ssychui",
@@ -911,6 +952,19 @@
    "kind": "",
    "deps": [],
    "bytes": 4555
+  },
+  {
+   "id": 44838,
+   "key": "themeocean__3d-animated-tilt-dynamic-glow-card",
+   "author": "themeocean",
+   "slug": "3d-animated-tilt-dynamic-glow-card",
+   "name": "3D Animated Tilt & Dynamic Glow Card",
+   "description": "A premium Bento-grid ready card featuring an interactive 3D perspective tilt effect and a mouse-tracking neon glow border. Fully accessible, type-safe, and perfect for highlighting feature sections.",
+   "url": "https://21st.dev/@themeocean/components/3d-animated-tilt-dynamic-glow-card",
+   "preview": "https://cdn.21st.dev/user_3KgWzslqJFclZ2iRrfddAtKvi27/3d-animated-tilt-dynamic-glow-card/default/preview.1794245307278.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 12840
   },
   {
    "id": 45654,
@@ -937,6 +991,19 @@
    "kind": "",
    "deps": [],
    "bytes": 13317
+  },
+  {
+   "id": 20068,
+   "key": "unlumen__count-up",
+   "author": "unlumen",
+   "slug": "count-up",
+   "name": "Count Up",
+   "description": "An animated number counter that springs to its target value when it enters the viewport, with support for decimals, thousands separators, count direction, and per-digit slide, fade, and blur effects.",
+   "url": "https://21st.dev/@unlumen/components/count-up",
+   "preview": "https://cdn.21st.dev/unlumen/count-up/default/preview.1784354297145-e0f233b1-2265-483b-a513-9d21626a0db1.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26122
   },
   {
    "id": 1877,

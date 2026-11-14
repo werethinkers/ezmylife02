@@ -1,0 +1,14 @@
+{
+  "id": 28564,
+  "key": "shadcnspace__team-01",
+  "author": "shadcnspace",
+  "slug": "team-01",
+  "name": "Creative Team Showcase",
+  "description": "A grid of animated profile cards for showcasing a team's members, roles, and social links, useful for agency or startup \"about us\" pages.",
+  "url": "https://21st.dev/@shadcnspace/components/team-01",
+  "preview": "https://cdn.21st.dev/shadcnspace/team-01/default/preview.1789988644310-cd8dd42d-d02b-4979-beee-826085faf610.png",
+  "kind": "",
+  "deps": [
+    "class-variance-authority"
+  ]
+}

@@ -1,0 +1,7 @@
+// @ts-nocheck
+/* eslint-disable */
+import Team01 from "@/components/ui/team-01";
+
+export default function Team01Demo() {
+  return <Team01 />;
+}

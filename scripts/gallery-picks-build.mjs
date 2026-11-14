@@ -45,6 +45,13 @@ const globalsPlugin = {
       for (const p of [path.join(ROOT, "gallery-picks/shims", name + ".tsx"), path.join(ROOT, "src/components/ui", name + ".tsx")]) if (fs.existsSync(p)) return { path: p };
       return undefined;
     });
+    /* small npm helpers some picks use, rebuilt here so we don't add packages */
+    b.onResolve({ filter: /^react-use-measure$/ }, () => ({ path: "measure", namespace: "measureshim" }));
+    b.onLoad({ filter: /.*/, namespace: "measureshim" }, () => ({
+      contents: `import * as React from "react";export default function useMeasure(){const[el,setEl]=React.useState(null);const[b,setB]=React.useState({x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0});React.useLayoutEffect(()=>{if(!el)return;const f=()=>{const r=el.getBoundingClientRect();setB({x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,left:r.left,right:r.right,bottom:r.bottom});};f();const ro=new ResizeObserver(f);ro.observe(el);return()=>ro.disconnect();},[el]);return[setEl,b];}`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
     /* newer shadcn "field" helper that our ui folder doesn't have */
     b.onResolve({ filter: /^@\/components\/ui\/field$/ }, () => ({ path: "field", namespace: "fieldshim" }));
     b.onLoad({ filter: /.*/, namespace: "fieldshim" }, () => ({
