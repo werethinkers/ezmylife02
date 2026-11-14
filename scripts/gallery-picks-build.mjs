@@ -86,6 +86,8 @@ for (const key of keys) {
       /* the demo imports the component as @/components/ui/<slug> (or some other path): point it at our copy */
       b.onResolve({ filter: /^@\/components\/([^/]+\/)?[^/]+$/ }, (a) => {
         if (a.path.endsWith(`/${meta.slug}`)) return { path: path.join(dir, "component.tsx") };
+        const helper = path.join(dir, "helpers", a.path.split("/").pop() + ".tsx");
+        if (fs.existsSync(helper)) return { path: helper };
         return undefined;
       });
       b.onResolve({ filter: /^\.\.?\/.+$/ }, (a) => (a.importer.startsWith(dir) && (a.path.endsWith(meta.slug) || a.path === "./component") ? { path: path.join(dir, "component.tsx") } : undefined));

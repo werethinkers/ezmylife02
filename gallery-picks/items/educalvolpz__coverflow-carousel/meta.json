@@ -1,0 +1,15 @@
+{
+  "id": 29138,
+  "key": "educalvolpz__coverflow-carousel",
+  "author": "educalvolpz",
+  "slug": "coverflow-carousel",
+  "name": "Coverflow Carousel",
+  "description": "A 3D perspective carousel that flips, scales and stacks cards like Apple's iTunes coverflow, with drag/swipe, keyboard navigation and optional autoplay.",
+  "url": "https://21st.dev/@educalvolpz/components/coverflow-carousel",
+  "preview": "https://cdn.21st.dev/educalvolpz/coverflow-carousel/default/preview.1790043939894-dac31069-827a-452f-9b91-eeac92697361.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

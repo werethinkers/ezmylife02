@@ -108,6 +108,19 @@
    "bytes": 28544
   },
   {
+   "id": 19861,
+   "key": "chamaac__how-it-works",
+   "author": "chamaac",
+   "slug": "how-it-works",
+   "name": "How It Works",
+   "description": "A visual step-by-step process section with pinned, connected cards showing how something works.",
+   "url": "https://21st.dev/@chamaac/components/how-it-works",
+   "preview": "https://cdn.21st.dev/chamaac/how-it-works/default/preview.1784360686164-c9ef8bfe-dc43-4bca-9387-30df706ad4d2.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6320
+  },
+  {
    "id": 25128,
    "key": "cnippet-dev__v-calendar-8",
    "author": "cnippet-dev",
@@ -346,6 +359,22 @@
    "kind": "",
    "deps": [],
    "bytes": 19223
+  },
+  {
+   "id": 29138,
+   "key": "educalvolpz__coverflow-carousel",
+   "author": "educalvolpz",
+   "slug": "coverflow-carousel",
+   "name": "Coverflow Carousel",
+   "description": "A 3D perspective carousel that flips, scales and stacks cards like Apple's iTunes coverflow, with drag/swipe, keyboard navigation and optional autoplay.",
+   "url": "https://21st.dev/@educalvolpz/components/coverflow-carousel",
+   "preview": "https://cdn.21st.dev/educalvolpz/coverflow-carousel/default/preview.1790043939894-dac31069-827a-452f-9b91-eeac92697361.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30405
   },
   {
    "id": 5967,
@@ -1004,6 +1033,32 @@
    "kind": "",
    "deps": [],
    "bytes": 26122
+  },
+  {
+   "id": 46292,
+   "key": "vovalopuh13__pricing-plan-tilt",
+   "author": "vovalopuh13",
+   "slug": "pricing-plan-tilt",
+   "name": "Pricing Plan Tilt",
+   "description": "Three pricing cards rendered as real 3D objects: they tilt with the cursor, carry a glare that follows it, and lift on hover. A running light circles the selected plan, and the monthly/yearly toggle is a springy pill with a bouncing Save badge.",
+   "url": "https://21st.dev/@vovalopuh13/components/pricing-plan-tilt",
+   "preview": "https://cdn.21st.dev/user_3M13BYwKrRjRaH8xv9vkJwwJUgj/pricing-plan-tilt/default/preview.1794571999314.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 30340
+  },
+  {
+   "id": 31523,
+   "key": "wensity__before-after-card",
+   "author": "wensity",
+   "slug": "before-after-card",
+   "name": "Image Comparison Slider",
+   "description": "A before and after image comparison slider with a draggable handle and full keyboard control. Show photo edits, redesigns, AI upscaling or product changes side by side.",
+   "url": "https://21st.dev/@wensity/components/before-after-card",
+   "preview": "https://cdn.21st.dev/user_3JFJF7Mbb5ImA8DO9hE1FECx2fT/before-after-card/default/preview.1790327425858.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 28188
   },
   {
    "id": 1877,
