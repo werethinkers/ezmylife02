@@ -235,6 +235,19 @@
    "bytes": 19223
   },
   {
+   "id": 25518,
+   "key": "gughigug__shave-reveal-hero",
+   "author": "gughigug",
+   "slug": "shave-reveal-hero",
+   "name": "Shave Reveal Hero",
+   "description": "Interactive hover-reveal hero — drag a blade across a bearded portrait to shave it, with synthesized sound. Full light/dark theme support and keyboard navigation. Zero dependencies.",
+   "url": "https://21st.dev/@gughigug/components/shave-reveal-hero",
+   "preview": "https://cdn.21st.dev/gughigug/shave-reveal-hero/default/preview.1787703080814-dea1994f-a87f-46b5-ba79-05579505dc0b.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 21186
+  },
+  {
    "id": 2582,
    "key": "isaiahbjork__event-countdown-card",
    "author": "isaiahbjork",
@@ -355,6 +368,19 @@
    "bytes": 24192
   },
   {
+   "id": 34856,
+   "key": "ruixen.ui__card-hand-gallery",
+   "author": "ruixen.ui",
+   "slug": "card-hand-gallery",
+   "name": "Card Hand Gallery",
+   "description": "A fanned hand of image cards — hover to lift, click or flick one up to pull it out while its title and description settle in beside it.",
+   "url": "https://21st.dev/@ruixen.ui/components/card-hand-gallery",
+   "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/card-hand-gallery/default/preview.1790884998362.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 26636
+  },
+  {
    "id": 2650,
    "key": "ruixen.ui__doctor-live-chat-card",
    "author": "ruixen.ui",
@@ -369,6 +395,19 @@
     "class-variance-authority"
    ],
    "bytes": 29057
+  },
+  {
+   "id": 36749,
+   "key": "ruixen.ui__tilted-grid-hero",
+   "author": "ruixen.ui",
+   "slug": "tilted-grid-hero",
+   "name": "Tilted Grid Hero",
+   "description": "Hero with a curved, endlessly streaming row of images that bends toward the viewer at the edges and fades out.",
+   "url": "https://21st.dev/@ruixen.ui/components/tilted-grid-hero",
+   "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/tilted-grid-hero/default/preview.1791489943448.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 25954
   },
   {
    "id": 30554,
