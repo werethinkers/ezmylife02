@@ -33,7 +33,7 @@ export function DiwaliHero() {
           <p className="mt-4 text-sm font-semibold text-ink/70">Hindi, Indori, English, Gujarati, Marathi and Tamil. Dhanteras, Bhai Dooj and Jain Diwali cards too.</p>
         </div>
         <div className="min-w-0 lg:col-span-5">
-          <Suspense fallback={<div className="mx-auto h-[520px] w-full max-w-[360px] rounded-[2.4rem] border-[9px] border-ink bg-[#2A0609]" aria-hidden />}>
+          <Suspense fallback={<div className="mx-auto h-[578px] w-full max-w-[360px] rounded-[3rem] border-2 border-ink bg-[#2A0609] shadow-block" aria-hidden />}>
             <DiwaliHeroCard part="card" />
           </Suspense>
         </div>

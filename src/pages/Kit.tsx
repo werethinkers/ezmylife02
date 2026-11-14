@@ -15,6 +15,7 @@ import { KIT, resolvePick, type KitPicks } from "@/data/kit";
 import { seoFor } from "@/lib/seo/pages";
 import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
 import { canBuyInThisApp } from "@/lib/nativeApp";
+import { PhoneMockup } from "@/components/ui/phone-mockup";
 
 /*
  * The one paid offer, at /kit. Every paid channel (influencer links, ads) lands here.
@@ -111,13 +112,11 @@ function Digits({ parts, dark }: { parts: { n: string; u: string }[]; dark?: boo
 /** A phone-shaped window showing a real design from the catalogue. */
 function DesignPhone({ pick }: { pick: ReturnType<typeof resolvePick> }) {
   return (
-    <div className="mx-auto w-full max-w-[300px] overflow-hidden rounded-[2rem] border-[7px] border-[#121212] bg-[#121212] shadow-[5px_5px_0_#121212]">
-      <div className="ip-frame relative h-[440px] overflow-hidden" style={{ transform: "translateZ(0)", ["--ip-vh" as string]: "440px", background: pick.theme.c.bg }}>
-        <div className="h-full overflow-y-auto overflow-x-hidden">
-          <ProductRenderer product={pick.product} theme={pick.theme} content={pick.product.sample} mode="preview" pageUrl={pageUrlFor()} />
-        </div>
+    <PhoneMockup className="max-w-[300px]" screenBg={pick.theme.c.bg} screenFg={pick.theme.c.tx} height={420}>
+      <div className="h-full overflow-y-auto overflow-x-hidden">
+        <ProductRenderer product={pick.product} theme={pick.theme} content={pick.product.sample} mode="preview" pageUrl={pageUrlFor()} />
       </div>
-    </div>
+    </PhoneMockup>
   );
 }
 
