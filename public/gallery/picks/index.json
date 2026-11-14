@@ -423,6 +423,32 @@
    "bytes": 4555
   },
   {
+   "id": 45654,
+   "key": "themeocean__bento-grid-product-hero-with-live-metric-cards",
+   "author": "themeocean",
+   "slug": "bento-grid-product-hero-with-live-metric-cards",
+   "name": "Bento Grid Product Hero with Live Metric Cards",
+   "description": "A modern, structured hero section pairing crisp value-proposition copy with an asymmetric bento grid of interactive feature cards, live status badges, and staggered Framer Motion animations.",
+   "url": "https://21st.dev/@themeocean/components/bento-grid-product-hero-with-live-metric-cards",
+   "preview": "https://cdn.21st.dev/user_3KgWzslqJFclZ2iRrfddAtKvi27/bento-grid-product-hero-with-live-metric-cards/default/preview.1794603957052.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 11888
+  },
+  {
+   "id": 45733,
+   "key": "themeocean__floating-glassmorphic-navbar-with-morphing-pill-indicator",
+   "author": "themeocean",
+   "slug": "floating-glassmorphic-navbar-with-morphing-pill-indicator",
+   "name": "Floating Glassmorphic Navbar with Morphing Pill Indicator",
+   "description": "A sleek, responsive floating navigation bar featuring Framer Motion shared-layout pill transitions, mobile drawer menu, and subtle backdrop blur for modern web apps.",
+   "url": "https://21st.dev/@themeocean/components/floating-glassmorphic-navbar-with-morphing-pill-indicator",
+   "preview": "https://cdn.21st.dev/themeocean/floating-glassmorphic-navbar-with-morphing-pill-indicator/default/preview.1794480409063-b592b368-b227-40b0-931a-cff0a4d5b02e.jpg",
+   "kind": "",
+   "deps": [],
+   "bytes": 13317
+  },
+  {
    "id": 1877,
    "key": "youcefbnm__card-curtain-reveal",
    "author": "youcefbnm",
