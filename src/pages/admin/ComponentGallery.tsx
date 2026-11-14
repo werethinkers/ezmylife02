@@ -227,7 +227,6 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
       <div className="p-3 flex items-start gap-2">
         <button className="min-w-0 grow text-left" onClick={onOpen}>
           <p className="font-semibold leading-snug line-clamp-2">{item.name}</p>
-          <p className="text-xs text-muted-foreground truncate">by {item.authorName || item.author}</p>
         </button>
         <button onClick={onPick} className="p-1.5 rounded-md hover:bg-secondary" aria-label={picked ? "Remove from picks" : "Pick"} aria-pressed={picked}>
           <Star className={`h-4 w-4 ${picked ? "fill-sun" : ""}`} />
@@ -247,6 +246,12 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
 
   const html = useComponentHtml(item);
   const [run, setRun] = useState(0);
+  const panel = useRef<HTMLElement>(null);
+
+  /* Opens where the card was, so scroll it into view. */
+  useEffect(() => {
+    panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -273,12 +278,11 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
     `inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-ink ${on ? "bg-sun" : "bg-card hover:bg-secondary"}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink/60 p-2 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-label={item.name} onClick={onClose}>
-      <div className="mx-auto max-w-[1340px] bg-background border-2 border-ink rounded-2xl shadow-block-lg p-3 sm:p-5" onClick={(e) => e.stopPropagation()}>
+    <section ref={panel} className="scroll-mt-24" aria-label={item.name}>
+      <div className="w-full bg-card border-2 border-ink rounded-2xl shadow-block-lg p-3 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-lg sm:text-xl leading-tight break-words">{item.name}</h2>
-            <p className="text-sm text-muted-foreground">by {item.authorName || item.author}</p>
           </div>
           <button onClick={onClose} className="p-2 border-2 border-ink rounded-lg bg-card hover:bg-secondary" aria-label="Close">
             <X className="h-4 w-4" />
@@ -335,7 +339,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude; the original author's licence is checked before anything goes live.
         </p>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -401,7 +405,7 @@ export default function ComponentGallery() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Private · admins only</p>
                 <h1 className="font-display text-2xl sm:text-3xl mt-1">Component gallery</h1>
                 <p className="mt-2 max-w-2xl text-muted-foreground">
-                  Ready-made interface parts from an open component library. Only components that visibly work are listed: they move on their own, or react when you hover or click. Open one to see it in our style, on a laptop or a phone, then pick the ones we should build into the site.
+                  Ready-made interface parts from an open component library. Only components that visibly work are listed: they move on their own, or react when you hover or click. Click one and it opens right there, to see it in our style on a laptop or a phone, then pick the ones we should build into the site.
                 </p>
               </div>
               {picks.length > 0 && (
@@ -446,10 +450,16 @@ export default function ComponentGallery() {
             {dir.data && (
               <>
                 <p className="mt-4 text-sm text-muted-foreground">{results.length.toLocaleString("en-IN")} components</p>
-                <div className="mt-3 grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                  {results.slice(0, shown).map((it) => (
-                    <PreviewCard key={it.id} item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onOpen={() => setOpen(it)} />
-                  ))}
+                <div className="mt-3 grid gap-5 grid-flow-row-dense grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {results.slice(0, shown).map((it) =>
+                    open?.id === it.id ? (
+                      <div key={it.id} className="col-span-full">
+                        <Preview item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onClose={() => setOpen(null)} />
+                      </div>
+                    ) : (
+                      <PreviewCard key={it.id} item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onOpen={() => setOpen(it)} />
+                    ),
+                  )}
                 </div>
                 {results.length > shown && (
                   <div className="mt-8 text-center">
@@ -464,7 +474,6 @@ export default function ComponentGallery() {
           </>
         )}
       </main>
-      {open && <Preview item={open} picked={picks.includes(open.id)} onPick={() => togglePick(open.id)} onClose={() => setOpen(null)} />}
     </div>
   );
 }
