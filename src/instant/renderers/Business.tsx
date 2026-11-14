@@ -3,9 +3,10 @@ import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
 import { DAYS, fill, fmtPhone, mapsDir, mapsLink, openStatus, priceText, t12, telHref, waTo } from "../util";
 import { BASE_CSS, Gallery, Icon, Img, LeadForm, MadeWith, fitWords, resolveImg, useRevealBar, useThemeFonts } from "../parts";
-import { coverFor, isStock } from "../stock";
+import { coverFor, galleryFor, isStock } from "../stock";
 import { Backdrop, FormFold, SIG_CSS, sigClass, usePointerFx } from "../signature";
 import StayShowcase, { STAY_PRODUCTS } from "../showpieces/StayShowcase";
+import { Hero3D, PageBand, PageTiles, SITE_CSS, SiteNav, useSitePages, type Hero3DLook, type PageKey, type SitePage } from "../showpieces/SitePages";
 
 export default function Business({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
@@ -41,13 +42,42 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
   const n = (i: number) => (s === "minimal" ? <span className="biz-no">{String(i).padStart(2, "0")}</span> : null);
   let sec = 0;
 
+  // Multi-page: when there is enough to fill them, the parts become pages chosen from a tab row.
+  const hasSvc = services.length > 0 || !!o.listOrder || how.length > 0 || brands.length > 0;
+  const hasAbout = team.length > 0 || reviews.length > 0 || faqs.length > 0;
+  const sitePages: SitePage[] = [
+    { key: "home", label: "Home" },
+    ...(hasSvc ? [{ key: "services" as PageKey, label: String(o.servicesTitle || "Services") }] : []),
+    ...(gallery.length > 0 ? [{ key: "gallery" as PageKey, label: "Gallery" }] : []),
+    ...(hasAbout ? [{ key: "about" as PageKey, label: "About" }] : []),
+    { key: "contact", label: "Contact" },
+  ];
+  const multi = sitePages.length >= 4;
+  const { page, go, top } = useSitePages(sitePages, mode);
+  const on = (k: PageKey) => !multi || page === k;
+  const toLead = multi
+    ? { href: "#contact", onClick: (e: React.MouseEvent) => { e.preventDefault(); go("contact"); } }
+    : { href: "#lead" };
+  // 3D photo hero for the calmer layouts, from the owner's photos or the product's stock set.
+  const LOOKS: Partial<Record<string, Hero3DLook>> = { bold: "split", split: "fan", soft: "fan", editorial: "ring", minimal: "ring" };
+  const look = LOOKS[s];
+  const ownPhotos = gallery.map((g: { photo: string }) => g.photo).filter((p: string) => !isStock(p));
+  const heroPhotos: string[] = (ownPhotos.length >= 3 ? ownPhotos : [cover, ...gallery.map((g: { photo: string }) => g.photo), ...galleryFor(product.id, 8, 0).map((g) => g.photo)])
+    .filter((p: string, i: number, a: string[]) => resolveImg(p) && a.indexOf(p) === i).slice(0, 8);
+  const use3d = !!look && heroPhotos.length >= 3;
+  const BAND: Partial<Record<PageKey, [string, string?]>> = {
+    gallery: ["Gallery", `A look inside ${name}`],
+    about: ["About us", place || undefined],
+    contact: ["Contact", st ? st.label : undefined],
+  };
+
   return (
     <div className={`ipr ipr-biz s-${s}` + (theme.dark ? " dark" : "") + sigClass(product.id, s === "prime")} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <style>{BASE_CSS + CSS + SIG_CSS + SITE_CSS}</style>
       <div className="biz-page" ref={fxRef}>
         <header className="biz-top">
           <div className="ip-wrap biz-top-in">
-            <a className="biz-logo" href="#top">
+            <a className="biz-logo" href="#top" onClick={multi ? (e) => { e.preventDefault(); go("home"); } : undefined}>
               {resolveImg(c.logo) ? <Img src={c.logo} alt="" className="lg" eager /> : <b aria-hidden="true">{words[0]?.[0] ?? "A"}</b>}
               <span>{name}</span>
             </a>
@@ -55,9 +85,14 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </div>
         </header>
 
+        {multi && <div ref={top} />}
+        {multi && <SiteNav pages={sitePages} page={page} go={go} />}
+        {multi && page !== "home" && BAND[page] && <PageBand title={BAND[page]![0]} sub={BAND[page]![1]} />}
+
         {c.notice && <p className="biz-notice"><span className="ip-wrap"><i aria-hidden="true" />{c.notice}</span></p>}
 
-        <section className={"biz-hero" + (prime ? " sig-hero" : "")} id="top">
+        {on("home") && (
+        <section className={"biz-hero" + (prime ? " sig-hero" : "") + (use3d ? " has-3d" : "")} id="top">
           {s === "photo" && <div className="biz-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
           {prime && <Backdrop id={product.id} />}
           {(s === "bold" || prime) && <span className="biz-mark" aria-hidden="true">{words[0]?.[0]}</span>}
@@ -70,20 +105,23 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
               </h1>
               {c.tagline && <p className="biz-tag">{c.tagline}</p>}
               <div className="biz-cta" ref={bar.ref}>
-                {c.offer && <a className="ip-btn ip-primary" href="#lead">{c.offer}</a>}
+                {c.offer && <a className="ip-btn ip-primary" {...toLead}>{c.offer}</a>}
                 <a className="ip-btn ip-wa" href={enquire} target="_blank" rel="noopener noreferrer"><Icon.wa /> WhatsApp us</a>
               </div>
               {c.rating && <p className="biz-rate"><span className="stars"><Icon.star /></span><b>{c.rating}</b> on Google{c.reviews_count ? ` · ${c.reviews_count} reviews` : ""}</p>}
             </div>
-            {s !== "photo" && cover && (
+            {use3d ? (
+              <div className="biz-3d"><Hero3D photos={heroPhotos} look={look!} label={`${name} photos`} /></div>
+            ) : s !== "photo" && cover && (
               <div className="biz-media" aria-hidden="true">
                 <Img src={cover} alt="" sizes="(min-width: 900px) 45vw, 100vw" eager />
               </div>
             )}
           </div>
         </section>
+        )}
 
-        {stats.length > 0 && (
+        {on("home") && stats.length > 0 && (
           <section className="biz-stats-sec" aria-label="At a glance">
             <div className="ip-wrap">
               <dl className="biz-stats">{stats.map((x: { value: string; label?: string }, i: number) => <div key={i}><dt>{prime ? <CountUp value={x.value} /> : x.value}</dt>{x.label && <dd>{x.label}</dd>}</div>)}</dl>
@@ -91,7 +129,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {services.length > 0 && (
+        {on("services") && services.length > 0 && (
           <section className="biz-sec" id="services">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.servicesTitle}</p>
@@ -117,9 +155,9 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {o.listOrder && <ListOrder o={o.listOrder} wa={c.whatsapp} tpl={product.whatsapp.order} vars={vars} n={n(++sec)} />}
+        {on("services") && o.listOrder && <ListOrder o={o.listOrder} wa={c.whatsapp} tpl={product.whatsapp.order} vars={vars} n={n(++sec)} />}
 
-        {how.length > 0 && (
+        {on("services") && how.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.howTitle ?? "How it works"}</p>
@@ -128,7 +166,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {highlights.length > 0 && (
+        {on("home") && highlights.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.highlightsTitle}</p>
@@ -143,7 +181,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {brands.length > 0 && (
+        {on("services") && brands.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.brandsTitle ?? "Brands we stock"}</p>
@@ -154,7 +192,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {gallery.length > 0 && (
+        {on("gallery") && gallery.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}Take a look</p>
@@ -163,7 +201,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {team.length > 0 && (
+        {on("about") && team.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.teamTitle ?? "Team"}</p>
@@ -182,7 +220,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {reviews.length > 0 && (
+        {on("about") && reviews.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}Reviews</p>
@@ -191,7 +229,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
-        {faqs.length > 0 && (
+        {on("about") && faqs.length > 0 && (
           <section className="biz-sec">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}Questions people ask</p>
@@ -200,6 +238,19 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           </section>
         )}
 
+        {multi && page === "home" && (
+          <PageTiles go={go} tiles={sitePages.filter((p) => p.key !== "home").map((p) => ({
+            key: p.key,
+            title: p.label,
+            text: p.key === "services" ? (services.length ? `${services.length} to choose from, with prices` : "What we offer")
+              : p.key === "gallery" ? `${gallery.length} photos`
+              : p.key === "about" ? [team.length && "Team", reviews.length && "Reviews", faqs.length && "Questions"].filter(Boolean).join(", ")
+              : [st?.label, place].filter(Boolean).join(" · ") || "Call, WhatsApp, directions",
+            photo: p.key === "gallery" ? gallery[0]?.photo : p.key === "services" ? heroPhotos[1] : p.key === "about" ? heroPhotos[2] : undefined,
+          }))} />
+        )}
+
+        {on("contact") && (
         <section className="biz-sec" id="find">
           <div className="ip-wrap biz-find">
             {c.opens && c.closes && (
@@ -222,8 +273,9 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
             </div>
           </div>
         </section>
+        )}
 
-        {c.offer && (
+        {on("contact") && c.offer && (
           <section className="biz-sec" id="lead">
             <div className="ip-wrap">
               <div className="biz-lead">
@@ -254,7 +306,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
       <nav className={"biz-bar ip-fixed" + (bar.show ? " on" : "")} aria-label={`Contact ${name}`} aria-hidden={!bar.show}>
         <a className="ip-btn ip-wa" href={enquire} target="_blank" rel="noopener noreferrer" tabIndex={bar.show ? 0 : -1}><Icon.wa /> WhatsApp</a>
         {c.phone && <a className="ip-btn ip-ghost" href={telHref(c.phone)} tabIndex={bar.show ? 0 : -1}><Icon.phone /> Call</a>}
-        {c.offer ? <a className="ip-btn ip-primary" href="#lead" tabIndex={bar.show ? 0 : -1}>{o.bar}</a> : place && <a className="ip-btn ip-ghost" href={mapsDir(place)} target="_blank" rel="noopener noreferrer" tabIndex={bar.show ? 0 : -1}><Icon.map /> Map</a>}
+        {c.offer ? <a className="ip-btn ip-primary" {...toLead} tabIndex={bar.show ? 0 : -1}>{o.bar}</a> : place && <a className="ip-btn ip-ghost" href={mapsDir(place)} target="_blank" rel="noopener noreferrer" tabIndex={bar.show ? 0 : -1}><Icon.map /> Map</a>}
       </nav>
     </div>
   );
@@ -393,6 +445,9 @@ const CSS = `
 .stars svg{width:18px;height:18px}
 .biz-media{position:relative;border-radius:var(--rad);overflow:hidden;background:var(--sf);aspect-ratio:4/3;box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
 .biz-media img{width:100%;height:100%;object-fit:cover}
+.biz-3d{position:relative;width:100%;min-width:0;max-width:640px;justify-self:center}
+.biz-hero.has-3d{overflow:hidden}
+.s-editorial .biz-3d,.s-minimal .biz-3d{max-width:720px}
 @container page (min-width:860px){
   .biz-hero-in{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}
   .biz-media{aspect-ratio:4/5;max-height:640px}
