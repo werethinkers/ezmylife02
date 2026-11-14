@@ -1,0 +1,15 @@
+{
+  "id": 25369,
+  "key": "cnippet-dev__v-card-19",
+  "author": "cnippet-dev",
+  "slug": "v-card-19",
+  "name": "Event RSVP Card",
+  "description": "An event card showing the title, category badge, date, time, location and attendee count with a reserve/RSVP button.",
+  "url": "https://21st.dev/@cnippet-dev/components/v-card-19",
+  "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-card-19/default/preview.1788201544881.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

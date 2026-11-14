@@ -1,0 +1,15 @@
+{
+  "id": 20046,
+  "key": "olewandowski1__coming-soon-3",
+  "author": "olewandowski1",
+  "slug": "coming-soon-3",
+  "name": "Coming Soon Countdown",
+  "description": "A coming-soon page section with a live countdown timer and an email signup form.",
+  "url": "https://21st.dev/@olewandowski1/components/coming-soon-3",
+  "preview": "https://cdn.21st.dev/7ovr/coming-soon-3/default/preview.1784348843660-e9a739f8-be94-4482-87b8-42487d72ca99.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

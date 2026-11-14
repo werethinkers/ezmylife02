@@ -1,0 +1,12 @@
+{
+  "id": 8563,
+  "key": "dhileepkumargm__profile-card",
+  "author": "dhileepkumargm",
+  "slug": "profile-card",
+  "name": "ProfileCard",
+  "description": "An interactive, 3D-tilt profile card component featuring an animated status cycle, tier-based glow effects, a sliding glass panel, and a customizable action button.",
+  "url": "https://21st.dev/@dhileepkumargm/components/profile-card",
+  "preview": "https://cdn.21st.dev/dhileepkumargm/profile-card/default/preview.1759832360385.png",
+  "kind": "",
+  "deps": []
+}

@@ -79,6 +79,19 @@
    "bytes": 6305
   },
   {
+   "id": 1436,
+   "key": "ayushmxxn__3d-flip-card",
+   "author": "ayushmxxn",
+   "slug": "3d-flip-card",
+   "name": "3D Flip Card",
+   "description": "An interactive card stack component with 3D hover effects and animations. Perfect for showcasing images, portfolios, or featured content.\n\nFeatures\n- Smooth 3D rotation effects\n- Responsive design\n- Interactive card selection\n- Customizable card dimensions\n- Configurable stack spacing\n- Mobile-friendly fallback animations\n- Blur effects for depth perception",
+   "url": "https://21st.dev/@ayushmxxn/components/3d-flip-card",
+   "preview": "https://cdn.21st.dev/user_ayushmxxn/3d-flip-card/default/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24023
+  },
+  {
    "id": 26223,
    "key": "ayushmxxn__masonry-lightbox",
    "author": "ayushmxxn",
@@ -134,6 +147,19 @@
    "bytes": 28544
   },
   {
+   "id": 12635,
+   "key": "cesaroeduardo__flip-card",
+   "author": "cesaroeduardo",
+   "slug": "flip-card",
+   "name": "Tilt Flip Card",
+   "description": "An interactive 3D flip card component with hover tilt, front and back content, image support, and controlled flip state.",
+   "url": "https://21st.dev/@cesaroeduardo/components/flip-card",
+   "preview": "https://cdn.21st.dev/dudadecesaro/flip-card/default/preview.1778599393578.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6577
+  },
+  {
    "id": 19861,
    "key": "chamaac__how-it-works",
    "author": "chamaac",
@@ -177,6 +203,22 @@
     "react-day-picker"
    ],
    "bytes": 82139
+  },
+  {
+   "id": 25369,
+   "key": "cnippet-dev__v-card-19",
+   "author": "cnippet-dev",
+   "slug": "v-card-19",
+   "name": "Event RSVP Card",
+   "description": "An event card showing the title, category badge, date, time, location and attendee count with a reserve/RSVP button.",
+   "url": "https://21st.dev/@cnippet-dev/components/v-card-19",
+   "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-card-19/default/preview.1788201544881.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29712
   },
   {
    "id": 39045,
@@ -257,6 +299,19 @@
    "bytes": 11680
   },
   {
+   "id": 28196,
+   "key": "deltacomponents__product-card",
+   "author": "deltacomponents",
+   "slug": "product-card",
+   "name": "Product Card",
+   "description": "A compound card component for e-commerce product listings with an image well, an overlaid wishlist badge, and a title/subtitle/price footer.",
+   "url": "https://21st.dev/@deltacomponents/components/product-card",
+   "preview": "https://cdn.21st.dev/deltacomponents/product-card/default/preview.1789956964555-ab26ccd8-e67d-48ee-b19f-95d55b9f86c0.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24500
+  },
+  {
    "id": 21987,
    "key": "dev.shejanmahamud__expanded-map",
    "author": "dev.shejanmahamud",
@@ -281,6 +336,19 @@
    "kind": "",
    "deps": [],
    "bytes": 10498
+  },
+  {
+   "id": 8563,
+   "key": "dhileepkumargm__profile-card",
+   "author": "dhileepkumargm",
+   "slug": "profile-card",
+   "name": "ProfileCard",
+   "description": "An interactive, 3D-tilt profile card component featuring an animated status cycle, tier-based glow effects, a sliding glass panel, and a customizable action button.",
+   "url": "https://21st.dev/@dhileepkumargm/components/profile-card",
+   "preview": "https://cdn.21st.dev/dhileepkumargm/profile-card/default/preview.1759832360385.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 5138
   },
   {
    "id": 7217,
@@ -536,6 +604,19 @@
    "bytes": 21186
   },
   {
+   "id": 37282,
+   "key": "ibrandify__featured-project-hero",
+   "author": "ibrandify",
+   "slug": "featured-project-hero",
+   "name": "Featured Project Hero",
+   "description": "A stunning hero section to highlight featured projects, featuring image showcases and clean typography.",
+   "url": "https://21st.dev/@ibrandify/components/featured-project-hero",
+   "preview": "https://cdn.21st.dev/ibrandify/featured-project-hero/default/preview.1791549577798-3ed4844a-39b9-44c1-8cb9-b35f02eb5cda.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25636
+  },
+  {
    "id": 2554,
    "key": "isaiahbjork__coach-scheduling-card",
    "author": "isaiahbjork",
@@ -602,6 +683,32 @@
    "kind": "",
    "deps": [],
    "bytes": 2735
+  },
+  {
+   "id": 1946,
+   "key": "jatin-yadav05__classy-hero",
+   "author": "jatin-yadav05",
+   "slug": "classy-hero",
+   "name": "Classy Hero",
+   "description": "Classy Hero is a premium hero section with a black-and-white animated background, elegant typography, and interactive elements—perfect for a modern, high-end digital presence.",
+   "url": "https://21st.dev/@jatin-yadav05/components/classy-hero",
+   "preview": "https://cdn.21st.dev/user_2ra80vx0iKMyQWJ5AESmNfFbCHD/classy-hero/default/preview.1746632337264.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 45085
+  },
+  {
+   "id": 7772,
+   "key": "jatin-yadav05__flip-hover",
+   "author": "jatin-yadav05",
+   "slug": "flip-hover",
+   "name": "FlipHover",
+   "description": "A card component that performs a 3D flip animation on hover, rotating 180 degrees \n * around the Y-axis while translating upward.",
+   "url": "https://21st.dev/@jatin-yadav05/components/flip-hover",
+   "preview": "https://cdn.21st.dev/jatin-yadav05/flip-hover/default/preview.1758213434011.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2118
   },
   {
    "id": 7863,
@@ -890,6 +997,19 @@
    "bytes": 297224
   },
   {
+   "id": 35230,
+   "key": "kedhareswer__viewfinder-flip-carousel",
+   "author": "kedhareswer",
+   "slug": "viewfinder-flip-carousel",
+   "name": "3D Flip Image Carousel",
+   "description": "3D flip image carousel for React: only the photo in the viewfinder frame lies flat while the rest fold away on their edges in perspective, opening out of the stack as you move, with a small frame pulse as each lands. Dark stage, titles, keyboard arrows and swipe, reduced-motion aware. Use for camera rolls, photo galleries and portfolios.",
+   "url": "https://21st.dev/@kedhareswer/components/viewfinder-flip-carousel",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/viewfinder-flip-carousel/default/preview.1791304512075.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 10287
+  },
+  {
    "id": 43217,
    "key": "klyv-ui__time-slot-picker",
    "author": "klyv-ui",
@@ -914,6 +1034,19 @@
    "kind": "",
    "deps": [],
    "bytes": 23276
+  },
+  {
+   "id": 7507,
+   "key": "lavikatiyar__card-3",
+   "author": "lavikatiyar",
+   "slug": "card-3",
+   "name": "Card",
+   "description": "Property Card\nA visually polished card component designed to showcase properties, rentals, or listings. It features a responsive layout, theme support for light and dark modes, and subtle animations on hover and load.",
+   "url": "https://21st.dev/@lavikatiyar/components/card-3",
+   "preview": "https://cdn.21st.dev/lavikatiyar/card-3/default/preview.1757930285736.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 23907
   },
   {
    "id": 7902,
@@ -1003,6 +1136,22 @@
     "@radix-ui/react-select"
    ],
    "bytes": 133196
+  },
+  {
+   "id": 20046,
+   "key": "olewandowski1__coming-soon-3",
+   "author": "olewandowski1",
+   "slug": "coming-soon-3",
+   "name": "Coming Soon Countdown",
+   "description": "A coming-soon page section with a live countdown timer and an email signup form.",
+   "url": "https://21st.dev/@olewandowski1/components/coming-soon-3",
+   "preview": "https://cdn.21st.dev/7ovr/coming-soon-3/default/preview.1784348843660-e9a739f8-be94-4482-87b8-42487d72ca99.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29673
   },
   {
    "id": 27052,
@@ -1255,6 +1404,22 @@
    "bytes": 26023
   },
   {
+   "id": 26139,
+   "key": "skyleen77__flip-card",
+   "author": "skyleen77",
+   "slug": "flip-card",
+   "name": "Flip Card",
+   "description": "A 3D profile card that flips on hover or tap to reveal a bio, stats, and social links.",
+   "url": "https://21st.dev/@skyleen77/components/flip-card",
+   "preview": "https://cdn.21st.dev/user_2vJfh2NfFGAPdS5oQXlSpccjJvB/flip-card/default/preview.1788527617844.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30068
+  },
+  {
    "id": 30554,
    "key": "ssychui__project-index",
    "author": "ssychui",
@@ -1266,6 +1431,19 @@
    "kind": "",
    "deps": [],
    "bytes": 4555
+  },
+  {
+   "id": 19328,
+   "key": "support_596fe4b8__animated-countdown",
+   "author": "support_596fe4b8",
+   "slug": "animated-countdown",
+   "name": "Animated Countdown",
+   "description": "A flip-style countdown timer with animated number transitions and modern, digital, minimal, and classic variants.",
+   "url": "https://21st.dev/@support_596fe4b8/components/animated-countdown",
+   "preview": "https://cdn.21st.dev/user_registry_nexus-ui_1783492392202/animated-countdown/default/preview.1784126304541.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27215
   },
   {
    "id": 44838,

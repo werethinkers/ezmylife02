@@ -1,0 +1,12 @@
+{
+  "id": 35230,
+  "key": "kedhareswer__viewfinder-flip-carousel",
+  "author": "kedhareswer",
+  "slug": "viewfinder-flip-carousel",
+  "name": "3D Flip Image Carousel",
+  "description": "3D flip image carousel for React: only the photo in the viewfinder frame lies flat while the rest fold away on their edges in perspective, opening out of the stack as you move, with a small frame pulse as each lands. Dark stage, titles, keyboard arrows and swipe, reduced-motion aware. Use for camera rolls, photo galleries and portfolios.",
+  "url": "https://21st.dev/@kedhareswer/components/viewfinder-flip-carousel",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/viewfinder-flip-carousel/default/preview.1791304512075.webp",
+  "kind": "",
+  "deps": []
+}

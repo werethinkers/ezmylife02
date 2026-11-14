@@ -1,0 +1,12 @@
+{
+  "id": 7507,
+  "key": "lavikatiyar__card-3",
+  "author": "lavikatiyar",
+  "slug": "card-3",
+  "name": "Card",
+  "description": "Property Card\nA visually polished card component designed to showcase properties, rentals, or listings. It features a responsive layout, theme support for light and dark modes, and subtle animations on hover and load.",
+  "url": "https://21st.dev/@lavikatiyar/components/card-3",
+  "preview": "https://cdn.21st.dev/lavikatiyar/card-3/default/preview.1757930285736.png",
+  "kind": "",
+  "deps": []
+}

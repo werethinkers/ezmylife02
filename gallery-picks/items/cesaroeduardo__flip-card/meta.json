@@ -1,0 +1,12 @@
+{
+  "id": 12635,
+  "key": "cesaroeduardo__flip-card",
+  "author": "cesaroeduardo",
+  "slug": "flip-card",
+  "name": "Tilt Flip Card",
+  "description": "An interactive 3D flip card component with hover tilt, front and back content, image support, and controlled flip state.",
+  "url": "https://21st.dev/@cesaroeduardo/components/flip-card",
+  "preview": "https://cdn.21st.dev/dudadecesaro/flip-card/default/preview.1778599393578.png",
+  "kind": "",
+  "deps": []
+}
