@@ -1,0 +1,12 @@
+{
+  "id": 43147,
+  "key": "dhxwhy__palette-picker-gallery",
+  "author": "dhxwhy",
+  "slug": "palette-picker-gallery",
+  "name": "Color Palette Image Gallery – Extract and Filter by Palette",
+  "description": "Color Palette Image Gallery for React and Tailwind CSS (shadcn/ui): pull a five-color palette out of every photo, then filter photos by color. It is built to let visitors shop by color: pick a real shade in one photo and see which others share it. Use it for mood boards, shop-by-color filters, fashion and interior stores, and portfolios. Hover a photo and its palette fans out like paint chips with HEX labels; press a swatch and matching photos lift with a color dot as the rest sink to grayscale, and a header pill lets you copy the HEX. Palettes come from your data or the built-in color palette extractor (canvas, k-means in OKLab); photos without CORS skip it. The palette picker is controlled or uncontrolled (value, onChange), with onSelect, threshold, columns and labels. Photos are roving-tabindex buttons (arrows move, Enter pins, Escape folds); reduced motion drops transitions, and both themes use shadcn tokens. The included demo autoplays a palette tour over 16 stock photos and makes no requests beyond image loads. Requires React and lucide-react, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/palette-picker-gallery",
+  "preview": "https://cdn.21st.dev/dhxwhy/palette-picker-gallery/default/preview.1793378305167-bba6b0e1-1bd8-4af8-9fbb-bdfd0d9f84f2.png",
+  "kind": "",
+  "deps": []
+}

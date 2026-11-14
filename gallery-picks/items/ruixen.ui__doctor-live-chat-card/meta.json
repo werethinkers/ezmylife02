@@ -1,0 +1,15 @@
+{
+  "id": 2650,
+  "key": "ruixen.ui__doctor-live-chat-card",
+  "author": "ruixen.ui",
+  "slug": "doctor-live-chat-card",
+  "name": "DoctorLiveChatCard",
+  "description": "A modern, responsive UI component to showcase a doctor’s profile for live consultation. It highlights real-time availability, rating, specialty, and enables patients to instantly join a chat or bookmark the doctor. Built for both light and dark modes with a sleek, accessible design.",
+  "url": "https://21st.dev/@ruixen.ui/components/doctor-live-chat-card",
+  "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/doctor-live-chat-card/default/preview.1750812337794.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

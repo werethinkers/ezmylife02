@@ -1,0 +1,12 @@
+{
+  "id": 34856,
+  "key": "ruixen.ui__card-hand-gallery",
+  "author": "ruixen.ui",
+  "slug": "card-hand-gallery",
+  "name": "Card Hand Gallery",
+  "description": "A fanned hand of image cards — hover to lift, click or flick one up to pull it out while its title and description settle in beside it.",
+  "url": "https://21st.dev/@ruixen.ui/components/card-hand-gallery",
+  "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/card-hand-gallery/default/preview.1790884998362.webp",
+  "kind": "",
+  "deps": []
+}

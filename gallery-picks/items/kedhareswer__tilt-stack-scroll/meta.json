@@ -1,0 +1,12 @@
+{
+  "id": 44650,
+  "key": "kedhareswer__tilt-stack-scroll",
+  "author": "kedhareswer",
+  "slug": "tilt-stack-scroll",
+  "name": "Scroll Stacking Cards",
+  "description": "Scroll stacking cards: full-bleed photo cards pile up as the page scrolls, each arriving tilted and landing flat while the ones below tip back, shrink and darken, with a counter and progress rail. For tours, case studies and product stories.",
+  "url": "https://21st.dev/@kedhareswer/components/tilt-stack-scroll",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/tilt-stack-scroll/default/preview.1793901283151.webp",
+  "kind": "",
+  "deps": []
+}

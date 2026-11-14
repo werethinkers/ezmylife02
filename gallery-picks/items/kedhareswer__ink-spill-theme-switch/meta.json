@@ -1,0 +1,12 @@
+{
+  "id": 45453,
+  "key": "kedhareswer__ink-spill-theme-switch",
+  "author": "kedhareswer",
+  "slug": "ink-spill-theme-switch",
+  "name": "Ink Spill Theme Switch",
+  "description": "A light/dark theme switch where the new theme spills out of the toggle like ink, with a ragged fractal edge, hairline tendrils and droplets. Wrap any page; no dependencies beyond React.",
+  "url": "https://21st.dev/@kedhareswer/components/ink-spill-theme-switch",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-spill-theme-switch/default/preview.1794575050396.webp",
+  "kind": "",
+  "deps": []
+}

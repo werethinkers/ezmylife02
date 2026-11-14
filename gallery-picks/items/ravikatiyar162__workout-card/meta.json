@@ -1,0 +1,12 @@
+{
+  "id": 8218,
+  "key": "ravikatiyar162__workout-card",
+  "author": "ravikatiyar162",
+  "slug": "workout-card",
+  "name": "Workout Card",
+  "description": "Workout Card\nDescription: A container component to display a \"Workout of the Day\" session, complete with a title, duration, and an animated list of exercises.",
+  "url": "https://21st.dev/@ravikatiyar162/components/workout-card",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/workout-card/default/preview.1758957879413.png",
+  "kind": "",
+  "deps": []
+}

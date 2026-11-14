@@ -1,0 +1,12 @@
+{
+  "id": 30554,
+  "key": "ssychui__project-index",
+  "author": "ssychui",
+  "slug": "project-index",
+  "name": "Project Index",
+  "description": "A list of companies or projects where each row shows its cover beside the cursor on hover, for fund portfolios and case study pages. Part of ssych ui: https://ssych.com/library/project-index",
+  "url": "https://21st.dev/@ssychui/components/project-index",
+  "preview": "https://cdn.21st.dev/user_3CdJgTW8geRShR3gegqAjY0JB3B/project-index/default/preview.1790280175981.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": 43142,
+  "key": "dhxwhy__picture-rail-gallery",
+  "author": "dhxwhy",
+  "slug": "picture-rail-gallery",
+  "name": "Picture Rail Image Gallery – Art Print Shop Hero Section",
+  "description": "Picture Rail Image Gallery for React and Tailwind CSS (shadcn/ui): framed prints hanging from a picture rail on steel wires. It is built to make an art print shop or portfolio feel like a real gallery wall, so visitors stop, touch a print and look closer. Use it for art print stores, photo shops, artist portfolios and hero sections. Each frame hangs from its hook as a pendulum with real physics (longer wires swing slower); a hover tilt leans the print toward the pointer, its picture light switches on and the wall dims. Drag a print along the rail to bump its neighbours; click or press Enter to lift it off the wall and turn it to read the gallery label on the back. Items take title, artist, year, image, aspect, frame, mat, drop, tag and details; control the lit print with active and onActiveChange, track the dialog with onOpenChange, relabel it with labels. Roving keyboard focus, an accessible modal, reduced motion and light/dark themes are built in. The included demo hangs eight framed prints and makes no requests beyond image loads. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/picture-rail-gallery",
+  "preview": "https://cdn.21st.dev/dhxwhy/picture-rail-gallery/default/preview.1793378004192-6dc4ab99-60ec-4b2a-85a9-86ccaff9d107.png",
+  "kind": "",
+  "deps": []
+}
