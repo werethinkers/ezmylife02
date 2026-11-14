@@ -5,6 +5,7 @@ import { fill, inr, mapsDir, mapsLink, openStatus, priceText, telHref, waTo } fr
 import { BASE_CSS, Icon, Img, MadeWith, fitWords, resolveImg, useThemeFonts } from "../parts";
 import { coverFor, isStock } from "../stock";
 import { Backdrop, SIG_CSS, sigClass, usePointerFx } from "../signature";
+import MenuBelt, { BELT_MIN, BELT_PRODUCTS } from "../showpieces/MenuBelt";
 
 type Item = { category?: string; name: string; price?: string; desc?: string; diet?: string; photo?: string };
 const num = (p?: string) => { const n = Number(String(p ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) && /^\s*[₹]?\s*[\d,]+(\.\d+)?\s*$/.test(String(p ?? "")) ? n : null; };
@@ -59,6 +60,10 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
           {sty !== "photo" && cover && <div className="mn-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 45vw, 100vw" eager /></div>}
         </div>
       </header>
+
+      {BELT_PRODUCTS.has(product.id) && items.length >= BELT_MIN && (
+        <MenuBelt product={product} theme={theme} items={items} whatsapp={c.whatsapp} vars={vars} cart={!!o.cart} onAdd={(i) => add(i, 1)} />
+      )}
 
       <nav className="mn-tabs" aria-label="Categories">
         <div className="mn-tabs-in">
