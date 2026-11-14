@@ -1,0 +1,12 @@
+{
+  "id": 36626,
+  "key": "dhxwhy__lighthouse-gallery",
+  "author": "dhxwhy",
+  "slug": "lighthouse-gallery",
+  "name": "Lighthouse Spotlight Image Gallery",
+  "description": "Spotlight image gallery for React and Tailwind CSS (shadcn/ui): a photo grid lit by a sweeping lighthouse beam. It is built to guide the eye: light travels across the grid and pictures wake up one after another, so visitors keep watching to see what the beam reveals next, and the torch turns browsing into discovery. At rest each photo sits under a flat color swatch extracted from the image, with a hint of the picture showing through; tiles wake up as the beam passes and fade back with a slow afterglow. The pointer works as a hand torch, keyboard focus lights a tile, clicking parks the beam. Props for beam origin, speed, width, afterglow, peek and columns. Light and dark themes, reduced-motion fallback, no WebGL. Use it for portfolios, photo collections and product showcases.",
+  "url": "https://21st.dev/@dhxwhy/components/lighthouse-gallery",
+  "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/lighthouse-gallery/default/preview.1791470315489.webp",
+  "kind": "",
+  "deps": []
+}

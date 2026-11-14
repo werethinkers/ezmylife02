@@ -1,0 +1,13 @@
+{
+ "id": 5240,
+ "key": "dhileepkumargm__woven-light-hero",
+ "author": "dhileepkumargm",
+ "slug": "woven-light-hero",
+ "name": "Woven Light Hero",
+ "description": "A fully interactive, theme-aware hero section featuring a 3D object woven from thousands of light particles that react to the user's cursor.",
+ "url": "https://21st.dev/@dhileepkumargm/components/woven-light-hero",
+ "preview": "https://cdn.21st.dev/dhileepkumargm/woven-light-hero/default/preview.1755152006229.png",
+ "kind": "",
+ "deps": [],
+ "skip": "Needs the three.js package"
+}

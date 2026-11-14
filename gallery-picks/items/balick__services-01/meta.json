@@ -1,0 +1,12 @@
+{
+  "id": 33903,
+  "key": "balick__services-01",
+  "author": "balick",
+  "slug": "services-01",
+  "name": "Services List",
+  "description": "A numbered list section that presents a company's services with a starting price, key deliverables, and a link to learn more or get in touch.",
+  "url": "https://21st.dev/@balick/components/services-01",
+  "preview": "https://cdn.21st.dev/balick/services-01/default/preview.1790754381987-38bce506-ce43-474b-b171-27b105f5611a.png",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": 8969,
+  "key": "ravikatiyar162__contact",
+  "author": "ravikatiyar162",
+  "slug": "contact",
+  "name": "Contact",
+  "description": "Contact Section\nDescription: A comprehensive and visually appealing contact section component featuring an animated background, a navigation bar, a main title, a contact form with various input types, and social media integration. Designed for reusability, responsiveness, and theme-adaptability using shadcn/ui.",
+  "url": "https://21st.dev/@ravikatiyar162/components/contact",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/contact/default/preview.1760506498496.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label"
+  ]
+}

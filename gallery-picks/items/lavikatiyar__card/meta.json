@@ -1,0 +1,12 @@
+{
+  "id": 7504,
+  "key": "lavikatiyar__card",
+  "author": "lavikatiyar",
+  "slug": "card",
+  "name": "Card",
+  "description": "Hotel Card\nA visually polished card component to display property information, including an image, name, location, and rating. It is fully responsive and animated on hover.",
+  "url": "https://21st.dev/@lavikatiyar/components/card",
+  "preview": "https://cdn.21st.dev/user_32jKsxB5RdZryZbhXn5ZBjOM8aV/card/default/preview.1788958813944.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,15 @@
+{
+  "id": 27904,
+  "key": "ln-dev7__contact-01",
+  "author": "ln-dev7",
+  "slug": "contact-01",
+  "name": "Centered Contact Form",
+  "description": "A centered contact form section with name, email and message fields, a submit button, and trust badges for reply time and privacy.",
+  "url": "https://21st.dev/@ln-dev7/components/contact-01",
+  "preview": "https://cdn.21st.dev/ln-dev7/contact-01/default/preview.1789819769701-36011358-a4c4-4a59-9010-76215de9d861.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

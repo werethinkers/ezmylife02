@@ -1,0 +1,12 @@
+{
+  "id": 7772,
+  "key": "jatin-yadav05__flip-hover",
+  "author": "jatin-yadav05",
+  "slug": "flip-hover",
+  "name": "FlipHover",
+  "description": "A card component that performs a 3D flip animation on hover, rotating 180 degrees \n * around the Y-axis while translating upward.",
+  "url": "https://21st.dev/@jatin-yadav05/components/flip-hover",
+  "preview": "https://cdn.21st.dev/jatin-yadav05/flip-hover/default/preview.1758213434011.png",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,15 @@
+{
+  "id": 7100,
+  "key": "ravikatiyar162__card-4",
+  "author": "ravikatiyar162",
+  "slug": "card-4",
+  "name": "Card",
+  "description": "Property Card\nA modern, responsive card component designed to showcase property listings with key details and a call-to-action.",
+  "url": "https://21st.dev/@ravikatiyar162/components/card-4",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/card-4/default/preview.1757403639137.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

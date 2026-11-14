@@ -1,0 +1,12 @@
+{
+  "id": 46292,
+  "key": "vovalopuh13__pricing-plan-tilt",
+  "author": "vovalopuh13",
+  "slug": "pricing-plan-tilt",
+  "name": "Pricing Plan Tilt",
+  "description": "Three pricing cards rendered as real 3D objects: they tilt with the cursor, carry a glare that follows it, and lift on hover. A running light circles the selected plan, and the monthly/yearly toggle is a springy pill with a bouncing Save badge.",
+  "url": "https://21st.dev/@vovalopuh13/components/pricing-plan-tilt",
+  "preview": "https://cdn.21st.dev/user_3M13BYwKrRjRaH8xv9vkJwwJUgj/pricing-plan-tilt/default/preview.1794571999314.png",
+  "kind": "",
+  "deps": []
+}

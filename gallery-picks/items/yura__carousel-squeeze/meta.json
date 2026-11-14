@@ -1,0 +1,12 @@
+{
+  "id": 25474,
+  "key": "yura__carousel-squeeze",
+  "author": "yura",
+  "slug": "carousel-squeeze",
+  "name": "Squeeze Carousel",
+  "description": "An expanding accordion image carousel: one wide hero panel, the rest squeezed into thin clickable strips. Smooth width animation, click-to-open, hover grow, autoplay, keyboard control, responsive, light and dark mode. Perfect for product features.",
+  "url": "https://21st.dev/@yura/components/carousel-squeeze",
+  "preview": "https://cdn.21st.dev/yura/carousel-squeeze/default/preview.1787420809042-efcce442-3d43-4cd1-afe0-2f4cabfc9dd9.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,15 @@
+{
+  "id": 40206,
+  "key": "my__pricing-table",
+  "author": "my",
+  "slug": "pricing-table",
+  "name": "Pricing Table",
+  "description": "A pricing section with a monthly/yearly billing toggle, animated digit-rolling prices, and plan cards with feature checklists and a highlighted popular plan.",
+  "url": "https://21st.dev/@my/components/pricing-table",
+  "preview": "https://cdn.21st.dev/my/pricing-table/default/preview.1792526138790-f202e0f2-2873-496a-bc96-0555fa642a72.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

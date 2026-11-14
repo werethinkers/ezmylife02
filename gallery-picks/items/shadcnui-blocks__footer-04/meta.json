@@ -1,0 +1,16 @@
+{
+  "id": 26006,
+  "key": "shadcnui-blocks__footer-04",
+  "author": "shadcnui-blocks",
+  "slug": "footer-04",
+  "name": "Footer 04",
+  "description": "A responsive website footer with logo, navigation links, a newsletter subscribe form, copyright, and social media icons.",
+  "url": "https://21st.dev/@shadcnui-blocks/components/footer-04",
+  "preview": "https://cdn.21st.dev/shadcnui-blocks/footer-04/default/preview.1788331739303-b5d48979-9c2a-4c33-9101-b81a80f700fa.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-separator"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": 5650,
+  "key": "beratberkayg__product-card-1",
+  "author": "beratberkayg",
+  "slug": "product-card-1",
+  "name": "Product Card",
+  "description": "The ProductCard component is a fully customizable e-commerce card built with shadcn/ui, Tailwind CSS, and Framer Motion.\nIt provides a modern, responsive, and theme-aware product showcase with interactive features, designed to work seamlessly in both light and dark modes.\n\nKey Features:\n\n-> Image carousel with smooth fade animations\n\n-> Dynamic badges for New, Best Seller, or Discount labels\n\n-> Wishlist toggle with visual feedback\n\n-> Selectable color swatches and size options\n\n-> Rating & reviews display with free shipping indicator\n\n-> Add to Cart button with loading and success states\n\n-> Light & dark mode support using shadcn’s theme system\n\n-> Polished UI with hover shadows, rounded corners, and fluid transitions\n\nThis component is ideal for online stores, product listings, and landing pages, where both visual quality and user experience matter. It follows the shadcn/ui design pattern of separating reusable logic from demo usage, ensuring scalability and maintainability.",
+  "url": "https://21st.dev/@beratberkayg/components/product-card-1",
+  "preview": "https://cdn.21st.dev/beratberkayg/product-card-1/default/preview.1785192713083-a85d44a3-7979-456d-b469-dbded1219da5.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

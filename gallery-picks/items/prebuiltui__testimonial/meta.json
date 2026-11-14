@@ -1,0 +1,12 @@
+{
+  "id": 7335,
+  "key": "prebuiltui__testimonial",
+  "author": "prebuiltui",
+  "slug": "testimonial",
+  "name": "Testimonial",
+  "description": "Here is Testimonial component ",
+  "url": "https://21st.dev/@prebuiltui/components/testimonial",
+  "preview": "https://cdn.21st.dev/user_prebuiltui/testimonial/star-rating-with-avatar-group/preview.1785939451504.png",
+  "kind": "",
+  "deps": []
+}

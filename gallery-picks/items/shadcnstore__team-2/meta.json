@@ -1,0 +1,16 @@
+{
+  "id": 28597,
+  "key": "shadcnstore__team-2",
+  "author": "shadcnstore",
+  "slug": "team-2",
+  "name": "Agents Team Grid",
+  "description": "Team grid with hover animation and default quick view of Agent details",
+  "url": "https://21st.dev/@shadcnstore/components/team-2",
+  "preview": "https://cdn.21st.dev/shadcnstore/team-2/default/preview.1789991447243-20a41961-7939-45b9-8d8d-c2c2caaaae71.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ],
+  "skip": "Needs helper files the API result leaves out"
+}

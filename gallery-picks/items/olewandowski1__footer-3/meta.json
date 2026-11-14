@@ -1,0 +1,18 @@
+{
+  "id": 28162,
+  "key": "olewandowski1__footer-3",
+  "author": "olewandowski1",
+  "slug": "footer-3",
+  "name": "Newsletter Signup Footer",
+  "description": "A page footer that pairs a newsletter email signup form with grouped navigation link columns and a bottom bar of social icon links.",
+  "url": "https://21st.dev/@olewandowski1/components/footer-3",
+  "preview": "https://cdn.21st.dev/7ovr/footer-3/default/preview.1789956847954-42462dd9-6028-4042-bc38-283c5e5524c7.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "@radix-ui/react-separator",
+    "sonner"
+  ]
+}

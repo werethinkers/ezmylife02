@@ -1,0 +1,15 @@
+{
+  "id": 1131,
+  "key": "lukacho__image-swiper",
+  "author": "lukacho",
+  "slug": "image-swiper",
+  "name": "Image Swiper",
+  "description": "Image swiper card for a real estate website\n\n",
+  "url": "https://21st.dev/@lukacho/components/image-swiper",
+  "preview": "https://cdn.21st.dev/user_lukacho/image-swiper/default/preview.1786715503080.webp",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

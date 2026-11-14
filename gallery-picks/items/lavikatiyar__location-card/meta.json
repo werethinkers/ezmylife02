@@ -1,0 +1,12 @@
+{
+  "id": 7902,
+  "key": "lavikatiyar__location-card",
+  "author": "lavikatiyar",
+  "slug": "location-card",
+  "name": "Location Card",
+  "description": "Location Card\nA visually polished card component to display a location with an image, title, subtitle, and an animated call-to-action button. It is fully responsive, theme-adaptive, and includes subtle animations using framer-motion.",
+  "url": "https://21st.dev/@lavikatiyar/components/location-card",
+  "preview": "https://cdn.21st.dev/lavikatiyar/location-card/default/preview.1758519025947.png",
+  "kind": "",
+  "deps": []
+}

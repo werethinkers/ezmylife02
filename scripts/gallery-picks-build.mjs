@@ -38,6 +38,46 @@ const globalsPlugin = {
     b.onResolve({ filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|framer-motion|motion\/react|lucide-react)$/ }, (a) => ({ path: a.path, namespace: "gx" }));
     b.onLoad({ filter: /.*/, namespace: "gx" }, (a) => ({ contents: `module.exports = window.__gx.${GLOBALS[a.path]};`, loader: "js" }));
     /* Next.js helpers some picks use: plain img / a stand-ins */
+    /* helper files a pick imports from "<slug>-utils/<name>" but the API leaves out:
+       use our stand-in in gallery-picks/shims, else our own shadcn ui file of that name */
+    b.onResolve({ filter: /^@\/components\/ui\/[^/]+-utils\/[^/]+$/ }, (a) => {
+      const name = a.path.split("/").pop();
+      for (const p of [path.join(ROOT, "gallery-picks/shims", name + ".tsx"), path.join(ROOT, "src/components/ui", name + ".tsx")]) if (fs.existsSync(p)) return { path: p };
+      return undefined;
+    });
+    /* small npm helpers some picks use, rebuilt here so we don't add packages */
+    b.onResolve({ filter: /^react-use-measure$/ }, () => ({ path: "measure", namespace: "measureshim" }));
+    b.onLoad({ filter: /.*/, namespace: "measureshim" }, () => ({
+      contents: `import * as React from "react";export default function useMeasure(){const[el,setEl]=React.useState(null);const[b,setB]=React.useState({x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0});React.useLayoutEffect(()=>{if(!el)return;const f=()=>{const r=el.getBoundingClientRect();setB({x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,left:r.left,right:r.right,bottom:r.bottom});};f();const ro=new ResizeObserver(f);ro.observe(el);return()=>ro.disconnect();},[el]);return[setEl,b];}`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
+    b.onResolve({ filter: /^react-wrap-balancer$/ }, () => ({ path: "balancer", namespace: "balancershim" }));
+    b.onLoad({ filter: /.*/, namespace: "balancershim" }, () => ({
+      contents: `import * as React from "react";export default function Balancer({children}){return React.createElement("span",{style:{textWrap:"balance"}},children);}export const Provider=({children})=>children;`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
+    /* web-font packages: the page loads its own fonts */
+    b.onResolve({ filter: /^@fontsource(-variable)?\// }, () => ({ path: "font", namespace: "emptyshim" }));
+    b.onLoad({ filter: /.*/, namespace: "emptyshim" }, () => ({ contents: "", loader: "js" }));
+    /* "cn" imported as a package by some picks: our own helper */
+    b.onResolve({ filter: /^cn$/ }, () => ({ path: path.join(ROOT, "src/lib/utils.ts") }));
+    /* @gsap/react's useGSAP, rebuilt on gsap.context so we don't add a package */
+    b.onResolve({ filter: /^@gsap\/react$/ }, () => ({ path: "usegsap", namespace: "gsapshim" }));
+    b.onLoad({ filter: /.*/, namespace: "gsapshim" }, () => ({
+      contents: `import * as React from "react";import gsap from "gsap";export function useGSAP(cb,cfg){const deps=Array.isArray(cfg)?cfg:(cfg&&cfg.dependencies)||[];const scope=!Array.isArray(cfg)&&cfg?cfg.scope:undefined;const ctxRef=React.useRef(null);React.useLayoutEffect(()=>{const ctx=gsap.context((self)=>{if(cb)cb(self);},scope&&scope.current?scope.current:undefined);ctxRef.current=ctx;return()=>ctx.revert();},deps);return{context:ctxRef.current,contextSafe:(f)=>f};}export default useGSAP;`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
+    /* newer shadcn "field" helper that our ui folder doesn't have */
+    b.onResolve({ filter: /^@\/components\/ui\/field$/ }, () => ({ path: "field", namespace: "fieldshim" }));
+    b.onLoad({ filter: /.*/, namespace: "fieldshim" }, () => ({
+      contents: `import * as React from "react";const h=(t,c)=>({className,...p})=>React.createElement(t,{className:c+" "+(className||""),...p});
+export const Field=h("div","grid gap-2");export const FieldLabel=h("label","text-sm font-medium");export const FieldDescription=h("p","text-sm text-muted-foreground");export const FieldError=h("p","text-sm text-destructive");export const FieldGroup=h("div","grid gap-4");export const FieldSet=h("fieldset","grid gap-4");export const FieldLegend=h("legend","font-medium");export const FieldContent=h("div","grid gap-1");export const FieldTitle=h("div","text-sm font-medium");export const FieldSeparator=h("hr","border-border");`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
     b.onResolve({ filter: /^next\/(image|link)$/ }, (a) => ({ path: a.path, namespace: "nextshim" }));
     b.onLoad({ filter: /.*/, namespace: "nextshim" }, (a) => ({
       contents: a.path === "next/image"
@@ -62,11 +102,13 @@ for (const key of keys) {
     name: "own",
     setup(b) {
       /* the demo imports the component as @/components/ui/<slug> (or some other path): point it at our copy */
-      b.onResolve({ filter: /^@\/components\/(ui\/)?[^/]+$/ }, (a) => {
+      b.onResolve({ filter: /^@\/components\/([^/]+\/)?[^/]+$/ }, (a) => {
         if (a.path.endsWith(`/${meta.slug}`)) return { path: path.join(dir, "component.tsx") };
+        const helper = path.join(dir, "helpers", a.path.split("/").pop() + ".tsx");
+        if (fs.existsSync(helper)) return { path: helper };
         return undefined;
       });
-      b.onResolve({ filter: /^\.\.?\/[^/]+$/ }, (a) => (a.importer.startsWith(dir) && (a.path.endsWith(meta.slug) || a.path === "./component") ? { path: path.join(dir, "component.tsx") } : undefined));
+      b.onResolve({ filter: /^\.\.?\/.+$/ }, (a) => (a.importer.startsWith(dir) && (a.path.endsWith(meta.slug) || a.path === "./component") ? { path: path.join(dir, "component.tsx") } : undefined));
     },
   };
   try {

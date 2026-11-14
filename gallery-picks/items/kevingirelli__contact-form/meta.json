@@ -1,0 +1,15 @@
+{
+  "id": 35258,
+  "key": "kevingirelli__contact-form",
+  "author": "kevingirelli",
+  "slug": "contact-form",
+  "name": "Contact Form",
+  "description": "A two-column contact section with a header and contact details on one side and a validated name/email/message form in a card on the other, with built-in pending, success and error states.",
+  "url": "https://21st.dev/@kevingirelli/components/contact-form",
+  "preview": "https://cdn.21st.dev/kevingirelli/contact-form/default/preview.1791041663088-a865c431-ef9e-4289-9a4c-a145ff0ba6e4.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

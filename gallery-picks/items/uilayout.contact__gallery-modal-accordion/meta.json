@@ -1,0 +1,12 @@
+{
+  "id": 24830,
+  "key": "uilayout.contact__gallery-modal-accordion",
+  "author": "uilayout.contact",
+  "slug": "gallery-modal-accordion",
+  "name": "Gallery Modal Accordion",
+  "description": "An interactive image gallery where thumbnails expand accordion-style on hover and open into an animated fullscreen modal with title and description.",
+  "url": "https://21st.dev/@uilayout.contact/components/gallery-modal-accordion",
+  "preview": "https://cdn.21st.dev/user_2zAsvSHo1IeJGKtSjJ3uR1N1Cd7/gallery-modal-accordion/default/preview.1787745779112.png",
+  "kind": "",
+  "deps": []
+}

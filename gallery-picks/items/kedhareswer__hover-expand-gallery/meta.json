@@ -1,0 +1,12 @@
+{
+  "id": 27010,
+  "key": "kedhareswer__hover-expand-gallery",
+  "author": "kedhareswer",
+  "slug": "hover-expand-gallery",
+  "name": "Hover Expand Gallery",
+  "description": "Hover expand image gallery accordion: a row of hairline-separated panels with vertical labels, where the hovered or tapped panel grows to reveal its image while the rest stay rail-width. Below 1024px it becomes a vertical accordion. For portfolios and case studies. Pure CSS, no animation library.",
+  "url": "https://21st.dev/@kedhareswer/components/hover-expand-gallery",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/hover-expand-gallery/default/preview.1791304987340.webp",
+  "kind": "",
+  "deps": []
+}
