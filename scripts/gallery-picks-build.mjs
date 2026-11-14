@@ -37,6 +37,15 @@ const globalsPlugin = {
   setup(b) {
     b.onResolve({ filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|framer-motion|motion\/react|lucide-react)$/ }, (a) => ({ path: a.path, namespace: "gx" }));
     b.onLoad({ filter: /.*/, namespace: "gx" }, (a) => ({ contents: `module.exports = window.__gx.${GLOBALS[a.path]};`, loader: "js" }));
+    /* Next.js helpers some picks use: plain img / a stand-ins */
+    b.onResolve({ filter: /^next\/(image|link)$/ }, (a) => ({ path: a.path, namespace: "nextshim" }));
+    b.onLoad({ filter: /.*/, namespace: "nextshim" }, (a) => ({
+      contents: a.path === "next/image"
+        ? `import * as React from "react";export default function Image({src,alt="",fill,priority,quality,placeholder,blurDataURL,loader,unoptimized,style,...p}){const s=typeof src==="object"&&src?src.src:src;return React.createElement("img",{src:s,alt,style:fill?{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",...style}:style,...p});}`
+        : `import * as React from "react";export default function Link({href,prefetch,replace,scroll,shallow,legacyBehavior,passHref,...p}){return React.createElement("a",{href:typeof href==="string"?href:"#",...p});}`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
   },
 };
 

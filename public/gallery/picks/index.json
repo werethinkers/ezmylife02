@@ -40,6 +40,45 @@
    "bytes": 174049
   },
   {
+   "id": 39045,
+   "key": "daiwiikharihar__curtain-split-hero",
+   "author": "daiwiikharihar",
+   "slug": "curtain-split-hero",
+   "name": "Curtain Split Hero",
+   "description": "A theatrical stage-reveal hero component where a stacked deck of cards splits symmetrically apart into curved vertical wings to unveil central typography.",
+   "url": "https://21st.dev/@daiwiikharihar/components/curtain-split-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/curtain-split-hero/default/preview.1792426105466.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 7326
+  },
+  {
+   "id": 30669,
+   "key": "daiwiikharihar__panoramic-spread-hero",
+   "author": "daiwiikharihar",
+   "slug": "panoramic-spread-hero",
+   "name": "Panoramic Spread Hero",
+   "description": "An interactive 3D panoramic hero gallery featuring dynamic image spreading and pointer-tilt animations.",
+   "url": "https://21st.dev/@daiwiikharihar/components/panoramic-spread-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/panoramic-spread-hero/default/preview.1790280872785.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 6875
+  },
+  {
+   "id": 45026,
+   "key": "daiwiikharihar__waving-hand-poster",
+   "author": "daiwiikharihar",
+   "slug": "waving-hand-poster",
+   "name": "Waving Hand Poster",
+   "description": "An interactive, responsive greeting poster featuring an animated waving hand ribbon, smooth SVG graphics, and dynamic typography.",
+   "url": "https://21st.dev/@daiwiikharihar/components/waving-hand-poster",
+   "preview": "https://cdn.21st.dev/daiwiikharihar/waving-hand-poster/default/preview.1794302817494-64da9557-d4b8-4665-8182-97f087b1bd7c.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 11680
+  },
+  {
    "id": 25480,
    "key": "dg.singh252525__3-d-coverflow-carousel",
    "author": "dg.singh252525",
@@ -301,6 +340,22 @@
    "kind": "",
    "deps": [],
    "bytes": 24192
+  },
+  {
+   "id": 2650,
+   "key": "ruixen.ui__doctor-live-chat-card",
+   "author": "ruixen.ui",
+   "slug": "doctor-live-chat-card",
+   "name": "DoctorLiveChatCard",
+   "description": "A modern, responsive UI component to showcase a doctor’s profile for live consultation. It highlights real-time availability, rating, specialty, and enables patients to instantly join a chat or bookmark the doctor. Built for both light and dark modes with a sleek, accessible design.",
+   "url": "https://21st.dev/@ruixen.ui/components/doctor-live-chat-card",
+   "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/doctor-live-chat-card/default/preview.1750812337794.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29057
   }
  ],
  "failed": [
