@@ -5,6 +5,7 @@ import { DAYS, fill, fmtPhone, mapsDir, mapsLink, openStatus, priceText, t12, te
 import { BASE_CSS, Gallery, Icon, Img, LeadForm, MadeWith, fitWords, resolveImg, useRevealBar, useThemeFonts } from "../parts";
 import { coverFor, isStock } from "../stock";
 import { Backdrop, FormFold, SIG_CSS, sigClass, usePointerFx } from "../signature";
+import StayShowcase, { STAY_PRODUCTS } from "../showpieces/StayShowcase";
 
 export default function Business({ product, theme, content: c, mode, slug }: RenderProps) {
   useThemeFonts(theme);
@@ -94,6 +95,14 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
           <section className="biz-sec" id="services">
             <div className="ip-wrap">
               <p className="biz-label">{n(++sec)}{o.servicesTitle}</p>
+              {STAY_PRODUCTS.has(product.id) && services.length >= 2 ? (
+                <StayShowcase
+                  rooms={services}
+                  photos={[...gallery.map((g: { photo: string }) => g.photo), cover].filter(Boolean)}
+                  label={String(o.serviceLabel || "room")}
+                  bookHref={(r) => waTo(c.whatsapp, fill(product.whatsapp.service, { ...vars, item: r.name, price: priceText(r.price) || "price on request" }))}
+                />
+              ) : (
               <div className={"biz-svcs" + (services.length >= 3 ? " many" : "")}>
                 {services.map((sv: { name: string; price?: string; note?: string }, i: number) => (
                   <article key={i} className={"svc" + (i === 1 && services.length > 2 ? " pop" : "") + (prime ? " sig-fx" : "")}>
@@ -103,6 +112,7 @@ export default function Business({ product, theme, content: c, mode, slug }: Ren
                   </article>
                 ))}
               </div>
+              )}
             </div>
           </section>
         )}
