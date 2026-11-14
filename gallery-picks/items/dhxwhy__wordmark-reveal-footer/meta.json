@@ -1,0 +1,12 @@
+{
+  "id": 44843,
+  "key": "dhxwhy__wordmark-reveal-footer",
+  "author": "dhxwhy",
+  "slug": "wordmark-reveal-footer",
+  "name": "Wordmark Reveal Footer – Giant Logo Footer with Reflection, Status and Local Time",
+  "description": "Wordmark Reveal Footer for React and Tailwind CSS (shadcn/ui): a footer whose giant wordmark rises letter by letter through the floor line, lights a reflection, then switches on a status band with live local time per office. It is built to close a page with a brand moment that feels alive instead of a static logo. Props: brand, columns, newsletter, socials, legal, status tone, offices with IANA time zones, reflection, reveal on mount, in view or manual, controlled revealed with onRevealEnd. Landmarks, reduced motion, light and dark. Use it for SaaS, studio and agency sites. The included demo replays the reveal once and makes no requests. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/wordmark-reveal-footer",
+  "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/wordmark-reveal-footer/default/preview.1794245055815.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": 44854,
+  "key": "dhxwhy__comparing-radio-cards",
+  "author": "dhxwhy",
+  "slug": "comparing-radio-cards",
+  "name": "Comparing Radio Cards – Plan Picker that Shows the Difference from Your Selection",
+  "description": "Comparing Radio Cards for React and Tailwind CSS (shadcn/ui): plan cards in a radio group where the selected card lifts forward and the others show their difference from it as chips (+$12/mo, +200 GB). It is built to answer \"what changes if I pick this one\" without a table. On a new pick the ring slides over, the detail unfolds and chips roll to the new baseline. Real radio inputs, controlled or uncontrolled value, numeric attributes with betterDirection, a live summary, light and dark, instant under reduced motion. Use it for pricing plans, storage tiers, shipping or seats. The included demo scripts three Alder plans and makes no requests. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/comparing-radio-cards",
+  "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/comparing-radio-cards/default/preview.1794235309746.webp",
+  "kind": "",
+  "deps": []
+}

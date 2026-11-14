@@ -1,6 +1,32 @@
 {
  "items": [
   {
+   "id": 44854,
+   "key": "dhxwhy__comparing-radio-cards",
+   "author": "dhxwhy",
+   "slug": "comparing-radio-cards",
+   "name": "Comparing Radio Cards – Plan Picker that Shows the Difference from Your Selection",
+   "description": "Comparing Radio Cards for React and Tailwind CSS (shadcn/ui): plan cards in a radio group where the selected card lifts forward and the others show their difference from it as chips (+$12/mo, +200 GB). It is built to answer \"what changes if I pick this one\" without a table. On a new pick the ring slides over, the detail unfolds and chips roll to the new baseline. Real radio inputs, controlled or uncontrolled value, numeric attributes with betterDirection, a live summary, light and dark, instant under reduced motion. Use it for pricing plans, storage tiers, shipping or seats. The included demo scripts three Alder plans and makes no requests. Requires React only, with no animation library.",
+   "url": "https://21st.dev/@dhxwhy/components/comparing-radio-cards",
+   "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/comparing-radio-cards/default/preview.1794235309746.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 16495
+  },
+  {
+   "id": 44844,
+   "key": "dhxwhy__early-access-pass-cta",
+   "author": "dhxwhy",
+   "slug": "early-access-pass-cta",
+   "name": "Early Access Pass CTA – Email Signup Section that Issues a Holographic Pass",
+   "description": "Early Access Pass CTA for React and Tailwind CSS (shadcn/ui): an email signup section that issues a membership-style pass on submit, printing the name, rolling the number up and stamping the date. It is built to turn a signup into something visitors can hold. The pass tilts toward the pointer with a moving sheen; the form validates the address, shows Try again when the promise rejects and announces the issue politely. Controlled or uncontrolled pass, split or stacked layout, reduced motion, light and dark. Use it for waitlists, newsletters, betas and event registration. The included demo types, issues, retries once and makes no requests. Requires React only, with no animation library.",
+   "url": "https://21st.dev/@dhxwhy/components/early-access-pass-cta",
+   "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/early-access-pass-cta/default/preview.1794245022860.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 19468
+  },
+  {
    "id": 43148,
    "key": "dhxwhy__metro-map-gallery",
    "author": "dhxwhy",
@@ -12,6 +38,19 @@
    "kind": "",
    "deps": [],
    "bytes": 42414
+  },
+  {
+   "id": 43147,
+   "key": "dhxwhy__palette-picker-gallery",
+   "author": "dhxwhy",
+   "slug": "palette-picker-gallery",
+   "name": "Color Palette Image Gallery – Extract and Filter by Palette",
+   "description": "Color Palette Image Gallery for React and Tailwind CSS (shadcn/ui): pull a five-color palette out of every photo, then filter photos by color. It is built to let visitors shop by color: pick a real shade in one photo and see which others share it. Use it for mood boards, shop-by-color filters, fashion and interior stores, and portfolios. Hover a photo and its palette fans out like paint chips with HEX labels; press a swatch and matching photos lift with a color dot as the rest sink to grayscale, and a header pill lets you copy the HEX. Palettes come from your data or the built-in color palette extractor (canvas, k-means in OKLab); photos without CORS skip it. The palette picker is controlled or uncontrolled (value, onChange), with onSelect, threshold, columns and labels. Photos are roving-tabindex buttons (arrows move, Enter pins, Escape folds); reduced motion drops transitions, and both themes use shadcn tokens. The included demo autoplays a palette tour over 16 stock photos and makes no requests beyond image loads. Requires React and lucide-react, with no animation library.",
+   "url": "https://21st.dev/@dhxwhy/components/palette-picker-gallery",
+   "preview": "https://cdn.21st.dev/dhxwhy/palette-picker-gallery/default/preview.1793378305167-bba6b0e1-1bd8-4af8-9fbb-bdfd0d9f84f2.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24120
   },
   {
    "id": 43150,
@@ -77,7 +116,62 @@
    "kind": "",
    "deps": [],
    "bytes": 39968
+  },
+  {
+   "id": 44843,
+   "key": "dhxwhy__wordmark-reveal-footer",
+   "author": "dhxwhy",
+   "slug": "wordmark-reveal-footer",
+   "name": "Wordmark Reveal Footer – Giant Logo Footer with Reflection, Status and Local Time",
+   "description": "Wordmark Reveal Footer for React and Tailwind CSS (shadcn/ui): a footer whose giant wordmark rises letter by letter through the floor line, lights a reflection, then switches on a status band with live local time per office. It is built to close a page with a brand moment that feels alive instead of a static logo. Props: brand, columns, newsletter, socials, legal, status tone, offices with IANA time zones, reflection, reveal on mount, in view or manual, controlled revealed with onRevealEnd. Landmarks, reduced motion, light and dark. Use it for SaaS, studio and agency sites. The included demo replays the reveal once and makes no requests. Requires React only, with no animation library.",
+   "url": "https://21st.dev/@dhxwhy/components/wordmark-reveal-footer",
+   "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/wordmark-reveal-footer/default/preview.1794245055815.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 19078
+  },
+  {
+   "id": 35500,
+   "key": "kedhareswer__lunar-boarding-pass",
+   "author": "kedhareswer",
+   "slug": "lunar-boarding-pass",
+   "name": "Interactive Boarding Pass Ticket Card",
+   "description": "Interactive boarding pass ticket card with a front and back: a VIP pass with a halftone Moon and a paper boarding pass with a perforated stub you can tear off. Tilt, flip and personalise every field through props. Use it for event tickets, launch invites or a playful hero.",
+   "url": "https://21st.dev/@kedhareswer/components/lunar-boarding-pass",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/lunar-boarding-pass/default/preview.1791305244493.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 30505
+  },
+  {
+   "id": 43141,
+   "key": "kedhareswer__signature-pen-footer",
+   "author": "kedhareswer",
+   "slug": "signature-pen-footer",
+   "name": "Handwriting Signature Footer",
+   "description": "Handwriting signature footer: a white stylus writes one word in flowing script stroke by stroke, lifts and rests beside it, then a thank-you line, a short note, two actions and a quiet legal bar settle in. Built-in single-stroke script glyphs, no fonts or images. For signing flows, checkouts and case studies.",
+   "url": "https://21st.dev/@kedhareswer/components/signature-pen-footer",
+   "preview": "https://cdn.21st.dev/kedhareswer/signature-pen-footer/default/preview.1793372505190-37c40126-c999-4b17-9e22-0ad116a1496b.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 41354
   }
  ],
- "failed": []
+ "failed": [
+  {
+   "key": "kedhareswer__rotating-flavor-slider",
+   "name": "Scroll Rotating Product Slider",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
+   "key": "kedhareswer__runway-lookbook",
+   "name": "Runway Fashion Lookbook Carousel",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
+   "key": "kedhareswer__sneaker-product-hero",
+   "name": "Sneaker Product Page Hero",
+   "reason": "Could not resolve \"gsap\""
+  }
+ ]
 }
