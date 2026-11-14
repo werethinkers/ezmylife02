@@ -1,0 +1,6 @@
+# Build: FlipCountdown
+
+Create a stunning, retro-style animated counter for your React applications with the FlipCountdown component. This component mimics the classic split-flap display of old-school clocks and airport departure boards, providing a visually engaging way to display numbers.
+Built for ultimate flexibility, FlipCountdown can handle both counting down and counting up between any two numbers, no matter how large, thanks to its use of BigInt. It's perfect for launch pages, event timers, displaying real-time statistics, or adding a dynamic flair to any dashboard. The component is fully responsive and allows for easy customization of the card and text colors to perfectly match your theme. Simply set the countFrom and countTo props and watch the numbers flip!
+
+The working code is in gallery-picks/items/jahed__flip-countdown/component.tsx (demo: demo.tsx). Rebuild it inside the Ezyourlife repo in its own style (docs/design.md): cream page, white cards, thick ink outlines (border-2 border-ink) with hard block shadows (shadow-block-sm / shadow-block), Unbounded headings (font-display), Hind body text, solid brand colours (bg-pink, bg-sun, bg-teal, bg-sky, bg-lime), plain words. Use our shadcn parts from src/components/ui where they fit. Keep the behaviour, keyboard and reduced-motion handling.

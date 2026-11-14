@@ -1,0 +1,15 @@
+{
+  "id": 2582,
+  "key": "isaiahbjork__event-countdown-card",
+  "author": "isaiahbjork",
+  "slug": "event-countdown-card",
+  "name": "Event Countdown Card",
+  "description": "This Event Countdown Card is a fully animated promotional block designed to highlight and convert users for upcoming live events. It features a real-time countdown timer, urgency cues (like “Starts Soon!”), dynamic hover states, and pulsing time units—all wrapped in a theme-aware, motion-optimized layout. It supports image backdrops, attendee stats, and customizable join actions.\n\nPerfect for workshop landing pages, webinars, tech meetups, product launches, or any scenario where live countdown urgency drives engagement and conversions.",
+  "url": "https://21st.dev/@isaiahbjork/components/event-countdown-card",
+  "preview": "https://cdn.21st.dev/isaiahbjork/event-countdown-card/default/preview.1749155511699.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

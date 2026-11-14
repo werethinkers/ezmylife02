@@ -43,8 +43,11 @@ type Entry = {
   htmlPath: string;
   screenshotPath: string;
 };
-type Works = "moves" | "responds";
-type Item = Entry & { id: string; name: string; folder: string; haystack: string; works: Works };
+type Works = "moves" | "responds" | "live";
+type Item = Entry & { id: string; name: string; folder: string; haystack: string; works: Works; pick?: PickMeta };
+/* Our own picked components: real code, bundled by scripts/gallery-picks-build.mjs into public/gallery/picks/. */
+type PickMeta = { key: string; name: string; slug: string; author: string; kind: string; description: string };
+const PICKS_BASE = "/gallery/picks/";
 
 /* Only components that passed scripts/component-gallery-check.cjs are listed: they move on their own or react to hover or click. */
 const WORKING = working.items as Record<string, Works>;
@@ -91,10 +94,39 @@ function savePicks(p: string[]) {
   }
 }
 
+async function loadPicks(): Promise<Item[]> {
+  try {
+    const res = await fetch(`${PICKS_BASE}index.json`);
+    if (!res.ok) return [];
+    const { items } = (await res.json()) as { items: PickMeta[] };
+    return items.map((m) => ({
+      author: m.author,
+      component: m.slug,
+      variant: "default",
+      path: "",
+      promptPath: "",
+      htmlPath: "",
+      screenshotPath: "",
+      id: `pick/${m.key}`,
+      works: "live" as Works,
+      name: relabel(m.name),
+      folder: "",
+      haystack: `${m.slug} ${m.name} ${m.kind} ${m.description}`.toLowerCase(),
+      pick: m,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 async function loadDirectory(): Promise<Item[]> {
-  const res = await fetch(`${RAW}data/components.json`);
+  const [own, res] = await Promise.all([loadPicks(), fetch(`${RAW}data/components.json`)]);
   if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
   const rows = (await res.json()) as Entry[];
+  return [...own, ...snapshots(rows)];
+}
+
+function snapshots(rows: Entry[]): Item[] {
   return rows.filter((r) => WORKING[`${r.author}/${r.component}/${r.variant}`]).map((r) => {
     const base = relabel(r.componentName || r.component);
     const name = r.variant === "default" ? base : `${base} · ${relabel(r.variantName || r.variant)}`;
@@ -164,9 +196,13 @@ function useFrameWidth(ref: React.RefObject<HTMLDivElement>) {
 
 function useComponentHtml(item: Item, enabled = true) {
   return useQuery({
-    queryKey: ["component-html", item.htmlPath],
+    queryKey: ["component-html", item.id],
     enabled,
     queryFn: async () => {
+      if (item.pick) {
+        const o = window.location.origin + PICKS_BASE;
+        return `<div id="root"></div><script src="${o}runtime.js"></script><script src="${o}${item.pick.key}.js"></script>`;
+      }
       const r = await fetch(RAW + item.htmlPath);
       if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
       return r.text();
@@ -217,7 +253,7 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
         onMouseEnter={() => { hot.current = true; postDemo(frame.current, true); }}
         onMouseLeave={() => { hot.current = false; postDemo(frame.current, false); }}
       >
-        <img src={RAW + item.screenshotPath} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+        {!item.pick && <img src={RAW + item.screenshotPath} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />}
         {near && srcDoc && (
           <iframe
             key={run}
@@ -231,8 +267,8 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
           />
         )}
         <button className="absolute inset-0 z-0" onClick={onOpen} aria-label={`Open ${item.name}`} />
-        <span className={`absolute left-3 top-3 z-10 rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold ${item.works === "moves" ? "bg-lime" : "bg-sky"}`}>
-          {item.works === "moves" ? "Moves" : "Responds"}
+        <span className={`absolute left-3 top-3 z-10 rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold ${item.works === "moves" ? "bg-lime" : item.works === "live" ? "bg-pink" : "bg-sky"}`}>
+          {item.works === "moves" ? "Moves" : item.works === "live" ? "Runs live" : "Responds"}
         </span>
         {near && html.isLoading && <Loader2 className="absolute right-3 bottom-3 h-4 w-4 animate-spin text-muted-foreground" />}
         <div className="absolute right-3 top-3 z-10 flex gap-2 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
@@ -282,8 +318,14 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
   const frameH = device === "laptop" ? 800 : 780;
   const scale = boxW ? Math.min(1, boxW / frameW) : 1;
 
+  const copyCode = async () => {
+    const r = await fetch(`${PICKS_BASE}${item.pick!.key}.code.txt`);
+    await navigator.clipboard.writeText(await r.text());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
   const copyPrompt = async () => {
-    const r = await fetch(RAW + item.promptPath);
+    const r = await fetch(item.pick ? `${PICKS_BASE}${item.pick.key}.prompt.md` : RAW + item.promptPath);
     const text = await r.text();
     const ours =
       "\n\n## Ezyourlife look\n\nRebuild this inside the Ezyourlife repo in its own style (docs/design.md): cream page, white cards, thick ink outlines (border-2 border-ink) with hard block shadows (shadow-block-sm / shadow-block), Unbounded headings (font-display), Hind body text, solid brand colours (bg-pink, bg-sun, bg-teal, bg-sky, bg-lime), plain words. Use our shadcn parts from src/components/ui where they fit.\n";
@@ -338,9 +380,15 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           <button className={`${seg(false)} rounded-lg`} onClick={copyPrompt}>
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied ? "Copied" : "Copy build prompt"}
           </button>
-          <a className={`${seg(false)} rounded-lg`} href={TREE + item.folder} target="_blank" rel="noreferrer">
-            <ExternalLink className="h-4 w-4" /> Source
-          </a>
+          {item.pick ? (
+            <button className={`${seg(false)} rounded-lg`} onClick={copyCode}>
+              <Copy className="h-4 w-4" /> Copy code
+            </button>
+          ) : (
+            <a className={`${seg(false)} rounded-lg`} href={TREE + item.folder} target="_blank" rel="noreferrer">
+              <ExternalLink className="h-4 w-4" /> Source
+            </a>
+          )}
         </div>
 
         <div ref={box} className="mt-4 w-full">
@@ -363,7 +411,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           )}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude.
+          {item.pick ? "This one is the real component running live, with its own code, so spring, scroll and drag effects work. Copy its code or its build prompt to bring it into the site." : "Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. \"Our style\" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude."}
         </p>
       </div>
     </section>
@@ -410,7 +458,7 @@ export default function ComponentGallery() {
 
   const copyList = async () => {
     const byId = new Map((dir.data ?? []).map((it) => [it.id, it]));
-    const lines = picks.map((id) => byId.get(id)).filter(Boolean).map((it) => `- ${it!.name}: ${TREE}${it!.folder}`);
+    const lines = picks.map((id) => byId.get(id)).filter(Boolean).map((it) => (it!.pick ? `- ${it!.name}: gallery-picks/items/${it!.pick.key}/component.tsx` : `- ${it!.name}: ${TREE}${it!.folder}`));
     await navigator.clipboard.writeText(`Components picked for Ezyourlife:\n${lines.join("\n")}\n`);
     setCopiedList(true);
     setTimeout(() => setCopiedList(false), 1800);
@@ -456,6 +504,7 @@ export default function ComponentGallery() {
                 <Star className={`inline h-3.5 w-3.5 mr-1 -mt-0.5 ${onlyPicks ? "fill-ink" : ""}`} />My picks ({picks.length})
               </button>
               <button className={chip(works === "moves")} onClick={() => setWorks(works === "moves" ? null : "moves")}>Moves on its own</button>
+              <button className={chip(works === "live")} onClick={() => setWorks(works === "live" ? null : "live")}>Runs live</button>
               <button className={chip(works === "responds")} onClick={() => setWorks(works === "responds" ? null : "responds")}>Responds to hover or click</button>
             </div>
 

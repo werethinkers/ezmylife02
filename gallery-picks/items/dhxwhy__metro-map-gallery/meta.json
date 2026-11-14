@@ -1,0 +1,12 @@
+{
+  "id": 43148,
+  "key": "dhxwhy__metro-map-gallery",
+  "author": "dhxwhy",
+  "slug": "metro-map-gallery",
+  "name": "Metro Map Image Gallery – Subway Map Roadmap Timeline",
+  "description": "Metro Map Image Gallery for React and Tailwind CSS (shadcn/ui): a subway map roadmap timeline where every station is a photo and small trains run the lines. It is built to turn a list of milestones into a transit map people want to explore. Use it for product roadmaps, release timelines, travel stories and portfolios, with milestones as stations on up to five colored lines. Trains brake into each stop and pop its photo in a bubble; hovering a station grows the photo into a card and fades the other lines, and a click opens a dialog with a large photo, the story and the next stop. Pass active, open, onActiveChange, onOpenChange, trainSpeed, dwell, autoplay and labels for controlled or uncontrolled use. Stations are buttons with one tab stop and arrow keys along and across lines, the dialog traps focus and closes on Escape, reduced motion parks the trains, and light and dark themes plus a portrait phone layout are built in. The included demo rides a fictional 2026 product roadmap and makes no requests beyond image loads. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/metro-map-gallery",
+  "preview": "https://cdn.21st.dev/dhxwhy/metro-map-gallery/default/preview.1793378367617-57f4ff6c-f77a-4612-9b29-d82d210b2914.png",
+  "kind": "",
+  "deps": []
+}

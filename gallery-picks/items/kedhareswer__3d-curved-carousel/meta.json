@@ -1,0 +1,12 @@
+{
+  "id": 44872,
+  "key": "kedhareswer__3d-curved-carousel",
+  "author": "kedhareswer",
+  "slug": "3d-curved-carousel",
+  "name": "3D Curved Carousel",
+  "description": "3D curved carousel: a WebGL image slider that bends photo cards around a cylinder like a lens. Drag, swipe or use the arrows; captions and a progress counter follow the active slide. Falls back to plain images without WebGL.",
+  "url": "https://21st.dev/@kedhareswer/components/3d-curved-carousel",
+  "preview": "https://cdn.21st.dev/kedhareswer/3d-curved-carousel/default/preview.1794154544838-1256e543-75e3-4f9e-9d23-3967c1ddcf29.jpg",
+  "kind": "",
+  "deps": []
+}

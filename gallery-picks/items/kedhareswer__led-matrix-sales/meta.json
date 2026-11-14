@@ -1,0 +1,12 @@
+{
+  "id": 44652,
+  "key": "kedhareswer__led-matrix-sales",
+  "author": "kedhareswer",
+  "slug": "led-matrix-sales",
+  "name": "LED Dot Matrix Chart Card",
+  "description": "LED dot matrix chart card: a revenue card whose chart is a board of LED dots, lighting each day's column from the bottom with a bright top dot, sweeping on in view while the total rolls up like an odometer. For dashboards and sales stats.",
+  "url": "https://21st.dev/@kedhareswer/components/led-matrix-sales",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/led-matrix-sales/default/preview.1793900811530.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": 44844,
+  "key": "dhxwhy__early-access-pass-cta",
+  "author": "dhxwhy",
+  "slug": "early-access-pass-cta",
+  "name": "Early Access Pass CTA – Email Signup Section that Issues a Holographic Pass",
+  "description": "Early Access Pass CTA for React and Tailwind CSS (shadcn/ui): an email signup section that issues a membership-style pass on submit, printing the name, rolling the number up and stamping the date. It is built to turn a signup into something visitors can hold. The pass tilts toward the pointer with a moving sheen; the form validates the address, shows Try again when the promise rejects and announces the issue politely. Controlled or uncontrolled pass, split or stacked layout, reduced motion, light and dark. Use it for waitlists, newsletters, betas and event registration. The included demo types, issues, retries once and makes no requests. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/early-access-pass-cta",
+  "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/early-access-pass-cta/default/preview.1794245022860.webp",
+  "kind": "",
+  "deps": []
+}
