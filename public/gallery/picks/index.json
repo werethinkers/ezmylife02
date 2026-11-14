@@ -79,6 +79,19 @@
    "bytes": 6305
   },
   {
+   "id": 46116,
+   "key": "automate_flows__daytake-photo-landing",
+   "author": "automate_flows",
+   "slug": "daytake-photo-landing",
+   "name": "Daytake Landing Page",
+   "description": "An editorial photography landing page with a scroll-controlled 3D hero, opposing photo rows, an expanding feature image, floating widgets, and SVG-connected creator cards. Responsive light and dark layouts include pause controls and a reduced-motion fallback.",
+   "url": "https://21st.dev/@automate_flows/components/daytake-photo-landing",
+   "preview": "https://cdn.21st.dev/user_3EFgBcaTwAWLVWzXlHvjY47l6Xk/daytake-photo-landing/default/preview.1794605404251.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 320237
+  },
+  {
    "id": 1436,
    "key": "ayushmxxn__3d-flip-card",
    "author": "ayushmxxn",
@@ -103,6 +116,22 @@
    "kind": "",
    "deps": [],
    "bytes": 6695
+  },
+  {
+   "id": 33904,
+   "key": "balick__footer-01",
+   "author": "balick",
+   "slug": "footer-01",
+   "name": "Footer With Newsletter",
+   "description": "A multi-column site footer with a newsletter signup form, an operational-status indicator, social icon links and an oversized background wordmark.",
+   "url": "https://21st.dev/@balick/components/footer-01",
+   "preview": "https://cdn.21st.dev/balick/footer-01/default/preview.1790754388831-9bf30249-3386-4757-8cbc-b43bc4491afb.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32952
   },
   {
    "id": 33903,
@@ -218,7 +247,7 @@
     "@radix-ui/react-slot",
     "class-variance-authority"
    ],
-   "bytes": 29712
+   "bytes": 25797
   },
   {
    "id": 39045,
@@ -507,6 +536,25 @@
    "bytes": 19223
   },
   {
+   "id": 27099,
+   "key": "diarmuradi__pricing-8",
+   "author": "diarmuradi",
+   "slug": "pricing-8",
+   "name": "Animated Pricing Card",
+   "description": "A single-plan pricing card with a monthly/annual billing toggle that animates the price digits and lists plan features.",
+   "url": "https://21st.dev/@diarmuradi/components/pricing-8",
+   "preview": "https://cdn.21st.dev/diarmuradi/pricing-8/default/preview.1789242795238-7997a3ec-a0c6-4860-9017-16fad6e636c1.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-separator"
+   ],
+   "bytes": 43784
+  },
+  {
    "id": 29138,
    "key": "educalvolpz__coverflow-carousel",
    "author": "educalvolpz",
@@ -534,6 +582,19 @@
    "kind": "",
    "deps": [],
    "bytes": 24735
+  },
+  {
+   "id": 7267,
+   "key": "efferd__testimonials-section",
+   "author": "efferd",
+   "slug": "testimonials-section",
+   "name": "Testimonials Section",
+   "description": "A modern testimonial grid with animations, customer photos, and quotes — perfect for SaaS, startups, and business websites to showcase client success stories and build trust.",
+   "url": "https://21st.dev/@efferd/components/testimonials-section",
+   "preview": "https://cdn.21st.dev/sshahaider/testimonials-section/default/preview.1757677151700.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 28783
   },
   {
    "id": 5967,
@@ -802,6 +863,19 @@
    "bytes": 4967
   },
   {
+   "id": 36083,
+   "key": "kedhareswer__ink-orbit-pricing",
+   "author": "kedhareswer",
+   "slug": "ink-orbit-pricing",
+   "name": "Pricing Section with Monthly/Yearly Toggle",
+   "description": "Pricing section with a monthly/yearly toggle: plan cards whose prices count to the discounted amount, a highlighted bracketed plan, yearly savings and plan selection. Light/dark, zero dependencies.",
+   "url": "https://21st.dev/@kedhareswer/components/ink-orbit-pricing",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-orbit-pricing/default/preview.1791314045096.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 14066
+  },
+  {
    "id": 36082,
    "key": "kedhareswer__ink-orbit-testimonials",
    "author": "kedhareswer",
@@ -1010,6 +1084,22 @@
    "bytes": 10287
   },
   {
+   "id": 35258,
+   "key": "kevingirelli__contact-form",
+   "author": "kevingirelli",
+   "slug": "contact-form",
+   "name": "Contact Form",
+   "description": "A two-column contact section with a header and contact details on one side and a validated name/email/message form in a card on the other, with built-in pending, success and error states.",
+   "url": "https://21st.dev/@kevingirelli/components/contact-form",
+   "preview": "https://cdn.21st.dev/kevingirelli/contact-form/default/preview.1791041663088-a865c431-ef9e-4289-9a4c-a145ff0ba6e4.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32842
+  },
+  {
    "id": 43217,
    "key": "klyv-ui__time-slot-picker",
    "author": "klyv-ui",
@@ -1021,6 +1111,35 @@
    "kind": "",
    "deps": [],
    "bytes": 26795
+  },
+  {
+   "id": 675,
+   "key": "kokonutd__background-paths",
+   "author": "kokonutd",
+   "slug": "background-paths",
+   "name": "Background Paths",
+   "description": "Landing Background paths with Gradient Title",
+   "url": "https://21st.dev/@kokonutd/components/background-paths",
+   "preview": "https://cdn.21st.dev/user_2rQ1QHrJyxpmWMHhqhANzWMc64n/background-paths/default/preview.png?v=1",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29905
+  },
+  {
+   "id": 524,
+   "key": "kokonutd__shape-landing-hero",
+   "author": "kokonutd",
+   "slug": "shape-landing-hero",
+   "name": "Shape Landing Hero",
+   "description": "A nicely landing with shapes and color.",
+   "url": "https://21st.dev/@kokonutd/components/shape-landing-hero",
+   "preview": "https://cdn.21st.dev/user_2rQ1QHrJyxpmWMHhqhANzWMc64n/shape-landing-hero/default/preview.1787944413150.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 25141
   },
   {
    "id": 7504,
@@ -1060,6 +1179,22 @@
    "kind": "",
    "deps": [],
    "bytes": 23497
+  },
+  {
+   "id": 27904,
+   "key": "ln-dev7__contact-01",
+   "author": "ln-dev7",
+   "slug": "contact-01",
+   "name": "Centered Contact Form",
+   "description": "A centered contact form section with name, email and message fields, a submit button, and trust badges for reply time and privacy.",
+   "url": "https://21st.dev/@ln-dev7/components/contact-01",
+   "preview": "https://cdn.21st.dev/ln-dev7/contact-01/default/preview.1789819769701-36011358-a4c4-4a59-9010-76215de9d861.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29724
   },
   {
    "id": 3007,
@@ -1117,6 +1252,67 @@
    "bytes": 25545
   },
   {
+   "id": 4741,
+   "key": "meschacirung__contact-form",
+   "author": "meschacirung",
+   "slug": "contact-form",
+   "name": "Contact Form",
+   "description": "Here is Contact Form component",
+   "url": "https://21st.dev/@meschacirung/components/contact-form",
+   "preview": "https://cdn.21st.dev/meschacirung/contact-form/contact/preview.1785191197008-3ac72e56-1d45-4e43-9b34-7bfa60baf087.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "lucide-react",
+    "@radix-ui/react-select"
+   ],
+   "bytes": 124320
+  },
+  {
+   "id": 27511,
+   "key": "meschacirung__footer-4",
+   "author": "meschacirung",
+   "slug": "footer-4",
+   "name": "Newsletter Footer",
+   "description": "A marketing site footer with a brand logo, address, social links, three link columns, and a newsletter signup form.",
+   "url": "https://21st.dev/@meschacirung/components/footer-4",
+   "preview": "https://cdn.21st.dev/meschacirung/footer-4/default/preview.1789774188094-2c429c69-19d9-4fbd-abd3-fa17e7a0d735.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7140
+  },
+  {
+   "id": 2511,
+   "key": "minhxthanh__digital-serenity-animated-landing-page",
+   "author": "minhxthanh",
+   "slug": "digital-serenity-animated-landing-page",
+   "name": "Digital Serenity - Animated Landing Page",
+   "description": "Component creates a visually immersive and calming landing page. It features a dark UI with animated text quotes appearing word by word, a dynamic grid background, subtle floating elements, corner decorative accents, and interactive effects like a mouse-following gradient and click ripples. ",
+   "url": "https://21st.dev/@minhxthanh/components/digital-serenity-animated-landing-page",
+   "preview": "https://cdn.21st.dev/minhxthanh/digital-serenity-animated-landing-page/default/preview.1748705926625.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 12629
+  },
+  {
+   "id": 40206,
+   "key": "my__pricing-table",
+   "author": "my",
+   "slug": "pricing-table",
+   "name": "Pricing Table",
+   "description": "A pricing section with a monthly/yearly billing toggle, animated digit-rolling prices, and plan cards with feature checklists and a highlighted popular plan.",
+   "url": "https://21st.dev/@my/components/pricing-table",
+   "preview": "https://cdn.21st.dev/my/pricing-table/default/preview.1792526138790-f202e0f2-2873-496a-bc96-0555fa642a72.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28129
+  },
+  {
    "id": 29211,
    "key": "olewandowski1__booking-2",
    "author": "olewandowski1",
@@ -1154,6 +1350,25 @@
    "bytes": 29673
   },
   {
+   "id": 28162,
+   "key": "olewandowski1__footer-3",
+   "author": "olewandowski1",
+   "slug": "footer-3",
+   "name": "Newsletter Signup Footer",
+   "description": "A page footer that pairs a newsletter email signup form with grouped navigation link columns and a bottom bar of social icon links.",
+   "url": "https://21st.dev/@olewandowski1/components/footer-3",
+   "preview": "https://cdn.21st.dev/7ovr/footer-3/default/preview.1789956847954-42462dd9-6028-4042-bc38-283c5e5524c7.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "@radix-ui/react-separator",
+    "sonner"
+   ],
+   "bytes": 70572
+  },
+  {
    "id": 27052,
    "key": "olewandowski1__menu-1",
    "author": "olewandowski1",
@@ -1165,6 +1380,22 @@
    "kind": "",
    "deps": [],
    "bytes": 4131
+  },
+  {
+   "id": 28342,
+   "key": "olewandowski1__pricing-4",
+   "author": "olewandowski1",
+   "slug": "pricing-4",
+   "name": "Annual Savings Pricing Grid",
+   "description": "A three-tier pricing grid with a monthly/annual billing toggle that shows the yearly billed total under each price and a Most Popular badge on the featured plan.",
+   "url": "https://21st.dev/@olewandowski1/components/pricing-4",
+   "preview": "https://cdn.21st.dev/7ovr/pricing-4/default/preview.1789969127385-543cdf36-77e7-4c7d-a29e-4304c4ef8f88.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28604
   },
   {
    "id": 20039,
@@ -1191,6 +1422,19 @@
    "kind": "",
    "deps": [],
    "bytes": 9162
+  },
+  {
+   "id": 7335,
+   "key": "prebuiltui__testimonial",
+   "author": "prebuiltui",
+   "slug": "testimonial",
+   "name": "Testimonial",
+   "description": "Here is Testimonial component ",
+   "url": "https://21st.dev/@prebuiltui/components/testimonial",
+   "preview": "https://cdn.21st.dev/user_prebuiltui/testimonial/star-rating-with-avatar-group/preview.1785939451504.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 3920
   },
   {
    "id": 8723,
@@ -1249,6 +1493,25 @@
     "class-variance-authority"
    ],
    "bytes": 28645
+  },
+  {
+   "id": 8969,
+   "key": "ravikatiyar162__contact",
+   "author": "ravikatiyar162",
+   "slug": "contact",
+   "name": "Contact",
+   "description": "Contact Section\nDescription: A comprehensive and visually appealing contact section component featuring an animated background, a navigation bar, a main title, a contact form with various input types, and social media integration. Designed for reusability, responsiveness, and theme-adaptability using shadcn/ui.",
+   "url": "https://21st.dev/@ravikatiyar162/components/contact",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/contact/default/preview.1760506498496.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label"
+   ],
+   "bytes": 48782
   },
   {
    "id": 8737,
@@ -1389,6 +1652,19 @@
    "bytes": 26952
   },
   {
+   "id": 26568,
+   "key": "shadcnspace__marquee-03",
+   "author": "shadcnspace",
+   "slug": "marquee-03",
+   "name": "Vertical Testimonials Marquee",
+   "description": "A vertically scrolling, auto-animating column of testimonial cards with pause-on-hover and edge fade masks, ideal for social-proof sections on landing pages.",
+   "url": "https://21st.dev/@shadcnspace/components/marquee-03",
+   "preview": "https://cdn.21st.dev/shadcnspace/marquee-03/default/preview.1788816915079-aac56834-74ad-4654-8b7f-27301af6d503.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27382
+  },
+  {
    "id": 28564,
    "key": "shadcnspace__team-01",
    "author": "shadcnspace",
@@ -1402,6 +1678,23 @@
     "class-variance-authority"
    ],
    "bytes": 26023
+  },
+  {
+   "id": 26006,
+   "key": "shadcnui-blocks__footer-04",
+   "author": "shadcnui-blocks",
+   "slug": "footer-04",
+   "name": "Footer 04",
+   "description": "A responsive website footer with logo, navigation links, a newsletter subscribe form, copyright, and social media icons.",
+   "url": "https://21st.dev/@shadcnui-blocks/components/footer-04",
+   "preview": "https://cdn.21st.dev/shadcnui-blocks/footer-04/default/preview.1788331739303-b5d48979-9c2a-4c33-9101-b81a80f700fa.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-separator"
+   ],
+   "bytes": 38166
   },
   {
    "id": 26139,
@@ -1485,6 +1778,22 @@
    "bytes": 13317
   },
   {
+   "id": 29547,
+   "key": "uiable__block-pricing-18",
+   "author": "uiable",
+   "slug": "block-pricing-18",
+   "name": "Pricing Plans with Billing Toggle",
+   "description": "A three-tier pricing section with a monthly/yearly billing toggle, animated price transitions, and a highlighted \"most popular\" plan card.",
+   "url": "https://21st.dev/@uiable/components/block-pricing-18",
+   "preview": "https://cdn.21st.dev/uiable/block-pricing-18/default/preview.1790088549796-8c26e7a7-04a2-47bf-a634-e2409d4974af.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32986
+  },
+  {
    "id": 24830,
    "key": "uilayout.contact__gallery-modal-accordion",
    "author": "uilayout.contact",
@@ -1496,6 +1805,19 @@
    "kind": "",
    "deps": [],
    "bytes": 7069
+  },
+  {
+   "id": 18913,
+   "key": "uilayout.contact__testimonial-basic",
+   "author": "uilayout.contact",
+   "slug": "testimonial-basic",
+   "name": "Testimonial Basic",
+   "description": "An editorial testimonials section with video thumbnails, author avatars, quotes, and star ratings arranged in alternating rows.",
+   "url": "https://21st.dev/@uilayout.contact/components/testimonial-basic",
+   "preview": "https://cdn.21st.dev/uilayout.contact/testimonial-basic/default/preview.1784409206157-71e28755-7fc1-4fec-94ef-1d1a947e285d.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25267
   },
   {
    "id": 20068,
@@ -1608,6 +1930,11 @@
    "key": "starc007__feedback-widget",
    "name": "Feedback Widget",
    "reason": "Needs helper files the API result leaves out"
+  },
+  {
+   "key": "uilayout.contact__testimonial-1",
+   "name": "Testimonial",
+   "reason": "shows real company logos"
   },
   {
    "key": "unlumen__motion-navigation-menu",

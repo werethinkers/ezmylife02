@@ -1,0 +1,18 @@
+{
+  "id": 27099,
+  "key": "diarmuradi__pricing-8",
+  "author": "diarmuradi",
+  "slug": "pricing-8",
+  "name": "Animated Pricing Card",
+  "description": "A single-plan pricing card with a monthly/annual billing toggle that animates the price digits and lists plan features.",
+  "url": "https://21st.dev/@diarmuradi/components/pricing-8",
+  "preview": "https://cdn.21st.dev/diarmuradi/pricing-8/default/preview.1789242795238-7997a3ec-a0c6-4860-9017-16fad6e636c1.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-separator"
+  ]
+}

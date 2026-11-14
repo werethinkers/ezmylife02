@@ -1,0 +1,15 @@
+{
+  "id": 28342,
+  "key": "olewandowski1__pricing-4",
+  "author": "olewandowski1",
+  "slug": "pricing-4",
+  "name": "Annual Savings Pricing Grid",
+  "description": "A three-tier pricing grid with a monthly/annual billing toggle that shows the yearly billed total under each price and a Most Popular badge on the featured plan.",
+  "url": "https://21st.dev/@olewandowski1/components/pricing-4",
+  "preview": "https://cdn.21st.dev/7ovr/pricing-4/default/preview.1789969127385-543cdf36-77e7-4c7d-a29e-4304c4ef8f88.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": 33904,
+  "key": "balick__footer-01",
+  "author": "balick",
+  "slug": "footer-01",
+  "name": "Footer With Newsletter",
+  "description": "A multi-column site footer with a newsletter signup form, an operational-status indicator, social icon links and an oversized background wordmark.",
+  "url": "https://21st.dev/@balick/components/footer-01",
+  "preview": "https://cdn.21st.dev/balick/footer-01/default/preview.1790754388831-9bf30249-3386-4757-8cbc-b43bc4491afb.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

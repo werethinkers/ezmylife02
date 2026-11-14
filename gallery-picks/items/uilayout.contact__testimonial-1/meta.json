@@ -1,0 +1,13 @@
+{
+  "id": 6286,
+  "key": "uilayout.contact__testimonial-1",
+  "author": "uilayout.contact",
+  "slug": "testimonial-1",
+  "name": "Testimonial",
+  "description": "Professional testimonial components featuring customer reviews, client feedback, social proof displays, and trust-building layouts designed to showcase credibility and increase customer confidence",
+  "url": "https://21st.dev/@uilayout.contact/components/testimonial-1",
+  "preview": "https://cdn.21st.dev/user_2zAsvSHo1IeJGKtSjJ3uR1N1Cd7/testimonial-1/default/preview.1785945622193.png",
+  "kind": "",
+  "deps": [],
+  "skip": "shows real company logos"
+}

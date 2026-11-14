@@ -58,6 +58,18 @@ const globalsPlugin = {
       loader: "jsx",
       resolveDir: process.cwd(),
     }));
+    /* web-font packages: the page loads its own fonts */
+    b.onResolve({ filter: /^@fontsource(-variable)?\// }, () => ({ path: "font", namespace: "emptyshim" }));
+    b.onLoad({ filter: /.*/, namespace: "emptyshim" }, () => ({ contents: "", loader: "js" }));
+    /* "cn" imported as a package by some picks: our own helper */
+    b.onResolve({ filter: /^cn$/ }, () => ({ path: path.join(ROOT, "src/lib/utils.ts") }));
+    /* @gsap/react's useGSAP, rebuilt on gsap.context so we don't add a package */
+    b.onResolve({ filter: /^@gsap\/react$/ }, () => ({ path: "usegsap", namespace: "gsapshim" }));
+    b.onLoad({ filter: /.*/, namespace: "gsapshim" }, () => ({
+      contents: `import * as React from "react";import gsap from "gsap";export function useGSAP(cb,cfg){const deps=Array.isArray(cfg)?cfg:(cfg&&cfg.dependencies)||[];const scope=!Array.isArray(cfg)&&cfg?cfg.scope:undefined;const ctxRef=React.useRef(null);React.useLayoutEffect(()=>{const ctx=gsap.context((self)=>{if(cb)cb(self);},scope&&scope.current?scope.current:undefined);ctxRef.current=ctx;return()=>ctx.revert();},deps);return{context:ctxRef.current,contextSafe:(f)=>f};}export default useGSAP;`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
     /* newer shadcn "field" helper that our ui folder doesn't have */
     b.onResolve({ filter: /^@\/components\/ui\/field$/ }, () => ({ path: "field", namespace: "fieldshim" }));
     b.onLoad({ filter: /.*/, namespace: "fieldshim" }, () => ({
