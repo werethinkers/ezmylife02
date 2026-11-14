@@ -26,6 +26,12 @@ import { handleCreditError, emitCreditPrompt } from '@/lib/creditPrompt';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
+import { useWorkspace } from '@/apps/lib/workspace';
+import { docFromBlocks } from '@/apps/output/buildDoc';
+import { blocksFromElement, blocksToMarkdown } from '@/apps/output/fromElement';
+import { makePdf } from '@/apps/output/render';
+import { saveFile } from '@/apps/output/save';
+import { downloadWord } from '@/apps/lib/files';
 
 interface CustomWindow extends Window {
   SpeechRecognition: SpeechRecognitionStatic;
@@ -548,6 +554,7 @@ const ShortcutGeneratorModal: React.FC<{
 
 const SpeedyNotebook: React.FC = () => {
   const { user } = useAuth();
+  const { profile: wsProfile } = useWorkspace();
   const navigate = useNavigate();
   const [shortcuts, setShortcuts] = useState<Map<string, ShortcutItemData[]>>(new Map());
   const [flatShortcutsMap, setFlatShortcutsMap] = useState<ShortcutMap>(new Map());
@@ -806,6 +813,26 @@ const SpeedyNotebook: React.FC = () => {
       }
   }, [shortcuts, user]);
 
+  const notesDoc = () => {
+      if (!editorRef.current || !editorRef.current.innerText.trim()) { toast.info('Write something first.'); return null; }
+      const { title, blocks } = blocksFromElement(editorRef.current);
+      return docFromBlocks({ appName: 'Speedy Notebook', template: 'document', title: title || 'My notes', blocks, profile: wsProfile, fileName: `notes-${new Date().toISOString().slice(0, 10)}` });
+  };
+  const handlePdf = async () => {
+      const doc = notesDoc();
+      if (!doc) return;
+      try {
+          const { blob } = await makePdf(doc);
+          await saveFile(blob, `${doc.fileName}.pdf`, 'Speedy Notebook');
+      } catch {
+          toast.error('The PDF could not be made on this device.');
+      }
+  };
+  const handleWord = () => {
+      const doc = notesDoc();
+      if (doc) downloadWord(blocksToMarkdown(doc.title, doc.blocks), doc.fileName, 'Speedy Notebook');
+  };
+
   const handleDownload = () => {
       if (!editorRef.current) return;
       const text = editorRef.current.innerText;
@@ -1052,7 +1079,9 @@ const SpeedyNotebook: React.FC = () => {
                  <button onClick={handleAutoCorrectAll} className="p-2 text-sm bg-sky-100 text-sky-700 rounded hover:bg-sky-200 dark:bg-sky-900 dark:text-sky-300 dark:hover:bg-sky-800 hidden sm:inline-flex items-center" title="Auto Correct All">
                      <CheckIcon className="w-4 h-4 mr-1" /> Fix All
                  </button>
-                 <button onClick={handleDownload} className="p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-full" title="Download">
+                 <button onClick={() => void handlePdf()} className="px-2 py-1 text-xs font-semibold text-slate-700 border border-slate-300 hover:bg-slate-100 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 rounded" title="Save as PDF">PDF</button>
+                 <button onClick={handleWord} className="px-2 py-1 text-xs font-semibold text-slate-700 border border-slate-300 hover:bg-slate-100 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 rounded" title="Save as Word">Word</button>
+                 <button onClick={handleDownload} className="p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-full" title="Download as text">
                      <DownloadIcon className="w-5 h-5" />
                  </button>
              </div>

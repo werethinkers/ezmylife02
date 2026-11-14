@@ -9,6 +9,10 @@ import { AppShell } from "../shell/AppShell";
 import { useAppStore } from "../lib/store";
 import { useRun } from "../lib/api";
 import { APPS } from "../registry";
+import { useWorkspace } from "../lib/workspace";
+import { docFromBlocks } from "../output/buildDoc";
+import { markdownToBlocks } from "../output/markdown";
+import { SaveBar } from "../output/SaveBar";
 
 const WORDS = ["able", "accepting", "adaptable", "bold", "brave", "calm", "caring", "cheerful", "clever", "complex", "confident", "dependable", "dignified", "energetic", "extroverted", "friendly", "giving", "happy", "helpful", "idealistic", "independent", "ingenious", "intelligent", "introverted", "kind", "knowledgeable", "logical", "loving", "mature", "modest", "nervous", "observant", "organised", "patient", "powerful", "proud", "quiet", "reflective", "relaxed", "religious", "responsive", "searching", "self-assertive", "self-conscious", "sensible", "sentimental", "shy", "silly", "spontaneous", "sympathetic", "tense", "trustworthy", "warm", "wise", "witty"];
 const PICK = 6;
@@ -47,6 +51,7 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
   const [friendPicks, setFriendPicks] = useState<number[]>([]);
   const [friendName, setFriendName] = useState("");
   const { busy, run } = useRun(toolId);
+  const { profile: wsProfile } = useWorkspace();
   const toggle = (list: number[], i: number) => (list.includes(i) ? list.filter((x) => x !== i) : list.length >= PICK ? list : [...list, i]);
 
   const windowAreas = useMemo(() => {
@@ -97,6 +102,28 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
     toast.success(`Added ${r.n || "a friend"}'s answers`);
   };
 
+  const doc = d.reading
+    ? docFromBlocks({
+        appName: "Soul Mirror",
+        template: "report",
+        title: `${d.name || "My"} Johari window`,
+        subtitle: `Your own picks and ${(d.friends ?? []).length} ${(d.friends ?? []).length === 1 ? "friend's" : "friends'"} answers`,
+        profile: wsProfile,
+        blocks: [
+          {
+            t: "table",
+            head: ["Area", "What it means", "Words"],
+            rows: ([["Open", "Known to you and others"], ["Blind", "Others see, you don't"], ["Hidden", "You see, others don't"], ["Unknown", "Not picked by anyone"]] as const).map(([k, sub]) => [
+              `**${k}**`,
+              sub,
+              k === "Unknown" ? `${windowAreas.Unknown.length} words` : windowAreas[k].join(", ") || "—",
+            ]),
+          },
+          ...markdownToBlocks(d.reading).blocks,
+        ],
+      })
+    : null;
+
   const interpret = async () => {
     const out = await run<string>({ inputs: { Name: d.name, ...Object.fromEntries(Object.entries(windowAreas).map(([k, v]) => [`${k} area`, k === "Unknown" ? `${v.length} words` : v.join(", ") || "—"])), "Friends who answered": String((d.friends ?? []).length) } });
     if (out) store.update({ reading: out });
@@ -145,6 +172,7 @@ export default function SoulMirror({ toolId }: { toolId: string }) {
           <Button className="w-full gap-2" onClick={interpret} disabled={busy || (d.self ?? []).length < 3}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Get my reflection</Button>
           {(d.friends ?? []).length === 0 && <p className="text-center text-xs text-muted-foreground">Works best with answers from 3 or more people.</p>}
           {d.reading && <div className="rounded-2xl border-2 border-ink bg-card p-4"><Markdown>{d.reading}</Markdown></div>}
+          {d.reading && <SaveBar toolId={toolId} appName="Soul Mirror" doc={doc} />}
         </div>
       </div>
     </AppShell>

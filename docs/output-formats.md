@@ -41,3 +41,13 @@ selected; Word and Text cover copying.
 - Startup Analyser and Virasat restyled to the same look.
 - Public API: `format: "pdf"` on `POST /apps/{id}/run` returning a link to a page that shows the
   result with Download PDF, so the keyboard and Siri can insert a PDF link (needs a saved-results table).
+
+## Apps with their own screens (added 14 Nov 2026)
+
+- Purchase Order (`tool-22`): "Download PO PDF" makes a letter-style purchase order (replaces the pop-up print), plus the PDF · Word · WhatsApp · Copy bar.
+- Storybook Creator: "Book PDF" makes one story page per PDF page with its picture (new `img` and `break` blocks, `big` paragraphs).
+- Proofreader, Glossary Maker, Resume Profile Extractor (landscape register), Soul Mirror (report): the bar, built from the app's own data.
+- Exam and visa photo apps (`preset` engine): "Print sheet (PDF)" fills an A4 sheet with 35 × 45 mm photos (51 mm square for the US visa).
+- Startup Analyser: the bar reads the open tab as a Report (raw JSON and chat left out).
+- Speedy Notebook: PDF and Word buttons beside the text download.
+- Not changed: Virasat (has its own book PDF), image apps and converters (their result is a picture or file), editors (book editor already exports Word).

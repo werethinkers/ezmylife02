@@ -77,6 +77,9 @@ export const PDF_CSS = `
 .ezpdf-split{display:flex;height:28px;border:1.8px solid #121212;border-radius:8px;overflow:hidden;margin:6px 0 16px}
 .ezpdf-split span{display:flex;align-items:center;padding-left:9px;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .ezpdf-hr{border:0;border-top:1.4px solid #121212;margin:16px 0}
+.ezpdf-img{display:block;margin:6px auto 14px;max-width:100%;object-fit:contain;border-radius:10px}
+.ezpdf-break{display:none}
+.ezpdf p.ezpdf-big{font-size:20px;line-height:1.65;margin-top:8px}
 .ezpdf-note{font-size:11.5px;color:#5d574d;margin:10px 0}
 .ezpdf-sign{display:flex;justify-content:space-between;gap:40px;margin-top:48px}
 .ezpdf-sign div{flex:1;border-top:1.4px solid #121212;padding-top:6px;font-size:12px}
@@ -124,7 +127,7 @@ export function blockHtml(b: PdfBlock): string {
     case "h":
       return `<h${b.level}>${inline(b.text)}</h${b.level}>`;
     case "p":
-      return `<p>${inline(b.text)}</p>`;
+      return b.big ? `<p class="ezpdf-big">${inline(b.text)}</p>` : `<p>${inline(b.text)}</p>`;
     case "ul":
       return `<ul>${b.items.map((i) => `<li>${inline(i)}</li>`).join("")}</ul>`;
     case "ol":
@@ -157,6 +160,10 @@ export function blockHtml(b: PdfBlock): string {
       return `<div class="ezpdf-sign">${b.lines.map((l) => `<div>${inline(l)}</div>`).join("")}</div>`;
     case "hr":
       return `<hr class="ezpdf-hr">`;
+    case "img":
+      return `<img class="ezpdf-img" src="${esc(b.src)}" alt="${esc(b.alt ?? "")}" crossorigin="anonymous" style="max-height:${b.maxH ?? 520}px">`;
+    case "break":
+      return `<div class="ezpdf-break"></div>`;
   }
 }
 
@@ -295,12 +302,23 @@ export async function layoutPages(doc: PdfDoc, host: HTMLElement): Promise<HTMLE
   const head = doc.template === "report" ? "" : headerHtml(doc);
   const letterTitle = doc.template === "letter" && doc.title ? `<h1>${inline(doc.title)}</h1>` : "";
   tmp.innerHTML = head + letterTitle + doc.blocks.map(blockHtml).join("");
+  // Pictures must be loaded before pages can be measured.
+  await Promise.all(
+    Array.from(tmp.querySelectorAll("img")).map((im) => (im.complete ? Promise.resolve() : im.decode().catch(() => im.remove()))),
+  );
   queue.push(...(Array.from(tmp.children) as HTMLElement[]));
 
   let cur = newPage(host, doc);
   pages.push(cur.page);
   while (queue.length) {
     const el = queue.shift()!;
+    if (el.classList.contains("ezpdf-break")) {
+      if (cur.body.children.length) {
+        cur = newPage(host, doc);
+        pages.push(cur.page);
+      }
+      continue;
+    }
     cur.body.appendChild(el);
     if (!overflows(cur.body)) continue;
     const alone = cur.body.children.length === 1;

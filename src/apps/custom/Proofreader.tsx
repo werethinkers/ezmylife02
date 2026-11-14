@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, Copy, Loader2, SpellCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { AppShell } from "../shell/AppShell";
 import { useRun } from "../lib/api";
 import { APPS } from "../registry";
+import { useWorkspace } from "../lib/workspace";
+import { docFromBlocks } from "../output/buildDoc";
+import { SaveBar } from "../output/SaveBar";
+import type { PdfBlock } from "../output/types";
 
 interface Result {
   corrected: string;
@@ -18,6 +22,28 @@ export default function Proofreader({ toolId }: { toolId: string }) {
   const [res, setRes] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
   const { busy, run } = useRun(toolId);
+  const { profile } = useWorkspace();
+  const doc = useMemo(
+    () =>
+      res
+        ? docFromBlocks({
+            appName: "Proofreader",
+            template: "document",
+            title: "Corrected text",
+            profile,
+            blocks: [
+              { t: "p", text: res.corrected },
+              ...(res.changes.length
+                ? [
+                    { t: "h", level: 2, text: `${res.changes.length} change${res.changes.length === 1 ? "" : "s"} made` } as PdfBlock,
+                    { t: "table", head: ["Was", "Now", "Why"], rows: res.changes.map((c) => [c.original, c.fix, c.reason ?? ""]) } as PdfBlock,
+                  ]
+                : [{ t: "note", text: "No mistakes found." } as PdfBlock]),
+            ],
+          })
+        : null,
+    [res, profile],
+  );
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   const check = async () => {
@@ -64,6 +90,7 @@ export default function Proofreader({ toolId }: { toolId: string }) {
                   ))}
                 </ul>
               </div>
+              <SaveBar toolId={toolId} appName="Proofreader" doc={doc} />
             </>
           ) : (
             <div className="flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">

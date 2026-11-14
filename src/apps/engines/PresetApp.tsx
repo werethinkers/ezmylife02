@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Loader2, Lock, Upload, X, ZoomIn } from "lucide-react";
+import { Check, Download, FileText, Loader2, Lock, Upload, X, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -10,6 +10,8 @@ import { AppShell } from "../shell/AppShell";
 import { StepLabel } from "../shell/StepLabel";
 import { Sources } from "./CalcApp";
 import { downloadBlob, slug } from "../lib/files";
+import { makePhotoSheetPdf, sheetFit } from "../output/photoSheet";
+import { saveFile } from "../output/save";
 import { loadImage, zipFiles } from "../lib/convert";
 import { checks, cropRect, inkCrop, kbRuleText, prepare, render, sizeRuleText, type Crop, type Prepared } from "../lib/presetImage";
 import type { PresetDef, PresetItem } from "../types";
@@ -144,6 +146,21 @@ function ItemCard({ n, exam, item, onReady }: { n: number; exam: string; item: P
     setCrop((c) => ({ ...c, cx: Math.min(1, Math.max(0, drag.current!.cx - dx * sx)), cy: Math.min(1, Math.max(0, drag.current!.cy - dy * sy)) }));
   };
 
+  // Square photos print at 2 × 2 inch (51 mm, US visa); others at the Indian 3.5 × 4.5 cm, for forms and admit cards.
+  const printSheet = async () => {
+    if (!out) return;
+    const square = Math.abs(aspect - 1) < 0.05;
+    const photo = await new Promise<string>((ok, fail) => {
+      const r = new FileReader();
+      r.onload = () => ok(String(r.result));
+      r.onerror = fail;
+      r.readAsDataURL(out.blob);
+    });
+    const wMm = square ? 51 : 35;
+    const hMm = square ? 51 : 45;
+    const blob = await makePhotoSheetPdf({ photo, wMm, hMm, copies: sheetFit("a4", wMm, hMm).per, paper: "a4", label: `${exam} ${item.label.toLowerCase()}` });
+    await saveFile(blob, `${slug(exam)}-${item.key}-print-sheet.pdf`, `${exam} photo sheet`);
+  };
   const result = out ? checks(item, out) : [];
   const allOk = result.length > 0 && result.every((c) => c.ok);
 
@@ -224,6 +241,11 @@ function ItemCard({ n, exam, item, onReady }: { n: number; exam: string; item: P
                 <Button type="button" size="sm" className="gap-1.5" disabled={!allOk} onClick={() => downloadBlob(out.blob, `${slug(exam)}-${item.key}.jpg`)}>
                   <Download className="h-3.5 w-3.5" /> Download {item.label.toLowerCase()}
                 </Button>
+                {item.mode === "photo" && (
+                  <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={!allOk || busy} onClick={() => void printSheet()}>
+                    <FileText className="h-3.5 w-3.5" /> Print sheet (PDF)
+                  </Button>
+                )}
               </>
             ) : null}
           </div>
