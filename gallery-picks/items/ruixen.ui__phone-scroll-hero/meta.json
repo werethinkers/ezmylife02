@@ -1,0 +1,12 @@
+{
+  "id": 27355,
+  "key": "ruixen.ui__phone-scroll-hero",
+  "author": "ruixen.ui",
+  "slug": "phone-scroll-hero",
+  "name": "Phone Scroll Hero",
+  "description": "A hero whose 3D-tilted phone mockup flattens and climbs up over the headline as the page scrolls. Theme-aware, with a reduced-motion fallback.",
+  "url": "https://21st.dev/@ruixen.ui/components/phone-scroll-hero",
+  "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/phone-scroll-hero/default/preview.1789735896057.webp",
+  "kind": "",
+  "deps": []
+}

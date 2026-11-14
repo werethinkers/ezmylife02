@@ -66,6 +66,22 @@
    "bytes": 24311
   },
   {
+   "id": 5650,
+   "key": "beratberkayg__product-card-1",
+   "author": "beratberkayg",
+   "slug": "product-card-1",
+   "name": "Product Card",
+   "description": "The ProductCard component is a fully customizable e-commerce card built with shadcn/ui, Tailwind CSS, and Framer Motion.\nIt provides a modern, responsive, and theme-aware product showcase with interactive features, designed to work seamlessly in both light and dark modes.\n\nKey Features:\n\n-> Image carousel with smooth fade animations\n\n-> Dynamic badges for New, Best Seller, or Discount labels\n\n-> Wishlist toggle with visual feedback\n\n-> Selectable color swatches and size options\n\n-> Rating & reviews display with free shipping indicator\n\n-> Add to Cart button with loading and success states\n\n-> Light & dark mode support using shadcn’s theme system\n\n-> Polished UI with hover shadows, rounded corners, and fluid transitions\n\nThis component is ideal for online stores, product listings, and landing pages, where both visual quality and user experience matter. It follows the shadcn/ui design pattern of separating reusable logic from demo usage, ensuring scalability and maintainability.",
+   "url": "https://21st.dev/@beratberkayg/components/product-card-1",
+   "preview": "https://cdn.21st.dev/beratberkayg/product-card-1/default/preview.1785192713083-a85d44a3-7979-456d-b469-dbded1219da5.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 33665
+  },
+  {
    "id": 34576,
    "key": "bidyut10__booking-slot-calendar",
    "author": "bidyut10",
@@ -330,6 +346,19 @@
    "kind": "",
    "deps": [],
    "bytes": 24299
+  },
+  {
+   "id": 8477,
+   "key": "erikvalencia1__layer-parallax-hero",
+   "author": "erikvalencia1",
+   "slug": "layer-parallax-hero",
+   "name": "Layer Parallax Hero",
+   "description": "Layer Parallax Hero",
+   "url": "https://21st.dev/@erikvalencia1/components/layer-parallax-hero",
+   "preview": "https://cdn.21st.dev/erikvalencia1/layer-parallax-hero/default/preview.1759612080134.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4993
   },
   {
    "id": 25518,
@@ -720,6 +749,19 @@
    "bytes": 6261
   },
   {
+   "id": 9583,
+   "key": "prashantsom75__scroll-morph-hero",
+   "author": "prashantsom75",
+   "slug": "scroll-morph-hero",
+   "name": "Scroll Morph Hero",
+   "description": "A stunning hero section that morphs from a scattered layout to a circle, and finally to a scroll-driven interactive rainbow arc.",
+   "url": "https://21st.dev/@prashantsom75/components/scroll-morph-hero",
+   "preview": "https://cdn.21st.dev/prashantsom75/scroll-morph-hero/default/preview.1765164297799.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 9162
+  },
+  {
    "id": 8723,
    "key": "rahil1202__metallic-business-card",
    "author": "rahil1202",
@@ -789,6 +831,19 @@
     "class-variance-authority"
    ],
    "bytes": 29057
+  },
+  {
+   "id": 27355,
+   "key": "ruixen.ui__phone-scroll-hero",
+   "author": "ruixen.ui",
+   "slug": "phone-scroll-hero",
+   "name": "Phone Scroll Hero",
+   "description": "A hero whose 3D-tilted phone mockup flattens and climbs up over the headline as the page scrolls. Theme-aware, with a reduced-motion fallback.",
+   "url": "https://21st.dev/@ruixen.ui/components/phone-scroll-hero",
+   "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/phone-scroll-hero/default/preview.1789735896057.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 24678
   },
   {
    "id": 36749,
