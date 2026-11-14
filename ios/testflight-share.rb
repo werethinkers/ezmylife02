@@ -13,6 +13,7 @@ require "json"
 require "base64"
 require "net/http"
 require "uri"
+$stdout.sync = true
 
 KEY_PATH = ARGV[0] or abort("usage: testflight-share.rb <key.p8> [build number]")
 BUILD_NUMBER = ARGV[1].to_s.strip
@@ -52,10 +53,12 @@ app_id = app["id"]
 build = nil
 80.times do
   query = BUILD_NUMBER.empty? ? "sort=-uploadedDate&limit=1" : "filter[version]=#{BUILD_NUMBER}&limit=1"
-  _, builds = api("GET", "/v1/builds?filter[app]=#{app_id}&#{query}")
+  code, builds = api("GET", "/v1/builds?filter[app]=#{app_id}&#{query}")
+  abort("App Store Connect refused the build list (#{code}): #{errors(builds)}") if code >= 400
   build = builds["data"]&.first
   state = build && build.dig("attributes", "processingState")
-  puts "Build #{BUILD_NUMBER.empty? ? "(newest)" : BUILD_NUMBER}: #{state || "not in App Store Connect yet"}"
+  puts "Build #{build&.dig("attributes", "version") || BUILD_NUMBER}: #{state || "not in App Store Connect yet"}"
+  $stdout.flush
   break if state == "VALID"
   abort("Apple could not process the build (#{state}).") if %w[FAILED INVALID].include?(state)
   sleep 30
