@@ -5,7 +5,7 @@ import { PropertyCard } from "@/components/ui/card-4";
 export default function PropertyCardDemo() {
   const handleReserveClick = () => {
     // In a real app, this would handle the reservation logic
-    alert("Reserve button clicked!");
+    
   };
 
   return (

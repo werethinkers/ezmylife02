@@ -40,6 +40,19 @@
    "bytes": 174049
   },
   {
+   "id": 26223,
+   "key": "ayushmxxn__masonry-lightbox",
+   "author": "ayushmxxn",
+   "slug": "masonry-lightbox",
+   "name": "Masonry Lightbox",
+   "description": "Responsive masonry image gallery with smooth hover animations and an animated lightbox viewer.",
+   "url": "https://21st.dev/@ayushmxxn/components/masonry-lightbox",
+   "preview": "https://cdn.21st.dev/ayushmxxn/masonry-lightbox/default/preview.1788768876094-07e06845-e2d3-43c1-9277-a29f1fc08325.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 6695
+  },
+  {
    "id": 33903,
    "key": "balick__services-01",
    "author": "balick",
@@ -189,6 +202,19 @@
    "bytes": 19613
   },
   {
+   "id": 36626,
+   "key": "dhxwhy__lighthouse-gallery",
+   "author": "dhxwhy",
+   "slug": "lighthouse-gallery",
+   "name": "Lighthouse Spotlight Image Gallery",
+   "description": "Spotlight image gallery for React and Tailwind CSS (shadcn/ui): a photo grid lit by a sweeping lighthouse beam. It is built to guide the eye: light travels across the grid and pictures wake up one after another, so visitors keep watching to see what the beam reveals next, and the torch turns browsing into discovery. At rest each photo sits under a flat color swatch extracted from the image, with a hint of the picture showing through; tiles wake up as the beam passes and fade back with a slow afterglow. The pointer works as a hand torch, keyboard focus lights a tile, clicking parks the beam. Props for beam origin, speed, width, afterglow, peek and columns. Light and dark themes, reduced-motion fallback, no WebGL. Use it for portfolios, photo collections and product showcases.",
+   "url": "https://21st.dev/@dhxwhy/components/lighthouse-gallery",
+   "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/lighthouse-gallery/default/preview.1791470315489.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 10900
+  },
+  {
    "id": 43148,
    "key": "dhxwhy__metro-map-gallery",
    "author": "dhxwhy",
@@ -293,6 +319,19 @@
    "bytes": 19223
   },
   {
+   "id": 5967,
+   "key": "efferd__zoom-parallax",
+   "author": "efferd",
+   "slug": "zoom-parallax",
+   "name": "Zoom Parallax",
+   "description": "A smooth scroll effect where images zoom in at different speeds for a cinematic feel.\nPerfect for hero sections or storytelling layouts that need extra visual depth.",
+   "url": "https://21st.dev/@efferd/components/zoom-parallax",
+   "preview": "https://cdn.21st.dev/user_2tWTE0rCrloVAVylFPYfp10xU92/zoom-parallax/default/preview.1788462332485.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24299
+  },
+  {
    "id": 25518,
    "key": "gughigug__shave-reveal-hero",
    "author": "gughigug",
@@ -333,6 +372,32 @@
     "class-variance-authority"
    ],
    "bytes": 31780
+  },
+  {
+   "id": 7517,
+   "key": "isaiahbjork__portfolio-gallery",
+   "author": "isaiahbjork",
+   "slug": "portfolio-gallery",
+   "name": "Portfolio Gallery",
+   "description": "The PortfolioGallery component creates an engaging visual showcase of portfolio items with a 3D overlapping layout on desktop and a smooth horizontal marquee on mobile devices. It features interactive hover effects that elevate selected images while lowering others, creating depth and focus, along with customizable styling options for maximum adaptability. This component is ideal for creative professionals and agencies to display their work collections, allowing users to browse through projects with an immersive, cinematic experience that enhances visual storytelling and portfolio presentation.",
+   "url": "https://21st.dev/@isaiahbjork/components/portfolio-gallery",
+   "preview": "https://cdn.21st.dev/isaiahbjork/portfolio-gallery/default/preview.1757974061317.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26502
+  },
+  {
+   "id": 7863,
+   "key": "kavikatiyar__3d-card",
+   "author": "kavikatiyar",
+   "slug": "3d-card",
+   "name": "3D Card",
+   "description": "Destination Card – Showcase travel spots. Highlights locations with image, details, and a quick booking option for better trip planning.",
+   "url": "https://21st.dev/@kavikatiyar/components/3d-card",
+   "preview": "https://cdn.21st.dev/kavikatiyar/3d-card/default/preview.1758427566770.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24207
   },
   {
    "id": 44872,
@@ -543,6 +608,19 @@
    "bytes": 102934
   },
   {
+   "id": 38218,
+   "key": "kedhareswer__slit-type-faq",
+   "author": "kedhareswer",
+   "slug": "slit-type-faq",
+   "name": "FAQ Accordion Section",
+   "description": "FAQ accordion section set in one ink on one paper: a display headline cut by a stencil slit that lifts clear on hover, live search across questions and answers with matches highlighted, and rows that flood with ink edge to edge as they open. A real accessible accordion with keyboard navigation, deep links per question and Copy link. Single or multiple open, four presets, light and dark.",
+   "url": "https://21st.dev/@kedhareswer/components/slit-type-faq",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/slit-type-faq/default/preview.1792010596991.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 30805
+  },
+  {
    "id": 44658,
    "key": "kedhareswer__sneaker-product-hero",
    "author": "kedhareswer",
@@ -582,6 +660,19 @@
    "bytes": 297224
   },
   {
+   "id": 1503,
+   "key": "manuarora700__hero-parallax",
+   "author": "manuarora700",
+   "slug": "hero-parallax",
+   "name": "Hero Parallax",
+   "description": "A scroll effect with rotation, translation and opacity animations.",
+   "url": "https://21st.dev/@manuarora700/components/hero-parallax",
+   "preview": "https://cdn.21st.dev/user_aceternity/hero-parallax/default/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6443
+  },
+  {
    "id": 29211,
    "key": "olewandowski1__booking-2",
    "author": "olewandowski1",
@@ -616,6 +707,19 @@
    "bytes": 4131
   },
   {
+   "id": 20039,
+   "key": "piyushxdev__3d-parallax-unfurling-gallery",
+   "author": "piyushxdev",
+   "slug": "3d-parallax-unfurling-gallery",
+   "name": "3D Parallax Unfurling Gallery",
+   "description": "A cinematic, scroll-driven image grid gallery with deep 3D matrix rotations, smooth multi-column parallax translation offsets, and responsive fluid boundaries for landing showcases",
+   "url": "https://21st.dev/@piyushxdev/components/3d-parallax-unfurling-gallery",
+   "preview": "https://cdn.21st.dev/user_3BzhPCFt0DpZ68bL55oANSJ8bSx/3d-parallax-unfurling-gallery/default/preview.1785933325260.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6261
+  },
+  {
    "id": 8723,
    "key": "rahil1202__metallic-business-card",
    "author": "rahil1202",
@@ -642,7 +746,7 @@
     "@radix-ui/react-slot",
     "class-variance-authority"
    ],
-   "bytes": 28677
+   "bytes": 28645
   },
   {
    "id": 8218,
