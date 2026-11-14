@@ -268,7 +268,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
     const r = await fetch(RAW + item.promptPath);
     const text = await r.text();
     const ours =
-      "\n\n## Ezyourlife look\n\nRebuild this inside the Ezyourlife repo in its own style (docs/design.md): cream page, white cards, thick ink outlines (border-2 border-ink) with hard block shadows (shadow-block-sm / shadow-block), Unbounded headings (font-display), Hind body text, solid brand colours (bg-pink, bg-sun, bg-teal, bg-sky, bg-lime), plain words. Use our shadcn parts from src/components/ui where they fit. Check the original author's licence first.\n";
+      "\n\n## Ezyourlife look\n\nRebuild this inside the Ezyourlife repo in its own style (docs/design.md): cream page, white cards, thick ink outlines (border-2 border-ink) with hard block shadows (shadow-block-sm / shadow-block), Unbounded headings (font-display), Hind body text, solid brand colours (bg-pink, bg-sun, bg-teal, bg-sky, bg-lime), plain words. Use our shadcn parts from src/components/ui where they fit.\n";
     await navigator.clipboard.writeText(text + ours);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
@@ -336,7 +336,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           )}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude; the original author's licence is checked before anything goes live.
+          Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude.
         </p>
       </div>
     </section>
@@ -383,7 +383,7 @@ export default function ComponentGallery() {
 
   const copyList = async () => {
     const byId = new Map((dir.data ?? []).map((it) => [it.id, it]));
-    const lines = picks.map((id) => byId.get(id)).filter(Boolean).map((it) => `- ${it!.name} (by ${it!.authorName || it!.author}): ${TREE}${it!.folder}`);
+    const lines = picks.map((id) => byId.get(id)).filter(Boolean).map((it) => `- ${it!.name}: ${TREE}${it!.folder}`);
     await navigator.clipboard.writeText(`Components picked for Ezyourlife:\n${lines.join("\n")}\n`);
     setCopiedList(true);
     setTimeout(() => setCopiedList(false), 1800);
