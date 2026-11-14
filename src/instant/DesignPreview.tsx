@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Laptop, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PhoneMockup } from "@/components/ui/phone-mockup";
 import type { Content, Product, Theme } from "./types";
 import { ProductRenderer } from "./renderers";
 import { pageUrlFor } from "./util";
@@ -51,11 +52,9 @@ export function DeviceFrame({ product, theme, content, device, height, slug }: {
     );
   }
   return (
-    <div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[2.4rem] border-[9px] border-ink bg-ink shadow-block">
-      <div className="ip-frame relative overflow-hidden" style={{ height, transform: "translateZ(0)", ["--ip-vh" as string]: `${height}px`, background: theme.c.bg }}>
-        <div className="h-full overflow-y-auto overflow-x-hidden">{page}</div>
-      </div>
-    </div>
+    <PhoneMockup className="max-w-[360px]" screenBg={theme.c.bg} screenFg={theme.c.tx} height={height}>
+      <div className="h-full overflow-y-auto overflow-x-hidden">{page}</div>
+    </PhoneMockup>
   );
 }
 
