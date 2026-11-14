@@ -1,0 +1,20 @@
+{
+  "id": 29211,
+  "key": "olewandowski1__booking-2",
+  "author": "olewandowski1",
+  "slug": "booking-2",
+  "name": "Appointment Booking Split",
+  "description": "A two-column appointment request form pairing service reassurance points with a booking form for job type, preferred day, vehicle registration, phone number, and notes.",
+  "url": "https://21st.dev/@olewandowski1/components/booking-2",
+  "preview": "https://cdn.21st.dev/7ovr/booking-2/default/preview.1790051732678-c6a5a283-c945-4c86-8018-47c239f5ec45.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label",
+    "@radix-ui/react-radio-group",
+    "@radix-ui/react-select"
+  ]
+}

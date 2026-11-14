@@ -38,6 +38,21 @@ const globalsPlugin = {
     b.onResolve({ filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|framer-motion|motion\/react|lucide-react)$/ }, (a) => ({ path: a.path, namespace: "gx" }));
     b.onLoad({ filter: /.*/, namespace: "gx" }, (a) => ({ contents: `module.exports = window.__gx.${GLOBALS[a.path]};`, loader: "js" }));
     /* Next.js helpers some picks use: plain img / a stand-ins */
+    /* helper files a pick imports from "<slug>-utils/<name>" but the API leaves out:
+       use our stand-in in gallery-picks/shims, else our own shadcn ui file of that name */
+    b.onResolve({ filter: /^@\/components\/ui\/[^/]+-utils\/[^/]+$/ }, (a) => {
+      const name = a.path.split("/").pop();
+      for (const p of [path.join(ROOT, "gallery-picks/shims", name + ".tsx"), path.join(ROOT, "src/components/ui", name + ".tsx")]) if (fs.existsSync(p)) return { path: p };
+      return undefined;
+    });
+    /* newer shadcn "field" helper that our ui folder doesn't have */
+    b.onResolve({ filter: /^@\/components\/ui\/field$/ }, () => ({ path: "field", namespace: "fieldshim" }));
+    b.onLoad({ filter: /.*/, namespace: "fieldshim" }, () => ({
+      contents: `import * as React from "react";const h=(t,c)=>({className,...p})=>React.createElement(t,{className:c+" "+(className||""),...p});
+export const Field=h("div","grid gap-2");export const FieldLabel=h("label","text-sm font-medium");export const FieldDescription=h("p","text-sm text-muted-foreground");export const FieldError=h("p","text-sm text-destructive");export const FieldGroup=h("div","grid gap-4");export const FieldSet=h("fieldset","grid gap-4");export const FieldLegend=h("legend","font-medium");export const FieldContent=h("div","grid gap-1");export const FieldTitle=h("div","text-sm font-medium");export const FieldSeparator=h("hr","border-border");`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
     b.onResolve({ filter: /^next\/(image|link)$/ }, (a) => ({ path: a.path, namespace: "nextshim" }));
     b.onLoad({ filter: /.*/, namespace: "nextshim" }, (a) => ({
       contents: a.path === "next/image"

@@ -40,6 +40,51 @@
    "bytes": 174049
   },
   {
+   "id": 33903,
+   "key": "balick__services-01",
+   "author": "balick",
+   "slug": "services-01",
+   "name": "Services List",
+   "description": "A numbered list section that presents a company's services with a starting price, key deliverables, and a link to learn more or get in touch.",
+   "url": "https://21st.dev/@balick/components/services-01",
+   "preview": "https://cdn.21st.dev/balick/services-01/default/preview.1790754381987-38bce506-ce43-474b-b171-27b105f5611a.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24311
+  },
+  {
+   "id": 34576,
+   "key": "bidyut10__booking-slot-calendar",
+   "author": "bidyut10",
+   "slug": "booking-slot-calendar",
+   "name": "Booking Slot Calendar",
+   "description": "A Google Calendar-style appointment picker where a user selects a day from a week strip and then taps an available time slot to book it.",
+   "url": "https://21st.dev/@bidyut10/components/booking-slot-calendar",
+   "preview": "https://cdn.21st.dev/user_registry_bidyut10_1790790084027/booking-slot-calendar/default/preview.1790890044748.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 28544
+  },
+  {
+   "id": 25128,
+   "key": "cnippet-dev__v-calendar-8",
+   "author": "cnippet-dev",
+   "slug": "v-calendar-8",
+   "name": "Appointment Booking Calendar",
+   "description": "A calendar for booking appointments that greys out weekends, past dates, and fully-booked days and shows the chosen slot.",
+   "url": "https://21st.dev/@cnippet-dev/components/v-calendar-8",
+   "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-calendar-8/default/preview.1787760081693.webp",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "date-fns",
+    "lucide-react",
+    "react-day-picker"
+   ],
+   "bytes": 82139
+  },
+  {
    "id": 39045,
    "key": "daiwiikharihar__curtain-split-hero",
    "author": "daiwiikharihar",
@@ -261,6 +306,19 @@
    "bytes": 21186
   },
   {
+   "id": 2554,
+   "key": "isaiahbjork__coach-scheduling-card",
+   "author": "isaiahbjork",
+   "slug": "coach-scheduling-card",
+   "name": "Coach Scheduling Card",
+   "description": "This is a fully interactive, motion-enhanced Coach Scheduling Card that allows users to view a coach’s weekly availability, select time slots, choose a location, and confirm bookings—all in a single animated, responsive UI. It blends profile preview, dropdown logic, availability grids, and confirmation flows into a seamless component with thoughtful framer-motion effects throughout. Animations are conditionally toggled for accessibility, and the UI adapts to user actions in real-time. Perfect for fitness apps, tutoring platforms, service marketplaces, or any SaaS tool offering human-led bookings with sleek UX.",
+   "url": "https://21st.dev/@isaiahbjork/components/coach-scheduling-card",
+   "preview": "https://cdn.21st.dev/user_2tkbBPFWYn8YMjZNHwgIuP3yzvd/coach-scheduling-card/default/preview.1750809485621.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 34842
+  },
+  {
    "id": 2582,
    "key": "isaiahbjork__event-countdown-card",
    "author": "isaiahbjork",
@@ -340,6 +398,19 @@
    "kind": "",
    "deps": [],
    "bytes": 103636
+  },
+  {
+   "id": 36082,
+   "key": "kedhareswer__ink-orbit-testimonials",
+   "author": "kedhareswer",
+   "slug": "ink-orbit-testimonials",
+   "name": "Testimonials Section with Logo Marquee",
+   "description": "Testimonials section with logo marquee: snap-scrolling quote cards with star ratings, drawn greyscale portraits and an arrows-and-dots pager, over a scrolling row of customer names. Light/dark, zero dependencies.",
+   "url": "https://21st.dev/@kedhareswer/components/ink-orbit-testimonials",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-orbit-testimonials/default/preview.1791314075324.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 17759
   },
   {
    "id": 45453,
@@ -511,6 +582,27 @@
    "bytes": 297224
   },
   {
+   "id": 29211,
+   "key": "olewandowski1__booking-2",
+   "author": "olewandowski1",
+   "slug": "booking-2",
+   "name": "Appointment Booking Split",
+   "description": "A two-column appointment request form pairing service reassurance points with a booking form for job type, preferred day, vehicle registration, phone number, and notes.",
+   "url": "https://21st.dev/@olewandowski1/components/booking-2",
+   "preview": "https://cdn.21st.dev/7ovr/booking-2/default/preview.1790051732678-c6a5a283-c945-4c86-8018-47c239f5ec45.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label",
+    "@radix-ui/react-radio-group",
+    "@radix-ui/react-select"
+   ],
+   "bytes": 133196
+  },
+  {
    "id": 27052,
    "key": "olewandowski1__menu-1",
    "author": "olewandowski1",
@@ -535,6 +627,22 @@
    "kind": "",
    "deps": [],
    "bytes": 11758
+  },
+  {
+   "id": 7100,
+   "key": "ravikatiyar162__card-4",
+   "author": "ravikatiyar162",
+   "slug": "card-4",
+   "name": "Card",
+   "description": "Property Card\nA modern, responsive card component designed to showcase property listings with key details and a call-to-action.",
+   "url": "https://21st.dev/@ravikatiyar162/components/card-4",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/card-4/default/preview.1757403639137.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28677
   },
   {
    "id": 8218,
@@ -592,6 +700,21 @@
    "bytes": 25954
   },
   {
+   "id": 28203,
+   "key": "shadcnspace__card-02",
+   "author": "shadcnspace",
+   "slug": "card-02",
+   "name": "Property Preview Card",
+   "description": "A real estate listing card that shows a property photo, price badge, address, and bed/bath/area stats with a hover reveal effect.",
+   "url": "https://21st.dev/@shadcnspace/components/card-02",
+   "preview": "https://cdn.21st.dev/shadcnspace/card-02/default/preview.1789956983707-5c181cf4-2bf5-4923-bae4-74b76dd128d5.png",
+   "kind": "",
+   "deps": [
+    "class-variance-authority"
+   ],
+   "bytes": 25577
+  },
+  {
    "id": 28229,
    "key": "shadcnspace__card-14",
    "author": "shadcnspace",
@@ -603,6 +726,19 @@
    "kind": "",
    "deps": [],
    "bytes": 27337
+  },
+  {
+   "id": 19852,
+   "key": "shadcnspace__marquee-01",
+   "author": "shadcnspace",
+   "slug": "marquee-01",
+   "name": "Testimonials Marquee",
+   "description": "A scrolling testimonials marquee with two rows of review cards moving in opposite directions and edge fade gradients.",
+   "url": "https://21st.dev/@shadcnspace/components/marquee-01",
+   "preview": "https://cdn.21st.dev/shadcnspace/marquee-01/default/preview.1784150693674.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26952
   },
   {
    "id": 30554,
@@ -658,6 +794,16 @@
   }
  ],
  "failed": [
+  {
+   "key": "dhileepkumargm__3d-animation",
+   "name": "3D Animation",
+   "reason": "its stylesheet was not included with the code"
+  },
+  {
+   "key": "dhileepkumargm__woven-light-hero",
+   "name": "Woven Light Hero",
+   "reason": "Needs the three.js package"
+  },
   {
    "key": "hello_54e122be__hairline-phone",
    "name": "Hairline Phone",
