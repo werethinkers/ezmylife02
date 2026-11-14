@@ -290,6 +290,32 @@
    "bytes": 13500
   },
   {
+   "id": 44583,
+   "key": "kedhareswer__dish-orbit-carousel",
+   "author": "kedhareswer",
+   "slug": "dish-orbit-carousel",
+   "name": "Food Menu Scroll Carousel",
+   "description": "Food menu scroll carousel: page scroll swings each plate out on an orbit as the next swings in, with a wiping two-weight title, chef card and a colour-morphing band. Endless both ways, GSAP ScrollTrigger, light/dark.",
+   "url": "https://21st.dev/@kedhareswer/components/dish-orbit-carousel",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/dish-orbit-carousel/default/preview.1793824300186.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 311346
+  },
+  {
+   "id": 44651,
+   "key": "kedhareswer__folio-fold-menu",
+   "author": "kedhareswer",
+   "slug": "folio-fold-menu",
+   "name": "3D Fold Fullscreen Menu",
+   "description": "3D fold fullscreen menu: pressing Menu drops the page and tips it back into a rounded sheet while serif links rise in above it, with hover dimming and Escape to close. For portfolios, studios and editorial sites.",
+   "url": "https://21st.dev/@kedhareswer/components/folio-fold-menu",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/folio-fold-menu/default/preview.1793901167186.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 160936
+  },
+  {
    "id": 44656,
    "key": "kedhareswer__halftone-flow-hero",
    "author": "kedhareswer",
@@ -355,6 +381,45 @@
    "bytes": 30651
   },
   {
+   "id": 44654,
+   "key": "kedhareswer__pulse-stripe-hero",
+   "author": "kedhareswer",
+   "slug": "pulse-stripe-hero",
+   "name": "Animated Stripe Hero Section",
+   "description": "Animated stripe hero section: a striped card lit by slow light beams that flare under the pointer, with a serif headline, counting stats, a drifting logo band and a statement that lights up word by word on scroll. For SaaS and logistics landing pages.",
+   "url": "https://21st.dev/@kedhareswer/components/pulse-stripe-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/pulse-stripe-hero/default/preview.1793900470851.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 265813
+  },
+  {
+   "id": 44607,
+   "key": "kedhareswer__rotating-flavor-slider",
+   "author": "kedhareswer",
+   "slug": "rotating-flavor-slider",
+   "name": "Scroll Rotating Product Slider",
+   "description": "Scroll rotating product slider: a big top-down photo turns and morphs into the next as the page scrolls, while the background colour blends, a dot glides round a ring of curved names and corner garnish swaps. For menus, bakeries and product ranges.",
+   "url": "https://21st.dev/@kedhareswer/components/rotating-flavor-slider",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/rotating-flavor-slider/default/preview.1793824132234.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 321859
+  },
+  {
+   "id": 44528,
+   "key": "kedhareswer__runway-lookbook",
+   "author": "kedhareswer",
+   "slug": "runway-lookbook",
+   "name": "Runway Fashion Lookbook Carousel",
+   "description": "Runway fashion lookbook carousel: the collection's looks queue up in depth across a catwalk, and scrolling walks the next model forward into focus while the rest blur behind. A look counter, shop-the-look link and a side rail of pieces with prices.",
+   "url": "https://21st.dev/@kedhareswer/components/runway-lookbook",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/runway-lookbook/default/preview.1793822924631.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 294738
+  },
+  {
    "id": 43141,
    "key": "kedhareswer__signature-pen-footer",
    "author": "kedhareswer",
@@ -379,6 +444,45 @@
    "kind": "",
    "deps": [],
    "bytes": 102934
+  },
+  {
+   "id": 44658,
+   "key": "kedhareswer__sneaker-product-hero",
+   "author": "kedhareswer",
+   "slug": "sneaker-product-hero",
+   "name": "Sneaker Product Page Hero",
+   "description": "Sneaker product page hero: a product-detail section for one shoe in several colourways, with a floating shoe and reflection, hold-to-zoom loupe, size, colour and stock picker, animated price and add-to-cart with a like burst. For ecommerce product pages.",
+   "url": "https://21st.dev/@kedhareswer/components/sneaker-product-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/sneaker-product-hero/default/preview.1793899556993.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 282635
+  },
+  {
+   "id": 44653,
+   "key": "kedhareswer__sticker-swap-headline",
+   "author": "kedhareswer",
+   "slug": "sticker-swap-headline",
+   "name": "Animated Sticker Headline Hero",
+   "description": "Animated sticker headline hero: a poster-weight headline whose last word keeps swapping, as the round photo sticker pops off, the word rolls to the next one and a new sticker pops into the gap. For landing pages and brand heroes.",
+   "url": "https://21st.dev/@kedhareswer/components/sticker-swap-headline",
+   "preview": "https://cdn.21st.dev/kedhareswer/sticker-swap-headline/default/preview.1793891299152-10e84444-78a6-4e06-83ad-71edb056c289.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 167318
+  },
+  {
+   "id": 44650,
+   "key": "kedhareswer__tilt-stack-scroll",
+   "author": "kedhareswer",
+   "slug": "tilt-stack-scroll",
+   "name": "Scroll Stacking Cards",
+   "description": "Scroll stacking cards: full-bleed photo cards pile up as the page scrolls, each arriving tilted and landing flat while the ones below tip back, shrink and darken, with a counter and progress rail. For tours, case studies and product stories.",
+   "url": "https://21st.dev/@kedhareswer/components/tilt-stack-scroll",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/tilt-stack-scroll/default/preview.1793901283151.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 297224
   },
   {
    "id": 8723,
@@ -506,46 +610,6 @@
    "key": "jahed__flip-countdown",
    "name": "FlipCountdown",
    "reason": "its stylesheet was not included with the code"
-  },
-  {
-   "key": "kedhareswer__dish-orbit-carousel",
-   "name": "Food Menu Scroll Carousel",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__folio-fold-menu",
-   "name": "3D Fold Fullscreen Menu",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__pulse-stripe-hero",
-   "name": "Animated Stripe Hero Section",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__rotating-flavor-slider",
-   "name": "Scroll Rotating Product Slider",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__runway-lookbook",
-   "name": "Runway Fashion Lookbook Carousel",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__sneaker-product-hero",
-   "name": "Sneaker Product Page Hero",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__sticker-swap-headline",
-   "name": "Animated Sticker Headline Hero",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__tilt-stack-scroll",
-   "name": "Scroll Stacking Cards",
-   "reason": "Could not resolve \"gsap\""
   }
  ]
 }
