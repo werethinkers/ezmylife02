@@ -1,0 +1,12 @@
+{
+  "id": 28111,
+  "key": "educalvolpz__hover-expand",
+  "author": "educalvolpz",
+  "slug": "hover-expand",
+  "name": "Hover Expand",
+  "description": "An accordion-style image gallery where panels expand on hover or keyboard focus and the rest collapse to a thin strip with a rotated label.",
+  "url": "https://21st.dev/@educalvolpz/components/hover-expand",
+  "preview": "https://cdn.21st.dev/educalvolpz/hover-expand/default/preview.1789896994579-0686610b-1c19-47c1-b8ed-3e1d10bad11b.png",
+  "kind": "",
+  "deps": []
+}

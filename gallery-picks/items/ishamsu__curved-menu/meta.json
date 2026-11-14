@@ -1,0 +1,12 @@
+{
+  "id": 2200,
+  "key": "ishamsu__curved-menu",
+  "author": "ishamsu",
+  "slug": "curved-menu",
+  "name": "Curved Menu",
+  "description": "A modern React navigation component with an animated curved sidebar, interactive menu items, and social media footer. with smooth animations",
+  "url": "https://21st.dev/@ishamsu/components/curved-menu",
+  "preview": "https://cdn.21st.dev/ishamsu/curved-menu/default/preview.1747620613612.png",
+  "kind": "",
+  "deps": []
+}

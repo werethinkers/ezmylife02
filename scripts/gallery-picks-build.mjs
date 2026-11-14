@@ -52,6 +52,12 @@ const globalsPlugin = {
       loader: "jsx",
       resolveDir: process.cwd(),
     }));
+    b.onResolve({ filter: /^react-wrap-balancer$/ }, () => ({ path: "balancer", namespace: "balancershim" }));
+    b.onLoad({ filter: /.*/, namespace: "balancershim" }, () => ({
+      contents: `import * as React from "react";export default function Balancer({children}){return React.createElement("span",{style:{textWrap:"balance"}},children);}export const Provider=({children})=>children;`,
+      loader: "jsx",
+      resolveDir: process.cwd(),
+    }));
     /* newer shadcn "field" helper that our ui folder doesn't have */
     b.onResolve({ filter: /^@\/components\/ui\/field$/ }, () => ({ path: "field", namespace: "fieldshim" }));
     b.onLoad({ filter: /.*/, namespace: "fieldshim" }, () => ({

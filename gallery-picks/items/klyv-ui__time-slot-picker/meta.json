@@ -1,0 +1,12 @@
+{
+  "id": 43217,
+  "key": "klyv-ui__time-slot-picker",
+  "author": "klyv-ui",
+  "slug": "time-slot-picker",
+  "name": "Time Slot Picker",
+  "description": "A booking widget that shows a strip of days and that day's available times as two keyboard-navigable radio groups, so free and taken slots read at a glance.",
+  "url": "https://21st.dev/@klyv-ui/components/time-slot-picker",
+  "preview": "https://cdn.21st.dev/user_registry_klyv-ui_1791308669867/time-slot-picker/default/preview.1793405763346.webp",
+  "kind": "",
+  "deps": []
+}

@@ -1,0 +1,13 @@
+{
+  "id": 28655,
+  "key": "starc007__feedback-widget",
+  "author": "starc007",
+  "slug": "feedback-widget",
+  "name": "Feedback Widget",
+  "description": "A corner trigger button that expands into a floating feedback popup where a user types a message and submits it, with animated sending, success and retry states.",
+  "url": "https://21st.dev/@starc007/components/feedback-widget",
+  "preview": "https://cdn.21st.dev/starc007/feedback-widget/default/preview.1789995938239-dc7df8c3-b283-46da-8bed-d6814efd9633.png",
+  "kind": "",
+  "deps": [],
+  "skip": "Needs helper files the API result leaves out"
+}

@@ -27,6 +27,19 @@
    "bytes": 3176
   },
   {
+   "id": 45590,
+   "key": "aadixc0de__contact-card",
+   "author": "aadixc0de",
+   "slug": "contact-card",
+   "name": "Contact Card",
+   "description": "People and businesses in an assistant reply: name, role or category, rating, open now with hours, phone, email and address, local time for people, and Call, Email and Copy actions.",
+   "url": "https://21st.dev/@aadixc0de/components/contact-card",
+   "preview": "https://cdn.21st.dev/user_3LlhXiSsBVSfcYPAE8bBARKA2mf/contact-card/default/preview.1794561772046.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 48964
+  },
+  {
    "id": 44486,
    "key": "aakashmehra__coffee-pour-menu",
    "author": "aakashmehra",
@@ -51,6 +64,19 @@
    "kind": "",
    "deps": [],
    "bytes": 174049
+  },
+  {
+   "id": 45440,
+   "key": "aloksivastava1025__cue-collapsing-cards-accordion",
+   "author": "aloksivastava1025",
+   "slug": "cue-collapsing-cards-accordion",
+   "name": "Collapsing Cards Accordion",
+   "description": "A five-image horizontal accordion where hovering a card expands it with smooth flex transitions while others collapse to vertical wordmarks.",
+   "url": "https://21st.dev/@aloksivastava1025/components/cue-collapsing-cards-accordion",
+   "preview": "https://cdn.21st.dev/user_2wdgsmfD3BNOOm4oOqUDUS9IXZI/cue-collapsing-cards-accordion/default/preview.1794517822031.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6305
   },
   {
    "id": 26223,
@@ -121,6 +147,19 @@
    "bytes": 6320
   },
   {
+   "id": 11615,
+   "key": "cnippet-dev__davincho-hero-1",
+   "author": "cnippet-dev",
+   "slug": "davincho-hero-1",
+   "name": "Davincho Hero-1",
+   "description": "Animated hero section with parallax background image.",
+   "url": "https://21st.dev/@cnippet-dev/components/davincho-hero-1",
+   "preview": "https://cdn.21st.dev/cnippet.dev/davincho-hero-1/default/preview.1774290703029.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2591
+  },
+  {
    "id": 25128,
    "key": "cnippet-dev__v-calendar-8",
    "author": "cnippet-dev",
@@ -153,6 +192,19 @@
    "bytes": 7326
   },
   {
+   "id": 9859,
+   "key": "daiwiikharihar__elastic-gallery",
+   "author": "daiwiikharihar",
+   "slug": "elastic-gallery",
+   "name": "Elastic Gallery",
+   "description": "Interactive horizontal image accordion where the active card expands with a dark gradient overlay, title, category chip, and CTA while others collapse.",
+   "url": "https://21st.dev/@daiwiikharihar/components/elastic-gallery",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/elastic-gallery/default/preview.1786118119359.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 24986
+  },
+  {
    "id": 30669,
    "key": "daiwiikharihar__panoramic-spread-hero",
    "author": "daiwiikharihar",
@@ -164,6 +216,19 @@
    "kind": "",
    "deps": [],
    "bytes": 6875
+  },
+  {
+   "id": 9701,
+   "key": "daiwiikharihar__scroll-triggered-video-hero",
+   "author": "daiwiikharihar",
+   "slug": "scroll-triggered-video-hero",
+   "name": "Scroll-Triggered Video Hero",
+   "description": "A robust hero section that transitions between video chapters based on viewport position. Uses sticky positioning for performance, with z-index layering for smooth cross-fades. Includes a synchronized progress indicator and accessible text overlays.",
+   "url": "https://21st.dev/@daiwiikharihar/components/scroll-triggered-video-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/scroll-triggered-video-hero/default/preview.1786657946551.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 7010
   },
   {
    "id": 30683,
@@ -190,6 +255,19 @@
    "kind": "",
    "deps": [],
    "bytes": 11680
+  },
+  {
+   "id": 21987,
+   "key": "dev.shejanmahamud__expanded-map",
+   "author": "dev.shejanmahamud",
+   "slug": "expanded-map",
+   "name": "Expanded Map",
+   "description": "An interactive location card with a subtle 3D tilt that expands on click to reveal real map tiles, coordinates, and a location marker.",
+   "url": "https://21st.dev/@dev.shejanmahamud/components/expanded-map",
+   "preview": "https://cdn.21st.dev/user_32IAZZ0jCu5Ox98TEx5aAsxVNyq/expanded-map/expanded-map-locations/preview.1787663442745.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7670
   },
   {
    "id": 25480,
@@ -377,6 +455,19 @@
    "bytes": 30405
   },
   {
+   "id": 28111,
+   "key": "educalvolpz__hover-expand",
+   "author": "educalvolpz",
+   "slug": "hover-expand",
+   "name": "Hover Expand",
+   "description": "An accordion-style image gallery where panels expand on hover or keyboard focus and the rest collapse to a thin strip with a rotated label.",
+   "url": "https://21st.dev/@educalvolpz/components/hover-expand",
+   "preview": "https://cdn.21st.dev/educalvolpz/hover-expand/default/preview.1789896994579-0686610b-1c19-47c1-b8ed-3e1d10bad11b.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24735
+  },
+  {
    "id": 5967,
    "key": "efferd__zoom-parallax",
    "author": "efferd",
@@ -401,6 +492,35 @@
    "kind": "",
    "deps": [],
    "bytes": 4993
+  },
+  {
+   "id": 19080,
+   "key": "felipemenezes098__hero-09",
+   "author": "felipemenezes098",
+   "slug": "hero-09",
+   "name": "Real Estate Search Hero",
+   "description": "A centered hero section with a rounded search bar, a masked architecture image that fades into the page, and a split closing statement.",
+   "url": "https://21st.dev/@felipemenezes098/components/hero-09",
+   "preview": "https://cdn.21st.dev/felipemenezes098/hero-09/default/preview.1783679376775.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 31844
+  },
+  {
+   "id": 37903,
+   "key": "gughigug__liquid-sculpture-hero",
+   "author": "gughigug",
+   "slug": "liquid-sculpture-hero",
+   "name": "Liquid Sculpture Hero",
+   "description": "Editorial hero with a 3D sculpture that turns into ~125k liquid particles under the cursor. Light/dark switch, mobile layout, WebGL2.",
+   "url": "https://21st.dev/@gughigug/components/liquid-sculpture-hero",
+   "preview": "https://cdn.21st.dev/gughigug/liquid-sculpture-hero/default/preview.1791918866135-0876fd37-a2b3-42f8-9aa0-8f0c57907ad1.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 41685
   },
   {
    "id": 25518,
@@ -456,6 +576,32 @@
    "kind": "",
    "deps": [],
    "bytes": 26502
+  },
+  {
+   "id": 2200,
+   "key": "ishamsu__curved-menu",
+   "author": "ishamsu",
+   "slug": "curved-menu",
+   "name": "Curved Menu",
+   "description": "A modern React navigation component with an animated curved sidebar, interactive menu items, and social media footer. with smooth animations",
+   "url": "https://21st.dev/@ishamsu/components/curved-menu",
+   "preview": "https://cdn.21st.dev/ishamsu/curved-menu/default/preview.1747620613612.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6409
+  },
+  {
+   "id": 2061,
+   "key": "ishamsu__smooth-scroll-hero",
+   "author": "ishamsu",
+   "slug": "smooth-scroll-hero",
+   "name": "Smooth Scroll Hero",
+   "description": "A React component that creates a smooth-scrolling hero section with parallax background effects. Features responsive images for mobile and desktop, with customizable scroll animations built using Framer Motion.",
+   "url": "https://21st.dev/@ishamsu/components/smooth-scroll-hero",
+   "preview": "https://cdn.21st.dev/ishamsu/smooth-scroll-hero/default/preview.1747142616016.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2735
   },
   {
    "id": 7863,
@@ -534,6 +680,19 @@
    "kind": "",
    "deps": [],
    "bytes": 103636
+  },
+  {
+   "id": 27010,
+   "key": "kedhareswer__hover-expand-gallery",
+   "author": "kedhareswer",
+   "slug": "hover-expand-gallery",
+   "name": "Hover Expand Gallery",
+   "description": "Hover expand image gallery accordion: a row of hairline-separated panels with vertical labels, where the hovered or tapped panel grows to reveal its image while the rest stay rail-width. Below 1024px it becomes a vertical accordion. For portfolios and case studies. Pure CSS, no animation library.",
+   "url": "https://21st.dev/@kedhareswer/components/hover-expand-gallery",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/hover-expand-gallery/default/preview.1791304987340.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 4967
   },
   {
    "id": 36082,
@@ -731,6 +890,74 @@
    "bytes": 297224
   },
   {
+   "id": 43217,
+   "key": "klyv-ui__time-slot-picker",
+   "author": "klyv-ui",
+   "slug": "time-slot-picker",
+   "name": "Time Slot Picker",
+   "description": "A booking widget that shows a strip of days and that day's available times as two keyboard-navigable radio groups, so free and taken slots read at a glance.",
+   "url": "https://21st.dev/@klyv-ui/components/time-slot-picker",
+   "preview": "https://cdn.21st.dev/user_registry_klyv-ui_1791308669867/time-slot-picker/default/preview.1793405763346.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 26795
+  },
+  {
+   "id": 7504,
+   "key": "lavikatiyar__card",
+   "author": "lavikatiyar",
+   "slug": "card",
+   "name": "Card",
+   "description": "Hotel Card\nA visually polished card component to display property information, including an image, name, location, and rating. It is fully responsive and animated on hover.",
+   "url": "https://21st.dev/@lavikatiyar/components/card",
+   "preview": "https://cdn.21st.dev/user_32jKsxB5RdZryZbhXn5ZBjOM8aV/card/default/preview.1788958813944.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 23276
+  },
+  {
+   "id": 7902,
+   "key": "lavikatiyar__location-card",
+   "author": "lavikatiyar",
+   "slug": "location-card",
+   "name": "Location Card",
+   "description": "Location Card\nA visually polished card component to display a location with an image, title, subtitle, and an animated call-to-action button. It is fully responsive, theme-adaptive, and includes subtle animations using framer-motion.",
+   "url": "https://21st.dev/@lavikatiyar/components/location-card",
+   "preview": "https://cdn.21st.dev/lavikatiyar/location-card/default/preview.1758519025947.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 23497
+  },
+  {
+   "id": 3007,
+   "key": "lovesickfromthe6ix__revolution-hero",
+   "author": "lovesickfromthe6ix",
+   "slug": "revolution-hero",
+   "name": "Revolution Hero",
+   "description": "Hero section with floating side panel navigation and an animated dynamic abstract background",
+   "url": "https://21st.dev/@lovesickfromthe6ix/components/revolution-hero",
+   "preview": "https://cdn.21st.dev/lovesickfromthe6ix/revolution-hero/default/preview.1785191286889-987b8fd7-5b33-4d3d-8c0c-1c2190654f52.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 85982
+  },
+  {
+   "id": 1131,
+   "key": "lukacho__image-swiper",
+   "author": "lukacho",
+   "slug": "image-swiper",
+   "name": "Image Swiper",
+   "description": "Image swiper card for a real estate website\n\n",
+   "url": "https://21st.dev/@lukacho/components/image-swiper",
+   "preview": "https://cdn.21st.dev/user_lukacho/image-swiper/default/preview.1786715503080.webp",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30638
+  },
+  {
    "id": 1503,
    "key": "manuarora700__hero-parallax",
    "author": "manuarora700",
@@ -742,6 +969,19 @@
    "kind": "",
    "deps": [],
    "bytes": 6443
+  },
+  {
+   "id": 1024,
+   "key": "manuarora700__navbar-menu",
+   "author": "manuarora700",
+   "slug": "navbar-menu",
+   "name": "Navbar Menu",
+   "description": "A navbar menu that animates its children on hover, makes a beautiful bignav",
+   "url": "https://21st.dev/@manuarora700/components/navbar-menu",
+   "preview": "https://cdn.21st.dev/user_aceternity/navbar-menu/1024/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25545
   },
   {
    "id": 29211,
@@ -817,6 +1057,35 @@
    "bytes": 11758
   },
   {
+   "id": 12200,
+   "key": "rahil1202__prisma-hero",
+   "author": "rahil1202",
+   "slug": "prisma-hero",
+   "name": "PrismaHero",
+   "description": "A full-screen cinematic hero section with a background video, animated word reveal, and minimal floating navbar—designed to highlight a creative brand with strong visual storytelling and smooth motion interactions.",
+   "url": "https://21st.dev/@rahil1202/components/prisma-hero",
+   "preview": "https://cdn.21st.dev/rahil1202/prisma-hero/default/preview.1776747545948.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4508
+  },
+  {
+   "id": 7617,
+   "key": "ravikatiyar162__card-17",
+   "author": "ravikatiyar162",
+   "slug": "card-17",
+   "name": "Card",
+   "description": "Location Card\nA visually engaging card component to display location details with an image background and a 3D tilt effect on hover. It's fully responsive and theme-adaptive.",
+   "url": "https://21st.dev/@ravikatiyar162/components/card-17",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/card-17/default/preview.1758027475153.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29524
+  },
+  {
    "id": 7100,
    "key": "ravikatiyar162__card-4",
    "author": "ravikatiyar162",
@@ -831,6 +1100,22 @@
     "class-variance-authority"
    ],
    "bytes": 28645
+  },
+  {
+   "id": 8737,
+   "key": "ravikatiyar162__hero-section-9",
+   "author": "ravikatiyar162",
+   "slug": "hero-section-9",
+   "name": "Hero Section",
+   "description": "Hero Section Component\nThis component creates a dynamic and engaging hero section, perfect for landing pages. It features a two-column layout with animated text, actionable buttons, social proof statistics, and a visually appealing image collage.",
+   "url": "https://21st.dev/@ravikatiyar162/components/hero-section-9",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/hero-section-9/default/preview.1760172786727.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 31246
   },
   {
    "id": 7794,
@@ -1022,6 +1307,19 @@
    "bytes": 13317
   },
   {
+   "id": 24830,
+   "key": "uilayout.contact__gallery-modal-accordion",
+   "author": "uilayout.contact",
+   "slug": "gallery-modal-accordion",
+   "name": "Gallery Modal Accordion",
+   "description": "An interactive image gallery where thumbnails expand accordion-style on hover and open into an animated fullscreen modal with title and description.",
+   "url": "https://21st.dev/@uilayout.contact/components/gallery-modal-accordion",
+   "preview": "https://cdn.21st.dev/user_2zAsvSHo1IeJGKtSjJ3uR1N1Cd7/gallery-modal-accordion/default/preview.1787745779112.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7069
+  },
+  {
    "id": 20068,
    "key": "unlumen__count-up",
    "author": "unlumen",
@@ -1072,9 +1370,27 @@
    "kind": "",
    "deps": [],
    "bytes": 29771
+  },
+  {
+   "id": 25474,
+   "key": "yura__carousel-squeeze",
+   "author": "yura",
+   "slug": "carousel-squeeze",
+   "name": "Squeeze Carousel",
+   "description": "An expanding accordion image carousel: one wide hero panel, the rest squeezed into thin clickable strips. Smooth width animation, click-to-open, hover grow, autoplay, keyboard control, responsive, light and dark mode. Perfect for product features.",
+   "url": "https://21st.dev/@yura/components/carousel-squeeze",
+   "preview": "https://cdn.21st.dev/yura/carousel-squeeze/default/preview.1787420809042-efcce442-3d43-4cd1-afe0-2f4cabfc9dd9.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 33434
   }
  ],
  "failed": [
+  {
+   "key": "0xUrvish__bottom-menu",
+   "name": "Bottom Menu",
+   "reason": "Needs the Hugeicons icon package"
+  },
   {
    "key": "dhileepkumargm__3d-animation",
    "name": "3D Animation",
@@ -1104,6 +1420,21 @@
    "key": "kedhareswer__hotel-showcase",
    "name": "Hotel Showcase",
    "reason": "the code came back empty"
+  },
+  {
+   "key": "shadcnstore__team-2",
+   "name": "Agents Team Grid",
+   "reason": "Needs helper files the API result leaves out"
+  },
+  {
+   "key": "starc007__feedback-widget",
+   "name": "Feedback Widget",
+   "reason": "Needs helper files the API result leaves out"
+  },
+  {
+   "key": "unlumen__motion-navigation-menu",
+   "name": "Motion Navigation Menu",
+   "reason": "Needs helper files the API result leaves out"
   },
   {
    "key": "ziegfiroyt__booking29",

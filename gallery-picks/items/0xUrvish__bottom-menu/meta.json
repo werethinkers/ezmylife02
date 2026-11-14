@@ -1,0 +1,13 @@
+{
+  "id": 10458,
+  "key": "0xUrvish__bottom-menu",
+  "author": "0xUrvish",
+  "slug": "bottom-menu",
+  "name": "Bottom Menu",
+  "description": "An animated bottom navigation menu with smooth transitions.",
+  "url": "https://21st.dev/@0xUrvish/components/bottom-menu",
+  "preview": "https://cdn.21st.dev/user_0xUrvish/bottom-menu/default/preview.1788881378060.webp",
+  "kind": "",
+  "deps": [],
+  "skip": "Needs the Hugeicons icon package"
+}

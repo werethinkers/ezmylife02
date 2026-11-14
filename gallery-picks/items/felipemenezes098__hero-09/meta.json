@@ -1,0 +1,15 @@
+{
+  "id": 19080,
+  "key": "felipemenezes098__hero-09",
+  "author": "felipemenezes098",
+  "slug": "hero-09",
+  "name": "Real Estate Search Hero",
+  "description": "A centered hero section with a rounded search bar, a masked architecture image that fades into the page, and a split closing statement.",
+  "url": "https://21st.dev/@felipemenezes098/components/hero-09",
+  "preview": "https://cdn.21st.dev/felipemenezes098/hero-09/default/preview.1783679376775.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}
