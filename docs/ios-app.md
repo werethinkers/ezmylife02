@@ -142,3 +142,11 @@ at `/privacy`, which is the privacy address for the App Store listing.
   (that needs Apple's server notifications). Refunds are rare; check the `apple_purchases` table if one is reported.
 - **Push notifications** (needs an APNs key and a sender).
 - **The business kit in the app.** Not sold there; it would need its own Apple product.
+
+## Testers get every build
+
+After each upload the TestFlight workflow runs `ios/testflight-share.rb`: it waits for Apple to process the
+build, adds it to every tester group (internal groups set to "every build" already get it), and for external
+groups sets "What to Test" and sends it to Beta App Review. To share the newest build again without building,
+run the workflow with "Skip the build" ticked. External testers need Test Information (contact email, and a
+sign-in for the reviewer) filled once in App Store Connect → TestFlight → Test Information.

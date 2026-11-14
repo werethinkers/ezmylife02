@@ -17,6 +17,14 @@ on:
         description: "Version shown in the App Store (e.g. 1.0, 1.1)"
         required: true
         default: "1.0"
+      share_only:
+        description: "Skip the build: only give the newest build to every tester group"
+        type: boolean
+        default: false
+      public_link:
+        description: "Make an outside-tester group with a join link if there is none"
+        type: boolean
+        default: false
 jobs:
   testflight:
     runs-on: macos-15
@@ -30,7 +38,9 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-package-lock --no-audit --no-fund
+        if: ${{ !inputs.share_only }}
       - run: npx cap sync ios
+        if: ${{ !inputs.share_only }}
 
       - name: Check the secrets are set
         env:
@@ -86,6 +96,7 @@ jobs:
           ruby -rjson -e 'JSON.parse(File.read(ARGV[0]))["data"].each { |d| puts "  app id: #{d["attributes"]["identifier"]}" }' "$RUNNER_TEMP/ids.json"
 
       - name: Build (archive)
+        if: ${{ !inputs.share_only }}
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -108,9 +119,11 @@ jobs:
             CURRENT_PROJECT_VERSION="${{ github.run_number }}"
 
       - name: Stamp the entitlements (App Group shared with the keyboard)
+        if: ${{ !inputs.share_only }}
         run: ios/stamp-entitlements.sh "$RUNNER_TEMP/App.xcarchive"
 
       - name: Upload to TestFlight
+        if: ${{ !inputs.share_only }}
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -139,6 +152,15 @@ jobs:
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
           echo "Uploaded build ${{ github.run_number }} (version ${{ inputs.version }}). It shows in App Store Connect → TestFlight after Apple finishes processing (usually 10 to 30 minutes)."
+
+      - name: Give the build to every tester group
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          PUBLIC_LINK: ${{ inputs.public_link && '1' || '0' }}
+        run: |
+          # Without this only the account owner (and internal groups set to get every build) see new builds.
+          ruby ios/testflight-share.rb "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" "${{ inputs.share_only && 'newest' || github.run_number }}"
 
       - name: Show why the export failed
         if: failure()
