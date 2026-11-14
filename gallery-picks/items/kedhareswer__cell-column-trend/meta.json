@@ -1,0 +1,12 @@
+{
+  "id": 44655,
+  "key": "kedhareswer__cell-column-trend",
+  "author": "kedhareswer",
+  "slug": "cell-column-trend",
+  "name": "Animated Bar Chart Dashboard",
+  "description": "Animated bar chart dashboard: a performance chart of stacked cells where KPI tabs flip the board to a new metric in a diagonal wave, the axis rolls to its new scale and hovering a column shows a tooltip. For analytics and admin dashboards.",
+  "url": "https://21st.dev/@kedhareswer/components/cell-column-trend",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/cell-column-trend/default/preview.1793900161863.png",
+  "kind": "",
+  "deps": []
+}

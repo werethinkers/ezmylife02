@@ -277,6 +277,45 @@
    "bytes": 227344
   },
   {
+   "id": 44655,
+   "key": "kedhareswer__cell-column-trend",
+   "author": "kedhareswer",
+   "slug": "cell-column-trend",
+   "name": "Animated Bar Chart Dashboard",
+   "description": "Animated bar chart dashboard: a performance chart of stacked cells where KPI tabs flip the board to a new metric in a diagonal wave, the axis rolls to its new scale and hovering a column shows a tooltip. For analytics and admin dashboards.",
+   "url": "https://21st.dev/@kedhareswer/components/cell-column-trend",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/cell-column-trend/default/preview.1793900161863.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 13500
+  },
+  {
+   "id": 44656,
+   "key": "kedhareswer__halftone-flow-hero",
+   "author": "kedhareswer",
+   "slug": "halftone-flow-hero",
+   "name": "Halftone Shader Hero",
+   "description": "Halftone shader hero: a WebGL hero card whose background is liquid marbling printed through a halftone dot screen that blooms under the pointer, with a word-by-word serif headline and a typing prompt bar. For AI and SaaS landing pages.",
+   "url": "https://21st.dev/@kedhareswer/components/halftone-flow-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/halftone-flow-hero/default/preview.1793899925396.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 103636
+  },
+  {
+   "id": 45453,
+   "key": "kedhareswer__ink-spill-theme-switch",
+   "author": "kedhareswer",
+   "slug": "ink-spill-theme-switch",
+   "name": "Ink Spill Theme Switch",
+   "description": "A light/dark theme switch where the new theme spills out of the toggle like ink, with a ragged fractal edge, hairline tendrils and droplets. Wrap any page; no dependencies beyond React.",
+   "url": "https://21st.dev/@kedhareswer/components/ink-spill-theme-switch",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-spill-theme-switch/default/preview.1794575050396.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 8235
+  },
+  {
    "id": 44662,
    "key": "kedhareswer__journal-spread-carousel",
    "author": "kedhareswer",
@@ -479,6 +518,11 @@
    "reason": "Could not resolve \"gsap\""
   },
   {
+   "key": "kedhareswer__pulse-stripe-hero",
+   "name": "Animated Stripe Hero Section",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
    "key": "kedhareswer__rotating-flavor-slider",
    "name": "Scroll Rotating Product Slider",
    "reason": "Could not resolve \"gsap\""
@@ -491,6 +535,11 @@
   {
    "key": "kedhareswer__sneaker-product-hero",
    "name": "Sneaker Product Page Hero",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
+   "key": "kedhareswer__sticker-swap-headline",
+   "name": "Animated Sticker Headline Hero",
    "reason": "Could not resolve \"gsap\""
   },
   {
