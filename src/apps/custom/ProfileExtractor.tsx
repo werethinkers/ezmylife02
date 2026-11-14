@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Download, FileUp, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,9 @@ import { useAppStore, uid } from "../lib/store";
 import { runApp, NeedsCredits, errorText } from "../lib/api";
 import { downloadText, fileText, toCsv } from "../lib/files";
 import { APPS } from "../registry";
+import { useWorkspace } from "../lib/workspace";
+import { docFromBlocks } from "../output/buildDoc";
+import { SaveBar } from "../output/SaveBar";
 
 interface Profile {
   id: string;
@@ -74,6 +77,37 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
   };
 
   const open = profiles.find((p) => p.id === openId);
+  const { profile: ws } = useWorkspace();
+  const doc = useMemo(() => {
+    const list = store.data.profiles ?? [];
+    return (
+      list.length
+        ? docFromBlocks({
+            appName: "Resume Profile Extractor",
+            template: "register",
+            title: "Candidate profiles",
+            subtitle: `${list.length} ${list.length === 1 ? "profile" : "profiles"}`,
+            profile: ws,
+            blocks: [
+              {
+                t: "table",
+                head: ["#", "Name", "Latest role", "Email", "Phone", "Location", "Top skills", "Education"],
+                rows: list.map((p, i) => [
+                  String(i + 1),
+                  p.name || p.file,
+                  p.experience?.[0] ? `${p.experience[0].title}, ${p.experience[0].company}` : p.headline,
+                  p.email,
+                  p.phone,
+                  p.location,
+                  (p.skills ?? []).slice(0, 6).join(", "),
+                  (p.education ?? []).map((e) => `${e.degree} ${e.institution} ${e.year}`.trim()).join("; "),
+                ]),
+              },
+            ],
+          })
+        : null
+    );
+  }, [store.data.profiles, ws]);
 
   return (
     <AppShell toolId={toolId} intro={def.intro} related={def.related} syncState={store.syncState} wide steps={["Add resume PDFs", "AI extracts each profile", "Review & export CSV"]}>
@@ -122,6 +156,7 @@ export default function ProfileExtractor({ toolId }: { toolId: string }) {
               {(open.education ?? []).map((x, i) => <p key={i} className="text-xs">{x.degree}, {x.institution} {x.year}</p>)}
             </div>
           )}
+          {profiles.length > 0 && <SaveBar toolId={toolId} appName="Resume Profile Extractor" doc={doc} />}
         </div>
       </div>
     </AppShell>

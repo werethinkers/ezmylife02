@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BookOpen, ChevronLeft, ChevronRight, ImagePlus, Loader2, Printer, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,13 @@ import { useAppStore, uid } from "../lib/store";
 import { useRun } from "../lib/api";
 import { APPS } from "../registry";
 import { DEFAULT_PRICES } from "../prices";
+import { useWorkspace } from "../lib/workspace";
+import { letterheadFrom } from "../output/buildDoc";
+import { TEMPLATE_ACCENT, todayText } from "../output/choice";
+import { makePdf } from "../output/render";
+import { saveFile } from "../output/save";
+import { SaveBar } from "../output/SaveBar";
+import type { PdfBlock, PdfDoc } from "../output/types";
 
 interface Page {
   text: string;
@@ -23,7 +30,24 @@ interface Story {
   at: number;
 }
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/** The story as a picture book: one story page per PDF page, picture on top. */
+function storyDoc(story: Story, profile: Parameters<typeof letterheadFrom>[0]): PdfDoc {
+  const blocks: PdfBlock[] = story.pages.flatMap((p, i) => [
+    ...(i ? [{ t: "break" } as PdfBlock] : []),
+    ...(p.image ? [{ t: "img", src: p.image, alt: p.illustration, maxH: 560 } as PdfBlock] : []),
+    { t: "p", text: p.text, big: true } as PdfBlock,
+  ]);
+  return {
+    template: "document",
+    title: story.title,
+    kicker: "Storybook Creator",
+    date: todayText(),
+    accent: TEMPLATE_ACCENT.plan,
+    letterhead: letterheadFrom(profile),
+    blocks,
+    fileName: `story-${story.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "book"}`,
+  };
+}
 
 export default function StoryBook({ toolId }: { toolId: string }) {
   const def = APPS[toolId];
@@ -60,13 +84,20 @@ export default function StoryBook({ toolId }: { toolId: string }) {
     }
   };
 
-  const print = () => {
-    if (!story) return;
-    const w = window.open("", "_blank", "noopener,noreferrer");
-    if (!w) return toast.error("Allow pop-ups to print.");
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(story.title)}</title><style>body{font-family:Georgia,serif;max-width:720px;margin:auto;padding:24px}h1{text-align:center;margin:40vh 0}section{page-break-before:always;padding-top:24px}img{max-width:100%;border-radius:12px}p{font-size:18px;line-height:1.6}</style></head><body><h1>${esc(story.title)}</h1>${story.pages.map((p, i) => `<section>${p.image ? `<img src="${p.image}" alt="">` : ""}<p>${esc(p.text).replace(/\n/g, "<br>")}</p><small>${i + 1}</small></section>`).join("")}</body></html>`);
-    w.document.close();
-    setTimeout(() => w.print(), 500);
+  const { profile } = useWorkspace();
+  const doc = useMemo(() => (story ? storyDoc(story, profile) : null), [story, profile]);
+  const [making, setMaking] = useState(false);
+  const print = async () => {
+    if (!doc) return;
+    setMaking(true);
+    try {
+      const { blob } = await makePdf(doc);
+      await saveFile(blob, `${doc.fileName}.pdf`, story?.title ?? "Story");
+    } catch {
+      toast.error("The PDF could not be made on this device.");
+    } finally {
+      setMaking(false);
+    }
   };
 
   const cur = story?.pages[page];
@@ -109,10 +140,11 @@ export default function StoryBook({ toolId }: { toolId: string }) {
           {write.busy ? (
             <div className="flex min-h-[420px] items-center justify-center rounded-2xl border-2 border-ink bg-card text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Writing your story…</div>
           ) : story && cur ? (
+            <div className="space-y-3">
             <div className="overflow-hidden rounded-3xl border border-border/60 bg-[hsl(40_60%_97%)] text-stone-800 dark:bg-stone-900 dark:text-stone-100">
               <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5 dark:border-white/10">
                 <p className="truncate font-serif text-lg font-bold">{story.title}</p>
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={print}><Printer className="h-3.5 w-3.5" /> Print book</Button>
+                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => void print()} disabled={making}>{making ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Printer className="h-3.5 w-3.5" />} Book PDF</Button>
               </div>
               <div className="grid gap-4 p-5 md:grid-cols-2 md:p-8">
                 <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5">
@@ -130,6 +162,8 @@ export default function StoryBook({ toolId }: { toolId: string }) {
                 <span className="text-xs">Page {page + 1} of {story.pages.length}</span>
                 <Button size="sm" variant="ghost" disabled={page >= story.pages.length - 1} onClick={() => setPage(page + 1)}>Next <ChevronRight className="h-4 w-4" /></Button>
               </div>
+            </div>
+            <SaveBar toolId={toolId} appName="Storybook Creator" doc={doc} />
             </div>
           ) : (
             <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-ink/60 bg-sand/60 p-6 text-center text-sm text-muted-foreground">

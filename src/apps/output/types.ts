@@ -21,7 +21,7 @@ export interface Letterhead {
 /** One block of a PDF document. Text may hold **bold** and *italic*. */
 export type PdfBlock =
   | { t: "h"; level: 1 | 2 | 3; text: string }
-  | { t: "p"; text: string }
+  | { t: "p"; text: string; big?: boolean }
   | { t: "ul" | "ol" | "check"; items: string[] }
   | { t: "table"; head: string[]; rows: string[][]; foot?: string[] }
   | { t: "tiles"; items: { label: string; value: string; main?: boolean }[] }
@@ -30,7 +30,11 @@ export type PdfBlock =
   | { t: "split"; parts: { label: string; value: number }[] }
   | { t: "note"; text: string }
   | { t: "sign"; lines: string[] }
-  | { t: "hr" };
+  | { t: "hr" }
+  /** A picture (data: URL or a CORS-readable link), at most `maxH` px tall. */
+  | { t: "img"; src: string; alt?: string; maxH?: number }
+  /** Start a new page here. */
+  | { t: "break" };
 
 export interface PdfDoc {
   template: TemplateId;

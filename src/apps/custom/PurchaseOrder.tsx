@@ -13,7 +13,11 @@ import { useAppStore, uid } from "../lib/store";
 import { useWorkspace } from "../lib/workspace";
 import { takeHandoff } from "../lib/handoff";
 import { useRun } from "../lib/api";
-import { markdownToHtml, toCsv, downloadText } from "../lib/files";
+import { toCsv, downloadText } from "../lib/files";
+import { docFromPurchaseOrder } from "../output/buildDoc";
+import { SaveBar } from "../output/SaveBar";
+import { makePdf } from "../output/render";
+import { saveFile } from "../output/save";
 import { APPS } from "../registry";
 
 interface PO {
@@ -95,21 +99,30 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
     toast.success(`${po.number} saved`);
   };
 
-  const poMarkdown = () => {
-    const buyer = ws.profile;
-    const lines = filled
-      .map((r, i) => `| ${i + 1} | ${r.item} | ${r.hsn || ""} | ${r.qty} ${r.unit || ""} | ${inr(num(r.rate))} | ${r.gst}% | ${inr(num(r.qty) * num(r.rate) * (1 + num(r.gst) / 100))} |`)
-      .join("\n");
-    return `# Purchase Order ${po.number}\n\n**Date:** ${po.date}${po.deliveryDate ? ` · **Deliver by:** ${po.deliveryDate}` : ""}\n\n| From (buyer) | To (supplier) |\n| --- | --- |\n| ${buyer.businessName ?? ""}${buyer.gstin ? ` · GSTIN ${buyer.gstin}` : ""}<br>${buyer.address ?? ""}<br>${buyer.phone ?? ""} | ${po.supplier}${po.supplierGstin ? ` · GSTIN ${po.supplierGstin}` : ""}<br>${po.supplierAddress} |\n\n| # | Item | HSN | Qty | Rate | GST | Amount |\n| --- | --- | --- | --- | --- | --- | --- |\n${lines}\n\n**Subtotal:** ${inr(t.sub)}  \n**GST:** ${inr(t.tax)}  \n**Total:** ${inr(t.total)}\n\n**Deliver to:** ${po.deliverTo}  \n**Terms:** ${po.terms}${po.notes ? `\n\n**Notes:** ${po.notes}` : ""}\n\n\n_Authorised signatory_`;
-  };
-
-  const print = () => {
-    if (!filled.length) return toast.error("Add at least one item.");
-    const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=1000");
-    if (!w) return toast.error("Allow pop-ups to print.");
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${po.number}</title><style>body{font-family:Arial,sans-serif;font-size:11pt;max-width:820px;margin:24px auto;padding:0 16px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}th{background:#f3f4f6}</style></head><body>${markdownToHtml(poMarkdown()).replace(/&lt;br&gt;/g, "<br>")}</body></html>`);
-    w.document.close();
-    setTimeout(() => w.print(), 300);
+  const poDoc = useMemo(
+    () =>
+      filled.length
+        ? docFromPurchaseOrder({
+            ...po,
+            items: filled.map((r) => ({ item: r.item, hsn: r.hsn ?? "", qty: num(r.qty), unit: r.unit ?? "", rate: num(r.rate), gst: num(r.gst) })),
+            profile: ws.profile,
+          })
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(po), ws.profile],
+  );
+  const [making, setMaking] = useState(false);
+  const print = async () => {
+    if (!poDoc) return toast.error("Add at least one item.");
+    setMaking(true);
+    try {
+      const { blob } = await makePdf(poDoc);
+      await saveFile(blob, `${poDoc.fileName}.pdf`, `Purchase order ${po.number}`);
+    } catch {
+      toast.error("The PDF could not be made on this device.");
+    } finally {
+      setMaking(false);
+    }
   };
 
   const draftEmail = async () => {
@@ -159,7 +172,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
               <Textarea id="po-notes" rows={2} value={po.notes} onChange={(e) => set("notes", e.target.value)} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button onClick={print} variant="outline" className="gap-1.5"><Printer className="h-4 w-4" /> Print / PDF</Button>
+              <Button onClick={() => void print()} disabled={making} variant="outline" className="gap-1.5">{making ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />} Download PO PDF</Button>
               <Button onClick={saveOrder} variant="outline" className="gap-1.5"><Save className="h-4 w-4" /> Save PO</Button>
               <Button onClick={draftEmail} disabled={busy} className="gap-1.5">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Write email to supplier
@@ -167,6 +180,7 @@ export default function PurchaseOrder({ toolId }: { toolId: string }) {
               <Button variant="ghost" onClick={() => { setPo(blank(orders.length)); setEmail(""); }}>New PO</Button>
             </div>
           </div>
+          <SaveBar toolId={toolId} appName="Purchase Order" doc={poDoc} />
           {email && <OutputPanel toolId={toolId} text={email} title="Email to supplier" fileName={`${po.number}-email`} editable onEdit={setEmail} />}
         </div>
         <aside className="space-y-4">
