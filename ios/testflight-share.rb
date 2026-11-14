@@ -16,7 +16,7 @@ require "uri"
 $stdout.sync = true
 
 KEY_PATH = ARGV[0] or abort("usage: testflight-share.rb <key.p8> [build number]")
-BUILD_NUMBER = ARGV[1].to_s.strip
+BUILD_NUMBER = ARGV[1].to_s.strip.sub(/\Anewest\z/, "")
 BUNDLE_ID = ENV.fetch("BUNDLE_ID", "com.ezyourlife.app")
 WHATS_NEW = ENV.fetch("WHATS_NEW", "New EZYOURLIFE keyboard build. Type / in any app to try the apps and shortcuts.")
 

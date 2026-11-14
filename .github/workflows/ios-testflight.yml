@@ -155,7 +155,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           # Without this only the account owner (and internal groups set to get every build) see new builds.
-          ruby ios/testflight-share.rb "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" "${{ inputs.share_only && '' || github.run_number }}"
+          ruby ios/testflight-share.rb "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" "${{ inputs.share_only && 'newest' || github.run_number }}"
 
       - name: Show why the export failed
         if: failure()
