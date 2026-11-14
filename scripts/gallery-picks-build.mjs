@@ -46,8 +46,9 @@ const failed = [];
 for (const key of keys) {
   const dir = path.join(ITEMS, key);
   const meta = JSON.parse(fs.readFileSync(path.join(dir, "meta.json"), "utf8"));
+  if (meta.skip) { failed.push({ key, name: meta.name, reason: meta.skip }); continue; }
   const entry = path.join(TMP, `${key}.entry.tsx`);
-  fs.writeFileSync(entry, `import * as React from "react";import {createRoot} from "react-dom/client";import Demo from ${JSON.stringify(path.join(dir, "demo.tsx"))};createRoot(document.getElementById("root")!).render(<Demo/>);`);
+  fs.writeFileSync(entry, `import * as React from "react";import {createRoot} from "react-dom/client";import * as M from ${JSON.stringify(path.join(dir, "demo.tsx"))};const Demo:any=(M as any).default||Object.values(M).find((v)=>typeof v==="function");createRoot(document.getElementById("root")!).render(<Demo/>);`);
   const ownPlugin = {
     name: "own",
     setup(b) {

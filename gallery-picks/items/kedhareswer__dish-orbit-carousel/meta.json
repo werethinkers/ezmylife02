@@ -1,0 +1,12 @@
+{
+  "id": 44583,
+  "key": "kedhareswer__dish-orbit-carousel",
+  "author": "kedhareswer",
+  "slug": "dish-orbit-carousel",
+  "name": "Food Menu Scroll Carousel",
+  "description": "Food menu scroll carousel: page scroll swings each plate out on an orbit as the next swings in, with a wiping two-weight title, chef card and a colour-morphing band. Endless both ways, GSAP ScrollTrigger, light/dark.",
+  "url": "https://21st.dev/@kedhareswer/components/dish-orbit-carousel",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/dish-orbit-carousel/default/preview.1793824300186.webp",
+  "kind": "",
+  "deps": []
+}

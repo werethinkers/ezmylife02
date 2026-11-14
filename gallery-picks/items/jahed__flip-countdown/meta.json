@@ -1,0 +1,13 @@
+{
+  "id": 3809,
+  "key": "jahed__flip-countdown",
+  "author": "jahed",
+  "slug": "flip-countdown",
+  "name": "FlipCountdown",
+  "description": "Create a stunning, retro-style animated counter for your React applications with the FlipCountdown component. This component mimics the classic split-flap display of old-school clocks and airport departure boards, providing a visually engaging way to display numbers.\nBuilt for ultimate flexibility, FlipCountdown can handle both counting down and counting up between any two numbers, no matter how large, thanks to its use of BigInt. It's perfect for launch pages, event timers, displaying real-time statistics, or adding a dynamic flair to any dashboard. The component is fully responsive and allows for easy customization of the card and text colors to perfectly match your theme. Simply set the countFrom and countTo props and watch the numbers flip!",
+  "url": "https://21st.dev/@jahed/components/flip-countdown",
+  "preview": "https://cdn.21st.dev/easemize/flip-countdown/plain/preview.1751900339620.png",
+  "kind": "",
+  "deps": [],
+  "skip": "its stylesheet was not included with the code"
+}

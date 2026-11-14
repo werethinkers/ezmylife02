@@ -1,6 +1,58 @@
 {
  "items": [
   {
+   "id": 2318,
+   "key": "TomIsLoading__squishy-card",
+   "author": "TomIsLoading",
+   "slug": "squishy-card",
+   "name": "Squishy card",
+   "description": "here is dynamic card",
+   "url": "https://21st.dev/@TomIsLoading/components/squishy-card",
+   "preview": "https://cdn.21st.dev/larsen66/squishy-card/default/preview.1747857814520.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 3176
+  },
+  {
+   "id": 44486,
+   "key": "aakashmehra__coffee-pour-menu",
+   "author": "aakashmehra",
+   "slug": "coffee-pour-menu",
+   "name": "Coffee Pour Menu",
+   "description": "A coffee menu with detailed SVG cups and hand-written physics: hover a drink and its cup slides in, coffee and milk pour, splash and blend, and the previous cup tips over and falls away.",
+   "url": "https://21st.dev/@aakashmehra/components/coffee-pour-menu",
+   "preview": "https://cdn.21st.dev/user_3LYLgwJ6QI0pqW5236yVVu72Qtj/coffee-pour-menu/default/preview.1793709298916.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 58717
+  },
+  {
+   "id": 44447,
+   "key": "aakashmehra__holographic-business-card",
+   "author": "aakashmehra",
+   "slug": "holographic-business-card",
+   "name": "Holographic Business Card",
+   "description": "An interactive business card that tilts toward your pointer, lifts on hover and flips on click, with nine holographic foils (Shards, Rainbow, Stars, Cosmos, Hearts, Shapes, Gold, Silver, Aurora) set by the effect and intensity props.",
+   "url": "https://21st.dev/@aakashmehra/components/holographic-business-card",
+   "preview": "https://cdn.21st.dev/user_3LYLgwJ6QI0pqW5236yVVu72Qtj/holographic-business-card/default/preview.1793743015299.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 174049
+  },
+  {
+   "id": 25480,
+   "key": "dg.singh252525__3-d-coverflow-carousel",
+   "author": "dg.singh252525",
+   "slug": "3-d-coverflow-carousel",
+   "name": "3D Coverflow Carousel",
+   "description": "A luxury 3D coverflow carousel with on-tile typography, masked reveals, and synchronized ambient background blur",
+   "url": "https://21st.dev/@dg.singh252525/components/3-d-coverflow-carousel",
+   "preview": "https://cdn.21st.dev/user_3IJ54MOiV6YYbWmtx6zRpU2UX7A/3-d-coverflow-carousel/default/preview.1787668264882.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 10498
+  },
+  {
    "id": 44854,
    "key": "dhxwhy__comparing-radio-cards",
    "author": "dhxwhy",
@@ -11,7 +63,7 @@
    "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/comparing-radio-cards/default/preview.1794235309746.webp",
    "kind": "",
    "deps": [],
-   "bytes": 16495
+   "bytes": 16641
   },
   {
    "id": 44844,
@@ -24,7 +76,7 @@
    "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/early-access-pass-cta/default/preview.1794245022860.webp",
    "kind": "",
    "deps": [],
-   "bytes": 19468
+   "bytes": 19613
   },
   {
    "id": 43148,
@@ -37,7 +89,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/metro-map-gallery/default/preview.1793378367617-57f4ff6c-f77a-4612-9b29-d82d210b2914.png",
    "kind": "",
    "deps": [],
-   "bytes": 42414
+   "bytes": 42607
   },
   {
    "id": 43147,
@@ -50,7 +102,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/palette-picker-gallery/default/preview.1793378305167-bba6b0e1-1bd8-4af8-9fbb-bdfd0d9f84f2.png",
    "kind": "",
    "deps": [],
-   "bytes": 24120
+   "bytes": 24291
   },
   {
    "id": 43150,
@@ -63,7 +115,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/pendant-lamp-rail/default/preview.1793379806291-52357793-bf80-4404-a294-d882393beab2.png",
    "kind": "",
    "deps": [],
-   "bytes": 38755
+   "bytes": 38923
   },
   {
    "id": 43142,
@@ -76,7 +128,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/picture-rail-gallery/default/preview.1793378004192-6dc4ab99-60ec-4b2a-85a9-86ccaff9d107.png",
    "kind": "",
    "deps": [],
-   "bytes": 45199
+   "bytes": 45371
   },
   {
    "id": 43000,
@@ -89,7 +141,7 @@
    "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/product-rail-gallery/default/preview.1793019403905.webp",
    "kind": "",
    "deps": [],
-   "bytes": 60040
+   "bytes": 60208
   },
   {
    "id": 43152,
@@ -102,7 +154,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/sushi-conveyor-menu/default/preview.1793379980194-5aa57ccf-f1f6-4ee1-b629-1534391a9c98.png",
    "kind": "menus",
    "deps": [],
-   "bytes": 36930
+   "bytes": 37125
   },
   {
    "id": 43143,
@@ -115,7 +167,7 @@
    "preview": "https://cdn.21st.dev/dhxwhy/team-lanyard-rail/default/preview.1793378106253-ba29fe10-5373-419d-8156-643effe20165.png",
    "kind": "",
    "deps": [],
-   "bytes": 39968
+   "bytes": 40138
   },
   {
    "id": 44843,
@@ -128,7 +180,23 @@
    "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/wordmark-reveal-footer/default/preview.1794245055815.webp",
    "kind": "",
    "deps": [],
-   "bytes": 19078
+   "bytes": 19223
+  },
+  {
+   "id": 2582,
+   "key": "isaiahbjork__event-countdown-card",
+   "author": "isaiahbjork",
+   "slug": "event-countdown-card",
+   "name": "Event Countdown Card",
+   "description": "This Event Countdown Card is a fully animated promotional block designed to highlight and convert users for upcoming live events. It features a real-time countdown timer, urgency cues (like “Starts Soon!”), dynamic hover states, and pulsing time units—all wrapped in a theme-aware, motion-optimized layout. It supports image backdrops, attendee stats, and customizable join actions.\n\nPerfect for workshop landing pages, webinars, tech meetups, product launches, or any scenario where live countdown urgency drives engagement and conversions.",
+   "url": "https://21st.dev/@isaiahbjork/components/event-countdown-card",
+   "preview": "https://cdn.21st.dev/isaiahbjork/event-countdown-card/default/preview.1749155511699.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 31780
   },
   {
    "id": 35500,
@@ -141,7 +209,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/lunar-boarding-pass/default/preview.1791305244493.webp",
    "kind": "",
    "deps": [],
-   "bytes": 30505
+   "bytes": 30651
   },
   {
    "id": 43141,
@@ -154,10 +222,46 @@
    "preview": "https://cdn.21st.dev/kedhareswer/signature-pen-footer/default/preview.1793372505190-37c40126-c999-4b17-9e22-0ad116a1496b.png",
    "kind": "",
    "deps": [],
-   "bytes": 41354
+   "bytes": 41499
+  },
+  {
+   "id": 8723,
+   "key": "rahil1202__metallic-business-card",
+   "author": "rahil1202",
+   "slug": "metallic-business-card",
+   "name": "MetallicBusinessCard",
+   "description": "A premium, reflective 3D metallic business card component that dynamically responds to mouse movement with realistic lighting and tilt effects.\nIt supports multiple metal finishes (gold, silver, bronze, platinum) and intelligently adjusts text color and glow for perfect readability on each surface.",
+   "url": "https://21st.dev/@rahil1202/components/metallic-business-card",
+   "preview": "https://cdn.21st.dev/rahil1202/metallic-business-card/default/preview.1785369908228-885ffbc3-e971-40b7-aed4-406a86be50e8.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 11758
+  },
+  {
+   "id": 8218,
+   "key": "ravikatiyar162__workout-card",
+   "author": "ravikatiyar162",
+   "slug": "workout-card",
+   "name": "Workout Card",
+   "description": "Workout Card\nDescription: A container component to display a \"Workout of the Day\" session, complete with a title, duration, and an animated list of exercises.",
+   "url": "https://21st.dev/@ravikatiyar162/components/workout-card",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/workout-card/default/preview.1758957879413.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24192
   }
  ],
  "failed": [
+  {
+   "key": "jahed__flip-countdown",
+   "name": "FlipCountdown",
+   "reason": "its stylesheet was not included with the code"
+  },
+  {
+   "key": "kedhareswer__dish-orbit-carousel",
+   "name": "Food Menu Scroll Carousel",
+   "reason": "Could not resolve \"gsap\""
+  },
   {
    "key": "kedhareswer__rotating-flavor-slider",
    "name": "Scroll Rotating Product Slider",
