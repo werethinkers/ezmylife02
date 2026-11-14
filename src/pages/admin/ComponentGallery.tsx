@@ -4,6 +4,9 @@ import { Check, Copy, ExternalLink, Laptop, Loader2, Maximize2, Moon, RotateCcw,
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { isAdmin } from "@/lib/devApps";
+import twAnimateCss from "./tw-animate.css?raw";
+import previewFrameCss from "./previewFrameCss.css?raw";
+import { hind400, hind600, unbounded700 } from "./frameFonts";
 
 /*
  * Private component gallery (/admin/components), for admins only.
@@ -117,10 +120,9 @@ function frameDoc(html: string, look: Look, dark: boolean): string {
   const vars = look === "ours" ? OURS : dark ? SHADCN_DARK : SHADCN_LIGHT;
   const ours =
     look === "ours"
-      ? `@font-face{font-family:Unbounded;font-weight:500;font-display:swap;src:url(${origin}/fonts/unbounded-latin-500-normal.woff2) format("woff2")}
-@font-face{font-family:Unbounded;font-weight:700;font-display:swap;src:url(${origin}/fonts/unbounded-latin-700-normal.woff2) format("woff2")}
-@font-face{font-family:Hind;font-weight:400;font-display:swap;src:url(${origin}/fonts/hind-latin-400-normal.woff2) format("woff2")}
-@font-face{font-family:Hind;font-weight:600;font-display:swap;src:url(${origin}/fonts/hind-latin-600-normal.woff2) format("woff2")}
+      ? `@font-face{font-family:Unbounded;font-weight:700;font-display:swap;src:url(${unbounded700}) format("woff2")}
+@font-face{font-family:Hind;font-weight:400;font-display:swap;src:url(${hind400}) format("woff2")}
+@font-face{font-family:Hind;font-weight:600;font-display:swap;src:url(${hind600}) format("woff2")}
 @theme{--font-sans:Hind,system-ui,sans-serif;--font-display:Unbounded,Hind,system-ui,sans-serif;
 --shadow-2xs:3px 3px 0 0 hsl(0 0% 7%);--shadow-xs:3px 3px 0 0 hsl(0 0% 7%);--shadow-sm:3px 3px 0 0 hsl(0 0% 7%);--shadow-md:3px 3px 0 0 hsl(0 0% 7%);--shadow-lg:5px 5px 0 0 hsl(0 0% 7%);--shadow-xl:7px 7px 0 0 hsl(0 0% 7%);--shadow-2xl:7px 7px 0 0 hsl(0 0% 7%)}
 body{font-family:Hind,system-ui,sans-serif}
@@ -133,6 +135,8 @@ h1,h2,h3{font-family:Unbounded,Hind,system-ui,sans-serif}
 @custom-variant dark (&:where(.dark, .dark *));
 @theme inline{${colors}${brand}--radius-sm:calc(var(--radius) - 4px);--radius-md:calc(var(--radius) - 2px);--radius-lg:var(--radius);--radius-xl:calc(var(--radius) + 4px)}
 @layer base{*{border-color:var(--color-border)}body{background:var(--color-background);color:var(--color-foreground)}}
+${twAnimateCss}
+${previewFrameCss}
 ${ours}
 </style>
 <script src="${origin}/vendor/tailwind-browser-4.1.11.js"></script>
