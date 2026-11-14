@@ -7,6 +7,7 @@ import { isAdmin } from "@/lib/devApps";
 import twAnimateCss from "./tw-animate.css?raw";
 import previewFrameCss from "./previewFrameCss.css?raw";
 import { hind400, hind600, unbounded700 } from "./frameFonts";
+import working from "./workingComponents.json";
 
 /*
  * Private component gallery (/admin/components), for admins only.
@@ -41,7 +42,11 @@ type Entry = {
   htmlPath: string;
   screenshotPath: string;
 };
-type Item = Entry & { id: string; name: string; folder: string; haystack: string };
+type Works = "moves" | "responds";
+type Item = Entry & { id: string; name: string; folder: string; haystack: string; works: Works };
+
+/* Only components that passed scripts/component-gallery-check.cjs are listed: they move on their own or react to hover or click. */
+const WORKING = working.items as Record<string, Works>;
 
 /* Our internal labels never show on the site, even on private pages, so names using them are reworded. */
 const RELABEL: [RegExp, string][] = [
@@ -89,12 +94,13 @@ async function loadDirectory(): Promise<Item[]> {
   const res = await fetch(`${RAW}data/components.json`);
   if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
   const rows = (await res.json()) as Entry[];
-  return rows.map((r) => {
+  return rows.filter((r) => WORKING[`${r.author}/${r.component}/${r.variant}`]).map((r) => {
     const base = relabel(r.componentName || r.component);
     const name = r.variant === "default" ? base : `${base} · ${relabel(r.variantName || r.variant)}`;
     return {
       ...r,
       id: `${r.author}/${r.component}/${r.variant}`,
+      works: WORKING[`${r.author}/${r.component}/${r.variant}`],
       name,
       folder: r.path.replace(/\/README\.md$/, ""),
       haystack: `${r.component} ${r.componentName ?? ""} ${r.variant} ${r.author} ${r.authorName ?? ""}`.toLowerCase(),
@@ -209,6 +215,9 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
             style={{ width: CARD_W, height: CARD_H, transform: `scale(${scale})`, transformOrigin: "0 0" }}
           />
         )}
+        <span className={`absolute left-3 top-3 z-10 rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold ${item.works === "moves" ? "bg-lime" : "bg-sky"}`}>
+          {item.works === "moves" ? "Moves" : "Responds"}
+        </span>
         {near && html.isLoading && <Loader2 className="absolute right-3 bottom-3 h-4 w-4 animate-spin text-muted-foreground" />}
         <div className="absolute right-3 top-3 flex gap-2 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button className={tool} onClick={() => setRun((r) => r + 1)} aria-label="Replay animation" title="Replay"><RotateCcw className="h-4 w-4" /></button>
@@ -218,7 +227,6 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
       <div className="p-3 flex items-start gap-2">
         <button className="min-w-0 grow text-left" onClick={onOpen}>
           <p className="font-semibold leading-snug line-clamp-2">{item.name}</p>
-          <p className="text-xs text-muted-foreground truncate">by {item.authorName || item.author}</p>
         </button>
         <button onClick={onPick} className="p-1.5 rounded-md hover:bg-secondary" aria-label={picked ? "Remove from picks" : "Pick"} aria-pressed={picked}>
           <Star className={`h-4 w-4 ${picked ? "fill-sun" : ""}`} />
@@ -238,6 +246,12 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
 
   const html = useComponentHtml(item);
   const [run, setRun] = useState(0);
+  const panel = useRef<HTMLElement>(null);
+
+  /* Opens where the card was, so scroll it into view. */
+  useEffect(() => {
+    panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -264,12 +278,11 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
     `inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border-2 border-ink ${on ? "bg-sun" : "bg-card hover:bg-secondary"}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink/60 p-2 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-label={item.name} onClick={onClose}>
-      <div className="mx-auto max-w-[1340px] bg-background border-2 border-ink rounded-2xl shadow-block-lg p-3 sm:p-5" onClick={(e) => e.stopPropagation()}>
+    <section ref={panel} className="scroll-mt-24" aria-label={item.name}>
+      <div className="w-full bg-card border-2 border-ink rounded-2xl shadow-block-lg p-3 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-lg sm:text-xl leading-tight break-words">{item.name}</h2>
-            <p className="text-sm text-muted-foreground">by {item.authorName || item.author}</p>
           </div>
           <button onClick={onClose} className="p-2 border-2 border-ink rounded-lg bg-card hover:bg-secondary" aria-label="Close">
             <X className="h-4 w-4" />
@@ -326,7 +339,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude; the original author's licence is checked before anything goes live.
         </p>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -339,13 +352,13 @@ export default function ComponentGallery() {
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<string | null>(null);
   const [onlyPicks, setOnlyPicks] = useState(false);
-  const [defaultsOnly, setDefaultsOnly] = useState(true);
+  const [works, setWorks] = useState<Works | null>(null);
   const [shown, setShown] = useState(PAGE);
   const [open, setOpen] = useState<Item | null>(null);
   const [picks, setPicks] = useState<string[]>(readPicks);
   const [copiedList, setCopiedList] = useState(false);
 
-  useEffect(() => setShown(PAGE), [q, kind, onlyPicks, defaultsOnly]);
+  useEffect(() => setShown(PAGE), [q, kind, onlyPicks, works]);
 
   const togglePick = (id: string) =>
     setPicks((p) => {
@@ -362,11 +375,11 @@ export default function ComponentGallery() {
     return all.filter(
       (it) =>
         (!onlyPicks || pickSet.has(it.id)) &&
-        (!defaultsOnly || onlyPicks || it.variant === "default") &&
+        (!works || it.works === works) &&
         (!re || re.test(it.component)) &&
         words.every((w) => it.haystack.includes(w)),
     );
-  }, [dir.data, q, kind, onlyPicks, defaultsOnly, picks]);
+  }, [dir.data, q, kind, onlyPicks, works, picks]);
 
   const copyList = async () => {
     const byId = new Map((dir.data ?? []).map((it) => [it.id, it]));
@@ -392,7 +405,7 @@ export default function ComponentGallery() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Private · admins only</p>
                 <h1 className="font-display text-2xl sm:text-3xl mt-1">Component gallery</h1>
                 <p className="mt-2 max-w-2xl text-muted-foreground">
-                  Ready-made interface parts from an open component library. Open one to see it in our style, on a laptop or a phone, then pick the ones we should build into the site.
+                  Ready-made interface parts from an open component library. Only components that visibly work are listed: they move on their own, or react when you hover or click. Click one and it opens right there, to see it in our style on a laptop or a phone, then pick the ones we should build into the site.
                 </p>
               </div>
               {picks.length > 0 && (
@@ -415,10 +428,8 @@ export default function ComponentGallery() {
               <button className={chip(onlyPicks)} onClick={() => setOnlyPicks((v) => !v)}>
                 <Star className={`inline h-3.5 w-3.5 mr-1 -mt-0.5 ${onlyPicks ? "fill-ink" : ""}`} />My picks ({picks.length})
               </button>
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={!defaultsOnly} onChange={(e) => setDefaultsOnly(!e.target.checked)} className="h-4 w-4 accent-ink" />
-                Show every variant
-              </label>
+              <button className={chip(works === "moves")} onClick={() => setWorks(works === "moves" ? null : "moves")}>Moves on its own</button>
+              <button className={chip(works === "responds")} onClick={() => setWorks(works === "responds" ? null : "responds")}>Responds to hover or click</button>
             </div>
 
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
@@ -439,10 +450,16 @@ export default function ComponentGallery() {
             {dir.data && (
               <>
                 <p className="mt-4 text-sm text-muted-foreground">{results.length.toLocaleString("en-IN")} components</p>
-                <div className="mt-3 grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                  {results.slice(0, shown).map((it) => (
-                    <PreviewCard key={it.id} item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onOpen={() => setOpen(it)} />
-                  ))}
+                <div className="mt-3 grid gap-5 grid-flow-row-dense grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {results.slice(0, shown).map((it) =>
+                    open?.id === it.id ? (
+                      <div key={it.id} className="col-span-full">
+                        <Preview item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onClose={() => setOpen(null)} />
+                      </div>
+                    ) : (
+                      <PreviewCard key={it.id} item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onOpen={() => setOpen(it)} />
+                    ),
+                  )}
                 </div>
                 {results.length > shown && (
                   <div className="mt-8 text-center">
@@ -457,7 +474,6 @@ export default function ComponentGallery() {
           </>
         )}
       </main>
-      {open && <Preview item={open} picked={picks.includes(open.id)} onPick={() => togglePick(open.id)} onClose={() => setOpen(null)} />}
     </div>
   );
 }
