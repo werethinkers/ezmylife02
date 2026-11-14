@@ -1,0 +1,12 @@
+{
+  "id": 7217,
+  "key": "dhileepkumargm__sketchbook-reveal-card",
+  "author": "dhileepkumargm",
+  "slug": "sketchbook-reveal-card",
+  "name": "Sketchbook Reveal Card",
+  "description": "A scroll-triggered reveal card that hand-draws a wobbling SVG border, animates a lightbulb icon, text lines, and a button into view as you scroll.",
+  "url": "https://21st.dev/@dhileepkumargm/components/sketchbook-reveal-card",
+  "preview": "https://cdn.21st.dev/dhileepkumargm/sketchbook-reveal-card/default/preview.1757573459807.png",
+  "kind": "",
+  "deps": []
+}

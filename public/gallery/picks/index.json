@@ -92,6 +92,19 @@
    "bytes": 10498
   },
   {
+   "id": 7217,
+   "key": "dhileepkumargm__sketchbook-reveal-card",
+   "author": "dhileepkumargm",
+   "slug": "sketchbook-reveal-card",
+   "name": "Sketchbook Reveal Card",
+   "description": "A scroll-triggered reveal card that hand-draws a wobbling SVG border, animates a lightbulb icon, text lines, and a button into view as you scroll.",
+   "url": "https://21st.dev/@dhileepkumargm/components/sketchbook-reveal-card",
+   "preview": "https://cdn.21st.dev/dhileepkumargm/sketchbook-reveal-card/default/preview.1757573459807.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 3859
+  },
+  {
    "id": 44854,
    "key": "dhxwhy__comparing-radio-cards",
    "author": "dhxwhy",
@@ -356,6 +369,32 @@
     "class-variance-authority"
    ],
    "bytes": 29057
+  },
+  {
+   "id": 30554,
+   "key": "ssychui__project-index",
+   "author": "ssychui",
+   "slug": "project-index",
+   "name": "Project Index",
+   "description": "A list of companies or projects where each row shows its cover beside the cursor on hover, for fund portfolios and case study pages. Part of ssych ui: https://ssych.com/library/project-index",
+   "url": "https://21st.dev/@ssychui/components/project-index",
+   "preview": "https://cdn.21st.dev/user_3CdJgTW8geRShR3gegqAjY0JB3B/project-index/default/preview.1790280175981.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 4555
+  },
+  {
+   "id": 1877,
+   "key": "youcefbnm__card-curtain-reveal",
+   "author": "youcefbnm",
+   "slug": "card-curtain-reveal",
+   "name": "Card Curtain Reveal",
+   "description": "Interactive card component with open curtain to see content on hover",
+   "url": "https://21st.dev/@youcefbnm/components/card-curtain-reveal",
+   "preview": "https://cdn.21st.dev/user_2sdAd21yCZlZRkVtZyf4K8ogkBh/card-curtain-reveal/card-curtain-reveal/preview.png?v=1",
+   "kind": "",
+   "deps": [],
+   "bytes": 29771
   }
  ],
  "failed": [
