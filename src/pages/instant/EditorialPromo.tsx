@@ -8,6 +8,7 @@ import { pageUrlFor, plainName } from "@/instant/util";
 import { fmtCredits } from "@/lib/creditRate";
 import type { Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
+import { PhoneMockup } from "@/components/ui/phone-mockup";
 
 /** Products whose /make page uses the editorial layout below instead of the shared promo layout. */
 export const EDITORIAL_PROMOS = new Set<string>(["get-well-soon"]);
@@ -114,13 +115,11 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
           <div className="mx-auto w-full max-w-[380px]">
             <div className="relative px-3 pt-6">
               <div aria-hidden="true" className="absolute left-1/2 top-14 aspect-square w-[108%] -translate-x-1/2 rounded-full border-2 border-ink bg-sun" />
-              <div className="relative overflow-hidden rounded-[2.2rem] border-[9px] border-ink bg-ink shadow-block-lg">
-                <div className="ip-frame relative h-[560px] overflow-hidden" style={{ transform: "translateZ(0)", ["--ip-vh" as string]: "560px", background: theme.c.bg }}>
-                  <div className="h-full overflow-y-auto overflow-x-hidden">
-                    <ProductRenderer product={product} theme={theme} content={sample} mode="preview" pageUrl={pageUrlFor()} />
-                  </div>
+              <PhoneMockup screenBg={theme.c.bg} screenFg={theme.c.tx} height={540}>
+                <div className="h-full overflow-y-auto overflow-x-hidden">
+                  <ProductRenderer product={product} theme={theme} content={sample} mode="preview" pageUrl={pageUrlFor()} />
                 </div>
-              </div>
+              </PhoneMockup>
               <span aria-hidden="true" className="pointer-events-none absolute right-2 top-0 rotate-6 rounded-xl border-2 border-ink bg-card px-3 py-1.5 text-sm font-bold shadow-block-sm">No app needed</span>
             </div>
             <p className="mt-4 text-center text-xs text-muted-foreground">Live sample · scroll and tap around</p>

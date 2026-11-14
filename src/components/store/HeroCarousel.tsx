@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { PhoneMockup } from "@/components/ui/phone-mockup";
 
 export type HeroSlide = {
   key: string;
@@ -125,15 +126,17 @@ export function HeroCarousel({ slides, label = "Featured", className }: { slides
             {s.phones ? (
               <div className="flex min-h-[240px] items-end justify-center gap-[2%] overflow-hidden px-4 pt-8 md:px-5">
                 {s.phones.slice(0, 3).map((src, k, a) => (
-                  <img
+                  <PhoneMockup
                     key={k}
-                    src={src}
-                    alt={k === Math.floor(a.length / 2) ? s.title : ""}
-                    className={cn(
-                      "aspect-[420/709] rounded-t-[22px] border-[3px] border-b-0 border-ink bg-card object-cover object-top",
-                      k === Math.floor(a.length / 2) ? "w-[40%]" : "-mb-14 w-[31%]",
-                    )}
-                  />
+                    size="sm"
+                    cropped
+                    shadow={false}
+                    screenBg="#ffffff"
+                    className={cn("mx-0", k === Math.floor(a.length / 2) ? "w-[40%]" : "-mb-14 w-[31%]")}
+                    screenClassName="aspect-[420/680]"
+                  >
+                    <img src={src} alt={k === Math.floor(a.length / 2) ? s.title : ""} className="h-full w-full bg-card object-cover object-top" />
+                  </PhoneMockup>
                 ))}
               </div>
             ) : (

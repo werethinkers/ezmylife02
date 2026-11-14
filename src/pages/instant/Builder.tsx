@@ -21,6 +21,7 @@ import { nameFromParam } from "@/instant/festLang";
 import { isMobile, pageUrlFor, titleOf } from "@/instant/util";
 import type { Content, Field, Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
+import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { FlowSteps } from "@/components/brand/FlowSteps";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
 
@@ -347,15 +348,11 @@ function BuilderInner({ product }: { product: Product }) {
 
         <aside className={cn("md:sticky md:top-24 self-start", tab === "edit" && "hidden md:block")} aria-label="Live preview">
           <p className="mb-3 hidden items-center gap-2 text-sm font-bold md:flex"><Eye className="h-4 w-4" /> Live preview · this is what people will see</p>
-          <div className="mx-auto w-full max-w-[400px] overflow-hidden rounded-[2.4rem] border-[10px] border-ink bg-ink shadow-block-lg">
-            {/* The transform makes this box the containing block for the page's fixed bars and sheets;
-                it must not scroll itself, or they would scroll away with the content. */}
-            <div className="ip-frame relative h-[calc(100svh-220px)] md:h-[720px] overflow-hidden bg-background" style={{ transform: "translateZ(0)", ["--ip-vh" as string]: "640px" }}>
-              <div className="h-full overflow-y-auto overflow-x-hidden">
-                <ProductRenderer product={product} theme={theme} content={content} mode="preview" pageUrl={pageUrlFor(published?.slug)} />
-              </div>
+          <PhoneMockup className="max-w-[400px]" screenBg={theme.c.bg} screenFg={theme.c.tx} screenClassName="h-[calc(100svh-254px)] md:h-[686px]" screenStyle={{ ["--ip-vh" as string]: "640px" }}>
+            <div className="h-full overflow-y-auto overflow-x-hidden">
+              <ProductRenderer product={product} theme={theme} content={content} mode="preview" pageUrl={pageUrlFor(published?.slug)} />
             </div>
-          </div>
+          </PhoneMockup>
         </aside>
       </div>
 
