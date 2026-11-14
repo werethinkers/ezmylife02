@@ -81,6 +81,13 @@ external = false
 list.each do |g|
   name = g.dig("attributes", "name")
   internal = g.dig("attributes", "isInternalGroup")
+  # Who is in the group and whether they accepted (emails masked in the log).
+  _, people = api("GET", "/v1/betaGroups/#{g["id"]}/betaTesters?limit=200&fields[betaTesters]=email,inviteType,state")
+  (people["data"] || []).each do |t|
+    email = t.dig("attributes", "email").to_s
+    masked = email.sub(/\A(.).*(.@)/, '\\1***\\2')
+    puts "    tester #{masked}: #{t.dig("attributes", "state") || "?"} (#{t.dig("attributes", "inviteType") || "?"})"
+  end
   if internal && g.dig("attributes", "hasAccessToAllBuilds")
     puts "  #{name} (internal): already gets every build"
     next
