@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, Laptop, Loader2, Maximize2, Moon, RotateCcw, Search, Smartphone, Star, Sun, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Laptop, Loader2, Maximize2, MousePointer2, Moon, RotateCcw, Search, Smartphone, Star, Sun, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { isAdmin } from "@/lib/devApps";
 import twAnimateCss from "./tw-animate.css?raw";
 import previewFrameCss from "./previewFrameCss.css?raw";
+import previewDemo from "./previewDemo.js?raw";
 import { hind400, hind600, unbounded700 } from "./frameFonts";
 import working from "./workingComponents.json";
 
@@ -146,7 +147,7 @@ ${previewFrameCss}
 ${ours}
 </style>
 <script src="${origin}/vendor/tailwind-browser-4.1.11.js"></script>
-</head><body>${html}</body></html>`;
+</head><body>${html}<script>${previewDemo}</script></body></html>`;
 }
 
 function useFrameWidth(ref: React.RefObject<HTMLDivElement>) {
@@ -187,6 +188,11 @@ function useNearViewport(ref: React.RefObject<HTMLElement>) {
   return near;
 }
 
+/** Starts or stops the moving-cursor demo inside a preview frame (see previewDemo.js). */
+function postDemo(frame: HTMLIFrameElement | null, on: boolean) {
+  frame?.contentWindow?.postMessage({ ezDemo: on ? "start" : "stop" }, "*");
+}
+
 const CARD_W = 960;
 const CARD_H = 720;
 
@@ -196,6 +202,8 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
   const near = useNearViewport(box);
   const w = useFrameWidth(box);
   const [run, setRun] = useState(0);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const hot = useRef(false);
   const html = useComponentHtml(item, near);
   const srcDoc = useMemo(() => (html.data ? frameDoc(html.data, "ours", false) : ""), [html.data]);
   const scale = w ? w / CARD_W : 0.4;
@@ -203,23 +211,31 @@ function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boo
   const tool = "p-2 rounded-lg border-2 border-ink bg-card hover:bg-sun shadow-block-sm";
   return (
     <div className="block-card overflow-hidden flex flex-col">
-      <div ref={box} className="group relative aspect-[4/3] overflow-hidden border-b-2 border-ink bg-secondary">
+      <div
+        ref={box}
+        className="group relative aspect-[4/3] overflow-hidden border-b-2 border-ink bg-secondary"
+        onMouseEnter={() => { hot.current = true; postDemo(frame.current, true); }}
+        onMouseLeave={() => { hot.current = false; postDemo(frame.current, false); }}
+      >
         <img src={RAW + item.screenshotPath} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
         {near && srcDoc && (
           <iframe
             key={run}
+            ref={frame}
             title={`${item.name} live preview`}
             sandbox="allow-scripts"
             srcDoc={srcDoc}
-            className="absolute left-0 top-0 border-0 bg-background"
+            onLoad={() => hot.current && postDemo(frame.current, true)}
+            className="pointer-events-none absolute left-0 top-0 border-0 bg-background"
             style={{ width: CARD_W, height: CARD_H, transform: `scale(${scale})`, transformOrigin: "0 0" }}
           />
         )}
+        <button className="absolute inset-0 z-0" onClick={onOpen} aria-label={`Open ${item.name}`} />
         <span className={`absolute left-3 top-3 z-10 rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-semibold ${item.works === "moves" ? "bg-lime" : "bg-sky"}`}>
           {item.works === "moves" ? "Moves" : "Responds"}
         </span>
         {near && html.isLoading && <Loader2 className="absolute right-3 bottom-3 h-4 w-4 animate-spin text-muted-foreground" />}
-        <div className="absolute right-3 top-3 flex gap-2 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <div className="absolute right-3 top-3 z-10 flex gap-2 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button className={tool} onClick={() => setRun((r) => r + 1)} aria-label="Replay animation" title="Replay"><RotateCcw className="h-4 w-4" /></button>
           <button className={tool} onClick={onOpen} aria-label={`Open ${item.name} full size`} title="Full size"><Maximize2 className="h-4 w-4" /></button>
         </div>
@@ -247,6 +263,8 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
   const html = useComponentHtml(item);
   const [run, setRun] = useState(0);
   const panel = useRef<HTMLElement>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const [demo, setDemo] = useState(false);
 
   /* Opens where the card was, so scroll it into view. */
   useEffect(() => {
@@ -306,6 +324,13 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           <button className={`${seg(false)} rounded-lg`} onClick={() => setRun((r) => r + 1)}>
             <RotateCcw className="h-4 w-4" /> Replay
           </button>
+          <button
+            className={`${seg(demo)} rounded-lg`}
+            onClick={() => { postDemo(frame.current, !demo); setDemo(!demo); }}
+            aria-pressed={demo}
+          >
+            <MousePointer2 className="h-4 w-4" /> {demo ? "Stop demo" : "Show what it does"}
+          </button>
           <span className="grow" />
           <button className={`${seg(picked)} rounded-lg`} onClick={onPick}>
             <Star className={`h-4 w-4 ${picked ? "fill-ink" : ""}`} /> {picked ? "Picked" : "Pick"}
@@ -327,6 +352,8 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
             <div className="mx-auto border-2 border-ink rounded-xl overflow-hidden bg-card" style={{ width: frameW * scale, height: frameH * scale }}>
               <iframe
                 key={`${look}-${dark}-${run}`}
+                ref={frame}
+                onLoad={() => demo && postDemo(frame.current, true)}
                 title={`${item.name} preview`}
                 sandbox="allow-scripts"
                 srcDoc={srcDoc}
