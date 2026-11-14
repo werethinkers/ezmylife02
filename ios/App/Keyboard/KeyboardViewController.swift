@@ -91,6 +91,22 @@ final class KeyboardViewController: UIInputViewController {
         return card?.fields.first(where: { $0.key == key })?.type == "images"
     }
     private let cardView = UIView()
+    /// Above the keys: the app picker after "/", or the one-box editor while a box is being typed into.
+    private let panel = UIView()
+    private var panelHeight: NSLayoutConstraint?
+    /// What a run made (a picture, several, or a PDF), shown until the person closes it.
+    private struct Outcome {
+        var app: EzyApp
+        var headline: String
+        var preview: UIImage?
+        var count: Int
+        var charged: Int?
+    }
+    private var outcome: Outcome? {
+        didSet { outcomeContext = outcome == nil ? nil : textDocumentProxy.documentContextBeforeInput ?? "" }
+    }
+    /// The text before the cursor when the result showed; when it changes (the person pasted), the panel closes.
+    private var outcomeContext: String?
     private var planTask: Task<Void, Never>?
     private var suggestion: (text: String, plan: EzyPlan)?
     private var plannedText = ""
@@ -137,8 +153,11 @@ final class KeyboardViewController: UIInputViewController {
 
         cardView.translatesAutoresizingMaskIntoConstraints = false
         cardView.isHidden = true
+        panel.translatesAutoresizingMaskIntoConstraints = false
+        panel.isHidden = true
 
         container.addSubview(strip)
+        container.addSubview(panel)
         container.addSubview(keysStack)
         container.addSubview(cardView)
 
@@ -154,7 +173,11 @@ final class KeyboardViewController: UIInputViewController {
             stripStack.trailingAnchor.constraint(equalTo: strip.contentLayoutGuide.trailingAnchor, constant: -2),
             stripStack.heightAnchor.constraint(equalTo: strip.frameLayoutGuide.heightAnchor),
 
-            keysStack.topAnchor.constraint(equalTo: strip.bottomAnchor, constant: 6),
+            panel.topAnchor.constraint(equalTo: strip.bottomAnchor, constant: 2),
+            panel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 6),
+            panel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
+
+            keysStack.topAnchor.constraint(equalTo: panel.bottomAnchor, constant: 4),
             keysStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 3),
             keysStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -3),
             keysStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
@@ -168,6 +191,9 @@ final class KeyboardViewController: UIInputViewController {
         h.priority = UILayoutPriority(999)
         h.isActive = true
         heightConstraint = h
+        let ph = panel.heightAnchor.constraint(equalToConstant: 0)
+        ph.isActive = true
+        panelHeight = ph
 
         buildKeys()
         refreshStrip()
@@ -179,6 +205,11 @@ final class KeyboardViewController: UIInputViewController {
         updateAutoShift()
         buildKeys(force: true)
         refreshStrip(force: true)
+        if hasFullAccess, EzyShared.isConnected {
+            Task { [weak self] in
+                if await EzyAPI.refreshBalance() != nil { await MainActor.run { self?.refreshStrip(force: true) } }
+            }
+        }
         if hasFullAccess, EzyShared.isConnected, EzyShared.shortcutsAge > 300 {
             Task { [weak self] in
                 _ = try? await EzyAPI.refreshShortcuts()
@@ -189,6 +220,8 @@ final class KeyboardViewController: UIInputViewController {
 
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
+        // The result was pasted (or the person carried on typing): back to the keys.
+        if outcome != nil, (textDocumentProxy.documentContextBeforeInput ?? "") != outcomeContext { outcome = nil }
         if card != nil && editingKey == nil { cardFollowsText() }
         updateAutoShift()
         buildKeys()
@@ -510,6 +543,8 @@ final class KeyboardViewController: UIInputViewController {
         parts.append(appResults.map { $0.id }.joined(separator: ","))
         parts.append(suggestion?.text ?? "")
         if let card { parts.append(card.app.id + "|" + String(card.values.count)) }
+        parts.append(outcome?.headline ?? "")
+        parts.append(String(EzyShared.balance ?? -1))
         parts.append(editingKey ?? "")
         parts.append(editingValue)
         parts.append((EzyShared.lastResult?.isFresh ?? false) ? "last" : "")
@@ -517,6 +552,7 @@ final class KeyboardViewController: UIInputViewController {
         if !force && signature == stripSignature { return }
         stripSignature = signature
         stripStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        setPanel(0)
 
         if let busy {
             addChip(busy, style: .note)
@@ -537,30 +573,18 @@ final class KeyboardViewController: UIInputViewController {
 
         // The details card is open.
         if let card {
-            if let key = editingKey, let field = card.fields.first(where: { $0.key == key }) {
+            if let key = editingKey, card.fields.contains(where: { $0.key == key }) {
+                addHeader(card.app.name)
                 addChip("Done", style: .primary) { [weak self] in self?.finishEditing() }
-                let value = card.values[key] ?? ""
-                addChip("\(field.label): \(value.isEmpty ? (field.placeholder ?? "") : value)▏", style: .note, truncateHead: true)
-                for option in field.options ?? [] {
-                    addChip(option, style: .plain) { [weak self] in
-                        self?.card?.values[key] = option
-                        self?.card?.edited.insert(key)
-                        self?.finishEditing()
-                    }
-                }
-                if !value.isEmpty {
-                    addChip("Clear", style: .plain) { [weak self] in
-                        self?.card?.values[key] = ""
-                        self?.card?.edited.insert(key)
-                        self?.card?.fromProfile.remove(key)
-                        self?.afterTyping()
-                    }
-                }
+                renderEditor(card, key: key)
             } else {
-                let price = card.app.priceLabel.isEmpty ? "" : " · \(card.app.priceLabel)"
-                addChip("\(card.app.name)\(price)", style: .note)
+                addHeader(card.app.name)
                 addChip("Tap a box to change it, or say more after the command", style: .note)
             }
+            return
+        }
+        if outcome != nil {
+            addHeader("Done")
             return
         }
 
@@ -585,37 +609,23 @@ final class KeyboardViewController: UIInputViewController {
         let jumped = words.count - lastWordCount >= 2
         lastWordCount = words.count
 
-        // A sentence after "/": the best app, ready to check and run.
+        // The picker: the best match as a big card, then a row of the other apps and shortcuts.
+        var items: [PickItem] = []
         if let suggestion, suggestion.text == command.text, let app = suggestion.plan.app {
-            let price = app.priceLabel.isEmpty ? "" : " · \(app.priceLabel)"
-            addChip("✨ \(app.name)\(price)", style: .primary) { [weak self] in
-                self?.openCard(suggestion.plan, text: command.text)
-            }
+            items.append(.app(app, suggestion.plan))
         }
-
-        // Shortcuts first (instant, from the saved copy), then apps (searched online).
+        // An exact shortcut wins; other shortcuts follow the apps.
         let shortcutHits = EzyMatch.shortcuts(EzyShared.shortcuts, for: first)
-        for s in shortcutHits {
-            let preview = s.value.replacingOccurrences(of: "\n", with: " ").prefix(28)
-            addChip("\(s.key) · \(preview)", style: .shortcut) { [weak self] in
-                self?.replaceCommand(with: s.value)
-            }
-        }
+        let exact = shortcutHits.filter { $0.key.lowercased() == first.lowercased() }
+        items += exact.map { PickItem.shortcut($0) }
         let apps = first.isEmpty ? EzyShared.recentApps : EzyMatch.rank(appResults, for: first)
-        for app in apps.prefix(6) where app.id != suggestion?.plan.app?.id {
-            let price = app.priceLabel.isEmpty ? "" : " · \(app.priceLabel)"
-            let title = app.runnable == false ? "\(app.name) ↗ website" : "\(app.name)\(price)"
-            addChip(title, style: app.runnable == false ? .plain : .app) { [weak self] in
-                guard let self else { return }
-                if app.runnable == false {
-                    self.replaceCommand(with: app.link)
-                } else {
-                    self.prepare(app: app, text: details.isEmpty ? app.name : details)
-                }
-            }
-        }
-        if shortcutHits.isEmpty && apps.isEmpty && suggestion == nil {
-            addChip(first.isEmpty ? "Type a shortcut or an app name" : "Searching…", style: .note)
+        items += apps.prefix(8).filter { $0.id != suggestion?.plan.app?.id }.map { PickItem.app($0, nil) }
+        items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
+        addHeader(first.isEmpty ? (apps.isEmpty ? "Type an app or shortcut" : "Recent apps") : "Apps for /\(first)")
+        if items.isEmpty {
+            addChip(first.isEmpty ? "Like /invoice or /passport" : "Searching…", style: .note)
+        } else {
+            renderPicker(items, details: details, command: command.text)
         }
         search(first)
         if words.count >= 2 && !shortcutHits.contains(where: { $0.key.lowercased() == command.text.lowercased() }) {
@@ -803,7 +813,12 @@ final class KeyboardViewController: UIInputViewController {
                     if let pdf {
                         EzyClipboard.copyPDF(pdf, name: current.app.name)
                         self.replaceCommand(with: "")
-                        self.notice = Self.pastePDF
+                        self.showOutcome(current.app, data: [pdf], type: "com.adobe.pdf", charged: result.charged)
+                    } else if result.imageURL != nil {
+                        self.replaceCommand(with: EzyChat.forChat(result.text))
+                        let count = result.images?.count ?? 1
+                        self.outcome = Outcome(app: current.app, headline: count > 1 ? "\(count) pictures ready" : "Your picture is ready", preview: UIPasteboard.general.image, count: count, charged: result.charged)
+                        self.notice = nil
                     } else {
                         self.replaceCommand(with: EzyChat.forChat(result.text))
                         if let many = result.images, many.count > 1 {
@@ -838,11 +853,11 @@ final class KeyboardViewController: UIInputViewController {
                         if type == "com.adobe.pdf" { EzyClipboard.copyPDF(data, name: app.name) }
                         else { UIPasteboard.general.setData(data, forPasteboardType: type) }
                         self.replaceCommand(with: "")
-                        self.notice = type == "com.adobe.pdf" ? Self.pastePDF : Self.pasteImage
+                        self.showOutcome(app, data: [data], type: type, charged: app.credits)
                     case let .images(list, type):
                         UIPasteboard.general.setItems(list.map { [type: $0] })
                         self.replaceCommand(with: "")
-                        self.notice = "✓ \(list.count) images copied · hold the message box › Paste"
+                        self.showOutcome(app, data: list, type: type, charged: app.credits)
                     case let .text(text):
                         self.replaceCommand(with: text)
                         self.notice = "✓ \(app.name) is in. Tap to close."
@@ -882,12 +897,23 @@ final class KeyboardViewController: UIInputViewController {
 
     // MARK: The details card
 
+    private var showsCard: Bool { outcome != nil || (card != nil && editingKey == nil) }
+
     private func applyMode() {
-        let showCard = card != nil && editingKey == nil
+        let showCard = showsCard
         cardView.isHidden = !showCard
         keysStack.isHidden = showCard
-        heightConstraint?.constant = showCard ? 320 : 270
-        if showCard { renderCard() }
+        view.backgroundColor = showCard ? EzyLook.cream : nil
+        if showCard { setPanel(0) } else { setPanel(panelHeight?.constant ?? 0) }
+        if showCard { if outcome != nil { renderOutcome() } else { renderCard() } }
+    }
+
+    /// Shows the panel above the keys at this height (0 hides it) and sizes the keyboard to fit.
+    private func setPanel(_ height: CGFloat) {
+        if height == 0 { panel.subviews.forEach { $0.removeFromSuperview() } }
+        panelHeight?.constant = height
+        panel.isHidden = height == 0
+        heightConstraint?.constant = showsCard ? 400 : 270 + (height > 0 ? height + 2 : 0)
     }
 
     private func renderCard() {
@@ -902,11 +928,18 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
 
+        let header = cardHeader(card.app.name) { [weak self] in self?.closeCard() }
+
+        let required = card.fields.filter { $0.required ?? false }
+        let ready = required.filter { !(card.values[$0.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+        let progress = progressRow(done: ready, of: required.count)
+
         let scroll = UIScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
+        scroll.clipsToBounds = false
         let list = UIStackView()
         list.axis = .vertical
-        list.spacing = 6
+        list.spacing = 8
         list.translatesAutoresizingMaskIntoConstraints = false
         scroll.addSubview(list)
 
@@ -917,49 +950,47 @@ final class KeyboardViewController: UIInputViewController {
             list.addArrangedSubview(fieldRow(field, card: card))
         }
 
-        let cancel = ChipButton(type: .system)
-        cancel.setTitle("Cancel", for: .normal)
-        cancel.titleLabel?.font = .systemFont(ofSize: 16)
-        cancel.setTitleColor(keyTextColor, for: .normal)
-        cancel.backgroundColor = functionKeyColor
-        cancel.layer.cornerRadius = 8
-        cancel.handler = { [weak self] in self?.closeCard() }
-        cancel.addTarget(cancel, action: #selector(ChipButton.tapped), for: .touchUpInside)
-
-        let go = ChipButton(type: .system)
         let price = card.app.priceLabel.isEmpty ? "" : " · \(card.app.priceLabel)"
-        go.setTitle("✨ Generate\(price)", for: .normal)
-        go.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        go.setTitleColor(.white, for: .normal)
-        go.backgroundColor = brand
-        go.layer.cornerRadius = 8
-        go.handler = { [weak self] in self?.generate() }
-        go.addTarget(go, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        let go = blockButton("Make it\(price)", fill: EzyLook.primary, text: .white, size: 17) { [weak self] in self?.generate() }
+        let note = EzyLook.label("No result, no charge.", EzyLook.body(12), EzyLook.muted)
+        note.textAlignment = .center
 
-        let bar = UIStackView(arrangedSubviews: [cancel, go])
-        bar.axis = .horizontal
-        bar.spacing = 8
-        bar.translatesAutoresizingMaskIntoConstraints = false
-        cancel.widthAnchor.constraint(equalToConstant: 92).isActive = true
-
+        for v in [header, progress, go, note] as [UIView] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            cardView.addSubview(v)
+        }
         cardView.addSubview(scroll)
-        cardView.addSubview(bar)
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: cardView.topAnchor),
-            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: bar.topAnchor, constant: -6),
+            header.topAnchor.constraint(equalTo: cardView.topAnchor),
+            header.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            header.heightAnchor.constraint(equalToConstant: 40),
+
+            progress.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 2),
+            progress.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 4),
+            progress.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -4),
+            progress.heightAnchor.constraint(equalToConstant: required.isEmpty ? 0 : 20),
+
+            scroll.topAnchor.constraint(equalTo: progress.bottomAnchor, constant: 8),
+            scroll.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 2),
+            scroll.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -4),
+            scroll.bottomAnchor.constraint(equalTo: go.topAnchor, constant: -10),
 
             list.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
-            list.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            list.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -4),
             list.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
             list.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             list.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
 
-            bar.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
-            bar.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
-            bar.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
-            bar.heightAnchor.constraint(equalToConstant: 46),
+            go.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 2),
+            go.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -5),
+            go.bottomAnchor.constraint(equalTo: note.topAnchor, constant: -4),
+            go.heightAnchor.constraint(equalToConstant: 48),
+
+            note.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            note.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            note.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+            note.heightAnchor.constraint(equalToConstant: 16),
         ])
     }
 
@@ -1411,79 +1442,117 @@ final class KeyboardViewController: UIInputViewController {
 
     /// "How do you want it?": typed into the chat, or as a PDF to paste. Remembered per app.
     private func formatRow(_ card: Card) -> UIView {
-        let label = UILabel()
-        label.text = "Get it as"
-        label.font = .systemFont(ofSize: 13)
-        label.textColor = dark ? UIColor(white: 0.75, alpha: 1) : UIColor(white: 0.35, alpha: 1)
-        var buttons: [UIView] = [label]
-        for (value, title) in [("text", "💬 Text in chat"), ("pdf", "📄 PDF")] {
-            let b = ChipButton(type: .system)
-            b.setTitle(title, for: .normal)
-            b.titleLabel?.font = .systemFont(ofSize: 15, weight: card.format == value ? .semibold : .regular)
+        let label = EzyLook.label("GET IT AS", EzyLook.body(11, .bold), EzyLook.muted)
+        var views: [UIView] = [label]
+        for (value, title) in [("text", "Text in chat"), ("pdf", "PDF")] {
             let on = card.format == value
-            b.backgroundColor = on ? brand : chipColor
-            b.setTitleColor(on ? .white : keyTextColor, for: .normal)
-            b.layer.cornerRadius = 8
-            b.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
-            b.handler = { [weak self] in
+            let b = chip(title, on: on) { [weak self] in
                 guard let self, self.card != nil else { return }
                 self.card?.format = value
                 EzyShared.store.set(value, forKey: "format.\(card.app.id)")
                 self.renderCard()
             }
-            b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
-            buttons.append(b)
+            views.append(b)
         }
-        buttons.append(UIView())
-        let row = UIStackView(arrangedSubviews: buttons)
+        views.append(UIView())
+        let row = UIStackView(arrangedSubviews: views)
         row.axis = .horizontal
         row.spacing = 8
         row.alignment = .center
-        row.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        row.heightAnchor.constraint(equalToConstant: 40).isActive = true
         return row
     }
 
     private func fieldRow(_ field: EzyField, card: Card) -> UIView {
         let value = (card.values[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let required = field.required ?? false
-        let muted = dark ? UIColor(white: 0.75, alpha: 1) : UIColor(white: 0.35, alpha: 1)
+        let filled = !value.isEmpty
 
-        let title = NSMutableAttributedString(string: field.label, attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: muted])
+        let title = NSMutableAttributedString(string: field.label, attributes: [.font: EzyLook.body(14, .semibold), .foregroundColor: EzyLook.ink])
         if card.fromProfile.contains(field.key) {
-            title.append(NSAttributedString(string: "  · from your profile", attributes: [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: brand]))
+            title.append(NSAttributedString(string: " · from your profile", attributes: [.font: EzyLook.body(13), .foregroundColor: EzyLook.primary]))
         }
-        title.append(NSAttributedString(string: "\n"))
-        if field.type == "images" {
-            let count = value.isEmpty ? 0 : value.components(separatedBy: "\n").count
-            let shown = count == 0 ? "Tap to pick photos" : "📷 \(count) photo\(count == 1 ? "" : "s") added (tap to change)"
-            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: count == 0 ? .semibold : .regular), .foregroundColor: count == 0 ? brand : keyTextColor]))
-        } else if field.type == "pdf" {
-            let shown = value.isEmpty ? "Copy a PDF, then tap here" : "📄 PDF added (tap to use the one you copied now)"
-            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
-        } else if field.type == "image" {
+        let shown: String
+        var hintColor = EzyLook.muted
+        switch field.type {
+        case "images":
+            let count = filled ? value.components(separatedBy: "\n").count : 0
+            shown = count == 0 ? "Tap to pick photos" : "\(count) photo\(count == 1 ? "" : "s") added · tap to change"
+        case "pdf":
+            shown = filled ? "PDF added · tap to use the one you copied now" : "Copy a PDF, then tap here"
+        case "image":
             let library = Self.photoAccess
-            let shown = value.isEmpty
-                ? (library ? "Tap to pick a photo" : "Copy a photo, then tap here")
-                : (library ? "📷 Photo added (tap to change)" : "📷 Photo added (tap to use the one you copied now)")
-            title.append(NSAttributedString(string: shown, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: value.isEmpty ? .semibold : .regular), .foregroundColor: value.isEmpty ? brand : keyTextColor]))
-        } else if value.isEmpty {
-            let hint = required ? "Tap to add" : (field.placeholder.map { "Optional, e.g. \($0)" } ?? "Optional")
-            title.append(NSAttributedString(string: hint, attributes: [.font: UIFont.systemFont(ofSize: 15, weight: required ? .semibold : .regular), .foregroundColor: required ? brand : muted]))
-        } else {
-            title.append(NSAttributedString(string: value, attributes: [.font: UIFont.systemFont(ofSize: 15), .foregroundColor: keyTextColor]))
+            shown = filled
+                ? (library ? "Photo added · tap to change" : "Photo added · tap to use the one you copied now")
+                : (library ? "Tap to pick a photo" : "Copy a photo, then tap here")
+        default:
+            if filled { shown = value; hintColor = EzyLook.ink }
+            else { shown = required ? "Tap to add" : (field.placeholder.map { "Optional, e.g. \($0)" } ?? "Optional") }
         }
+        if !filled && required { hintColor = EzyLook.primary }
+        let detail = EzyLook.label(shown, EzyLook.body(14, filled ? .regular : .semibold), hintColor, lines: 2)
+        let titleLabel = UILabel()
+        titleLabel.attributedText = title
+        titleLabel.numberOfLines = 1
+
+        // Status: a teal tick when filled, coral when it still needs something, sand when optional.
+        let dot = UIView()
+        EzyLook.block(dot, radius: 11, fill: filled ? EzyLook.teal : (required ? EzyLook.coral : EzyLook.sand))
+        dot.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        dot.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        if filled {
+            let tick = UIImageView(image: UIImage(systemName: "checkmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .black)))
+            tick.tintColor = EzyLook.ink
+            tick.translatesAutoresizingMaskIntoConstraints = false
+            dot.addSubview(tick)
+            tick.centerXAnchor.constraint(equalTo: dot.centerXAnchor).isActive = true
+            tick.centerYAnchor.constraint(equalTo: dot.centerYAnchor).isActive = true
+        }
+
+        let texts = UIStackView(arrangedSubviews: [titleLabel, detail])
+        texts.axis = .vertical
+        texts.spacing = 1
+        let line = UIStackView(arrangedSubviews: [dot, texts])
+        line.axis = .horizontal
+        line.spacing = 10
+        line.alignment = .center
+        line.isUserInteractionEnabled = false
 
         let row = ChipButton(type: .custom)
-        row.setAttributedTitle(title, for: .normal)
-        row.titleLabel?.numberOfLines = 3
-        row.titleLabel?.lineBreakMode = .byTruncatingTail
-        row.contentHorizontalAlignment = .leading
-        row.contentEdgeInsets = UIEdgeInsets(top: 7, left: 12, bottom: 7, right: 12)
-        row.backgroundColor = chipColor
-        row.layer.cornerRadius = 8
-        if required && value.isEmpty {
-            row.layer.borderWidth = 1
-            row.layer.borderColor = brand.cgColor
+        EzyLook.block(row, radius: 14, fill: .white)
+        line.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(line)
+        var rows: [UIView] = [line]
+        // Choices show as chips right in the row (sizes, payment terms…).
+        if let options = field.options, !options.isEmpty, options.count <= 12 {
+            let chips = chipRow(options.map { option in
+                (option, value == option, { [weak self] in
+                    self?.card?.values[field.key] = option
+                    self?.card?.edited.insert(field.key)
+                    self?.card?.fromProfile.remove(field.key)
+                    self?.renderCard()
+                })
+            })
+            chips.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(chips)
+            rows.append(chips)
+        }
+        NSLayoutConstraint.activate([
+            line.topAnchor.constraint(equalTo: row.topAnchor, constant: 9),
+            line.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
+            line.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+        ])
+        if rows.count > 1 {
+            let chips = rows[1]
+            NSLayoutConstraint.activate([
+                chips.topAnchor.constraint(equalTo: line.bottomAnchor, constant: 6),
+                chips.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 42),
+                chips.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -6),
+                chips.heightAnchor.constraint(equalToConstant: 40),
+                chips.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -6),
+            ])
+        } else {
+            line.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -9).isActive = true
         }
         row.handler = { [weak self] in
             if field.type == "image" || field.type == "images" {
@@ -1499,6 +1568,466 @@ final class KeyboardViewController: UIInputViewController {
             self?.afterTyping()
         }
         row.addTarget(row, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        return row
+    }
+
+    // MARK: The new look: header, picker, one-box editor, result
+
+    private enum PickItem {
+        case app(EzyApp, EzyPlan?)
+        case shortcut(EzyShortcut)
+    }
+
+    /// The strip's start: the EZ badge, a title in the display font, and the balance.
+    private func addHeader(_ title: String) {
+        let badge = EzyLook.label("EZ", EzyLook.display(11), EzyLook.ink)
+        badge.textAlignment = .center
+        EzyLook.block(badge, radius: 14, fill: EzyLook.sun)
+        badge.clipsToBounds = true
+        badge.widthAnchor.constraint(equalToConstant: 28).isActive = true
+        badge.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        stripStack.addArrangedSubview(badge)
+        let name = EzyLook.label(title, EzyLook.display(14), dark && !showsCard ? .white : EzyLook.ink)
+        name.lineBreakMode = .byTruncatingTail
+        name.widthAnchor.constraint(lessThanOrEqualToConstant: 200).isActive = true
+        stripStack.addArrangedSubview(name)
+        if let pill = balancePill() { stripStack.addArrangedSubview(pill) }
+    }
+
+    private func balancePill() -> UIView? {
+        guard let b = EzyShared.balance else { return nil }
+        let pill = PadLabel()
+        pill.text = b == 1 ? "1 credit" : "\(b) credits"
+        pill.font = EzyLook.body(12, .bold)
+        pill.textColor = EzyLook.ink
+        EzyLook.block(pill, radius: 13, fill: EzyLook.sand)
+        pill.clipsToBounds = true
+        pill.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        return pill
+    }
+
+    private func pickAction(_ item: PickItem, details: String, command: String) {
+        switch item {
+        case let .shortcut(s):
+            replaceCommand(with: s.value)
+        case let .app(app, plan):
+            if let plan { openCard(plan, text: command); return }
+            if app.runnable == false { replaceCommand(with: app.link) }
+            else { prepare(app: app, text: details.isEmpty ? app.name : details) }
+        }
+    }
+
+    private func pickLook(_ item: PickItem) -> (name: String, detail: String, price: String, symbol: String, color: UIColor) {
+        switch item {
+        case let .shortcut(s):
+            let preview = s.value.replacingOccurrences(of: "\n", with: " ")
+            return ("/\(s.key)", String(preview.prefix(60)), "Shortcut", "text.quote", EzyLook.sand)
+        case let .app(app, _):
+            let web = app.runnable == false
+            let symbol: String
+            switch app.mode ?? "" {
+            case _ where web: symbol = "safari"
+            case "device": symbol = app.id.contains("pdf") ? "doc.richtext" : "photo"
+            case "coach": symbol = "bubble.left.and.bubble.right"
+            case "image", "images": symbol = "paintbrush"
+            default: symbol = "sparkles"
+            }
+            let detail = web ? "Opens on ezyourlife.com" : (app.description ?? "")
+            return (app.name, detail, web ? "Website" : app.priceLabel, symbol, EzyLook.swatch(app.category ?? app.id))
+        }
+    }
+
+    /// After "/": the best match as a big card, then a scrolling row of the other matches.
+    private func renderPicker(_ items: [PickItem], details: String, command: String) {
+        guard let first = items.first else { return }
+        let best = ChipButton(type: .custom)
+        EzyLook.block(best, radius: 16, shadow: 4)
+        let look = pickLook(first)
+        let icon = UIView()
+        EzyLook.block(icon, radius: 12, fill: look.color)
+        let symbol = UIImageView(image: UIImage(systemName: look.symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)))
+        symbol.tintColor = EzyLook.ink
+        symbol.translatesAutoresizingMaskIntoConstraints = false
+        icon.addSubview(symbol)
+        let name = EzyLook.label(look.name, EzyLook.body(16, .bold), EzyLook.ink)
+        let detail = EzyLook.label(look.detail, EzyLook.body(13), EzyLook.muted)
+        let texts = UIStackView(arrangedSubviews: [name, detail])
+        texts.axis = .vertical
+        texts.spacing = 1
+        let price = EzyLook.label(look.price, EzyLook.body(13, .bold), EzyLook.ink)
+        price.setContentHuggingPriority(.required, for: .horizontal)
+        price.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let line = UIStackView(arrangedSubviews: [icon, texts, price])
+        line.axis = .horizontal
+        line.spacing = 10
+        line.alignment = .center
+        line.isUserInteractionEnabled = false
+        line.translatesAutoresizingMaskIntoConstraints = false
+        best.addSubview(line)
+        best.handler = { [weak self] in self?.pickAction(first, details: details, command: command) }
+        best.addTarget(best, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        best.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(best)
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 42),
+            icon.heightAnchor.constraint(equalToConstant: 42),
+            symbol.centerXAnchor.constraint(equalTo: icon.centerXAnchor),
+            symbol.centerYAnchor.constraint(equalTo: icon.centerYAnchor),
+            line.leadingAnchor.constraint(equalTo: best.leadingAnchor, constant: 10),
+            line.trailingAnchor.constraint(equalTo: best.trailingAnchor, constant: -12),
+            line.centerYAnchor.constraint(equalTo: best.centerYAnchor),
+            best.topAnchor.constraint(equalTo: panel.topAnchor, constant: 4),
+            best.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            best.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -4),
+            best.heightAnchor.constraint(equalToConstant: 64),
+        ])
+        let rest = Array(items.dropFirst().prefix(10))
+        guard !rest.isEmpty else { setPanel(76); return }
+
+        let scroll = UIScrollView()
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.clipsToBounds = false
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        let row = UIStackView()
+        row.axis = .horizontal
+        row.spacing = 8
+        row.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(row)
+        for item in rest {
+            let l = pickLook(item)
+            let card = ChipButton(type: .custom)
+            EzyLook.block(card, radius: 14, shadow: 3, fill: { () -> UIColor in if case .shortcut = item { return EzyLook.sand }; return .white }())
+            let n = EzyLook.label(l.name, EzyLook.body(14, .bold), EzyLook.ink)
+            let p = EzyLook.label(l.price, EzyLook.body(12), EzyLook.muted)
+            let stack = UIStackView(arrangedSubviews: [n, p])
+            stack.axis = .vertical
+            stack.spacing = 2
+            stack.isUserInteractionEnabled = false
+            stack.translatesAutoresizingMaskIntoConstraints = false
+            card.addSubview(stack)
+            NSLayoutConstraint.activate([
+                card.widthAnchor.constraint(equalToConstant: 150),
+                stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 10),
+                stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
+                stack.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            ])
+            card.handler = { [weak self] in self?.pickAction(item, details: details, command: command) }
+            card.addTarget(card, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            row.addArrangedSubview(card)
+        }
+        panel.addSubview(scroll)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: best.bottomAnchor, constant: 10),
+            scroll.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            scroll.heightAnchor.constraint(equalToConstant: 56),
+            row.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            row.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            row.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -6),
+            row.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
+        ])
+        setPanel(142)
+    }
+
+    /// The boxes typed into one at a time (the keys stay below): which box, its value, Back and Next.
+    private func typedFields(_ card: Card) -> [EzyField] {
+        card.fields.filter { !["image", "images", "pdf"].contains($0.type ?? "") }
+    }
+
+    private func moveEditing(by step: Int) {
+        guard let card, let key = editingKey else { return }
+        let list = typedFields(card)
+        guard let i = list.firstIndex(where: { $0.key == key }) else { return }
+        let j = i + step
+        guard j >= 0 else { return }
+        guard j < list.count else { finishEditing(); return }
+        editingKey = list[j].key
+        page = list[j].type == "number" || list[j].type == "money" ? .numbers : .letters
+        afterTyping()
+    }
+
+    private func renderEditor(_ card: Card, key: String) {
+        let list = typedFields(card)
+        guard let index = list.firstIndex(where: { $0.key == key }) else { return }
+        let field = list[index]
+        let value = card.values[key] ?? ""
+        let ink = dark ? UIColor.white : EzyLook.ink
+
+        let caption = EzyLook.label(field.label.uppercased(), EzyLook.body(11, .bold), dark ? UIColor(white: 0.8, alpha: 1) : EzyLook.muted)
+        caption.lineBreakMode = .byTruncatingTail
+        let step = EzyLook.label("\(index + 1) of \(list.count)", EzyLook.body(12, .bold), ink)
+        step.setContentHuggingPriority(.required, for: .horizontal)
+        let back = blockButton("Back", fill: .white, text: EzyLook.ink, size: 13, shadow: 0) { [weak self] in self?.moveEditing(by: -1) }
+        back.alpha = index == 0 ? 0.4 : 1
+        let last = index == list.count - 1
+        let next = blockButton(last ? "Done" : "Next", fill: EzyLook.sun, text: EzyLook.ink, size: 13, shadow: 0) { [weak self] in self?.moveEditing(by: 1) }
+        for b in [back, next] { b.widthAnchor.constraint(equalToConstant: 62).isActive = true }
+        let top = UIStackView(arrangedSubviews: [caption, step, back, next])
+        top.axis = .horizontal
+        top.spacing = 8
+        top.alignment = .center
+
+        let bars = UIStackView()
+        bars.axis = .horizontal
+        bars.spacing = 4
+        bars.distribution = .fillEqually
+        for (i, f) in list.prefix(10).enumerated() {
+            let bar = UIView()
+            let has = !(card.values[f.key] ?? "").isEmpty
+            EzyLook.block(bar, radius: 3, fill: i == index ? EzyLook.ink : (has ? EzyLook.teal : .white), border: 1.5)
+            bars.addArrangedSubview(bar)
+        }
+
+        let box = UIView()
+        EzyLook.block(box, radius: 14, shadow: 3)
+        let shownValue = value.isEmpty ? (field.placeholder ?? "") : value
+        let big = EzyLook.label(shownValue + "▏", EzyLook.body(19, .semibold), value.isEmpty ? EzyLook.muted : EzyLook.ink)
+        big.lineBreakMode = .byTruncatingHead
+        let hint = EzyLook.label(field.help ?? (field.required ?? false ? "Needed" : "Optional"), EzyLook.body(12), EzyLook.muted)
+        let inner = UIStackView(arrangedSubviews: [big, hint])
+        inner.axis = .vertical
+        inner.spacing = 0
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(inner)
+
+        var chipItems: [(String, Bool, () -> Void)] = (field.options ?? []).map { option in
+            (option, value == option, { [weak self] in
+                self?.card?.values[key] = option
+                self?.card?.edited.insert(key)
+                self?.moveEditing(by: 1)
+            })
+        }
+        if !value.isEmpty {
+            chipItems.append(("Clear", false, { [weak self] in
+                self?.card?.values[key] = ""
+                self?.card?.edited.insert(key)
+                self?.card?.fromProfile.remove(key)
+                self?.afterTyping()
+            }))
+        }
+        let chips = chipRow(chipItems)
+
+        let views: [UIView] = chipItems.isEmpty ? [top, bars, box] : [top, bars, box, chips]
+        let stack = UIStackView(arrangedSubviews: views)
+        stack.axis = .vertical
+        stack.spacing = 6
+        stack.setCustomSpacing(8, after: bars)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(stack)
+        NSLayoutConstraint.activate([
+            top.heightAnchor.constraint(equalToConstant: 32),
+            bars.heightAnchor.constraint(equalToConstant: 6),
+            box.heightAnchor.constraint(equalToConstant: 54),
+            inner.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
+            inner.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+            inner.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+            stack.topAnchor.constraint(equalTo: panel.topAnchor, constant: 2),
+            stack.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -4),
+        ])
+        if !chipItems.isEmpty { chips.heightAnchor.constraint(equalToConstant: 40).isActive = true }
+        setPanel(chipItems.isEmpty ? 112 : 158)
+    }
+
+    /// What a run made: a preview, how to paste it, and what it cost.
+    private func renderOutcome() {
+        cardView.subviews.forEach { $0.removeFromSuperview() }
+        guard let outcome else { return }
+        let tick = UIView()
+        EzyLook.block(tick, radius: 14, fill: EzyLook.teal)
+        let mark = UIImageView(image: UIImage(systemName: "checkmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .black)))
+        mark.tintColor = EzyLook.ink
+        mark.translatesAutoresizingMaskIntoConstraints = false
+        tick.addSubview(mark)
+        let headline = EzyLook.label(outcome.headline, EzyLook.display(15), EzyLook.ink)
+        let close = ChipButton(type: .system)
+        close.setImage(UIImage(systemName: "xmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)), for: .normal)
+        close.tintColor = EzyLook.ink
+        close.accessibilityLabel = "Close"
+        close.handler = { [weak self] in self?.outcome = nil; self?.afterTyping() }
+        close.addTarget(close, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        let top = UIStackView(arrangedSubviews: [tick, headline, close])
+        top.axis = .horizontal
+        top.spacing = 10
+        top.alignment = .center
+
+        let frame = UIView()
+        EzyLook.block(frame, radius: 12, shadow: 4)
+        let picture = UIImageView(image: outcome.preview)
+        picture.contentMode = .scaleAspectFit
+        picture.clipsToBounds = true
+        picture.layer.cornerRadius = 10
+        picture.translatesAutoresizingMaskIntoConstraints = false
+        frame.addSubview(picture)
+
+        let name = EzyLook.label(outcome.count > 1 ? "\(outcome.app.name) · \(outcome.count) pictures" : outcome.app.name, EzyLook.body(15, .bold), EzyLook.ink, lines: 2)
+        let how = EzyLook.label(outcome.count > 1 ? "All copied. In the chat, hold the message box and tap Paste: every one goes in, in order." : "Copied. In the chat, hold the message box and tap Paste.", EzyLook.body(13), EzyLook.muted, lines: 4)
+        var side: [UIView] = [name, how]
+        if let b = EzyShared.balance {
+            let pill = PadLabel()
+            pill.text = outcome.charged.map { "\($0) used · \(b) left" } ?? "\(b) credits left"
+            pill.font = EzyLook.body(12, .bold)
+            pill.textColor = EzyLook.ink
+            EzyLook.block(pill, radius: 12, fill: EzyLook.sand)
+            pill.clipsToBounds = true
+            pill.heightAnchor.constraint(equalToConstant: 24).isActive = true
+            let wrap = UIStackView(arrangedSubviews: [pill, UIView()])
+            wrap.axis = .horizontal
+            side.append(wrap)
+        }
+        let info = UIStackView(arrangedSubviews: side)
+        info.axis = .vertical
+        info.spacing = 8
+        let body = UIStackView(arrangedSubviews: [frame, info])
+        body.axis = .horizontal
+        body.spacing = 14
+        body.alignment = .center
+
+        let done = blockButton("Back to typing", fill: EzyLook.primary, text: .white, size: 16) { [weak self] in self?.outcome = nil; self?.afterTyping() }
+
+        for v in [top, body, done] as [UIView] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            cardView.addSubview(v)
+        }
+        NSLayoutConstraint.activate([
+            tick.widthAnchor.constraint(equalToConstant: 28),
+            tick.heightAnchor.constraint(equalToConstant: 28),
+            mark.centerXAnchor.constraint(equalTo: tick.centerXAnchor),
+            mark.centerYAnchor.constraint(equalTo: tick.centerYAnchor),
+            close.widthAnchor.constraint(equalToConstant: 44),
+            close.heightAnchor.constraint(equalToConstant: 44),
+            top.topAnchor.constraint(equalTo: cardView.topAnchor),
+            top.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 6),
+            top.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            frame.widthAnchor.constraint(equalToConstant: 128),
+            frame.heightAnchor.constraint(equalToConstant: 150),
+            picture.topAnchor.constraint(equalTo: frame.topAnchor, constant: 4),
+            picture.leadingAnchor.constraint(equalTo: frame.leadingAnchor, constant: 4),
+            picture.trailingAnchor.constraint(equalTo: frame.trailingAnchor, constant: -4),
+            picture.bottomAnchor.constraint(equalTo: frame.bottomAnchor, constant: -4),
+            body.topAnchor.constraint(equalTo: top.bottomAnchor, constant: 14),
+            body.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 6),
+            body.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -6),
+            done.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 2),
+            done.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -5),
+            done.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -6),
+            done.heightAnchor.constraint(equalToConstant: 48),
+        ])
+    }
+
+    /// Shows the result panel for a picture, several pictures, or a PDF.
+    private func showOutcome(_ app: EzyApp, data: [Data], type: String, charged: Int?) {
+        let pdf = type == "com.adobe.pdf"
+        var preview: UIImage?
+        if let first = data.first {
+            if pdf {
+                preview = PDFDocument(data: first)?.page(at: 0)?.thumbnail(of: CGSize(width: 240, height: 320), for: .mediaBox)
+            } else if let source = CGImageSourceCreateWithData(first as CFData, nil) {
+                let opts: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true, kCGImageSourceThumbnailMaxPixelSize: 400]
+                if let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, opts as CFDictionary) { preview = UIImage(cgImage: cg) }
+            }
+        }
+        let headline = pdf ? "Your PDF is ready" : (data.count > 1 ? "\(data.count) pictures ready" : "Your picture is ready")
+        outcome = Outcome(app: app, headline: headline, preview: preview, count: data.count, charged: charged)
+        notice = nil
+    }
+
+    // MARK: Small builders in the new look
+
+    private func blockButton(_ title: String, fill: UIColor, text: UIColor, size: CGFloat, shadow: CGFloat = 3, action: @escaping () -> Void) -> ChipButton {
+        let b = ChipButton(type: .system)
+        b.setTitle(title, for: .normal)
+        b.titleLabel?.font = EzyLook.body(size, .bold)
+        b.titleLabel?.adjustsFontSizeToFitWidth = true
+        b.titleLabel?.minimumScaleFactor = 0.8
+        b.setTitleColor(text, for: .normal)
+        EzyLook.block(b, radius: 12, shadow: shadow, fill: fill)
+        b.contentEdgeInsets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+        b.handler = action
+        b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        return b
+    }
+
+    private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> ChipButton {
+        let b = ChipButton(type: .system)
+        b.setTitle(title, for: .normal)
+        b.titleLabel?.font = EzyLook.body(13, .semibold)
+        b.setTitleColor(EzyLook.ink, for: .normal)
+        EzyLook.block(b, radius: 17, fill: on ? EzyLook.sun : .white)
+        b.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
+        b.heightAnchor.constraint(equalToConstant: 34).isActive = true
+        b.accessibilityTraits = on ? [.button, .selected] : .button
+        b.handler = action
+        b.addTarget(b, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        return b
+    }
+
+    private func chipRow(_ items: [(String, Bool, () -> Void)]) -> UIScrollView {
+        let scroll = UIScrollView()
+        scroll.showsHorizontalScrollIndicator = false
+        let row = UIStackView(arrangedSubviews: items.map { chip($0.0, on: $0.1, action: $0.2) })
+        row.axis = .horizontal
+        row.spacing = 8
+        row.alignment = .center
+        row.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            row.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            row.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 2),
+            row.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -2),
+            row.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
+        ])
+        return scroll
+    }
+
+    private func cardHeader(_ title: String, back: @escaping () -> Void) -> UIView {
+        let arrow = ChipButton(type: .system)
+        arrow.setImage(UIImage(systemName: "arrow.left", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .bold)), for: .normal)
+        arrow.tintColor = EzyLook.ink
+        arrow.accessibilityLabel = "Back"
+        arrow.handler = back
+        arrow.addTarget(arrow, action: #selector(ChipButton.tapped), for: .touchUpInside)
+        arrow.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        let name = EzyLook.label(title, EzyLook.display(15), EzyLook.ink)
+        name.lineBreakMode = .byTruncatingTail
+        var views: [UIView] = [arrow, name]
+        if let pill = balancePill() {
+            pill.setContentHuggingPriority(.required, for: .horizontal)
+            pill.setContentCompressionResistancePriority(.required, for: .horizontal)
+            views.append(pill)
+        }
+        let row = UIStackView(arrangedSubviews: views)
+        row.axis = .horizontal
+        row.spacing = 6
+        row.alignment = .center
+        return row
+    }
+
+    private func progressRow(done: Int, of total: Int) -> UIView {
+        let track = UIView()
+        EzyLook.block(track, radius: 6, fill: .white)
+        track.clipsToBounds = true
+        let fill = UIView()
+        fill.backgroundColor = EzyLook.teal
+        fill.translatesAutoresizingMaskIntoConstraints = false
+        track.addSubview(fill)
+        let share = total == 0 ? 0 : CGFloat(done) / CGFloat(total)
+        NSLayoutConstraint.activate([
+            fill.topAnchor.constraint(equalTo: track.topAnchor),
+            fill.bottomAnchor.constraint(equalTo: track.bottomAnchor),
+            fill.leadingAnchor.constraint(equalTo: track.leadingAnchor),
+            fill.widthAnchor.constraint(equalTo: track.widthAnchor, multiplier: max(share, 0.001)),
+            track.heightAnchor.constraint(equalToConstant: 12),
+        ])
+        let label = EzyLook.label("\(done) of \(total) ready", EzyLook.body(13, .semibold), EzyLook.ink)
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        let row = UIStackView(arrangedSubviews: [track, label])
+        row.axis = .horizontal
+        row.spacing = 10
+        row.alignment = .center
+        row.isHidden = total == 0
         return row
     }
 
@@ -1538,6 +2067,62 @@ final class KeyboardViewController: UIInputViewController {
 }
 
 // MARK: - Small views
+
+/// The Ezyourlife look (docs/design.md): cream, ink borders, flat offset shadows, sunny accents.
+enum EzyLook {
+    static func hex(_ v: UInt32) -> UIColor {
+        UIColor(red: CGFloat((v >> 16) & 0xff) / 255, green: CGFloat((v >> 8) & 0xff) / 255, blue: CGFloat(v & 0xff) / 255, alpha: 1)
+    }
+    static let cream = hex(0xfff8eb), ink = hex(0x121212), sand = hex(0xf4ebdc), sun = hex(0xffc800)
+    static let teal = hex(0x22c3a6), coral = hex(0xff8157), sky = hex(0x8fb4ff), pink = hex(0xff8fe9)
+    static let lime = hex(0xbef434), muted = hex(0x4a4a4a), primary = hex(0xac156b)
+
+    /// Titles: a heavy rounded face, close to the site's display font without bundling fonts in the keyboard.
+    static func display(_ size: CGFloat) -> UIFont {
+        let base = UIFont.systemFont(ofSize: size, weight: .heavy)
+        guard let d = base.fontDescriptor.withDesign(.rounded) else { return base }
+        return UIFont(descriptor: d, size: size)
+    }
+    static func body(_ size: CGFloat, _ weight: UIFont.Weight = .regular) -> UIFont { .systemFont(ofSize: size, weight: weight) }
+
+    static func block(_ v: UIView, radius: CGFloat = 14, shadow: CGFloat = 0, fill: UIColor = .white, border: CGFloat = 2) {
+        v.backgroundColor = fill
+        v.layer.cornerRadius = radius
+        v.layer.borderWidth = border
+        v.layer.borderColor = ink.cgColor
+        if shadow > 0 {
+            v.layer.shadowColor = ink.cgColor
+            v.layer.shadowOpacity = 1
+            v.layer.shadowRadius = 0
+            v.layer.shadowOffset = CGSize(width: shadow, height: shadow)
+        }
+    }
+
+    static func label(_ text: String, _ font: UIFont, _ color: UIColor, lines: Int = 1) -> UILabel {
+        let l = UILabel()
+        l.text = text
+        l.font = font
+        l.textColor = color
+        l.numberOfLines = lines
+        return l
+    }
+
+    /// A steady colour per category (the same every time, unlike hashValue).
+    static func swatch(_ key: String) -> UIColor {
+        let list = [teal, sun, sky, pink, lime, coral]
+        let n = key.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xffff }
+        return list[n % list.count]
+    }
+}
+
+final class PadLabel: UILabel {
+    var insets = UIEdgeInsets(top: 3, left: 10, bottom: 3, right: 10)
+    override func drawText(in rect: CGRect) { super.drawText(in: rect.inset(by: insets)) }
+    override var intrinsicContentSize: CGSize {
+        let s = super.intrinsicContentSize
+        return CGSize(width: s.width + insets.left + insets.right, height: s.height + insets.top + insets.bottom)
+    }
+}
 
 /// The keys area. A touch that lands in the gap between keys goes to the nearest key,
 /// so no tap is lost (Apple's keyboard has no dead space either).

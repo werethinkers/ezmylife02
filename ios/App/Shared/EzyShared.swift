@@ -100,6 +100,12 @@ enum EzyShared {
         }
     }
 
+    /// The wallet balance from the last run or charge, shown in the keyboard. Nil until the first one.
+    static var balance: Int? {
+        get { store.object(forKey: "ezy.balance") as? Int }
+        set { store.set(newValue, forKey: "ezy.balance") }
+    }
+
     static func remember(_ app: EzyApp) {
         recentApps = [app] + recentApps.filter { $0.id != app.id }
     }
@@ -128,6 +134,8 @@ struct EzyApp: Codable, Hashable {
     var url: String?
     /// "device": a photo tool that runs on the phone (EzyPhoto in the keyboard); the server only charges it.
     var mode: String?
+    var description: String?
+    var category: String?
 
     var link: String { url ?? "\(EzyShared.site)/tool/\(id)" }
     var priceLabel: String {
@@ -185,6 +193,8 @@ struct EzyResult: Codable {
     var at: Date
     /// Apps that make several pictures at once (ProductVision 360's angles): all of them, in order.
     var images: [String]? = nil
+    /// Credits this run cost (from the server), when known.
+    var charged: Int? = nil
 
     var isFresh: Bool { Date().timeIntervalSince(at) < 15 * 60 }
 }
@@ -271,7 +281,16 @@ enum EzyAPI {
     /// Charges a photo tool that ran on the phone, at its website price.
     static func chargeDevice(_ appId: String) async throws {
         let id = appId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? appId
-        _ = try await request("/apps/\(id)/charge", method: "POST", body: [:])
+        let json = try await request("/apps/\(id)/charge", method: "POST", body: [:])
+        if let b = json["balance"] as? Int { EzyShared.balance = b }
+    }
+
+    /// The wallet balance, saved for the keyboard's balance pill.
+    @discardableResult
+    static func refreshBalance() async -> Int? {
+        guard let json = try? await request("/wallet"), let b = json["balance"] as? Int else { return nil }
+        EzyShared.balance = b
+        return b
     }
 
     /// Runs the app, charged at its normal price. Returns the result as text (and an image link for image apps).
@@ -283,6 +302,8 @@ enum EzyAPI {
         let id = app.id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? app.id
         let json = try await request("/apps/\(id)/run", method: "POST", body: body)
         EzyShared.remember(app)
+        if let b = json["balance"] as? Int { EzyShared.balance = b }
+        let spent = json["credits_charged"] as? Int
         var image: String? = json["image"] as? String
         var text = EzyText.flatten(json["output"])
         if image == nil, let s = json["output"] as? String, s.hasPrefix("data:image") || (s.hasPrefix("http") && !s.contains(" ")) {
@@ -303,6 +324,7 @@ enum EzyAPI {
         }
         var result = EzyResult(title: app.name, text: text, imageURL: image, at: Date())
         if many.count > 1 { result.images = many }
+        result.charged = spent
         return result
     }
 

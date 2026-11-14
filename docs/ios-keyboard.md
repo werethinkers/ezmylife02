@@ -56,6 +56,13 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
 - Still website only: Image to WebP (iOS can't write WebP), Mail Brain (needs Gmail), Virasat (needs voice
   recording) and outside-developer apps without code in this repo.
 
+- **Look (Nov 2026).** The keyboard follows the site's look (`EzyLook` in the keyboard file): cream panels,
+  2 px ink borders, flat offset shadows, sun and teal accents, heavy rounded titles, and the balance in a pill.
+  After `/` the best match is a big card with a row of other apps and shortcuts above the keys; the details
+  card shows a tick per box, an "N of M ready" bar, choices as chips and "Make it · N credits"; typing into a box
+  shows one box at a time with Back and Next; a picture or PDF result shows a preview, how to paste and credits
+  left. Design canvas: https://claude.ai/artifact/T7hXVoiCvRyNLtHtRtqfET.
+
 ## How it fits together
 
 | Path | What it is |
