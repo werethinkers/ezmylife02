@@ -74,6 +74,25 @@ end
 
 _, groups = api("GET", "/v1/betaGroups?filter[app]=#{app_id}&limit=200")
 list = groups["data"] || []
+
+# PUBLIC_LINK=1: make sure an outside-tester group with a join link exists (anyone with the link can join).
+if ENV["PUBLIC_LINK"] == "1" && list.none? { |g| !g.dig("attributes", "isInternalGroup") && g.dig("attributes", "publicLinkEnabled") }
+  code, made = api("POST", "/v1/betaGroups", {
+    data: { type: "betaGroups",
+            attributes: { name: "EZYOURLIFE testers", publicLinkEnabled: true, publicLinkLimitEnabled: true, publicLinkLimit: 1000, feedbackEnabled: true },
+            relationships: { app: { data: { type: "apps", id: app_id } } } },
+  })
+  if code < 300
+    puts "Made the outside-tester group \"EZYOURLIFE testers\" with a join link."
+    list << made["data"]
+  else
+    puts "::warning::Could not make the outside-tester group (#{code}): #{errors(made)}"
+  end
+end
+list.each do |g|
+  link = g.dig("attributes", "publicLink")
+  puts "Join link for #{g.dig("attributes", "name")}: #{link}" if link
+end
 puts "Tester groups: #{list.empty? ? "none" : list.map { |g| g.dig("attributes", "name") }.join(", ")}"
 puts "No tester groups yet: make one in App Store Connect → TestFlight and add the testers." if list.empty?
 

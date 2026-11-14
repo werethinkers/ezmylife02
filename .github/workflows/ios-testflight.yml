@@ -21,6 +21,10 @@ on:
         description: "Skip the build: only give the newest build to every tester group"
         type: boolean
         default: false
+      public_link:
+        description: "Make an outside-tester group with a join link if there is none"
+        type: boolean
+        default: false
 jobs:
   testflight:
     runs-on: macos-15
@@ -153,6 +157,7 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          PUBLIC_LINK: ${{ inputs.public_link && '1' || '0' }}
         run: |
           # Without this only the account owner (and internal groups set to get every build) see new builds.
           ruby ios/testflight-share.rb "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" "${{ inputs.share_only && 'newest' || github.run_number }}"
