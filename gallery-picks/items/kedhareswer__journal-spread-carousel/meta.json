@@ -1,0 +1,12 @@
+{
+  "id": 44662,
+  "key": "kedhareswer__journal-spread-carousel",
+  "author": "kedhareswer",
+  "slug": "journal-spread-carousel",
+  "name": "3D Journal Page Carousel",
+  "description": "3D journal page carousel: an open scrapbook spread in the middle with earlier and later pages standing edge-on in two receding stacks. Drag, flick, click a page or use the arrow keys to turn; each turn swings the next spread in and folds the last one shut. Polaroids, taped prints and handwritten notes sit on each page, and it auto-advances until touched.",
+  "url": "https://21st.dev/@kedhareswer/components/journal-spread-carousel",
+  "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/journal-spread-carousel/default/preview.1793905434697.webp",
+  "kind": "",
+  "deps": []
+}

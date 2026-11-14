@@ -199,6 +199,45 @@
    "bytes": 31780
   },
   {
+   "id": 44872,
+   "key": "kedhareswer__3d-curved-carousel",
+   "author": "kedhareswer",
+   "slug": "3d-curved-carousel",
+   "name": "3D Curved Carousel",
+   "description": "3D curved carousel: a WebGL image slider that bends photo cards around a cylinder like a lens. Drag, swipe or use the arrows; captions and a progress counter follow the active slide. Falls back to plain images without WebGL.",
+   "url": "https://21st.dev/@kedhareswer/components/3d-curved-carousel",
+   "preview": "https://cdn.21st.dev/kedhareswer/3d-curved-carousel/default/preview.1794154544838-1256e543-75e3-4f9e-9d23-3967c1ddcf29.jpg",
+   "kind": "",
+   "deps": [],
+   "bytes": 227344
+  },
+  {
+   "id": 44662,
+   "key": "kedhareswer__journal-spread-carousel",
+   "author": "kedhareswer",
+   "slug": "journal-spread-carousel",
+   "name": "3D Journal Page Carousel",
+   "description": "3D journal page carousel: an open scrapbook spread in the middle with earlier and later pages standing edge-on in two receding stacks. Drag, flick, click a page or use the arrow keys to turn; each turn swings the next spread in and folds the last one shut. Polaroids, taped prints and handwritten notes sit on each page, and it auto-advances until touched.",
+   "url": "https://21st.dev/@kedhareswer/components/journal-spread-carousel",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/journal-spread-carousel/default/preview.1793905434697.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 158174
+  },
+  {
+   "id": 44652,
+   "key": "kedhareswer__led-matrix-sales",
+   "author": "kedhareswer",
+   "slug": "led-matrix-sales",
+   "name": "LED Dot Matrix Chart Card",
+   "description": "LED dot matrix chart card: a revenue card whose chart is a board of LED dots, lighting each day's column from the bottom with a bright top dot, sweeping on in view while the total rolls up like an odometer. For dashboards and sales stats.",
+   "url": "https://21st.dev/@kedhareswer/components/led-matrix-sales",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/led-matrix-sales/default/preview.1793900811530.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 11859
+  },
+  {
    "id": 35500,
    "key": "kedhareswer__lunar-boarding-pass",
    "author": "kedhareswer",
@@ -223,6 +262,19 @@
    "kind": "",
    "deps": [],
    "bytes": 41499
+  },
+  {
+   "id": 44657,
+   "key": "kedhareswer__silk-mesh-shader-hero",
+   "author": "kedhareswer",
+   "slug": "silk-mesh-shader-hero",
+   "name": "Silk Shader Hero Background",
+   "description": "Silk shader hero background: a full-bleed WebGL hero of drifting satin folds with a fine mesh and pulse rings that lean from the pointer and ripple on click, under a masked headline reveal. For fashion, luxury and product launches.",
+   "url": "https://21st.dev/@kedhareswer/components/silk-mesh-shader-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/silk-mesh-shader-hero/default/preview.1793899754432.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 102934
   },
   {
    "id": 8723,
@@ -263,6 +315,11 @@
    "reason": "Could not resolve \"gsap\""
   },
   {
+   "key": "kedhareswer__folio-fold-menu",
+   "name": "3D Fold Fullscreen Menu",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
    "key": "kedhareswer__rotating-flavor-slider",
    "name": "Scroll Rotating Product Slider",
    "reason": "Could not resolve \"gsap\""
@@ -275,6 +332,11 @@
   {
    "key": "kedhareswer__sneaker-product-hero",
    "name": "Sneaker Product Page Hero",
+   "reason": "Could not resolve \"gsap\""
+  },
+  {
+   "key": "kedhareswer__tilt-stack-scroll",
+   "name": "Scroll Stacking Cards",
    "reason": "Could not resolve \"gsap\""
   }
  ]
