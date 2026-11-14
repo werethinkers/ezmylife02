@@ -182,7 +182,8 @@ final class KeyboardViewController: UIInputViewController {
             keysStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -3),
             keysStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
 
-            cardView.topAnchor.constraint(equalTo: strip.bottomAnchor, constant: 4),
+            // The card has its own header, so it covers the strip too.
+            cardView.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             cardView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 6),
             cardView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
             cardView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
@@ -903,6 +904,7 @@ final class KeyboardViewController: UIInputViewController {
         let showCard = showsCard
         cardView.isHidden = !showCard
         keysStack.isHidden = showCard
+        strip.isHidden = showCard
         view.backgroundColor = showCard ? EzyLook.cream : nil
         if showCard { setPanel(0) } else { setPanel(panelHeight?.constant ?? 0) }
         if showCard { if outcome != nil { renderOutcome() } else { renderCard() } }
@@ -936,7 +938,8 @@ final class KeyboardViewController: UIInputViewController {
 
         let scroll = UIScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
-        scroll.clipsToBounds = false
+        // Rows scroll only between the header and the button, never over them.
+        scroll.clipsToBounds = true
         let list = UIStackView()
         list.axis = .vertical
         list.spacing = 8
