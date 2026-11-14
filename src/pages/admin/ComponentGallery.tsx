@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, Laptop, Loader2, Moon, Search, Smartphone, Star, Sun, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Laptop, Loader2, Maximize2, Moon, RotateCcw, Search, Smartphone, Star, Sun, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { isAdmin } from "@/lib/devApps";
+import twAnimateCss from "./tw-animate.css?raw";
+import previewFrameCss from "./previewFrameCss.css?raw";
+import { hind400, hind600, unbounded700 } from "./frameFonts";
 
 /*
  * Private component gallery (/admin/components), for admins only.
@@ -24,7 +27,7 @@ const COMMIT = "87e9f787c81ce3fc9c73d37f890fb3e8d2d19ef6";
 const RAW = `https://raw.githubusercontent.com/${REPO}/${COMMIT}/`;
 const TREE = `https://github.com/${REPO}/tree/${COMMIT}/`;
 const PICKS_KEY = "ez-component-picks";
-const PAGE = 48;
+const PAGE = 24;
 
 type Entry = {
   author: string;
@@ -117,10 +120,9 @@ function frameDoc(html: string, look: Look, dark: boolean): string {
   const vars = look === "ours" ? OURS : dark ? SHADCN_DARK : SHADCN_LIGHT;
   const ours =
     look === "ours"
-      ? `@font-face{font-family:Unbounded;font-weight:500;font-display:swap;src:url(${origin}/fonts/unbounded-latin-500-normal.woff2) format("woff2")}
-@font-face{font-family:Unbounded;font-weight:700;font-display:swap;src:url(${origin}/fonts/unbounded-latin-700-normal.woff2) format("woff2")}
-@font-face{font-family:Hind;font-weight:400;font-display:swap;src:url(${origin}/fonts/hind-latin-400-normal.woff2) format("woff2")}
-@font-face{font-family:Hind;font-weight:600;font-display:swap;src:url(${origin}/fonts/hind-latin-600-normal.woff2) format("woff2")}
+      ? `@font-face{font-family:Unbounded;font-weight:700;font-display:swap;src:url(${unbounded700}) format("woff2")}
+@font-face{font-family:Hind;font-weight:400;font-display:swap;src:url(${hind400}) format("woff2")}
+@font-face{font-family:Hind;font-weight:600;font-display:swap;src:url(${hind600}) format("woff2")}
 @theme{--font-sans:Hind,system-ui,sans-serif;--font-display:Unbounded,Hind,system-ui,sans-serif;
 --shadow-2xs:3px 3px 0 0 hsl(0 0% 7%);--shadow-xs:3px 3px 0 0 hsl(0 0% 7%);--shadow-sm:3px 3px 0 0 hsl(0 0% 7%);--shadow-md:3px 3px 0 0 hsl(0 0% 7%);--shadow-lg:5px 5px 0 0 hsl(0 0% 7%);--shadow-xl:7px 7px 0 0 hsl(0 0% 7%);--shadow-2xl:7px 7px 0 0 hsl(0 0% 7%)}
 body{font-family:Hind,system-ui,sans-serif}
@@ -133,6 +135,8 @@ h1,h2,h3{font-family:Unbounded,Hind,system-ui,sans-serif}
 @custom-variant dark (&:where(.dark, .dark *));
 @theme inline{${colors}${brand}--radius-sm:calc(var(--radius) - 4px);--radius-md:calc(var(--radius) - 2px);--radius-lg:var(--radius);--radius-xl:calc(var(--radius) + 4px)}
 @layer base{*{border-color:var(--color-border)}body{background:var(--color-background);color:var(--color-foreground)}}
+${twAnimateCss}
+${previewFrameCss}
 ${ours}
 </style>
 <script src="${origin}/vendor/tailwind-browser-4.1.11.js"></script>
@@ -151,6 +155,79 @@ function useFrameWidth(ref: React.RefObject<HTMLDivElement>) {
   return w;
 }
 
+function useComponentHtml(item: Item, enabled = true) {
+  return useQuery({
+    queryKey: ["component-html", item.htmlPath],
+    enabled,
+    queryFn: async () => {
+      const r = await fetch(RAW + item.htmlPath);
+      if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
+      return r.text();
+    },
+    staleTime: Infinity,
+  });
+}
+
+/** True while the element is on screen or just off it, so only nearby cards run a live preview. */
+function useNearViewport(ref: React.RefObject<HTMLElement>) {
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setNear(e.isIntersecting), { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return near;
+}
+
+const CARD_W = 960;
+const CARD_H = 720;
+
+/* One card: a big live preview (hover effects, CSS animations and transitions run), then name, author and pick. */
+function PreviewCard({ item, picked, onPick, onOpen }: { item: Item; picked: boolean; onPick: () => void; onOpen: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const near = useNearViewport(box);
+  const w = useFrameWidth(box);
+  const [run, setRun] = useState(0);
+  const html = useComponentHtml(item, near);
+  const srcDoc = useMemo(() => (html.data ? frameDoc(html.data, "ours", false) : ""), [html.data]);
+  const scale = w ? w / CARD_W : 0.4;
+
+  const tool = "p-2 rounded-lg border-2 border-ink bg-card hover:bg-sun shadow-block-sm";
+  return (
+    <div className="block-card overflow-hidden flex flex-col">
+      <div ref={box} className="group relative aspect-[4/3] overflow-hidden border-b-2 border-ink bg-secondary">
+        <img src={RAW + item.screenshotPath} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+        {near && srcDoc && (
+          <iframe
+            key={run}
+            title={`${item.name} live preview`}
+            sandbox="allow-scripts"
+            srcDoc={srcDoc}
+            className="absolute left-0 top-0 border-0 bg-background"
+            style={{ width: CARD_W, height: CARD_H, transform: `scale(${scale})`, transformOrigin: "0 0" }}
+          />
+        )}
+        {near && html.isLoading && <Loader2 className="absolute right-3 bottom-3 h-4 w-4 animate-spin text-muted-foreground" />}
+        <div className="absolute right-3 top-3 flex gap-2 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <button className={tool} onClick={() => setRun((r) => r + 1)} aria-label="Replay animation" title="Replay"><RotateCcw className="h-4 w-4" /></button>
+          <button className={tool} onClick={onOpen} aria-label={`Open ${item.name} full size`} title="Full size"><Maximize2 className="h-4 w-4" /></button>
+        </div>
+      </div>
+      <div className="p-3 flex items-start gap-2">
+        <button className="min-w-0 grow text-left" onClick={onOpen}>
+          <p className="font-semibold leading-snug line-clamp-2">{item.name}</p>
+          <p className="text-xs text-muted-foreground truncate">by {item.authorName || item.author}</p>
+        </button>
+        <button onClick={onPick} className="p-1.5 rounded-md hover:bg-secondary" aria-label={picked ? "Remove from picks" : "Pick"} aria-pressed={picked}>
+          <Star className={`h-4 w-4 ${picked ? "fill-sun" : ""}`} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolean; onPick: () => void; onClose: () => void }) {
   const [look, setLook] = useState<Look>("ours");
   const [dark, setDark] = useState(false);
@@ -159,15 +236,8 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
   const box = useRef<HTMLDivElement>(null);
   const boxW = useFrameWidth(box);
 
-  const html = useQuery({
-    queryKey: ["component-html", item.htmlPath],
-    queryFn: async () => {
-      const r = await fetch(RAW + item.htmlPath);
-      if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
-      return r.text();
-    },
-    staleTime: Infinity,
-  });
+  const html = useComponentHtml(item);
+  const [run, setRun] = useState(0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -220,6 +290,9 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />} {dark ? "Light" : "Dark"}
             </button>
           )}
+          <button className={`${seg(false)} rounded-lg`} onClick={() => setRun((r) => r + 1)}>
+            <RotateCcw className="h-4 w-4" /> Replay
+          </button>
           <span className="grow" />
           <button className={`${seg(picked)} rounded-lg`} onClick={onPick}>
             <Star className={`h-4 w-4 ${picked ? "fill-ink" : ""}`} /> {picked ? "Picked" : "Pick"}
@@ -240,7 +313,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           {html.data && (
             <div className="mx-auto border-2 border-ink rounded-xl overflow-hidden bg-card" style={{ width: frameW * scale, height: frameH * scale }}>
               <iframe
-                key={`${look}-${dark}`}
+                key={`${look}-${dark}-${run}`}
                 title={`${item.name} preview`}
                 sandbox="allow-scripts"
                 srcDoc={srcDoc}
@@ -250,7 +323,7 @@ function Preview({ item, picked, onPick, onClose }: { item: Item; picked: boolea
           )}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          This is a saved snapshot of the component, so it shows the look but clicks and animations may not work. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude; the original author's licence is checked before anything goes live.
+          Hover effects, CSS animations and transitions run here. Motion driven by script code (for example spring or scroll effects) is only a frozen snapshot. "Our style" swaps in our colours, fonts, ink outlines and block shadows. To use one on the site, copy its build prompt and give it to Claude; the original author's licence is checked before anything goes live.
         </p>
       </div>
     </div>
@@ -309,7 +382,7 @@ export default function ComponentGallery() {
     <div className="min-h-screen bg-background">
       <PageSeo title="Component gallery | EZYOURLIFE" description="Private gallery of interface parts." path="/admin/components" noindex />
       <Navbar />
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
+      <main className="container mx-auto px-4 py-8 max-w-[1500px]">
         {admin.isLoading && <p className="p-8">Checking your access…</p>}
         {!admin.isLoading && admin.data !== true && <p className="p-8">This page is for admins only.</p>}
         {admin.data === true && (
@@ -366,26 +439,10 @@ export default function ComponentGallery() {
             {dir.data && (
               <>
                 <p className="mt-4 text-sm text-muted-foreground">{results.length.toLocaleString("en-IN")} components</p>
-                <div className="mt-3 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {results.slice(0, shown).map((it) => {
-                    const picked = picks.includes(it.id);
-                    return (
-                      <div key={it.id} className="block-card block-lift overflow-hidden flex flex-col">
-                        <button className="block aspect-[16/10] bg-secondary border-b-2 border-ink overflow-hidden" onClick={() => setOpen(it)} aria-label={`Open ${it.name}`}>
-                          <img src={RAW + it.screenshotPath} alt="" loading="lazy" className="h-full w-full object-cover object-top" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-                        </button>
-                        <div className="p-3 flex items-start gap-2">
-                          <button className="min-w-0 grow text-left" onClick={() => setOpen(it)}>
-                            <p className="font-semibold leading-snug line-clamp-2">{it.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">by {it.authorName || it.author}</p>
-                          </button>
-                          <button onClick={() => togglePick(it.id)} className="p-1.5 rounded-md hover:bg-secondary" aria-label={picked ? "Remove from picks" : "Pick"} aria-pressed={picked}>
-                            <Star className={`h-4 w-4 ${picked ? "fill-sun" : ""}`} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="mt-3 grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {results.slice(0, shown).map((it) => (
+                    <PreviewCard key={it.id} item={it} picked={picks.includes(it.id)} onPick={() => togglePick(it.id)} onOpen={() => setOpen(it)} />
+                  ))}
                 </div>
                 {results.length > shown && (
                   <div className="mt-8 text-center">
