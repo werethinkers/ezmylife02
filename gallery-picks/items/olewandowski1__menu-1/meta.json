@@ -1,0 +1,12 @@
+{
+  "id": 27052,
+  "key": "olewandowski1__menu-1",
+  "author": "olewandowski1",
+  "slug": "menu-1",
+  "name": "Restaurant Menu Block",
+  "description": "A two-column restaurant menu section that lists dishes in courses with dotted leader lines connecting each dish name to its price, plus a description and dietary note.",
+  "url": "https://21st.dev/@olewandowski1/components/menu-1",
+  "preview": "https://cdn.21st.dev/7ovr/menu-1/default/preview.1789182520451-3d1ee4cc-1b1c-4de5-a160-6d667c08495d.png",
+  "kind": "",
+  "deps": []
+}

@@ -66,6 +66,19 @@
    "bytes": 6875
   },
   {
+   "id": 30683,
+   "key": "daiwiikharihar__spatial-depth-hero",
+   "author": "daiwiikharihar",
+   "slug": "spatial-depth-hero",
+   "name": "Spatial Depth Hero",
+   "description": "Spatial depth 3D volumetric card scatter hero section",
+   "url": "https://21st.dev/@daiwiikharihar/components/spatial-depth-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/spatial-depth-hero/default/preview.1790280613817.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 6269
+  },
+  {
    "id": 45026,
    "key": "daiwiikharihar__waving-hand-poster",
    "author": "daiwiikharihar",
@@ -381,6 +394,19 @@
    "bytes": 30651
   },
   {
+   "id": 38035,
+   "key": "kedhareswer__open-slot-booking",
+   "author": "kedhareswer",
+   "slug": "open-slot-booking",
+   "name": "Meeting Booking Calendar",
+   "description": "Meeting booking calendar: a book-a-call section that does the booking itself. A bold headline over a scheduler window with the host's card, call lengths and a timezone-aware week of open slots. Pick a slot and it grows into a confirm form; confirm and it flips into a perforated ticket stamped booked, with an .ics download. A Check against my calendar switch hatches your busy blocks and strikes clashing slots. Fully customisable host, hours, slots and colours.",
+   "url": "https://21st.dev/@kedhareswer/components/open-slot-booking",
+   "preview": "https://cdn.21st.dev/kedhareswer/open-slot-booking/default/preview.1791954021018-34f09e50-c1ef-430e-ac08-3a79cf3d91a7.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 65918
+  },
+  {
    "id": 44654,
    "key": "kedhareswer__pulse-stripe-hero",
    "author": "kedhareswer",
@@ -485,6 +511,19 @@
    "bytes": 297224
   },
   {
+   "id": 27052,
+   "key": "olewandowski1__menu-1",
+   "author": "olewandowski1",
+   "slug": "menu-1",
+   "name": "Restaurant Menu Block",
+   "description": "A two-column restaurant menu section that lists dishes in courses with dotted leader lines connecting each dish name to its price, plus a description and dietary note.",
+   "url": "https://21st.dev/@olewandowski1/components/menu-1",
+   "preview": "https://cdn.21st.dev/7ovr/menu-1/default/preview.1789182520451-3d1ee4cc-1b1c-4de5-a160-6d667c08495d.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4131
+  },
+  {
    "id": 8723,
    "key": "rahil1202__metallic-business-card",
    "author": "rahil1202",
@@ -553,6 +592,19 @@
    "bytes": 25954
   },
   {
+   "id": 28229,
+   "key": "shadcnspace__card-14",
+   "author": "shadcnspace",
+   "slug": "card-14",
+   "name": "3D Flip Card",
+   "description": "A property/listing card that flips with a 3D perspective animation on hover to reveal specs and a call-to-action on the back.",
+   "url": "https://21st.dev/@shadcnspace/components/card-14",
+   "preview": "https://cdn.21st.dev/shadcnspace/card-14/default/preview.1789957009834-3cb1e021-1cea-4be0-9412-188a76166236.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27337
+  },
+  {
    "id": 30554,
    "key": "ssychui__project-index",
    "author": "ssychui",
@@ -607,9 +659,29 @@
  ],
  "failed": [
   {
+   "key": "hello_54e122be__hairline-phone",
+   "name": "Hairline Phone",
+   "reason": "its helper files were not included with the code"
+  },
+  {
    "key": "jahed__flip-countdown",
    "name": "FlipCountdown",
    "reason": "its stylesheet was not included with the code"
+  },
+  {
+   "key": "kedhareswer__festivity-hero",
+   "name": "Festivity Hero",
+   "reason": "Needs the three.js package"
+  },
+  {
+   "key": "kedhareswer__hotel-showcase",
+   "name": "Hotel Showcase",
+   "reason": "the code came back empty"
+  },
+  {
+   "key": "ziegfiroyt__booking29",
+   "name": "Appointment Intake Match",
+   "reason": "Needs helper files the API result leaves out"
   }
  ]
 }

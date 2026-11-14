@@ -1,0 +1,5 @@
+# Build: Meeting Booking Calendar
+
+Meeting booking calendar: a book-a-call section that does the booking itself. A bold headline over a scheduler window with the host's card, call lengths and a timezone-aware week of open slots. Pick a slot and it grows into a confirm form; confirm and it flips into a perforated ticket stamped booked, with an .ics download. A Check against my calendar switch hatches your busy blocks and strikes clashing slots. Fully customisable host, hours, slots and colours.
+
+The working code is in gallery-picks/items/kedhareswer__open-slot-booking/component.tsx (demo: demo.tsx). Rebuild it inside the Ezyourlife repo in its own style (docs/design.md): cream page, white cards, thick ink outlines (border-2 border-ink) with hard block shadows (shadow-block-sm / shadow-block), Unbounded headings (font-display), Hind body text, solid brand colours (bg-pink, bg-sun, bg-teal, bg-sky, bg-lime), plain words. Use our shadcn parts from src/components/ui where they fit. Keep the behaviour, keyboard and reduced-motion handling.

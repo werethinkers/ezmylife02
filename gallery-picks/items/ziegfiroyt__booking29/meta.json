@@ -1,0 +1,16 @@
+{
+ "id": 29256,
+ "key": "ziegfiroyt__booking29",
+ "author": "ziegfiroyt",
+ "slug": "booking29",
+ "name": "Appointment Intake Match",
+ "description": "A three-question booking intake form that matches the visitor's answers to a specific appointment type, length and clinician, with a live availability card that swaps to match the result.",
+ "url": "https://21st.dev/@ziegfiroyt/components/booking29",
+ "preview": "https://cdn.21st.dev/ziegfiroyt/booking29/default/preview.1790057146799-617a8241-5882-4151-8416-6924ada41052.png",
+ "kind": "",
+ "deps": [
+  "@radix-ui/react-slot",
+  "class-variance-authority"
+ ],
+ "skip": "Needs helper files the API result leaves out"
+}
