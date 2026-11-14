@@ -1,0 +1,12 @@
+{
+  "id": 43143,
+  "key": "dhxwhy__team-lanyard-rail",
+  "author": "dhxwhy",
+  "slug": "team-lanyard-rail",
+  "name": "Team Lanyard Rail – Meet the Team Section with Flip Badges",
+  "description": "Team Lanyard Rail for React and Tailwind CSS (shadcn/ui): a meet the team section where lanyard ID badges hang from a brushed rail and flip over to introduce each person. It is built to make an about page feel tactile, so visitors meet the team by pulling and flipping badges instead of scanning a grid of avatars. Use it for about pages, team sections, hero sections, portfolios and hiring pages. Badges sway with spring physics: hover turns one to the front and nudges its neighbours, dragging slides it along the rail with collisions, pulling it down stretches the reel cord before it bounces back, and a click turns it over, flip card style, to a bio, tags and contact links. Items take name, role, team, photo, bio, tags, links and a chart-color tone; active and flipped can be controlled with callbacks. Keyboard support, an aria-live caption, reduced motion, light and dark themes and a swipe carousel on phones are built in. The included demo autoplays a short tour of eight fictional teammates and makes no requests beyond image loads. Requires React only, with no animation library.",
+  "url": "https://21st.dev/@dhxwhy/components/team-lanyard-rail",
+  "preview": "https://cdn.21st.dev/dhxwhy/team-lanyard-rail/default/preview.1793378106253-ba29fe10-5373-419d-8156-643effe20165.png",
+  "kind": "",
+  "deps": []
+}
