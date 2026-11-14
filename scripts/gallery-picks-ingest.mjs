@@ -27,6 +27,13 @@ const header = `/*
 `;
 fs.writeFileSync(path.join(dir, "component.tsx"), header + c.componentCode);
 fs.writeFileSync(path.join(dir, "demo.tsx"), "// @ts-nocheck\n/* eslint-disable */\n" + (c.demoCode ?? ""));
+/* helper files the pick ships with that our own src/components/ui doesn't have (e.g. a custom button) */
+for (const [p, f] of Object.entries(c.registryDependencies?.filesWithRegistry ?? {})) {
+  const name = path.basename(p);
+  if (!f?.code || fs.existsSync(path.join("src/components/ui", name))) continue;
+  fs.mkdirSync(path.join(dir, "helpers"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "helpers", name), "// @ts-nocheck\n/* eslint-disable */\n" + f.code);
+}
 const deps = Object.keys(c.registryDependencies?.npmDependencies ?? {});
 const meta = { id: c.id, key: `${author}__${slug}`, author, slug, name: c.name, description: c.description ?? "", url, preview: c.previewUrl ?? "", kind, deps };
 fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify(meta, null, 2));

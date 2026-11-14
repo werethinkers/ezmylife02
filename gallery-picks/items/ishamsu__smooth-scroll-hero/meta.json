@@ -1,0 +1,12 @@
+{
+  "id": 2061,
+  "key": "ishamsu__smooth-scroll-hero",
+  "author": "ishamsu",
+  "slug": "smooth-scroll-hero",
+  "name": "Smooth Scroll Hero",
+  "description": "A React component that creates a smooth-scrolling hero section with parallax background effects. Features responsive images for mobile and desktop, with customizable scroll animations built using Framer Motion.",
+  "url": "https://21st.dev/@ishamsu/components/smooth-scroll-hero",
+  "preview": "https://cdn.21st.dev/ishamsu/smooth-scroll-hero/default/preview.1747142616016.png",
+  "kind": "",
+  "deps": []
+}

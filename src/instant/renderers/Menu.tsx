@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
 import type { RenderProps } from "../types";
 import { themeVars } from "../themes";
-import { fill, inr, mapsDir, mapsLink, openStatus, priceText, telHref, waTo } from "../util";
+import { DAYS, fill, fmtPhone, inr, mapsDir, mapsLink, openStatus, priceText, t12, telHref, waTo } from "../util";
 import { BASE_CSS, Icon, Img, MadeWith, fitWords, resolveImg, useThemeFonts } from "../parts";
-import { coverFor, isStock } from "../stock";
+import { coverFor, galleryFor, isStock } from "../stock";
 import { Backdrop, SIG_CSS, sigClass, usePointerFx } from "../signature";
 import MenuBelt, { BELT_MIN, BELT_PRODUCTS } from "../showpieces/MenuBelt";
+import { Hero3D, PageBand, PageTiles, SITE_CSS, SiteNav, useSitePages, type Hero3DLook, type PageKey, type SitePage } from "../showpieces/SitePages";
 
 type Item = { category?: string; name: string; price?: string; desc?: string; diet?: string; photo?: string };
 const num = (p?: string) => { const n = Number(String(p ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) && /^\s*[₹]?\s*[\d,]+(\.\d+)?\s*$/.test(String(p ?? "")) ? n : null; };
 
-export default function Menu({ product, theme, content: c }: RenderProps) {
+export default function Menu({ product, theme, content: c, mode }: RenderProps) {
   useThemeFonts(theme);
   const o = product.opts;
   const items: Item[] = (Array.isArray(c.items) ? c.items : []).filter((i: Item) => i?.name);
@@ -34,12 +35,31 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
   const total = lines.reduce((a, l) => a + (num(l.item.price) ?? 0) * l.q, 0);
   const hasUnpriced = lines.some((l) => num(l.item.price) == null);
   const orderText = fill(product.whatsapp.order, { ...vars, lead_name: name, lines: lines.map((l) => `${l.q} × ${l.item.name}${num(l.item.price) != null ? ` (${inr(num(l.item.price)! * l.q)})` : ""}`).join("\n"), total: total ? inr(total) + (hasUnpriced ? " + items on request" : "") : "to be confirmed" });
+  // Multi-page once the menu is long enough: Home, Menu, Visit.
+  const sitePages: SitePage[] = [{ key: "home", label: "Home" }, { key: "menu", label: "Menu" }, { key: "contact", label: "Visit" }];
+  const multi = items.length >= 6;
+  const { page, go, top } = useSitePages(sitePages, mode);
+  const on = (k: PageKey) => !multi || page === k;
+  const itemPhotos = items.map((it) => it.photo).filter((p): p is string => !!resolveImg(p));
+  const heroPhotos = [...itemPhotos.filter((p) => !isStock(p)), cover, ...itemPhotos, ...galleryFor(product.id, 8, 0).map((g) => g.photo)]
+    .filter((p, i, a) => resolveImg(p) && a.indexOf(p) === i).slice(0, 8);
+  const LOOKS: Partial<Record<string, Hero3DLook>> = { bold: "split", split: "fan", soft: "fan", editorial: "ring", minimal: "ring" };
+  const look = LOOKS[sty];
+  const use3d = !!look && heroPhotos.length >= 3;
+  const favs = items.map((it, i) => ({ it, i })).filter(({ it }) => resolveImg(it.photo)).slice(0, 6);
+  const today = DAYS[(new Date().getDay() + 6) % 7];
+  const openDays: string[] = Array.isArray(c.open_days) && c.open_days.length ? c.open_days : DAYS;
   const shown = items.map((it, i) => ({ it, i })).filter(({ it }) => (!cat || (it.category || "Menu") === cat) && (!vegOnly || ["Veg", "Jain"].includes(it.diet || "")));
 
   return (
     <div className={`ipr ipr-menu s-${sty}` + (theme.dark ? " dark" : "") + sigClass(product.id, prime)} style={themeVars(theme) as React.CSSProperties}>
-      <style>{BASE_CSS + CSS + SIG_CSS}</style>
+      <style>{BASE_CSS + CSS + SIG_CSS + SITE_CSS}</style>
       <div className="mn-page" ref={fxRef}>
+      {multi && <div ref={top} />}
+      {multi && <SiteNav pages={sitePages} page={page} go={go} />}
+      {multi && page === "menu" && <PageBand title="Menu" sub={[c.name, c.order_note].filter(Boolean).join(" · ") || undefined} />}
+      {multi && page === "contact" && <PageBand title="Visit us" sub={st ? st.label : undefined} />}
+      {on("home") && (
       <header className={"mn-head" + (prime ? " sig-hero" : "")}>
         {prime && <Backdrop id={product.id} />}
         {sty === "photo" && cover && <div className="mn-bg" aria-hidden="true"><Img src={cover} alt="" sizes="100vw" eager /></div>}
@@ -57,14 +77,39 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
             </div>
             {c.order_note && <p className="mn-note">{c.order_note}</p>}
           </div>
-          {sty !== "photo" && cover && <div className="mn-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 45vw, 100vw" eager /></div>}
+          {use3d ? <div className="mn-3d"><Hero3D photos={heroPhotos} look={look!} label={`${c.name || product.name} photos`} /></div>
+            : sty !== "photo" && cover && <div className="mn-media" aria-hidden="true"><Img src={cover} alt="" sizes="(min-width: 860px) 45vw, 100vw" eager /></div>}
         </div>
       </header>
+      )}
 
-      {BELT_PRODUCTS.has(product.id) && items.length >= BELT_MIN && (
+      {on("home") && BELT_PRODUCTS.has(product.id) && items.length >= BELT_MIN && (
         <MenuBelt product={product} theme={theme} items={items} whatsapp={c.whatsapp} vars={vars} cart={!!o.cart} onAdd={(i) => add(i, 1)} />
       )}
 
+      {multi && page === "home" && favs.length >= 3 && (
+        <section className="ip-wrap mn-favs">
+          <h2><span>Favourites</span></h2>
+          <div className="mn-fav-grid">
+            {favs.map(({ it, i }) => (
+              <article key={i} className="mn-fav">
+                <Img src={it.photo!} alt={it.name} sizes="(min-width: 860px) 30vw, 45vw" />
+                <div><b>{it.name}</b>{priceText(it.price) && <span>{priceText(it.price)}</span>}</div>
+                {o.cart && <button type="button" className="addb" onClick={() => add(i, 1)}>{cart[i] ? `Added · ${cart[i]}` : "Add"}</button>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {multi && page === "home" && (
+        <PageTiles go={go} tiles={[
+          { key: "menu", title: "Full menu", text: `${items.length} dishes in ${cats.length} section${cats.length === 1 ? "" : "s"}`, photo: heroPhotos[1] },
+          { key: "contact", title: "Visit us", text: [st?.label, c.area || place].filter(Boolean).join(" · ") || "Call, WhatsApp, directions", photo: heroPhotos[2] },
+        ]} />
+      )}
+
+      {on("menu") && <>
       <nav className="mn-tabs" aria-label="Categories">
         <div className="mn-tabs-in">
           <button type="button" aria-pressed={!cat} onClick={() => setCat(null)}>All</button>
@@ -106,6 +151,21 @@ export default function Menu({ product, theme, content: c }: RenderProps) {
             </section>
           );
         })}
+      </main>
+      </>}
+
+      {multi && page === "contact" && (
+        <section className="ip-wrap mn-visit">
+          {place && <div className="card"><h3>Address</h3><p>{place}</p><a className="ip-btn ip-ghost" href={c.maps_url ? mapsLink(c.maps_url, place) : mapsDir(place)} target="_blank" rel="noopener noreferrer"><Icon.nav /> Directions</a></div>}
+          {(c.phone || c.whatsapp) && <div className="card"><h3>Order or book</h3>
+            {c.phone && <a className="ip-btn ip-ghost" href={telHref(c.phone)}><Icon.phone /> {fmtPhone(c.phone)}</a>}
+            {c.whatsapp && <a className="ip-btn ip-wa" href={waTo(c.whatsapp, fill(product.whatsapp.enquire, vars))} target="_blank" rel="noopener noreferrer"><Icon.wa /> WhatsApp</a>}
+          </div>}
+          {c.opens && c.closes && <div className="card"><h3>Opening hours</h3>{DAYS.map((d) => <div key={d} className={"hr" + (d === today ? " today" : "")}><span>{d}</span><span>{!openDays.includes(d) ? "Closed" : c.opens === c.closes ? "Open 24 hours" : `${t12(c.opens)} – ${t12(c.closes)}`}</span></div>)}</div>}
+        </section>
+      )}
+
+      <main className="ip-wrap mn-list mn-end">
         {(isStock(cover) || items.some((it) => isStock(it.photo))) && <p className="mn-cr">Some photos from <a href="https://unsplash.com/?utm_source=ezyourlife&utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></p>}
         <MadeWith product={product} />
       </main>
@@ -156,6 +216,23 @@ const CSS = `
 .mn-note{margin:6px 0 0;padding:10px 14px;border-radius:calc(var(--rad) * .75);background:var(--sf);font-size:.88rem;color:var(--mu);box-shadow:inset 0 0 0 1px var(--line);max-width:52ch}
 .mn-media{position:relative;border-radius:var(--rad);overflow:hidden;aspect-ratio:16/10;background:var(--sf);box-shadow:0 30px 60px -32px rgba(0,0,0,.5)}
 .mn-media img{width:100%;height:100%;object-fit:cover}
+.mn-3d{position:relative;width:100%;min-width:0;max-width:640px;justify-self:center}
+.mn-head:has(.mn-3d){overflow:hidden}
+.mn-favs{padding-block:24px 8px}
+.mn-favs h2,.mn-visit h3{font:800 1.4rem/1.1 var(--fd);margin:0 0 14px;color:var(--tx)}
+.mn-fav-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.mn-fav{position:relative;border-radius:var(--rad);overflow:hidden;background:var(--sf);border:1px solid var(--line);display:grid;transition:transform .3s}
+.mn-fav:hover{transform:translateY(-3px) rotate(-.4deg)}
+.mn-fav img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.mn-fav div{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;font-size:.92rem}
+.mn-fav div span{color:var(--ac);font-weight:700;white-space:nowrap}
+.mn-fav .addb{margin:0 12px 12px}
+.mn-visit{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));padding-block:16px 24px}
+.mn-visit .card{display:grid;gap:10px;align-content:start;padding:18px;border-radius:var(--rad);background:var(--sf);border:1px solid var(--line)}
+.mn-visit .card p{margin:0;color:var(--mu)}
+.mn-visit .hr{display:flex;justify-content:space-between;font-size:.9rem;color:var(--mu);padding:3px 0}
+.mn-visit .hr.today{color:var(--tx);font-weight:700}
+.mn-end{padding-top:0}
 @container page (min-width:860px){
   .mn-head-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .mn-copy{justify-items:start;text-align:left}

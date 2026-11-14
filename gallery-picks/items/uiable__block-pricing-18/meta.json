@@ -1,0 +1,15 @@
+{
+  "id": 29547,
+  "key": "uiable__block-pricing-18",
+  "author": "uiable",
+  "slug": "block-pricing-18",
+  "name": "Pricing Plans with Billing Toggle",
+  "description": "A three-tier pricing section with a monthly/yearly billing toggle, animated price transitions, and a highlighted \"most popular\" plan card.",
+  "url": "https://21st.dev/@uiable/components/block-pricing-18",
+  "preview": "https://cdn.21st.dev/uiable/block-pricing-18/default/preview.1790088549796-8c26e7a7-04a2-47bf-a634-e2409d4974af.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

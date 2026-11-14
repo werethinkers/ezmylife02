@@ -1,0 +1,15 @@
+{
+  "id": 675,
+  "key": "kokonutd__background-paths",
+  "author": "kokonutd",
+  "slug": "background-paths",
+  "name": "Background Paths",
+  "description": "Landing Background paths with Gradient Title",
+  "url": "https://21st.dev/@kokonutd/components/background-paths",
+  "preview": "https://cdn.21st.dev/user_2rQ1QHrJyxpmWMHhqhANzWMc64n/background-paths/default/preview.png?v=1",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

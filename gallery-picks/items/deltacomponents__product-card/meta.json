@@ -1,0 +1,12 @@
+{
+  "id": 28196,
+  "key": "deltacomponents__product-card",
+  "author": "deltacomponents",
+  "slug": "product-card",
+  "name": "Product Card",
+  "description": "A compound card component for e-commerce product listings with an image well, an overlaid wishlist badge, and a title/subtitle/price footer.",
+  "url": "https://21st.dev/@deltacomponents/components/product-card",
+  "preview": "https://cdn.21st.dev/deltacomponents/product-card/default/preview.1789956964555-ab26ccd8-e67d-48ee-b19f-95d55b9f86c0.png",
+  "kind": "",
+  "deps": []
+}

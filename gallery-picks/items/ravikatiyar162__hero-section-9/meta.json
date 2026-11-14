@@ -1,0 +1,15 @@
+{
+  "id": 8737,
+  "key": "ravikatiyar162__hero-section-9",
+  "author": "ravikatiyar162",
+  "slug": "hero-section-9",
+  "name": "Hero Section",
+  "description": "Hero Section Component\nThis component creates a dynamic and engaging hero section, perfect for landing pages. It features a two-column layout with animated text, actionable buttons, social proof statistics, and a visually appealing image collage.",
+  "url": "https://21st.dev/@ravikatiyar162/components/hero-section-9",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/hero-section-9/default/preview.1760172786727.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

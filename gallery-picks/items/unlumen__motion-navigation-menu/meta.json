@@ -1,0 +1,13 @@
+{
+  "id": 21349,
+  "key": "unlumen__motion-navigation-menu",
+  "author": "unlumen",
+  "slug": "motion-navigation-menu",
+  "name": "Motion Navigation Menu",
+  "description": "An animated navigation menu with a single morphing dropdown container, a layout-animated active pill, and direction-aware spring content transitions.",
+  "url": "https://21st.dev/@unlumen/components/motion-navigation-menu",
+  "preview": "https://cdn.21st.dev/user_registry_unlumen_1783477855825/motion-navigation-menu/default/preview.1789039567079.webp",
+  "kind": "",
+  "deps": [],
+  "skip": "Needs helper files the API result leaves out"
+}

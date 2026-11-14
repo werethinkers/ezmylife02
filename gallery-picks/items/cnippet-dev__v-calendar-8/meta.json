@@ -1,0 +1,18 @@
+{
+  "id": 25128,
+  "key": "cnippet-dev__v-calendar-8",
+  "author": "cnippet-dev",
+  "slug": "v-calendar-8",
+  "name": "Appointment Booking Calendar",
+  "description": "A calendar for booking appointments that greys out weekends, past dates, and fully-booked days and shows the chosen slot.",
+  "url": "https://21st.dev/@cnippet-dev/components/v-calendar-8",
+  "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-calendar-8/default/preview.1787760081693.webp",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "date-fns",
+    "lucide-react",
+    "react-day-picker"
+  ]
+}

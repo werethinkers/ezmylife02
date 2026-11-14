@@ -1,0 +1,13 @@
+{
+ "id": 8045,
+ "key": "kedhareswer__festivity-hero",
+ "author": "kedhareswer",
+ "slug": "festivity-hero",
+ "name": "Festivity Hero",
+ "description": "3D sphere physics hero section: interactive spheres with dynamic collisions, mouse interaction and breathing motion, opened by a loading animation sequence and a responsive particle system. Use for modern landing page and product launch heroes.",
+ "url": "https://21st.dev/@kedhareswer/components/festivity-hero",
+ "preview": "https://cdn.21st.dev/kedhareswer.12110626/festivity-hero/default/preview.1758782987004.png",
+ "kind": "",
+ "deps": [],
+ "skip": "Needs the three.js package"
+}

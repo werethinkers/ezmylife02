@@ -1,0 +1,12 @@
+{
+  "id": 7794,
+  "key": "ravikatiyar162__menu-item-card",
+  "author": "ravikatiyar162",
+  "slug": "menu-item-card",
+  "name": "Menu Item Card",
+  "description": "Menu Item Card\nThis component displays a food item with its image, price, name, and an interactive \"ADD\" button. It's designed to be highly reusable and customizable through props.",
+  "url": "https://21st.dev/@ravikatiyar162/components/menu-item-card",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/menu-item-card/default/preview.1758278928941.png",
+  "kind": "",
+  "deps": []
+}

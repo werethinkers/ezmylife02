@@ -1,0 +1,12 @@
+{
+  "id": 46116,
+  "key": "automate_flows__daytake-photo-landing",
+  "author": "automate_flows",
+  "slug": "daytake-photo-landing",
+  "name": "Daytake Landing Page",
+  "description": "An editorial photography landing page with a scroll-controlled 3D hero, opposing photo rows, an expanding feature image, floating widgets, and SVG-connected creator cards. Responsive light and dark layouts include pause controls and a reduced-motion fallback.",
+  "url": "https://21st.dev/@automate_flows/components/daytake-photo-landing",
+  "preview": "https://cdn.21st.dev/user_3EFgBcaTwAWLVWzXlHvjY47l6Xk/daytake-photo-landing/default/preview.1794605404251.webp",
+  "kind": "",
+  "deps": []
+}

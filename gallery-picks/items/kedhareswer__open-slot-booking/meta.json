@@ -1,0 +1,12 @@
+{
+  "id": 38035,
+  "key": "kedhareswer__open-slot-booking",
+  "author": "kedhareswer",
+  "slug": "open-slot-booking",
+  "name": "Meeting Booking Calendar",
+  "description": "Meeting booking calendar: a book-a-call section that does the booking itself. A bold headline over a scheduler window with the host's card, call lengths and a timezone-aware week of open slots. Pick a slot and it grows into a confirm form; confirm and it flips into a perforated ticket stamped booked, with an .ics download. A Check against my calendar switch hatches your busy blocks and strikes clashing slots. Fully customisable host, hours, slots and colours.",
+  "url": "https://21st.dev/@kedhareswer/components/open-slot-booking",
+  "preview": "https://cdn.21st.dev/kedhareswer/open-slot-booking/default/preview.1791954021018-34f09e50-c1ef-430e-ac08-3a79cf3d91a7.png",
+  "kind": "",
+  "deps": []
+}

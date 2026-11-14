@@ -1,0 +1,12 @@
+{
+  "id": 1436,
+  "key": "ayushmxxn__3d-flip-card",
+  "author": "ayushmxxn",
+  "slug": "3d-flip-card",
+  "name": "3D Flip Card",
+  "description": "An interactive card stack component with 3D hover effects and animations. Perfect for showcasing images, portfolios, or featured content.\n\nFeatures\n- Smooth 3D rotation effects\n- Responsive design\n- Interactive card selection\n- Customizable card dimensions\n- Configurable stack spacing\n- Mobile-friendly fallback animations\n- Blur effects for depth perception",
+  "url": "https://21st.dev/@ayushmxxn/components/3d-flip-card",
+  "preview": "https://cdn.21st.dev/user_ayushmxxn/3d-flip-card/default/preview.png",
+  "kind": "",
+  "deps": []
+}

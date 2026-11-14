@@ -1,0 +1,9 @@
+// @ts-nocheck
+/* eslint-disable */
+"use client";
+
+import SpatialDepthHero from "@/components/ui/spatial-depth-hero";
+
+export default function Page() {
+  return <SpatialDepthHero />;
+}

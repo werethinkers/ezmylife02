@@ -1,0 +1,14 @@
+{
+  "id": 28203,
+  "key": "shadcnspace__card-02",
+  "author": "shadcnspace",
+  "slug": "card-02",
+  "name": "Property Preview Card",
+  "description": "A real estate listing card that shows a property photo, price badge, address, and bed/bath/area stats with a hover reveal effect.",
+  "url": "https://21st.dev/@shadcnspace/components/card-02",
+  "preview": "https://cdn.21st.dev/shadcnspace/card-02/default/preview.1789956983707-5c181cf4-2bf5-4923-bae4-74b76dd128d5.png",
+  "kind": "",
+  "deps": [
+    "class-variance-authority"
+  ]
+}

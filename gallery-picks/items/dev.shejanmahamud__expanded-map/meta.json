@@ -1,0 +1,12 @@
+{
+  "id": 21987,
+  "key": "dev.shejanmahamud__expanded-map",
+  "author": "dev.shejanmahamud",
+  "slug": "expanded-map",
+  "name": "Expanded Map",
+  "description": "An interactive location card with a subtle 3D tilt that expands on click to reveal real map tiles, coordinates, and a location marker.",
+  "url": "https://21st.dev/@dev.shejanmahamud/components/expanded-map",
+  "preview": "https://cdn.21st.dev/user_32IAZZ0jCu5Ox98TEx5aAsxVNyq/expanded-map/expanded-map-locations/preview.1787663442745.png",
+  "kind": "",
+  "deps": []
+}

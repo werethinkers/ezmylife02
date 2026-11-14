@@ -1,6 +1,19 @@
 {
  "items": [
   {
+   "id": 10392,
+   "key": "Shatlyk1011__team-member-card",
+   "author": "Shatlyk1011",
+   "slug": "team-member-card",
+   "name": "Team Member Card",
+   "description": "An animated team member card with hover effects revealing social links and role details.",
+   "url": "https://21st.dev/@Shatlyk1011/components/team-member-card",
+   "preview": "https://cdn.21st.dev/user_Shatlyk1011/team-member-card/default/preview.1789062711082.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24355
+  },
+  {
    "id": 2318,
    "key": "TomIsLoading__squishy-card",
    "author": "TomIsLoading",
@@ -12,6 +25,19 @@
    "kind": "",
    "deps": [],
    "bytes": 3176
+  },
+  {
+   "id": 45590,
+   "key": "aadixc0de__contact-card",
+   "author": "aadixc0de",
+   "slug": "contact-card",
+   "name": "Contact Card",
+   "description": "People and businesses in an assistant reply: name, role or category, rating, open now with hours, phone, email and address, local time for people, and Call, Email and Copy actions.",
+   "url": "https://21st.dev/@aadixc0de/components/contact-card",
+   "preview": "https://cdn.21st.dev/user_3LlhXiSsBVSfcYPAE8bBARKA2mf/contact-card/default/preview.1794561772046.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 48964
   },
   {
    "id": 44486,
@@ -40,6 +66,190 @@
    "bytes": 174049
   },
   {
+   "id": 45440,
+   "key": "aloksivastava1025__cue-collapsing-cards-accordion",
+   "author": "aloksivastava1025",
+   "slug": "cue-collapsing-cards-accordion",
+   "name": "Collapsing Cards Accordion",
+   "description": "A five-image horizontal accordion where hovering a card expands it with smooth flex transitions while others collapse to vertical wordmarks.",
+   "url": "https://21st.dev/@aloksivastava1025/components/cue-collapsing-cards-accordion",
+   "preview": "https://cdn.21st.dev/user_2wdgsmfD3BNOOm4oOqUDUS9IXZI/cue-collapsing-cards-accordion/default/preview.1794517822031.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6305
+  },
+  {
+   "id": 46116,
+   "key": "automate_flows__daytake-photo-landing",
+   "author": "automate_flows",
+   "slug": "daytake-photo-landing",
+   "name": "Daytake Landing Page",
+   "description": "An editorial photography landing page with a scroll-controlled 3D hero, opposing photo rows, an expanding feature image, floating widgets, and SVG-connected creator cards. Responsive light and dark layouts include pause controls and a reduced-motion fallback.",
+   "url": "https://21st.dev/@automate_flows/components/daytake-photo-landing",
+   "preview": "https://cdn.21st.dev/user_3EFgBcaTwAWLVWzXlHvjY47l6Xk/daytake-photo-landing/default/preview.1794605404251.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 320237
+  },
+  {
+   "id": 1436,
+   "key": "ayushmxxn__3d-flip-card",
+   "author": "ayushmxxn",
+   "slug": "3d-flip-card",
+   "name": "3D Flip Card",
+   "description": "An interactive card stack component with 3D hover effects and animations. Perfect for showcasing images, portfolios, or featured content.\n\nFeatures\n- Smooth 3D rotation effects\n- Responsive design\n- Interactive card selection\n- Customizable card dimensions\n- Configurable stack spacing\n- Mobile-friendly fallback animations\n- Blur effects for depth perception",
+   "url": "https://21st.dev/@ayushmxxn/components/3d-flip-card",
+   "preview": "https://cdn.21st.dev/user_ayushmxxn/3d-flip-card/default/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24023
+  },
+  {
+   "id": 26223,
+   "key": "ayushmxxn__masonry-lightbox",
+   "author": "ayushmxxn",
+   "slug": "masonry-lightbox",
+   "name": "Masonry Lightbox",
+   "description": "Responsive masonry image gallery with smooth hover animations and an animated lightbox viewer.",
+   "url": "https://21st.dev/@ayushmxxn/components/masonry-lightbox",
+   "preview": "https://cdn.21st.dev/ayushmxxn/masonry-lightbox/default/preview.1788768876094-07e06845-e2d3-43c1-9277-a29f1fc08325.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 6695
+  },
+  {
+   "id": 33904,
+   "key": "balick__footer-01",
+   "author": "balick",
+   "slug": "footer-01",
+   "name": "Footer With Newsletter",
+   "description": "A multi-column site footer with a newsletter signup form, an operational-status indicator, social icon links and an oversized background wordmark.",
+   "url": "https://21st.dev/@balick/components/footer-01",
+   "preview": "https://cdn.21st.dev/balick/footer-01/default/preview.1790754388831-9bf30249-3386-4757-8cbc-b43bc4491afb.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32952
+  },
+  {
+   "id": 33903,
+   "key": "balick__services-01",
+   "author": "balick",
+   "slug": "services-01",
+   "name": "Services List",
+   "description": "A numbered list section that presents a company's services with a starting price, key deliverables, and a link to learn more or get in touch.",
+   "url": "https://21st.dev/@balick/components/services-01",
+   "preview": "https://cdn.21st.dev/balick/services-01/default/preview.1790754381987-38bce506-ce43-474b-b171-27b105f5611a.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24311
+  },
+  {
+   "id": 5650,
+   "key": "beratberkayg__product-card-1",
+   "author": "beratberkayg",
+   "slug": "product-card-1",
+   "name": "Product Card",
+   "description": "The ProductCard component is a fully customizable e-commerce card built with shadcn/ui, Tailwind CSS, and Framer Motion.\nIt provides a modern, responsive, and theme-aware product showcase with interactive features, designed to work seamlessly in both light and dark modes.\n\nKey Features:\n\n-> Image carousel with smooth fade animations\n\n-> Dynamic badges for New, Best Seller, or Discount labels\n\n-> Wishlist toggle with visual feedback\n\n-> Selectable color swatches and size options\n\n-> Rating & reviews display with free shipping indicator\n\n-> Add to Cart button with loading and success states\n\n-> Light & dark mode support using shadcn’s theme system\n\n-> Polished UI with hover shadows, rounded corners, and fluid transitions\n\nThis component is ideal for online stores, product listings, and landing pages, where both visual quality and user experience matter. It follows the shadcn/ui design pattern of separating reusable logic from demo usage, ensuring scalability and maintainability.",
+   "url": "https://21st.dev/@beratberkayg/components/product-card-1",
+   "preview": "https://cdn.21st.dev/beratberkayg/product-card-1/default/preview.1785192713083-a85d44a3-7979-456d-b469-dbded1219da5.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 33665
+  },
+  {
+   "id": 34576,
+   "key": "bidyut10__booking-slot-calendar",
+   "author": "bidyut10",
+   "slug": "booking-slot-calendar",
+   "name": "Booking Slot Calendar",
+   "description": "A Google Calendar-style appointment picker where a user selects a day from a week strip and then taps an available time slot to book it.",
+   "url": "https://21st.dev/@bidyut10/components/booking-slot-calendar",
+   "preview": "https://cdn.21st.dev/user_registry_bidyut10_1790790084027/booking-slot-calendar/default/preview.1790890044748.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 28544
+  },
+  {
+   "id": 12635,
+   "key": "cesaroeduardo__flip-card",
+   "author": "cesaroeduardo",
+   "slug": "flip-card",
+   "name": "Tilt Flip Card",
+   "description": "An interactive 3D flip card component with hover tilt, front and back content, image support, and controlled flip state.",
+   "url": "https://21st.dev/@cesaroeduardo/components/flip-card",
+   "preview": "https://cdn.21st.dev/dudadecesaro/flip-card/default/preview.1778599393578.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6577
+  },
+  {
+   "id": 19861,
+   "key": "chamaac__how-it-works",
+   "author": "chamaac",
+   "slug": "how-it-works",
+   "name": "How It Works",
+   "description": "A visual step-by-step process section with pinned, connected cards showing how something works.",
+   "url": "https://21st.dev/@chamaac/components/how-it-works",
+   "preview": "https://cdn.21st.dev/chamaac/how-it-works/default/preview.1784360686164-c9ef8bfe-dc43-4bca-9387-30df706ad4d2.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6320
+  },
+  {
+   "id": 11615,
+   "key": "cnippet-dev__davincho-hero-1",
+   "author": "cnippet-dev",
+   "slug": "davincho-hero-1",
+   "name": "Davincho Hero-1",
+   "description": "Animated hero section with parallax background image.",
+   "url": "https://21st.dev/@cnippet-dev/components/davincho-hero-1",
+   "preview": "https://cdn.21st.dev/cnippet.dev/davincho-hero-1/default/preview.1774290703029.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2591
+  },
+  {
+   "id": 25128,
+   "key": "cnippet-dev__v-calendar-8",
+   "author": "cnippet-dev",
+   "slug": "v-calendar-8",
+   "name": "Appointment Booking Calendar",
+   "description": "A calendar for booking appointments that greys out weekends, past dates, and fully-booked days and shows the chosen slot.",
+   "url": "https://21st.dev/@cnippet-dev/components/v-calendar-8",
+   "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-calendar-8/default/preview.1787760081693.webp",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "date-fns",
+    "lucide-react",
+    "react-day-picker"
+   ],
+   "bytes": 82139
+  },
+  {
+   "id": 25369,
+   "key": "cnippet-dev__v-card-19",
+   "author": "cnippet-dev",
+   "slug": "v-card-19",
+   "name": "Event RSVP Card",
+   "description": "An event card showing the title, category badge, date, time, location and attendee count with a reserve/RSVP button.",
+   "url": "https://21st.dev/@cnippet-dev/components/v-card-19",
+   "preview": "https://cdn.21st.dev/user_36Tbt0v8JdD4jEycmBFhR8tojnR/v-card-19/default/preview.1788201544881.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 25797
+  },
+  {
    "id": 39045,
    "key": "daiwiikharihar__curtain-split-hero",
    "author": "daiwiikharihar",
@@ -51,6 +261,19 @@
    "kind": "",
    "deps": [],
    "bytes": 7326
+  },
+  {
+   "id": 9859,
+   "key": "daiwiikharihar__elastic-gallery",
+   "author": "daiwiikharihar",
+   "slug": "elastic-gallery",
+   "name": "Elastic Gallery",
+   "description": "Interactive horizontal image accordion where the active card expands with a dark gradient overlay, title, category chip, and CTA while others collapse.",
+   "url": "https://21st.dev/@daiwiikharihar/components/elastic-gallery",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/elastic-gallery/default/preview.1786118119359.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 24986
   },
   {
    "id": 30669,
@@ -66,6 +289,32 @@
    "bytes": 6875
   },
   {
+   "id": 9701,
+   "key": "daiwiikharihar__scroll-triggered-video-hero",
+   "author": "daiwiikharihar",
+   "slug": "scroll-triggered-video-hero",
+   "name": "Scroll-Triggered Video Hero",
+   "description": "A robust hero section that transitions between video chapters based on viewport position. Uses sticky positioning for performance, with z-index layering for smooth cross-fades. Includes a synchronized progress indicator and accessible text overlays.",
+   "url": "https://21st.dev/@daiwiikharihar/components/scroll-triggered-video-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/scroll-triggered-video-hero/default/preview.1786657946551.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 7010
+  },
+  {
+   "id": 30683,
+   "key": "daiwiikharihar__spatial-depth-hero",
+   "author": "daiwiikharihar",
+   "slug": "spatial-depth-hero",
+   "name": "Spatial Depth Hero",
+   "description": "Spatial depth 3D volumetric card scatter hero section",
+   "url": "https://21st.dev/@daiwiikharihar/components/spatial-depth-hero",
+   "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/spatial-depth-hero/default/preview.1790280613817.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 6269
+  },
+  {
    "id": 45026,
    "key": "daiwiikharihar__waving-hand-poster",
    "author": "daiwiikharihar",
@@ -79,6 +328,32 @@
    "bytes": 11680
   },
   {
+   "id": 28196,
+   "key": "deltacomponents__product-card",
+   "author": "deltacomponents",
+   "slug": "product-card",
+   "name": "Product Card",
+   "description": "A compound card component for e-commerce product listings with an image well, an overlaid wishlist badge, and a title/subtitle/price footer.",
+   "url": "https://21st.dev/@deltacomponents/components/product-card",
+   "preview": "https://cdn.21st.dev/deltacomponents/product-card/default/preview.1789956964555-ab26ccd8-e67d-48ee-b19f-95d55b9f86c0.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24500
+  },
+  {
+   "id": 21987,
+   "key": "dev.shejanmahamud__expanded-map",
+   "author": "dev.shejanmahamud",
+   "slug": "expanded-map",
+   "name": "Expanded Map",
+   "description": "An interactive location card with a subtle 3D tilt that expands on click to reveal real map tiles, coordinates, and a location marker.",
+   "url": "https://21st.dev/@dev.shejanmahamud/components/expanded-map",
+   "preview": "https://cdn.21st.dev/user_32IAZZ0jCu5Ox98TEx5aAsxVNyq/expanded-map/expanded-map-locations/preview.1787663442745.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7670
+  },
+  {
    "id": 25480,
    "key": "dg.singh252525__3-d-coverflow-carousel",
    "author": "dg.singh252525",
@@ -90,6 +365,19 @@
    "kind": "",
    "deps": [],
    "bytes": 10498
+  },
+  {
+   "id": 8563,
+   "key": "dhileepkumargm__profile-card",
+   "author": "dhileepkumargm",
+   "slug": "profile-card",
+   "name": "ProfileCard",
+   "description": "An interactive, 3D-tilt profile card component featuring an animated status cycle, tier-based glow effects, a sliding glass panel, and a customizable action button.",
+   "url": "https://21st.dev/@dhileepkumargm/components/profile-card",
+   "preview": "https://cdn.21st.dev/dhileepkumargm/profile-card/default/preview.1759832360385.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 5138
   },
   {
    "id": 7217,
@@ -129,6 +417,19 @@
    "kind": "",
    "deps": [],
    "bytes": 19613
+  },
+  {
+   "id": 36626,
+   "key": "dhxwhy__lighthouse-gallery",
+   "author": "dhxwhy",
+   "slug": "lighthouse-gallery",
+   "name": "Lighthouse Spotlight Image Gallery",
+   "description": "Spotlight image gallery for React and Tailwind CSS (shadcn/ui): a photo grid lit by a sweeping lighthouse beam. It is built to guide the eye: light travels across the grid and pictures wake up one after another, so visitors keep watching to see what the beam reveals next, and the torch turns browsing into discovery. At rest each photo sits under a flat color swatch extracted from the image, with a hint of the picture showing through; tiles wake up as the beam passes and fade back with a slow afterglow. The pointer works as a hand torch, keyboard focus lights a tile, clicking parks the beam. Props for beam origin, speed, width, afterglow, peek and columns. Light and dark themes, reduced-motion fallback, no WebGL. Use it for portfolios, photo collections and product showcases.",
+   "url": "https://21st.dev/@dhxwhy/components/lighthouse-gallery",
+   "preview": "https://cdn.21st.dev/user_35e5ygDqQuDYzujLgyG9331zPPO/lighthouse-gallery/default/preview.1791470315489.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 10900
   },
   {
    "id": 43148,
@@ -235,6 +536,122 @@
    "bytes": 19223
   },
   {
+   "id": 27099,
+   "key": "diarmuradi__pricing-8",
+   "author": "diarmuradi",
+   "slug": "pricing-8",
+   "name": "Animated Pricing Card",
+   "description": "A single-plan pricing card with a monthly/annual billing toggle that animates the price digits and lists plan features.",
+   "url": "https://21st.dev/@diarmuradi/components/pricing-8",
+   "preview": "https://cdn.21st.dev/diarmuradi/pricing-8/default/preview.1789242795238-7997a3ec-a0c6-4860-9017-16fad6e636c1.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-separator"
+   ],
+   "bytes": 43784
+  },
+  {
+   "id": 29138,
+   "key": "educalvolpz__coverflow-carousel",
+   "author": "educalvolpz",
+   "slug": "coverflow-carousel",
+   "name": "Coverflow Carousel",
+   "description": "A 3D perspective carousel that flips, scales and stacks cards like Apple's iTunes coverflow, with drag/swipe, keyboard navigation and optional autoplay.",
+   "url": "https://21st.dev/@educalvolpz/components/coverflow-carousel",
+   "preview": "https://cdn.21st.dev/educalvolpz/coverflow-carousel/default/preview.1790043939894-dac31069-827a-452f-9b91-eeac92697361.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30405
+  },
+  {
+   "id": 28111,
+   "key": "educalvolpz__hover-expand",
+   "author": "educalvolpz",
+   "slug": "hover-expand",
+   "name": "Hover Expand",
+   "description": "An accordion-style image gallery where panels expand on hover or keyboard focus and the rest collapse to a thin strip with a rotated label.",
+   "url": "https://21st.dev/@educalvolpz/components/hover-expand",
+   "preview": "https://cdn.21st.dev/educalvolpz/hover-expand/default/preview.1789896994579-0686610b-1c19-47c1-b8ed-3e1d10bad11b.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24735
+  },
+  {
+   "id": 7267,
+   "key": "efferd__testimonials-section",
+   "author": "efferd",
+   "slug": "testimonials-section",
+   "name": "Testimonials Section",
+   "description": "A modern testimonial grid with animations, customer photos, and quotes — perfect for SaaS, startups, and business websites to showcase client success stories and build trust.",
+   "url": "https://21st.dev/@efferd/components/testimonials-section",
+   "preview": "https://cdn.21st.dev/sshahaider/testimonials-section/default/preview.1757677151700.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 28783
+  },
+  {
+   "id": 5967,
+   "key": "efferd__zoom-parallax",
+   "author": "efferd",
+   "slug": "zoom-parallax",
+   "name": "Zoom Parallax",
+   "description": "A smooth scroll effect where images zoom in at different speeds for a cinematic feel.\nPerfect for hero sections or storytelling layouts that need extra visual depth.",
+   "url": "https://21st.dev/@efferd/components/zoom-parallax",
+   "preview": "https://cdn.21st.dev/user_2tWTE0rCrloVAVylFPYfp10xU92/zoom-parallax/default/preview.1788462332485.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24299
+  },
+  {
+   "id": 8477,
+   "key": "erikvalencia1__layer-parallax-hero",
+   "author": "erikvalencia1",
+   "slug": "layer-parallax-hero",
+   "name": "Layer Parallax Hero",
+   "description": "Layer Parallax Hero",
+   "url": "https://21st.dev/@erikvalencia1/components/layer-parallax-hero",
+   "preview": "https://cdn.21st.dev/erikvalencia1/layer-parallax-hero/default/preview.1759612080134.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4993
+  },
+  {
+   "id": 19080,
+   "key": "felipemenezes098__hero-09",
+   "author": "felipemenezes098",
+   "slug": "hero-09",
+   "name": "Real Estate Search Hero",
+   "description": "A centered hero section with a rounded search bar, a masked architecture image that fades into the page, and a split closing statement.",
+   "url": "https://21st.dev/@felipemenezes098/components/hero-09",
+   "preview": "https://cdn.21st.dev/felipemenezes098/hero-09/default/preview.1783679376775.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 31844
+  },
+  {
+   "id": 37903,
+   "key": "gughigug__liquid-sculpture-hero",
+   "author": "gughigug",
+   "slug": "liquid-sculpture-hero",
+   "name": "Liquid Sculpture Hero",
+   "description": "Editorial hero with a 3D sculpture that turns into ~125k liquid particles under the cursor. Light/dark switch, mobile layout, WebGL2.",
+   "url": "https://21st.dev/@gughigug/components/liquid-sculpture-hero",
+   "preview": "https://cdn.21st.dev/gughigug/liquid-sculpture-hero/default/preview.1791918866135-0876fd37-a2b3-42f8-9aa0-8f0c57907ad1.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 41685
+  },
+  {
    "id": 25518,
    "key": "gughigug__shave-reveal-hero",
    "author": "gughigug",
@@ -246,6 +663,32 @@
    "kind": "",
    "deps": [],
    "bytes": 21186
+  },
+  {
+   "id": 37282,
+   "key": "ibrandify__featured-project-hero",
+   "author": "ibrandify",
+   "slug": "featured-project-hero",
+   "name": "Featured Project Hero",
+   "description": "A stunning hero section to highlight featured projects, featuring image showcases and clean typography.",
+   "url": "https://21st.dev/@ibrandify/components/featured-project-hero",
+   "preview": "https://cdn.21st.dev/ibrandify/featured-project-hero/default/preview.1791549577798-3ed4844a-39b9-44c1-8cb9-b35f02eb5cda.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25636
+  },
+  {
+   "id": 2554,
+   "key": "isaiahbjork__coach-scheduling-card",
+   "author": "isaiahbjork",
+   "slug": "coach-scheduling-card",
+   "name": "Coach Scheduling Card",
+   "description": "This is a fully interactive, motion-enhanced Coach Scheduling Card that allows users to view a coach’s weekly availability, select time slots, choose a location, and confirm bookings—all in a single animated, responsive UI. It blends profile preview, dropdown logic, availability grids, and confirmation flows into a seamless component with thoughtful framer-motion effects throughout. Animations are conditionally toggled for accessibility, and the UI adapts to user actions in real-time. Perfect for fitness apps, tutoring platforms, service marketplaces, or any SaaS tool offering human-led bookings with sleek UX.",
+   "url": "https://21st.dev/@isaiahbjork/components/coach-scheduling-card",
+   "preview": "https://cdn.21st.dev/user_2tkbBPFWYn8YMjZNHwgIuP3yzvd/coach-scheduling-card/default/preview.1750809485621.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 34842
   },
   {
    "id": 2582,
@@ -262,6 +705,84 @@
     "class-variance-authority"
    ],
    "bytes": 31780
+  },
+  {
+   "id": 7517,
+   "key": "isaiahbjork__portfolio-gallery",
+   "author": "isaiahbjork",
+   "slug": "portfolio-gallery",
+   "name": "Portfolio Gallery",
+   "description": "The PortfolioGallery component creates an engaging visual showcase of portfolio items with a 3D overlapping layout on desktop and a smooth horizontal marquee on mobile devices. It features interactive hover effects that elevate selected images while lowering others, creating depth and focus, along with customizable styling options for maximum adaptability. This component is ideal for creative professionals and agencies to display their work collections, allowing users to browse through projects with an immersive, cinematic experience that enhances visual storytelling and portfolio presentation.",
+   "url": "https://21st.dev/@isaiahbjork/components/portfolio-gallery",
+   "preview": "https://cdn.21st.dev/isaiahbjork/portfolio-gallery/default/preview.1757974061317.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26502
+  },
+  {
+   "id": 2200,
+   "key": "ishamsu__curved-menu",
+   "author": "ishamsu",
+   "slug": "curved-menu",
+   "name": "Curved Menu",
+   "description": "A modern React navigation component with an animated curved sidebar, interactive menu items, and social media footer. with smooth animations",
+   "url": "https://21st.dev/@ishamsu/components/curved-menu",
+   "preview": "https://cdn.21st.dev/ishamsu/curved-menu/default/preview.1747620613612.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6409
+  },
+  {
+   "id": 2061,
+   "key": "ishamsu__smooth-scroll-hero",
+   "author": "ishamsu",
+   "slug": "smooth-scroll-hero",
+   "name": "Smooth Scroll Hero",
+   "description": "A React component that creates a smooth-scrolling hero section with parallax background effects. Features responsive images for mobile and desktop, with customizable scroll animations built using Framer Motion.",
+   "url": "https://21st.dev/@ishamsu/components/smooth-scroll-hero",
+   "preview": "https://cdn.21st.dev/ishamsu/smooth-scroll-hero/default/preview.1747142616016.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2735
+  },
+  {
+   "id": 1946,
+   "key": "jatin-yadav05__classy-hero",
+   "author": "jatin-yadav05",
+   "slug": "classy-hero",
+   "name": "Classy Hero",
+   "description": "Classy Hero is a premium hero section with a black-and-white animated background, elegant typography, and interactive elements—perfect for a modern, high-end digital presence.",
+   "url": "https://21st.dev/@jatin-yadav05/components/classy-hero",
+   "preview": "https://cdn.21st.dev/user_2ra80vx0iKMyQWJ5AESmNfFbCHD/classy-hero/default/preview.1746632337264.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 45085
+  },
+  {
+   "id": 7772,
+   "key": "jatin-yadav05__flip-hover",
+   "author": "jatin-yadav05",
+   "slug": "flip-hover",
+   "name": "FlipHover",
+   "description": "A card component that performs a 3D flip animation on hover, rotating 180 degrees \n * around the Y-axis while translating upward.",
+   "url": "https://21st.dev/@jatin-yadav05/components/flip-hover",
+   "preview": "https://cdn.21st.dev/jatin-yadav05/flip-hover/default/preview.1758213434011.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 2118
+  },
+  {
+   "id": 7863,
+   "key": "kavikatiyar__3d-card",
+   "author": "kavikatiyar",
+   "slug": "3d-card",
+   "name": "3D Card",
+   "description": "Destination Card – Showcase travel spots. Highlights locations with image, details, and a quick booking option for better trip planning.",
+   "url": "https://21st.dev/@kavikatiyar/components/3d-card",
+   "preview": "https://cdn.21st.dev/kavikatiyar/3d-card/default/preview.1758427566770.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 24207
   },
   {
    "id": 44872,
@@ -290,6 +811,32 @@
    "bytes": 13500
   },
   {
+   "id": 44583,
+   "key": "kedhareswer__dish-orbit-carousel",
+   "author": "kedhareswer",
+   "slug": "dish-orbit-carousel",
+   "name": "Food Menu Scroll Carousel",
+   "description": "Food menu scroll carousel: page scroll swings each plate out on an orbit as the next swings in, with a wiping two-weight title, chef card and a colour-morphing band. Endless both ways, GSAP ScrollTrigger, light/dark.",
+   "url": "https://21st.dev/@kedhareswer/components/dish-orbit-carousel",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/dish-orbit-carousel/default/preview.1793824300186.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 311346
+  },
+  {
+   "id": 44651,
+   "key": "kedhareswer__folio-fold-menu",
+   "author": "kedhareswer",
+   "slug": "folio-fold-menu",
+   "name": "3D Fold Fullscreen Menu",
+   "description": "3D fold fullscreen menu: pressing Menu drops the page and tips it back into a rounded sheet while serif links rise in above it, with hover dimming and Escape to close. For portfolios, studios and editorial sites.",
+   "url": "https://21st.dev/@kedhareswer/components/folio-fold-menu",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/folio-fold-menu/default/preview.1793901167186.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 160936
+  },
+  {
    "id": 44656,
    "key": "kedhareswer__halftone-flow-hero",
    "author": "kedhareswer",
@@ -301,6 +848,45 @@
    "kind": "",
    "deps": [],
    "bytes": 103636
+  },
+  {
+   "id": 27010,
+   "key": "kedhareswer__hover-expand-gallery",
+   "author": "kedhareswer",
+   "slug": "hover-expand-gallery",
+   "name": "Hover Expand Gallery",
+   "description": "Hover expand image gallery accordion: a row of hairline-separated panels with vertical labels, where the hovered or tapped panel grows to reveal its image while the rest stay rail-width. Below 1024px it becomes a vertical accordion. For portfolios and case studies. Pure CSS, no animation library.",
+   "url": "https://21st.dev/@kedhareswer/components/hover-expand-gallery",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/hover-expand-gallery/default/preview.1791304987340.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 4967
+  },
+  {
+   "id": 36083,
+   "key": "kedhareswer__ink-orbit-pricing",
+   "author": "kedhareswer",
+   "slug": "ink-orbit-pricing",
+   "name": "Pricing Section with Monthly/Yearly Toggle",
+   "description": "Pricing section with a monthly/yearly toggle: plan cards whose prices count to the discounted amount, a highlighted bracketed plan, yearly savings and plan selection. Light/dark, zero dependencies.",
+   "url": "https://21st.dev/@kedhareswer/components/ink-orbit-pricing",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-orbit-pricing/default/preview.1791314045096.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 14066
+  },
+  {
+   "id": 36082,
+   "key": "kedhareswer__ink-orbit-testimonials",
+   "author": "kedhareswer",
+   "slug": "ink-orbit-testimonials",
+   "name": "Testimonials Section with Logo Marquee",
+   "description": "Testimonials section with logo marquee: snap-scrolling quote cards with star ratings, drawn greyscale portraits and an arrows-and-dots pager, over a scrolling row of customer names. Light/dark, zero dependencies.",
+   "url": "https://21st.dev/@kedhareswer/components/ink-orbit-testimonials",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/ink-orbit-testimonials/default/preview.1791314075324.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 17759
   },
   {
    "id": 45453,
@@ -355,6 +941,58 @@
    "bytes": 30651
   },
   {
+   "id": 38035,
+   "key": "kedhareswer__open-slot-booking",
+   "author": "kedhareswer",
+   "slug": "open-slot-booking",
+   "name": "Meeting Booking Calendar",
+   "description": "Meeting booking calendar: a book-a-call section that does the booking itself. A bold headline over a scheduler window with the host's card, call lengths and a timezone-aware week of open slots. Pick a slot and it grows into a confirm form; confirm and it flips into a perforated ticket stamped booked, with an .ics download. A Check against my calendar switch hatches your busy blocks and strikes clashing slots. Fully customisable host, hours, slots and colours.",
+   "url": "https://21st.dev/@kedhareswer/components/open-slot-booking",
+   "preview": "https://cdn.21st.dev/kedhareswer/open-slot-booking/default/preview.1791954021018-34f09e50-c1ef-430e-ac08-3a79cf3d91a7.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 65918
+  },
+  {
+   "id": 44654,
+   "key": "kedhareswer__pulse-stripe-hero",
+   "author": "kedhareswer",
+   "slug": "pulse-stripe-hero",
+   "name": "Animated Stripe Hero Section",
+   "description": "Animated stripe hero section: a striped card lit by slow light beams that flare under the pointer, with a serif headline, counting stats, a drifting logo band and a statement that lights up word by word on scroll. For SaaS and logistics landing pages.",
+   "url": "https://21st.dev/@kedhareswer/components/pulse-stripe-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/pulse-stripe-hero/default/preview.1793900470851.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 265813
+  },
+  {
+   "id": 44607,
+   "key": "kedhareswer__rotating-flavor-slider",
+   "author": "kedhareswer",
+   "slug": "rotating-flavor-slider",
+   "name": "Scroll Rotating Product Slider",
+   "description": "Scroll rotating product slider: a big top-down photo turns and morphs into the next as the page scrolls, while the background colour blends, a dot glides round a ring of curved names and corner garnish swaps. For menus, bakeries and product ranges.",
+   "url": "https://21st.dev/@kedhareswer/components/rotating-flavor-slider",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/rotating-flavor-slider/default/preview.1793824132234.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 321859
+  },
+  {
+   "id": 44528,
+   "key": "kedhareswer__runway-lookbook",
+   "author": "kedhareswer",
+   "slug": "runway-lookbook",
+   "name": "Runway Fashion Lookbook Carousel",
+   "description": "Runway fashion lookbook carousel: the collection's looks queue up in depth across a catwalk, and scrolling walks the next model forward into focus while the rest blur behind. A look counter, shop-the-look link and a side rail of pieces with prices.",
+   "url": "https://21st.dev/@kedhareswer/components/runway-lookbook",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/runway-lookbook/default/preview.1793822924631.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 294738
+  },
+  {
    "id": 43141,
    "key": "kedhareswer__signature-pen-footer",
    "author": "kedhareswer",
@@ -381,6 +1019,424 @@
    "bytes": 102934
   },
   {
+   "id": 38218,
+   "key": "kedhareswer__slit-type-faq",
+   "author": "kedhareswer",
+   "slug": "slit-type-faq",
+   "name": "FAQ Accordion Section",
+   "description": "FAQ accordion section set in one ink on one paper: a display headline cut by a stencil slit that lifts clear on hover, live search across questions and answers with matches highlighted, and rows that flood with ink edge to edge as they open. A real accessible accordion with keyboard navigation, deep links per question and Copy link. Single or multiple open, four presets, light and dark.",
+   "url": "https://21st.dev/@kedhareswer/components/slit-type-faq",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/slit-type-faq/default/preview.1792010596991.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 30805
+  },
+  {
+   "id": 44658,
+   "key": "kedhareswer__sneaker-product-hero",
+   "author": "kedhareswer",
+   "slug": "sneaker-product-hero",
+   "name": "Sneaker Product Page Hero",
+   "description": "Sneaker product page hero: a product-detail section for one shoe in several colourways, with a floating shoe and reflection, hold-to-zoom loupe, size, colour and stock picker, animated price and add-to-cart with a like burst. For ecommerce product pages.",
+   "url": "https://21st.dev/@kedhareswer/components/sneaker-product-hero",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/sneaker-product-hero/default/preview.1793899556993.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 282635
+  },
+  {
+   "id": 44653,
+   "key": "kedhareswer__sticker-swap-headline",
+   "author": "kedhareswer",
+   "slug": "sticker-swap-headline",
+   "name": "Animated Sticker Headline Hero",
+   "description": "Animated sticker headline hero: a poster-weight headline whose last word keeps swapping, as the round photo sticker pops off, the word rolls to the next one and a new sticker pops into the gap. For landing pages and brand heroes.",
+   "url": "https://21st.dev/@kedhareswer/components/sticker-swap-headline",
+   "preview": "https://cdn.21st.dev/kedhareswer/sticker-swap-headline/default/preview.1793891299152-10e84444-78a6-4e06-83ad-71edb056c289.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 167318
+  },
+  {
+   "id": 44650,
+   "key": "kedhareswer__tilt-stack-scroll",
+   "author": "kedhareswer",
+   "slug": "tilt-stack-scroll",
+   "name": "Scroll Stacking Cards",
+   "description": "Scroll stacking cards: full-bleed photo cards pile up as the page scrolls, each arriving tilted and landing flat while the ones below tip back, shrink and darken, with a counter and progress rail. For tours, case studies and product stories.",
+   "url": "https://21st.dev/@kedhareswer/components/tilt-stack-scroll",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/tilt-stack-scroll/default/preview.1793901283151.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 297224
+  },
+  {
+   "id": 35230,
+   "key": "kedhareswer__viewfinder-flip-carousel",
+   "author": "kedhareswer",
+   "slug": "viewfinder-flip-carousel",
+   "name": "3D Flip Image Carousel",
+   "description": "3D flip image carousel for React: only the photo in the viewfinder frame lies flat while the rest fold away on their edges in perspective, opening out of the stack as you move, with a small frame pulse as each lands. Dark stage, titles, keyboard arrows and swipe, reduced-motion aware. Use for camera rolls, photo galleries and portfolios.",
+   "url": "https://21st.dev/@kedhareswer/components/viewfinder-flip-carousel",
+   "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/viewfinder-flip-carousel/default/preview.1791304512075.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 10287
+  },
+  {
+   "id": 35258,
+   "key": "kevingirelli__contact-form",
+   "author": "kevingirelli",
+   "slug": "contact-form",
+   "name": "Contact Form",
+   "description": "A two-column contact section with a header and contact details on one side and a validated name/email/message form in a card on the other, with built-in pending, success and error states.",
+   "url": "https://21st.dev/@kevingirelli/components/contact-form",
+   "preview": "https://cdn.21st.dev/kevingirelli/contact-form/default/preview.1791041663088-a865c431-ef9e-4289-9a4c-a145ff0ba6e4.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32842
+  },
+  {
+   "id": 43217,
+   "key": "klyv-ui__time-slot-picker",
+   "author": "klyv-ui",
+   "slug": "time-slot-picker",
+   "name": "Time Slot Picker",
+   "description": "A booking widget that shows a strip of days and that day's available times as two keyboard-navigable radio groups, so free and taken slots read at a glance.",
+   "url": "https://21st.dev/@klyv-ui/components/time-slot-picker",
+   "preview": "https://cdn.21st.dev/user_registry_klyv-ui_1791308669867/time-slot-picker/default/preview.1793405763346.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 26795
+  },
+  {
+   "id": 675,
+   "key": "kokonutd__background-paths",
+   "author": "kokonutd",
+   "slug": "background-paths",
+   "name": "Background Paths",
+   "description": "Landing Background paths with Gradient Title",
+   "url": "https://21st.dev/@kokonutd/components/background-paths",
+   "preview": "https://cdn.21st.dev/user_2rQ1QHrJyxpmWMHhqhANzWMc64n/background-paths/default/preview.png?v=1",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29905
+  },
+  {
+   "id": 524,
+   "key": "kokonutd__shape-landing-hero",
+   "author": "kokonutd",
+   "slug": "shape-landing-hero",
+   "name": "Shape Landing Hero",
+   "description": "A nicely landing with shapes and color.",
+   "url": "https://21st.dev/@kokonutd/components/shape-landing-hero",
+   "preview": "https://cdn.21st.dev/user_2rQ1QHrJyxpmWMHhqhANzWMc64n/shape-landing-hero/default/preview.1787944413150.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 25141
+  },
+  {
+   "id": 7504,
+   "key": "lavikatiyar__card",
+   "author": "lavikatiyar",
+   "slug": "card",
+   "name": "Card",
+   "description": "Hotel Card\nA visually polished card component to display property information, including an image, name, location, and rating. It is fully responsive and animated on hover.",
+   "url": "https://21st.dev/@lavikatiyar/components/card",
+   "preview": "https://cdn.21st.dev/user_32jKsxB5RdZryZbhXn5ZBjOM8aV/card/default/preview.1788958813944.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 23276
+  },
+  {
+   "id": 7507,
+   "key": "lavikatiyar__card-3",
+   "author": "lavikatiyar",
+   "slug": "card-3",
+   "name": "Card",
+   "description": "Property Card\nA visually polished card component designed to showcase properties, rentals, or listings. It features a responsive layout, theme support for light and dark modes, and subtle animations on hover and load.",
+   "url": "https://21st.dev/@lavikatiyar/components/card-3",
+   "preview": "https://cdn.21st.dev/lavikatiyar/card-3/default/preview.1757930285736.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 23907
+  },
+  {
+   "id": 7902,
+   "key": "lavikatiyar__location-card",
+   "author": "lavikatiyar",
+   "slug": "location-card",
+   "name": "Location Card",
+   "description": "Location Card\nA visually polished card component to display a location with an image, title, subtitle, and an animated call-to-action button. It is fully responsive, theme-adaptive, and includes subtle animations using framer-motion.",
+   "url": "https://21st.dev/@lavikatiyar/components/location-card",
+   "preview": "https://cdn.21st.dev/lavikatiyar/location-card/default/preview.1758519025947.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 23497
+  },
+  {
+   "id": 27904,
+   "key": "ln-dev7__contact-01",
+   "author": "ln-dev7",
+   "slug": "contact-01",
+   "name": "Centered Contact Form",
+   "description": "A centered contact form section with name, email and message fields, a submit button, and trust badges for reply time and privacy.",
+   "url": "https://21st.dev/@ln-dev7/components/contact-01",
+   "preview": "https://cdn.21st.dev/ln-dev7/contact-01/default/preview.1789819769701-36011358-a4c4-4a59-9010-76215de9d861.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29724
+  },
+  {
+   "id": 3007,
+   "key": "lovesickfromthe6ix__revolution-hero",
+   "author": "lovesickfromthe6ix",
+   "slug": "revolution-hero",
+   "name": "Revolution Hero",
+   "description": "Hero section with floating side panel navigation and an animated dynamic abstract background",
+   "url": "https://21st.dev/@lovesickfromthe6ix/components/revolution-hero",
+   "preview": "https://cdn.21st.dev/lovesickfromthe6ix/revolution-hero/default/preview.1785191286889-987b8fd7-5b33-4d3d-8c0c-1c2190654f52.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 85982
+  },
+  {
+   "id": 1131,
+   "key": "lukacho__image-swiper",
+   "author": "lukacho",
+   "slug": "image-swiper",
+   "name": "Image Swiper",
+   "description": "Image swiper card for a real estate website\n\n",
+   "url": "https://21st.dev/@lukacho/components/image-swiper",
+   "preview": "https://cdn.21st.dev/user_lukacho/image-swiper/default/preview.1786715503080.webp",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30638
+  },
+  {
+   "id": 1503,
+   "key": "manuarora700__hero-parallax",
+   "author": "manuarora700",
+   "slug": "hero-parallax",
+   "name": "Hero Parallax",
+   "description": "A scroll effect with rotation, translation and opacity animations.",
+   "url": "https://21st.dev/@manuarora700/components/hero-parallax",
+   "preview": "https://cdn.21st.dev/user_aceternity/hero-parallax/default/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6443
+  },
+  {
+   "id": 1024,
+   "key": "manuarora700__navbar-menu",
+   "author": "manuarora700",
+   "slug": "navbar-menu",
+   "name": "Navbar Menu",
+   "description": "A navbar menu that animates its children on hover, makes a beautiful bignav",
+   "url": "https://21st.dev/@manuarora700/components/navbar-menu",
+   "preview": "https://cdn.21st.dev/user_aceternity/navbar-menu/1024/preview.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25545
+  },
+  {
+   "id": 4741,
+   "key": "meschacirung__contact-form",
+   "author": "meschacirung",
+   "slug": "contact-form",
+   "name": "Contact Form",
+   "description": "Here is Contact Form component",
+   "url": "https://21st.dev/@meschacirung/components/contact-form",
+   "preview": "https://cdn.21st.dev/meschacirung/contact-form/contact/preview.1785191197008-3ac72e56-1d45-4e43-9b34-7bfa60baf087.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "lucide-react",
+    "@radix-ui/react-select"
+   ],
+   "bytes": 124320
+  },
+  {
+   "id": 27511,
+   "key": "meschacirung__footer-4",
+   "author": "meschacirung",
+   "slug": "footer-4",
+   "name": "Newsletter Footer",
+   "description": "A marketing site footer with a brand logo, address, social links, three link columns, and a newsletter signup form.",
+   "url": "https://21st.dev/@meschacirung/components/footer-4",
+   "preview": "https://cdn.21st.dev/meschacirung/footer-4/default/preview.1789774188094-2c429c69-19d9-4fbd-abd3-fa17e7a0d735.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7140
+  },
+  {
+   "id": 2511,
+   "key": "minhxthanh__digital-serenity-animated-landing-page",
+   "author": "minhxthanh",
+   "slug": "digital-serenity-animated-landing-page",
+   "name": "Digital Serenity - Animated Landing Page",
+   "description": "Component creates a visually immersive and calming landing page. It features a dark UI with animated text quotes appearing word by word, a dynamic grid background, subtle floating elements, corner decorative accents, and interactive effects like a mouse-following gradient and click ripples. ",
+   "url": "https://21st.dev/@minhxthanh/components/digital-serenity-animated-landing-page",
+   "preview": "https://cdn.21st.dev/minhxthanh/digital-serenity-animated-landing-page/default/preview.1748705926625.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 12629
+  },
+  {
+   "id": 40206,
+   "key": "my__pricing-table",
+   "author": "my",
+   "slug": "pricing-table",
+   "name": "Pricing Table",
+   "description": "A pricing section with a monthly/yearly billing toggle, animated digit-rolling prices, and plan cards with feature checklists and a highlighted popular plan.",
+   "url": "https://21st.dev/@my/components/pricing-table",
+   "preview": "https://cdn.21st.dev/my/pricing-table/default/preview.1792526138790-f202e0f2-2873-496a-bc96-0555fa642a72.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28129
+  },
+  {
+   "id": 29211,
+   "key": "olewandowski1__booking-2",
+   "author": "olewandowski1",
+   "slug": "booking-2",
+   "name": "Appointment Booking Split",
+   "description": "A two-column appointment request form pairing service reassurance points with a booking form for job type, preferred day, vehicle registration, phone number, and notes.",
+   "url": "https://21st.dev/@olewandowski1/components/booking-2",
+   "preview": "https://cdn.21st.dev/7ovr/booking-2/default/preview.1790051732678-c6a5a283-c945-4c86-8018-47c239f5ec45.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label",
+    "@radix-ui/react-radio-group",
+    "@radix-ui/react-select"
+   ],
+   "bytes": 133196
+  },
+  {
+   "id": 20046,
+   "key": "olewandowski1__coming-soon-3",
+   "author": "olewandowski1",
+   "slug": "coming-soon-3",
+   "name": "Coming Soon Countdown",
+   "description": "A coming-soon page section with a live countdown timer and an email signup form.",
+   "url": "https://21st.dev/@olewandowski1/components/coming-soon-3",
+   "preview": "https://cdn.21st.dev/7ovr/coming-soon-3/default/preview.1784348843660-e9a739f8-be94-4482-87b8-42487d72ca99.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29673
+  },
+  {
+   "id": 28162,
+   "key": "olewandowski1__footer-3",
+   "author": "olewandowski1",
+   "slug": "footer-3",
+   "name": "Newsletter Signup Footer",
+   "description": "A page footer that pairs a newsletter email signup form with grouped navigation link columns and a bottom bar of social icon links.",
+   "url": "https://21st.dev/@olewandowski1/components/footer-3",
+   "preview": "https://cdn.21st.dev/7ovr/footer-3/default/preview.1789956847954-42462dd9-6028-4042-bc38-283c5e5524c7.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "@radix-ui/react-separator",
+    "sonner"
+   ],
+   "bytes": 70572
+  },
+  {
+   "id": 27052,
+   "key": "olewandowski1__menu-1",
+   "author": "olewandowski1",
+   "slug": "menu-1",
+   "name": "Restaurant Menu Block",
+   "description": "A two-column restaurant menu section that lists dishes in courses with dotted leader lines connecting each dish name to its price, plus a description and dietary note.",
+   "url": "https://21st.dev/@olewandowski1/components/menu-1",
+   "preview": "https://cdn.21st.dev/7ovr/menu-1/default/preview.1789182520451-3d1ee4cc-1b1c-4de5-a160-6d667c08495d.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4131
+  },
+  {
+   "id": 28342,
+   "key": "olewandowski1__pricing-4",
+   "author": "olewandowski1",
+   "slug": "pricing-4",
+   "name": "Annual Savings Pricing Grid",
+   "description": "A three-tier pricing grid with a monthly/annual billing toggle that shows the yearly billed total under each price and a Most Popular badge on the featured plan.",
+   "url": "https://21st.dev/@olewandowski1/components/pricing-4",
+   "preview": "https://cdn.21st.dev/7ovr/pricing-4/default/preview.1789969127385-543cdf36-77e7-4c7d-a29e-4304c4ef8f88.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28604
+  },
+  {
+   "id": 20039,
+   "key": "piyushxdev__3d-parallax-unfurling-gallery",
+   "author": "piyushxdev",
+   "slug": "3d-parallax-unfurling-gallery",
+   "name": "3D Parallax Unfurling Gallery",
+   "description": "A cinematic, scroll-driven image grid gallery with deep 3D matrix rotations, smooth multi-column parallax translation offsets, and responsive fluid boundaries for landing showcases",
+   "url": "https://21st.dev/@piyushxdev/components/3d-parallax-unfurling-gallery",
+   "preview": "https://cdn.21st.dev/user_3BzhPCFt0DpZ68bL55oANSJ8bSx/3d-parallax-unfurling-gallery/default/preview.1785933325260.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 6261
+  },
+  {
+   "id": 9583,
+   "key": "prashantsom75__scroll-morph-hero",
+   "author": "prashantsom75",
+   "slug": "scroll-morph-hero",
+   "name": "Scroll Morph Hero",
+   "description": "A stunning hero section that morphs from a scattered layout to a circle, and finally to a scroll-driven interactive rainbow arc.",
+   "url": "https://21st.dev/@prashantsom75/components/scroll-morph-hero",
+   "preview": "https://cdn.21st.dev/prashantsom75/scroll-morph-hero/default/preview.1765164297799.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 9162
+  },
+  {
+   "id": 7335,
+   "key": "prebuiltui__testimonial",
+   "author": "prebuiltui",
+   "slug": "testimonial",
+   "name": "Testimonial",
+   "description": "Here is Testimonial component ",
+   "url": "https://21st.dev/@prebuiltui/components/testimonial",
+   "preview": "https://cdn.21st.dev/user_prebuiltui/testimonial/star-rating-with-avatar-group/preview.1785939451504.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 3920
+  },
+  {
    "id": 8723,
    "key": "rahil1202__metallic-business-card",
    "author": "rahil1202",
@@ -392,6 +1448,99 @@
    "kind": "",
    "deps": [],
    "bytes": 11758
+  },
+  {
+   "id": 12200,
+   "key": "rahil1202__prisma-hero",
+   "author": "rahil1202",
+   "slug": "prisma-hero",
+   "name": "PrismaHero",
+   "description": "A full-screen cinematic hero section with a background video, animated word reveal, and minimal floating navbar—designed to highlight a creative brand with strong visual storytelling and smooth motion interactions.",
+   "url": "https://21st.dev/@rahil1202/components/prisma-hero",
+   "preview": "https://cdn.21st.dev/rahil1202/prisma-hero/default/preview.1776747545948.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 4508
+  },
+  {
+   "id": 7617,
+   "key": "ravikatiyar162__card-17",
+   "author": "ravikatiyar162",
+   "slug": "card-17",
+   "name": "Card",
+   "description": "Location Card\nA visually engaging card component to display location details with an image background and a 3D tilt effect on hover. It's fully responsive and theme-adaptive.",
+   "url": "https://21st.dev/@ravikatiyar162/components/card-17",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/card-17/default/preview.1758027475153.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 29524
+  },
+  {
+   "id": 7100,
+   "key": "ravikatiyar162__card-4",
+   "author": "ravikatiyar162",
+   "slug": "card-4",
+   "name": "Card",
+   "description": "Property Card\nA modern, responsive card component designed to showcase property listings with key details and a call-to-action.",
+   "url": "https://21st.dev/@ravikatiyar162/components/card-4",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/card-4/default/preview.1757403639137.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 28645
+  },
+  {
+   "id": 8969,
+   "key": "ravikatiyar162__contact",
+   "author": "ravikatiyar162",
+   "slug": "contact",
+   "name": "Contact",
+   "description": "Contact Section\nDescription: A comprehensive and visually appealing contact section component featuring an animated background, a navigation bar, a main title, a contact form with various input types, and social media integration. Designed for reusability, responsiveness, and theme-adaptability using shadcn/ui.",
+   "url": "https://21st.dev/@ravikatiyar162/components/contact",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/contact/default/preview.1760506498496.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "lucide-react",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-label"
+   ],
+   "bytes": 48782
+  },
+  {
+   "id": 8737,
+   "key": "ravikatiyar162__hero-section-9",
+   "author": "ravikatiyar162",
+   "slug": "hero-section-9",
+   "name": "Hero Section",
+   "description": "Hero Section Component\nThis component creates a dynamic and engaging hero section, perfect for landing pages. It features a two-column layout with animated text, actionable buttons, social proof statistics, and a visually appealing image collage.",
+   "url": "https://21st.dev/@ravikatiyar162/components/hero-section-9",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/hero-section-9/default/preview.1760172786727.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 31246
+  },
+  {
+   "id": 7794,
+   "key": "ravikatiyar162__menu-item-card",
+   "author": "ravikatiyar162",
+   "slug": "menu-item-card",
+   "name": "Menu Item Card",
+   "description": "Menu Item Card\nThis component displays a food item with its image, price, name, and an interactive \"ADD\" button. It's designed to be highly reusable and customizable through props.",
+   "url": "https://21st.dev/@ravikatiyar162/components/menu-item-card",
+   "preview": "https://cdn.21st.dev/ravikatiyar162/menu-item-card/default/preview.1758278928941.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25572
   },
   {
    "id": 8218,
@@ -436,6 +1585,19 @@
    "bytes": 29057
   },
   {
+   "id": 27355,
+   "key": "ruixen.ui__phone-scroll-hero",
+   "author": "ruixen.ui",
+   "slug": "phone-scroll-hero",
+   "name": "Phone Scroll Hero",
+   "description": "A hero whose 3D-tilted phone mockup flattens and climbs up over the headline as the page scrolls. Theme-aware, with a reduced-motion fallback.",
+   "url": "https://21st.dev/@ruixen.ui/components/phone-scroll-hero",
+   "preview": "https://cdn.21st.dev/user_2y5Wd5l713ZIFYjX19aZXSyXd6b/phone-scroll-hero/default/preview.1789735896057.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 24678
+  },
+  {
    "id": 36749,
    "key": "ruixen.ui__tilted-grid-hero",
    "author": "ruixen.ui",
@@ -449,6 +1611,108 @@
    "bytes": 25954
   },
   {
+   "id": 28203,
+   "key": "shadcnspace__card-02",
+   "author": "shadcnspace",
+   "slug": "card-02",
+   "name": "Property Preview Card",
+   "description": "A real estate listing card that shows a property photo, price badge, address, and bed/bath/area stats with a hover reveal effect.",
+   "url": "https://21st.dev/@shadcnspace/components/card-02",
+   "preview": "https://cdn.21st.dev/shadcnspace/card-02/default/preview.1789956983707-5c181cf4-2bf5-4923-bae4-74b76dd128d5.png",
+   "kind": "",
+   "deps": [
+    "class-variance-authority"
+   ],
+   "bytes": 25577
+  },
+  {
+   "id": 28229,
+   "key": "shadcnspace__card-14",
+   "author": "shadcnspace",
+   "slug": "card-14",
+   "name": "3D Flip Card",
+   "description": "A property/listing card that flips with a 3D perspective animation on hover to reveal specs and a call-to-action on the back.",
+   "url": "https://21st.dev/@shadcnspace/components/card-14",
+   "preview": "https://cdn.21st.dev/shadcnspace/card-14/default/preview.1789957009834-3cb1e021-1cea-4be0-9412-188a76166236.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27337
+  },
+  {
+   "id": 19852,
+   "key": "shadcnspace__marquee-01",
+   "author": "shadcnspace",
+   "slug": "marquee-01",
+   "name": "Testimonials Marquee",
+   "description": "A scrolling testimonials marquee with two rows of review cards moving in opposite directions and edge fade gradients.",
+   "url": "https://21st.dev/@shadcnspace/components/marquee-01",
+   "preview": "https://cdn.21st.dev/shadcnspace/marquee-01/default/preview.1784150693674.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26952
+  },
+  {
+   "id": 26568,
+   "key": "shadcnspace__marquee-03",
+   "author": "shadcnspace",
+   "slug": "marquee-03",
+   "name": "Vertical Testimonials Marquee",
+   "description": "A vertically scrolling, auto-animating column of testimonial cards with pause-on-hover and edge fade masks, ideal for social-proof sections on landing pages.",
+   "url": "https://21st.dev/@shadcnspace/components/marquee-03",
+   "preview": "https://cdn.21st.dev/shadcnspace/marquee-03/default/preview.1788816915079-aac56834-74ad-4654-8b7f-27301af6d503.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27382
+  },
+  {
+   "id": 28564,
+   "key": "shadcnspace__team-01",
+   "author": "shadcnspace",
+   "slug": "team-01",
+   "name": "Creative Team Showcase",
+   "description": "A grid of animated profile cards for showcasing a team's members, roles, and social links, useful for agency or startup \"about us\" pages.",
+   "url": "https://21st.dev/@shadcnspace/components/team-01",
+   "preview": "https://cdn.21st.dev/shadcnspace/team-01/default/preview.1789988644310-cd8dd42d-d02b-4979-beee-826085faf610.png",
+   "kind": "",
+   "deps": [
+    "class-variance-authority"
+   ],
+   "bytes": 26023
+  },
+  {
+   "id": 26006,
+   "key": "shadcnui-blocks__footer-04",
+   "author": "shadcnui-blocks",
+   "slug": "footer-04",
+   "name": "Footer 04",
+   "description": "A responsive website footer with logo, navigation links, a newsletter subscribe form, copyright, and social media icons.",
+   "url": "https://21st.dev/@shadcnui-blocks/components/footer-04",
+   "preview": "https://cdn.21st.dev/shadcnui-blocks/footer-04/default/preview.1788331739303-b5d48979-9c2a-4c33-9101-b81a80f700fa.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-separator"
+   ],
+   "bytes": 38166
+  },
+  {
+   "id": 26139,
+   "key": "skyleen77__flip-card",
+   "author": "skyleen77",
+   "slug": "flip-card",
+   "name": "Flip Card",
+   "description": "A 3D profile card that flips on hover or tap to reveal a bio, stats, and social links.",
+   "url": "https://21st.dev/@skyleen77/components/flip-card",
+   "preview": "https://cdn.21st.dev/user_2vJfh2NfFGAPdS5oQXlSpccjJvB/flip-card/default/preview.1788527617844.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 30068
+  },
+  {
    "id": 30554,
    "key": "ssychui__project-index",
    "author": "ssychui",
@@ -460,6 +1724,32 @@
    "kind": "",
    "deps": [],
    "bytes": 4555
+  },
+  {
+   "id": 19328,
+   "key": "support_596fe4b8__animated-countdown",
+   "author": "support_596fe4b8",
+   "slug": "animated-countdown",
+   "name": "Animated Countdown",
+   "description": "A flip-style countdown timer with animated number transitions and modern, digital, minimal, and classic variants.",
+   "url": "https://21st.dev/@support_596fe4b8/components/animated-countdown",
+   "preview": "https://cdn.21st.dev/user_registry_nexus-ui_1783492392202/animated-countdown/default/preview.1784126304541.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 27215
+  },
+  {
+   "id": 44838,
+   "key": "themeocean__3d-animated-tilt-dynamic-glow-card",
+   "author": "themeocean",
+   "slug": "3d-animated-tilt-dynamic-glow-card",
+   "name": "3D Animated Tilt & Dynamic Glow Card",
+   "description": "A premium Bento-grid ready card featuring an interactive 3D perspective tilt effect and a mouse-tracking neon glow border. Fully accessible, type-safe, and perfect for highlighting feature sections.",
+   "url": "https://21st.dev/@themeocean/components/3d-animated-tilt-dynamic-glow-card",
+   "preview": "https://cdn.21st.dev/user_3KgWzslqJFclZ2iRrfddAtKvi27/3d-animated-tilt-dynamic-glow-card/default/preview.1794245307278.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 12840
   },
   {
    "id": 45654,
@@ -488,6 +1778,87 @@
    "bytes": 13317
   },
   {
+   "id": 29547,
+   "key": "uiable__block-pricing-18",
+   "author": "uiable",
+   "slug": "block-pricing-18",
+   "name": "Pricing Plans with Billing Toggle",
+   "description": "A three-tier pricing section with a monthly/yearly billing toggle, animated price transitions, and a highlighted \"most popular\" plan card.",
+   "url": "https://21st.dev/@uiable/components/block-pricing-18",
+   "preview": "https://cdn.21st.dev/uiable/block-pricing-18/default/preview.1790088549796-8c26e7a7-04a2-47bf-a634-e2409d4974af.png",
+   "kind": "",
+   "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+   ],
+   "bytes": 32986
+  },
+  {
+   "id": 24830,
+   "key": "uilayout.contact__gallery-modal-accordion",
+   "author": "uilayout.contact",
+   "slug": "gallery-modal-accordion",
+   "name": "Gallery Modal Accordion",
+   "description": "An interactive image gallery where thumbnails expand accordion-style on hover and open into an animated fullscreen modal with title and description.",
+   "url": "https://21st.dev/@uilayout.contact/components/gallery-modal-accordion",
+   "preview": "https://cdn.21st.dev/user_2zAsvSHo1IeJGKtSjJ3uR1N1Cd7/gallery-modal-accordion/default/preview.1787745779112.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 7069
+  },
+  {
+   "id": 18913,
+   "key": "uilayout.contact__testimonial-basic",
+   "author": "uilayout.contact",
+   "slug": "testimonial-basic",
+   "name": "Testimonial Basic",
+   "description": "An editorial testimonials section with video thumbnails, author avatars, quotes, and star ratings arranged in alternating rows.",
+   "url": "https://21st.dev/@uilayout.contact/components/testimonial-basic",
+   "preview": "https://cdn.21st.dev/uilayout.contact/testimonial-basic/default/preview.1784409206157-71e28755-7fc1-4fec-94ef-1d1a947e285d.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 25267
+  },
+  {
+   "id": 20068,
+   "key": "unlumen__count-up",
+   "author": "unlumen",
+   "slug": "count-up",
+   "name": "Count Up",
+   "description": "An animated number counter that springs to its target value when it enters the viewport, with support for decimals, thousands separators, count direction, and per-digit slide, fade, and blur effects.",
+   "url": "https://21st.dev/@unlumen/components/count-up",
+   "preview": "https://cdn.21st.dev/unlumen/count-up/default/preview.1784354297145-e0f233b1-2265-483b-a513-9d21626a0db1.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 26122
+  },
+  {
+   "id": 46292,
+   "key": "vovalopuh13__pricing-plan-tilt",
+   "author": "vovalopuh13",
+   "slug": "pricing-plan-tilt",
+   "name": "Pricing Plan Tilt",
+   "description": "Three pricing cards rendered as real 3D objects: they tilt with the cursor, carry a glare that follows it, and lift on hover. A running light circles the selected plan, and the monthly/yearly toggle is a springy pill with a bouncing Save badge.",
+   "url": "https://21st.dev/@vovalopuh13/components/pricing-plan-tilt",
+   "preview": "https://cdn.21st.dev/user_3M13BYwKrRjRaH8xv9vkJwwJUgj/pricing-plan-tilt/default/preview.1794571999314.png",
+   "kind": "",
+   "deps": [],
+   "bytes": 30340
+  },
+  {
+   "id": 31523,
+   "key": "wensity__before-after-card",
+   "author": "wensity",
+   "slug": "before-after-card",
+   "name": "Image Comparison Slider",
+   "description": "A before and after image comparison slider with a draggable handle and full keyboard control. Show photo edits, redesigns, AI upscaling or product changes side by side.",
+   "url": "https://21st.dev/@wensity/components/before-after-card",
+   "preview": "https://cdn.21st.dev/user_3JFJF7Mbb5ImA8DO9hE1FECx2fT/before-after-card/default/preview.1790327425858.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 28188
+  },
+  {
    "id": 1877,
    "key": "youcefbnm__card-curtain-reveal",
    "author": "youcefbnm",
@@ -499,53 +1870,81 @@
    "kind": "",
    "deps": [],
    "bytes": 29771
+  },
+  {
+   "id": 25474,
+   "key": "yura__carousel-squeeze",
+   "author": "yura",
+   "slug": "carousel-squeeze",
+   "name": "Squeeze Carousel",
+   "description": "An expanding accordion image carousel: one wide hero panel, the rest squeezed into thin clickable strips. Smooth width animation, click-to-open, hover grow, autoplay, keyboard control, responsive, light and dark mode. Perfect for product features.",
+   "url": "https://21st.dev/@yura/components/carousel-squeeze",
+   "preview": "https://cdn.21st.dev/yura/carousel-squeeze/default/preview.1787420809042-efcce442-3d43-4cd1-afe0-2f4cabfc9dd9.webp",
+   "kind": "",
+   "deps": [],
+   "bytes": 33434
   }
  ],
  "failed": [
+  {
+   "key": "0xUrvish__bottom-menu",
+   "name": "Bottom Menu",
+   "reason": "Needs the Hugeicons icon package"
+  },
+  {
+   "key": "dhileepkumargm__3d-animation",
+   "name": "3D Animation",
+   "reason": "its stylesheet was not included with the code"
+  },
+  {
+   "key": "dhileepkumargm__woven-light-hero",
+   "name": "Woven Light Hero",
+   "reason": "Needs the three.js package"
+  },
+  {
+   "key": "hello_54e122be__hairline-phone",
+   "name": "Hairline Phone",
+   "reason": "its helper files were not included with the code"
+  },
   {
    "key": "jahed__flip-countdown",
    "name": "FlipCountdown",
    "reason": "its stylesheet was not included with the code"
   },
   {
-   "key": "kedhareswer__dish-orbit-carousel",
-   "name": "Food Menu Scroll Carousel",
-   "reason": "Could not resolve \"gsap\""
+   "key": "kedhareswer__festivity-hero",
+   "name": "Festivity Hero",
+   "reason": "Needs the three.js package"
   },
   {
-   "key": "kedhareswer__folio-fold-menu",
-   "name": "3D Fold Fullscreen Menu",
-   "reason": "Could not resolve \"gsap\""
+   "key": "kedhareswer__hotel-showcase",
+   "name": "Hotel Showcase",
+   "reason": "the code came back empty"
   },
   {
-   "key": "kedhareswer__pulse-stripe-hero",
-   "name": "Animated Stripe Hero Section",
-   "reason": "Could not resolve \"gsap\""
+   "key": "shadcnstore__team-2",
+   "name": "Agents Team Grid",
+   "reason": "Needs helper files the API result leaves out"
   },
   {
-   "key": "kedhareswer__rotating-flavor-slider",
-   "name": "Scroll Rotating Product Slider",
-   "reason": "Could not resolve \"gsap\""
+   "key": "starc007__feedback-widget",
+   "name": "Feedback Widget",
+   "reason": "Needs helper files the API result leaves out"
   },
   {
-   "key": "kedhareswer__runway-lookbook",
-   "name": "Runway Fashion Lookbook Carousel",
-   "reason": "Could not resolve \"gsap\""
+   "key": "uilayout.contact__testimonial-1",
+   "name": "Testimonial",
+   "reason": "shows real company logos"
   },
   {
-   "key": "kedhareswer__sneaker-product-hero",
-   "name": "Sneaker Product Page Hero",
-   "reason": "Could not resolve \"gsap\""
+   "key": "unlumen__motion-navigation-menu",
+   "name": "Motion Navigation Menu",
+   "reason": "Needs helper files the API result leaves out"
   },
   {
-   "key": "kedhareswer__sticker-swap-headline",
-   "name": "Animated Sticker Headline Hero",
-   "reason": "Could not resolve \"gsap\""
-  },
-  {
-   "key": "kedhareswer__tilt-stack-scroll",
-   "name": "Scroll Stacking Cards",
-   "reason": "Could not resolve \"gsap\""
+   "key": "ziegfiroyt__booking29",
+   "name": "Appointment Intake Match",
+   "reason": "Needs helper files the API result leaves out"
   }
  ]
 }

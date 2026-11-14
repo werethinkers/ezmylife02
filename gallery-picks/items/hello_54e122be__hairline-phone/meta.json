@@ -1,0 +1,13 @@
+{
+  "id": 36599,
+  "key": "hello_54e122be__hairline-phone",
+  "author": "hello_54e122be",
+  "slug": "hairline-phone",
+  "name": "Hairline Phone",
+  "description": "An isometric line drawing of a phone taken apart into four layers (glass, board, battery, shell) that opens and picks a layer as the pointer moves across and down it.",
+  "url": "https://21st.dev/@hello_54e122be/components/hairline-phone",
+  "preview": "https://cdn.21st.dev/user_registry_lucasmarkes_1791397778844/hairline-phone/default/preview.1791415878149.webp",
+  "kind": "",
+  "deps": [],
+  "skip": "its helper files were not included with the code"
+}

@@ -1,0 +1,15 @@
+{
+  "id": 7617,
+  "key": "ravikatiyar162__card-17",
+  "author": "ravikatiyar162",
+  "slug": "card-17",
+  "name": "Card",
+  "description": "Location Card\nA visually engaging card component to display location details with an image background and a 3D tilt effect on hover. It's fully responsive and theme-adaptive.",
+  "url": "https://21st.dev/@ravikatiyar162/components/card-17",
+  "preview": "https://cdn.21st.dev/ravikatiyar162/card-17/default/preview.1758027475153.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

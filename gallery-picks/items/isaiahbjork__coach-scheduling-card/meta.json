@@ -1,0 +1,12 @@
+{
+  "id": 2554,
+  "key": "isaiahbjork__coach-scheduling-card",
+  "author": "isaiahbjork",
+  "slug": "coach-scheduling-card",
+  "name": "Coach Scheduling Card",
+  "description": "This is a fully interactive, motion-enhanced Coach Scheduling Card that allows users to view a coach’s weekly availability, select time slots, choose a location, and confirm bookings—all in a single animated, responsive UI. It blends profile preview, dropdown logic, availability grids, and confirmation flows into a seamless component with thoughtful framer-motion effects throughout. Animations are conditionally toggled for accessibility, and the UI adapts to user actions in real-time. Perfect for fitness apps, tutoring platforms, service marketplaces, or any SaaS tool offering human-led bookings with sleek UX.",
+  "url": "https://21st.dev/@isaiahbjork/components/coach-scheduling-card",
+  "preview": "https://cdn.21st.dev/user_2tkbBPFWYn8YMjZNHwgIuP3yzvd/coach-scheduling-card/default/preview.1750809485621.png",
+  "kind": "",
+  "deps": []
+}

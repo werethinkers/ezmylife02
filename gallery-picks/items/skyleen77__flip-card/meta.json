@@ -1,0 +1,15 @@
+{
+  "id": 26139,
+  "key": "skyleen77__flip-card",
+  "author": "skyleen77",
+  "slug": "flip-card",
+  "name": "Flip Card",
+  "description": "A 3D profile card that flips on hover or tap to reveal a bio, stats, and social links.",
+  "url": "https://21st.dev/@skyleen77/components/flip-card",
+  "preview": "https://cdn.21st.dev/user_2vJfh2NfFGAPdS5oQXlSpccjJvB/flip-card/default/preview.1788527617844.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ]
+}

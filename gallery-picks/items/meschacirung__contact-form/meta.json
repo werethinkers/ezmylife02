@@ -1,0 +1,18 @@
+{
+  "id": 4741,
+  "key": "meschacirung__contact-form",
+  "author": "meschacirung",
+  "slug": "contact-form",
+  "name": "Contact Form",
+  "description": "Here is Contact Form component",
+  "url": "https://21st.dev/@meschacirung/components/contact-form",
+  "preview": "https://cdn.21st.dev/meschacirung/contact-form/contact/preview.1785191197008-3ac72e56-1d45-4e43-9b34-7bfa60baf087.png",
+  "kind": "",
+  "deps": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@radix-ui/react-label",
+    "lucide-react",
+    "@radix-ui/react-select"
+  ]
+}

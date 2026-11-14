@@ -1,0 +1,12 @@
+{
+  "id": 9701,
+  "key": "daiwiikharihar__scroll-triggered-video-hero",
+  "author": "daiwiikharihar",
+  "slug": "scroll-triggered-video-hero",
+  "name": "Scroll-Triggered Video Hero",
+  "description": "A robust hero section that transitions between video chapters based on viewport position. Uses sticky positioning for performance, with z-index layering for smooth cross-fades. Includes a synchronized progress indicator and accessible text overlays.",
+  "url": "https://21st.dev/@daiwiikharihar/components/scroll-triggered-video-hero",
+  "preview": "https://cdn.21st.dev/user_332oxzW8MyPod4IDIdKq9rbPYuk/scroll-triggered-video-hero/default/preview.1786657946551.webp",
+  "kind": "",
+  "deps": []
+}

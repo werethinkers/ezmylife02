@@ -1,0 +1,12 @@
+{
+  "id": 34576,
+  "key": "bidyut10__booking-slot-calendar",
+  "author": "bidyut10",
+  "slug": "booking-slot-calendar",
+  "name": "Booking Slot Calendar",
+  "description": "A Google Calendar-style appointment picker where a user selects a day from a week strip and then taps an available time slot to book it.",
+  "url": "https://21st.dev/@bidyut10/components/booking-slot-calendar",
+  "preview": "https://cdn.21st.dev/user_registry_bidyut10_1790790084027/booking-slot-calendar/default/preview.1790890044748.webp",
+  "kind": "",
+  "deps": []
+}
