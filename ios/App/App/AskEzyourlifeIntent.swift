@@ -166,7 +166,7 @@ struct AskEzyourlifeIntent: AppIntent {
         // 2. An app.
         var plan: EzyPlan
         do { plan = try await EzyAPI.plan(spoken) } catch { return Outcome(dialog: error.localizedDescription) }
-        guard let app = plan.app else {
+        guard var app = plan.app else {
             return Outcome(dialog: plan.message ?? "I couldn't find an app for that. Try other words.")
         }
 
@@ -175,6 +175,17 @@ struct AskEzyourlifeIntent: AppIntent {
             let reply = try await $answer.requestValue(IntentDialog(stringLiteral: "\(app.name) mein kya dikkat aa rahi hai? What's the trouble? Say \"making one\" and I'll help you make it."))
             if !EzyVoice.wantsToMake(reply) {
                 return Outcome(dialog: "Main \(app.name) banane mein madad kar sakta hoon. I can help make it. For anything else, open \(app.name) in the EZYOURLIFE app.")
+            }
+        }
+
+        // Other apps that would also solve the problem: offer them by name, or "go" for the first.
+        if EzyVoice.soundsLikeTrouble(spoken), let others = plan.alternatives, !others.isEmpty {
+            let names = others.map(\.name).joined(separator: ", ")
+            let reply = try await $answer.requestValue(IntentDialog(stringLiteral: "Main \(app.name) suggest karta hoon. Or you could use \(names). Say a name, or say go for \(app.name)."))
+            let said = reply.lowercased()
+            if let pick = others.first(where: { said.contains($0.name.lowercased()) }) {
+                do { plan = try await EzyAPI.plan(spoken, appId: pick.id) } catch { return Outcome(dialog: error.localizedDescription) }
+                app = plan.app ?? app
             }
         }
 

@@ -685,8 +685,13 @@ final class KeyboardViewController: UIInputViewController {
         let shortcutHits = EzyMatch.shortcuts(EzyShared.shortcuts, for: first)
         let exact = shortcutHits.filter { $0.key.lowercased() == first.lowercased() }
         items += exact.map { PickItem.shortcut($0) }
+        // For a problem said in words, the other apps that would also solve it come right after the best one.
+        if let suggestion, suggestion.text == command.text {
+            items += (suggestion.plan.alternatives ?? []).map { PickItem.app($0, nil) }
+        }
         let apps = first.isEmpty ? EzyShared.recentApps : EzyMatch.rank(appResults, for: first)
-        items += apps.prefix(8).filter { $0.id != suggestion?.plan.app?.id }.map { PickItem.app($0, nil) }
+        let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
+        items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
         addHeader(first.isEmpty ? (apps.isEmpty ? "Type an app or shortcut" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {

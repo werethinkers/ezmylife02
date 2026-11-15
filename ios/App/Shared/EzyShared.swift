@@ -161,9 +161,11 @@ struct EzyPlan: Codable {
     var fields: [EzyField]?
     /// Boxes filled from the person's saved business details on ezyourlife.com.
     var fromProfile: [String]?
+    /// Other apps that could solve the same problem, best first (the server fills this in).
+    var alternatives: [EzyApp]?
 
     enum CodingKeys: String, CodingKey {
-        case app, inputs, prompt, missing, ready, message, fields
+        case app, inputs, prompt, missing, ready, message, fields, alternatives
         case fromProfile = "from_profile"
     }
 }
