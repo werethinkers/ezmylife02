@@ -89,7 +89,7 @@
    "preview": "https://cdn.21st.dev/user_3EFgBcaTwAWLVWzXlHvjY47l6Xk/daytake-photo-landing/default/preview.1794605404251.webp",
    "kind": "",
    "deps": [],
-   "bytes": 320237
+   "bytes": 321958
   },
   {
    "id": 1436,
@@ -623,6 +623,45 @@
    "bytes": 4993
   },
   {
+   "id": 0,
+   "key": "ez__shining-text",
+   "author": "Ezyourlife",
+   "slug": "shining-text",
+   "name": "Shining text",
+   "description": "A band of light sweeps across the words.",
+   "url": "",
+   "preview": "",
+   "kind": "text",
+   "deps": [],
+   "bytes": 21816
+  },
+  {
+   "id": 0,
+   "key": "ez__stay-showcase",
+   "author": "Ezyourlife",
+   "slug": "stay-showcase",
+   "name": "Stay showcase",
+   "description": "Room cards with photos and prices, for hotels and stays.",
+   "url": "",
+   "preview": "",
+   "kind": "cards",
+   "deps": [],
+   "bytes": 259282
+  },
+  {
+   "id": 0,
+   "key": "ez__sushi-conveyor-menu",
+   "author": "Ezyourlife",
+   "slug": "sushi-conveyor-menu",
+   "name": "Sushi conveyor menu",
+   "description": "Plates on a conveyor belt; tap a plate to see the dish and add it.",
+   "url": "",
+   "preview": "",
+   "kind": "menus",
+   "deps": [],
+   "bytes": 33975
+  },
+  {
    "id": 19080,
    "key": "felipemenezes098__hero-09",
    "author": "felipemenezes098",
@@ -821,7 +860,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/dish-orbit-carousel/default/preview.1793824300186.webp",
    "kind": "",
    "deps": [],
-   "bytes": 311346
+   "bytes": 312785
   },
   {
    "id": 44651,
@@ -834,7 +873,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/folio-fold-menu/default/preview.1793901167186.webp",
    "kind": "",
    "deps": [],
-   "bytes": 160936
+   "bytes": 161856
   },
   {
    "id": 44656,
@@ -964,7 +1003,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/pulse-stripe-hero/default/preview.1793900470851.webp",
    "kind": "",
    "deps": [],
-   "bytes": 265813
+   "bytes": 267254
   },
   {
    "id": 44607,
@@ -977,7 +1016,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/rotating-flavor-slider/default/preview.1793824132234.webp",
    "kind": "",
    "deps": [],
-   "bytes": 321859
+   "bytes": 323298
   },
   {
    "id": 44528,
@@ -990,7 +1029,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/runway-lookbook/default/preview.1793822924631.webp",
    "kind": "",
    "deps": [],
-   "bytes": 294738
+   "bytes": 296178
   },
   {
    "id": 43141,
@@ -1042,7 +1081,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/sneaker-product-hero/default/preview.1793899556993.webp",
    "kind": "",
    "deps": [],
-   "bytes": 282635
+   "bytes": 283554
   },
   {
    "id": 44653,
@@ -1055,7 +1094,7 @@
    "preview": "https://cdn.21st.dev/kedhareswer/sticker-swap-headline/default/preview.1793891299152-10e84444-78a6-4e06-83ad-71edb056c289.png",
    "kind": "",
    "deps": [],
-   "bytes": 167318
+   "bytes": 168236
   },
   {
    "id": 44650,
@@ -1068,7 +1107,7 @@
    "preview": "https://cdn.21st.dev/user_30fkm37UoBFJx1GiK2Q4Sy8lSrO/tilt-stack-scroll/default/preview.1793901283151.webp",
    "kind": "",
    "deps": [],
-   "bytes": 297224
+   "bytes": 298665
   },
   {
    "id": 35230,
@@ -1207,7 +1246,7 @@
    "preview": "https://cdn.21st.dev/lovesickfromthe6ix/revolution-hero/default/preview.1785191286889-987b8fd7-5b33-4d3d-8c0c-1c2190654f52.png",
    "kind": "",
    "deps": [],
-   "bytes": 85982
+   "bytes": 86901
   },
   {
    "id": 1131,

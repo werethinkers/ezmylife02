@@ -1,0 +1,12 @@
+{
+  "id": 0,
+  "key": "ez__stay-showcase",
+  "author": "Ezyourlife",
+  "slug": "stay-showcase",
+  "name": "Stay showcase",
+  "description": "Room cards with photos and prices, for hotels and stays.",
+  "url": "",
+  "preview": "",
+  "kind": "cards",
+  "deps": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": 0,
+  "key": "ez__sushi-conveyor-menu",
+  "author": "Ezyourlife",
+  "slug": "sushi-conveyor-menu",
+  "name": "Sushi conveyor menu",
+  "description": "Plates on a conveyor belt; tap a plate to see the dish and add it.",
+  "url": "",
+  "preview": "",
+  "kind": "menus",
+  "deps": []
+}

@@ -126,6 +126,9 @@ for (const key of keys) {
       logLevel: "silent",
       absWorkingDir: ROOT,
     });
+    /* files behind the gallery's "Copy code" and "Copy build prompt" buttons */
+    fs.copyFileSync(path.join(dir, "component.tsx"), path.join(OUT, `${key}.code.txt`));
+    if (fs.existsSync(path.join(dir, "prompt.md"))) fs.copyFileSync(path.join(dir, "prompt.md"), path.join(OUT, `${key}.prompt.md`));
     items.push({ ...meta, bytes: fs.statSync(path.join(OUT, `${key}.js`)).size });
   } catch (e) {
     failed.push({ key, name: meta.name, reason: String(e.errors?.[0]?.text ?? e.message).slice(0, 200) });
