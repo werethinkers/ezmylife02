@@ -656,7 +656,32 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   const wanted = str(body.app_id, 120);
   let rows = c.rows.filter((r) => APPS[r.id]);
   if (wanted) rows = rows.filter((r) => r.id === wanted);
-  const ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => wanted || x.s > 0).sort((a, b) => b.s - a.s).slice(0, 8);
+  let ranked = rows.map((r) => ({ r, s: score(r, words) })).filter((x) => wanted || x.s > 0).sort((a, b) => b.s - a.s).slice(0, 8);
+  // A problem said in plain words ("GST notice aaya hai, kya karu", "naukri ke liye kuch chahiye") rarely contains an
+  // app's name. When the words match weakly, one small call turns the problem into the jobs that would solve it,
+  // and those words search the catalogue again, so the best app still comes up.
+  if (!wanted && (ranked.length < 3 || (ranked[0]?.s ?? 0) < 8)) {
+    try {
+      const out = await chat([
+        {
+          role: "system",
+          content:
+            "A person describes a problem or a need, in English, Hindi, Hinglish or another Indian language. Name what they actually need done, " +
+            "as 4 to 8 short English search words an app catalogue would use (documents, tools, calculators, letters, photos, plans, studios). " +
+            'Answer JSON only: {"keywords": string[]}.',
+        },
+        { role: "user", content: text },
+      ], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 120, temperature: 0 });
+      const extra = (parseJson(out) as { keywords?: unknown }).keywords;
+      const more = (Array.isArray(extra) ? extra : []).flatMap((k) => String(k).toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/)).filter((w) => w.length > 2).slice(0, 12);
+      if (more.length) {
+        const all = [...new Set([...words, ...more])];
+        ranked = rows.map((r) => ({ r, s: score(r, all) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 10);
+      }
+    } catch (e) {
+      console.error("command understand", e);
+    }
+  }
   if (!ranked.length) return json({ ok: true, app: null, message: "No app matched. Try other words." });
 
   const candidates = ranked.map(({ r }) => {
@@ -669,7 +694,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
       prompt: spec.fields?.length ? undefined : (spec.promptLabel ?? "prompt"),
     };
   });
-  let pick: { app_id?: string | null; inputs?: Record<string, unknown>; prompt?: string } = {};
+  let pick: { app_id?: string | null; alternatives?: unknown; inputs?: Record<string, unknown>; prompt?: string } = {};
   try {
     const out = await chat([
       {
@@ -679,7 +704,9 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
           "Fill its fields only with facts in the request (keep the person's language; numbers as digits; select fields must use one of the options; " +
           "a 'rows' field is one plain-text line per item, like '2 x Steel chair @ 1500, GST 18%'). " +
           "Never invent names, amounts or dates. Apps with no fields take the whole request, cleaned up, as 'prompt'. " +
-          'Answer JSON only: {"app_id": string|null, "inputs": {fieldKey: value}, "prompt": string|null}.',
+          "The request may be a problem or a need rather than a command (in any language): then pick the app that would solve it and get it done, " +
+          "and list up to 3 other apps from the list that could also help, best first, as 'alternatives'. " +
+          'Answer JSON only: {"app_id": string|null, "alternatives": string[], "inputs": {fieldKey: value}, "prompt": string|null}.',
       },
       { role: "user", content: JSON.stringify({ request: text, apps: candidates }) },
     ], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 800, temperature: 0 });
@@ -717,9 +744,18 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
     }
   }
   const missing = fields.filter((f) => f.required && !inputs[f.key]).map((f) => ({ key: f.key, label: f.label }));
+  // Other apps that could solve the same problem: the model's list first, then the next best matches.
+  const altIds = (Array.isArray(pick.alternatives) ? pick.alternatives : []).map(String);
+  const alternatives = [...new Set([...altIds, ...ranked.map((x) => x.r.id)])]
+    .filter((id) => id !== chosen.id)
+    .map((id) => ranked.find((x) => x.r.id === id)?.r)
+    .filter((r): r is CatalogRow => !!r)
+    .slice(0, 3)
+    .map((r) => summary(r, c));
   return json({
     ok: true,
     app: summary(chosen, c),
+    alternatives,
     inputs,
     prompt: fields.length ? undefined : (str(pick.prompt, 2000) || text),
     missing,
