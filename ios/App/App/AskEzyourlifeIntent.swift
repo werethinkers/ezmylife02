@@ -78,6 +78,8 @@ struct EzyAppShortcuts: AppShortcutsProvider {
                 "Ask \(.applicationName)",
                 "\(.applicationName) command",
                 "Tell \(.applicationName)",
+                "Talk to \(.applicationName)",
+                "\(.applicationName) voice",
             ],
             shortTitle: "Ask EZYOURLIFE",
             systemImageName: "mic.fill"

@@ -38,6 +38,9 @@ final class KeyboardViewController: UIInputViewController {
     private let keysStack = KeysStack()
     /// What the keys were last drawn for; they are redrawn only when this changes, not on every press.
     private var keysSignature = ""
+    /// The shift state the key faces were last drawn for (shift changes after nearly every capital, so it must be cheap).
+    private var facesShift: Shift = .once
+    private var facesPage: Page = .letters
     /// What the strip was last drawn for, for the same reason.
     private var stripSignature = ""
     private var heightConstraint: NSLayoutConstraint?
@@ -259,9 +262,15 @@ final class KeyboardViewController: UIInputViewController {
 
     private func buildKeys(force: Bool = false) {
         guard isViewLoaded else { return }
-        let signature = "\(page)|\(shift)|\(returnTitle())|\(dark)|\(needsInputModeSwitchKey)"
-        if !force && signature == keysSignature { return }
+        let signature = "\(page)|\(returnTitle())|\(dark)|\(needsInputModeSwitchKey)"
+        if !force && signature == keysSignature {
+            // Only shift changed: retitle the keys that are already there (no views are rebuilt).
+            if shift != facesShift { refreshKeyFaces() }
+            return
+        }
         keysSignature = signature
+        facesShift = shift
+        facesPage = page
         keysStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         view.backgroundColor = .clear
         for (index, row) in rows().enumerated() {
@@ -316,6 +325,31 @@ final class KeyboardViewController: UIInputViewController {
                 }
             }
         }
+    }
+
+    /// Changes capitals and the shift arrow on the existing keys, the way Apple's keyboard does.
+    private func refreshKeyFaces() {
+        facesShift = shift
+        func visit(_ view: UIView) {
+            if let key = view as? KeyButton {
+                switch key.keyValue {
+                case "⇧":
+                    let name = shift == .locked ? "capslock.fill" : (shift == .once ? "shift.fill" : "shift")
+                    key.setImage(UIImage(systemName: name), for: .normal)
+                    key.baseColor = shift != .off ? letterKeyColor : functionKeyColor
+                    key.backgroundColor = key.baseColor
+                case "⌫", "123", "ABC", "#+=", "🌐", "space", "return", "/", "\\": break
+                default:
+                    if page == .letters {
+                        let shown = shift != .off ? key.keyValue.uppercased() : key.keyValue
+                        if key.title(for: .normal) != shown { key.setTitle(shown, for: .normal) }
+                    }
+                }
+                return
+            }
+            view.subviews.forEach(visit)
+        }
+        visit(keysStack)
     }
 
     private func isCharacterKey(_ title: String, bottomRow: Bool) -> Bool {
@@ -393,6 +427,7 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func keyDown(_ key: KeyButton) {
         key.backgroundColor = key.pressedColor
         UIDevice.current.playInputClick()
+        showCallout(for: key)
         if key.keyValue == "⌫" {
             deleteBackward()
             deleteRepeats = 0
@@ -410,11 +445,13 @@ final class KeyboardViewController: UIInputViewController {
 
     @objc private func keyCancel(_ key: KeyButton) {
         key.backgroundColor = key.baseColor
+        hideCallout()
         deleteTimer?.invalidate()
     }
 
     @objc private func keyUp(_ key: KeyButton) {
         key.backgroundColor = key.baseColor
+        hideCallout()
         deleteTimer?.invalidate()
         switch key.keyValue {
         case "⌫":
@@ -457,6 +494,34 @@ final class KeyboardViewController: UIInputViewController {
             if page != .letters && (text == "'" ) { page = .letters }
             afterTyping()
         }
+    }
+
+    private var callout: UIView?
+
+    /// The enlarged letter above the pressed key, like Apple's keyboard.
+    private func showCallout(for key: KeyButton) {
+        hideCallout()
+        guard let text = key.title(for: .normal), text.count == 1, key.keyValue.count == 1,
+              !["/", "\\"].contains(key.keyValue) || page != .letters else { return }
+        let frame = key.convert(key.bounds, to: view)
+        let width = frame.width + 18
+        let pop = UILabel(frame: CGRect(x: min(max(frame.midX - width / 2, 2), view.bounds.width - width - 2),
+                                        y: max(frame.minY - 50, 0), width: width, height: 56))
+        pop.text = text
+        pop.textAlignment = .center
+        pop.font = .systemFont(ofSize: 34)
+        pop.textColor = keyTextColor
+        pop.backgroundColor = letterKeyColor
+        pop.layer.cornerRadius = 8
+        pop.layer.masksToBounds = true
+        pop.isUserInteractionEnabled = false
+        view.addSubview(pop)
+        callout = pop
+    }
+
+    private func hideCallout() {
+        callout?.removeFromSuperview()
+        callout = nil
     }
 
     /// Where typing goes: into the box being edited on the details card, otherwise into the app's text box.
@@ -597,8 +662,9 @@ final class KeyboardViewController: UIInputViewController {
             }
             addChip("Type / for shortcuts and apps", style: .note)
             addChip("🎙 Voice", style: .plain) { [weak self] in
-                self?.notice = "Type /, then tap the mic below and say what you need, like “proforma invoice for Rahul Traders”."
-                self?.refreshStrip()
+                // One tap: start the command, then the person taps iOS's own mic and speaks.
+                self?.textDocumentProxy.insertText("/")
+                self?.afterTyping()
             }
             return
         }
@@ -624,7 +690,7 @@ final class KeyboardViewController: UIInputViewController {
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
         addHeader(first.isEmpty ? (apps.isEmpty ? "Type an app or shortcut" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {
-            addChip(first.isEmpty ? "Like /invoice or /passport" : "Searching…", style: .note)
+            addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
         } else {
             renderPicker(items, details: details, command: command.text)
         }
@@ -639,7 +705,7 @@ final class KeyboardViewController: UIInputViewController {
         lastQuery = word
         searchTask?.cancel()
         searchTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 250_000_000)
+            try? await Task.sleep(nanoseconds: 120_000_000)
             if Task.isCancelled { return }
             let found = (try? await EzyAPI.searchApps(word)) ?? []
             await MainActor.run {
@@ -656,7 +722,7 @@ final class KeyboardViewController: UIInputViewController {
         plannedText = text
         planTask?.cancel()
         planTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: open ? 300_000_000 : 1_000_000_000)
+            try? await Task.sleep(nanoseconds: open ? 120_000_000 : 600_000_000)
             if Task.isCancelled { return }
             guard let plan = try? await EzyAPI.plan(text), plan.app != nil else { return }
             await MainActor.run {
