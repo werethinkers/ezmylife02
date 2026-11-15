@@ -116,3 +116,29 @@ existing `POST /v1/apps/{id}/run` at the website's prices, only after a tap or S
 - Siri's trigger phrase can't carry free words, so Siri always asks "What do you need?" first.
 - No app can make itself the default keyboard. People drag EZYOURLIFE to the top of Settings › General ›
   Keyboard › Keyboards › Edit; iOS then opens it first and remembers it per app.
+
+## Siri conversation (iOS 18 and later)
+
+"Hey Siri, ask EZYOURLIFE" now runs the whole job by voice, in `ios/App/App/AskEzyourlifeIntent.swift`:
+
+1. "What do you need?" A shortcut name is copied at once. Otherwise `/v1/command` picks the app.
+2. A problem sentence ("mujhe invoice mai dikkat aa rahi hai") gets "What's the trouble?"; "making one" carries on.
+3. Each empty required box is asked in turn, in the person's own words.
+4. Siri reads the answers back with the price: Run, Change something (names the box), or Cancel. Nothing is charged before Run.
+5. After the run: Text or PDF (only for apps that offer it, and only if the choice isn't already remembered), who to send it to (a Contacts name, or a spoken number or email) and WhatsApp, Messages, Mail or just copy.
+   iOS never lets an app send a message silently, so the chat opens with the text filled and the person taps Send once.
+   A PDF is copied as a file and pasted into the chat.
+
+Siri and the app's name: "ease your life", "easy your life", "EZ your life" and similar are listed under
+`INAlternativeAppNames` in `Info.plist`, and there are more phrases ("Talk to", "Hey", "voice"). Contacts access is
+asked once when the person taps Connect on `/keyboard` (a Siri run can't show the prompt).
+iOS 16 and 17 no longer get the Siri command; they keep the keyboard.
+
+## Problem to app, and voice into one box (Nov 2026)
+
+- `POST /v1/command` now copes with a problem said in plain words ("GST notice aaya hai, kya karu"): when the
+  words match apps weakly, one small Flash-Lite call turns the problem into search words and the catalogue is
+  searched again. The answer also carries `alternatives` (up to 3 other apps). The keyboard lists them after the
+  best app; Siri names them and lets the person say one. Needs the `api` function redeployed.
+- While a card box is open for editing, the mic under the keyboard fills that box: `takeDictation` moves what was
+  dictated from the chat into the box. Tap the next box (or Next) and say the next answer.
