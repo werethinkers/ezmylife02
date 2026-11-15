@@ -5,6 +5,7 @@ interface PageSeoProps {
   title: string;
   description: string;
   path: string;
+  canonicalPath?: string;
   keywords?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   ogType?: string;
@@ -12,13 +13,13 @@ interface PageSeoProps {
   noindex?: boolean | "keep";
 }
 
-export function PageSeo({ title, description, path, keywords, jsonLd, ogType = "website", image, noindex = false }: PageSeoProps) {
+export function PageSeo({ title, description, path, canonicalPath, keywords, jsonLd, ogType = "website", image, noindex = false }: PageSeoProps) {
   const ld = JSON.stringify(jsonLd ?? null);
   useEffect(() => {
-    applyHead({ title, description, path, keywords, jsonLd, ogType, image, noindex });
+    applyHead({ title, description, path, canonicalPath, keywords, jsonLd, ogType, image, noindex });
     // jsonLd is compared by value (ld), so a new object each render does not re-run this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, path, keywords, ld, ogType, image, noindex]);
+  }, [title, description, path, canonicalPath, keywords, ld, ogType, image, noindex]);
 
   return null;
 }

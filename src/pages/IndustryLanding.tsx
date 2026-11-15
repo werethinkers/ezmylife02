@@ -1,10 +1,10 @@
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { Navbar } from "@/components/Navbar";
 import { LandingBody } from "@/components/seo/LandingBody";
 import { PageSeo } from "@/components/seo/PageSeo";
-import { humanize, landingMatches, industrySeo } from "@/lib/seoData";
+import { humanize, landingMatches, industrySeo, USE_CASE_SEEDS } from "@/lib/seoData";
 import { MIN_LANDING_APPS } from "@/lib/seo/pages";
 import { useAppCountLabel } from "@/lib/appCount";
 
@@ -16,6 +16,10 @@ const IndustryLanding = () => {
   const tools = useMemo(() => landingMatches(industry, catalogue.filter((t) => t.is_live)).slice(0, 60), [industry, catalogue]);
 
   const { title, description, keywords } = industrySeo(industry);
+
+  // A business type that is also a job ("accounting") has the same apps on /ai-tool-for/<name>. That page is the one
+  // search engines list, so this address sends visitors there. (The static page the build writes names it as canonical.)
+  if (USE_CASE_SEEDS.includes(industry)) return <Navigate to={`/ai-tool-for/${industry}`} replace />;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

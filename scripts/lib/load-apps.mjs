@@ -19,7 +19,7 @@ export async function loadApps() {
   });
   try {
     const load = (file) => server.ssrLoadModule("/" + file);
-    const [registry, prices, specs, db, goals, catalog, seo, placements] = await Promise.all([
+    const [registry, prices, specs, db, goals, catalog, seo, placements, detail] = await Promise.all([
       load("src/apps/registry.ts"),
       load("src/apps/prices.ts"),
       load("supabase/functions/_shared/appSpecs.ts"),
@@ -28,6 +28,7 @@ export async function loadApps() {
       load("src/data/catalog/index.ts"),
       load("src/lib/appSeo.ts"),
       load("src/data/placements.ts"),
+      load("src/lib/appDetail.ts"),
     ]);
     // Older apps are plain screens listed in one map; read its keys from the file text.
     const native = fs.readFileSync(path.join(ROOT, "src/components/tools/NativeToolRenderer.tsx"), "utf8");
@@ -55,6 +56,7 @@ export async function loadApps() {
       giveGetFor: goals.giveGetFor,
       nativeIds,
       seo,
+      appDetail: detail.appDetail,
       PLACEMENT_IDS: placements.PLACEMENT_IDS,
     };
   } finally {
