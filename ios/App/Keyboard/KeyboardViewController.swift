@@ -84,7 +84,12 @@ final class KeyboardViewController: UIInputViewController {
     private static let pasteImage = "✓ Image copied · hold the message box › Paste"
     private static let pastePDF = "✓ PDF copied · hold the message box › Paste"
     private var card: Card?
-    private var editingKey: String?
+    private var editingKey: String? {
+        didSet { editBaseline = textDocumentProxy.documentContextBeforeInput ?? "" }
+    }
+    /// The app's text before the cursor when a box started being edited: anything iOS dictation adds after it
+    /// belongs to that box, not to the chat.
+    private var editBaseline = ""
     /// The photo box whose picker (recent photos from the library) is showing in the card.
     private var pickingKey: String?
     /// Photos ticked so far when a box takes several photos.
@@ -227,9 +232,27 @@ final class KeyboardViewController: UIInputViewController {
         // The result was pasted (or the person carried on typing): back to the keys.
         if outcome != nil, (textDocumentProxy.documentContextBeforeInput ?? "") != outcomeContext { outcome = nil }
         if card != nil && editingKey == nil { cardFollowsText() }
+        else if card != nil, let key = editingKey { takeDictation(into: key) }
         updateAutoShift()
         buildKeys()
         refreshStrip()
+    }
+
+    /// Dictation (iOS's own mic) types into the app's box. While a card box is being edited, move what was said
+    /// into that box and take it out of the chat, so each box can be filled by voice one at a time.
+    private func takeDictation(into key: String) {
+        let now = textDocumentProxy.documentContextBeforeInput ?? ""
+        guard now.count > editBaseline.count, now.hasPrefix(editBaseline) else { return }
+        let added = String(now.dropFirst(editBaseline.count))
+        guard card != nil else { return }
+        let said = added.trimmingCharacters(in: .whitespacesAndNewlines)
+        for _ in 0..<added.count { textDocumentProxy.deleteBackward() }
+        guard !said.isEmpty else { return }
+        let current = card!.values[key] ?? ""
+        card!.values[key] = current.isEmpty ? said : current + " " + said
+        card!.edited.insert(key)
+        card!.fromProfile.remove(key)
+        afterTyping()
     }
 
     // MARK: - Keys

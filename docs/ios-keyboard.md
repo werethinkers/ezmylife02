@@ -133,3 +133,12 @@ Siri and the app's name: "ease your life", "easy your life", "EZ your life" and 
 `INAlternativeAppNames` in `Info.plist`, and there are more phrases ("Talk to", "Hey", "voice"). Contacts access is
 asked once when the person taps Connect on `/keyboard` (a Siri run can't show the prompt).
 iOS 16 and 17 no longer get the Siri command; they keep the keyboard.
+
+## Problem to app, and voice into one box (Nov 2026)
+
+- `POST /v1/command` now copes with a problem said in plain words ("GST notice aaya hai, kya karu"): when the
+  words match apps weakly, one small Flash-Lite call turns the problem into search words and the catalogue is
+  searched again. The answer also carries `alternatives` (up to 3 other apps). The keyboard lists them after the
+  best app; Siri names them and lets the person say one. Needs the `api` function redeployed.
+- While a card box is open for editing, the mic under the keyboard fills that box: `takeDictation` moves what was
+  dictated from the chat into the box. Tap the next box (or Next) and say the next answer.
