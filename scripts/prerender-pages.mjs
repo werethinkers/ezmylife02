@@ -79,6 +79,8 @@ export async function sitePages({ d } = {}) {
         path: p,
         ...s,
         noindex: matches.length < MIN_LANDING_APPS,
+        // A business type that is also a job ("accounting") lists the same apps on both addresses; /ai-tool-for/<name> is the one search engines list.
+        canonicalPath: kind === "industry" && seo.USE_CASE_SEEDS.includes(slug) ? `/ai-tool-for/${slug}` : undefined,
         body: shell(`        <h1>${esc(heading)}</h1>
         <p>${esc(line)}</p>
         ${matches.length ? `<h2>${matches.length} apps for ${esc(human.toLowerCase())}</h2>${ul(matches.map(appLi))}` : ""}
@@ -114,6 +116,8 @@ export async function sitePages({ d } = {}) {
     const description = `${intro} See what ${app.name} gives you, how it works and what it costs before you try it.`.slice(0, 170);
     pages.push({
       path: p,
+      // The app's own page, /tool/<id>, is the one search engines list; this one stays for visitors who follow store links.
+      canonicalPath: `/tool/${encodeURIComponent(app.id)}`,
       title,
       description,
       keywords: d.seo.appSeoKeywords(app.name, app.category, app.toolType),
@@ -162,8 +166,8 @@ export async function sitePages({ d } = {}) {
       return cats.map((c) => `<h2>${esc(c)}</h2>${ul(live.filter((t) => t.category === c).map(appLi))}`).join("\n        ");
     },
     "/explore": () =>
-      `<h2>By job to do</h2>${ul(landings.filter((l) => !l.noindex && l.path.startsWith("/ai-tool-for/")).map((l) => li(l.path, seo.humanize(l.path.split("/").pop()))))}
-        <h2>By business type</h2>${ul(landings.filter((l) => !l.noindex && l.path.startsWith("/ai-for/")).map((l) => li(l.path, seo.humanize(l.path.split("/").pop()))))}`,
+      `<h2>By job to do</h2>${ul(landings.filter((l) => !l.noindex && !l.canonicalPath && l.path.startsWith("/ai-tool-for/")).map((l) => li(l.path, seo.humanize(l.path.split("/").pop()))))}
+        <h2>By business type</h2>${ul(landings.filter((l) => !l.noindex && !l.canonicalPath && l.path.startsWith("/ai-for/")).map((l) => li(l.path, seo.humanize(l.path.split("/").pop()))))}`,
     "/websites": () => CATEGORIES.filter((c) => WEBSITE_CATS.includes(c.id)).map((c) => `<h2>${esc(c.name)}</h2><p>${esc(c.blurb)}</p>${ul(productsFor([c.id]).map(productLi))}`).join("\n        "),
     "/cards": () => CATEGORIES.filter((c) => !WEBSITE_CATS.includes(c.id)).map((c) => `<h2>${esc(c.name)}</h2><p>${esc(c.blurb)}</p>${ul(productsFor([c.id]).map(productLi))}`).join("\n        "),
     "/create": () => CATEGORIES.map((c) => `<h2>${esc(c.name)}</h2><p>${esc(c.blurb)}</p>${ul(productsFor([c.id]).map(productLi))}`).join("\n        "),
@@ -241,10 +245,10 @@ export async function prerenderPages({ dist = path.join(ROOT, "dist"), log = con
 
   let n = 0;
   for (const page of pages) {
-    const url = `${SITE}${page.path === "/" ? "/" : enc(page.path)}`;
+    const url = `${SITE}${(page.canonicalPath ?? page.path) === "/" ? "/" : enc(page.canonicalPath ?? page.path)}`;
     const html = render(template, { ...page, url });
     if (!write) continue;
-    if (page.path === "/") continue; // the home page is index.html itself, done last
+    if (page.path === "/") continue; // the home page is index.html itself, written last
     const file = path.join(dist, ...page.path.slice(1).split("/"));
     fs.mkdirSync(file, { recursive: true });
     fs.writeFileSync(path.join(file, "index.html"), html);
@@ -254,7 +258,7 @@ export async function prerenderPages({ dist = path.join(ROOT, "dist"), log = con
 
   // Fixed pages first, then apps, then websites and cards, then the "AI tool for" pages.
   const rank = (p) => (p.startsWith("/ai-tool-for/") || p.startsWith("/ai-for/") ? 3 : p.startsWith("/make/") ? 2 : p.startsWith("/promo/") ? 4 : 0);
-  const listed = pages.filter((p) => !p.noindex).map((p) => p.path);
+  const listed = pages.filter((p) => !p.noindex && !p.canonicalPath).map((p) => p.path);
   const indexable = [
     ...listed.filter((p) => rank(p) === 0),
     ...live.map((t) => `/tool/${t.id}`),
@@ -267,21 +271,15 @@ export async function prerenderPages({ dist = path.join(ROOT, "dist"), log = con
 
   if (write) {
     fs.writeFileSync(path.join(dist, "sitemap.xml"), xml);
-    // The home page keeps index.html as it is (it is also what any other address falls back to), with
-    // the title and description from src/lib/seo/pages.ts so both say the same.
+    // The home page is written like every other page: its own head tags and readable text in the HTML, so a
+    // crawler that does not run JavaScript sees the page too. It is also what any address without its own page falls back to.
     const home = pages.find((p) => p.path === "/");
-    let html = template;
-    const set = (re, to) => (html = html.replace(re, () => to));
-    set(/<title>[\s\S]*?<\/title>/, `<title>${esc(home.title)}</title>`);
-    set(/<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(home.description)}" />`);
-    set(/<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${esc(home.title)}">`);
-    set(/<meta name="twitter:title" content="[^"]*"\s*\/?>/, `<meta name="twitter:title" content="${esc(home.title)}">`);
-    set(/<meta property="og:description" content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${esc(home.description)}">`);
-    set(/<meta name="twitter:description" content="[^"]*"\s*\/?>/, `<meta name="twitter:description" content="${esc(home.description)}">`);
+    const html = render(template, { ...home, url: `${SITE}/` });
     fs.writeFileSync(templateFile, html);
   }
   const hidden = pages.filter((p) => p.noindex).length;
-  log(`Pages for search: ${write ? `wrote ${n} pages, ` : ""}sitemap has ${urls.length} addresses; ${hidden} thin "AI tool for" pages kept out of search.`);
+  const second = pages.filter((p) => p.canonicalPath).length;
+  log(`Pages for search: ${write ? `wrote ${n} pages, ` : ""}sitemap has ${urls.length} addresses; ${hidden} thin "AI tool for" pages kept out of search; ${second} second addresses (/promo/..., /ai-for/...) point to their main page.`);
   return { pages, urls, xml, warnings };
 }
 

@@ -98,7 +98,7 @@ const SEOFooter = () => {
             <Logo />
           </div>
           <p className="max-w-xl text-sm text-cream/70">
-            The Future's First AI App Store. Business apps, websites and cards for small businesses in India — pay only for what you use. © 2026 EZYOURLIFE.
+            Business apps, websites and cards for small businesses in India — pay only for what you use. © 2026 EZYOURLIFE.
           </p>
         </div>
       </div>

@@ -135,7 +135,7 @@ const About = () => {
               "@type": "AboutPage",
               name: "About EZYOURLIFE",
               description:
-                `Learn about EZYOURLIFE, the Future's First AI App Store — ${countLabel} live AI Apps today and 2,000+ launching within a year.`,
+                `Learn about EZYOURLIFE, an app store for small businesses in India with ${countLabel} AI apps, plus websites and cards.`,
               url: "https://ezyourlife.com/about",
               mainEntity: {
                 "@type": "Organization",
@@ -188,7 +188,7 @@ const About = () => {
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-                EZYOURLIFE is the Future's First AI App Store: practical, task-specific AI apps in one place,
+                EZYOURLIFE is an app store for small businesses in India: practical, task-specific AI apps in one place,
                 ready to use in your browser.
               </p>
 

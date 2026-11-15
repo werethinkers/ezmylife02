@@ -21,6 +21,7 @@ import { GiveGet } from "@/components/brand/GiveGet";
 import { categoryInfo, goalOf } from "@/data/goals";
 import { appIntroOf } from "@/data/appKind";
 import { appSeoDescription, appSeoKeywords, appSeoTitle, sentence } from "@/lib/appSeo";
+import { AppAbout } from "@/components/tools/AppAbout";
 import { isDeveloperApp } from "@/lib/devApps";
 import DeveloperApp from "@/apps/hosted/DeveloperApp";
 
@@ -306,6 +307,8 @@ const ToolViewer = () => {
         demoOutput={catalogInfo?.demo_output}
         toolName={toolTitle}
       />}
+
+      {toolId && !isHosted && seoCategory && !isLoading && <AppAbout toolId={toolId} name={seoName} description={seoIntro} category={seoCategory} />}
     </div>
   );
 };

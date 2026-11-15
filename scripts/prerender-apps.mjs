@@ -32,6 +32,11 @@ export function pageFor(d, app, byId) {
   const steps = def?.steps?.length ? def.steps : [`Open ${app.name} in your browser. Nothing to install.`, `Give ${give}.`, `Get ${get}.`];
   const related = (def?.related ?? []).map((id) => byId.get(id)).filter((t) => t?.isLive);
   const siblings = [...byId.values()].filter((t) => t.isLive && t.category === app.category && t.id !== app.id && !related.includes(t)).slice(0, 12);
+  const detail = d.appDetail(app, def, { categoryLine: info.line, give, get, goalName: goal.name });
+  const detailHtml = detail.sections
+    .map((s) => `<h2>${esc(s.heading)}</h2>${(s.paragraphs ?? []).map((p) => `<p>${esc(p)}</p>`).join("")}${s.items?.length ? `<ul>${s.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : ""}`)
+    .join("\n        ");
+  const faqHtml = `<h2>Questions about ${esc(app.name)}</h2>${detail.faqs.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join("")}`;
   const link = (t) => `<li><a href="/tool/${slug(t.id)}">${esc(t.name)}</a> — ${esc(t.description)}</li>`;
 
   const body = `
@@ -44,8 +49,10 @@ export function pageFor(d, app, byId) {
         <p>You give ${esc(give)}. You get ${esc(get)}. ${esc(how.line)}</p>
         <h2>How ${esc(app.name)} works</h2>
         <ol>${steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+        ${detailHtml}
         <h2>What it costs</h2>
         <p>You pay in credits, and only when the app gives you a result. New accounts start with 100 free credits, and credit packs start at ₹10. <a href="/credits">See prices</a>.</p>
+        ${faqHtml}
         ${related.length ? `<h2>Apps that go well with ${esc(app.name)}</h2><ul>${related.map(link).join("")}</ul>` : ""}
         ${siblings.length ? `<h2>More ${esc(app.category)} apps</h2><ul>${siblings.map(link).join("")}</ul>` : ""}
         <p><a href="/ai-apps">See all apps on EZYOURLIFE</a></p>
@@ -63,6 +70,11 @@ export function pageFor(d, app, byId) {
       operatingSystem: "Web",
       inLanguage: "en-IN",
       publisher: { "@type": "Organization", name: "EZYOURLIFE", url: SITE },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: detail.faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
     },
     {
       "@context": "https://schema.org",
