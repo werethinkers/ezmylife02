@@ -256,6 +256,7 @@ export default function PromoPage() {
           description={row?.seo_description ?? subtitle.slice(0, 160)}
           image={row?.og_image_url ?? row?.hero_image_url ?? media.previewImageUrl ?? undefined}
           path={`/promo/${pageSlug}`}
+          canonicalPath={toolId ? `/tool/${toolId}` : undefined}
         />
         <Navbar />
 

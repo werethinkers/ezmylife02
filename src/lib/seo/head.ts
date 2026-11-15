@@ -11,6 +11,8 @@ export interface HeadInput {
   title: string;
   description: string;
   path: string;
+  /** The address search engines should list when this page is a second way in to another one. */
+  canonicalPath?: string;
   keywords?: string;
   image?: string;
   ogType?: string;
@@ -37,7 +39,7 @@ export function canonicalUrl(path: string) {
 }
 
 export function applyHead(h: HeadInput) {
-  const url = canonicalUrl(h.path);
+  const url = canonicalUrl(h.canonicalPath ?? h.path);
   const image = h.image ?? DEFAULT_IMAGE;
   document.title = h.title;
   meta("name", "description", h.description);
