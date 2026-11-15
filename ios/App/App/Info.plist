@@ -57,18 +57,6 @@
 			<key>INAlternativeAppName</key>
 			<string>EZ Your Life</string>
 		</dict>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>Ezy Your Life</string>
-		</dict>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>Ease Ur Life</string>
-		</dict>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>Easy Life</string>
-		</dict>
 	</array>
 	<key>NSContactsUsageDescription</key>
 	<string>So Siri can find the phone number or email of the person you ask EZYOURLIFE to send something to.</string>
