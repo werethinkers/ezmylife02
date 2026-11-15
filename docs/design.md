@@ -47,3 +47,7 @@ Pair it with `<GiveGet give="…" get="…" />` so the purpose is clear at a gla
 - **Menu sections and the website/card split:** `src/components/brand/nav.ts`.
 - **Header, phone tab bar and footer:** `src/components/Navbar.tsx`, `src/components/MobileDock.tsx`, `src/components/SEOFooter.tsx`.
 - **Shared app frame:** `src/apps/shell/` (`AppShell`, `OutputPanel`, `StepLabel`).
+
+## Design ideas (private)
+
+`/admin/design-ideas` (admins only) lists new looks that are not live yet, each with a preview and its own full page at `/admin/design-ideas/<id>` (`?view=phone` for a phone frame). The ideas and their parts live in `src/design-ideas/` (`registry.tsx` lists them). They read the real catalogue and prices; only the shop and thali grouping is design (`src/design-ideas/data.ts`). The first idea is the Bazaar home page. Nothing here is linked from the public site.
