@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { isAdmin } from "@/lib/devApps";
+import { cn } from "@/lib/utils";
 import { IDEAS } from "@/design-ideas/registry";
 
 /*
@@ -11,6 +13,8 @@ import { IDEAS } from "@/design-ideas/registry";
  * and opens on its own page. Not in src/lib/seo/pages.ts, so it has no static page or sitemap entry.
  */
 export default function DesignIdeas() {
+  const [tab, setTab] = useState<"design" | "campaign">("design");
+  const shown = IDEAS.filter((i) => (i.group === "campaign") === (tab === "campaign"));
   const admin = useQuery({ queryKey: ["dev-is-admin"], queryFn: isAdmin, staleTime: 10 * 60 * 1000 });
   return (
     <div className="min-h-screen bg-background">
@@ -24,8 +28,13 @@ export default function DesignIdeas() {
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Private · admins only</p>
             <h1 className="mt-1 text-3xl font-bold">Design ideas</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">New looks for the site, built from real parts and real apps. Open one to see it full page, or use the phone view to check small screens.</p>
-            <ul className="mt-8 grid gap-6 md:grid-cols-2">
-              {IDEAS.map((i) => (
+            <div className="mt-6 flex gap-2" role="tablist" aria-label="Kind of idea">
+              {([["design", "Designs"], ["campaign", "Campaigns"]] as const).map(([k, label]) => (
+                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cn("rounded-full border-2 border-ink px-5 py-1.5 text-sm font-bold", tab === k ? "bg-sun shadow-block-sm" : "bg-card hover:bg-secondary")}>{label}</button>
+              ))}
+            </div>
+            <ul className="mt-6 grid gap-6 md:grid-cols-2">
+              {shown.map((i) => (
                 <li key={i.id} className="block-card flex flex-col overflow-hidden bg-card">
                   <div className="relative h-[230px] w-full overflow-hidden border-b-2 border-ink bg-background">
                     <iframe title={`${i.title} preview`} src={`/admin/design-ideas/${i.id}?bare=1`} loading="lazy" tabIndex={-1} className="pointer-events-none absolute left-0 top-0 origin-top-left border-0" style={{ width: 1280, height: 820, transform: "scale(0.42)" }} />
