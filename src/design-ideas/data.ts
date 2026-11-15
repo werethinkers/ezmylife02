@@ -75,3 +75,8 @@ export function resolveBundles(live: CatalogTool[]): ResolvedBundle[] {
     return { ...b, apps };
   }).filter((b) => b.apps.length >= 3);
 }
+
+/** First live app whose name matches. Used so the plays below only ever show apps that exist. */
+export function findApp(live: CatalogTool[], re: RegExp, skip: Set<string> = new Set()): CatalogTool | undefined {
+  return live.find((t) => re.test(t.name) && !skip.has(t.id));
+}

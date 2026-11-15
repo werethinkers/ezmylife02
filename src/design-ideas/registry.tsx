@@ -4,6 +4,9 @@ import { BazaarHeader } from "./components/BazaarChrome";
 import TruckHome from "./TruckHome";
 import LedgerHome from "./LedgerHome";
 import TalkiesHome from "./TalkiesHome";
+import MeriDukaan from "./MeriDukaan";
+import KyaHua from "./KyaHua";
+import VendingMachine from "./VendingMachine";
 
 /*
  * The design ideas, listed on /admin/design-ideas. Each one opens on its own at
@@ -24,6 +27,9 @@ export const IDEAS: Idea[] = [
   { id: "truck", title: "Truck home page", line: "Road-art look: garland, painted panels and a rhyming line for every shop.", tag: "Home page", Page: TruckHome },
   { id: "ledger", title: "Bahi-Khata home page", line: "The trader's red ledger: every app is an entry with its price on the right.", tag: "Home page", Page: LedgerHome },
   { id: "talkies", title: "Talkies home page", line: "A cinema hoarding: latest releases up top, then one poster rail per shop.", tag: "Home page", Page: TalkiesHome },
+  { id: "meri-dukaan", title: "Meri Dukaan", line: "Your home page is your own shop. Every app you use adds a part to it: counter, signboard, photos.", tag: "Home page", Page: MeriDukaan },
+  { id: "kya-hua", title: "Kya hua aaj?", line: "Start from what went wrong, in a shop owner's own words. Tap a trouble and get a plan with the right app.", tag: "Home page", Page: KyaHua },
+  { id: "vending", title: "The Vending Machine", line: "Apps sit in coils with a code and a price. Press a slot and the app drops into the tray.", tag: "Home page", Page: VendingMachine },
   { id: "bazaar-lane", title: "The lane of shops", line: "Six striped-awning shops. Tap one to step inside and see its apps as price tags.", tag: "Part", Page: () => <Frame><BazaarLane /></Frame> },
   { id: "shopkeeper", title: "Shopkeeper search", line: "The greeting and search box that sit at the top of the home page.", tag: "Part", Page: () => <Frame><BazaarHero /></Frame> },
   { id: "thali", title: "Thali bundles", line: "A steel plate with one katori per app. Pick a thali to see the set for one job.", tag: "Part", Page: () => <Frame><BazaarThali /></Frame> },
