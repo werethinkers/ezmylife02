@@ -660,7 +660,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
   // A problem said in plain words ("GST notice aaya hai, kya karu", "naukri ke liye kuch chahiye") rarely contains an
   // app's name. When the words match weakly, one small call turns the problem into the jobs that would solve it,
   // and those words search the catalogue again, so the best app still comes up.
-  if (!wanted && (ranked.length < 3 || (ranked[0]?.s ?? 0) < 8)) {
+  if (!wanted && (ranked.length < 3 || (ranked[0]?.s ?? 0) < 12 || words.length >= 4)) {
     try {
       const out = await chat([
         {
@@ -675,8 +675,8 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
       const extra = (parseJson(out) as { keywords?: unknown }).keywords;
       const more = (Array.isArray(extra) ? extra : []).flatMap((k) => String(k).toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/)).filter((w) => w.length > 2).slice(0, 12);
       if (more.length) {
-        const all = [...new Set([...words, ...more])];
-        ranked = rows.map((r) => ({ r, s: score(r, all) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 10);
+        // The needed jobs count double, so a stray word in a long sentence can't outrank the app that does the job.
+        ranked = rows.map((r) => ({ r, s: score(r, more) * 2 + score(r, words) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 10);
       }
     } catch (e) {
       console.error("command understand", e);
@@ -705,6 +705,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
           "a 'rows' field is one plain-text line per item, like '2 x Steel chair @ 1500, GST 18%'). " +
           "Never invent names, amounts or dates. Apps with no fields take the whole request, cleaned up, as 'prompt'. " +
           "The request may be a problem or a need rather than a command (in any language): then pick the app that would solve it and get it done, " +
+          "and answer null only if no app on the list could plausibly help at all, " +
           "and list up to 3 other apps from the list that could also help, best first, as 'alternatives'. " +
           'Answer JSON only: {"app_id": string|null, "alternatives": string[], "inputs": {fieldKey: value}, "prompt": string|null}.',
       },
