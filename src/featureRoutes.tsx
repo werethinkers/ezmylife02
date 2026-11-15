@@ -34,4 +34,6 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/terms", page: lazy(() => import("./pages/Terms")) },
   { path: "/privacy", page: lazy(() => import("./pages/Privacy")) },
   { path: "/admin/components", page: lazy(() => import("./pages/admin/ComponentGallery")), signedIn: true },
+  { path: "/admin/design-ideas", page: lazy(() => import("./pages/admin/DesignIdeas")), signedIn: true },
+  { path: "/admin/design-ideas/:id", page: lazy(() => import("./pages/admin/DesignIdeaView")), signedIn: true },
 ];
