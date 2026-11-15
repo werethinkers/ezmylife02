@@ -112,7 +112,7 @@ enum EzyVoice {
 
 enum DeliveryMethodKind { case keep, whatsapp, messages, mail }
 
-@available(iOS 18.0, *)
+@available(iOS 18.2, *)
 struct AskEzyourlifeIntent: AppIntent {
     static var title: LocalizedStringResource = "Ask EZYOURLIFE"
     static var description = IntentDescription("Say what you need. EZYOURLIFE picks the right app, asks for the details one by one, makes it, and sends it to whoever you choose.")
@@ -140,9 +140,9 @@ struct AskEzyourlifeIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog & OpensIntent {
         let out = try await conversation()
         if let url = out.open {
-            return .result(value: out.value, dialog: IntentDialog(stringLiteral: out.dialog), opensIntent: OpenURLIntent(url))
+            return .result(value: out.value, opensIntent: OpenURLIntent(url), dialog: IntentDialog(stringLiteral: out.dialog))
         }
-        return .result(value: out.value, dialog: IntentDialog(stringLiteral: out.dialog), opensIntent: EzyStayHereIntent())
+        return .result(value: out.value, opensIntent: EzyStayHereIntent(), dialog: IntentDialog(stringLiteral: out.dialog))
     }
 
     private func conversation() async throws -> Outcome {
@@ -300,7 +300,7 @@ struct AskEzyourlifeIntent: AppIntent {
     }
 }
 
-@available(iOS 18.0, *)
+@available(iOS 18.2, *)
 struct EzyAppShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
