@@ -72,6 +72,14 @@ enum EzyVoice {
         return words.contains { t.contains($0) } || t.contains("बना") || t.contains("नया") || t.contains("हां") || t.contains("हाँ")
     }
 
+    /// "that's all", "no", "nothing", "bas", "nahi": the person has nothing more to add.
+    static func isDone(_ text: String) -> Bool {
+        let t = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        let phrases = ["that's all", "thats all", "that is all", "nothing", "kuch nahi", "kuch nahin", "no more", "all done", "nothing more"]
+        let words: Set<String> = ["no", "nope", "done", "skip", "nahi", "nahin", "bas", "enough", "none", "बस", "नहीं"]
+        return phrases.contains { t.contains($0) } || words.contains(t)
+    }
+
     static func digits(_ s: String) -> String { s.filter { $0.isNumber } }
 
     /// 10-digit Indian numbers get 91 in front, the way WhatsApp wants them.
@@ -189,19 +197,57 @@ struct AskEzyourlifeIntent: AppIntent {
             }
         }
 
-        // 3. Each box still empty, one at a time.
+        // 3. Fill the boxes. Several answers in one sentence are welcome, and each answer is read back at once.
         var inputs = plan.inputs ?? [:]
-        var asked = 0
-        var missing = plan.missing ?? []
-        while let next = missing.first, asked < 12 {
-            missing.removeFirst()
-            asked += 1
-            let field = plan.fields?.first { $0.key == next.key }
-            var question = "\(next.label)?"
-            if let options = field?.options, !options.isEmpty { question += " " + options.prefix(5).joined(separator: ", ") + "." }
-            let value = try await $answer.requestValue(IntentDialog(stringLiteral: question))
-            inputs[next.key] = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fields = plan.fields ?? []
+        var transcript = spoken
+        var confirm = ""
+        func filled(_ key: String) -> Bool { !(inputs[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        func label(_ key: String) -> String { fields.first { $0.key == key }?.label ?? key }
+        /// Puts a spoken answer into the box asked about (when `direct`) and, if it holds more, into other empty
+        /// boxes too. Returns what was heard, to say back before the next question.
+        func take(_ said: String, key: String?, direct: Bool) async -> String {
+            let value = said.trimmingCharacters(in: .whitespacesAndNewlines)
+            var got: [String] = []
+            if direct, let key, !value.isEmpty {
+                inputs[key] = value
+                got.append("\(label(key)) \(value)")
+            }
+            transcript += ". " + value
+            if !direct || value.contains(" ") || value.contains(",") {
+                if let more = try? await EzyAPI.plan(transcript, appId: app.id) {
+                    for (k, v) in more.inputs ?? [:] where k != key && !filled(k) && !v.isEmpty {
+                        inputs[k] = v
+                        got.append("\(label(k)) \(v)")
+                    }
+                }
+            }
+            return got.isEmpty ? "" : "Got it: " + got.joined(separator: ", ") + ". "
         }
+
+        // The required boxes first.
+        var asked = 0
+        while asked < 20, let next = fields.first(where: { ($0.required ?? false) && !filled($0.key) }) {
+            asked += 1
+            var question = confirm + "\(next.label)?"
+            if let options = next.options, !options.isEmpty { question += " " + options.prefix(5).joined(separator: ", ") + "." }
+            let said = try await $answer.requestValue(IntentDialog(stringLiteral: question))
+            confirm = await take(said, key: next.key, direct: true)
+        }
+        // Then the optional ones, so nothing is skipped without the person saying so.
+        let notSpoken: Set<String> = ["photo", "image", "images", "pdf", "file", "signature"]
+        var rounds = 0
+        while rounds < 3 {
+            let optional = fields.filter { !($0.required ?? false) && !filled($0.key) && !notSpoken.contains(($0.type ?? "").lowercased()) }
+            if optional.isEmpty { break }
+            rounds += 1
+            let names = optional.prefix(3).map(\.label).joined(separator: ", ")
+            let said = try await $answer.requestValue(IntentDialog(stringLiteral: confirm + "Anything more to add, like \(names)? Say it, or say that's all."))
+            if EzyVoice.isDone(said) { break }
+            let heard = await take(said, key: nil, direct: false)
+            confirm = heard.isEmpty ? "I couldn't match that to a box. " : heard
+        }
+        confirm = ""
         plan.inputs = inputs
         plan.missing = nil
 
