@@ -12,10 +12,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = MainViewController()
         window?.makeKeyAndVisible()
 
+        // Opened from Siri with a page to show (ezyourlife://open?path=/tool/...): load it once the web view is up.
+        if let url = connectionOptions.urlContexts.first?.url, let page = MainViewController.page(for: url) {
+            MainViewController.pendingPage = page
+        }
+
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        if let url = URLContexts.first?.url, let page = MainViewController.page(for: url) {
+            (window?.rootViewController as? MainViewController)?.show(page)
+        }
         SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)
     }
 

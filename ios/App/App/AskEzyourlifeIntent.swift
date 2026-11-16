@@ -1,6 +1,8 @@
 import AppIntents
 import UIKit
 import Contacts
+import Photos
+import ImageIO
 
 /*
  * "Hey Siri, ask EZYOURLIFE" / the Action Button / Back Tap / the Shortcuts app (iOS 18 and later).
@@ -145,6 +147,23 @@ struct AskEzyourlifeIntent: AppIntent {
         return .result(value: out.value, opensIntent: EzyStayHereIntent(), dialog: IntentDialog(stringLiteral: out.dialog))
     }
 
+    /// A photo or PDF box: Siri can't show a picker, so it offers the newest photo or what was copied.
+    /// Returns nil when the person wants to pick it in the app, or nothing usable was found.
+    private func fileValue(label: String, type: String) async throws -> String? {
+        let pdf = EzyFiles.isPDF(type)
+        let question = pdf
+            ? "\(label)? Say copied to use the PDF you copied, or say app to pick it in the EZYOURLIFE app."
+            : "\(label)? Say latest for your newest photo, copied for a photo you copied, or app to pick one in the EZYOURLIFE app."
+        let said = try await $answer.requestValue(IntentDialog(stringLiteral: question)).lowercased()
+        if ["copied", "copy", "clipboard", "paste"].contains(where: { said.contains($0) }) {
+            return EzyFiles.copied(pdf: pdf)
+        }
+        if !pdf, ["latest", "last", "newest", "new", "recent", "photo"].contains(where: { said.contains($0) }) {
+            return await EzyFiles.latestPhoto()
+        }
+        return nil
+    }
+
     private func conversation() async throws -> Outcome {
         guard EzyShared.isConnected else {
             return Outcome(dialog: "Open the EZYOURLIFE app, go to Keyboard and voice, and tap Connect first.")
@@ -189,6 +208,11 @@ struct AskEzyourlifeIntent: AppIntent {
             }
         }
 
+        // Photo tools that work on the phone can't run from Siri: open them in the app to pick the photo.
+        if app.mode == "device" {
+            return Outcome(dialog: "\(app.name) works on your photo inside the EZYOURLIFE app. Opening it now: pick your photo there.", open: EzyFiles.appURL(app))
+        }
+
         // 3. Each box still empty, one at a time.
         var inputs = plan.inputs ?? [:]
         var asked = 0
@@ -197,6 +221,13 @@ struct AskEzyourlifeIntent: AppIntent {
             missing.removeFirst()
             asked += 1
             let field = plan.fields?.first { $0.key == next.key }
+            if let type = field?.type, EzyFiles.fileTypes.contains(type) {
+                guard let file = try await fileValue(label: next.label, type: type) else {
+                    return Outcome(dialog: "Opening \(app.name) in the EZYOURLIFE app: add the \(next.label.lowercased()) there.", open: EzyFiles.appURL(app))
+                }
+                inputs[next.key] = file
+                continue
+            }
             var question = "\(next.label)?"
             if let options = field?.options, !options.isEmpty { question += " " + options.prefix(5).joined(separator: ", ") + "." }
             let value = try await $answer.requestValue(IntentDialog(stringLiteral: question))
@@ -212,6 +243,7 @@ struct AskEzyourlifeIntent: AppIntent {
             let price = app.priceLabel.isEmpty ? "" : " for \(app.priceLabel)"
             let lines = (plan.fields ?? []).compactMap { f -> String? in
                 guard let v = inputs[f.key], !v.isEmpty else { return nil }
+                if v.hasPrefix("data:") { return "\(f.label): added" }
                 return "\(f.label): \(v)"
             }
             let summary = lines.isEmpty ? "" : lines.joined(separator: ". ") + ". "
@@ -228,6 +260,14 @@ struct AskEzyourlifeIntent: AppIntent {
                 return w.contains(l) || l.contains(w)
             }
             guard let target else { continue }
+            if let type = target.type, EzyFiles.fileTypes.contains(type) {
+                guard let file = try await fileValue(label: target.label, type: type) else {
+                    return Outcome(dialog: "Opening \(app.name) in the EZYOURLIFE app: add the \(target.label.lowercased()) there.", open: EzyFiles.appURL(app))
+                }
+                inputs[target.key] = file
+                plan.inputs = inputs
+                continue
+            }
             let value = try await $answer.requestValue(IntentDialog(stringLiteral: "\(target.label)?"))
             inputs[target.key] = value.trimmingCharacters(in: .whitespacesAndNewlines)
             plan.inputs = inputs
@@ -316,5 +356,67 @@ struct EzyAppShortcuts: AppShortcutsProvider {
             shortTitle: "Ask EZYOURLIFE",
             systemImageName: "mic.fill"
         )
+    }
+}
+
+/// Photos and PDFs for Siri's photo and PDF boxes, sent the way the keyboard sends them (data: links).
+enum EzyFiles {
+    static let fileTypes: Set<String> = ["image", "images", "pdf", "document"]
+    static func isPDF(_ type: String) -> Bool { type == "pdf" || type == "document" }
+
+    /// ezyourlife://open?path=/tool/<id>: opens that page inside the app (SceneDelegate).
+    static func appURL(_ app: EzyApp) -> URL? {
+        let path = URL(string: app.link)?.path ?? "/tool/\(app.id)"
+        var c = URLComponents()
+        c.scheme = "ezyourlife"
+        c.host = "open"
+        c.queryItems = [URLQueryItem(name: "path", value: path.isEmpty ? "/tool/\(app.id)" : path)]
+        return c.url
+    }
+
+    /// The copied PDF, or the copied photo as a JPEG.
+    static func copied(pdf: Bool) -> String? {
+        let board = UIPasteboard.general
+        if pdf {
+            guard let data = board.data(forPasteboardType: "com.adobe.pdf"), data.count < 12_000_000 else { return nil }
+            return "data:application/pdf;base64," + data.base64EncodedString()
+        }
+        let types = ["public.jpeg", "public.png", "public.heic", "public.heif", "public.image"]
+        if let raw = types.lazy.compactMap({ board.data(forPasteboardType: $0) }).first { return jpeg(raw) }
+        if let image = board.image, let data = image.jpegData(compressionQuality: 0.9) { return jpeg(data) }
+        return nil
+    }
+
+    /// The newest photo in the library (needs Photos access, asked in the app).
+    static func latestPhoto() async -> String? {
+        var status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        if status == .notDetermined { status = await PHPhotoLibrary.requestAuthorization(for: .readWrite) }
+        guard status == .authorized || status == .limited else { return nil }
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        options.fetchLimit = 1
+        guard let asset = PHAsset.fetchAssets(with: .image, options: options).firstObject else { return nil }
+        let request = PHImageRequestOptions()
+        request.isNetworkAccessAllowed = true
+        request.deliveryMode = .highQualityFormat
+        let data: Data? = await withCheckedContinuation { done in
+            PHImageManager.default().requestImageDataAndOrientation(for: asset, options: request) { data, _, _, _ in
+                done.resume(returning: data)
+            }
+        }
+        return data.flatMap(jpeg)
+    }
+
+    /// Shrinks a picture to 1600 px while decoding it and returns it as a JPEG data link.
+    static func jpeg(_ raw: Data) -> String? {
+        guard let source = CGImageSourceCreateWithData(raw as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: 1600,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let data = UIImage(cgImage: cg).jpegData(compressionQuality: 0.9) else { return nil }
+        return "data:image/jpeg;base64," + data.base64EncodedString()
     }
 }
