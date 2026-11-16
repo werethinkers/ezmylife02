@@ -142,3 +142,7 @@ iOS 16 and 17 no longer get the Siri command; they keep the keyboard.
   best app; Siri names them and lets the person say one. Needs the `api` function redeployed.
 - While a card box is open for editing, the mic under the keyboard fills that box: `takeDictation` moves what was
   dictated from the chat into the box. Tap the next box (or Next) and say the next answer.
+
+## Deploying server functions without Lovable credits
+
+`.github/workflows/deploy-functions.yml` deploys all Supabase functions when a change under `supabase/functions` reaches `main`. It needs the `SUPABASE_ACCESS_TOKEN` repository secret, and GitHub Actions working on the account. While Actions is blocked, run `scripts/deploy-functions.sh [name]` with the same token from any computer (the Mac session can do it). Until a token is set, Lovable's agent remains the only way to deploy.
