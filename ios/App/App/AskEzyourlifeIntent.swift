@@ -178,6 +178,11 @@ struct AskEzyourlifeIntent: AppIntent {
             return Outcome(dialog: plan.message ?? "I couldn't find an app for that. Try other words.")
         }
 
+        // The picture and PDF tools run on the phone inside the keyboard, not through Siri.
+        if app.mode == "device" {
+            return Outcome(dialog: "\(app.name) works on a photo or PDF, so it runs in the keyboard. Open the EZYOURLIFE keyboard in your chat, type /\(app.id) and copy the file there.")
+        }
+
         // "mujhe invoice mai dikkat aa rahi hai": ask what is wrong; "making one" carries on.
         if EzyVoice.soundsLikeTrouble(spoken) {
             let reply = try await $answer.requestValue(IntentDialog(stringLiteral: "\(app.name) mein kya dikkat aa rahi hai? What's the trouble? Say \"making one\" and I'll help you make it."))
@@ -225,10 +230,35 @@ struct AskEzyourlifeIntent: AppIntent {
             return got.isEmpty ? "" : "Got it: " + got.joined(separator: ", ") + ". "
         }
 
+        func isMedia(_ f: EzyField) -> Bool { ["image", "images", "pdf"].contains((f.type ?? "").lowercased()) }
+        /// A photo or PDF can't be spoken: ask for it to be copied, then take it from the clipboard.
+        /// Returns false when the person skips it (or, for a required one, gives up).
+        func takeFile(_ f: EzyField, required: Bool) async throws -> Bool {
+            let pdf = (f.type ?? "").lowercased() == "pdf"
+            let what = pdf ? "PDF" : "photo"
+            var ask = (required ? "I need a \(what) for \(f.label). " : "You can add a \(what) for \(f.label). ")
+                + "Copy it first (\(pdf ? "in Files, tap Share, then Copy" : "in Photos, tap Share, then Copy")), then say ready" + (required ? "." : ", or say skip.")
+            for _ in 0..<3 {
+                let said = try await $answer.requestValue(IntentDialog(stringLiteral: ask))
+                if !required && EzyVoice.isDone(said) { return false }
+                if let data = EzyClipboard.copiedFile(pdf: pdf) {
+                    inputs[f.key] = data
+                    confirm = "Got the \(what). "
+                    return true
+                }
+                ask = "I don't see a copied \(what). Copy it, then say ready" + (required ? "." : ", or say skip.")
+            }
+            return false
+        }
+
         // The required boxes first.
         var asked = 0
         while asked < 20, let next = fields.first(where: { ($0.required ?? false) && !filled($0.key) }) {
             asked += 1
+            if isMedia(next) {
+                if try await takeFile(next, required: true) { continue }
+                return Outcome(dialog: "I couldn't find the \(next.label). Copy it, then ask me again.")
+            }
             var question = confirm + "\(next.label)?"
             if let options = next.options, !options.isEmpty { question += " " + options.prefix(5).joined(separator: ", ") + "." }
             let said = try await $answer.requestValue(IntentDialog(stringLiteral: question))
@@ -247,6 +277,10 @@ struct AskEzyourlifeIntent: AppIntent {
             let heard = await take(said, key: nil, direct: false)
             confirm = heard.isEmpty ? "I couldn't match that to a box. " : heard
         }
+        // Optional photos or PDFs (a pitch deck for the Startup Analyser): offered once each.
+        for f in fields where !(f.required ?? false) && isMedia(f) && !filled(f.key) {
+            _ = try await takeFile(f, required: false)
+        }
         confirm = ""
         plan.inputs = inputs
         plan.missing = nil
@@ -258,6 +292,7 @@ struct AskEzyourlifeIntent: AppIntent {
             let price = app.priceLabel.isEmpty ? "" : " for \(app.priceLabel)"
             let lines = (plan.fields ?? []).compactMap { f -> String? in
                 guard let v = inputs[f.key], !v.isEmpty else { return nil }
+                if v.hasPrefix("data:") { return "\(f.label): attached" }
                 return "\(f.label): \(v)"
             }
             let summary = lines.isEmpty ? "" : lines.joined(separator: ". ") + ". "

@@ -93,6 +93,7 @@ export const NATIVE_APPS: Record<string, NativeApp> = {
       { key: "companyName", label: "Company", type: "text", required: true, placeholder: "Zepto" },
       { key: "companyWebsite", label: "Website", type: "text", placeholder: "zeptonow.com" },
       { key: "pitchDeckText", label: "Pitch or notes", type: "textarea", placeholder: "Paste the pitch, or a few lines about it" },
+      { key: "pitchDeckPdf", label: "Pitch deck PDF (optional)", type: "pdf", help: "Copy the PDF first (Files › Share › Copy), then tap here. It is read on your phone." },
     ],
     build: (i) => ({ companyName: i.companyName, companyWebsite: i.companyWebsite ?? "", pitchDeckText: i.pitchDeckText ?? "" }),
   },

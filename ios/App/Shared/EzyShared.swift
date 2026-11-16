@@ -2,6 +2,8 @@ import Foundation
 #if canImport(UIKit)
 import UIKit
 import CoreText
+import PDFKit
+import ImageIO
 #endif
 
 /*
@@ -299,7 +301,18 @@ enum EzyAPI {
     static func run(_ plan: EzyPlan) async throws -> EzyResult {
         guard let app = plan.app else { throw EzyError.server("No app to run.") }
         var body: [String: Any] = [:]
-        if let inputs = plan.inputs, !inputs.isEmpty { body["inputs"] = inputs }
+        if var inputs = plan.inputs, !inputs.isEmpty {
+            // A PDF given to a writing app (Startup Analyser's pitch deck) is read on the phone and sent as text:
+            // the box "somethingPdf" fills the box "somethingText".
+            for (key, value) in inputs where key.hasSuffix("Pdf") && value.hasPrefix("data:application/pdf") {
+                inputs[key] = nil
+                if let text = EzyPDFText.read(dataURL: value), !text.isEmpty {
+                    let target = String(key.dropLast(3)) + "Text"
+                    inputs[target] = [inputs[target] ?? "", text].filter { !$0.isEmpty }.joined(separator: "\n\n")
+                }
+            }
+            body["inputs"] = inputs
+        }
         if let prompt = plan.prompt, !prompt.isEmpty { body["prompt"] = prompt }
         let id = app.id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? app.id
         let json = try await request("/apps/\(id)/run", method: "POST", body: body)
@@ -437,6 +450,26 @@ enum EzyMatch {
 
 #if canImport(UIKit)
 enum EzyClipboard {
+    /// A photo or PDF the person copied, as a data link ready to send ("" when nothing suitable is copied).
+    static func copiedFile(pdf: Bool) -> String? {
+        let board = UIPasteboard.general
+        if pdf {
+            guard let data = board.data(forPasteboardType: "com.adobe.pdf"), data.count <= 15_000_000 else { return nil }
+            return "data:application/pdf;base64," + data.base64EncodedString()
+        }
+        let types = ["public.jpeg", "public.png", "public.heic", "public.heif", "public.image"]
+        guard let raw = types.lazy.compactMap({ board.data(forPasteboardType: $0) }).first,
+              let source = CGImageSourceCreateWithData(raw as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: 1600,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let jpeg = UIImage(cgImage: cg).jpegData(compressionQuality: 0.85) else { return nil }
+        return "data:image/jpeg;base64," + jpeg.base64EncodedString()
+    }
+
     /// Copies a PDF as a named file, the way the Files app does, so chat apps such as
     /// WhatsApp paste it as a document. Notes and Mail still read the raw PDF data.
     static func copyPDF(_ data: Data, name: String) {
@@ -680,3 +713,14 @@ enum EzyPDF {
     }
 }
 #endif
+
+
+/// Reads the words out of a PDF (as a data link) on the phone.
+enum EzyPDFText {
+    static func read(dataURL: String, limit: Int = 30_000) -> String? {
+        guard let comma = dataURL.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(dataURL[dataURL.index(after: comma)...])),
+              let doc = PDFDocument(data: data), !doc.isLocked, let text = doc.string else { return nil }
+        return String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(limit))
+    }
+}
