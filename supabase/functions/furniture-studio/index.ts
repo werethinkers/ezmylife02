@@ -356,6 +356,28 @@ BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
 - Every detail: bold ALL-CAPS title (DETAIL A — ARM PROFILE, etc.), 45-degree section hatching on cut faces, dimension lines with closed arrowheads, leader lines to material/component callouts in ALL CAPS
 - Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers with thicknesses), leg mounting hardware, upholstery seam and piping, panel joinery, back cushion fill, full vertical section with numbered layers
 - Each detail must be enlarged enough to read all dimensions clearly`,
+
+  bom: `BILL OF MATERIALS DRAWING BOARD — parts-focused technical overview:
+TOP ZONE (top 50% of board):
+  LEFT — 3D EXPLODED ISOMETRIC ASSEMBLY (~55% width):
+    • Large photorealistic exploded 3D assembly from the furniture photo
+    • Parts floated apart along vertical dotted guide lines
+    • Numbered callout badges ①②③…⑫ with thin leader lines
+    • LEFT MARGIN: callout legend in small ALL-CAPS listing each part name
+    • Bold panel title "EXPLODED ASSEMBLY — PARTS IDENTIFICATION"
+  RIGHT — FRONT + SIDE ELEVATIONS stacked (~40% width):
+    • Top half: FRONT ELEVATION with overall width/height/seat-height dimensions
+    • Bottom half: SIDE ELEVATION with depth/height dimensions
+    • All dimension lines: closed arrowheads, values in the stated unit
+    • Bold panel titles "FRONT ELEVATION" and "SIDE ELEVATION"
+
+BOTTOM ZONE (bottom 50% of board):
+  A tidy row of 5–7 ENLARGED PART DETAIL drawings, each in its own bordered sub-panel:
+  • Each detail focuses on ONE specific component from the parts list
+  • Show it at 2× or 3× scale with section hatching on cut faces
+  • Include: material callout, key dimensions, finish note
+  • Bold ALL-CAPS title per panel: "DETAIL — [COMPONENT NAME]"
+  • Cover the most construction-critical parts: upholstery build-up, frame joint, hardware mounting, foam layer, leg detail`,
 };
 
 function boardPrompt(body: Record<string, unknown>): string {
