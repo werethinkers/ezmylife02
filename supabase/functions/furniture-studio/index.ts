@@ -332,7 +332,7 @@ BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
   DETAIL E — UPHOLSTERY SEAM AND PIPING: piping cord, upholstery fabric, top stitch, internal foam edge — cross-section of edge treatment
   DETAIL F — BACK CUSHION FILL AND TICKING: upholstery fabric, feather+fiber blend fill, dacron wrap, ticking fabric — layer diagram with callouts
   DETAIL G — FULL VERTICAL SECTION BUILD-UP: numbered layers ①–⑩ as a vertical strip cross-section showing the entire sofa/chair height
-  Each detail panel: bold ALL-CAPS title, scale note, dimensions in ${unit || "mm"}, section hatching on cut faces`,
+  Each detail panel: bold ALL-CAPS title, scale note, dimensions in the stated unit, section hatching on cut faces`,
 
   exploded: `EXPLODED ISOMETRIC DRAWING BOARD — large exploded assembly:
 - ONE very large 3D exploded isometric assembly filling ~80% of the board
@@ -348,7 +348,7 @@ BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
 - BACK ELEVATION: rear view with dimensions
 - TOP PLAN: overhead view, width/depth dimensions, centre lines as dash-dot
 - SECTION A-A: vertical cross-section, interior construction, numbered layer callouts with right-margin legend
-- All dimension lines: closed arrowheads at both ends, numbers in ${unit || "mm"}, overall + sub-dimensions
+- All dimension lines: closed arrowheads at both ends, numbers in the stated unit, overall + sub-dimensions
 - All bold panel titles in ALL CAPS`,
 
   details: `CONSTRUCTION DETAILS DRAWING BOARD — 9 to 12 enlarged detail drawings:
