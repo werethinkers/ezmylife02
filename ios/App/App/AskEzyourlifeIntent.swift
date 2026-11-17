@@ -94,6 +94,15 @@ enum EzyVoice {
         return (full, c.phoneNumbers.first?.value.stringValue, c.emailAddresses.first.map { String($0.value) })
     }
 
+    /// The link that opens EZYOURLIFE on a saved PDF with the share sheet up (see EzyShareSheet).
+    static func sharePDFURL(_ file: URL) -> URL? {
+        var parts = URLComponents()
+        parts.scheme = "ezyourlife"
+        parts.host = "share-pdf"
+        parts.queryItems = [URLQueryItem(name: "file", value: file.lastPathComponent)]
+        return parts.url
+    }
+
     static func url(method: DeliveryMethodKind, phone: String?, email: String?, title: String, text: String) -> URL? {
         switch method {
         case .whatsapp:
@@ -267,15 +276,20 @@ struct AskEzyourlifeIntent: AppIntent {
         }()
 
         var body = result.text
+        var savedPDF: URL?
         if wantsPDF {
             let letter = EzyPDF.template(id: app.id, name: app.name) == .letter
             let profile = letter ? await EzyAPI.profile() : [:]
             let pdf = EzyPDF.make(appId: app.id, title: app.name, markdown: result.text, profile: profile)
             EzyClipboard.copyPDF(pdf, name: app.name)
+            savedPDF = EzyClipboard.saveToFiles(pdf, name: app.name)
             body = ""
         }
         if kind == .keep {
-            return Outcome(value: result.text, dialog: wantsPDF ? "The PDF is copied. Paste it where you need it." : "Copied. Paste it, or tap it in the EZYOURLIFE keyboard.")
+            if wantsPDF, let saved = savedPDF, let open = EzyVoice.sharePDFURL(saved) {
+                return Outcome(value: result.text, dialog: "The PDF is saved in Files, in the EZYOURLIFE folder. Pick where to send it.", open: open)
+            }
+            return Outcome(value: result.text, dialog: wantsPDF ? "The PDF is saved in Files, in the EZYOURLIFE folder." : "Copied. Paste it, or tap it in the EZYOURLIFE keyboard.")
         }
 
         var phone: String?
@@ -293,8 +307,10 @@ struct AskEzyourlifeIntent: AppIntent {
             email = heard.replacingOccurrences(of: " at ", with: "@").replacingOccurrences(of: " dot ", with: ".").replacingOccurrences(of: " ", with: "")
             who = email ?? heard
         }
-        let url = EzyVoice.url(method: kind, phone: phone, email: email, title: app.name, text: body)
-        let how = wantsPDF ? "The PDF is copied: paste it in the chat, then tap Send." : "Tap Send."
+        // A PDF goes by the share sheet (a pasted PDF doesn't work in WhatsApp): the app opens on the saved file.
+        var url = EzyVoice.url(method: kind, phone: phone, email: email, title: app.name, text: body)
+        if wantsPDF, let saved = savedPDF, let share = EzyVoice.sharePDFURL(saved) { url = share }
+        let how = wantsPDF ? "The PDF is saved in Files. Choose \(kind == .whatsapp ? "WhatsApp" : kind == .messages ? "Messages" : "Mail") and \(who.isEmpty ? "the chat" : who) in the share sheet, then tap Send." : "Tap Send."
         let to = who.isEmpty ? "" : " to \(who)"
         return Outcome(value: result.text, dialog: "Opening \(kind == .whatsapp ? "WhatsApp" : kind == .messages ? "Messages" : "Mail")\(to). \(how)", open: url)
     }
