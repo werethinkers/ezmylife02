@@ -83,12 +83,12 @@ export const ROOMS: Array<{ id: string; name: string }> = [
 
 export const COLOURWAYS = ["Emerald green velvet", "Charcoal bouclé", "Tan leather", "Dusty pink linen", "Navy blue wool", "Mustard yellow velvet", "Walnut wood finish", "White lacquer"];
 
-export const DEFAULT_PRICES = { analyze: 4, quick: 31, standard: 52, premium: 104, image: 31 };
+export const DEFAULT_PRICES = { analyze: 4, quick: 31, standard: 52, premium: 52, image: 31 };
 
 export const TIERS: Array<{ id: Tier; name: string; line: string; tool: string }> = [
   { id: "quick", name: "Quick draft", line: "Fast and cheapest. Good for checking the layout.", tool: "furniture-sheet-quick" },
   { id: "standard", name: "Standard", line: "Sharp drawings and dimensions. Best value.", tool: "furniture-sheet" },
-  { id: "premium", name: "Premium", line: "Top model for the finest construction detail.", tool: "furniture-sheet-pro" },
+  { id: "premium", name: "Premium", line: "Best available model, same price as Standard — maximum detail.", tool: "furniture-sheet-pro" },
 ];
 
 export const emptyMeta = (): Meta => ({

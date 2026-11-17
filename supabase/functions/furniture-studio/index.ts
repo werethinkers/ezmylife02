@@ -23,20 +23,22 @@ const TOOL_IMAGE = "furniture-image";
 
 // Credits by the 3x rule in docs/pricing.md (price = AI cost in rupees x 3 / 0.376, rounded up, at 96.36 rupees a dollar).
 //   quick     Gemini 2.5 Flash Image,                about $0.039 = 3.8 rupees  -> 31 credits
-//   standard  Gemini 3.1 Flash Image (1K),           about $0.067 = 6.5 rupees  -> 52 credits
-//   premium   Gemini 3 Pro Image,                    about $0.134 = 12.9 rupees -> 104 credits
+//   standard  Gemini 3.1 Flash Lite Image (fallback: 2.5-flash-image),          -> 52 credits
+//   premium   Gemini 3.1 Flash Lite Image (best quality currently available),   -> 52 credits
 //   image     Gemini 2.5 Flash Image                                            -> 31 credits
 //   analyze   Flash with one photo, about 0.5 rupees                            -> 4 credits
 // The rows are created on first use; admins can change them later.
 const DEFAULT_CREDITS: Record<string, number> = {
-  [TOOL_ANALYZE]: 4, [TOOL_SHEET_QUICK]: 31, [TOOL_SHEET]: 52, [TOOL_SHEET_PRO]: 104, [TOOL_IMAGE]: 31,
+  [TOOL_ANALYZE]: 4, [TOOL_SHEET_QUICK]: 31, [TOOL_SHEET]: 52, [TOOL_SHEET_PRO]: 52, [TOOL_IMAGE]: 31,
 };
 
 // Each tier tries its own model first and, only if that model is not available, the one after it.
+// gemini-2.5-flash-image  = standard image model (~$0.039/image, used across the codebase)
+// gemini-3.1-flash-lite-image = higher quality lite variant (used in productvision-angles)
 const TIER_MODELS: Record<string, string[]> = {
   quick: ["google/gemini-2.5-flash-image"],
-  standard: ["google/gemini-3.1-flash-image-preview", "google/gemini-2.5-flash-image"],
-  premium: ["google/gemini-3-pro-image-preview", "google/gemini-3.1-flash-image-preview"],
+  standard: ["google/gemini-3.1-flash-lite-image", "google/gemini-2.5-flash-image"],
+  premium: ["google/gemini-3.1-flash-lite-image"],
 };
 const tierOf = (b: { tier?: unknown } | null) => (b?.tier === "quick" || b?.tier === "premium" ? String(b.tier) : "standard");
 const IMAGE_MODEL = "google/gemini-2.5-flash-image";
