@@ -460,6 +460,45 @@ enum EzyClipboard {
         UIPasteboard.general.setItemProviders([provider], localOnly: false, expirationDate: nil)
     }
 
+    /// Saves a PDF where the person can find it in the Files app (On My iPhone > EZYOURLIFE) and returns it.
+    /// The app and Siri write straight into the app's Documents folder, which Files shows (Info.plist:
+    /// UIFileSharingEnabled). The keyboard can't write there, so it saves into the shared App Group
+    /// and the app moves it over the next time it opens (`mirrorToFiles`).
+    @discardableResult
+    static func saveToFiles(_ data: Data, name: String) -> URL? {
+        let clean = name.components(separatedBy: CharacterSet(charactersIn: "/\\:?*\"<>|")).joined()
+        let stamp = DateFormatter()
+        stamp.dateFormat = "yyyy-MM-dd HHmm"
+        let file = (clean.isEmpty ? "EZYOURLIFE" : clean) + " " + stamp.string(from: Date()) + ".pdf"
+        let fm = FileManager.default
+        let inApp = Bundle.main.bundleURL.pathExtension == "app"
+        let base: URL?
+        if inApp {
+            base = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        } else {
+            base = fm.containerURL(forSecurityApplicationGroupIdentifier: EzyShared.appGroup)?.appendingPathComponent("Exports", isDirectory: true)
+        }
+        guard let folder = base else { return nil }
+        try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent(file)
+        do { try data.write(to: url, options: .atomic) } catch { return nil }
+        return url
+    }
+
+    /// App only: moves PDFs the keyboard saved in the App Group into the Files folder.
+    static func mirrorToFiles() {
+        let fm = FileManager.default
+        guard Bundle.main.bundleURL.pathExtension == "app",
+              let group = fm.containerURL(forSecurityApplicationGroupIdentifier: EzyShared.appGroup)?.appendingPathComponent("Exports", isDirectory: true),
+              let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
+              let files = try? fm.contentsOfDirectory(at: group, includingPropertiesForKeys: nil) else { return }
+        for file in files where file.pathExtension.lowercased() == "pdf" {
+            let target = docs.appendingPathComponent(file.lastPathComponent)
+            if fm.fileExists(atPath: target.path) { try? fm.removeItem(at: file); continue }
+            try? fm.moveItem(at: file, to: target)
+        }
+    }
+
     /// Copies a result: the text, or the image itself when the app made one.
     static func copy(_ result: EzyResult) async {
         if let many = result.images, many.count > 1 {

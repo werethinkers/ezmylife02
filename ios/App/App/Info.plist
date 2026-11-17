@@ -60,6 +60,10 @@
 	</array>
 	<key>NSContactsUsageDescription</key>
 	<string>So Siri can find the phone number or email of the person you ask EZYOURLIFE to send something to.</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

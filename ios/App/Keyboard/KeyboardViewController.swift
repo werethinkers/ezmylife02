@@ -109,6 +109,8 @@ final class KeyboardViewController: UIInputViewController {
         var preview: UIImage?
         var count: Int
         var charged: Int?
+        /// A PDF saved for Files (keyboard: App Group, moved to the Files folder when the app next opens).
+        var pdfFile: URL?
     }
     private var outcome: Outcome? {
         didSet { outcomeContext = outcome == nil ? nil : textDocumentProxy.documentContextBeforeInput ?? "" }
@@ -1959,7 +1961,7 @@ final class KeyboardViewController: UIInputViewController {
         frame.addSubview(picture)
 
         let name = EzyLook.label(outcome.count > 1 ? "\(outcome.app.name) · \(outcome.count) pictures" : outcome.app.name, EzyLook.body(15, .bold), EzyLook.ink, lines: 2)
-        let how = EzyLook.label(outcome.count > 1 ? "All copied. In the chat, hold the message box and tap Paste: every one goes in, in order." : "Copied. In the chat, hold the message box and tap Paste.", EzyLook.body(13), EzyLook.muted, lines: 4)
+        let how = EzyLook.label(outcome.pdfFile != nil ? "Saved in Files, in the EZYOURLIFE folder. Tap Send PDF and pick WhatsApp: it goes in as an attachment." : outcome.count > 1 ? "All copied. In the chat, hold the message box and tap Paste: every one goes in, in order." : "Copied. In the chat, hold the message box and tap Paste.", EzyLook.body(13), EzyLook.muted, lines: 4)
         var side: [UIView] = [name, how]
         if let b = EzyShared.balance {
             let pill = PadLabel()
@@ -1981,7 +1983,16 @@ final class KeyboardViewController: UIInputViewController {
         body.spacing = 14
         body.alignment = .center
 
-        let done = blockButton("Back to typing", fill: EzyLook.primary, text: .white, size: 16) { [weak self] in self?.outcome = nil; self?.afterTyping() }
+        let pdfFile = outcome.pdfFile
+        let done = blockButton(pdfFile == nil ? "Back to typing" : "Send PDF", fill: EzyLook.primary, text: .white, size: 16) { [weak self] in
+            guard let self else { return }
+            if let pdfFile {
+                self.sharePDF(pdfFile)
+            } else {
+                self.outcome = nil
+                self.afterTyping()
+            }
+        }
 
         for v in [top, body, done] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
@@ -2013,6 +2024,13 @@ final class KeyboardViewController: UIInputViewController {
         ])
     }
 
+    /// Opens the iPhone share sheet on the saved PDF: WhatsApp, Messages, Mail or "Save to Files" attach the real file.
+    /// (A pasted PDF doesn't work in WhatsApp, and a keyboard can't attach files itself.)
+    private func sharePDF(_ file: URL) {
+        let sheet = UIActivityViewController(activityItems: [file], applicationActivities: nil)
+        present(sheet, animated: true)
+    }
+
     /// Shows the result panel for a picture, several pictures, or a PDF.
     private func showOutcome(_ app: EzyApp, data: [Data], type: String, charged: Int?) {
         let pdf = type == "com.adobe.pdf"
@@ -2026,7 +2044,8 @@ final class KeyboardViewController: UIInputViewController {
             }
         }
         let headline = pdf ? "Your PDF is ready" : (data.count > 1 ? "\(data.count) pictures ready" : "Your picture is ready")
-        outcome = Outcome(app: app, headline: headline, preview: preview, count: data.count, charged: charged)
+        let saved = pdf ? data.first.flatMap { EzyClipboard.saveToFiles($0, name: app.name) } : nil
+        outcome = Outcome(app: app, headline: headline, preview: preview, count: data.count, charged: charged, pdfFile: saved)
         notice = nil
     }
 

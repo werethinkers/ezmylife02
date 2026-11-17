@@ -46,8 +46,17 @@ Both ship inside the iOS app (docs/ios-app.md), so they need a new App Store bui
 - **Several outputs.** Apps that make more than one picture (exam sets, grids, splits, bulk resize, PDF
   pages, ProductVision 360 angles) copy them all at once, in order, as separate images; one Paste in
   WhatsApp or Mail puts in every one. Instagram grid pieces come last-first, the order to post them.
-- **PDFs** are copied as a named file (`<App name>.pdf`) plus the raw PDF data, so WhatsApp pastes them as a
-  document and Notes or Mail as a PDF.
+- **PDFs are saved in Files, then sent from there.** Every PDF the keyboard or Siri makes is saved
+  without asking (`EzyClipboard.saveToFiles`): Siri writes straight into the app's Documents folder, which
+  the Files app shows as On My iPhone > EZYOURLIFE (`UIFileSharingEnabled` in App/Info.plist). A keyboard
+  can't write there, so it saves into the App Group and the app moves the file across the next time it
+  opens (`mirrorToFiles`). The result panel's **Send PDF** button opens the iPhone share sheet on the
+  file; picking WhatsApp attaches the real file in the chat (pasting a PDF never worked in WhatsApp).
+  Siri does the same: it saves the PDF, then opens EZYOURLIFE on `ezyourlife://share-pdf?file=...`, which
+  shows the share sheet. iOS has no way to attach a file silently, so the person picks WhatsApp and the
+  chat once, then taps Send. The PDF is still copied as well (Notes, Mail). Not tested on a real iPhone:
+  the share sheet inside a keyboard extension may be refused by some iOS versions; the PDF is still
+  saved and still copied.
 - **Coaching sessions** run as a chat inside the card: Start (the app's price) gives the first message,
   replies and the closing summary are free. Paste reply puts the coach's last message in the text box.
 - **Trackers** add one entry per run to the same saved list the website shows (`tool_sessions`), charged
