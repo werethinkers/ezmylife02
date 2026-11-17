@@ -2,6 +2,7 @@ import type { ToolEntry } from "../toolsDatabase";
 import { businessDocs } from "./business-docs";
 import { customTools } from "./custom-tools";
 import { bhedTools } from "./bhed";
+import { furnitureTools } from "./furniture";
 import { calculators } from "./calculators";
 import { converters } from "./converters";
 import { examPresets } from "./exam-presets";
@@ -31,6 +32,7 @@ export const CATALOG_GROUPS: Record<string, ToolEntry[]> = {
   businessDocs,
   customTools,
   bhedTools,
+  furnitureTools,
   calculators,
   converters,
   examPresets,

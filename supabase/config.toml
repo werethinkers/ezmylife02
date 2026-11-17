@@ -114,3 +114,6 @@ verify_jwt = false
 
 [functions.apple-iap-verify]
 verify_jwt = false
+
+[functions.furniture-studio]
+verify_jwt = false
