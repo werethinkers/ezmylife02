@@ -125,6 +125,17 @@ export const SITE_PAGES: SitePage[] = [
     links: [["Studios", "/studios"], ...MAIN_LINKS],
   },
   {
+    path: "/studios/furniture-sheets",
+    title: "Furniture Sheets: a technical design sheet from one photo",
+    description: "Upload a photo of any sofa, chair or table and get a design sheet with exploded view, sizes, section, materials and parts list, plus colourways and room scenes.",
+    h1: "Furniture Sheets",
+    text: [
+      "Upload a photo of a piece of furniture and get a full technical design sheet: an exploded assembly, front, side and top views, a section, construction details, a material and finish schedule and a parts list with a title block you can fill in.",
+      "Choose light, blueprint, line-art or vintage drawing styles, edit the parts list and sizes, then draw it again. Make catalogue views, new colourways and room scenes from the same photo, and download everything as PNG, PDF, a parts list file or one zip.",
+    ],
+    links: [["Studios", "/studios"], ...MAIN_LINKS],
+  },
+  {
     path: "/mail-brain",
     title: "Mail Brain: your Gmail read for you by AI | EZYOURLIFE",
     description: "Connect Gmail and get every mail read for you: a short summary, tasks, reminders and a reply draft. Reading mail is free; AI reading is 0.08 credits a mail.",

@@ -14,6 +14,7 @@ export const featureRoutes: FeatureRoute[] = [
   { path: "/studios", page: lazy(() => import("./pages/Studios")) },
   { path: "/studios/site-watch", page: lazy(() => import("./pages/SiteWatchDemo")) },
   { path: "/studios/bhed-prabhed", page: lazy(() => import("./pages/BhedPrabhed")) },
+  { path: "/studios/furniture-sheets", page: lazy(() => import("./pages/FurnitureSheets")) },
   { path: "/influencer", page: lazy(() => import("./pages/influencers/InfluencerPortal")) },
   { path: "/keyboard", page: lazy(() => import("./pages/KeyboardSetup")) },
   { path: "/developers/keys", page: lazy(() => import("./pages/developer/ApiKeys")), signedIn: true },
