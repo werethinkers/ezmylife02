@@ -54,27 +54,147 @@ const bad = (message: string, status = 400) => json({ error: message, message },
 type Opt = Record<string, string>;
 
 const STYLES: Opt = {
-  light:
-    "LIGHT DRAFTING STYLE: white background, fine black linework, soft grey shading, a realistic rendered 3D exploded isometric at top-left, clean thin panel borders, small photoreal material swatches, a crisp title block at bottom-right. Looks like a luxury furniture maker's production drawing.",
-  blueprint:
-    "BLUEPRINT CAD STYLE: deep navy background, white and pale-cyan linework, yellow dimension numbers and panel titles, a few red cut-line accents, thin white panel borders, photoreal material swatches, a title block at bottom-right. Looks like a night-mode CAD export.",
-  mono:
-    "MONOCHROME LINE-ART STYLE: pure black line art on white paper, no fills and no colour, hatching for sections, thin panel borders, neat title block. Looks like a photocopied architect's drawing.",
-  vintage:
-    "VINTAGE DRAFTING STYLE: aged cream paper, brown-black ink linework with light wash shading, hand-lettered feel but fully legible, thin double-rule borders, an engraved-style title block.",
+  light: `LIGHT PROFESSIONAL DRAFTING STYLE (like the reference sheets):
+- Background: crisp white (#FFFFFF), outer sheet border 2 px dark grey
+- Linework: uniform 0.5–1 px black lines for drawings; 1.5 px thick outlines for the exploded isometric
+- 3D Exploded Isometric: full photorealistic or near-photorealistic 3D render of the actual furniture piece, exploded along vertical axis so all parts float apart with dotted leader lines and round numbered callout badges (①②③…). The piece must look exactly like the furniture in the photo.
+- Orthographic elevations: clean orthographic projection drawings, thin lines, dimension lines with closed-arrow heads, dimension text in a sans-serif condensed font
+- Detail drawings: crisp cut-away cross-sections or profile drawings with hatching on cut faces (45-degree hatching), leader lines to material callouts written in ALL CAPS
+- Material swatches: small photorealistic square swatches (fabric/wood/metal textures rendered realistically), labelled M01, M02… beneath each one, with the material name in small text
+- BOM table: clean thin-rule table, alternating very light grey row fills, header row in dark grey with white text, 6 columns: ITEM NO. | COMPONENT | MATERIAL | FINISH | QTY | NOTES
+- Text: Helvetica or similar sans-serif, panel headings in bold ALL CAPS 10–11px, dimension text 7px, table text 7–8px
+- Looks exactly like a luxury furniture manufacturer's production drawing package.`,
+
+  blueprint: `BLUEPRINT CAD STYLE (dark technical):
+- Background: deep navy (#0d1b2a), outer border 1.5 px pale cyan
+- Primary linework: white and pale cyan; dimension lines and leader lines in pale cyan
+- Dimension numbers and panel titles: yellow (#FFD700)
+- Section cut lines and annotation leaders: bright red
+- 3D Exploded Isometric: pale cyan wireframe style with ghost-visible interior components, numbered callout circles in yellow
+- Detail cross-sections: white outlines, diagonal hatching in cyan on cut faces
+- Material swatches: dark-background squares showing light-coloured textures, label text in yellow
+- BOM table: dark background, cyan rules, yellow header text, white body text
+- Title block: bottom-right, cyan border, white project/drawing text, yellow drawing number
+- Looks like a CAD night-mode production export.`,
+
+  mono: `MONOCHROME LINE-ART STYLE (blueprint photocopy):
+- Background: white (#FFFFFF), no greys, no colour
+- All linework: black only, uniform fine strokes
+- Exploded isometric: black line-art, every part outlined only, no shading, dashed leader lines, number callouts in black circles
+- Section cuts: 45-degree cross-hatching in black
+- Material swatches: black-and-white texture patterns (dots for foam, diagonal lines for wood grain, cross-hatching for metal)
+- BOM table: thin black rules, no fills
+- Text: clean typewriter or Courier-style font, all caps headings
+- Looks like a high-quality photocopied architect's technical drawing.`,
+
+  vintage: `VINTAGE DRAFTING STYLE (hand-drawn era):
+- Background: aged cream (#F5F0E8) or warm ivory paper texture
+- Linework: brown-black ink (#2C1810), slightly variable weight as if hand-drawn with a technical pen
+- Exploded isometric: ink line drawing with light wash shading in warm grey/sepia
+- Elevations and details: ink outlines with pencil-like grey fill for shaded faces
+- Section hatching: hand-drawn look 45-degree hatching in brown ink
+- Material swatches: watercolour-style texture patches, hand-labelled
+- Text: hand-lettered feel but fully legible sans-serif, slight imperfection
+- Title block: double-rule border, engraved/inked style, year as Roman numerals
+- Looks like a master craftsman's workshop drawing from the 1960s-70s.`,
 };
 
 const SHEET_TYPES: Opt = {
-  full:
-    "Include ALL of these panels in one landscape sheet: (1) 3D exploded isometric assembly with numbered callout labels, (2) front elevation, (3) side elevation, (4) top plan, (5) section A-A, (6) a row of 5 to 7 lettered construction detail drawings (arm profile, back-to-seat junction, seat build-up, leg mounting, upholstery seam, and so on as fit the piece), (7) material and finish schedule with swatches M01 to M08, (8) parts schedule / bill of materials table, (9) specification legend notes, (10) title block.",
-  exploded:
-    "Make a single large exploded isometric assembly the hero of the sheet (about 60 percent of the area), every part separated along vertical guide lines with numbered callouts and leader lines, plus a compact parts schedule table and the title block.",
-  ortho:
-    "Include front elevation, side elevation, back elevation, top plan and section A-A, all fully dimensioned with dimension lines and arrows, with the title block. No exploded view.",
-  details:
-    "Include 8 to 12 enlarged construction detail drawings (joinery, cross-sections, upholstery build-ups, fixings, leg and foot details, hardware), each lettered with a title, with dimensions and material callouts, plus the title block.",
-  bom:
-    "Focus on production data: a large material and finish schedule with realistic swatches M01 onwards, a full parts schedule / bill of materials table (item, component, material, finish, qty, notes), specification legend notes, a small isometric thumbnail of the piece, and the title block.",
+  full: `FULL TECHNICAL DESIGN SHEET — include ALL 10 panels arranged in a landscape 3:2 grid:
+
+TOP ROW (spanning full width from left to right):
+  Panel 1 — 3D EXPLODED ISOMETRIC ASSEMBLY (largest panel, top-left, ~38% of sheet width):
+    • Full 3D photorealistic/near-photorealistic render of the furniture piece from the photo
+    • Explode all parts vertically along a central axis with dotted guideline between parts
+    • Every part gets a numbered callout badge: ①②③④⑤⑥⑦⑧⑨⑩ (at least 8 parts)
+    • Leader lines from each badge to the part
+    • Left margin: callout legend text, e.g. "LOOSE BACK CUSHIONS (03 NOS.)", "SEAT FRAME (HARDWOOD)", etc.
+    • Label the panel "3D EXPLODED ISOMETRIC ASSEMBLY" at top-left
+  Panel 2 — FRONT ELEVATION (top-centre, ~28% width):
+    • Accurate orthographic front view of the piece
+    • Full exterior dimension lines: overall width, seat height, back height, arm height
+    • Section cut-line "A–A" with arrows showing where section is taken
+    • Label "FRONT ELEVATION" at top
+  Panel 3 — SIDE ELEVATION (top-right, ~28% width):
+    • Accurate orthographic side/profile view
+    • Overall depth and height dimension lines
+    • Label "SIDE ELEVATION" at top
+
+MIDDLE ROW:
+  Panel 4 — TOP PLAN (mid-left, ~28% width):
+    • True orthographic top-down view
+    • Overall width and depth dimension lines
+    • Centre-lines (CL) shown as dash-dot lines
+    • Label "TOP PLAN"
+  Panel 5 — SECTION A-A (mid-right, ~40% width):
+    • Full vertical cross-section through the piece at cut-line A-A from the front elevation
+    • Interior construction clearly visible: foam layers, frame, webbing, back panel
+    • Numbered layer callouts (①②③…) keyed to a right-margin legend listing each layer: e.g. "① TOP FABRIC / UPHOLSTERY", "② TOP FOAM (40mm)", "③ FIBER WRAP", "④ PLYWOOD PANEL", "⑤ SOLID WOOD FRAME"
+    • Label "SECTION A-A"
+
+BOTTOM ROW:
+  Panel 6 — CONSTRUCTION DETAIL DRAWINGS (bottom-left band, ~65% width, 6 to 7 details side by side):
+    Each detail in its own thin-bordered sub-panel with a bold ALL-CAPS title:
+    DETAIL A — ARM or EDGE PROFILE CROSS-SECTION (enlarged cut-away showing arm build-up layers)
+    DETAIL B — BACK-TO-SEAT FRAME JUNCTION (how back frame meets seat frame)
+    DETAIL C — SEAT CUSHION BUILD-UP (foam layers, dacron wrap, ticking fabric, exploded layers)
+    DETAIL D — LEG TO FRAME MOUNTING DETAIL (metal insert, wood screw, solid wood leg)
+    DETAIL E — UPHOLSTERY SEAM AND PIPING (piping cord, top stitch, internal foam edge)
+    DETAIL F — BACK CUSHION FILL AND TICKING (feather+fiber fill, dacron wrap, ticking fabric)
+    DETAIL G — FULL VERTICAL SECTION BUILD-UP (numbered layers: ①upholstery fabric ②dacron ③foam ④back panel ⑤back frame ⑥webbing ⑦seat platform ⑧seat frame ⑨arm panel ⑩leg)
+  Panel 7 — MATERIAL & FINISH SCHEDULE (bottom-middle, 2 rows of 4 swatches):
+    8 swatches M01–M08, each a realistic photorealistic texture square (~40×40px), code and name below
+    Label "MATERIAL & FINISH SCHEDULE" at top of this panel
+  Panel 8 — PARTS SCHEDULE / BILL OF MATERIALS table:
+    Table heading: "[PIECE NAME] ASSEMBLY PARTS SCHEDULE / BILL OF MATERIALS"
+    Columns: ITEM NO. | COMPONENT | MATERIAL | FINISH | QTY | NOTES
+    8–12 rows, e.g.: 1 Frame Assembly, 2 Seat Platform Board, 3 Webbing Suspension, 4 Seat Cushion, 5 Back Cushion, 6 Arm Panels, 7 Back Panel, 8 Leg, 9 Piping Cord, 10 Upholstery Cover
+  Panel 9 — SPECIFICATION LEGEND (below section, left-aligned notes):
+    "• ALL DIMENSIONS INDICATIVE; VERIFY PRIOR TO PRODUCTION."
+    "• SEAT HEIGHT 400–440mm AFF."
+    "• ALL UPHOLSTERED SURFACES SEAMLESS AT VISIBLE FACES."
+    Plus 2–3 piece-specific notes
+  Panel 10 — TITLE BLOCK (bottom-right corner, bordered box):
+    PROJECT: [name]
+    DRAWING TITLE: [title]
+    DRAWING NO.: [number]
+    REVISION: REV A
+    SCALE: NTS / INDICATIVE
+    DATE: [year]
+    DRAWN BY: DESIGN STUDIO`,
+
+  exploded: `EXPLODED ISOMETRIC FOCUS SHEET — single large exploded assembly as the hero:
+- 3D EXPLODED ISOMETRIC ASSEMBLY takes ~70% of the sheet area, centred-left
+- Explode ALL parts along vertical axis with dotted guide lines, generous spacing between parts
+- Every part gets a numbered callout badge (① to ⑫+) with leader lines
+- Left column: callout legend text for each numbered part, one line each in ALL CAPS
+- Right side: compact PARTS SCHEDULE / BILL OF MATERIALS table (ITEM | COMPONENT | MATERIAL | FINISH | QTY | NOTES)
+- Bottom-right: TITLE BLOCK
+- Label "3D EXPLODED ISOMETRIC ASSEMBLY" prominently at top`,
+
+  ortho: `ORTHOGRAPHIC ELEVATIONS SHEET — all elevations and section, fully dimensioned:
+- FRONT ELEVATION: full-width front view, all exterior dimensions (overall width, height, seat height, arm height), section cut A-A
+- SIDE ELEVATION: full profile, depth and height dimensions
+- BACK ELEVATION: rear view with dimensions
+- TOP PLAN: overhead view, width and depth, centre lines as dash-dot
+- SECTION A-A: vertical cross-section at cut line, interior construction visible, numbered layer callouts with legend
+- All dimension lines: arrows at both ends, numbers in mm, overall and sub-dimensions shown
+- SPECIFICATION LEGEND notes
+- TITLE BLOCK bottom-right`,
+
+  details: `CONSTRUCTION DETAILS SHEET — maximum detail on joinery and build-ups:
+- 9 to 12 large enlarged detail drawings in a tidy grid, each in its own thin-bordered sub-panel
+- Every detail has: bold ALL-CAPS title (e.g. DETAIL A — ARM PROFILE), scale note, dimension lines, 45-degree section hatching on cut faces, leader lines to material/component callouts in ALL CAPS
+- Include all relevant details for the piece: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers), leg mounting hardware, upholstery seam and piping, panel joinery (dowel/screw/bracket), back panel fill and ticking, full vertical section with numbered layers
+- MATERIAL & FINISH SCHEDULE (8 swatches M01–M08) in one column
+- TITLE BLOCK bottom-right`,
+
+  bom: `PRODUCTION DATA SHEET — materials, BOM and specification focus:
+- Large 3D isometric thumbnail of the complete (non-exploded) piece (top-left, ~30% width)
+- MATERIAL & FINISH SCHEDULE: 2 rows × 4 swatches (M01–M08), each swatch a realistic texture square, code + full material name + finish note beneath
+- PARTS SCHEDULE / BILL OF MATERIALS: large table filling ~40% of sheet area, all columns: ITEM NO. | COMPONENT | MATERIAL | FINISH | QTY | NOTES, 10–14 rows
+- SPECIFICATION LEGEND: bulleted notes block (dimensions indicative, foam densities, fabric specification, production notes)
+- TITLE BLOCK bottom-right`,
 };
 
 interface Meta {
@@ -146,31 +266,96 @@ function sheetPrompt(body: Record<string, unknown>): string {
   const notes = clip(body.notes, 500);
   const recolour = clip(body.materials, 300);
   return [
-    "You are a senior furniture design engineer producing a manufacturer-ready TECHNICAL DESIGN SHEET from the attached photograph.",
-    "Draw the SAME piece of furniture as in the photo: identical silhouette, proportions, upholstery pattern, piping, legs, hardware and materials. Do not invent a different design.",
-    "Output ONE single landscape 3:2 image of the finished drawing sheet, edge to edge, with a thin outer border, every panel neatly aligned in a grid.",
-    STYLES[style],
-    SHEET_TYPES[kind],
-    "All text must be spelled correctly, upper-case panel headings, small legible labels, sensible dimension values in " + unit + ". Dimension lines have arrows and numbers. Never show lorem ipsum or gibberish text.",
+    "You are a senior furniture design engineer at a luxury manufacturer. You produce MANUFACTURER-READY TECHNICAL DESIGN SHEETS that are used directly on the factory floor.",
+    "Study the attached photograph carefully. Draw the SAME piece of furniture: identical silhouette, proportions, upholstery pattern, fabric texture, piping/welting, legs, hardware, cushion count and materials. Do NOT invent a different design.",
+    "Output ONE single landscape image (aspect ratio 3:2, e.g. 3000×2000 px) of the finished drawing sheet. The sheet fills the entire image edge-to-edge with a thin outer border. Every panel is neatly aligned in a grid with thin panel borders. The result must look indistinguishable from a real professional furniture manufacturer's production drawing package.",
+    "VISUAL STYLE TO APPLY:\n" + STYLES[style],
+    "SHEET CONTENT AND PANEL LAYOUT:\n" + SHEET_TYPES[kind],
+    `TEXT AND DIMENSION RULES:
+- All text: correctly spelled, ALL CAPS for panel headings and callout labels
+- Dimension text: small (7px equivalent), placed on dimension lines with closed arrowheads at both ends
+- All dimensions in ${unit} — use realistic values appropriate for the furniture category
+- Dimension lines: show both overall dimensions AND sub-dimensions (e.g. three equal seat bay widths that sum to overall width)
+- Section callout numbers on the cross-section use circled numerals ①②③ with a right-margin legend
+- No lorem ipsum, no placeholder text, no gibberish — all text must be real and meaningful`,
     specBlock(spec, unit),
-    recolour ? `Material changes requested by the customer (apply them to every drawing, swatch and the parts schedule): ${recolour}.` : "",
-    notes ? `Extra instructions from the customer: ${notes}` : "",
-    "TITLE BLOCK (bottom-right, exact text):\n" + metaBlock(meta, spec, unit),
-    "Do not add watermarks, logos of real brands, or people.",
+    recolour ? `MATERIAL CHANGES (apply to every drawing, swatch and BOM table): ${recolour}.` : "",
+    notes ? `CUSTOMER NOTES: ${notes}` : "",
+    "TITLE BLOCK EXACT TEXT (bottom-right bordered box):\n" + metaBlock(meta, spec, unit),
+    "QUALITY REQUIREMENTS: Every detail drawing must be large enough to read clearly. The exploded isometric must look 3-dimensional and realistic. Material swatches must look like real fabric/wood/metal, not flat colour squares. The BOM table must have all visible rows filled with real component names, not 'Component 1'. Do not add watermarks, logos of real brands, or people.",
   ].filter(Boolean).join("\n\n");
 }
 
-// Hybrid: Gemini draws only the drawings. No tables, no swatches, no title block (the browser adds those
-// as exact text), so the whole picture goes to line quality, dimensions and construction detail.
+// Hybrid: Gemini draws only the DRAWINGS section of the sheet (the visual panels).
+// The browser canvas (compose.ts) adds the BOM table, material swatches, spec legend and title block as exact text.
+// So the full image budget goes to line quality, 3D accuracy, dimensions and construction detail.
 const BOARD_TYPES: Opt = {
-  full:
-    "Layout of the board: top-left a large 3D exploded isometric assembly with numbered callout labels and leader lines; to its right the front elevation and side elevation; below them the top plan and section A-A; along the bottom a row of 6 or 7 lettered construction DETAIL drawings (each in its own thin frame with a title such as DETAIL A ARM PROFILE) chosen to fit the piece: arm or edge profile, back-to-seat junction, seat or top build-up, leg or foot mounting, upholstery seam or edge, back cushion or panel fill, full vertical section build-up.",
-  exploded:
-    "Layout of the board: ONE very large exploded isometric assembly filling about 80 percent of the board, every part separated along vertical dotted guide lines with numbered callouts (1, 2, 3 ...) and leader lines, and a small front elevation in the corner.",
-  ortho:
-    "Layout of the board: front elevation, side elevation, back elevation, top plan and section A-A, all large, fully dimensioned with dimension lines, arrows and numbers.",
-  details:
-    "Layout of the board: 9 to 12 large enlarged construction detail drawings in a tidy grid (joinery, cross-sections, upholstery and foam build-ups, fixings, leg and foot details, hardware), each in a thin frame with a lettered title, dimensions and short material callouts.",
+  full: `DRAWING BOARD LAYOUT (landscape 16:9, full drawing area only — NO title block, NO BOM table, NO material swatches):
+
+TOP ZONE (top 55% of board, full width):
+  LEFT — 3D EXPLODED ISOMETRIC ASSEMBLY (top-left, ~38% of board width):
+    • Full 3D photorealistic render of the furniture piece from the photo, exploded vertically
+    • Parts separated with dotted vertical guide lines, generous spacing between parts
+    • Round numbered callout badges: ①②③④⑤⑥⑦⑧⑨⑩ (at minimum 8 parts)
+    • Thin leader lines from each badge to its part
+    • Left margin: callout legend text in small ALL-CAPS (e.g. "LOOSE BACK CUSHIONS", "SEAT FRAME HARDWOOD", "WEBBING SUSPENSION")
+    • Bold panel title "3D EXPLODED ISOMETRIC ASSEMBLY" at top-left
+  CENTRE — FRONT ELEVATION (~28% width):
+    • Accurate orthographic front projection of the piece
+    • Dimension lines: overall width at top, back height, seat height, arm height on left side
+    • Sub-dimensions: seat bay widths summing to overall width
+    • Section cut arrow pair "A ← →A" with arrows showing cut location
+    • Bold panel title "FRONT ELEVATION"
+  RIGHT — SIDE ELEVATION (~28% width):
+    • Accurate orthographic side/profile projection
+    • Dimension lines: overall depth, overall height, seat depth
+    • Bold panel title "SIDE ELEVATION"
+
+MIDDLE ZONE (next 15% of board):
+  LEFT — TOP PLAN (~32% width):
+    • True orthographic overhead view
+    • Overall width and depth dimension lines
+    • Centre lines as dash-dot lines
+    • Bold panel title "TOP PLAN"
+  RIGHT — SECTION A-A (~62% width):
+    • Full vertical cross-section at the A-A cut line from front elevation
+    • Interior construction clearly visible: upholstery fabric, foam layers, dacron wrap, back panel, solid wood frame, webbing suspension, seat platform, leg
+    • Numbered layer callouts ①②③④⑤⑥⑦⑧ with right-margin legend: "① UPHOLSTERY FABRIC / LEATHER", "② DACRON WRAP", "③ HIGH RESILIENCE FOAM", "④ PLYWOOD PANEL", "⑤ SOLID WOOD FRAME", "⑥ WEBBING SUSPENSION", "⑦ SEAT PLATFORM BOARD", "⑧ SOLID WOOD LEG"
+    • Bold panel title "SECTION A-A"
+
+BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
+  Each detail in its own thin-bordered sub-panel. Choose the 6–7 most relevant from:
+  DETAIL A — ARM PROFILE CROSS-SECTION: enlarged cut-away of arm showing all build-up layers (hardwood rail, back panel, upholstered arm, screw fixing) with dimensions
+  DETAIL B — BACK-TO-SEAT FRAME JUNCTION: how back frame meets seat frame rail (dowel/bracket/bolt connection) with dimensions
+  DETAIL C — SEAT CUSHION BUILD-UP: exploded layer diagram — upholstery fabric > dacron wrap > HR foam 100mm > soft foam 20mm > ticking fabric — with thickness dimensions
+  DETAIL D — LEG TO FRAME MOUNTING: frame rail, metal insert M10, wood screw, solid wood leg, with dimensions
+  DETAIL E — UPHOLSTERY SEAM AND PIPING: piping cord, upholstery fabric, top stitch, internal foam edge — cross-section of edge treatment
+  DETAIL F — BACK CUSHION FILL AND TICKING: upholstery fabric, feather+fiber blend fill, dacron wrap, ticking fabric — layer diagram with callouts
+  DETAIL G — FULL VERTICAL SECTION BUILD-UP: numbered layers ①–⑩ as a vertical strip cross-section showing the entire sofa/chair height
+  Each detail panel: bold ALL-CAPS title, scale note, dimensions in ${unit || "mm"}, section hatching on cut faces`,
+
+  exploded: `EXPLODED ISOMETRIC DRAWING BOARD — large exploded assembly:
+- ONE very large 3D exploded isometric assembly filling ~80% of the board
+- Parts separated along vertical dotted guide lines with generous spacing
+- ALL parts visible with numbered callout badges ①②③…⑫+ and thin leader lines
+- Left side: callout legend text in small ALL-CAPS for each numbered part
+- Corner (bottom-right): small accurate FRONT ELEVATION with key dimensions
+- Bold title "3D EXPLODED ISOMETRIC ASSEMBLY" at top`,
+
+  ortho: `ORTHOGRAPHIC ELEVATIONS DRAWING BOARD — all projections fully dimensioned:
+- FRONT ELEVATION: full orthographic front view, overall width/height/seat-height dimension lines, section A-A arrows
+- SIDE ELEVATION: full profile, depth and height dimensions
+- BACK ELEVATION: rear view with dimensions
+- TOP PLAN: overhead view, width/depth dimensions, centre lines as dash-dot
+- SECTION A-A: vertical cross-section, interior construction, numbered layer callouts with right-margin legend
+- All dimension lines: closed arrowheads at both ends, numbers in ${unit || "mm"}, overall + sub-dimensions
+- All bold panel titles in ALL CAPS`,
+
+  details: `CONSTRUCTION DETAILS DRAWING BOARD — 9 to 12 enlarged detail drawings:
+- Tidy grid of 9–12 large detail drawings, each in its own thin-bordered sub-panel
+- Every detail: bold ALL-CAPS title (DETAIL A — ARM PROFILE, etc.), 45-degree section hatching on cut faces, dimension lines with closed arrowheads, leader lines to material/component callouts in ALL CAPS
+- Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers with thicknesses), leg mounting hardware, upholstery seam and piping, panel joinery, back cushion fill, full vertical section with numbered layers
+- Each detail must be enlarged enough to read all dimensions clearly`,
 };
 
 function boardPrompt(body: Record<string, unknown>): string {
@@ -182,19 +367,19 @@ function boardPrompt(body: Record<string, unknown>): string {
   const recolour = clip(body.materials, 300);
   const d = spec?.dimensions;
   return [
-    "You are a senior furniture design engineer drawing the DRAWING BOARD of a technical design sheet from the attached photograph.",
-    "Draw the SAME piece of furniture as in the photo: identical silhouette, proportions, upholstery pattern, piping, legs, hardware and materials. Do not invent a different design.",
-    "Output ONE single landscape 16:9 image, edge to edge, with a thin outer border. Spend every pixel on crisp, accurate, well-spaced drawings with generous detail.",
-    STYLES[style],
-    BOARD_TYPES[kind],
-    "IMPORTANT: do NOT draw any title block, bill of materials, parts table, material swatches, specification notes or legend. Those are added separately. Leave the board clean with only drawings, panel titles, callout numbers and dimensions.",
-    `Text rules: upper-case panel titles, small legible labels, correct spelling, dimension values in ${unit}. Dimension lines have arrows and numbers. Never show lorem ipsum or gibberish.`,
+    "You are a senior furniture design engineer at a luxury manufacturer. You are drawing the DRAWINGS SECTION of a professional technical design sheet from the attached photograph of a furniture piece.",
+    "Study the photo carefully. Draw the SAME piece: identical silhouette, proportions, upholstery pattern, fabric texture, piping, leg style, hardware, cushion count and materials. Do NOT invent a different design.",
+    "Output ONE single landscape 16:9 image. The drawings fill the entire image edge-to-edge. Spend every pixel on crisp, accurate, well-spaced, high-quality technical drawings.",
+    "VISUAL STYLE:\n" + STYLES[style],
+    "DRAWING LAYOUT AND CONTENT:\n" + BOARD_TYPES[kind],
+    `CRITICAL — DO NOT INCLUDE: title block, bill of materials table, material swatch grid, specification legend notes. Those are added separately by the browser. Only include drawings, panel titles, dimension lines/numbers, callout badges and leader lines.`,
+    `DIMENSION AND TEXT RULES: ALL CAPS panel titles; small legible dimension text; closed arrowheads on all dimension lines; values in ${unit}; never lorem ipsum or gibberish. The exploded isometric must look 3D and photo-quality.`,
     d && (d.width || d.depth || d.height)
-      ? `Use EXACTLY these overall dimensions in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. Every dimension line must add up to them.`
-      : "",
-    spec?.parts?.length ? `Number the exploded-view callouts to match this parts list (item number: component): ${spec.parts.slice(0, 20).map((p) => `${p.item}: ${clip(p.component, 40)}`).join("; ")}.` : "",
-    recolour ? `Material changes requested by the customer (apply them to every drawing): ${recolour}.` : "",
-    notes ? `Extra instructions from the customer: ${notes}` : "",
+      ? `USE EXACTLY THESE DIMENSIONS in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. All sub-dimensions must sum correctly to these overall values.`
+      : "Use realistic dimensions appropriate for this furniture category (e.g. a standard sofa: width ~2000–2400mm, depth ~900mm, height ~800mm, seat height ~420mm).",
+    spec?.parts?.length ? `Match exploded-view callout numbers to this parts list: ${spec.parts.slice(0, 20).map((p) => `${p.item}: ${clip(p.component, 40)}`).join("; ")}.` : "",
+    recolour ? `MATERIAL CHANGES (apply to every drawing): ${recolour}.` : "",
+    notes ? `CUSTOMER NOTES: ${notes}` : "",
     "No watermarks, no real brand logos, no people.",
   ].filter(Boolean).join("\n\n");
 }
@@ -237,7 +422,7 @@ function imagePrompt(body: Record<string, unknown>): string {
     case "hero":
       return `Create a premium catalogue hero photograph of the piece in the attached photo. ${keep} Seamless warm-white studio background, soft directional light, subtle floor reflection, magazine quality, no props, no text. Output only the image.`;
     case "iso":
-      return `Draw a clean isometric product illustration of the piece in the attached photo. ${keep} Soft flat shading, light background, thin outline, no text. Output only the image.`;
+      return `Draw a high-quality 3D isometric product illustration of the piece in the attached photo. ${keep} Render from a 30-degree isometric viewpoint (front-right elevated), show the piece fully, use soft ambient shading with light from above-right, thin dark outline stroke, clean white or very light grey background, photorealistic material textures on fabric/wood/metal surfaces, no text, no dimension lines. Magazine quality. Output only the image.`;
     case "lineart":
       return `Convert the piece in the attached photo into a precise black-on-white technical line drawing in three-quarter view, suitable for tracing in CAD. ${keep} Uniform thin outlines, no shading, no background, no text. Output only the image.`;
     case "scene": {
