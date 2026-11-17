@@ -5,19 +5,36 @@ import { callFunction } from "@/lib/credits";
 
 export type SheetStyle = "light" | "blueprint" | "mono" | "vintage";
 export type Tier = "quick" | "standard" | "premium";
-export type SheetType = "full" | "exploded" | "ortho" | "details" | "bom";
+export type SheetType = "full" | "exploded" | "ortho" | "details" | "structural" | "manufacturing" | "assembly" | "bom";
 export type OutputKind = "sheet" | "view" | "hero" | "iso" | "lineart" | "scene" | "colorway" | "edit";
 
 export interface Part { item: number; component: string; material: string; finish: string; qty: number | string; notes: string }
-export interface Mat { code: string; name: string; note: string; hex?: string }
+export interface Mat { code: string; name: string; note: string; grade?: string; thickness?: string; finish?: string; colour?: string; application?: string; hex?: string }
+export interface FoamLayer { component: string; layer: string; density?: string; thickness?: string; hardness?: string; qty?: number; notes?: string }
+export interface StructuralComponent { item: number; component: string; material: string; dimensions?: string; qty: number; notes?: string }
+export interface CuttingListItem { partId: string; name: string; length: number; width: number; thickness: number; qty: number; grain?: string; notes?: string }
+export interface CuttingList { materialType: string; components: CuttingListItem[] }
+export interface AssemblyStage { stage: number; title: string; components?: string[]; fasteners?: string; notes?: string }
+export interface QCCheck { checkNo: number; item: string; nominal: string; tolerance: string; criterion: string }
+export interface MetalComponent { item: number; component: string; material: string; thickness?: string; finish?: string; mountingMethod?: string; notes?: string }
 export interface Spec {
   name: string;
   category: string;
   style: string;
   summary: string;
-  dimensions: { width: number; depth: number; height: number; seatHeight: number; unit: string };
+  dimensions: {
+    width: number; depth: number; height: number; seatHeight: number;
+    armHeight?: number; backHeight?: number; seatDepth?: number; baseHeight?: number;
+    unit: string; confidence?: string;
+  };
   parts: Part[];
   materials: Mat[];
+  foamLayers?: FoamLayer[];
+  structuralComponents?: StructuralComponent[];
+  cuttingLists?: CuttingList[];
+  assemblyStages?: AssemblyStage[];
+  qcChecks?: QCCheck[];
+  metalComponents?: MetalComponent[];
   joinery: string[];
   notes: string[];
   cost: { lowINR: number; highINR: number; note: string };
@@ -51,11 +68,14 @@ export const STYLE_OPTIONS: Array<{ id: SheetStyle; name: string; line: string; 
   { id: "vintage", name: "Vintage drafting", line: "Cream paper, brown ink, wash shading", swatch: "bg-sun" },
 ];
 
-export const SHEET_TYPES: Array<{ id: SheetType; name: string; line: string }> = [
+export const SHEET_TYPES: Array<{ id: SheetType; name: string; line: string; badge?: string }> = [
   { id: "full", name: "Full sheet", line: "Everything on one page" },
   { id: "exploded", name: "Exploded view", line: "Big assembly with callouts" },
   { id: "ortho", name: "Views & section", line: "Front, side, back, top, section" },
   { id: "details", name: "Details", line: "Joinery and build-ups" },
+  { id: "structural", name: "Structural frame", line: "Internal skeleton, no upholstery", badge: "New" },
+  { id: "manufacturing", name: "Manufacturing package", line: "Cutting lists, BOM, material specs", badge: "New" },
+  { id: "assembly", name: "Assembly & QC", line: "Build sequence, inspection checklist", badge: "New" },
   { id: "bom", name: "Materials & parts", line: "Schedule, swatches, parts list" },
 ];
 
@@ -170,7 +190,12 @@ export function normaliseSpec(raw: Partial<Spec>): Spec {
       depth: Number(d.depth) || 0,
       height: Number(d.height) || 0,
       seatHeight: Number(d.seatHeight) || 0,
+      armHeight: d.armHeight ? Number(d.armHeight) : undefined,
+      backHeight: d.backHeight ? Number(d.backHeight) : undefined,
+      seatDepth: d.seatDepth ? Number(d.seatDepth) : undefined,
+      baseHeight: d.baseHeight ? Number(d.baseHeight) : undefined,
       unit: "mm",
+      confidence: d.confidence ? String(d.confidence) : "INDICATIVE — estimated from photo; verify before production",
     },
     parts: (raw.parts ?? []).map((p, i) => ({
       item: Number(p.item) || i + 1,
@@ -180,7 +205,70 @@ export function normaliseSpec(raw: Partial<Spec>): Spec {
       qty: p.qty ?? 1,
       notes: String(p.notes ?? ""),
     })),
-    materials: (raw.materials ?? []).map((m, i) => ({ code: String(m.code ?? `M0${i + 1}`), name: String(m.name ?? ""), note: String(m.note ?? ""), hex: /^#[0-9a-f]{6}$/i.test(String(m.hex ?? "")) ? String(m.hex) : undefined })),
+    materials: (raw.materials ?? []).map((m, i) => ({
+      code: String(m.code ?? `M0${i + 1}`),
+      name: String(m.name ?? ""),
+      note: String(m.note ?? ""),
+      grade: m.grade ? String(m.grade) : undefined,
+      thickness: m.thickness ? String(m.thickness) : undefined,
+      finish: m.finish ? String(m.finish) : undefined,
+      colour: m.colour ? String(m.colour) : undefined,
+      application: m.application ? String(m.application) : undefined,
+      hex: /^#[0-9a-f]{6}$/i.test(String(m.hex ?? "")) ? String(m.hex) : undefined,
+    })),
+    foamLayers: raw.foamLayers?.map((f) => ({
+      component: String(f.component ?? ""),
+      layer: String(f.layer ?? ""),
+      density: f.density ? String(f.density) : undefined,
+      thickness: f.thickness ? String(f.thickness) : undefined,
+      hardness: f.hardness ? String(f.hardness) : undefined,
+      qty: f.qty ? Number(f.qty) : undefined,
+      notes: f.notes ? String(f.notes) : undefined,
+    })),
+    structuralComponents: raw.structuralComponents?.map((s, i) => ({
+      item: Number(s.item) || i + 1,
+      component: String(s.component ?? ""),
+      material: String(s.material ?? ""),
+      dimensions: s.dimensions ? String(s.dimensions) : undefined,
+      qty: Number(s.qty) || 1,
+      notes: s.notes ? String(s.notes) : undefined,
+    })),
+    cuttingLists: raw.cuttingLists?.map((cl) => ({
+      materialType: String(cl.materialType ?? ""),
+      components: (cl.components ?? []).map((c) => ({
+        partId: String(c.partId ?? ""),
+        name: String(c.name ?? ""),
+        length: Number(c.length) || 0,
+        width: Number(c.width) || 0,
+        thickness: Number(c.thickness) || 0,
+        qty: Number(c.qty) || 1,
+        grain: c.grain ? String(c.grain) : undefined,
+        notes: c.notes ? String(c.notes) : undefined,
+      })),
+    })),
+    assemblyStages: raw.assemblyStages?.map((a, i) => ({
+      stage: Number(a.stage) || i + 1,
+      title: String(a.title ?? ""),
+      components: (a.components ?? []).map(String),
+      fasteners: a.fasteners ? String(a.fasteners) : undefined,
+      notes: a.notes ? String(a.notes) : undefined,
+    })),
+    qcChecks: raw.qcChecks?.map((q, i) => ({
+      checkNo: Number(q.checkNo) || i + 1,
+      item: String(q.item ?? ""),
+      nominal: String(q.nominal ?? ""),
+      tolerance: String(q.tolerance ?? ""),
+      criterion: String(q.criterion ?? ""),
+    })),
+    metalComponents: raw.metalComponents?.map((mc, i) => ({
+      item: Number(mc.item) || i + 1,
+      component: String(mc.component ?? ""),
+      material: String(mc.material ?? ""),
+      thickness: mc.thickness ? String(mc.thickness) : undefined,
+      finish: mc.finish ? String(mc.finish) : undefined,
+      mountingMethod: mc.mountingMethod ? String(mc.mountingMethod) : undefined,
+      notes: mc.notes ? String(mc.notes) : undefined,
+    })),
     joinery: (raw.joinery ?? []).map(String),
     notes: (raw.notes ?? []).map(String),
     cost: { lowINR: Number(raw.cost?.lowINR) || 0, highINR: Number(raw.cost?.highINR) || 0, note: String(raw.cost?.note ?? "") },
@@ -193,8 +281,23 @@ export function normaliseSpec(raw: Partial<Spec>): Spec {
 export function convertDims(spec: Spec, to: "mm" | "in"): Spec {
   const f = to === "in" ? 1 / 25.4 : 25.4;
   const r = (v: number) => (to === "in" ? Math.round(v * f * 10) / 10 : Math.round(v * f));
+  const rOpt = (v: number | undefined) => v != null ? r(v) : undefined;
   const d = spec.dimensions;
-  return { ...spec, dimensions: { ...d, width: r(d.width), depth: r(d.depth), height: r(d.height), seatHeight: r(d.seatHeight), unit: to } };
+  return {
+    ...spec,
+    dimensions: {
+      ...d,
+      width: r(d.width),
+      depth: r(d.depth),
+      height: r(d.height),
+      seatHeight: r(d.seatHeight),
+      armHeight: rOpt(d.armHeight),
+      backHeight: rOpt(d.backHeight),
+      seatDepth: rOpt(d.seatDepth),
+      baseHeight: rOpt(d.baseHeight),
+      unit: to,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

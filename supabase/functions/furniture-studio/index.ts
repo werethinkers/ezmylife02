@@ -1,10 +1,12 @@
 // Furniture Sheets studio: photo of a piece of furniture in, Gemini out.
 //
-//   action "analyze"  reads the photo and returns a structured spec (name, size, parts, materials, finishes,
-//                     joinery, an indicative cost) as JSON.              charged as furniture-analyze
+//   action "analyze"  reads the photo and returns a structured spec (name, size, parts, materials,
+//                     joinery, foam build-up, cutting lists, QC fields, etc.) as JSON.
+//                     charged as furniture-analyze
 //   action "sheet"    draws the technical design sheet. By default (hybrid) Gemini draws only the DRAWINGS
-//                     (exploded view, elevations, plan, section, details) on a wide board; the browser then adds
-//                     the parts list, materials, notes and title block as exact text. Three quality tiers.
+//                     (exploded view, elevations, plan, section, details) on a wide board; the browser then
+//                     adds the parts list, materials, notes and title block as exact text. Three quality tiers.
+//                     Six sheet types: full | exploded | ortho | details | structural | manufacturing | assembly | bom
 //                     charged as furniture-sheet-quick / furniture-sheet / furniture-sheet-pro
 //   action "image"    one picture: product view, catalogue shot, isometric, line drawing, room scene,
 //                     colourway or a free edit.                           charged as furniture-image
@@ -104,7 +106,7 @@ const SHEET_TYPES: Opt = {
 
 TOP ROW (spanning full width from left to right):
   Panel 1 — 3D EXPLODED ISOMETRIC ASSEMBLY (largest panel, top-left, ~38% of sheet width):
-    • Full 3D photorealistic/near-photorealistic render of the furniture piece from the photo
+    • Full 3D photorealistic/near-photorealistic render of the actual furniture piece from the photo
     • Explode all parts vertically along a central axis with dotted guideline between parts
     • Every part gets a numbered callout badge: ①②③④⑤⑥⑦⑧⑨⑩ (at least 8 parts)
     • Leader lines from each badge to the part
@@ -129,7 +131,7 @@ MIDDLE ROW:
   Panel 5 — SECTION A-A (mid-right, ~40% width):
     • Full vertical cross-section through the piece at cut-line A-A from the front elevation
     • Interior construction clearly visible: foam layers, frame, webbing, back panel
-    • Numbered layer callouts (①②③…) keyed to a right-margin legend listing each layer: e.g. "① TOP FABRIC / UPHOLSTERY", "② TOP FOAM (40mm)", "③ FIBER WRAP", "④ PLYWOOD PANEL", "⑤ SOLID WOOD FRAME"
+    • Numbered layer callouts (①②③…) keyed to a right-margin legend listing each layer
     • Label "SECTION A-A"
 
 BOTTOM ROW:
@@ -150,7 +152,7 @@ BOTTOM ROW:
     Columns: ITEM NO. | COMPONENT | MATERIAL | FINISH | QTY | NOTES
     8–12 rows, e.g.: 1 Frame Assembly, 2 Seat Platform Board, 3 Webbing Suspension, 4 Seat Cushion, 5 Back Cushion, 6 Arm Panels, 7 Back Panel, 8 Leg, 9 Piping Cord, 10 Upholstery Cover
   Panel 9 — SPECIFICATION LEGEND (below section, left-aligned notes):
-    "• ALL DIMENSIONS INDICATIVE; VERIFY PRIOR TO PRODUCTION."
+    "• ALL DIMENSIONS INDICATIVE — VERIFY PRIOR TO PRODUCTION."
     "• SEAT HEIGHT 400–440mm AFF."
     "• ALL UPHOLSTERED SURFACES SEAMLESS AT VISIBLE FACES."
     Plus 2–3 piece-specific notes
@@ -173,7 +175,7 @@ BOTTOM ROW:
 - Label "3D EXPLODED ISOMETRIC ASSEMBLY" prominently at top`,
 
   ortho: `ORTHOGRAPHIC ELEVATIONS SHEET — all elevations and section, fully dimensioned:
-- FRONT ELEVATION: full-width front view, all exterior dimensions (overall width, height, seat height, arm height), section cut A-A
+- FRONT ELEVATION: full-width front view, all exterior dimensions (overall width, height, seat height, arm height), section cut A-A arrows
 - SIDE ELEVATION: full profile, depth and height dimensions
 - BACK ELEVATION: rear view with dimensions
 - TOP PLAN: overhead view, width and depth, centre lines as dash-dot
@@ -188,6 +190,65 @@ BOTTOM ROW:
 - Include all relevant details for the piece: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers), leg mounting hardware, upholstery seam and piping, panel joinery (dowel/screw/bracket), back panel fill and ticking, full vertical section with numbered layers
 - MATERIAL & FINISH SCHEDULE (8 swatches M01–M08) in one column
 - TITLE BLOCK bottom-right`,
+
+  structural: `STRUCTURAL ENGINEERING SHEET — internal frame and support structure without upholstery:
+- TOP ZONE: large 3D isometric "X-ray" or transparent view showing only the internal frame and structure
+  • Main wooden frame members shown as solid structural sections
+  • Plywood panels shown hatched
+  • Steel brackets and metal hardware shown solid
+  • All components clearly separated and visible
+  • Numbered callout badges for each structural element (①②③…), no text labels — browser overlays them
+- MIDDLE ZONE: FRONT STRUCTURAL ELEVATION and SIDE STRUCTURAL ELEVATION side by side
+  • Both views show ONLY the structural skeleton, no upholstery
+  • Dimension lines with closed arrowheads (leave value gaps blank), extension lines
+  • Centre lines as dash-dot
+  • Section cut arrows for Section B-B
+- BOTTOM ZONE: SECTION B-B cross-section through the structural core
+  • Show only the frame, platform and hardware layers
+  • Numbered callout badges for each structural layer (①②③…)
+  • Dimension arrowheads with blank value gaps
+- NO text labels or dimension values anywhere — browser overlays all text
+- TITLE BLOCK bottom-right`,
+
+  manufacturing: `MANUFACTURING PACKAGE SHEET — cutting lists, material schedules, detailed BOM:
+- TOP ZONE (top 40%):
+  LEFT — large 3D isometric of the complete assembled piece (photorealistic), ~40% width
+  RIGHT — CUTTING LIST tables (one per material type: PLYWOOD | SOLID WOOD | METAL | FOAM):
+    Each table: columns PART ID | COMPONENT | L | W | T/THICKNESS | QTY | NOTES
+    Show at least 4 rows per material type, fill with realistic component dimensions
+    Label each table in bold ALL CAPS
+- MIDDLE ZONE (30%): MATERIAL & FINISH SCHEDULE
+  2 rows × 4 swatches (M01–M08), each swatch a large realistic texture square, code + full name + grade below
+  For each material: grade, thickness/density, finish, colour
+- BOTTOM ZONE (30%): full-width DETAILED BOM table
+  All columns: ITEM NO. | COMPONENT ID | COMPONENT NAME | MATERIAL CODE | RAW MATERIAL | LENGTH | WIDTH | THICKNESS | QTY | FINISH | PROCESS | DRAWING REF | NOTES
+  At least 10–12 rows, all filled with realistic values, NO truncation
+  TITLE BLOCK bottom-right`,
+
+  assembly: `ASSEMBLY & QUALITY CONTROL SHEET — build sequence, inspection and testing:
+- TOP ZONE (top 45%):
+  LEFT — ASSEMBLY SEQUENCE (numbered stages diagram):
+    Large numbered step diagram showing the construction order:
+    STAGE 1: BASE FRAME ASSEMBLY — components, fasteners used
+    STAGE 2: SUSPENSION INSTALLATION — webbing, springs
+    STAGE 3: SEAT DECK INSTALLATION
+    STAGE 4: FRAME UPHOLSTERY — foam, dacron, fabric attachment
+    STAGE 5: BACKREST ASSEMBLY AND ATTACHMENT
+    STAGE 6: ARM / DETAIL ELEMENT INSTALLATION
+    STAGE 7: BASE AND HARDWARE INSTALLATION
+    STAGE 8: FINAL UPHOLSTERY AND FINISHING
+    Each stage: numbered box with arrows showing direction of assembly
+  RIGHT — FASTENER AND HARDWARE SCHEDULE table:
+    Columns: ID | DESCRIPTION | MATERIAL | SIZE | QTY | LOCATION
+    At least 8 rows with realistic fastener specs (screws, bolts, brackets, glides)
+- BOTTOM ZONE (55%): QUALITY CONTROL AND INSPECTION CHECKLIST
+  Large table with columns: CHECK NO. | INSPECTION ITEM | NOMINAL DIMENSION | TOLERANCE | PASS CRITERION | REMARKS
+  Rows covering: overall width, depth, height, seat height, joint strength, foam density confirmation,
+  upholstery tension, surface finish, hardware function, structural stability, leg levelness
+  Show PASS/FAIL column, target values, tolerance values (±5mm for major dims, ±2mm for details)
+  Label clearly "DIMENSIONAL INSPECTION RECORD — MARK ACTUAL AS MEASURED"
+  Add note: "DO NOT CERTIFY UNTIL ALL CHECKS PASSED AND SIGNED OFF"
+  TITLE BLOCK bottom-right`,
 
   bom: `PRODUCTION DATA SHEET — materials, BOM and specification focus:
 - Large 3D isometric thumbnail of the complete (non-exploded) piece (top-left, ~30% width)
@@ -214,6 +275,12 @@ interface Spec {
   parts?: Array<{ item?: number; component?: string; material?: string; finish?: string; qty?: number | string; notes?: string }>;
   materials?: Array<{ code?: string; name?: string; note?: string }>;
   notes?: string[];
+  foamLayers?: Array<{ component?: string; layer?: string; density?: string; thickness?: string; hardness?: string }>;
+  cuttingLists?: Array<{ materialType?: string; components?: Array<{ partId?: string; name?: string; length?: number; width?: number; thickness?: number; qty?: number; notes?: string }> }>;
+  structuralComponents?: Array<{ item?: number; component?: string; material?: string; dimensions?: string; qty?: number; notes?: string }>;
+  assemblyStages?: Array<{ stage?: number; title?: string; components?: string[]; fasteners?: string; notes?: string }>;
+  qcChecks?: Array<{ checkNo?: number; item?: string; nominal?: string; tolerance?: string; criterion?: string }>;
+  metalComponents?: Array<{ item?: number; component?: string; material?: string; thickness?: string; finish?: string; notes?: string }>;
 }
 
 const clip = (v: unknown, n = 80) => String(v ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, n);
@@ -238,7 +305,7 @@ function specBlock(spec: Spec | undefined, unit: string): string {
   if (spec.name) out.push(`The piece is: ${clip(spec.name, 100)}${spec.category ? ` (${clip(spec.category, 40)})` : ""}.`);
   const d = spec.dimensions;
   if (d && (d.width || d.depth || d.height)) {
-    out.push(`Use EXACTLY these overall dimensions in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. Make every dimension line add up to them.`);
+    out.push(`Use EXACTLY these overall dimensions in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. Make every dimension line add up to them. All orthographic views MUST show the same geometry.`);
   }
   if (spec.parts?.length) {
     out.push("Use EXACTLY this parts schedule / bill of materials (same item numbers, names, materials, finishes, quantities):");
@@ -269,6 +336,7 @@ function sheetPrompt(body: Record<string, unknown>): string {
     "You are a senior furniture design engineer at a luxury manufacturer. You produce MANUFACTURER-READY TECHNICAL DESIGN SHEETS that are used directly on the factory floor.",
     "Study the attached photograph carefully. Draw the SAME piece of furniture: identical silhouette, proportions, upholstery pattern, fabric texture, piping/welting, legs, hardware, cushion count and materials. Do NOT invent a different design.",
     "Output ONE single landscape image (aspect ratio 3:2, e.g. 3000×2000 px) of the finished drawing sheet. The sheet fills the entire image edge-to-edge with a thin outer border. Every panel is neatly aligned in a grid with thin panel borders. The result must look indistinguishable from a real professional furniture manufacturer's production drawing package.",
+    "DIMENSIONAL CONSISTENCY RULE: All orthographic views (front, side, back, top, section) must show EXACTLY the same piece at EXACTLY the same geometry. The front elevation width must equal the top plan width. The side elevation depth must equal the top plan depth. Every sub-dimension must add up to its overall. If you are not certain of a value from the photo, write 'INDICATIVE / TO BE VERIFIED' next to it — never present an estimate as a verified manufacturing dimension.",
     "VISUAL STYLE TO APPLY:\n" + STYLES[style],
     "SHEET CONTENT AND PANEL LAYOUT:\n" + SHEET_TYPES[kind],
     `TEXT AND DIMENSION RULES:
@@ -277,7 +345,8 @@ function sheetPrompt(body: Record<string, unknown>): string {
 - All dimensions in ${unit} — use realistic values appropriate for the furniture category
 - Dimension lines: show both overall dimensions AND sub-dimensions (e.g. three equal seat bay widths that sum to overall width)
 - Section callout numbers on the cross-section use circled numerals ①②③ with a right-margin legend
-- No lorem ipsum, no placeholder text, no gibberish — all text must be real and meaningful`,
+- No lorem ipsum, no placeholder text, no gibberish — all text must be real and meaningful
+- Mark all AI-estimated dimensions with "(INDICATIVE)" — never present them as verified measurements`,
     specBlock(spec, unit),
     recolour ? `MATERIAL CHANGES (apply to every drawing, swatch and BOM table): ${recolour}.` : "",
     notes ? `CUSTOMER NOTES: ${notes}` : "",
@@ -300,23 +369,23 @@ TOP ZONE (top 55% of board, full width):
     • Thin leader lines from each badge to its part — NO accompanying text, the browser overlays labels
     • Bold panel title "3D EXPLODED ISOMETRIC ASSEMBLY" at top-left
   CENTRE — FRONT ELEVATION (~28% width):
-    • Accurate orthographic front projection of the piece
+    • Accurate orthographic front projection of the piece — SAME geometry as TOP PLAN width
     • Dimension lines: closed arrowheads at both ends, extension lines — LEAVE dimension value blank (draw the line and arrowhead only)
     • Section cut arrow pair "A ← →A" with arrows showing cut location
     • Bold panel title "FRONT ELEVATION"
   RIGHT — SIDE ELEVATION (~28% width):
-    • Accurate orthographic side/profile projection
+    • Accurate orthographic side/profile projection — SAME depth as TOP PLAN depth
     • Dimension lines with closed arrowheads — LEAVE values blank, browser overlays them
     • Bold panel title "SIDE ELEVATION"
 
 MIDDLE ZONE (next 15% of board):
   LEFT — TOP PLAN (~32% width):
-    • True orthographic overhead view
+    • True orthographic overhead view — width MUST match FRONT ELEVATION width; depth MUST match SIDE ELEVATION depth
     • Dimension lines with arrowheads — values left blank
     • Centre lines as dash-dot lines
     • Bold panel title "TOP PLAN"
   RIGHT — SECTION A-A (~62% width):
-    • Full vertical cross-section at the A-A cut line from front elevation
+    • Full vertical cross-section at the A-A cut line from front elevation — interior must match the construction described in the spec
     • Interior construction clearly visible: upholstery fabric, foam layers, dacron wrap, back panel, solid wood frame, webbing suspension, seat platform, leg
     • Numbered layer callouts ①②③④⑤⑥⑦⑧ with leader lines to layers — NO text labels next to them, browser overlays the legend
     • Bold panel title "SECTION A-A"
@@ -342,18 +411,83 @@ BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
 
   ortho: `ORTHOGRAPHIC ELEVATIONS DRAWING BOARD — clean geometry with dimension lines, NO dimension values:
 - FRONT ELEVATION: full orthographic front view, dimension lines with closed arrowheads (leave the value gap blank), section A-A arrows
-- SIDE ELEVATION: full profile, dimension lines with arrowheads (blank values)
+- SIDE ELEVATION: full profile, dimension lines with arrowheads (blank values) — depth shown MUST equal the top plan depth
 - BACK ELEVATION: rear view with dimension arrowheads
-- TOP PLAN: overhead view, dimension arrowheads, centre lines as dash-dot
+- TOP PLAN: overhead view, dimension arrowheads, centre lines as dash-dot — width shown MUST equal the front elevation width
 - SECTION A-A: vertical cross-section, interior construction, numbered layer callouts ①②③… with leader lines (NO right-margin legend text — browser overlays it)
+- GEOMETRIC CONSISTENCY: All four views show the SAME piece. Front elevation width = top plan width. Side elevation depth = top plan depth. No view may show different proportions from another.
 - All dimension lines: closed arrowheads at both ends, extension lines, value gap left blank
 - All bold panel titles in ALL CAPS`,
 
   details: `CONSTRUCTION DETAILS DRAWING BOARD — 9 to 12 enlarged detail drawings (geometry and hatching only):
 - Tidy grid of 9–12 large detail drawings, each in its own thin-bordered sub-panel
 - Every detail: bold ALL-CAPS title (DETAIL A — ARM PROFILE, etc.), 45-degree section hatching on cut faces, dimension arrowheads with blank value gaps, numbered callout badges ①②③ with leader lines but NO text labels (browser overlays them)
-- Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up layers, leg mounting hardware, upholstery seam and piping, panel joinery, back cushion fill, full vertical section with numbered layers
-- Each detail enlarged enough to read all geometry clearly — NO text crammed in tight spaces`,
+- Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up layers (show ALL foam/dacron/fabric layers), leg mounting hardware, upholstery seam and piping, panel joinery (dowel/bolt/bracket), back cushion fill, full vertical section with numbered layers
+- Each detail enlarged enough to read all geometry clearly — NO text crammed in tight spaces
+- Each detail should be a separate close-up at a larger scale than the main elevations`,
+
+  structural: `STRUCTURAL FRAME DRAWING BOARD — internal skeleton only, no upholstery (geometry only, NO text labels):
+- TOP ZONE (top 50%): large 3D isometric of the furniture piece WITHOUT upholstery — show only the internal structural frame
+  • Wooden frame members shown as solid rectangular sections with correct joinery
+  • Plywood panels shown with 45-degree cross-hatching
+  • Steel brackets and metal hardware shown as solid shapes
+  • Parts floated apart slightly (semi-exploded) to show all structural connections
+  • Numbered callout badges ①②③…⑩ for each structural element — NO text, browser overlays
+  • Bold panel title "STRUCTURAL FRAME ASSEMBLY — WITHOUT UPHOLSTERY"
+- MIDDLE ZONE (25%): FRONT STRUCTURAL ELEVATION and SIDE STRUCTURAL ELEVATION side by side
+  • Show only the structural skeleton: main frame members, brackets, leg positions
+  • Dimension lines with closed arrowheads (blank value gaps)
+  • Section cut arrows for Section B-B
+  • Bold panel titles "FRONT STRUCTURAL ELEVATION" and "SIDE STRUCTURAL ELEVATION"
+- BOTTOM ZONE (25%): SECTION B-B through the structural core
+  • Show only frame, platform, brackets, hardware — no foam or upholstery
+  • Numbered callout badges ①②③ for each structural layer
+  • 45-degree section hatching on cut faces of solid wood and plywood
+  • Dimension arrowheads with blank value gaps
+  • Bold panel title "SECTION B-B — STRUCTURAL CORE"`,
+
+  manufacturing: `MANUFACTURING PACKAGE DRAWING BOARD — parts data focus (geometry + tables, NO text overlays needed for tables):
+- TOP ZONE (top 45%):
+  LEFT (~40% width): Large 3D isometric of the complete assembled piece from the photo
+    • Photorealistic render showing all materials, textures and hardware
+    • Small numbered callout badges ①②③ for key components
+    • Bold title "PRODUCT ISOMETRIC"
+  RIGHT (~55% width): CUTTING SCHEDULE tables — draw 4 small tables side by side:
+    TABLE 1: PLYWOOD CUTTING LIST — columns: PART ID | LENGTH | WIDTH | THKNS | QTY
+    TABLE 2: SOLID WOOD CUTTING LIST — same columns
+    TABLE 3: FOAM CUTTING LIST — PART ID | LENGTH | WIDTH | HEIGHT | DENSITY | QTY
+    TABLE 4: METAL CUTTING LIST — PART ID | LENGTH | WIDTH | THKNS | GRADE | QTY
+    Fill each table with 4–6 rows of realistic component dimensions based on the furniture spec
+    Use thin-rule table borders, light grey alternate row fills, dark header rows
+- MIDDLE ZONE (10%): MATERIAL SPECIFICATION HEADER BAND
+  A single row of 8 material swatch squares (M01–M08), each with code and name
+- BOTTOM ZONE (45%): DETAILED BILL OF MATERIALS table spanning full width
+  Columns: NO | COMPONENT ID | COMPONENT NAME | MAT CODE | RAW MATERIAL | L | W | T | QTY | FINISH | PROCESS | REF
+  At least 12 rows with realistic component names and dimensions — NO truncation
+  Light grey alternate rows, dark header
+  Bold label "ASSEMBLY BILL OF MATERIALS" above the table`,
+
+  assembly: `ASSEMBLY & QUALITY CONTROL DRAWING BOARD — process and inspection (geometry and diagrams, NO text overlays needed):
+- TOP ZONE (top 50%):
+  LEFT (~55% width): ASSEMBLY SEQUENCE DIAGRAM
+    • 8 numbered assembly stage boxes arranged in a flow chart with arrows
+    • Each stage box: stage number in a circle, bold ALL-CAPS title, small diagram showing what gets assembled
+    • STAGE 1: BASE FRAME ASSEMBLY; STAGE 2: SUSPENSION INSTALLATION; STAGE 3: SEAT DECK;
+      STAGE 4: SEAT FOAM & DACRON; STAGE 5: BACKREST ASSEMBLY; STAGE 6: ARM / SPECIAL ELEMENTS;
+      STAGE 7: BASE & HARDWARE; STAGE 8: FINAL UPHOLSTERY
+    • Arrows between stages showing sequence direction
+    • Bold label "ASSEMBLY SEQUENCE — 8 STAGES" at top
+  RIGHT (~40% width): FASTENER & HARDWARE SCHEDULE table
+    • Columns: ID | DESCRIPTION | MATERIAL | SIZE | QTY | LOCATION
+    • 8–10 rows with realistic fastener specs (pocket screws, lag bolts, steel brackets, nylon glides, etc.)
+    • Bold label "FASTENER & HARDWARE SCHEDULE" at top
+- BOTTOM ZONE (50%): QUALITY CONTROL INSPECTION RECORD
+  • Full-width table with columns: CHECK NO. | INSPECTION ITEM | NOMINAL | TOLERANCE | CRITERION | ACTUAL | PASS/FAIL
+  • At least 12 rows covering dimensional, structural, upholstery, hardware and finish checks
+  • Include realistic tolerance values: ±5mm for major dimensions, ±2mm for details, foam density ±2 kg/m3
+  • Leave ACTUAL and PASS/FAIL columns blank (they are for factory use)
+  • Add underline row at bottom: "INSPECTOR SIGNATURE: ____________ DATE: ____________ APPROVED: ____________"
+  • Bold label "DIMENSIONAL & QUALITY INSPECTION RECORD" at top`,
 
   bom: `BILL OF MATERIALS DRAWING BOARD — parts-focused technical overview (geometry only, NO text labels):
 TOP ZONE (top 50% of board):
@@ -392,11 +526,17 @@ function boardPrompt(body: Record<string, unknown>): string {
     "VISUAL STYLE:\n" + STYLES[style],
     "DRAWING LAYOUT AND CONTENT:\n" + BOARD_TYPES[kind],
     `CRITICAL — TEXT-FREE DRAWING ZONE. The browser renders ALL text. You must NOT include any of these in the drawing image: title block, bill of materials table, material swatch grid, specification legend notes, dimension values/numbers (e.g. "2100mm", "420"), part name text labels, material callout text, finish text, or any written words inside the drawing area. The ONLY text permitted is: numbered callout badge numerals (①②③…), ALL-CAPS panel section headings (e.g. "FRONT ELEVATION"), and the main drawing title if it fits cleanly in a header strip.`,
-    `DRAWING GEOMETRY RULES: Draw all dimension lines WITH closed arrowheads and extension lines but leave the value blank (a short dash "—" if needed). Draw callout leader lines ending in numbered circles (①②…) with NO accompanying text label. The browser will overlay all dimension values and legend text as crisp vector text. Focus all effort on accurate, beautiful geometry. The exploded isometric must look 3D and photo-quality.`,
+    `DRAWING GEOMETRY RULES:
+- Draw all dimension lines WITH closed arrowheads and extension lines but leave the value blank (a short dash "—" if needed).
+- Draw callout leader lines ending in numbered circles (①②…) with NO accompanying text label. The browser will overlay all dimension values and legend text as crisp vector text.
+- GEOMETRIC CONSISTENCY RULE: All orthographic views must represent the same piece at the same scale. Front elevation width MUST visually match top plan width. Side elevation depth MUST visually match top plan depth. Never make the front view appear wider or narrower than the top plan shows from above.
+- Focus all effort on accurate, beautiful geometry. The exploded isometric must look 3D and photo-quality.`,
     d && (d.width || d.depth || d.height)
-      ? `USE EXACTLY THESE DIMENSIONS in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. All sub-dimensions must sum correctly to these overall values.`
-      : "Use realistic dimensions appropriate for this furniture category (e.g. a standard sofa: width ~2000–2400mm, depth ~900mm, height ~800mm, seat height ~420mm).",
+      ? `USE EXACTLY THESE PROPORTIONS in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. All sub-dimensions must sum correctly to these overall values. These are the SINGLE SOURCE OF TRUTH for all views.`
+      : "Use realistic dimensions appropriate for this furniture category (e.g. a standard sofa: width ~2000–2400mm, depth ~900mm, height ~800mm, seat height ~420mm). Use these SAME dimensions for EVERY view consistently.",
     spec?.parts?.length ? `The exploded view must have exactly ${Math.min(spec.parts.length, 20)} numbered callout badges (①②…). Number them ${spec.parts.slice(0, 20).map((p) => p.item).join(", ")} — the browser overlays the part names. Do NOT write part names in the image.` : "",
+    spec?.foamLayers?.length ? `Foam/upholstery layer build-up for the cross-section (use these layers in Section A-A from outside to inside): ${spec.foamLayers.slice(0, 8).map((fl, i) => `${i + 1}. ${clip(fl.layer, 40)}${fl.thickness ? ` (${clip(fl.thickness, 20)})` : ""}`).join("; ")}` : "",
+    spec?.structuralComponents?.length && (kind === "structural") ? `Structural components to show in this structural frame view: ${spec.structuralComponents.slice(0, 15).map((sc) => `${sc.item}. ${clip(sc.component, 40)} | ${clip(sc.material, 30)}`).join("; ")}` : "",
     recolour ? `MATERIAL CHANGES (apply to every drawing): ${recolour}.` : "",
     notes ? `CUSTOMER NOTES: ${notes}` : "",
     "No watermarks, no real brand logos, no people.",
@@ -458,25 +598,136 @@ function imagePrompt(body: Record<string, unknown>): string {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Analysis
+// Analysis — rich structured spec extraction
 // ---------------------------------------------------------------------------------------------
 
-const ANALYZE_PROMPT = `You are a furniture design engineer. Study the attached photo of a piece of furniture (or interior trim) and reply with ONE JSON object only, no prose, in exactly this shape:
+const ANALYZE_PROMPT = `You are a senior furniture design engineer at a luxury manufacturer. Study the attached photo of a piece of furniture and reply with ONE JSON object only, no prose, no markdown fences. Use this exact shape:
+
 {
-  "name": "short product name, e.g. 3-Seater Curved Bouclé Sofa",
-  "category": "sofa | chair | armchair | bench | table | bed | cabinet | shelf | lighting | trim | other",
+  "name": "short product name e.g. 3-Seater Curved Bouclé Sofa",
+  "category": "sofa | chair | armchair | bench | table | bed | cabinet | shelf | lighting | other",
   "style": "design style in a few words",
   "summary": "two plain sentences describing the piece",
-  "dimensions": { "width": 0, "depth": 0, "height": 0, "seatHeight": 0, "unit": "mm" },
-  "parts": [ { "item": 1, "component": "", "material": "", "finish": "", "qty": 1, "notes": "" } ],
-  "materials": [ { "code": "M01", "name": "", "note": "", "hex": "#RRGGBB approximate colour of the material" } ],
+  "dimensions": {
+    "width": 0,
+    "depth": 0,
+    "height": 0,
+    "seatHeight": 0,
+    "armHeight": 0,
+    "backHeight": 0,
+    "seatDepth": 0,
+    "baseHeight": 0,
+    "unit": "mm",
+    "confidence": "INDICATIVE — estimated from photo perspective; verify before production"
+  },
+  "parts": [
+    {
+      "item": 1,
+      "component": "component name",
+      "material": "material description",
+      "finish": "finish description",
+      "qty": 1,
+      "notes": "construction notes"
+    }
+  ],
+  "materials": [
+    {
+      "code": "M01",
+      "name": "material name",
+      "grade": "grade or specification",
+      "thickness": "thickness or density",
+      "finish": "finish description",
+      "colour": "colour name",
+      "application": "where used on the piece",
+      "note": "additional technical note",
+      "hex": "#RRGGBB approximate colour hex"
+    }
+  ],
+  "foamLayers": [
+    {
+      "component": "which part e.g. SEAT CUSHION",
+      "layer": "layer description e.g. TOP FABRIC",
+      "density": "density in kg/m3 if foam",
+      "thickness": "thickness in mm",
+      "hardness": "ILD if applicable",
+      "qty": 1,
+      "notes": "shape or attachment notes"
+    }
+  ],
+  "structuralComponents": [
+    {
+      "item": 1,
+      "component": "structural component name",
+      "material": "material",
+      "dimensions": "L x W x T in mm e.g. 2600 x 80 x 50mm",
+      "qty": 1,
+      "notes": "where it is and what it does"
+    }
+  ],
+  "cuttingLists": [
+    {
+      "materialType": "PLYWOOD | SOLID WOOD | METAL | FOAM | FABRIC",
+      "components": [
+        {
+          "partId": "PW-01",
+          "name": "component name",
+          "length": 0,
+          "width": 0,
+          "thickness": 0,
+          "qty": 1,
+          "grain": "along length | across width | n/a",
+          "notes": "edge treatment or CNC notes"
+        }
+      ]
+    }
+  ],
+  "assemblyStages": [
+    {
+      "stage": 1,
+      "title": "STAGE TITLE IN CAPS",
+      "components": ["list of component names used in this stage"],
+      "fasteners": "fasteners used e.g. 4x M8 hex bolts, 12x pocket screws",
+      "notes": "assembly direction and method"
+    }
+  ],
+  "qcChecks": [
+    {
+      "checkNo": 1,
+      "item": "inspection item e.g. OVERALL WIDTH",
+      "nominal": "target value e.g. 2600mm",
+      "tolerance": "e.g. ±5mm",
+      "criterion": "pass criterion e.g. 2595–2605mm"
+    }
+  ],
+  "metalComponents": [
+    {
+      "item": 1,
+      "component": "metal component name",
+      "material": "steel grade / alloy",
+      "thickness": "sheet thickness in mm",
+      "finish": "surface finish",
+      "mountingMethod": "how it attaches to the main structure",
+      "notes": "load path and fabrication notes"
+    }
+  ],
   "joinery": ["how the main parts are joined, one line each"],
   "notes": ["specification legend lines: tolerances, foam density, finishing, assembly"],
   "cost": { "lowINR": 0, "highINR": 0, "note": "indicative workshop cost in India for one piece" },
   "careNotes": ["short care tips"],
   "tags": ["search keywords"]
 }
-Rules: dimensions are realistic millimetres for this kind of piece (seatHeight 0 if none). Give 8 to 14 parts in build order from top to bottom and 6 to 8 materials. Be honest that every number is an estimate from one photo. Never invent brand names.`;
+
+RULES:
+- dimensions: estimate from photographic proportion and standard ergonomic ranges for this furniture type. seatHeight is floor to top of uncompressed seat cushion. backHeight is floor to top of backrest. Measure ALL seven dimension fields. Mark every value with "confidence": "INDICATIVE — estimated from photo; verify before production."
+- parts: 8 to 14 components in construction build order (bottom-to-top / inside-out). Include both visible and inferred internal components (frame, webbing, foam layers). Give realistic quantities.
+- materials: 6 to 10 entries. For each: grade (e.g. "18mm Birch Plywood BB/CC grade"), thickness/density (e.g. "35 kg/m3"), finish, colour, where used. Mark proposed specs as "PROPOSED — verify with supplier".
+- foamLayers: list every foam and upholstery layer for each major upholstered section (seat, backrest, arms if present) from outside-in: outer fabric → dacron wrap → soft foam → hr foam → structural base. Include thickness and density for each foam layer.
+- structuralComponents: list 6–10 major structural members with their approximate dimensions from your analysis of the photo and the overall dimensions.
+- cuttingLists: generate plywood, solid wood, foam, and (if metal is present) metal cutting lists based on the structural components and dimensions. Each item should have realistic dimensions that sum correctly to the overall piece.
+- assemblyStages: 6–8 logical build stages in factory assembly order.
+- qcChecks: 10–12 inspection items covering dimensional, structural, upholstery and hardware checks.
+- metalComponents: list only if the piece has integrated metal elements (trays, brackets, frames, legs). Include mounting method and load path.
+- Never invent brand names or certified test data. Mark all estimates clearly.`;
 
 function cleanImage(v: unknown): string | null {
   return typeof v === "string" && /^data:image\/(png|jpe?g|webp|heic|heif);base64,/.test(v) && v.length < MAX_IMAGE_CHARS ? v : null;
@@ -512,7 +763,7 @@ Deno.serve(
       try {
         if (action === "analyze") {
           const content: Part[] = [{ type: "text", text: ANALYZE_PROMPT }, { type: "image_url", image_url: { url: photo } }];
-          const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash", json: true, maxTokens: 3000, temperature: 0.3 });
+          const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash", json: true, maxTokens: 6000, temperature: 0.3 });
           const spec = parseJson<Record<string, unknown>>(text);
           if (!spec || typeof spec !== "object" || !("parts" in spec)) throw new ModelError(502, "The photo could not be read. You were not charged.");
           return json({ ok: true, spec, output: String(spec.summary ?? spec.name ?? "Furniture spec ready.") });
@@ -548,4 +799,3 @@ Deno.serve(
     },
   ),
 );
-

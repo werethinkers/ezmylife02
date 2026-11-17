@@ -343,7 +343,7 @@ export function FurnitureStudio() {
                   {SHEET_TYPES.map((s) => (
                     <button key={s.id} type="button" onClick={() => patch(active.id, () => ({ sheetType: s.id }))} aria-pressed={active.sheetType === s.id}
                       className={cn("w-40 shrink-0 rounded-2xl border-2 border-ink p-3 text-left [scroll-snap-align:start]", active.sheetType === s.id ? "bg-sun shadow-block-sm" : "bg-card")}>
-                      <span className="block text-sm font-bold">{s.name}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-bold">{s.name}{s.badge && <span className="rounded bg-accent px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">{s.badge}</span>}</span>
                       <span className="block text-xs text-muted-foreground">{s.line}</span>
                     </button>
                   ))}
