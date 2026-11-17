@@ -178,13 +178,13 @@ BOTTOM ROW:
 - BACK ELEVATION: rear view with dimensions
 - TOP PLAN: overhead view, width and depth, centre lines as dash-dot
 - SECTION A-A: vertical cross-section at cut line, interior construction visible, numbered layer callouts with legend
-- All dimension lines: arrows at both ends, numbers in mm, overall and sub-dimensions shown
-- SPECIFICATION LEGEND notes
-- TITLE BLOCK bottom-right`,
+- All dimension lines: closed arrowheads at both ends, extension lines, leave the numeric value BLANK (a short dash "—") — the browser overlays exact values; overall and sub-dimensions both shown
+- Section A-A: numbered layer callout circles (①②③…) with NO text labels next to them — the browser overlays the legend
+- NO text values, legends, or specification notes anywhere in the drawing — TITLE BLOCK bottom-right only`,
 
   details: `CONSTRUCTION DETAILS SHEET — maximum detail on joinery and build-ups:
 - 9 to 12 large enlarged detail drawings in a tidy grid, each in its own thin-bordered sub-panel
-- Every detail has: bold ALL-CAPS title (e.g. DETAIL A — ARM PROFILE), scale note, dimension lines, 45-degree section hatching on cut faces, leader lines to material/component callouts in ALL CAPS
+- Every detail has: bold ALL-CAPS title (e.g. DETAIL A — ARM PROFILE), scale note, dimension lines with blank values (closed arrowheads, blank gap), 45-degree section hatching on cut faces, numbered callout circles (①②③) with NO text labels next to them
 - Include all relevant details for the piece: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers), leg mounting hardware, upholstery seam and piping, panel joinery (dowel/screw/bracket), back panel fill and ticking, full vertical section with numbered layers
 - MATERIAL & FINISH SCHEDULE (8 swatches M01–M08) in one column
 - TITLE BLOCK bottom-right`,
@@ -290,94 +290,91 @@ function sheetPrompt(body: Record<string, unknown>): string {
 // The browser canvas (compose.ts) adds the BOM table, material swatches, spec legend and title block as exact text.
 // So the full image budget goes to line quality, 3D accuracy, dimensions and construction detail.
 const BOARD_TYPES: Opt = {
-  full: `DRAWING BOARD LAYOUT (landscape 16:9, full drawing area only — NO title block, NO BOM table, NO material swatches):
+  full: `DRAWING BOARD LAYOUT (landscape 16:9, full drawing area only — NO title block, NO BOM table, NO material swatches, NO text labels):
 
 TOP ZONE (top 55% of board, full width):
   LEFT — 3D EXPLODED ISOMETRIC ASSEMBLY (top-left, ~38% of board width):
     • Full 3D photorealistic render of the furniture piece from the photo, exploded vertically
     • Parts separated with dotted vertical guide lines, generous spacing between parts
-    • Round numbered callout badges: ①②③④⑤⑥⑦⑧⑨⑩ (at minimum 8 parts)
-    • Thin leader lines from each badge to its part
-    • Left margin: callout legend text in small ALL-CAPS (e.g. "LOOSE BACK CUSHIONS", "SEAT FRAME HARDWOOD", "WEBBING SUSPENSION")
+    • Round numbered callout badges ONLY: ①②③④⑤⑥⑦⑧⑨⑩ (at minimum 8 parts)
+    • Thin leader lines from each badge to its part — NO accompanying text, the browser overlays labels
     • Bold panel title "3D EXPLODED ISOMETRIC ASSEMBLY" at top-left
   CENTRE — FRONT ELEVATION (~28% width):
     • Accurate orthographic front projection of the piece
-    • Dimension lines: overall width at top, back height, seat height, arm height on left side
-    • Sub-dimensions: seat bay widths summing to overall width
+    • Dimension lines: closed arrowheads at both ends, extension lines — LEAVE dimension value blank (draw the line and arrowhead only)
     • Section cut arrow pair "A ← →A" with arrows showing cut location
     • Bold panel title "FRONT ELEVATION"
   RIGHT — SIDE ELEVATION (~28% width):
     • Accurate orthographic side/profile projection
-    • Dimension lines: overall depth, overall height, seat depth
+    • Dimension lines with closed arrowheads — LEAVE values blank, browser overlays them
     • Bold panel title "SIDE ELEVATION"
 
 MIDDLE ZONE (next 15% of board):
   LEFT — TOP PLAN (~32% width):
     • True orthographic overhead view
-    • Overall width and depth dimension lines
+    • Dimension lines with arrowheads — values left blank
     • Centre lines as dash-dot lines
     • Bold panel title "TOP PLAN"
   RIGHT — SECTION A-A (~62% width):
     • Full vertical cross-section at the A-A cut line from front elevation
     • Interior construction clearly visible: upholstery fabric, foam layers, dacron wrap, back panel, solid wood frame, webbing suspension, seat platform, leg
-    • Numbered layer callouts ①②③④⑤⑥⑦⑧ with right-margin legend: "① UPHOLSTERY FABRIC / LEATHER", "② DACRON WRAP", "③ HIGH RESILIENCE FOAM", "④ PLYWOOD PANEL", "⑤ SOLID WOOD FRAME", "⑥ WEBBING SUSPENSION", "⑦ SEAT PLATFORM BOARD", "⑧ SOLID WOOD LEG"
+    • Numbered layer callouts ①②③④⑤⑥⑦⑧ with leader lines to layers — NO text labels next to them, browser overlays the legend
     • Bold panel title "SECTION A-A"
 
 BOTTOM ZONE (bottom 30% of board, a row of 6–7 side-by-side detail drawings):
   Each detail in its own thin-bordered sub-panel. Choose the 6–7 most relevant from:
-  DETAIL A — ARM PROFILE CROSS-SECTION: enlarged cut-away of arm showing all build-up layers (hardwood rail, back panel, upholstered arm, screw fixing) with dimensions
-  DETAIL B — BACK-TO-SEAT FRAME JUNCTION: how back frame meets seat frame rail (dowel/bracket/bolt connection) with dimensions
-  DETAIL C — SEAT CUSHION BUILD-UP: exploded layer diagram — upholstery fabric > dacron wrap > HR foam 100mm > soft foam 20mm > ticking fabric — with thickness dimensions
-  DETAIL D — LEG TO FRAME MOUNTING: frame rail, metal insert M10, wood screw, solid wood leg, with dimensions
-  DETAIL E — UPHOLSTERY SEAM AND PIPING: piping cord, upholstery fabric, top stitch, internal foam edge — cross-section of edge treatment
-  DETAIL F — BACK CUSHION FILL AND TICKING: upholstery fabric, feather+fiber blend fill, dacron wrap, ticking fabric — layer diagram with callouts
-  DETAIL G — FULL VERTICAL SECTION BUILD-UP: numbered layers ①–⑩ as a vertical strip cross-section showing the entire sofa/chair height
-  Each detail panel: bold ALL-CAPS title, scale note, dimensions in the stated unit, section hatching on cut faces`,
+  DETAIL A — ARM PROFILE CROSS-SECTION: enlarged cut-away showing all build-up layers, 45-degree hatching, dimension arrowheads (no values)
+  DETAIL B — BACK-TO-SEAT FRAME JUNCTION: frame connection geometry, hatching, numbered callout badges only
+  DETAIL C — SEAT CUSHION BUILD-UP: exploded layer diagram — layers shown as geometry, numbered badges for each layer
+  DETAIL D — LEG TO FRAME MOUNTING: hardware geometry, numbered badges
+  DETAIL E — UPHOLSTERY SEAM AND PIPING: cross-section geometry, hatching, numbered badges
+  DETAIL F — BACK CUSHION FILL AND TICKING: layer diagram geometry with numbered badges
+  DETAIL G — FULL VERTICAL SECTION BUILD-UP: numbered layers ①–⑩ as a vertical strip cross-section
+  Each detail panel: bold ALL-CAPS title, section hatching on cut faces, dimension arrowheads only (NO values)`,
 
-  exploded: `EXPLODED ISOMETRIC DRAWING BOARD — large exploded assembly:
+  exploded: `EXPLODED ISOMETRIC DRAWING BOARD — large exploded assembly (geometry only, NO text labels):
 - ONE very large 3D exploded isometric assembly filling ~80% of the board
 - Parts separated along vertical dotted guide lines with generous spacing
-- ALL parts visible with numbered callout badges ①②③…⑫+ and thin leader lines
-- Left side: callout legend text in small ALL-CAPS for each numbered part
-- Corner (bottom-right): small accurate FRONT ELEVATION with key dimensions
+- ALL parts visible with numbered callout badges ①②③…⑫+ and thin leader lines — NO text names next to badges (browser overlays them)
+- Leave blank space on left side where the browser will overlay the callout legend
+- Corner (bottom-right): small accurate FRONT ELEVATION with dimension arrowheads (values left blank)
 - Bold title "3D EXPLODED ISOMETRIC ASSEMBLY" at top`,
 
-  ortho: `ORTHOGRAPHIC ELEVATIONS DRAWING BOARD — all projections fully dimensioned:
-- FRONT ELEVATION: full orthographic front view, overall width/height/seat-height dimension lines, section A-A arrows
-- SIDE ELEVATION: full profile, depth and height dimensions
-- BACK ELEVATION: rear view with dimensions
-- TOP PLAN: overhead view, width/depth dimensions, centre lines as dash-dot
-- SECTION A-A: vertical cross-section, interior construction, numbered layer callouts with right-margin legend
-- All dimension lines: closed arrowheads at both ends, numbers in the stated unit, overall + sub-dimensions
+  ortho: `ORTHOGRAPHIC ELEVATIONS DRAWING BOARD — clean geometry with dimension lines, NO dimension values:
+- FRONT ELEVATION: full orthographic front view, dimension lines with closed arrowheads (leave the value gap blank), section A-A arrows
+- SIDE ELEVATION: full profile, dimension lines with arrowheads (blank values)
+- BACK ELEVATION: rear view with dimension arrowheads
+- TOP PLAN: overhead view, dimension arrowheads, centre lines as dash-dot
+- SECTION A-A: vertical cross-section, interior construction, numbered layer callouts ①②③… with leader lines (NO right-margin legend text — browser overlays it)
+- All dimension lines: closed arrowheads at both ends, extension lines, value gap left blank
 - All bold panel titles in ALL CAPS`,
 
-  details: `CONSTRUCTION DETAILS DRAWING BOARD — 9 to 12 enlarged detail drawings:
+  details: `CONSTRUCTION DETAILS DRAWING BOARD — 9 to 12 enlarged detail drawings (geometry and hatching only):
 - Tidy grid of 9–12 large detail drawings, each in its own thin-bordered sub-panel
-- Every detail: bold ALL-CAPS title (DETAIL A — ARM PROFILE, etc.), 45-degree section hatching on cut faces, dimension lines with closed arrowheads, leader lines to material/component callouts in ALL CAPS
-- Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up (all foam+fabric layers with thicknesses), leg mounting hardware, upholstery seam and piping, panel joinery, back cushion fill, full vertical section with numbered layers
-- Each detail must be enlarged enough to read all dimensions clearly`,
+- Every detail: bold ALL-CAPS title (DETAIL A — ARM PROFILE, etc.), 45-degree section hatching on cut faces, dimension arrowheads with blank value gaps, numbered callout badges ①②③ with leader lines but NO text labels (browser overlays them)
+- Include: arm/edge cross-section, back-to-seat junction, seat cushion build-up layers, leg mounting hardware, upholstery seam and piping, panel joinery, back cushion fill, full vertical section with numbered layers
+- Each detail enlarged enough to read all geometry clearly — NO text crammed in tight spaces`,
 
-  bom: `BILL OF MATERIALS DRAWING BOARD — parts-focused technical overview:
+  bom: `BILL OF MATERIALS DRAWING BOARD — parts-focused technical overview (geometry only, NO text labels):
 TOP ZONE (top 50% of board):
   LEFT — 3D EXPLODED ISOMETRIC ASSEMBLY (~55% width):
     • Large photorealistic exploded 3D assembly from the furniture photo
     • Parts floated apart along vertical dotted guide lines
-    • Numbered callout badges ①②③…⑫ with thin leader lines
-    • LEFT MARGIN: callout legend in small ALL-CAPS listing each part name
+    • Numbered callout badges ①②③…⑫ with thin leader lines — NO text labels, browser overlays them
+    • Leave a clear left margin strip (blank/white) where browser will overlay the callout legend
     • Bold panel title "EXPLODED ASSEMBLY — PARTS IDENTIFICATION"
   RIGHT — FRONT + SIDE ELEVATIONS stacked (~40% width):
-    • Top half: FRONT ELEVATION with overall width/height/seat-height dimensions
-    • Bottom half: SIDE ELEVATION with depth/height dimensions
-    • All dimension lines: closed arrowheads, values in the stated unit
+    • Top half: FRONT ELEVATION with dimension lines (closed arrowheads, leave value gaps blank)
+    • Bottom half: SIDE ELEVATION with dimension lines (arrowheads, blank values)
     • Bold panel titles "FRONT ELEVATION" and "SIDE ELEVATION"
 
 BOTTOM ZONE (bottom 50% of board):
   A tidy row of 5–7 ENLARGED PART DETAIL drawings, each in its own bordered sub-panel:
-  • Each detail focuses on ONE specific component from the parts list
-  • Show it at 2× or 3× scale with section hatching on cut faces
-  • Include: material callout, key dimensions, finish note
+  • Each detail focuses on ONE specific component — show geometry and construction at 2× or 3× scale
+  • 45-degree section hatching on cut faces, numbered callout badges, dimension arrowheads (no values)
+  • NO text callout labels inside the detail — browser overlays them
   • Bold ALL-CAPS title per panel: "DETAIL — [COMPONENT NAME]"
-  • Cover the most construction-critical parts: upholstery build-up, frame joint, hardware mounting, foam layer, leg detail`,
+  • Cover: upholstery build-up, frame joint, hardware mounting, foam layer, leg detail`,
 };
 
 function boardPrompt(body: Record<string, unknown>): string {
@@ -394,12 +391,12 @@ function boardPrompt(body: Record<string, unknown>): string {
     "Output ONE single landscape 16:9 image. The drawings fill the entire image edge-to-edge. Spend every pixel on crisp, accurate, well-spaced, high-quality technical drawings.",
     "VISUAL STYLE:\n" + STYLES[style],
     "DRAWING LAYOUT AND CONTENT:\n" + BOARD_TYPES[kind],
-    `CRITICAL — DO NOT INCLUDE: title block, bill of materials table, material swatch grid, specification legend notes. Those are added separately by the browser. Only include drawings, panel titles, dimension lines/numbers, callout badges and leader lines.`,
-    `DIMENSION AND TEXT RULES: ALL CAPS panel titles; small legible dimension text; closed arrowheads on all dimension lines; values in ${unit}; never lorem ipsum or gibberish. The exploded isometric must look 3D and photo-quality.`,
+    `CRITICAL — TEXT-FREE DRAWING ZONE. The browser renders ALL text. You must NOT include any of these in the drawing image: title block, bill of materials table, material swatch grid, specification legend notes, dimension values/numbers (e.g. "2100mm", "420"), part name text labels, material callout text, finish text, or any written words inside the drawing area. The ONLY text permitted is: numbered callout badge numerals (①②③…), ALL-CAPS panel section headings (e.g. "FRONT ELEVATION"), and the main drawing title if it fits cleanly in a header strip.`,
+    `DRAWING GEOMETRY RULES: Draw all dimension lines WITH closed arrowheads and extension lines but leave the value blank (a short dash "—" if needed). Draw callout leader lines ending in numbered circles (①②…) with NO accompanying text label. The browser will overlay all dimension values and legend text as crisp vector text. Focus all effort on accurate, beautiful geometry. The exploded isometric must look 3D and photo-quality.`,
     d && (d.width || d.depth || d.height)
       ? `USE EXACTLY THESE DIMENSIONS in ${unit}: width ${d.width ?? "?"}, depth ${d.depth ?? "?"}, height ${d.height ?? "?"}${d.seatHeight ? `, seat height ${d.seatHeight}` : ""}. All sub-dimensions must sum correctly to these overall values.`
       : "Use realistic dimensions appropriate for this furniture category (e.g. a standard sofa: width ~2000–2400mm, depth ~900mm, height ~800mm, seat height ~420mm).",
-    spec?.parts?.length ? `Match exploded-view callout numbers to this parts list: ${spec.parts.slice(0, 20).map((p) => `${p.item}: ${clip(p.component, 40)}`).join("; ")}.` : "",
+    spec?.parts?.length ? `The exploded view must have exactly ${Math.min(spec.parts.length, 20)} numbered callout badges (①②…). Number them ${spec.parts.slice(0, 20).map((p) => p.item).join(", ")} — the browser overlays the part names. Do NOT write part names in the image.` : "",
     recolour ? `MATERIAL CHANGES (apply to every drawing): ${recolour}.` : "",
     notes ? `CUSTOMER NOTES: ${notes}` : "",
     "No watermarks, no real brand logos, no people.",
