@@ -24,6 +24,6 @@ An EzYourLife admin then tries the app, sets the credits per use and your share,
 
 - **Claude Code (with access to the EzYourLife repo):** `/plugin install ezyourlife-developer --marketplace werethinkers/ezmylife02`
 - **Each Claude account:** add this plugin. Plugins need a paid plan; on Team and Enterprise an owner can publish it to the organization library once.
-- **Connector only (any plan, including Free):** in Claude's connector settings, add a custom connector named EzYourLife with the URL `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/mcp`. You get the tools without the skill; `dev_get_standards` carries the rules.
+- **Connector only (any plan, including Free):** in Claude's connector settings, add a custom connector named EzYourLife with the URL `https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/mcp`. You get the tools without the skill; `dev_get_standards` carries the rules.
 - **First use:** Claude asks you to sign in to EzYourLife. Use the account that should own the apps.
 - **Private GitHub repos:** the EzYourLife server needs a read-only GitHub token to import from them. An EzYourLife admin sets it as the `EZYL_GITHUB_TOKEN` secret. Without it, use a public repo or the upload link.

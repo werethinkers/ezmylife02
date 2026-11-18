@@ -160,7 +160,7 @@ For apps whose own screens matter (typically an AI Studio export): the page stay
 - Deploy the new edge function `dev-app-run` (and redeploy `mcp`).
 - Deploy the `mcp` function so the connector has the developer tools. Whether a push to `main` redeploys
   functions is the open item in `docs/launch-plan.md`; the sitemap probe now reads `devapps-2` in the repo.
-  If `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap` still shows `phase0-b` after the push,
+  If `https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/sitemap` still shows `phase0-b` after the push,
   functions need a manual deploy.
 - Optional: a read-only GitHub token (fine-grained, Contents: read, on the repos developers use) as the
   `EZYL_GITHUB_TOKEN` secret, so `dev_import_project` can read private repos. Public repos work without it.

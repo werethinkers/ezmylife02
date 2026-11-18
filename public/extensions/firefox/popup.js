@@ -2,7 +2,7 @@
 const storageAPI = typeof browser !== "undefined" ? browser.storage : chrome.storage;
 const tabsAPI = typeof browser !== "undefined" ? browser.tabs : chrome.tabs;
 
-const API_BASE = "https://vrsadzjyugbusfazdgyi.supabase.co";
+const API_BASE = "https://cmwnjexfpcfpoeyemxhb.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyc2Fkemp5dWdidXNmYXpkZ3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MTE2MzgsImV4cCI6MjA4MjA4NzYzOH0.7Kd1i_-TGG0KAfF-3AtLRcLsGmCkIKxD3FydOxqiKkU";
 
 let currentShortcuts = {};

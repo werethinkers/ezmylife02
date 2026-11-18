@@ -43,7 +43,7 @@ Tested on 11–12 Oct 2026 with one harmless push to `main`.
 Probes left in place so any later chat can re-check in a minute:
 
 - Website: `/launch-check/` shows `launch-check marker: <value>` (file `public/launch-check/index.html`, not indexed). Change the value, push, and see whether the live page changes.
-- Functions: the sitemap function prints `<!-- launch-check: <value> -->` on its second line. Live address: `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sitemap`.
+- Functions: the sitemap function prints `<!-- launch-check: <value> -->` on its second line. Live address: `https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/sitemap`.
 - Database: `supabase/migrations/20261011190000_launch_check.sql` sets a description on `tools_catalog`. If the description appears without anyone running it, migration files are applied automatically.
 
 For catalogue rows the SQL is insert-only (`ON CONFLICT (id) DO NOTHING`), so applying it never changes an app that is already live.

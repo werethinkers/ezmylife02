@@ -1749,7 +1749,7 @@ var devTools = [
 ];
 
 // src/lib/mcp/index.ts
-var projectRef = "vrsadzjyugbusfazdgyi";
+var projectRef = "cmwnjexfpcfpoeyemxhb";
 var mcp_default = defineMcp({
   name: "ezyourlife-mcp",
   title: "EZYOURLIFE",

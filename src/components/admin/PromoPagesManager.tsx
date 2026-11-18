@@ -163,7 +163,7 @@ export default function PromoPagesManager() {
       const token = sess.session?.access_token;
       if (!token) throw new Error("Not signed in");
 
-      const url = `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/bulk-generate-promo-pages`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-generate-promo-pages`;
       const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
