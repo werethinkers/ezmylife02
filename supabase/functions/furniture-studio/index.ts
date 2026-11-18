@@ -15,7 +15,8 @@
 // any error costs nothing.
 import { json } from "../_shared/http.ts";
 import { billed } from "../_shared/billing.ts";
-import { chat, image, ModelError, parseJson, type Part } from "../_shared/llm.ts";
+import { chat, image, ModelError, type Part } from "../_shared/llm.ts";
+import { readSpec } from "./repair.ts";
 
 const TOOL_ANALYZE = "furniture-analyze";
 const TOOL_SHEET = "furniture-sheet"; // standard tier
@@ -762,10 +763,18 @@ Deno.serve(
 
       try {
         if (action === "analyze") {
-          const content: Part[] = [{ type: "text", text: ANALYZE_PROMPT }, { type: "image_url", image_url: { url: photo } }];
-          const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash", json: true, maxTokens: 6000, temperature: 0.3 });
-          const spec = parseJson<Record<string, unknown>>(text);
-          if (!spec || typeof spec !== "object" || !("parts" in spec)) throw new ModelError(502, "The photo could not be read. You were not charged.");
+          const content: Part[] = [
+            { type: "text", text: ANALYZE_PROMPT + "\n\nWrite the JSON compactly on as few lines as possible (no indentation) and keep every text value short." },
+            { type: "image_url", image_url: { url: photo } },
+          ];
+          // The full spec is long: give the model room, and if the answer still comes back cut off or
+          // malformed, repair it; failing that, ask once more before giving up.
+          let spec: Record<string, unknown> | null = null;
+          for (let attempt = 0; attempt < 2 && !spec; attempt++) {
+            const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash", json: true, maxTokens: 16000, temperature: 0.3 });
+            spec = readSpec(text);
+          }
+          if (!spec) throw new ModelError(502, "The photo could not be read. You were not charged.");
           return json({ ok: true, spec, output: String(spec.summary ?? spec.name ?? "Furniture spec ready.") });
         }
 

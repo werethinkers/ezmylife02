@@ -147,7 +147,13 @@ export function parseJson<T = unknown>(text: string): T {
     return JSON.parse(cleaned) as T;
   } catch {
     const m = cleaned.match(/[[{][\s\S]*[\]}]/);
-    if (m) return JSON.parse(m[0]) as T;
+    if (m) {
+      try {
+        return JSON.parse(m[0]) as T;
+      } catch {
+        /* unreadable: fall through to the plain message below */
+      }
+    }
     throw new ModelError(502, "The AI returned an unreadable result. You were not charged.");
   }
 }
