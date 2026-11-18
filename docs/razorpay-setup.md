@@ -12,7 +12,7 @@ The edge functions `create-razorpay-order` and `verify-razorpay-payment` require
 ### How to Set Environment Variables
 
 1. Go to [Supabase Console](https://supabase.com/dashboard)
-2. Select your project (vrsadzjyugbusfazdgyi)
+2. Select your project (cmwnjexfpcfpoeyemxhb)
 3. Click **Settings** (gear icon) → **Edge Functions** (left sidebar)
 4. Click **Secrets** or **Environment Variables**
 5. Add:

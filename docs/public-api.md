@@ -1,7 +1,7 @@
 # Public API (v1)
 
 One edge function, `supabase/functions/api`, lets the EzMe Mac app, the browser extension and outside
-developers use Ezyourlife apps. Address: `https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/api/v1`.
+developers use Ezyourlife apps. Address: `https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/api/v1`.
 
 ## Who can call it
 

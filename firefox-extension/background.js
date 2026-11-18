@@ -11,7 +11,7 @@ alarmsAPI.onAlarm.addListener(async (alarm) => {
 
     try {
       const res = await fetch(
-        "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sync-shortcuts",
+        "https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/sync-shortcuts",
         {
           headers: {
             Authorization: `Bearer ${result.accessToken}`,
