@@ -268,6 +268,10 @@ final class KeyboardViewController: UIInputViewController {
 
     private func editInstantField(_ field: String) {
         guard var ic = instantCard else { return }
+        // Delete any /command still in the host text field before capturing the baseline,
+        // so the user types into a clean slate (not after "/abhijay" etc.).
+        let cmdLen = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.length ?? 0
+        for _ in 0..<cmdLen { textDocumentProxy.deleteBackward() }
         ic.editingField = field
         ic.editBaseline = textDocumentProxy.documentContextBeforeInput ?? ""
         instantCard = ic
@@ -811,7 +815,7 @@ final class KeyboardViewController: UIInputViewController {
         parts.append(editingKey ?? "")
         parts.append(editingValue)
         parts.append((EzyShared.lastResult?.isFresh ?? false) ? "last" : "")
-        if let ic = instantCard { parts.append(ic.card.id + "|" + ic.theme + "|" + ic.sender + "|" + ic.recipient + "|" + (ic.editingField ?? "")) }
+        if let ic = instantCard { parts.append(ic.card.id + "|" + ic.theme + "|" + ic.sender + "|" + ic.recipient + "|" + ic.message.prefix(40) + "|" + (ic.editingField ?? "") + "|" + (ic.generatedLink ?? "") + "|" + (ic.submitting ? "1" : "0")) }
         let signature = parts.joined(separator: "¦")
         if !force && signature == stripSignature { return }
         stripSignature = signature
