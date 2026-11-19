@@ -871,22 +871,23 @@ final class KeyboardViewController: UIInputViewController {
         let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
         items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
-        addHeader(first.isEmpty ? (apps.isEmpty ? "Cards & apps" : "Recent apps") : "Apps for /\(first)")
-        if items.isEmpty {
-            addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
-        } else {
-            renderPicker(items, details: details, command: command.text)
-        }
-        // When "/" is typed with nothing after it, show pre-made cards and business website chips.
+        // When "/" is typed with nothing after it, show pre-made cards and business website chips FIRST.
         if first.isEmpty {
             let cards = EzyShared.instantCards
             if !cards.isEmpty {
-                addStripSeparator()
+                addHeader("Cards & websites")
                 for ezyCard in cards.prefix(8) {
                     let title = "\(ezyCard.glyph) \(ezyCard.name)"
                     addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
                 }
+                addStripSeparator()
             }
+        }
+        addHeader(first.isEmpty ? (apps.isEmpty ? "Apps" : "Recent apps") : "Apps for /\(first)")
+        if items.isEmpty {
+            addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
+        } else {
+            renderPicker(items, details: details, command: command.text)
         }
         search(first)
         if words.count >= 2 && !shortcutHits.contains(where: { $0.key.lowercased() == command.text.lowercased() }) {
