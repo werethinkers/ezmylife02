@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Heart, Zap } from "lucide-react";
@@ -43,6 +43,23 @@ export default function QuickLookPanel({ toolId, onClose }: { toolId: string | n
 }
 
 const slugOf = (name: string) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+function GalleryImg({ src, alt, single }: { src: string; alt: string; single: boolean }) {
+  const [err, setErr] = useState(false);
+  if (err) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setErr(true)}
+      className={cn(
+        "aspect-[4/3] shrink-0 snap-start rounded-2xl border-2 border-ink bg-sand object-cover",
+        single ? "w-full" : "w-[82%]",
+      )}
+    />
+  );
+}
 
 function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: () => void; mobile?: boolean }) {
   const navigate = useNavigate();
@@ -105,15 +122,11 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
       {gallery.length > 0 && (
         <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {gallery.map((url, i) => (
-            <img
+            <GalleryImg
               key={url}
               src={url}
               alt={`${tool.name} screenshot ${i + 1}`}
-              loading="lazy"
-              className={cn(
-                "aspect-[4/3] shrink-0 snap-start rounded-2xl border-2 border-ink bg-sand object-cover",
-                gallery.length === 1 ? "w-full" : "w-[82%]",
-              )}
+              single={gallery.length === 1}
             />
           ))}
         </div>

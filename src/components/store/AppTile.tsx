@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { CatalogTool } from "@/hooks/useToolsCatalog";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { giveGetFor, goalOf } from "@/data/goals";
@@ -32,6 +33,7 @@ export function AppTile({
   const goal = goalOf(tool.category);
   const info = giveGetFor(tool.category, { toolTypes: tool.tool_types });
   const tilt = useTilt<HTMLDivElement>();
+  const [previewErr, setPreviewErr] = useState(false);
   return (
     <div
       {...tilt}
@@ -54,11 +56,12 @@ export function AppTile({
         className,
       )}
     >
-      {media.previewImageUrl ? (
+      {media.previewImageUrl && !previewErr ? (
         <img
           src={media.previewImageUrl}
           alt={`${tool.name}: what the app looks like`}
           loading="lazy"
+          onError={() => setPreviewErr(true)}
           className={cn("aspect-[16/9] w-full border-b-2 border-ink bg-card transition-transform duration-500 group-hover:scale-[1.03]", media.previewFit === "contain" ? "object-contain" : "object-cover")}
         />
       ) : (
