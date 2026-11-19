@@ -156,6 +156,15 @@ export default function PromoPage() {
     navigate(`/tool/${toolId}`);
   };
 
+  // These must be before any early return to satisfy Rules of Hooks.
+  const gallery = (row?.gallery_images ?? []).filter((g) => g?.url);
+  const portraitShots = useMemo(() => {
+    const manifest = toolId ? appScreenshots(toolId) : [];
+    const galleryUrls = gallery.map((g) => g.url);
+    const all = [...manifest, ...galleryUrls.filter((u) => !manifest.includes(u))];
+    return Array.from(new Set(all)).slice(0, 8);
+  }, [toolId, gallery]);
+
   if (!rowLoaded || (catalogLoading && !row)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -201,16 +210,7 @@ export default function PromoPage() {
         ];
   const trustLogos = (row?.trust_logos ?? []).filter((l) => l?.name);
 
-  const gallery = (row?.gallery_images ?? []).filter((g) => g?.url);
   const isFav = favorites.has(toolId ?? "");
-
-  // Portrait screenshots: manifest screenshots first, then gallery images.
-  const portraitShots = useMemo(() => {
-    const manifest = toolId ? appScreenshots(toolId) : [];
-    const galleryUrls = gallery.map((g) => g.url);
-    const all = [...manifest, ...galleryUrls.filter((u) => !manifest.includes(u))];
-    return Array.from(new Set(all)).slice(0, 8);
-  }, [toolId, gallery]);
 
   // Hero image: first portrait screenshot → landscape preview → null.
   const heroImageUrl = portraitShots[0] ?? media.previewImageUrl ?? null;
