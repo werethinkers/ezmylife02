@@ -201,6 +201,60 @@ struct EzyResult: Codable {
     var isFresh: Bool { Date().timeIntervalSince(at) < 15 * 60 }
 }
 
+// MARK: - Pre-made cards and business websites
+
+/// A pre-made card or website template shown in the keyboard "/" strip.
+struct EzyCard {
+    let id: String
+    let name: String
+    let glyph: String
+    let category: String    // "festival" | "celebration" | "website"
+    let months: [Int]       // in-season months; empty = year-round
+    var url: String { "\(EzyShared.site)/create/\(id)" }
+
+    var isInSeason: Bool {
+        guard !months.isEmpty else { return true }
+        let month = Calendar.current.component(.month, from: Date())
+        return months.contains(month)
+    }
+}
+
+extension EzyShared {
+    /// Seasonal festival cards first (up to 4), then popular celebrations, then business website templates.
+    static var instantCards: [EzyCard] {
+        let festivals: [EzyCard] = [
+            EzyCard(id: "diwali",           name: "Diwali",           glyph: "🪔", category: "festival",     months: [10, 11]),
+            EzyCard(id: "dhanteras",        name: "Dhanteras",        glyph: "🪙", category: "festival",     months: [10, 11]),
+            EzyCard(id: "bhai-dooj",        name: "Bhai Dooj",        glyph: "🍬", category: "festival",     months: [10, 11]),
+            EzyCard(id: "navratri",         name: "Navratri",         glyph: "🪘", category: "festival",     months: [9, 10]),
+            EzyCard(id: "gurpurab",         name: "Gurpurab",         glyph: "☬",  category: "festival",     months: [11]),
+            EzyCard(id: "christmas",        name: "Christmas",        glyph: "🎄", category: "festival",     months: [12]),
+            EzyCard(id: "new-year",         name: "New Year",         glyph: "🎆", category: "festival",     months: [12, 1]),
+            EzyCard(id: "makar-sankranti",  name: "Makar Sankranti",  glyph: "🪁", category: "festival",     months: [1]),
+            EzyCard(id: "republic-day",     name: "Republic Day",     glyph: "🎖️", category: "festival",     months: [1]),
+            EzyCard(id: "valentine",        name: "Valentine's Day",  glyph: "🌹", category: "festival",     months: [2]),
+            EzyCard(id: "holi",             name: "Holi",             glyph: "🎨", category: "festival",     months: [2, 3]),
+            EzyCard(id: "independence-day", name: "Independence Day", glyph: "🇮🇳", category: "festival",    months: [8]),
+            EzyCard(id: "raksha-bandhan",   name: "Raksha Bandhan",   glyph: "🧶", category: "festival",     months: [7, 8]),
+            EzyCard(id: "ganesh-chaturthi", name: "Ganesh Chaturthi", glyph: "🐘", category: "festival",     months: [8, 9]),
+        ]
+        let celebrations: [EzyCard] = [
+            EzyCard(id: "birthday-surprise", name: "Birthday",    glyph: "🎂", category: "celebration", months: []),
+            EzyCard(id: "anniversary",       name: "Anniversary", glyph: "💞", category: "celebration", months: []),
+            EzyCard(id: "thank-you",         name: "Thank You",   glyph: "🙏", category: "celebration", months: []),
+            EzyCard(id: "congratulations",   name: "Congrats",    glyph: "🏆", category: "celebration", months: []),
+        ]
+        let websites: [EzyCard] = [
+            EzyCard(id: "school",    name: "School Site",   glyph: "🏫", category: "website", months: []),
+            EzyCard(id: "hotel",     name: "Hotel Site",    glyph: "🏨", category: "website", months: []),
+            EzyCard(id: "kirana",    name: "Shop Site",     glyph: "🛒", category: "website", months: []),
+            EzyCard(id: "pharmacy",  name: "Pharmacy Site", glyph: "💊", category: "website", months: []),
+        ]
+        let inSeason = festivals.filter { $0.isInSeason }
+        return Array((inSeason + celebrations + websites).prefix(10))
+    }
+}
+
 enum EzyError: LocalizedError {
     case notConnected
     case server(String)

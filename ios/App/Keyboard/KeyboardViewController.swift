@@ -723,11 +723,22 @@ final class KeyboardViewController: UIInputViewController {
         let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
         items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
-        addHeader(first.isEmpty ? (apps.isEmpty ? "Type an app or shortcut" : "Recent apps") : "Apps for /\(first)")
+        addHeader(first.isEmpty ? (apps.isEmpty ? "Cards & apps" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {
             addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
         } else {
             renderPicker(items, details: details, command: command.text)
+        }
+        // When "/" is typed with nothing after it, show pre-made cards and business website chips.
+        if first.isEmpty {
+            let cards = EzyShared.instantCards
+            if !cards.isEmpty {
+                addStripSeparator()
+                for card in cards.prefix(8) {
+                    let title = "\(card.glyph) \(card.name)"
+                    addChip(title, style: .plain) { [weak self] in self?.replaceCommand(with: card.url) }
+                }
+            }
         }
         search(first)
         if words.count >= 2 && !shortcutHits.contains(where: { $0.key.lowercased() == command.text.lowercased() }) {
@@ -2163,6 +2174,15 @@ final class KeyboardViewController: UIInputViewController {
     // MARK: Chips
 
     private enum ChipStyle { case primary, shortcut, app, plain, note }
+
+    private func addStripSeparator() {
+        let sep = UIView()
+        sep.backgroundColor = dark ? UIColor(white: 0.5, alpha: 0.5) : UIColor(white: 0.75, alpha: 1)
+        sep.translatesAutoresizingMaskIntoConstraints = false
+        sep.widthAnchor.constraint(equalToConstant: 1).isActive = true
+        sep.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        stripStack.addArrangedSubview(sep)
+    }
 
     private func addChip(_ title: String, style: ChipStyle, truncateHead: Bool = false, action: (() -> Void)? = nil) {
         let chip = ChipButton(type: .system)
