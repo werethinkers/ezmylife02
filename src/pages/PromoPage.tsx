@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import {
   Loader2,
   Zap,
@@ -9,9 +9,8 @@ import {
   Wallet,
   Mail,
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Check,
+  Heart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,11 +25,13 @@ import { SEOHead } from "@/components/SEOHead";
 import { AppIcon } from "@/components/store/AppIcon";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile } from "@/components/store/AppTile";
-import { FlowSteps } from "@/components/brand/FlowSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
+import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
+import { appScreenshots } from "@/data/screenshotManifest";
 import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
 import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import SEOFooter from "@/components/SEOFooter";
+import { cn } from "@/lib/utils";
 
 /*
  * Promo (landing) page for an AI app, at /promo/:slug.
@@ -103,7 +104,10 @@ export default function PromoPage() {
   const [row, setRow] = useState<PromoRow | null>(null);
   const [rowLoaded, setRowLoaded] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const howRef = useRef<HTMLElement | null>(null);
+  const { favorites } = useFavorites();
+  const { toggle } = useToggleFavorite();
 
   // Curated page, if an admin has published one (RLS only returns published rows to visitors).
   useEffect(() => {
@@ -197,27 +201,25 @@ export default function PromoPage() {
         ];
   const trustLogos = (row?.trust_logos ?? []).filter((l) => l?.name);
 
-  // Gallery: catalog preview → app UI → output → promotional, then any leftovers (max 4).
   const gallery = (row?.gallery_images ?? []).filter((g) => g?.url);
-  const byKind = (kinds: string[]) => gallery.find((g) => kinds.includes((g.kind ?? "").toLowerCase()));
-  const ordered: Array<GalleryImage | null> = [
-    media.previewImageUrl ? { url: media.previewImageUrl, caption: "Preview" } : null,
-    byKind(["screenshot", "input", "app", "interface"]) ?? null,
-    byKind(["output", "result", "results"]) ?? null,
-    byKind(["promotional", "promo", "hero", "compare"]) ??
-      (row?.hero_image_url ? { url: row.hero_image_url, caption: "In action" } : null),
-  ];
-  const used = new Set(ordered.filter(Boolean).map((s) => s!.url));
-  const leftovers = gallery.filter((g) => !used.has(g.url));
-  const slides = ordered.map((s) => s ?? leftovers.shift() ?? null).filter(Boolean).slice(0, 4) as GalleryImage[];
+  const isFav = favorites.has(toolId ?? "");
+
+  // Portrait screenshots: manifest screenshots first, then gallery images.
+  const portraitShots = useMemo(() => {
+    const manifest = toolId ? appScreenshots(toolId) : [];
+    const galleryUrls = gallery.map((g) => g.url);
+    const all = [...manifest, ...galleryUrls.filter((u) => !manifest.includes(u))];
+    return Array.from(new Set(all)).slice(0, 8);
+  }, [toolId, gallery]);
+
+  // Hero image: first portrait screenshot → landscape preview → null.
+  const heroImageUrl = portraitShots[0] ?? media.previewImageUrl ?? null;
 
   const related = catalog
     .filter((t) => t.is_live && inCategory(t, category) && t.id !== toolId)
     .slice(0, 4);
 
   const minPack = CREDIT_PACKS[0];
-  const scrollToHow = () => howRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
   const tryButton = (className = "") => (
     <Button
       size="lg"
@@ -260,78 +262,137 @@ export default function PromoPage() {
         />
         <Navbar />
 
-        {/* ───────── Hero ───────── */}
-        <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 md:pt-8">
-          <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted-foreground">
-            <Link to="/ai-apps" className="underline underline-offset-4 hover:text-ink">Business apps</Link>
-            {category && (
-              <>
-                <span aria-hidden>›</span>
-                <Link to={`/ai-apps?goal=${goal.id}`} className="underline underline-offset-4 hover:text-ink">{goal.name}</Link>
-                <span aria-hidden>›</span>
-                <Link to={`/ai-apps?category=${encodeURIComponent(category)}`} className="underline underline-offset-4 hover:text-ink">{category}</Link>
-              </>
+        {/* ───────── Google-Play-style hero banner ───────── */}
+        <section>
+          {/* Hero image: portrait screenshot fills the banner, blurred duplicate as background */}
+          <div className="relative w-full overflow-hidden bg-ink" style={{ minHeight: heroImageUrl ? 320 : 200 }}>
+            {heroImageUrl && (
+              <img
+                src={heroImageUrl}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl brightness-50"
+              />
             )}
-          </nav>
-          <FlowSteps flow="app" step={1} className="mb-8 max-w-3xl" />
-
-          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="min-w-0 space-y-5">
-              <div className="flex items-center gap-4">
-                <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="shadow-block" />
-                <div className="min-w-0">
-                  <span className="inline-flex rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold" style={{ background: goal.color }}>
-                    {goal.name}
-                  </span>
-                  {eyebrow && eyebrow !== category && <p className="mt-1 text-sm font-semibold text-muted-foreground">{eyebrow}</p>}
-                </div>
+            {!heroImageUrl && (
+              <div className="absolute inset-0" style={{ background: goal.color, opacity: 0.6 }} />
+            )}
+            <div className="relative mx-auto flex max-w-7xl items-end gap-6 px-4 pb-6 pt-10">
+              {heroImageUrl && (
+                <img
+                  src={heroImageUrl}
+                  alt={`${name} preview`}
+                  className="hidden h-56 w-auto shrink-0 rounded-2xl border-2 border-white/20 object-cover shadow-2xl sm:block"
+                />
+              )}
+              <div className="pb-2">
+                <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-medium text-white/60">
+                  <Link to="/ai-apps" className="hover:text-white">Apps</Link>
+                  {category && (
+                    <>
+                      <span aria-hidden>›</span>
+                      <Link to={`/ai-apps?goal=${goal.id}`} className="hover:text-white">{goal.name}</Link>
+                    </>
+                  )}
+                </nav>
+                <h1 className="text-2xl font-extrabold leading-tight text-white sm:text-4xl">
+                  {title}{titleAccent && <> <span className="text-sun">{titleAccent}</span></>}
+                </h1>
+                <p className="mt-1 text-sm font-medium text-white/70">{eyebrow && eyebrow !== category ? eyebrow : category}</p>
               </div>
+            </div>
+          </div>
 
-              <h1 className="text-[2rem] font-extrabold leading-[1.08] sm:text-5xl xl:text-[3.4rem]">
-                {title}
-                {titleAccent && (
-                  <>
-                    {" "}
-                    <span className="marker">{titleAccent}</span>
-                  </>
-                )}
-              </h1>
-
-              {intro && <p className="max-w-xl whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{intro}</p>}
-
-              <GiveGet give={info.give} get={info.get} />
-
-              <div className="border-l-[6px] border-ink pl-3">
-                <p className="font-bold">{kind.title}</p>
-                <p className="text-[15px] text-muted-foreground">{kind.line}</p>
+          {/* App info row (like Play Store header) */}
+          <div className="border-b-2 border-ink bg-card">
+            <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+              <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="shrink-0 shadow-block" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">{name}</p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="inline-flex rounded-full border border-ink/30 px-2 py-0.5 text-[11px] font-bold" style={{ background: goal.color }}>{goal.name}</span>
+                </p>
               </div>
+              {tryButton("shrink-0")}
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-10 w-10 shrink-0"
+                onClick={() => toggle(toolId ?? "", isFav)}
+                aria-pressed={isFav}
+                aria-label={isFav ? "Saved" : "Save"}
+              >
+                <Heart className={cn("h-4 w-4", isFav && "fill-rose-500 text-rose-500")} />
+              </Button>
+            </div>
+          </div>
+
+          {/* Stats strip */}
+          <div className="border-b-2 border-ink bg-background">
+            <div className="mx-auto flex max-w-7xl divide-x-2 divide-ink overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex shrink-0 flex-col items-center px-5 py-3">
+                <span className="font-display text-lg font-extrabold">{creditCost}</span>
+                <span className="text-[11px] font-bold text-muted-foreground">credits/result</span>
+              </div>
+              <div className="flex shrink-0 flex-col items-center px-5 py-3">
+                <Globe className="h-5 w-5" />
+                <span className="mt-0.5 text-[11px] font-bold text-muted-foreground">In browser</span>
+              </div>
+              <div className="flex shrink-0 flex-col items-center px-5 py-3">
+                <ShieldCheck className="h-5 w-5" />
+                <span className="mt-0.5 text-[11px] font-bold text-muted-foreground">Secure pay</span>
+              </div>
+              <div className="flex shrink-0 flex-col items-center px-5 py-3">
+                <Zap className="h-5 w-5" />
+                <span className="mt-0.5 text-[11px] font-bold text-muted-foreground">AI-powered</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Portrait screenshots strip */}
+          {portraitShots.length > 0 && (
+            <div className="border-b-2 border-ink bg-background py-4">
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {portraitShots.map((url, i) => (
+                  <img
+                    key={url}
+                    src={url}
+                    alt={`${name} screenshot ${i + 1}`}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="h-72 w-auto shrink-0 snap-start rounded-2xl border-2 border-ink object-cover shadow-md"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* About this app */}
+          <div className="border-b-2 border-ink bg-background">
+            <div className="mx-auto max-w-7xl px-4 py-6">
+              <h2 className="text-xl font-bold">About this app</h2>
+              <div className={cn("relative mt-3 overflow-hidden text-[15px] leading-relaxed text-muted-foreground", !descExpanded && "max-h-24")}>
+                <p className="whitespace-pre-line">{intro}</p>
+                {!descExpanded && <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />}
+              </div>
+              <button
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-2 text-sm font-bold text-primary hover:underline"
+              >
+                {descExpanded ? "Show less" : "Learn more"}
+              </button>
+
+              <GiveGet give={info.give} get={info.get} className="mt-5" />
 
               {chips.length > 0 && (
-                <ul className="flex flex-wrap gap-2">
-                  {chips.slice(0, 6).map((c) => (
-                    <li key={c} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold">
-                      {c}
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {chips.slice(0, 8).map((c) => (
+                    <li key={c} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-semibold">
+                      #{c}
                     </li>
                   ))}
                 </ul>
               )}
-
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
-                {tryButton("w-full sm:w-auto")}
-                <Button variant="outline" size="lg" className="h-12 px-5" onClick={scrollToHow}>
-                  How it works
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">Opening the app is free. Credits are used only when it gives you a result.</p>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.05 }} className="min-w-0">
-              {slides.length > 0 ? (
-                <HeroCarousel slides={slides} altBase={name} />
-              ) : (
-                <IconHero name={name} toolId={toolId ?? ""} category={category} color={goal.color} get={info.get} />
-              )}
-            </motion.div>
+            </div>
           </div>
         </section>
 
@@ -476,115 +537,3 @@ export default function PromoPage() {
   );
 }
 
-// Shown when an app has no screenshots yet: its icon on the colour of its goal.
-function IconHero({ name, toolId, category, color, get }: { name: string; toolId: string; category: string; color: string; get: string }) {
-  return (
-    <div className="relative mx-auto flex aspect-[4/3] w-full max-w-xl flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-ink p-8 text-center shadow-block-lg" style={{ background: color }}>
-      <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-ink bg-card/60" />
-      <div aria-hidden className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full border-2 border-ink bg-card/40" />
-      <AppIcon toolId={toolId} category={category} name={name} size="xl" className="relative shadow-block" />
-      <p className="relative mt-6 font-display text-2xl font-extrabold md:text-3xl">{name}</p>
-      <p className="relative mt-2 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">You get {get}</p>
-    </div>
-  );
-}
-
-// App Store-style carousel: auto-advances, arrows, dots and swipe.
-function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
-  const [idx, setIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const touchX = useRef<number | null>(null);
-  const count = slides.length;
-
-  useEffect(() => {
-    if (count <= 1 || paused) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % count), 4500);
-    return () => clearInterval(t);
-  }, [count, paused]);
-
-  const go = (next: number) => setIdx(((next % count) + count) % count);
-  const current = slides[idx];
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onTouchStart={(e) => {
-        touchX.current = e.touches[0].clientX;
-        setPaused(true);
-      }}
-      onTouchEnd={(e) => {
-        if (touchX.current == null) return;
-        const dx = e.changedTouches[0].clientX - touchX.current;
-        if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
-        touchX.current = null;
-      }}
-    >
-      <div className="overflow-hidden rounded-3xl border-2 border-ink bg-card p-2.5 shadow-block-lg">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border-2 border-ink bg-sand">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.img
-              key={current.url + idx}
-              src={current.url}
-              alt={current.caption ? `${altBase} — ${current.caption}` : `${altBase} — image ${idx + 1}`}
-              className="absolute inset-0 h-full w-full object-cover"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-            />
-          </AnimatePresence>
-
-          {current.caption && (
-            <div className="absolute bottom-3 left-3 z-10 rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-bold">
-              {current.caption}
-            </div>
-          )}
-
-          {count > 1 && (
-            <>
-              <button
-                type="button"
-                aria-label="Previous image"
-                onClick={() => go(idx - 1)}
-                className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                aria-label="Next image"
-                onClick={() => go(idx + 1)}
-                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-ink bg-card transition hover:bg-sun"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {count > 1 && (
-          <div className="mt-2.5 flex items-center justify-center gap-1">
-            {slides.map((s, i) => (
-              <button
-                key={s.url + i}
-                type="button"
-                aria-label={`Show image ${i + 1}`}
-                aria-current={i === idx}
-                onClick={() => setIdx(i)}
-                className="flex h-6 items-center px-1"
-              >
-                <span
-                  className={`block h-1.5 rounded-full transition-all ${
-                    i === idx ? "w-6 bg-ink" : "w-1.5 bg-ink/30 hover:bg-ink/60"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
