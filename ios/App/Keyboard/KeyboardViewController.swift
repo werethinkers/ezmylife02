@@ -871,17 +871,19 @@ final class KeyboardViewController: UIInputViewController {
         let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
         items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
-        // When "/" is typed with nothing after it, show pre-made cards and business website chips FIRST.
-        if first.isEmpty {
-            let cards = EzyShared.instantCards
-            if !cards.isEmpty {
-                addHeader("Cards & websites")
-                for ezyCard in cards.prefix(8) {
-                    let title = "\(ezyCard.glyph) \(ezyCard.name)"
-                    addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
-                }
-                addStripSeparator()
+        // Show pre-made cards and business website chips: all when "/" alone, matching ones when text follows.
+        let allCards = EzyShared.instantCards
+        let matchingCards = first.isEmpty ? allCards : allCards.filter {
+            $0.name.lowercased().contains(first.lowercased()) ||
+            $0.glyph.contains(first)
+        }
+        if !matchingCards.isEmpty {
+            addHeader("Cards & websites")
+            for ezyCard in matchingCards.prefix(8) {
+                let title = "\(ezyCard.glyph) \(ezyCard.name)"
+                addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
             }
+            addStripSeparator()
         }
         addHeader(first.isEmpty ? (apps.isEmpty ? "Apps" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {
