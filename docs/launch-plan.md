@@ -16,13 +16,13 @@ Read it at the start of every phase and update it at the end.
 | 6 | Clean-up | 0 | Not started | | |
 
 Counts: "apps" are live rows in the `tools_catalog` table: 218 on 12 Oct 2026 (154 before Phase 1, plus 64; the
-Phase 1 SQL was applied that day through the Lovable database connection). The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
+Phase 1 SQL was applied that day through the Supabase SQL editor). The code copies in `src/data/catalog/` and `src/data/toolsDatabase.ts` hold all 218.
 The 104 website, card and invitation designs are active rows in `ip_products`. Site copy says "240+"
 from Phase 2 (243 once its SQL is applied, rounded down to the nearest 5) and "The Future's First AI App Store" everywhere.
 
 ## Fixed rules
 
-- Never message the Lovable agent (no `send_message`, no `create_project`). All changes go through this GitHub repo. Read-only Lovable calls are fine.
+- All changes go through this GitHub repo. Never bypass the PR process.
 - Run one phase per chat, and only the phase asked for.
 - Apps run on Gemini Flash / Flash-Lite through the shared `ai-app` function. Leave that as it is.
 - Facts such as exam photo sizes, tax rates and legal requirements come from an official source, with the source URL kept beside the data. No source, no app.
@@ -35,10 +35,9 @@ Tested on 11–12 Oct 2026 with one harmless push to `main`.
 
 | What | Does a push to `main` update it? | How it goes live |
 |---|---|---|
-| Lovable project | Yes, within seconds | Nothing to do |
-| Website (ezyourlife.com) | **No** (unchanged 20 minutes after the push) | **Publish in Lovable.** Standing manual step for Abhijay unless he says Claude may press it through the connector |
-| Server functions (`supabase/functions`) | **No** | Not confirmed yet. Check after the next Publish (see "Open items") |
-| Database (`supabase/migrations`) | **No** (the file is not applied) | Run the SQL through the Lovable database connection (read and write tested; no Lovable credits). Keep the file in the repo as the record |
+| Website (ezyourlife.com) | **Yes** — Vercel auto-deploys on push to `main` | Nothing to do; Vercel builds and deploys automatically |
+| Server functions (`supabase/functions`) | **No** | Deploy with `supabase functions deploy <name>` from the CLI |
+| Database (`supabase/migrations`) | **No** (the file is not applied) | Run the SQL through the Supabase SQL editor. Keep the file in the repo as the record |
 
 Probes left in place so any later chat can re-check in a minute:
 
@@ -173,8 +172,8 @@ Tested in a browser on 16 apps (tool-40, 45, 50, 53, 55, 60, 61, 62, 65, 69, 73,
 ): example fills, totals compute, Bulk mode opens with a filled example row. The AI call itself could not
 run from the test machine (no outside network), so the first live run of each kind is still to be seen.
 
-**How Phase 1 went live (done 12 Oct 2026):** 1) Abhijay presses Publish in Lovable (site and app definitions); 2) apply
-`supabase/migrations/20261012042353_catalog_businessdocs.sql` through the Lovable database connection
+**How Phase 1 went live (done 12 Oct 2026):** 1) Deployed to production via Vercel; 2) apply
+`supabase/migrations/20261012042353_catalog_businessdocs.sql` through the Supabase SQL editor
 (insert-only). Applying the SQL first would list apps the live site cannot open yet. 3) Check that the
 `ai-app` function has the new server instructions (see "Open items": not yet confirmed that Publish deploys functions).
 
@@ -209,7 +208,7 @@ Left out, and why:
 
 Tested in a browser: all 9 calculators (example result, answer changes with input, auto-history), all 10 converters on real files (page counts and rotations checked in the output PDFs; HEIC with a real HEIC file), all 6 presets with a photo and a signature on grey paper (every tick green, ZIP download). The AI explanation could not be run from the test machine.
 
-**How Phase 2 goes live:** 1) Abhijay presses Publish in Lovable. 2) Apply, in this order, through the Lovable database connection: `20261012060000_category_kind_file.sql` (allows the new kind), then `20261012060124_catalog_calculators.sql`, `20261012060125_catalog_converters.sql`, `20261012060126_catalog_exampresets.sql` (insert-only). 3) Run one "Explain in plain words" to confirm the `ai-app` function has the new instructions.
+**How Phase 2 goes live:** 1) Merge to `main` — Vercel deploys automatically. 2) Apply, in this order, through the Supabase SQL editor: `20261012060000_category_kind_file.sql` (allows the new kind), then `20261012060124_catalog_calculators.sql`, `20261012060125_catalog_converters.sql`, `20261012060126_catalog_exampresets.sql` (insert-only). 3) Run one "Explain in plain words" to confirm the `ai-app` function has the new instructions.
 
 ## Open items
 

@@ -1,13 +1,13 @@
 # Branches and merging
 
 Many pieces of work run at once (often one Claude thread each). They all land in one branch,
-`staging`, and reach `main` together through one PR. Nothing goes live until Abhijay merges
-that PR and presses Publish in Lovable (see "How changes go live" in `docs/launch-plan.md`).
+`staging`, and reach `main` together through one PR. Nothing goes live until the admin merges
+that PR (see "How changes go live" in `docs/launch-plan.md`).
 
 ```
-main  ◄── one PR, merged when Abhijay says go ── staging ◄── PR ── feature branch (one per piece of work)
-  │                                                 ▲
-  └── Lovable edits land here; the merge train ─────┘ brings them into staging after every push to main
+main  ◄── one PR, merged when admin says go ── staging ◄── PR ── feature branch (one per piece of work)
+  │                                               ▲
+  └── the merge train ────────────────────────────┘ brings them into staging after every push to main
 ```
 
 ## For each piece of work
@@ -53,7 +53,7 @@ would change the same line:
 
 - The app count: `APP_COUNT_FALLBACK` in `src/lib/appCount.ts`, `index.html`, `public/llms.txt`, the MCP text.
 - The progress table in `docs/launch-plan.md`.
-- `src/integrations/supabase/types.ts` (Lovable regenerates it).
+- `src/integrations/supabase/types.ts` (auto-generated; regenerate with the Supabase CLI if needed).
 
 A new engine still needs its name added to the engine lists in `scripts/check-apps.mjs` and `KIND_BY_ENGINE` in
 `src/data/goals.ts`; those are short and rarely touched by two branches at once.
