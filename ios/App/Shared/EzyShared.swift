@@ -16,7 +16,7 @@ import CoreText
  */
 enum EzyShared {
     static let appGroup = "group.com.ezyourlife.app"
-    static let api = URL(string: "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/api/v1")!
+    static let api = URL(string: "https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/api/v1")!
     static let site = "https://ezyourlife.com"
 
     /// Opened once: the keyboard reads this on every key press, so it must stay cheap.

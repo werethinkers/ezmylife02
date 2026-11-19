@@ -650,11 +650,16 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         if let notice {
-            addChip(notice, style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip() }
+            let isNetworkError = notice.lowercased().contains("internet") || notice.lowercased().contains("network")
+            if isNetworkError {
+                addChip("No internet · tap to retry", style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip(force: true) }
+            } else {
+                addChip(notice, style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip() }
+            }
             return
         }
         guard hasFullAccess else {
-            addChip("For / shortcuts: Settings › EZYOURLIFE › Keyboards › Allow Full Access", style: .note)
+            addChip("Go to Settings › EZYOURLIFE › Keyboards and turn on Allow Full Access", style: .note)
             return
         }
         guard EzyShared.isConnected else {
@@ -779,7 +784,11 @@ final class KeyboardViewController: UIInputViewController {
             } catch {
                 await MainActor.run {
                     self?.busy = nil
-                    self?.notice = error.localizedDescription
+                    if case EzyError.network = error {
+                        self?.notice = "No internet · check Full Access in Settings › EZYOURLIFE"
+                    } else {
+                        self?.notice = error.localizedDescription
+                    }
                     self?.refreshStrip()
                 }
             }
@@ -929,7 +938,11 @@ final class KeyboardViewController: UIInputViewController {
             } catch {
                 await MainActor.run {
                     self?.busy = nil
-                    self?.notice = error.localizedDescription
+                    if case EzyError.network = error {
+                        self?.notice = "No internet · check Full Access in Settings › EZYOURLIFE"
+                    } else {
+                        self?.notice = error.localizedDescription
+                    }
                     self?.refreshStrip()
                 }
             }
