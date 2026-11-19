@@ -12,7 +12,7 @@ import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
 import { STUDIO_IDS } from "@/data/studios";
-import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
+import { GOALS, byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
 import { AnimatedGrid } from "@/components/ui/animated-grid";
@@ -128,6 +128,17 @@ const Home = () => {
     // An app counts once under every category it is listed in (main one plus "also in").
     live.forEach((t) => categoriesOf(t).forEach((c) => m.set(c, (m.get(c) ?? 0) + 1)));
     return [...m.entries()].sort(byCategoryOrder);
+  }, [live]);
+
+  // Per-goal app counts for the browse section.
+  const goalCounts = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    live.forEach((t) => categoriesOf(t).forEach((c) => {
+      const g = categoryInfo(c).goal;
+      if (!m.has(g)) m.set(g, new Set());
+      m.get(g)!.add(t.id);
+    }));
+    return m;
   }, [live]);
 
   // The moving strip: apps placed there, then the team's picks, then the newest, so it never shows only the oldest apps.
@@ -303,6 +314,31 @@ const Home = () => {
                 })}
               </Shelf>
             </Section>
+
+            {/* ───────── Browse by category ───────── */}
+            {goalCounts.size > 0 && (
+              <Section title="Browse by what you need" line="Every app organised by what it does for your business.">
+                <Shelf>
+                  {GOALS.filter((g) => g.id !== "more").map((g) => {
+                    const n = goalCounts.get(g.id)?.size ?? 0;
+                    if (n === 0) return null;
+                    return (
+                      <Link
+                        key={g.id}
+                        to={`/ai-apps?goal=${g.id}`}
+                        className="block-card flex w-[70%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[44%] lg:w-[18.5%] min-h-[150px] transition-transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        style={{ background: g.color }}
+                      >
+                        <span className="rounded-full border-2 border-ink bg-card/80 px-2.5 py-0.5 text-xs font-bold w-fit">{n} apps</span>
+                        <span className="text-[20px] font-extrabold leading-tight mt-auto">{g.name}</span>
+                        <span className="text-[14px] text-ink/80 leading-snug">{g.line}</span>
+                        <span className="inline-flex items-center gap-1 text-sm font-bold mt-1">Browse <ArrowRight className="h-3.5 w-3.5" /></span>
+                      </Link>
+                    );
+                  })}
+                </Shelf>
+              </Section>
+            )}
 
             {/* ───────── Websites and cards ───────── */}
             <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
