@@ -318,19 +318,21 @@ final class KeyboardViewController: UIInputViewController {
         if !ic.recipient.isEmpty { content["recipient"] = ic.recipient }
         if !ic.message.isEmpty { content["message"] = ic.message }
         if ic.card.category != "website" { content["music"] = true }
-        Task { @MainActor in
+        Task { [weak self] in
             do {
                 let result = try await EzyAPI.publishCard(productId: productId, variantId: variantId, content: content)
-                self.instantCard?.submitting = false
-                self.instantCard?.generatedLink = result.link
-                self.refreshStrip()
-                self.notice = "✓ Card ready! Tap 'Insert link →' to send it."
-                self.refreshStrip()
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.instantCard?.generatedLink = result.link
+                    self?.notice = "✓ Card ready! Tap 'Insert link →' to send it."
+                    self?.refreshStrip()
+                }
             } catch {
-                self.instantCard?.submitting = false
-                self.refreshStrip()
-                self.notice = error.localizedDescription
-                self.refreshStrip()
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
             }
         }
     }
