@@ -26,7 +26,7 @@ async function makeKey(): Promise<string> {
   const r = await fetch(`${API}/keys`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ app: "keyboard", name: "EZYOURLIFE keyboard on iPhone", daily_cap: 500 }),
+    body: JSON.stringify({ app: "keyboard", name: "EZYOURLIFE keyboard on iPhone", daily_cap: 50000 }),
   });
   const body = await r.json().catch(() => ({}));
   if (!r.ok || !body.key) throw new Error(body.message ?? `Could not connect (${r.status}).`);
