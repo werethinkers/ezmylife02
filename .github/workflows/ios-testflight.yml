@@ -116,7 +116,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             MARKETING_VERSION="${{ inputs.version }}" \
-            CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+            CURRENT_PROJECT_VERSION="$(date -u +%Y%m%d%H%M)"
 
       - name: Stamp the entitlements (App Group shared with the keyboard)
         if: ${{ !inputs.share_only }}
