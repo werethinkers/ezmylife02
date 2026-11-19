@@ -1,7 +1,7 @@
 // Builds the final sheet in the browser. The AI picture (when there is one) is the drawing board; the
 // parts list, materials, notes and title block are drawn here as exact text, so they always match what
 // the person edited, in any style, for free.
-import type { Item, Mat, Part, SheetStyle } from "./lib";
+import type { FoamLayer, Item, Mat, Part, SheetStyle, StructuralComponent } from "./lib";
 
 interface Palette { bg: string; panel: string; ink: string; line: string; accent: string; muted: string; head: string; font: string }
 
@@ -65,18 +65,32 @@ export async function composeSheet(item: Item, boardUrl: string | null): Promise
 
   // Band at the bottom: how tall depends on how much data there is.
   const rich = item.sheetType === "full" || item.sheetType === "bom";
-  const bandH = item.sheetType === "bom" ? H - 2 * m - 20 : rich ? 640 : 420;
+  const dataSheet = item.sheetType === "manufacturing" || item.sheetType === "assembly";
+  const bandH = item.sheetType === "bom" ? H - 2 * m - 20 : dataSheet ? 500 : rich ? 640 : 420;
   const bandY = H - m - bandH - 10;
   const bx = m + 10;
   const bw = W - 2 * m - 20;
 
-  // Drawing board
+  // Drawing board — Gemini's geometry-only drawing (no text)
+  let drawAreaX = m + 10, drawAreaY = m + 10;
+  let drawAreaW = W - 2 * m - 20, drawAreaH = bandY - drawAreaY - 14;
   if (boardUrl && item.sheetType !== "bom") {
     const img = await load(boardUrl);
-    const ax = m + 10, ay = m + 10, aw = W - 2 * m - 20, ah = bandY - ay - 14;
+    const aw = drawAreaW, ah = drawAreaH;
     const s = Math.min(aw / img.width, ah / img.height);
-    ctx.drawImage(img, ax + (aw - img.width * s) / 2, ay + (ah - img.height * s) / 2, img.width * s, img.height * s);
+    const ix = drawAreaX + (aw - img.width * s) / 2;
+    const iy = drawAreaY + (ah - img.height * s) / 2;
+    ctx.drawImage(img, ix, iy, img.width * s, img.height * s);
+    drawAreaX = ix; drawAreaY = iy;
+    drawAreaW = img.width * s; drawAreaH = img.height * s;
   }
+
+  // Browser text overlay on the drawing area — dimension values, callout legend, section layer legend.
+  // Gemini drew geometry only; we render all text here so it is always crisp and never clipped.
+  if (spec && item.sheetType !== "bom") {
+    drawOverlay(ctx, p, spec, item, drawAreaX, drawAreaY, drawAreaW, drawAreaH);
+  }
+  void dataSheet;
 
   // Title block (right) is always there.
   const tbW = 760;
@@ -123,6 +137,21 @@ export async function composeSheet(item: Item, boardUrl: string | null): Promise
       drawMaterials(ctx, p, spec.materials, px, bandY + bandH - 560, Math.floor((pw - 14) / 2), 560);
       drawNotes(ctx, p, spec, item, px + Math.floor((pw - 14) / 2) + 14, bandY + bandH - 560, pw - Math.floor((pw - 14) / 2) - 14, 560);
     }
+  } else if (item.sheetType === "structural" && spec) {
+    // Structural: callout legend for frame components + overall dims + spec notes
+    const nw = 640;
+    drawStructuralLegend(ctx, p, spec.structuralComponents ?? [], bx, bandY, leftW - nw - 14, bandH, unit);
+    drawNotes(ctx, p, spec, item, bx + leftW - nw, bandY, nw, bandH);
+  } else if (item.sheetType === "manufacturing" && spec) {
+    // Manufacturing: detailed BOM with all columns + materials
+    const mw = 760;
+    drawMaterials(ctx, p, spec.materials, bx, bandY, mw, bandH);
+    drawDetailedBom(ctx, p, spec, bx + mw + 14, bandY, leftW - mw - 14, bandH, unit);
+  } else if (item.sheetType === "assembly" && spec) {
+    // Assembly: QC checks table + assembly stages
+    const qcW = Math.floor(leftW * 0.58);
+    drawQCTable(ctx, p, spec, bx, bandY, qcW, bandH, unit);
+    drawAssemblyStages(ctx, p, spec, bx + qcW + 14, bandY, leftW - qcW - 14, bandH);
   } else if (rich && spec) {
     const mw = 760;
     drawMaterials(ctx, p, spec.materials, bx, bandY, mw, bandH);
@@ -135,6 +164,203 @@ export async function composeSheet(item: Item, boardUrl: string | null): Promise
   }
 
   return c.toDataURL("image/png");
+}
+
+/** Overlay crisp browser-rendered text onto the Gemini drawing area.
+ *  Gemini drew pure geometry with blank dimension gaps and numbered callout circles only.
+ *  We add: dimensions block (top-right), callout legend (left strip on exploded/ortho/details),
+ *  and section layer legend (bottom-right on full/ortho).
+ *
+ *  Sizing is in absolute canvas pixels (canvas = 3000 × 2121).
+ *  The drawing image is letterboxed inside the drawing area; x/y/w/h are the actual image bounds. */
+function drawOverlay(
+  ctx: CanvasRenderingContext2D, p: Palette, spec: NonNullable<Item["spec"]>,
+  item: Item, x: number, y: number, w: number, h: number
+) {
+  const unit = item.unit === "in" ? "in" : "mm";
+  const d = spec.dimensions;
+  const parts = spec.parts;
+  const sheetType = item.sheetType;
+
+  // Helper: filled rounded-ish semi-transparent panel
+  function panel(px: number, py: number, pw: number, ph: number) {
+    ctx.save();
+    ctx.globalAlpha = 0.90;
+    ctx.fillStyle = p.bg;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    ctx.strokeStyle = p.line; ctx.lineWidth = 2; ctx.strokeRect(px, py, pw, ph);
+  }
+  function divider(px: number, py: number, pw: number) {
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + pw, py); ctx.stroke();
+  }
+
+  // ── 1. DIMENSIONS BLOCK — top-right corner of the drawing image ───────────
+  // Shows W × D × H × SeatH from spec.dimensions, always.
+  {
+    const fmtV = (v: number | undefined) => v ? String(v) : undefined;
+    const dimRows: Array<[string, string]> = [
+      ["WIDTH",   fmtV(d.width)],
+      ["DEPTH",   fmtV(d.depth)],
+      ["HEIGHT",  fmtV(d.height)],
+      ["SEAT H",  fmtV(d.seatHeight)],
+    ].filter((r): r is [string, string] => Boolean(r[1]));
+
+    if (dimRows.length) {
+      // Fixed pixel sizes — readable at 3000px canvas, looks right when displayed smaller
+      const LABEL_W = 160; // px for label column
+      const VAL_W   = 220; // px for value column
+      const BW = LABEL_W + VAL_W + 24; // total block width  = 404
+      const ROW_H  = 52;
+      const HEAD_H = 44;
+      const BH = HEAD_H + dimRows.length * ROW_H + 8;
+      const BX = x + w - BW - 14;  // 14px from right edge of drawing image
+      const BY = y + 14;            // 14px from top edge
+
+      panel(BX, BY, BW, BH);
+      ctx.fillStyle = p.head; ctx.font = `bold 24px ${p.font}`; ctx.textBaseline = "middle";
+      ctx.fillText(`OVERALL DIMS — ${unit.toUpperCase()}`, BX + 12, BY + HEAD_H / 2);
+      divider(BX, BY + HEAD_H, BW);
+
+      dimRows.forEach(([label, val], i) => {
+        const ry = BY + HEAD_H + i * ROW_H;
+        if (i > 0) divider(BX, ry, BW);
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = p.muted; ctx.font = `bold 22px ${p.font}`;
+        ctx.fillText(label, BX + 12, ry + ROW_H / 2);
+        ctx.fillStyle = p.ink; ctx.font = `bold 28px ${p.font}`;
+        ctx.fillText(`${val} ${unit}`, BX + LABEL_W + 12, ry + ROW_H / 2);
+      });
+    }
+  }
+
+  // ── 2. CALLOUT LEGEND STRIP — left side of drawing image ──────────────────
+  // For exploded, ortho, details and bom sheet types — these are the sheets where
+  // Gemini draws large exploded views with numbered callout circles and no names.
+  // For 'full', the BOM table in the bottom band already lists all parts; we still
+  // show a compact legend so the drawing is self-contained.
+  // Skip for manufacturing/assembly (data-only sheets with no callout drawing).
+  if (parts.length && sheetType !== "bom" && sheetType !== "manufacturing" && sheetType !== "assembly") {
+    const maxRows = Math.min(parts.length, 15);
+    const ROW_H  = Math.min(52, Math.floor((h - 20) / (maxRows + 1))); // +1 for header
+    const FS_BAD = Math.max(20, Math.min(30, Math.floor(ROW_H * 0.56))); // badge font
+    const FS_TXT = Math.max(18, Math.min(26, Math.floor(ROW_H * 0.48))); // name font
+    // Width: badge (FS_BAD + 8) + longest name. Measure a representative name.
+    ctx.font = `${FS_TXT}px ${p.font}`;
+    const longestName = parts.slice(0, maxRows).reduce((acc, pt) =>
+      ctx.measureText(pt.component.toUpperCase()).width > acc ? ctx.measureText(pt.component.toUpperCase()).width : acc, 0);
+    const BADGE_COL = FS_BAD + 16;  // px
+    const NAME_COL  = Math.min(longestName + 20, 480); // cap at 480px
+    const SW = BADGE_COL + NAME_COL + 24;
+    const HEAD_H = ROW_H;
+    const SH = HEAD_H + maxRows * ROW_H + 8;
+    const SX = x + 10;
+    const SY = y + (h - SH) / 2; // vertically centred on drawing area
+
+    panel(SX, SY, SW, SH);
+    ctx.fillStyle = p.head; ctx.font = `bold 22px ${p.font}`; ctx.textBaseline = "middle";
+    ctx.fillText("CALLOUT LEGEND", SX + 12, SY + HEAD_H / 2);
+    divider(SX, SY + HEAD_H, SW);
+
+    const BADGES = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮"];
+    parts.slice(0, maxRows).forEach((pt, i) => {
+      const ry = SY + HEAD_H + i * ROW_H;
+      if (i > 0) divider(SX, ry, SW);
+      ctx.textBaseline = "middle";
+      // Badge circle
+      const cx2 = SX + 12 + FS_BAD / 2, cy2 = ry + ROW_H / 2;
+      ctx.beginPath(); ctx.arc(cx2, cy2, FS_BAD / 2 + 4, 0, Math.PI * 2);
+      ctx.fillStyle = p.accent; ctx.fill();
+      ctx.fillStyle = p.bg; ctx.font = `bold ${FS_BAD}px ${p.font}`;
+      ctx.textAlign = "center";
+      ctx.fillText(BADGES[i] ?? String(pt.item), cx2, cy2 + 1);
+      ctx.textAlign = "left";
+      // Component name + material
+      ctx.fillStyle = p.ink; ctx.font = `${FS_TXT}px ${p.font}`;
+      const nameStr = fit(ctx, pt.component.toUpperCase(), NAME_COL - 8);
+      ctx.fillText(nameStr, SX + BADGE_COL + 12, ry + ROW_H / 2 - (pt.material ? FS_TXT * 0.35 : 0));
+      if (pt.material) {
+        ctx.fillStyle = p.muted; ctx.font = `${Math.max(14, FS_TXT - 6)}px ${p.font}`;
+        ctx.fillText(fit(ctx, pt.material.toUpperCase(), NAME_COL - 8), SX + BADGE_COL + 12, ry + ROW_H / 2 + FS_TXT * 0.55);
+      }
+    });
+  }
+
+  // ── 3. SECTION LAYER LEGEND — bottom-right of drawing image ───────────────
+  // Section A-A on full/ortho, Section B-B (structural frame) on structural sheet.
+  if (sheetType === "structural") {
+    // Show structural frame component legend using structuralComponents if available
+    const comps = spec.structuralComponents ?? [];
+    const layers = comps.length >= 3
+      ? comps.slice(0, 8).map((c, i) => {
+          const badge = ["①","②","③","④","⑤","⑥","⑦","⑧"][i] ?? `${i + 1}.`;
+          return `${badge} ${c.component.toUpperCase()} (${c.material})`;
+        })
+      : ["① OUTER FRAME RAIL", "② CORNER BLOCK", "③ SEAT PLATFORM BOARD",
+         "④ BACK FRAME UPRIGHT", "⑤ ARM FRAME RAIL", "⑥ LEG TENON JOINT",
+         "⑦ CORNER BRACKET", "⑧ WEBBING TACK STRIP"];
+    const ROW_H2 = Math.min(40, Math.floor((h * 0.42) / (layers.length + 1)));
+    const FS2 = Math.max(16, Math.min(22, Math.floor(ROW_H2 * 0.55)));
+    ctx.font = `${FS2}px ${p.font}`;
+    const maxLen = layers.reduce((acc, l) => Math.max(acc, ctx.measureText(l).width), 0);
+    const SW2 = Math.min(maxLen + 36, 560);
+    const SH2 = ROW_H2 + layers.length * ROW_H2 + 8;
+    const dimBlockW = 404 + 14;
+    const SX2 = x + w - dimBlockW - SW2 - 20;
+    const SY2 = y + h - SH2 - 14;
+    panel(SX2, SY2, SW2, SH2);
+    ctx.fillStyle = p.head; ctx.font = `bold 20px ${p.font}`; ctx.textBaseline = "middle";
+    ctx.fillText("SECTION B-B — FRAME", SX2 + 10, SY2 + ROW_H2 / 2);
+    divider(SX2, SY2 + ROW_H2, SW2);
+    layers.forEach((l, i) => {
+      const ry = SY2 + ROW_H2 + i * ROW_H2;
+      if (i > 0) divider(SX2, ry, SW2);
+      ctx.fillStyle = p.ink; ctx.font = `${FS2}px ${p.font}`; ctx.textBaseline = "middle";
+      ctx.fillText(fit(ctx, l, SW2 - 20), SX2 + 10, ry + ROW_H2 / 2);
+    });
+  }
+
+  // Only on full and ortho sheets, which include the cross-section panel.
+  // Derives layers from spec.parts (structural/frame/foam/fabric items) so it
+  // matches this actual piece, not a generic sofa.
+  if (sheetType === "full" || sheetType === "ortho") {
+    // Pick structural layer description from materials list (fabric, foam, frame types)
+    // Fall back to a standard sofa layer stack if spec has no recognisable layers.
+    const matLayers = spec.materials.slice(0, 8).map((mt, i) => {
+      const badge = ["①","②","③","④","⑤","⑥","⑦","⑧"][i] ?? `${i + 1}.`;
+      return `${badge} ${mt.name.toUpperCase()}`;
+    });
+    const layers = matLayers.length >= 3 ? matLayers : [
+      "① UPHOLSTERY FABRIC", "② DACRON WRAP", "③ HIGH-RESILIENCE FOAM",
+      "④ PLYWOOD PANEL", "⑤ SOLID WOOD FRAME", "⑥ WEBBING SUSPENSION",
+      "⑦ SEAT PLATFORM BOARD", "⑧ SOLID WOOD LEG",
+    ];
+
+    const ROW_H2 = Math.min(40, Math.floor((h * 0.42) / (layers.length + 1)));
+    const FS2 = Math.max(16, Math.min(22, Math.floor(ROW_H2 * 0.55)));
+    ctx.font = `${FS2}px ${p.font}`;
+    const maxLen = layers.reduce((acc, l) => Math.max(acc, ctx.measureText(l).width), 0);
+    const SW2 = Math.min(maxLen + 36, 500);
+    const SH2 = ROW_H2 + layers.length * ROW_H2 + 8;
+    // Position: bottom-right of drawing image, left of the dims block
+    const dimBlockW = 404 + 14; // dims block width + its right margin
+    const SX2 = x + w - dimBlockW - SW2 - 20;
+    const SY2 = y + h - SH2 - 14;
+
+    panel(SX2, SY2, SW2, SH2);
+    ctx.fillStyle = p.head; ctx.font = `bold 20px ${p.font}`; ctx.textBaseline = "middle";
+    ctx.fillText("SECTION A-A LAYERS", SX2 + 10, SY2 + ROW_H2 / 2);
+    divider(SX2, SY2 + ROW_H2, SW2);
+
+    layers.forEach((l, i) => {
+      const ry = SY2 + ROW_H2 + i * ROW_H2;
+      if (i > 0) divider(SX2, ry, SW2);
+      ctx.fillStyle = p.ink; ctx.font = `${FS2}px ${p.font}`; ctx.textBaseline = "middle";
+      ctx.fillText(fit(ctx, l, SW2 - 20), SX2 + 10, ry + ROW_H2 / 2);
+    });
+  }
 }
 
 function drawParts(ctx: CanvasRenderingContext2D, p: Palette, parts: Part[], x: number, y: number, w: number, h: number, unit: string) {
@@ -198,4 +424,163 @@ function drawNotes(ctx: CanvasRenderingContext2D, p: Palette, spec: NonNullable<
   }
   const max = Math.floor((h - 84) / (fs + 8));
   out.slice(0, max).forEach((l, i) => ctx.fillText(l, x + 20, y + 74 + i * (fs + 8)));
+}
+
+/** Structural frame legend: component schedule table */
+function drawStructuralLegend(
+  ctx: CanvasRenderingContext2D, p: Palette,
+  components: StructuralComponent[],
+  x: number, y: number, w: number, h: number, unit: string
+) {
+  box(ctx, p, x, y, w, h, "STRUCTURAL COMPONENT SCHEDULE");
+  const cols = [40, 240, 360, 220, 60] as const; // item, component, material, dimensions, qty
+  const headers = ["#", "COMPONENT", "MATERIAL", `DIMENSIONS (${unit.toUpperCase()})`, "QTY"];
+  const colX = [x + 20, x + 70, x + 320, x + 690, x + 920];
+  const rowH = 46;
+  const startY = y + 74;
+  ctx.fillStyle = p.head; ctx.font = `bold 24px ${p.font}`; ctx.textBaseline = "top";
+  headers.forEach((h2, i) => ctx.fillText(h2, colX[i], startY));
+  ctx.strokeStyle = p.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x + 20, startY + 34); ctx.lineTo(x + w - 20, startY + 34); ctx.stroke();
+  ctx.font = `22px ${p.font}`; ctx.fillStyle = p.ink;
+  const maxRows = Math.floor((h - 130) / rowH);
+  components.slice(0, maxRows).forEach((c, i) => {
+    const ry = startY + 44 + i * rowH;
+    if (i % 2 === 1) { ctx.fillStyle = p.bg === "#ffffff" ? "#f5f5f5" : p.panel; ctx.fillRect(x + 10, ry - 4, w - 20, rowH - 2); }
+    ctx.fillStyle = p.ink;
+    ctx.fillText(String(c.item), colX[0], ry);
+    ctx.fillText(fit(ctx, c.component, cols[1] - 10), colX[1], ry);
+    ctx.fillText(fit(ctx, c.material, cols[2] - 10), colX[2], ry);
+    ctx.fillText(fit(ctx, c.dimensions ?? "—", cols[3] - 10), colX[3], ry);
+    ctx.fillText(String(c.qty), colX[4], ry);
+  });
+  void unit;
+}
+
+/** Detailed BOM for manufacturing sheet: cutting list by material type */
+function drawDetailedBom(
+  ctx: CanvasRenderingContext2D, p: Palette,
+  spec: NonNullable<Item["spec"]>,
+  x: number, y: number, w: number, h: number, unit: string
+) {
+  box(ctx, p, x, y, w, h, `CUTTING LIST / BOM  (${unit.toUpperCase()})`);
+  const lists = spec.cuttingLists ?? [];
+  const colX = [x + 20, x + 90, x + 340, x + 490, x + 620, x + 740, x + 820];
+  const headers = ["#", "PART NAME", `L`, `W`, `T`, "QTY", "GRN"];
+  const rowH = 40;
+  let ry = y + 74;
+  ctx.fillStyle = p.head; ctx.font = `bold 22px ${p.font}`; ctx.textBaseline = "top";
+  headers.forEach((h2, i) => ctx.fillText(h2, colX[i], ry));
+  ry += 36;
+  ctx.strokeStyle = p.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x + 10, ry - 4); ctx.lineTo(x + w - 10, ry - 4); ctx.stroke();
+  ctx.font = `20px ${p.font}`; ctx.fillStyle = p.ink;
+  const maxY = y + h - 20;
+  for (const list of lists) {
+    if (ry + 36 > maxY) break;
+    // Material sub-heading
+    ctx.fillStyle = p.accent; ctx.font = `bold 20px ${p.font}`;
+    ctx.fillText(`▶  ${list.materialType}`, x + 20, ry);
+    ctx.fillStyle = p.ink; ctx.font = `20px ${p.font}`;
+    ry += rowH;
+    for (const c of list.components) {
+      if (ry + rowH > maxY) break;
+      ctx.fillText(String(c.partId), colX[0], ry);
+      ctx.fillText(fit(ctx, c.name, 240), colX[1], ry);
+      ctx.fillText(String(c.length), colX[2], ry);
+      ctx.fillText(String(c.width), colX[3], ry);
+      ctx.fillText(String(c.thickness), colX[4], ry);
+      ctx.fillText(String(c.qty), colX[5], ry);
+      ctx.fillText(c.grain ?? "—", colX[6], ry);
+      ry += rowH;
+    }
+  }
+  // If no cutting lists, fall back to standard parts
+  if (lists.length === 0) {
+    ctx.font = `20px ${p.font}`; ctx.fillStyle = p.muted;
+    ctx.fillText("No cutting list data extracted. See material schedule.", x + 20, y + 130);
+  }
+}
+
+/** QC inspection checklist table */
+function drawQCTable(
+  ctx: CanvasRenderingContext2D, p: Palette,
+  spec: NonNullable<Item["spec"]>,
+  x: number, y: number, w: number, h: number, _unit: string
+) {
+  box(ctx, p, x, y, w, h, "QUALITY CONTROL & INSPECTION");
+  const checks = spec.qcChecks ?? [];
+  const colX = [x + 20, x + 70, x + 320, x + 530, x + 680];
+  const headers = ["#", "INSPECTION ITEM", "NOMINAL", "TOLERANCE", "CRITERION"];
+  const rowH = 46;
+  const startY = y + 74;
+  ctx.fillStyle = p.head; ctx.font = `bold 22px ${p.font}`; ctx.textBaseline = "top";
+  headers.forEach((h2, i) => ctx.fillText(h2, colX[i], startY));
+  ctx.strokeStyle = p.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x + 10, startY + 32); ctx.lineTo(x + w - 10, startY + 32); ctx.stroke();
+  ctx.font = `20px ${p.font}`; ctx.fillStyle = p.ink;
+  const maxRows = Math.floor((h - 130) / rowH);
+  if (checks.length === 0) {
+    ctx.fillStyle = p.muted; ctx.font = `20px ${p.font}`;
+    ctx.fillText("QC checks will be generated based on product analysis.", x + 20, startY + 50);
+  } else {
+    checks.slice(0, maxRows).forEach((c, i) => {
+      const ry = startY + 44 + i * rowH;
+      if (i % 2 === 1) { ctx.fillStyle = "#f9f9f9"; ctx.fillRect(x + 10, ry - 4, w - 20, rowH - 2); }
+      ctx.fillStyle = p.ink;
+      ctx.fillText(String(c.checkNo), colX[0], ry);
+      ctx.fillText(fit(ctx, c.item, 240), colX[1], ry);
+      ctx.fillText(fit(ctx, c.nominal, 200), colX[2], ry);
+      ctx.fillText(fit(ctx, c.tolerance, 140), colX[3], ry);
+      ctx.fillText(fit(ctx, c.criterion, 240), colX[4], ry);
+    });
+  }
+}
+
+/** Assembly stages list */
+function drawAssemblyStages(
+  ctx: CanvasRenderingContext2D, p: Palette,
+  spec: NonNullable<Item["spec"]>,
+  x: number, y: number, w: number, h: number
+) {
+  box(ctx, p, x, y, w, h, "ASSEMBLY SEQUENCE");
+  const stages = spec.assemblyStages ?? [];
+  let ry = y + 80;
+  const maxY = y + h - 20;
+  const lineH = 34;
+  ctx.textBaseline = "top";
+  if (stages.length === 0) {
+    ctx.fillStyle = p.muted; ctx.font = `20px ${p.font}`;
+    ctx.fillText("Assembly stages will be generated based on product analysis.", x + 20, ry);
+    return;
+  }
+  for (const s of stages) {
+    if (ry + lineH * 2 > maxY) break;
+    // Stage heading
+    ctx.fillStyle = p.accent; ctx.font = `bold 24px ${p.font}`;
+    ctx.fillText(`STAGE ${s.stage}: ${s.title.toUpperCase()}`, x + 20, ry);
+    ry += 32;
+    // Components list
+    if (s.components && s.components.length > 0) {
+      ctx.fillStyle = p.ink; ctx.font = `20px ${p.font}`;
+      const compLine = `Components: ${s.components.slice(0, 4).join(", ")}${s.components.length > 4 ? "…" : ""}`;
+      ctx.fillText(fit(ctx, compLine, w - 40), x + 20, ry);
+      ry += lineH;
+    }
+    if (s.fasteners) {
+      ctx.fillStyle = p.muted; ctx.font = `18px ${p.font}`;
+      ctx.fillText(fit(ctx, `Fasteners: ${s.fasteners}`, w - 40), x + 20, ry);
+      ry += lineH;
+    }
+    if (s.notes) {
+      ctx.fillStyle = p.muted; ctx.font = `18px ${p.font}`;
+      const noteLines = wrap(ctx, `↳ ${s.notes}`, w - 40);
+      noteLines.slice(0, 2).forEach((l) => { ctx.fillText(l, x + 30, ry); ry += 26; });
+    }
+    ry += 12; // gap between stages
+    // Divider
+    ctx.strokeStyle = p.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x + 20, ry); ctx.lineTo(x + w - 20, ry); ctx.stroke();
+    ry += 10;
+  }
 }

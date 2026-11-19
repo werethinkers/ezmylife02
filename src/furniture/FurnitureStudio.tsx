@@ -132,8 +132,16 @@ export function FurnitureStudio() {
     if (e instanceof AppCallError) {
       if (e.status === 401) return setLogin(true);
       if (e.status === 402) return setBuy({ open: true, required: e.data?.credits_required ?? 0, balance: e.data?.balance ?? 0 });
+      // The phone lost the connection (a generic "Edge Function" message from the client): the studio
+      // may already have finished and charged, so do not promise "not charged" here.
+      if (/edge function/i.test(e.message)) {
+        console.error("[furniture-studio] connection lost", e.status, e.message, e.data);
+        refreshWallet();
+        return void toast.error("The connection dropped before the result reached your phone. Keep this screen open while it works, and check your credits before trying again.");
+      }
       return void toast.error(`${e.message || "That did not work."} You were not charged.`);
     }
+    console.error("[furniture-studio] failed", e);
     toast.error("That did not work. You were not charged.");
   };
 
@@ -343,7 +351,7 @@ export function FurnitureStudio() {
                   {SHEET_TYPES.map((s) => (
                     <button key={s.id} type="button" onClick={() => patch(active.id, () => ({ sheetType: s.id }))} aria-pressed={active.sheetType === s.id}
                       className={cn("w-40 shrink-0 rounded-2xl border-2 border-ink p-3 text-left [scroll-snap-align:start]", active.sheetType === s.id ? "bg-sun shadow-block-sm" : "bg-card")}>
-                      <span className="block text-sm font-bold">{s.name}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-bold">{s.name}{s.badge && <span className="rounded bg-accent px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">{s.badge}</span>}</span>
                       <span className="block text-xs text-muted-foreground">{s.line}</span>
                     </button>
                   ))}
