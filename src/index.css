@@ -55,7 +55,7 @@ html {
     --secondary-foreground: 0 0% 7%;
 
     --muted: 37 52% 91%;
-    --muted-foreground: 0 0% 29%;
+    --muted-foreground: 0 0% 24%;          /* darker grey so small print stays easy to read */
 
     --accent: 47 100% 50%;              /* sun: hover and selected surfaces */
     --accent-foreground: 0 0% 7%;
@@ -468,3 +468,162 @@ html {
 @keyframes shine-sweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
 .shining-text { animation: shine-sweep 3.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .shining-text { animation: none; background-position: 0 0; } }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Motion layer — "alive, a little futuristic", in the same colours.
+ * Nothing here adds a colour: it moves the ink, cream and goal colours that are already on the
+ * page. Every effect stops for prefers-reduced-motion, and anything that hides content first is
+ * progressive (no support = shown as before).
+ * ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  /* Graph-paper dots that drift slowly behind every page. Faint, so text stays crisp. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -48px;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(hsl(var(--ink) / 0.09) 1.2px, transparent 1.6px);
+    background-size: 24px 24px;
+    animation: fx-drift 60s linear infinite;
+  }
+
+  /* Cards lift with a springier ease and the ink shadow grows under them. */
+  .block-lift {
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .block-lift:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 8px 8px 0 0 hsl(var(--ink));
+  }
+
+  /* Tilt + pointer sheen (TiltCard / useTilt, from 21st.dev). */
+  .fx-tilt {
+    position: relative;
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  }
+  .block-lift.fx-tilt:hover {
+    transform: perspective(900px) translate(-3px, -3px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  }
+  .block-lift.fx-tilt:active {
+    transform: perspective(900px) translate(2px, 2px);
+  }
+  /* White light under the pointer: brightens the card's own colour, adds none. */
+  .fx-tilt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(220px circle at var(--px, 50%) var(--py, 50%), hsl(0 0% 100% / 0.55), transparent 70%);
+    mix-blend-mode: soft-light;
+  }
+  /* A thin scan line that crosses the card once when the pointer arrives. */
+  .fx-tilt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 21;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(105deg, transparent 42%, hsl(0 0% 100% / 0.7) 49%, hsl(0 0% 100% / 0.7) 51%, transparent 58%);
+    background-size: 250% 100%;
+    background-position: 130% 0;
+    opacity: 0;
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .fx-tilt:hover::after { opacity: 1; }
+    .fx-tilt:hover::before { animation: fx-scan 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 1; }
+  }
+
+  /* The same light sweep for main buttons. */
+  .fx-sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .fx-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, hsl(0 0% 100% / 0.65) 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-position: 130% 0;
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .fx-sheen:hover::after { animation: fx-scan 0.7s ease-out 1; }
+  }
+
+  /* The highlighter draws itself in, left to right. */
+  .marker {
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .marker { animation: fx-marker 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.15s backwards; }
+  }
+
+  /* Cards rise into place as they scroll into view. Uses the separate translate/scale/opacity
+     properties with fill "backwards" only, so hover transforms and opacity classes are untouched
+     once a card is in place. Browsers without scroll timelines simply show the card. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .block-card:not([role="dialog"] *) {
+        animation: fx-rise linear backwards;
+        animation-timeline: view();
+        animation-range: entry 0% entry 70%;
+      }
+    }
+  }
+
+  /* Focus outlines that are easy to see on every goal colour. */
+  :focus-visible {
+    outline-offset: 3px;
+  }
+
+  /* Animated grid backdrop (AnimatedGrid, from 21st.dev). */
+  .fx-grid {
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
+  }
+  .fx-grid::before,
+  .fx-grid::after {
+    content: "";
+    position: absolute;
+    inset: -96px;
+    animation: fx-grid-drift 30s linear infinite;
+  }
+  .fx-grid::before {
+    background-image:
+      linear-gradient(to right, hsl(var(--ink) / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--ink) / 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .fx-grid::after {
+    background-image:
+      linear-gradient(to right, hsl(var(--grid-accent, var(--sun)) / 0.4) 2px, transparent 2px),
+      linear-gradient(to bottom, hsl(var(--grid-accent, var(--sun)) / 0.4) 2px, transparent 2px);
+    background-size: 96px 96px;
+  }
+  @media (forced-colors: active) {
+    .fx-grid, body::before { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before, .fx-grid::before, .fx-grid::after { animation: none; }
+  }
+}
+
+@keyframes fx-drift { to { transform: translate(24px, 24px); } }
+@keyframes fx-grid-drift { to { transform: translate(96px, 96px); } }
+@keyframes fx-scan {
+  0% { opacity: 1; background-position: 130% 0; }
+  100% { opacity: 1; background-position: -30% 0; }
+}
+@keyframes fx-marker { from { background-size: 0% 100%; } }
+@keyframes fx-rise { from { opacity: 0; translate: 0 28px; scale: 0.97; } }
