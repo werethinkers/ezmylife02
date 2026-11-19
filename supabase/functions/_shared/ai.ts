@@ -8,7 +8,7 @@
 // (streaming works). It tries the Lovable gateway first; if that fails (no key, out of credits,
 // rate-limited, key not registered, server error) it retries on the project's own Gemini keys
 // (gemini_api_keys table, then GEMINI_API_KEY_1..10) through Google's OpenAI-compatible endpoint.
-import { image as makeImage } from "./llm.ts";
+import { image as makeImage, chat as nativeChat, type ChatMessage } from "./llm.ts";
 
 export const AI = {
   GATEWAY: "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -100,6 +100,19 @@ export async function aiFetch(body: Body): Promise<Response> {
     } catch (e) {
       console.error("Gemini key error:", e);
     }
+  }
+  // Native Gemini endpoint fallback — handles key formats (e.g. AQ.*) that the OpenAI-compat endpoint rejects
+  try {
+    const msgs = (body.messages ?? []) as ChatMessage[];
+    const text = await nativeChat(msgs, {
+      model: body.model,
+      maxTokens: body.max_tokens,
+      json: body.response_format?.type === "json_object",
+      temperature: body.temperature,
+    });
+    return jsonRes({ choices: [{ message: { role: "assistant", content: text }, finish_reason: "stop" }] });
+  } catch {
+    // fall through
   }
   return last ?? jsonRes({ error: { message: "No AI key is configured." } }, 500);
 }
