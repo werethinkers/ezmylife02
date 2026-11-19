@@ -131,6 +131,18 @@ export const NATIVE_APPS: Record<string, NativeApp> = {
       return { imageBase64: m ? m[2] : photo, mimeType: m ? m[1] : "image/jpeg", angles };
     },
   },
+  "furniture-sheets": {
+    fn: "furniture-studio", charge: "furniture-sheet", credits: 52, isImage: true, selfCharging: true, mode: "image",
+    intro: "Photo of any furniture in — full technical design sheet out: exploded view, sizes, section, materials and parts list.",
+    fields: [
+      { key: "photo", label: "Furniture photo", type: "image", required: true, help: "Copy a furniture photo first, then tap here" },
+      { key: "type", label: "Sheet type", type: "select", options: ["Full sheet", "Exploded view", "Ortho views", "Bill of materials"], default: "Full sheet" },
+    ],
+    build: (i) => {
+      const typeMap: Record<string, string> = { "Full sheet": "full", "Exploded view": "exploded", "Ortho views": "ortho", "Bill of materials": "bom" };
+      return { action: "sheet", image: i.photo ?? "", type: typeMap[i.type as string] ?? "full", quality: "standard" };
+    },
+  },
 };
 
 /** A website app that runs in the browser, run on the server through ai-app with its AI spec (appSpecs/extras.ts). */

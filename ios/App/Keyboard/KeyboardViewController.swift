@@ -56,6 +56,21 @@ final class KeyboardViewController: UIInputViewController {
     private var busy: String?
     private var notice: String?
 
+    // MARK: Instant card (pre-made cards / websites) state
+
+    private struct InstantCardState {
+        var card: EzyCard
+        var theme: String
+        var sender: String = ""
+        var recipient: String = ""
+        var message: String = ""
+        var editingField: String? = nil  // "sender" | "recipient" | "message"
+        var editBaseline: String = ""
+        var submitting: Bool = false
+        var generatedLink: String? = nil
+    }
+    private var instantCard: InstantCardState?
+
     // MARK: Details card state
 
     /// The app chosen for the command, with its boxes, while the person checks them before it runs.
@@ -235,9 +250,166 @@ final class KeyboardViewController: UIInputViewController {
         if outcome != nil, (textDocumentProxy.documentContextBeforeInput ?? "") != outcomeContext { outcome = nil }
         if card != nil && editingKey == nil { cardFollowsText() }
         else if card != nil, let key = editingKey { takeDictation(into: key) }
+        else if instantCard != nil, let field = instantCard?.editingField { takeInstantDictation(into: field) }
         updateAutoShift()
         buildKeys()
         refreshStrip()
+    }
+
+    // MARK: - Instant card methods
+
+    private func openInstantCard(_ ezyCard: EzyCard) {
+        // Close any open app card first.
+        if card != nil { closeCard() }
+        let defaultTheme = ezyCard.themes.first?.id ?? ""
+        instantCard = InstantCardState(card: ezyCard, theme: defaultTheme, message: ezyCard.defaultMessage)
+        refreshStrip()
+    }
+
+    private func editInstantField(_ field: String) {
+        guard var ic = instantCard else { return }
+        ic.editingField = field
+        ic.editBaseline = textDocumentProxy.documentContextBeforeInput ?? ""
+        instantCard = ic
+        refreshStrip()
+    }
+
+    private func finishInstantEditing() {
+        instantCard?.editingField = nil
+        instantCard?.generatedLink = nil  // reset so user re-generates after editing
+        setPanel(0)
+        refreshStrip()
+    }
+
+    private func takeInstantDictation(into field: String) {
+        guard var ic = instantCard else { return }
+        let now = textDocumentProxy.documentContextBeforeInput ?? ""
+        guard now.count > ic.editBaseline.count, now.hasPrefix(ic.editBaseline) else { return }
+        let added = String(now.dropFirst(ic.editBaseline.count))
+        let said = added.trimmingCharacters(in: .whitespacesAndNewlines)
+        for _ in 0..<added.count { textDocumentProxy.deleteBackward() }
+        guard !said.isEmpty else { return }
+        switch field {
+        case "sender":    ic.sender    = ic.sender.isEmpty    ? said : ic.sender    + " " + said
+        case "recipient": ic.recipient = ic.recipient.isEmpty ? said : ic.recipient + " " + said
+        case "message":   ic.message   = ic.message.isEmpty   ? said : ic.message   + " " + said
+        default: break
+        }
+        instantCard = ic
+        afterTyping()
+    }
+
+    private func insertInstantCard() {
+        guard let ic = instantCard, !ic.submitting else { return }
+        // If we already have a generated link, just insert it
+        if let link = ic.generatedLink {
+            instantCard = nil
+            setPanel(0)
+            replaceCommand(with: link)
+            return
+        }
+        // Start publishing via the API
+        instantCard?.submitting = true
+        refreshStrip()
+        let productId = ic.card.id
+        let variantId = ic.theme
+        var content: [String: Any] = [:]
+        if !ic.sender.isEmpty { content["sender"] = ic.sender }
+        if !ic.recipient.isEmpty { content["recipient"] = ic.recipient }
+        if !ic.message.isEmpty { content["message"] = ic.message }
+        if ic.card.category != "website" { content["music"] = true }
+        Task { [weak self] in
+            do {
+                let result = try await EzyAPI.publishCard(productId: productId, variantId: variantId, content: content)
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.instantCard?.generatedLink = result.link
+                    self?.notice = "✓ Card ready! Tap 'Insert link →' to send it."
+                    self?.refreshStrip()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
+    }
+
+    private func renderInstantEditor() {
+        guard let ic = instantCard, let field = ic.editingField else { return }
+        let currentValue: String
+        let label: String
+        let hint: String
+        switch field {
+        case "sender":
+            currentValue = ic.sender
+            label = ic.card.senderLabel.uppercased()
+            hint = "Type your name or business name"
+        case "recipient":
+            currentValue = ic.recipient
+            label = "FOR (RECIPIENT'S NAME):"
+            hint = "Type the recipient's name"
+        case "message":
+            currentValue = ic.message
+            label = "MESSAGE:"
+            hint = "Edit the message"
+        default:
+            return
+        }
+        let themeColor = ic.card.themes.first(where: { $0.id == ic.theme })?.color ?? brand
+
+        let caption = EzyLook.label(label, EzyLook.body(11, .bold), dark ? UIColor(white: 0.8, alpha: 1) : EzyLook.muted)
+        caption.lineBreakMode = .byTruncatingTail
+
+        let doneBtn = blockButton("Done", fill: EzyLook.sun, text: EzyLook.ink, size: 13, shadow: 0) { [weak self] in self?.finishInstantEditing() }
+        let clearBtn = blockButton("Clear", fill: .white, text: EzyLook.ink, size: 13, shadow: 0) { [weak self] in
+            guard let self else { return }
+            switch field {
+            case "sender":    self.instantCard?.sender    = ""
+            case "recipient": self.instantCard?.recipient = ""
+            case "message":   self.instantCard?.message   = ""
+            default: break
+            }
+            self.afterTyping()
+        }
+        clearBtn.alpha = currentValue.isEmpty ? 0.4 : 1
+        for b in [doneBtn, clearBtn] { b.widthAnchor.constraint(equalToConstant: 62).isActive = true }
+        let top = UIStackView(arrangedSubviews: [caption, doneBtn, clearBtn])
+        top.axis = .horizontal
+        top.spacing = 8
+        top.alignment = .center
+
+        let box = UIView()
+        EzyLook.block(box, radius: 14, shadow: 3, fill: .white, border: 2)
+        box.layer.borderColor = themeColor.cgColor
+        let shownValue = currentValue.isEmpty ? (hint) : currentValue
+        let big = EzyLook.label(shownValue + "▏", EzyLook.body(17, .semibold), currentValue.isEmpty ? EzyLook.muted : EzyLook.ink)
+        big.lineBreakMode = .byTruncatingHead
+        let hintLabel = EzyLook.label("Type here — your keyboard types into this box", EzyLook.body(12), EzyLook.muted)
+        let inner = UIStackView(arrangedSubviews: [big, hintLabel])
+        inner.axis = .vertical
+        inner.spacing = 0
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(inner)
+
+        let stack = UIStackView(arrangedSubviews: [top, box])
+        stack.axis = .vertical
+        stack.spacing = 6
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(stack)
+        NSLayoutConstraint.activate([
+            top.heightAnchor.constraint(equalToConstant: 32),
+            box.heightAnchor.constraint(equalToConstant: 54),
+            inner.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
+            inner.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+            inner.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+            stack.topAnchor.constraint(equalTo: panel.topAnchor, constant: 2),
+            stack.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -4),
+        ])
+        setPanel(102)
     }
 
     /// Dictation (iOS's own mic) types into the app's box. While a card box is being edited, move what was said
@@ -639,22 +811,29 @@ final class KeyboardViewController: UIInputViewController {
         parts.append(editingKey ?? "")
         parts.append(editingValue)
         parts.append((EzyShared.lastResult?.isFresh ?? false) ? "last" : "")
+        if let ic = instantCard { parts.append(ic.card.id + "|" + ic.theme + "|" + ic.sender + "|" + ic.recipient + "|" + (ic.editingField ?? "")) }
         let signature = parts.joined(separator: "¦")
         if !force && signature == stripSignature { return }
         stripSignature = signature
         stripStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        setPanel(0)
+        // Keep the panel if we're editing an instant card field; setPanel(0) only when not.
+        if instantCard?.editingField == nil { setPanel(0) }
 
         if let busy {
             addChip(busy, style: .note)
             return
         }
         if let notice {
-            addChip(notice, style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip() }
+            let isNetworkError = notice.lowercased().contains("internet") || notice.lowercased().contains("network")
+            if isNetworkError {
+                addChip("No internet · tap to retry", style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip(force: true) }
+            } else {
+                addChip(notice, style: .note) { [weak self] in self?.notice = nil; self?.refreshStrip() }
+            }
             return
         }
         guard hasFullAccess else {
-            addChip("For / shortcuts: Settings › EZYOURLIFE › Keyboards › Allow Full Access", style: .note)
+            addChip("Go to Settings › EZYOURLIFE › Keyboards and turn on Allow Full Access", style: .note)
             return
         }
         guard EzyShared.isConnected else {
@@ -676,6 +855,13 @@ final class KeyboardViewController: UIInputViewController {
         }
         if outcome != nil {
             addHeader("Done")
+            return
+        }
+
+        // Instant card customisation form.
+        if let ic = instantCard {
+            renderInstantCardStrip(ic)
+            if ic.editingField != nil { renderInstantEditor() }
             return
         }
 
@@ -718,7 +904,21 @@ final class KeyboardViewController: UIInputViewController {
         let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
         items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
-        addHeader(first.isEmpty ? (apps.isEmpty ? "Type an app or shortcut" : "Recent apps") : "Apps for /\(first)")
+        // Show pre-made cards and business website chips: all when "/" alone, matching ones when text follows.
+        let allCards = EzyShared.instantCards
+        let matchingCards = first.isEmpty ? allCards : allCards.filter {
+            $0.name.lowercased().contains(first.lowercased()) ||
+            $0.glyph.contains(first)
+        }
+        if !matchingCards.isEmpty {
+            addHeader("Cards & websites")
+            for ezyCard in matchingCards.prefix(8) {
+                let title = "\(ezyCard.glyph) \(ezyCard.name)"
+                addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
+            }
+            addStripSeparator()
+        }
+        addHeader(first.isEmpty ? (apps.isEmpty ? "Apps" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {
             addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
         } else {
@@ -779,7 +979,11 @@ final class KeyboardViewController: UIInputViewController {
             } catch {
                 await MainActor.run {
                     self?.busy = nil
-                    self?.notice = error.localizedDescription
+                    if case EzyError.network = error {
+                        self?.notice = "No internet · check Full Access in Settings › EZYOURLIFE"
+                    } else {
+                        self?.notice = error.localizedDescription
+                    }
                     self?.refreshStrip()
                 }
             }
@@ -929,7 +1133,11 @@ final class KeyboardViewController: UIInputViewController {
             } catch {
                 await MainActor.run {
                     self?.busy = nil
-                    self?.notice = error.localizedDescription
+                    if case EzyError.network = error {
+                        self?.notice = "No internet · check Full Access in Settings › EZYOURLIFE"
+                    } else {
+                        self?.notice = error.localizedDescription
+                    }
                     self?.refreshStrip()
                 }
             }
@@ -2150,6 +2358,100 @@ final class KeyboardViewController: UIInputViewController {
     // MARK: Chips
 
     private enum ChipStyle { case primary, shortcut, app, plain, note }
+
+    private func renderInstantCardStrip(_ ic: InstantCardState) {
+        let themeColor = ic.card.themes.first(where: { $0.id == ic.theme })?.color ?? brand
+
+        // Close button
+        addChip("✕", style: .plain) { [weak self] in
+            self?.instantCard = nil
+            self?.setPanel(0)
+            self?.refreshStrip()
+        }
+
+        // Preview badge: big emoji circle in the active theme color
+        let badge = PadLabel()
+        badge.text = ic.card.glyph
+        badge.font = .systemFont(ofSize: 18)
+        badge.textAlignment = .center
+        badge.backgroundColor = themeColor
+        badge.layer.cornerRadius = 15
+        badge.layer.borderWidth = 2
+        badge.layer.borderColor = EzyLook.ink.cgColor
+        badge.clipsToBounds = true
+        badge.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        badge.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        stripStack.addArrangedSubview(badge)
+
+        // Card name
+        let nameLabel = EzyLook.label(ic.card.name, EzyLook.display(13), dark ? .white : EzyLook.ink)
+        nameLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 110).isActive = true
+        nameLabel.lineBreakMode = .byTruncatingTail
+        stripStack.addArrangedSubview(nameLabel)
+
+        // Theme dots (tappable)
+        for theme in ic.card.themes {
+            let dot = ChipButton(type: .custom)
+            dot.backgroundColor = theme.color
+            dot.layer.cornerRadius = 11
+            dot.clipsToBounds = true
+            dot.widthAnchor.constraint(equalToConstant: 22).isActive = true
+            dot.heightAnchor.constraint(equalToConstant: 22).isActive = true
+            if theme.id == ic.theme {
+                dot.layer.borderWidth = 2.5
+                dot.layer.borderColor = EzyLook.ink.cgColor
+            } else {
+                dot.layer.borderWidth = 1
+                dot.layer.borderColor = UIColor(white: 0.5, alpha: 0.5).cgColor
+            }
+            let themeId = theme.id
+            dot.handler = { [weak self] in
+                self?.instantCard?.theme = themeId
+                self?.instantCard?.generatedLink = nil
+                self?.refreshStrip()
+            }
+            dot.addTarget(dot, action: #selector(ChipButton.tapped), for: .touchUpInside)
+            stripStack.addArrangedSubview(dot)
+        }
+
+        addStripSeparator()
+
+        // Sender field chip
+        let senderText = ic.sender.isEmpty ? "👤 \(ic.card.senderLabel.replacingOccurrences(of: ":", with: ""))" : "👤 \(ic.sender)"
+        addChip(senderText, style: ic.sender.isEmpty ? .note : .app) { [weak self] in self?.editInstantField("sender") }
+
+        // Recipient chip (celebrations only)
+        if ic.card.hasRecipient {
+            let recipientText = ic.recipient.isEmpty ? "🎀 For (name)" : "🎀 \(ic.recipient)"
+            addChip(recipientText, style: ic.recipient.isEmpty ? .note : .app) { [weak self] in self?.editInstantField("recipient") }
+        }
+
+        // Message chip (festivals & celebrations)
+        if ic.card.showsMessage {
+            let msgPreview = ic.message.isEmpty ? "💬 Message" : "💬 \(String(ic.message.prefix(18)))…"
+            addChip(msgPreview, style: ic.message.isEmpty ? .note : .plain) { [weak self] in self?.editInstantField("message") }
+        }
+
+        addStripSeparator()
+
+        // Generate / insert link button
+        if ic.submitting {
+            addChip("⏳ Publishing…", style: .note)
+        } else if ic.generatedLink != nil {
+            addChip("Insert link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        } else {
+            addChip("Generate link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        }
+    }
+
+    private func addStripSeparator() {
+        let sep = UIView()
+        sep.backgroundColor = dark ? UIColor(white: 0.5, alpha: 0.5) : UIColor(white: 0.75, alpha: 1)
+        sep.translatesAutoresizingMaskIntoConstraints = false
+        sep.widthAnchor.constraint(equalToConstant: 1).isActive = true
+        sep.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        stripStack.addArrangedSubview(sep)
+    }
 
     private func addChip(_ title: String, style: ChipStyle, truncateHead: Bool = false, action: (() -> Void)? = nil) {
         let chip = ChipButton(type: .system)

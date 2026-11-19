@@ -15,6 +15,7 @@ import { STUDIO_IDS } from "@/data/studios";
 import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
 import { Shelf } from "@/components/store/Shelf";
 import { AppTile, AppRow } from "@/components/store/AppTile";
+import { AnimatedGrid } from "@/components/ui/animated-grid";
 import { HeroPicker } from "@/components/home/HeroPicker";
 import { FeatureCarousel, SqueezeCarousel, Fold } from "@/components/home/Showcases";
 import { useAppSlides } from "@/components/store/useAppSlides";
@@ -168,11 +169,12 @@ const Home = () => {
         )}
 
         {/* ───────── Hero ───────── */}
-        <section className="mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12">
+        <section className="relative isolate mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12">
+          <AnimatedGrid className="-z-10" />
           <div className="min-w-0 lg:col-span-7">
-            <span className="inline-flex items-center rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] font-bold">For small businesses in India</span>
-            <h1 className="mt-5 text-[2.1rem] font-extrabold leading-[1.06] sm:text-5xl xl:text-[4.1rem]">
-              <ShiningText>Run your</ShiningText> <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">whole business</span> from{" "}
+            <span className="inline-flex items-center rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] font-bold shadow-block-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-4 motion-safe:duration-500">For small businesses in India</span>
+            <h1 className="mt-5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-700 text-[2.1rem] font-extrabold leading-[1.06] sm:text-5xl xl:text-[4.1rem]">
+              <ShiningText>Run your</ShiningText> <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block transition-transform duration-300 hover:rotate-1 hover:scale-105">whole business</span> from{" "}
               <span className="marker">one place</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
@@ -209,7 +211,7 @@ const Home = () => {
                 <Link
                   key={q}
                   to={`/ai-apps?q=${encodeURIComponent(q)}`}
-                  className="shrink-0 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun"
+                  className="shrink-0 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-sun hover:shadow-block-sm"
                 >
                   {q}
                 </Link>
@@ -222,7 +224,7 @@ const Home = () => {
                 { t: "Pay per result", s: "Packs from ₹10, UPI or card" },
                 { t: "Failed runs are free", s: "Credits only when it works" },
               ].map(({ t, s }) => (
-                <li key={t} className="min-w-[170px] flex-1 rounded-xl border-2 border-ink bg-card px-3 py-2.5">
+                <li key={t} className="min-w-[170px] flex-1 rounded-xl border-2 border-ink bg-card px-3 py-2.5 shadow-block-sm transition-transform duration-300 hover:-translate-y-1">
                   <span className="block font-bold">{t}</span>
                   <span className="block text-[13px] text-muted-foreground">{s}</span>
                 </li>

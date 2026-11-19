@@ -7,6 +7,11 @@ import { isIosApp } from "./nativeApp";
  * in from an app's own web view, so the app opens the sign-in in Safari's secure window instead and Safari
  * sends the result back to the app through the ezyourlife:// link (registered in ios/App/App/Info.plist).
  * See docs/ios-app.md.
+ *
+ * We get the OAuth URL directly from Supabase (skipBrowserRedirect: true) so there is no server proxy
+ * endpoint needed. After Google auth, Supabase redirects to ezyourlife://oauth-callback with either:
+ *   - a PKCE code (?code=xxx) → exchangeCodeForSession
+ *   - implicit tokens (#access_token=xxx&refresh_token=xxx) → setSession
  */
 
 /** Return address Safari uses to hand the sign-in back to the app. Must match Info.plist (CFBundleURLSchemes). */
@@ -17,9 +22,18 @@ type Result = { error: Error | null; cancelled?: boolean };
 async function signInInApp(): Promise<Result> {
   const [{ Browser }, { App }] = await Promise.all([import("@capacitor/browser"), import("@capacitor/app")]);
 
-  const state = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  const params = new URLSearchParams({ provider: "google", redirect_uri: APP_OAUTH_REDIRECT, state });
-  const url = `${window.location.origin}/~oauth/initiate?${params.toString()}`;
+  // Get the Google OAuth URL directly from Supabase — no server proxy needed.
+  const { data, error: urlError } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: APP_OAUTH_REDIRECT,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (urlError || !data?.url) {
+    return { error: urlError ?? new Error("Could not start Google sign-in. Please try again.") };
+  }
 
   return new Promise<Result>((resolve) => {
     let settled = false;
@@ -36,9 +50,17 @@ async function signInInApp(): Promise<Result> {
       if (!opened.startsWith(APP_OAUTH_REDIRECT)) return;
       try {
         const u = new URL(opened);
-        const p = new URLSearchParams(u.search);
+
+        // PKCE flow: Supabase redirects with ?code=xxx
+        const code = new URLSearchParams(u.search).get("code");
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          return finish({ error: error ?? null });
+        }
+
+        // Implicit flow: tokens arrive in the URL hash
+        const p = new URLSearchParams();
         new URLSearchParams(u.hash.replace(/^#/, "")).forEach((v, k) => p.set(k, v));
-        if (p.get("state") !== state) return finish({ error: new Error("Sign in failed. Please try again.") });
         if (p.get("error")) return finish({ error: new Error(p.get("error_description") || "Sign in failed") });
         const access_token = p.get("access_token");
         const refresh_token = p.get("refresh_token");
@@ -50,10 +72,10 @@ async function signInInApp(): Promise<Result> {
       }
     }).then((h) => handles.push(h));
 
-    // Closing the Safari window without finishing is a cancel, not an error. Wait a moment in case the result is arriving.
+    // Closing Safari without finishing is a cancel, not an error. Wait a moment in case the result is still arriving.
     Browser.addListener("browserFinished", () => setTimeout(() => finish({ error: null, cancelled: true }), 1500)).then((h) => handles.push(h));
 
-    Browser.open({ url }).catch((e) => finish({ error: e instanceof Error ? e : new Error(String(e)) }));
+    Browser.open({ url: data.url }).catch((e) => finish({ error: e instanceof Error ? e : new Error(String(e)) }));
   });
 }
 

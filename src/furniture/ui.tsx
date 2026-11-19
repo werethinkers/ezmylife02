@@ -69,8 +69,8 @@ export function Dropzone({ onFiles, busy, max = 12 }: { onFiles: (files: File[])
 
   const take = useCallback((list: FileList | File[] | null) => {
     const files = Array.from(list ?? []);
-    const ok = files.filter((f) => /^image\//.test(f.type) && f.size <= 15 * 1024 * 1024).slice(0, max);
-    setErr(files.length && !ok.length ? "Use JPG, PNG or WebP pictures under 15 MB." : files.length > max ? `Only the first ${max} pictures were added.` : "");
+    const ok = files.filter((f) => /^image\//.test(f.type)).slice(0, max);
+    setErr(files.length && !ok.length ? "Use JPG, PNG or WebP pictures." : files.length > max ? `Only the first ${max} pictures were added.` : "");
     if (ok.length) onFiles(ok);
   }, [onFiles, max]);
 

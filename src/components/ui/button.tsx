@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-pink text-ink shadow-block-sm hover:-translate-x-px hover:-translate-y-px hover:shadow-block active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
+          "fx-sheen bg-pink text-ink shadow-block-sm hover:-translate-x-px hover:-translate-y-px hover:shadow-block active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
         destructive:
           "bg-destructive text-destructive-foreground shadow-block-sm hover:-translate-x-px hover:-translate-y-px hover:shadow-block active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
         outline:
-          "bg-card text-foreground shadow-block-sm hover:-translate-x-px hover:-translate-y-px hover:bg-sun hover:shadow-block active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
+          "fx-sheen bg-card text-foreground shadow-block-sm hover:-translate-x-px hover:-translate-y-px hover:bg-sun hover:shadow-block active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
         secondary: "bg-sand text-secondary-foreground hover:bg-sun",
         ghost: "border-transparent hover:border-foreground/15 hover:bg-foreground/5",
         link: "border-transparent text-primary underline underline-offset-4 decoration-2 hover:decoration-pink",

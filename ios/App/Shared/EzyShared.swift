@@ -16,7 +16,7 @@ import CoreText
  */
 enum EzyShared {
     static let appGroup = "group.com.ezyourlife.app"
-    static let api = URL(string: "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/api/v1")!
+    static let api = URL(string: "https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/api/v1")!
     static let site = "https://ezyourlife.com"
 
     /// Opened once: the keyboard reads this on every key press, so it must stay cheap.
@@ -201,6 +201,173 @@ struct EzyResult: Codable {
     var isFresh: Bool { Date().timeIntervalSince(at) < 15 * 60 }
 }
 
+// MARK: - Pre-made cards and business websites
+
+/// A pre-made card or website template shown in the keyboard "/" strip.
+struct EzyCard {
+    struct Theme {
+        let id: String
+        let label: String
+        let hex: UInt32
+        var color: UIColor {
+            UIColor(red: CGFloat((hex >> 16) & 0xff) / 255,
+                    green: CGFloat((hex >> 8) & 0xff) / 255,
+                    blue: CGFloat(hex & 0xff) / 255, alpha: 1)
+        }
+    }
+
+    let id: String
+    let name: String
+    let glyph: String
+    let category: String          // "festival" | "celebration" | "website"
+    let months: [Int]             // in-season months; empty = year-round
+    let themes: [Theme]           // 2–4 visual themes (first is the default)
+    let hasRecipient: Bool        // true for celebrations
+    let showsMessage: Bool        // true for festivals & celebrations; false for websites
+    let senderLabel: String       // "From:" / "Business name:"
+    let defaultMessage: String    // sample message pre-filled in the form
+
+    var url: String { "\(EzyShared.site)/create/\(id)" }
+
+    var isInSeason: Bool {
+        guard !months.isEmpty else { return true }
+        let month = Calendar.current.component(.month, from: Date())
+        return months.contains(month)
+    }
+
+    /// Builds a URL with optional pre-fill query params for the web Builder.
+    func buildURL(sender: String, recipient: String, message: String, theme: String) -> String {
+        var query: [String] = []
+        let defaultTheme = themes.first?.id ?? ""
+        if !theme.isEmpty && theme != defaultTheme { query.append("design=\(encode(theme))") }
+        if !sender.isEmpty   { query.append("sender=\(encode(sender))") }
+        if !recipient.isEmpty { query.append("recipient=\(encode(recipient))") }
+        if !message.isEmpty && message != defaultMessage { query.append("message=\(encode(message))") }
+        let qs = query.isEmpty ? "" : "?" + query.joined(separator: "&")
+        return url + qs
+    }
+
+    private func encode(_ s: String) -> String {
+        s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? s
+    }
+}
+
+// MARK: - Card + website catalog
+
+extension EzyShared {
+    /// Seasonal festival cards first, then popular celebrations, then business website templates.
+    static var instantCards: [EzyCard] {
+        let all = EzyCard.catalog
+        let inSeason = all.filter { $0.isInSeason && !$0.months.isEmpty }
+        let always   = all.filter { $0.months.isEmpty }
+        return Array((inSeason + always).prefix(10))
+    }
+}
+
+extension EzyCard {
+    // Shared theme palette
+    static let tAmber    = Theme(id: "festive",     label: "Festive",  hex: 0xFF9A00)
+    static let tDiwali   = Theme(id: "diwali",      label: "Diwali",   hex: 0xFFB300)
+    static let tRajwada  = Theme(id: "rajwada",     label: "Rajwada",  hex: 0x8B1A1A)
+    static let tRoyal    = Theme(id: "royal",       label: "Royal",    hex: 0x4A148C)
+    static let tMinimal  = Theme(id: "minimal",     label: "Minimal",  hex: 0xDDDDDD)
+    static let tCheer    = Theme(id: "cheer",       label: "Bright",   hex: 0xFF4081)
+    static let tFun      = Theme(id: "fun",         label: "Fun",      hex: 0x42A5F5)
+    static let tElegant  = Theme(id: "elegant",     label: "Elegant",  hex: 0x795548)
+    static let tRomantic = Theme(id: "romantic",    label: "Romantic", hex: 0xE91E63)
+    static let tGentle   = Theme(id: "gentle",      label: "Soft",     hex: 0xF48FB1)
+    static let tXmas     = Theme(id: "christmas",   label: "Christmas",hex: 0x2E7D32)
+    static let tNewYear  = Theme(id: "newyear",     label: "New Year", hex: 0x263238)
+    static let tHoli     = Theme(id: "holi",        label: "Holi",     hex: 0x9C27B0)
+    static let tSunny    = Theme(id: "sunny",       label: "Sunny",    hex: 0xFFD600)
+    static let tNavratri = Theme(id: "navratri",    label: "Navratri", hex: 0xE040FB)
+    static let tTiranga  = Theme(id: "tiranga",     label: "Tiranga",  hex: 0xFF6F00)
+    static let tGanesh   = Theme(id: "ganesh",      label: "Festive",  hex: 0xFF6D00)
+    static let tRakhi    = Theme(id: "rakhi",       label: "Festive",  hex: 0xFF8A65)
+    static let tKids     = Theme(id: "kids",        label: "Kids",     hex: 0x42A5F5)
+    static let tSchool   = Theme(id: "school",      label: "Classic",  hex: 0x1565C0)
+    static let tStay     = Theme(id: "stay",        label: "Calm",     hex: 0x00695C)
+    static let tNeutral  = Theme(id: "minimal",     label: "Clean",    hex: 0x607D8B)
+
+    static let catalog: [EzyCard] = [
+        // ── Festivals ──────────────────────────────────────────────────────────
+        EzyCard(id: "diwali", name: "Diwali", glyph: "🪔", category: "festival", months: [10, 11],
+            themes: [tAmber, tDiwali, tRajwada, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From (your name or business):",
+            defaultMessage: "May the light of the diyas fill your home with joy and prosperity. Happy Diwali!"),
+        EzyCard(id: "dhanteras", name: "Dhanteras", glyph: "🪙", category: "festival", months: [10, 11],
+            themes: [tAmber, tDiwali, tRajwada, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From (your name or business):",
+            defaultMessage: "May this Dhanteras bring wealth, good health and new beginnings. Shubh Dhanteras!"),
+        EzyCard(id: "bhai-dooj", name: "Bhai Dooj", glyph: "🍬", category: "festival", months: [10, 11],
+            themes: [tAmber, tDiwali, tRajwada, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Happy Bhai Dooj! Always there for you. 💛"),
+        EzyCard(id: "navratri", name: "Navratri", glyph: "🪘", category: "festival", months: [9, 10],
+            themes: [tNavratri, tAmber, tRajwada, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Wishing you a joyful and blessed Navratri! 🙏"),
+        EzyCard(id: "gurpurab", name: "Gurpurab", glyph: "☬", category: "festival", months: [11],
+            themes: [tAmber, tTiranga, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh. Happy Gurpurab! 🙏"),
+        EzyCard(id: "christmas", name: "Christmas", glyph: "🎄", category: "festival", months: [12],
+            themes: [tCheer, tXmas, tElegant, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Wishing you a joyful Christmas and a wonderful New Year! 🎄"),
+        EzyCard(id: "new-year", name: "New Year", glyph: "🎆", category: "festival", months: [12, 1],
+            themes: [tNewYear, tCheer, tSunny, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Wishing you a wonderful new year full of joy and new beginnings! 🎆"),
+        EzyCard(id: "makar-sankranti", name: "Makar Sankranti", glyph: "🪁", category: "festival", months: [1],
+            themes: [tSunny, tAmber, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "May this Makar Sankranti bring you warmth, prosperity and good harvest!"),
+        EzyCard(id: "republic-day", name: "Republic Day", glyph: "🎖️", category: "festival", months: [1],
+            themes: [tTiranga, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Happy Republic Day! Jai Hind 🇮🇳"),
+        EzyCard(id: "valentine", name: "Valentine's Day", glyph: "🌹", category: "festival", months: [2],
+            themes: [tRomantic, tGentle, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Happy Valentine's Day! ❤️"),
+        EzyCard(id: "holi", name: "Holi", glyph: "🎨", category: "festival", months: [2, 3],
+            themes: [tHoli, tCheer, tSunny, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Wishing you a colourful and joyful Holi! 🎨"),
+        EzyCard(id: "independence-day", name: "Independence Day", glyph: "🇮🇳", category: "festival", months: [8],
+            themes: [tTiranga, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Happy Independence Day! Jai Hind 🇮🇳"),
+        EzyCard(id: "raksha-bandhan", name: "Raksha Bandhan", glyph: "🧶", category: "festival", months: [7, 8],
+            themes: [tRakhi, tCheer, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Happy Raksha Bandhan! May this bond stay strong forever. 🧶"),
+        EzyCard(id: "ganesh-chaturthi", name: "Ganesh Chaturthi", glyph: "🐘", category: "festival", months: [8, 9],
+            themes: [tGanesh, tAmber, tMinimal], hasRecipient: false, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Ganpati Bappa Morya! Wishing you joy and prosperity. 🐘"),
+
+        // ── Celebrations ───────────────────────────────────────────────────────
+        EzyCard(id: "birthday-surprise", name: "Birthday", glyph: "🎂", category: "celebration", months: [],
+            themes: [tCheer, tFun, tElegant, tRomantic], hasRecipient: true, showsMessage: true,
+            senderLabel: "From:",
+            defaultMessage: "Wishing you a birthday full of laughter, love and everything that makes you smile! 🎂"),
+        EzyCard(id: "anniversary", name: "Anniversary", glyph: "💞", category: "celebration", months: [],
+            themes: [tRomantic, tGentle, tElegant, tMinimal], hasRecipient: true, showsMessage: true,
+            senderLabel: "From:",
+            defaultMessage: "Happy Anniversary! Every year together is a gift. 💞"),
+        EzyCard(id: "thank-you", name: "Thank You", glyph: "🙏", category: "celebration", months: [],
+            themes: [tGentle, tElegant, tMinimal], hasRecipient: true, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Thank you so much! Your kindness means the world to me. 🙏"),
+        EzyCard(id: "congratulations", name: "Congrats", glyph: "🏆", category: "celebration", months: [],
+            themes: [tCheer, tSunny, tElegant, tMinimal], hasRecipient: true, showsMessage: true,
+            senderLabel: "From:", defaultMessage: "Congratulations! You worked so hard for this — you deserve it. 🏆"),
+
+        // ── Business websites ──────────────────────────────────────────────────
+        EzyCard(id: "school", name: "School Site", glyph: "🏫", category: "website", months: [],
+            themes: [tSchool, tMinimal], hasRecipient: false, showsMessage: false,
+            senderLabel: "School name:", defaultMessage: ""),
+        EzyCard(id: "hotel", name: "Hotel Site", glyph: "🏨", category: "website", months: [],
+            themes: [tStay, tElegant, tMinimal], hasRecipient: false, showsMessage: false,
+            senderLabel: "Hotel name:", defaultMessage: ""),
+        EzyCard(id: "kirana", name: "Shop Site", glyph: "🛒", category: "website", months: [],
+            themes: [tAmber, tNeutral, tMinimal], hasRecipient: false, showsMessage: false,
+            senderLabel: "Shop name:", defaultMessage: ""),
+        EzyCard(id: "pharmacy", name: "Pharmacy Site", glyph: "💊", category: "website", months: [],
+            themes: [tXmas, tNeutral, tMinimal], hasRecipient: false, showsMessage: false,
+            senderLabel: "Pharmacy name:", defaultMessage: ""),
+    ]
+}
+
 enum EzyError: LocalizedError {
     case notConnected
     case server(String)
@@ -285,6 +452,15 @@ enum EzyAPI {
         let id = appId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? appId
         let json = try await request("/apps/\(id)/charge", method: "POST", body: [:])
         if let b = json["balance"] as? Int { EzyShared.balance = b }
+    }
+
+    /// Publishes a card/invite page and returns the shareable link. Charges the product's credits.
+    static func publishCard(productId: String, variantId: String, content: [String: Any]) async throws -> (link: String, slug: String) {
+        let json = try await request("/cards", method: "POST", body: ["product_id": productId, "variant_id": variantId, "content": content])
+        guard let link = json["link"] as? String else { throw EzyError.server("No link returned.") }
+        let slug = json["slug"] as? String ?? ""
+        if let bal = json["balance"] as? Int { EzyShared.balance = bal }
+        return (link, slug)
     }
 
     /// The wallet balance, saved for the keyboard's balance pill.

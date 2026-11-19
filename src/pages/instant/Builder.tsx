@@ -69,12 +69,16 @@ function BuilderInner({ product }: { product: Product }) {
     const base = readDraft(product.id) ?? { variantId: product.themes[0].id, content: { ...product.sample } };
     const withDesign = wantedDesign && !editId && product.themes.some((t) => t.id === wantedDesign) ? { ...base, variantId: wantedDesign } : base;
     if (editId) return withDesign;
-    // From a card ("make your own"): ?sender=<their name>. From a shop's QR: ?shop=<shop slug>, which puts the shop's offer on the card.
+    // From a card ("make your own"): ?sender=<their name>. From a shop's QR: ?shop=<shop slug>.
+    // From the iOS keyboard: ?sender=, ?recipient=, ?message= pre-fill those fields.
     const sender = nameFromParam(params.get("sender"));
+    const recipient = nameFromParam(params.get("recipient"));
+    const message = params.get("message");
     const shop = params.get("shop");
-    const hasSender = product.steps.some((st) => st.fields.some((f) => f.id === "sender"));
     const extra: Content = {};
-    if (sender && hasSender) extra.sender = sender;
+    if (sender && product.steps.some((st) => st.fields.some((f) => f.id === "sender"))) extra.sender = sender;
+    if (recipient && product.steps.some((st) => st.fields.some((f) => f.id === "recipient"))) extra.recipient = recipient;
+    if (message && product.steps.some((st) => st.fields.some((f) => f.id === "message"))) extra.message = message;
     if (shop && /^[a-z0-9][a-z0-9-]{1,40}$/.test(shop) && product.family === "festival") extra.shop = shop;
     return Object.keys(extra).length ? { ...withDesign, content: { ...withDesign.content, ...extra } } : withDesign;
     // eslint-disable-next-line react-hooks/exhaustive-deps

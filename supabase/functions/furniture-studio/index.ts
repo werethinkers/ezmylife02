@@ -46,7 +46,7 @@ const TIER_MODELS: Record<string, string[]> = {
 const tierOf = (b: { tier?: unknown } | null) => (b?.tier === "quick" || b?.tier === "premium" ? String(b.tier) : "standard");
 const IMAGE_MODEL = "google/gemini-2.5-flash-image";
 
-const MAX_IMAGE_CHARS = 14_000_000;
+const MAX_IMAGE_CHARS = Number.MAX_SAFE_INTEGER;
 
 const bad = (message: string, status = 400) => json({ error: message, message }, status);
 
@@ -759,7 +759,7 @@ Deno.serve(
       if (!toolFor(body)) return bad("Unknown action.");
 
       const photo = cleanImage(body.image);
-      if (!photo) return bad("Add one photo under 10 MB (JPG, PNG or WebP).");
+      if (!photo) return bad("Add one photo (JPG, PNG or WebP).");
 
       try {
         if (action === "analyze") {
