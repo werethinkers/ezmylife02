@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   GooglePhotosError,
   createPickerSession,
@@ -36,6 +37,9 @@ type Props = {
  */
 export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Photos", variant = "outline", size = "sm", className, disabled = false, trigger }: Props) {
   const enabled = isGooglePhotosEnabled();
+  const { user } = useAuth();
+  // If the user signed in with Google, pass their email as a hint so GIS skips the account selector.
+  const emailHint = user?.email ?? undefined;
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("connecting");
   const [error, setError] = useState("");
@@ -58,7 +62,7 @@ export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Phot
     setOpen(true); setPhase("connecting"); setError(""); setSession(null);
     let token = ""; let sid = "";
     try {
-      token = await getGooglePhotosToken();
+      token = await getGooglePhotosToken(emailHint);
       const s = await createPickerSession(token, max);
       sid = s.id;
       if (id !== run.current || ctl.signal.aborted) throw new GooglePhotosError("Cancelled.", "cancelled");
