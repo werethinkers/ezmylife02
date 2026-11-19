@@ -139,9 +139,8 @@ export const NATIVE_APPS: Record<string, NativeApp> = {
       { key: "type", label: "Sheet type", type: "select", options: ["Full sheet", "Exploded view", "Ortho views", "Bill of materials"], default: "Full sheet" },
     ],
     build: (i) => {
-      const photo = i.photo ?? "";
       const typeMap: Record<string, string> = { "Full sheet": "full", "Exploded view": "exploded", "Ortho views": "ortho", "Bill of materials": "bom" };
-      return { action: "sheet", photo, type: typeMap[i.type as string] ?? "full", quality: "standard" };
+      return { action: "sheet", image: i.photo ?? "", type: typeMap[i.type as string] ?? "full", quality: "standard" };
     },
   },
 };
