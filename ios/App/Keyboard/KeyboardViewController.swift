@@ -66,6 +66,8 @@ final class KeyboardViewController: UIInputViewController {
         var message: String = ""
         var editingField: String? = nil  // "sender" | "recipient" | "message"
         var editBaseline: String = ""
+        var submitting: Bool = false
+        var generatedLink: String? = nil
     }
     private var instantCard: InstantCardState?
 
@@ -274,6 +276,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private func finishInstantEditing() {
         instantCard?.editingField = nil
+        instantCard?.generatedLink = nil  // reset so user re-generates after editing
         setPanel(0)
         refreshStrip()
     }
@@ -297,11 +300,39 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func insertInstantCard() {
-        guard let ic = instantCard else { return }
-        let url = ic.card.buildURL(sender: ic.sender, recipient: ic.recipient, message: ic.message, theme: ic.theme)
-        instantCard = nil
-        setPanel(0)
-        replaceCommand(with: url)
+        guard let ic = instantCard, !ic.submitting else { return }
+        // If we already have a generated link, just insert it
+        if let link = ic.generatedLink {
+            instantCard = nil
+            setPanel(0)
+            replaceCommand(with: link)
+            return
+        }
+        // Start publishing via the API
+        instantCard?.submitting = true
+        refreshStrip()
+        let productId = ic.card.id
+        let variantId = ic.theme
+        var content: [String: Any] = [:]
+        if !ic.sender.isEmpty { content["sender"] = ic.sender }
+        if !ic.recipient.isEmpty { content["recipient"] = ic.recipient }
+        if !ic.message.isEmpty { content["message"] = ic.message }
+        if ic.card.category != "website" { content["music"] = true }
+        Task { @MainActor in
+            do {
+                let result = try await EzyAPI.publishCard(productId: productId, variantId: variantId, content: content)
+                self.instantCard?.submitting = false
+                self.instantCard?.generatedLink = result.link
+                self.refreshStrip()
+                self.notice = "✓ Card ready! Tap 'Insert link →' to send it."
+                self.refreshStrip()
+            } catch {
+                self.instantCard?.submitting = false
+                self.refreshStrip()
+                self.notice = error.localizedDescription
+                self.refreshStrip()
+            }
+        }
     }
 
     private func renderInstantEditor() {
@@ -2374,6 +2405,7 @@ final class KeyboardViewController: UIInputViewController {
             let themeId = theme.id
             dot.handler = { [weak self] in
                 self?.instantCard?.theme = themeId
+                self?.instantCard?.generatedLink = nil
                 self?.refreshStrip()
             }
             dot.addTarget(dot, action: #selector(ChipButton.tapped), for: .touchUpInside)
@@ -2400,8 +2432,14 @@ final class KeyboardViewController: UIInputViewController {
 
         addStripSeparator()
 
-        // Insert link button
-        addChip("Insert link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        // Generate / insert link button
+        if ic.submitting {
+            addChip("⏳ Publishing…", style: .note)
+        } else if ic.generatedLink != nil {
+            addChip("Insert link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        } else {
+            addChip("Generate link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        }
     }
 
     private func addStripSeparator() {

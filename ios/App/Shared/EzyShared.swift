@@ -454,6 +454,15 @@ enum EzyAPI {
         if let b = json["balance"] as? Int { EzyShared.balance = b }
     }
 
+    /// Publishes a card/invite page and returns the shareable link. Charges the product's credits.
+    static func publishCard(productId: String, variantId: String, content: [String: Any]) async throws -> (link: String, slug: String) {
+        let json = try await request("/cards", method: "POST", body: ["product_id": productId, "variant_id": variantId, "content": content])
+        guard let link = json["link"] as? String else { throw EzyError.server("No link returned.") }
+        let slug = json["slug"] as? String ?? ""
+        if let bal = json["balance"] as? Int { EzyShared.balance = bal }
+        return (link, slug)
+    }
+
     /// The wallet balance, saved for the keyboard's balance pill.
     @discardableResult
     static func refreshBalance() async -> Int? {
