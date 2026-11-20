@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Search } from "lucide-react";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { ArrowRight, Search, X } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { USE_CASE_SEEDS, humanize, landingMatches } from "@/lib/seoData";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
@@ -32,8 +33,8 @@ const Explore = () => {
   const { data: catalog = [], isLoading: catalogLoading } = useToolsCatalog();
   const { list: designs, loading: designsLoading } = useProducts();
   const [query, setQuery] = useState("");
-  // null until the visitor taps a card: then show whichever business type actually has the most
-  // real matches, so the page never opens on an empty "nothing found" stack.
+  // null: just the grid. Set once the visitor taps a card, which morphs into the active bar and
+  // brings in that industry's recommended stack.
   const [picked, setPicked] = useState<string | null>(null);
 
   const liveTools = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
@@ -55,15 +56,9 @@ const Explore = () => {
     [apps, studioTools, matchableDesigns],
   );
 
-  const bestSlug = useMemo(
-    () => types.reduce((best, t) => (t.appCount + t.designCount > best.appCount + best.designCount ? t : best), types[0])?.slug,
-    [types],
-  );
-  const selected = picked ?? bestSlug;
-
   const q = query.trim().toLowerCase();
   const filteredTypes = q ? types.filter((t) => t.label.toLowerCase().includes(q)) : types;
-  const active = types.find((t) => t.slug === selected) ?? types[0];
+  const active = picked ? types.find((t) => t.slug === picked) ?? null : null;
 
   const bundle = useMemo(() => {
     if (!active) return null;
@@ -103,6 +98,7 @@ const Explore = () => {
         jsonLd={jsonLd}
       />
 
+      <MotionConfig reducedMotion="user">
       <main className={cn(CONTAINER, "space-y-12 py-10 md:py-14")}>
         <PageHeader
           eyebrow="Explore by industry"
@@ -131,114 +127,154 @@ const Explore = () => {
           {filteredTypes.length === 0 ? (
             <EmptyState message="No business type matches that search." action="Clear search" onAction={() => setQuery("")} />
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {filteredTypes.map((b) => {
-                const on = active?.slug === b.slug;
-                return (
-                  <button
-                    key={b.slug}
-                    type="button"
-                    onClick={() => setPicked(b.slug)}
-                    aria-pressed={on}
-                    className={cn(
-                      "flex flex-col gap-2.5 rounded-2xl border p-4 text-left shadow-soft-sm transition",
-                      FOCUS_RING,
-                      on ? "border-orange-500 bg-orange-50 dark:border-orange-500 dark:bg-orange-950/40" : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700",
-                    )}
-                  >
-                    <span
+            <motion.div layout className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <AnimatePresence>
+                {filteredTypes.map((b) => {
+                  const isPicked = picked === b.slug;
+                  if (picked && !isPicked) return null;
+                  return (
+                    <motion.button
+                      key={b.slug}
+                      layout
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      transition={{ duration: 0.24, ease: "easeOut" }}
+                      type="button"
+                      onClick={() => setPicked(isPicked ? null : b.slug)}
+                      aria-pressed={isPicked}
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-xl",
-                        on ? "bg-orange-600 text-white" : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+                        "text-left shadow-soft-sm transition",
+                        FOCUS_RING,
+                        isPicked
+                          ? "col-span-2 flex items-center gap-3 rounded-2xl border p-4 sm:col-span-3 lg:col-span-4"
+                          : "flex flex-col gap-2.5 rounded-2xl border p-4",
+                        isPicked
+                          ? "border-orange-500 bg-orange-50 dark:border-orange-500 dark:bg-orange-950/40"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700",
                       )}
                     >
-                      <b.Icon className="h-5 w-5" aria-hidden />
-                    </span>
-                    <span className="font-display text-sm font-bold leading-snug">{b.label}</span>
-                    {!loading && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {b.appCount} app{b.appCount === 1 ? "" : "s"}
-                        {b.designCount > 0 ? ` · ${b.designCount} design${b.designCount === 1 ? "" : "s"}` : ""}
+                      <span
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                          isPicked ? "bg-orange-600 text-white" : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+                        )}
+                      >
+                        <b.Icon className="h-5 w-5" aria-hidden />
                       </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {isPicked ? (
+                        <>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-display text-sm font-bold leading-snug">{b.label}</span>
+                            <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                              {b.appCount} app{b.appCount === 1 ? "" : "s"}
+                              {b.designCount > 0 ? ` · ${b.designCount} design${b.designCount === 1 ? "" : "s"}` : ""}
+                            </span>
+                          </span>
+                          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-700 dark:border-orange-700 dark:bg-zinc-900 dark:text-orange-300">
+                            Change industry <X className="h-3.5 w-3.5" aria-hidden />
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-display text-sm font-bold leading-snug">{b.label}</span>
+                          {!loading && (
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {b.appCount} app{b.appCount === 1 ? "" : "s"}
+                              {b.designCount > 0 ? ` · ${b.designCount} design${b.designCount === 1 ? "" : "s"}` : ""}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </AnimatePresence>
+            </motion.div>
           )}
         </section>
 
-        {active && (
-          <section aria-labelledby="bundle-h" className="scroll-mt-24">
-            <SectionHead
-              id="bundle-h"
-              eyebrow="Recommended stack"
-              title={`Built for ${/^[aeiou]/i.test(active.label) ? "an" : "a"} ${active.label.toLowerCase()}`}
-              line="The websites, cards, studios and apps businesses like this use most."
-              action={
-                <Link to={`/ai-for/${active.slug}`} className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING)}>
-                  See the full page <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              }
-            />
+        <AnimatePresence>
+          {active && (
+            <motion.section
+              key="bundle"
+              aria-labelledby="bundle-h"
+              className="scroll-mt-24"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3, ease: "easeOut", delay: 0.12 }}
+            >
+              <SectionHead
+                id="bundle-h"
+                eyebrow="Recommended stack"
+                title={`Built for ${/^[aeiou]/i.test(active.label) ? "an" : "a"} ${active.label.toLowerCase()}`}
+                line="The websites, cards, studios and apps businesses like this use most."
+                action={
+                  <Link to={`/ai-for/${active.slug}`} className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING)}>
+                    See the full page <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </Link>
+                }
+              />
 
-            {loading ? (
-              <div className={ROW_CLASS}>
-                {[0, 1, 2].map((i) => (
-                  <div key={i} aria-hidden className={cn(ITEM_CLASS, "h-60 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900")} />
-                ))}
-              </div>
-            ) : bundleEmpty ? (
-              <EmptyState message={`We don't have a matched stack for ${active.label.toLowerCase()} yet. Browse everything instead.`} />
-            ) : (
-              <div className="space-y-8">
-                {bundle?.websites.length ? (
-                  <div>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Websites</p>
-                    <div className={ROW_CLASS}>
-                      {bundle.websites.map((l) => (
-                        <DesignCard key={l.product.id} d={toDesignLite(l)} size="md" className={ITEM_CLASS} />
-                      ))}
+              {loading ? (
+                <div className={ROW_CLASS}>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} aria-hidden className={cn(ITEM_CLASS, "h-60 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900")} />
+                  ))}
+                </div>
+              ) : bundleEmpty ? (
+                <EmptyState message={`We don't have a matched stack for ${active.label.toLowerCase()} yet. Browse everything instead.`} />
+              ) : (
+                <div className="space-y-8">
+                  {bundle?.websites.length ? (
+                    <div>
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Websites</p>
+                      <div className={ROW_CLASS}>
+                        {bundle.websites.map((l) => (
+                          <DesignCard key={l.product.id} d={toDesignLite(l)} size="md" className={ITEM_CLASS} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {bundle?.cards.length ? (
-                  <div>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Cards & invites</p>
-                    <div className={ROW_CLASS}>
-                      {bundle.cards.map((l) => (
-                        <DesignCard key={l.product.id} d={toDesignLite(l)} size="md" className={ITEM_CLASS} />
-                      ))}
+                  {bundle?.cards.length ? (
+                    <div>
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Cards & invites</p>
+                      <div className={ROW_CLASS}>
+                        {bundle.cards.map((l) => (
+                          <DesignCard key={l.product.id} d={toDesignLite(l)} size="md" className={ITEM_CLASS} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {bundle?.studios.length ? (
-                  <div>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Studios</p>
-                    <div className={ROW_CLASS}>
-                      {bundle.studios.map((t) => (
-                        <ToolCard key={t.id} tool={t} size="md" className={ITEM_CLASS} />
-                      ))}
+                  {bundle?.studios.length ? (
+                    <div>
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Studios</p>
+                      <div className={ROW_CLASS}>
+                        {bundle.studios.map((t) => (
+                          <ToolCard key={t.id} tool={t} size="md" className={ITEM_CLASS} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {bundle?.apps.length ? (
-                  <div>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Business apps</p>
-                    <div className={ROW_CLASS}>
-                      {bundle.apps.map((t) => (
-                        <ToolCard key={t.id} tool={t} size="md" className={ITEM_CLASS} />
-                      ))}
+                  {bundle?.apps.length ? (
+                    <div>
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Business apps</p>
+                      <div className={ROW_CLASS}>
+                        {bundle.apps.map((t) => (
+                          <ToolCard key={t.id} tool={t} size="md" className={ITEM_CLASS} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </section>
-        )}
+                  ) : null}
+                </div>
+              )}
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         <section aria-labelledby="jobs-h">
           <SectionHead id="jobs-h" title="By job to do" line={`${TOP_USE_CASES.length} everyday tasks`} />
@@ -276,6 +312,7 @@ const Explore = () => {
           <PillRow items={liveTools.map((t) => ({ to: `/tool/${t.id}`, label: t.name }))} />
         </section>
       </main>
+      </MotionConfig>
     </ModernPage>
   );
 };
