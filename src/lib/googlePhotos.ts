@@ -104,7 +104,7 @@ async function api<T>(token: string, path: string, init?: RequestInit): Promise<
   }
   if (res.status === 401 || res.status === 403) {
     cached = null;
-    throw new GooglePhotosError("Google Photos didn't accept the sign-in. Please try again.", "auth");
+    throw new GooglePhotosError("Google sign-in expired or was not accepted. Please try again.", "auth");
   }
   if (!res.ok) throw new GooglePhotosError(`Google Photos returned an error (${res.status}).`, "network");
   return (res.status === 204 ? ({} as T) : await res.json()) as T;

@@ -106,7 +106,12 @@ export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Phot
               </>
             )}
             {phase === "importing" && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Bringing your photos in…</p>}
-            {phase === "error" && <p className="text-sm text-destructive" role="alert">{error}</p>}
+            {phase === "error" && (
+              <div role="alert" className="space-y-1">
+                <p className="text-sm text-destructive">{error}</p>
+                <p className="text-xs text-muted-foreground">If Google showed an "unverified app" warning, click <strong>Advanced</strong> → <strong>Go to Ezyourlife</strong> to continue.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             {phase === "error" && <Button type="button" onClick={start}>Try again</Button>}
