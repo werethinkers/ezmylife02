@@ -53,13 +53,19 @@ export function loadGoogleSignIn(): Promise<GoogleGlobal> {
   return gisPromise;
 }
 
-let cached: { token: string; until: number } | null = null;
-/** An access token for this one scope. Kept in memory only (never stored) for as long as Google says it lasts. */
-export async function getGooglePhotosToken(): Promise<string> {
-  if (cached && cached.until > Date.now() + 30_000) return cached.token;
+let cached: { token: string; until: number; hint: string } | null = null;
+
+/**
+ * An access token for the photospicker scope.
+ * Kept in memory only. `hint` is the signed-in user's email: GIS auto-selects that
+ * Google account so the user never sees an account-picker or has to log in again.
+ */
+export async function getGooglePhotosToken(hint?: string): Promise<string> {
+  if (cached && cached.until > Date.now() + 30_000 && (!hint || cached.hint === hint)) return cached.token;
   const google = await loadGoogleSignIn();
+  const isFirstTime = !cached;
   return new Promise<string>((resolve, reject) => {
-    const client = google.accounts.oauth2.initTokenClient({
+    const clientConfig: Parameters<GoogleGlobal["accounts"]["oauth2"]["initTokenClient"]>[0] = {
       client_id: googlePhotosClientId(),
       scope: SCOPE,
       callback: (r) => {
@@ -67,12 +73,16 @@ export async function getGooglePhotosToken(): Promise<string> {
           const denied = r.error === "access_denied";
           return reject(new GooglePhotosError(denied ? "Google Photos access was not allowed." : r.error_description || "Google sign-in failed.", denied ? "cancelled" : "auth"));
         }
-        cached = { token: r.access_token, until: Date.now() + Number(r.expires_in ?? 3000) * 1000 };
+        cached = { token: r.access_token, until: Date.now() + Number(r.expires_in ?? 3000) * 1000, hint: hint ?? "" };
         resolve(r.access_token);
       },
       error_callback: (e) => reject(new GooglePhotosError(e.type === "popup_closed" ? "Sign-in was closed." : e.message || "Google sign-in failed.", e.type === "popup_closed" ? "cancelled" : "auth")),
-    });
-    client.requestAccessToken({ prompt: cached ? "" : "consent" });
+    };
+    // Pass the user's email as a hint so GIS skips the account selector entirely.
+    if (hint) (clientConfig as Record<string, unknown>).login_hint = hint;
+    const client = google.accounts.oauth2.initTokenClient(clientConfig);
+    // `prompt: ""` = silent if consent was already granted; first time needs "consent" to show the photos scope.
+    client.requestAccessToken({ prompt: isFirstTime ? "consent" : "" });
   });
 }
 
@@ -94,7 +104,7 @@ async function api<T>(token: string, path: string, init?: RequestInit): Promise<
   }
   if (res.status === 401 || res.status === 403) {
     cached = null;
-    throw new GooglePhotosError("Google Photos didn't accept the sign-in. Please try again.", "auth");
+    throw new GooglePhotosError("Google sign-in expired or was not accepted. Please try again.", "auth");
   }
   if (!res.ok) throw new GooglePhotosError(`Google Photos returned an error (${res.status}).`, "network");
   return (res.status === 204 ? ({} as T) : await res.json()) as T;

@@ -16,7 +16,7 @@ on:
       version:
         description: "Version shown in the App Store (e.g. 1.0, 1.1)"
         required: true
-        default: "1.0"
+        default: "1.1"
       share_only:
         description: "Skip the build: only give the newest build to every tester group"
         type: boolean
@@ -116,7 +116,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             MARKETING_VERSION="${{ inputs.version }}" \
-            CURRENT_PROJECT_VERSION="$(date -u +%Y%m%d%H%M)"
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}"
 
       - name: Stamp the entitlements (App Group shared with the keyboard)
         if: ${{ !inputs.share_only }}
@@ -151,7 +151,7 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
-          echo "Uploaded build ${{ github.run_number }} (version ${{ inputs.version }}). It shows in App Store Connect → TestFlight after Apple finishes processing (usually 10 to 30 minutes)."
+          echo "Uploaded version ${{ inputs.version }} build ${{ github.run_number }}. It shows in App Store Connect → TestFlight after Apple finishes processing (usually 10 to 30 minutes)."
 
       - name: Give the build to every tester group
         env:

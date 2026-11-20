@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   GooglePhotosError,
   createPickerSession,
@@ -15,6 +16,18 @@ import {
 } from "@/lib/googlePhotos";
 
 type Phase = "connecting" | "ready" | "importing" | "error";
+
+/** Opens the Google Photos picker in a centred popup so the user stays on-site.
+ *  Correctly inserts /autoclose into the path before any query string. */
+function openPickerPopup(pickerUri: string) {
+  const url = new URL(pickerUri);
+  url.pathname = url.pathname.replace(/\/$/, "") + "/autoclose";
+  const w = Math.min(1080, window.screen.width - 80);
+  const h = Math.min(820, window.screen.height - 80);
+  const left = Math.round((window.screen.width - w) / 2);
+  const top = Math.round((window.screen.height - h) / 2);
+  window.open(url.toString(), "googlephotos", `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+}
 
 type Props = {
   /** How many photos may be chosen (1 for a single-photo slot). */
@@ -36,6 +49,9 @@ type Props = {
  */
 export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Photos", variant = "outline", size = "sm", className, disabled = false, trigger }: Props) {
   const enabled = isGooglePhotosEnabled();
+  const { user } = useAuth();
+  // If the user signed in with Google, pass their email as a hint so GIS skips the account selector.
+  const emailHint = user?.email ?? undefined;
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("connecting");
   const [error, setError] = useState("");
@@ -58,7 +74,7 @@ export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Phot
     setOpen(true); setPhase("connecting"); setError(""); setSession(null);
     let token = ""; let sid = "";
     try {
-      token = await getGooglePhotosToken();
+      token = await getGooglePhotosToken(emailHint);
       const s = await createPickerSession(token, max);
       sid = s.id;
       if (id !== run.current || ctl.signal.aborted) throw new GooglePhotosError("Cancelled.", "cancelled");
@@ -95,14 +111,19 @@ export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Phot
             {phase === "connecting" && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Google…</p>}
             {phase === "ready" && session && (
               <>
-                <Button type="button" className="h-11" onClick={() => window.open(`${session.pickerUri}/autoclose`, "_blank", "noopener")}>
+                <Button type="button" className="h-11" onClick={() => openPickerPopup(session.pickerUri)}>
                   <ExternalLink className="h-4 w-4 mr-2" /> Open Google Photos
                 </Button>
                 <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Waiting for you to choose {max > 1 ? `up to ${max} photos` : "a photo"}. Come back here when you tap Done.</p>
               </>
             )}
             {phase === "importing" && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Bringing your photos in…</p>}
-            {phase === "error" && <p className="text-sm text-destructive" role="alert">{error}</p>}
+            {phase === "error" && (
+              <div role="alert" className="space-y-1">
+                <p className="text-sm text-destructive">{error}</p>
+                <p className="text-xs text-muted-foreground">If Google showed an "unverified app" warning, click <strong>Advanced</strong> → <strong>Go to Ezyourlife</strong> to continue.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             {phase === "error" && <Button type="button" onClick={start}>Try again</Button>}

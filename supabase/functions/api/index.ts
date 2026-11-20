@@ -6,6 +6,7 @@
 //   POST   /v1/prompt/improve                      PromptMaster "magic write"; charged PromptMaster's price
 //   POST   /v1/prompt/brainstorm                   PromptMaster brainstorm; charged PromptMaster's price
 //   GET    /v1/cards?q=                            card, invite and website designs (open on the site)
+//   POST   /v1/cards                               publish a card page (charged at the product's price)
 //   GET    /v1/shortcuts   PUT /v1/shortcuts   DELETE /v1/shortcuts/{key}   the person's synced shortcuts
 //   GET    /v1/wallet                              balance and the last charges
 //   POST   /v1/wallet/topup                        a checkout link for a credit pack
@@ -17,6 +18,7 @@
 // or an API key "ezy_live_…". Either way the person's own wallet pays, at the same prices as the website.
 // Charging uses the same start_tool_run / complete_tool_run as every other app, so failed runs cost nothing.
 import { corsHeaders as baseCors } from "../_shared/http.ts";
+import { writeSharePage } from "../_shared/sharepage.ts";
 import { ensurePrice, finishRun, startRun, walletBalance } from "../_shared/billing.ts";
 import { API_CATALOG, type ApiApp, type ApiField } from "../_shared/apiCatalog.ts";
 import { NATIVE_APPS, nativeOutput } from "../_shared/nativeApis.ts";
@@ -517,6 +519,64 @@ async function listCards(url: URL) {
   });
 }
 
+/** Publishes a card/invite page, charges the product's credits, returns a shareable link. */
+async function publishCard(who: Who, body: Record<string, unknown>): Promise<Response> {
+  const productId = str(body.product_id, 100)?.trim();
+  if (!productId) return fail(400, "missing_product_id", "Send a product_id.");
+
+  const products = await dbRows<{ id: string; name: string; price_credits: number | null; price_inr: number | null }>(
+    `ip_products?id=eq.${enc(productId)}&is_active=eq.true&select=id,name,price_credits,price_inr&limit=1`,
+  ).catch(() => []);
+  if (!products.length) return fail(404, "unknown_product", `No active card product '${productId}'.`);
+  const product = products[0];
+
+  const variantId = str(body.variant_id, 100)?.trim() ?? productId;
+
+  const rawContent = typeof body.content === "object" && body.content ? body.content as Record<string, unknown> : {};
+  const content: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(rawContent)) {
+    const key = String(k).slice(0, 60);
+    if (typeof v === "string") content[key] = v.slice(0, 10_000);
+    else if (typeof v === "number" || typeof v === "boolean") content[key] = v;
+    else if (Array.isArray(v)) content[key] = (v as unknown[]).slice(0, 50).map((item) => (typeof item === "string" ? item.slice(0, 2000) : item));
+  }
+
+  const creditsPrice = product.price_credits ?? Math.ceil(Math.max(1, (product.price_inr ?? 10)) * 2.2);
+  const chargeId = `card-${productId}`;
+
+  return charged(who, chargeId, creditsPrice, false, chargeId, async () => {
+    const recipient = str(rawContent.recipient, 60)?.trim();
+    const sender = str(rawContent.sender, 60)?.trim();
+    const title = recipient ? `${product.name} for ${recipient}` : sender ? `${product.name} from ${sender}` : product.name;
+
+    const pagesRes = await db("ip_pages?select=id", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ owner_id: who.userId, product_id: productId, variant_id: variantId, title, content }),
+    });
+    if (!pagesRes.ok) {
+      const errText = await pagesRes.text().catch(() => "");
+      return { status: 500, data: { error: "create_failed", message: `Could not create card: ${errText.slice(0, 100)}` } };
+    }
+    const [page] = (await pagesRes.json()) as { id: string }[];
+
+    const pubRes = await db("rpc/ip_publish_page", { method: "POST", body: JSON.stringify({ _page_id: page.id }) });
+    const pub = pubRes.ok ? (await pubRes.json() as { ok?: boolean; slug?: string; reason?: string }) : {};
+    if (!pubRes.ok || !pub?.ok) {
+      return { status: 500, data: { error: "publish_failed", message: pub?.reason ?? "Could not publish the card." } };
+    }
+
+    const slug = pub.slug as string;
+    const link = `https://ezyourlife.com/p/${encodeURIComponent(slug)}`;
+
+    writeSharePage({ slug, title, description: `${product.name} — shared with EZYOURLIFE`, indexable: false }).catch(
+      (e: unknown) => console.warn("share page write failed", e),
+    );
+
+    return { status: 200, data: { output: link, link, slug, card_name: product.name } };
+  });
+}
+
 // The shared business profile (business name, city, GSTIN…) that prefills app boxes on the site. Read only.
 const PROFILE_KEYS = ["businessName", "ownerName", "industry", "city", "state", "phone", "email", "address", "gstin", "website", "products", "audience", "tone", "language"];
 /** The person's saved business details (the website's workspace profile: name, GSTIN, address…). */
@@ -796,6 +856,15 @@ Deno.serve(async (req) => {
     if (m === "GET" && route[0] === "apps" && route.length === 1) return await listApps(url);
     if (m === "GET" && route[0] === "apps" && route.length === 2) return await getApp(decodeURIComponent(route[1]));
     if (m === "GET" && route[0] === "cards") return await listCards(url);
+
+    // POST /v1/cards — publish a card (auth required, charged)
+    if (m === "POST" && route[0] === "cards" && route.length === 1) {
+      const who = await identify(req);
+      if (!who) return fail(401, "login", "Send a valid ezyourlife.com sign-in token or API key as 'Authorization: Bearer …'.");
+      let body: Record<string, unknown> = {};
+      try { body = (await req.json()) ?? {}; } catch { body = {}; }
+      return await publishCard(who, body);
+    }
 
     const who = await identify(req);
     if (!who) return fail(401, "login", "Send a valid ezyourlife.com sign-in token or API key as 'Authorization: Bearer …'.");

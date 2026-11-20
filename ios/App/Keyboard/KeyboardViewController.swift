@@ -66,6 +66,8 @@ final class KeyboardViewController: UIInputViewController {
         var message: String = ""
         var editingField: String? = nil  // "sender" | "recipient" | "message"
         var editBaseline: String = ""
+        var submitting: Bool = false
+        var generatedLink: String? = nil
     }
     private var instantCard: InstantCardState?
 
@@ -266,6 +268,10 @@ final class KeyboardViewController: UIInputViewController {
 
     private func editInstantField(_ field: String) {
         guard var ic = instantCard else { return }
+        // Delete any /command still in the host text field before capturing the baseline,
+        // so the user types into a clean slate (not after "/abhijay" etc.).
+        let cmdLen = EzyMatch.command(in: textDocumentProxy.documentContextBeforeInput)?.length ?? 0
+        for _ in 0..<cmdLen { textDocumentProxy.deleteBackward() }
         ic.editingField = field
         ic.editBaseline = textDocumentProxy.documentContextBeforeInput ?? ""
         instantCard = ic
@@ -274,6 +280,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private func finishInstantEditing() {
         instantCard?.editingField = nil
+        instantCard?.generatedLink = nil  // reset so user re-generates after editing
         setPanel(0)
         refreshStrip()
     }
@@ -297,11 +304,41 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func insertInstantCard() {
-        guard let ic = instantCard else { return }
-        let url = ic.card.buildURL(sender: ic.sender, recipient: ic.recipient, message: ic.message, theme: ic.theme)
-        instantCard = nil
-        setPanel(0)
-        replaceCommand(with: url)
+        guard let ic = instantCard, !ic.submitting else { return }
+        // If we already have a generated link, just insert it
+        if let link = ic.generatedLink {
+            instantCard = nil
+            setPanel(0)
+            replaceCommand(with: link)
+            return
+        }
+        // Start publishing via the API
+        instantCard?.submitting = true
+        refreshStrip()
+        let productId = ic.card.id
+        let variantId = ic.theme
+        var content: [String: Any] = [:]
+        if !ic.sender.isEmpty { content["sender"] = ic.sender }
+        if !ic.recipient.isEmpty { content["recipient"] = ic.recipient }
+        if !ic.message.isEmpty { content["message"] = ic.message }
+        if ic.card.category != "website" { content["music"] = true }
+        Task { [weak self] in
+            do {
+                let result = try await EzyAPI.publishCard(productId: productId, variantId: variantId, content: content)
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.instantCard?.generatedLink = result.link
+                    self?.notice = "✓ Card ready! Tap 'Insert link →' to send it."
+                    self?.refreshStrip()
+                }
+            } catch {
+                await MainActor.run {
+                    self?.instantCard?.submitting = false
+                    self?.notice = error.localizedDescription
+                    self?.refreshStrip()
+                }
+            }
+        }
     }
 
     private func renderInstantEditor() {
@@ -778,7 +815,7 @@ final class KeyboardViewController: UIInputViewController {
         parts.append(editingKey ?? "")
         parts.append(editingValue)
         parts.append((EzyShared.lastResult?.isFresh ?? false) ? "last" : "")
-        if let ic = instantCard { parts.append(ic.card.id + "|" + ic.theme + "|" + ic.sender + "|" + ic.recipient + "|" + (ic.editingField ?? "")) }
+        if let ic = instantCard { parts.append(ic.card.id + "|" + ic.theme + "|" + ic.sender + "|" + ic.recipient + "|" + ic.message.prefix(40) + "|" + (ic.editingField ?? "") + "|" + (ic.generatedLink ?? "") + "|" + (ic.submitting ? "1" : "0")) }
         let signature = parts.joined(separator: "¦")
         if !force && signature == stripSignature { return }
         stripSignature = signature
@@ -871,22 +908,25 @@ final class KeyboardViewController: UIInputViewController {
         let shown = Set(items.compactMap { item -> String? in if case .app(let a, _) = item { return a.id } else { return nil } })
         items += apps.prefix(8).filter { !shown.contains($0.id) }.map { PickItem.app($0, nil) }
         items += shortcutHits.filter { !exact.contains($0) }.map { PickItem.shortcut($0) }
-        addHeader(first.isEmpty ? (apps.isEmpty ? "Cards & apps" : "Recent apps") : "Apps for /\(first)")
+        // Show pre-made cards and business website chips: all when "/" alone, matching ones when text follows.
+        let allCards = EzyShared.instantCards
+        let matchingCards = first.isEmpty ? allCards : allCards.filter {
+            $0.name.lowercased().contains(first.lowercased()) ||
+            $0.glyph.contains(first)
+        }
+        if !matchingCards.isEmpty {
+            addHeader("Cards & websites")
+            for ezyCard in matchingCards.prefix(8) {
+                let title = "\(ezyCard.glyph) \(ezyCard.name)"
+                addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
+            }
+            addStripSeparator()
+        }
+        addHeader(first.isEmpty ? (apps.isEmpty ? "Apps" : "Recent apps") : "Apps for /\(first)")
         if items.isEmpty {
             addChip(first.isEmpty ? "Tap the mic (bottom right) and speak, or type /invoice" : "Searching…", style: .note)
         } else {
             renderPicker(items, details: details, command: command.text)
-        }
-        // When "/" is typed with nothing after it, show pre-made cards and business website chips.
-        if first.isEmpty {
-            let cards = EzyShared.instantCards
-            if !cards.isEmpty {
-                addStripSeparator()
-                for ezyCard in cards.prefix(8) {
-                    let title = "\(ezyCard.glyph) \(ezyCard.name)"
-                    addChip(title, style: .plain) { [weak self] in self?.openInstantCard(ezyCard) }
-                }
-            }
         }
         search(first)
         if words.count >= 2 && !shortcutHits.contains(where: { $0.key.lowercased() == command.text.lowercased() }) {
@@ -2371,6 +2411,7 @@ final class KeyboardViewController: UIInputViewController {
             let themeId = theme.id
             dot.handler = { [weak self] in
                 self?.instantCard?.theme = themeId
+                self?.instantCard?.generatedLink = nil
                 self?.refreshStrip()
             }
             dot.addTarget(dot, action: #selector(ChipButton.tapped), for: .touchUpInside)
@@ -2397,8 +2438,14 @@ final class KeyboardViewController: UIInputViewController {
 
         addStripSeparator()
 
-        // Insert link button
-        addChip("Insert link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        // Generate / insert link button
+        if ic.submitting {
+            addChip("⏳ Publishing…", style: .note)
+        } else if ic.generatedLink != nil {
+            addChip("Insert link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        } else {
+            addChip("Generate link →", style: .primary) { [weak self] in self?.insertInstantCard() }
+        }
     }
 
     private func addStripSeparator() {
