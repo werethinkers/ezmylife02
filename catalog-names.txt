@@ -1,0 +1,247 @@
+﻿Invoice Generator
+Expense Tracker
+Profit Calculator
+Tax Estimator
+Bad Debt Recovery
+Contract Drafter
+Compliance Checklist
+Notice Reply Bot
+Dispute Letter
+Safety Protocol
+Cold Outreach
+Offer Generator
+Google Business Kit
+Review Replier
+Customer Follow-up
+Social Media Plan
+Campaign Manager
+Loyalty Program
+Lead Magnet
+Discount Strategist
+Stock Audit
+Wastage Log
+Supplier Order
+Maintenance Log
+Shift Handover
+Stock Watchdog
+Vendor Rater
+Quality Check
+Hiring Job Post
+Interview Guide
+Salary Calculator
+Warning Letter
+Daily Task List
+Shift Planner
+Payroll Engine
+Attendance Tracker
+Performance Scorecard
+Ticket Manager
+FAQ Builder
+Feedback Collector
+Advance AI Bot
+Quiz
+Image Creator
+StoryBook Creator
+Advance Text Extractor
+Create 3D Images
+SketchFlow AI
+Speedy Notebook
+PromptMaster AI
+Startup Analyser
+Meet Nudge
+Rich Editor
+PDF Chart & Image Extractor
+HTML Editor
+Wrong Written Words
+Book Editor
+Book Editor with HTML
+OCR
+Dictionary Extractor AI
+PDF Profile Extractor
+PDF Metadata AI Analyst
+Soul Mirror - Johari Window
+Cognimap - Mental Models
+AI Data Analysis
+Interactive Videos (Beta)
+Create Smart Diagram AI
+Auto Text Extractor Agent
+AI ID Photo Generator
+Passport Photo Maker
+Reduce Image Size in KB
+Resize Image by Pixel
+Increase Image Size in KB
+Resize Image in Centimeters
+Resize Image 3.5cm x 4.5cm
+Resize Image in Millimeters
+Resize Image in Inches
+Bulk Image Resizer
+Resize to A4 Size
+Resize 600x600 Pixels
+Generate Signature
+Resize Signature
+Resize Sign 6cm x 2cm
+Signature 50mm x 20mm
+Merge Photo & Signature
+Blur Background
+Remove Background
+Remove Object from Photo
+Add Name & DOB on Photo
+Rotate Image
+Flip Image
+Watermark Images
+Freehand Crop
+Circle Crop
+Square Crop
+Join Multiple Images
+Split Image
+Image Color Picker
+Add Text to Image
+Add Logo to Image
+Edit Image Metadata
+View Image Metadata
+Remove Image Metadata
+Beautify Image
+Unblur Image
+Blur Image
+Blur Face
+Unblur Face
+Pixelate Image
+Pixelate Face
+Censor Photo
+Motion Blur
+Grayscale Image
+Black & White
+Picture to Pixel Art
+AI Face Generator
+Blemish Remover
+Retouch Image
+AI Photo Enhancer
+Increase Image Quality
+Convert DPI
+Check Image DPI
+Super Resolution
+Upscale Image with AI
+SSC Photo Resize
+PAN Card Photo Resize
+UPSC Photo Resize
+PSC Photo Resize
+Resize 35mm x 45mm
+Resize 2x2 Inch
+Resize 3x4 Inch
+Resize 4x6 Inch
+Instagram Resize (No Crop)
+Instagram Grid Maker
+WhatsApp DP Resize
+YouTube Banner Resize
+Zoom Out Image
+Quiz Maker
+Grade Calculator
+Study Planner
+Flashcard Maker
+Assignment Tracker
+Bibliography Generator
+Exam Scheduler
+Lesson Planner
+Social Post Generator
+Caption Generator
+Hashtag Generator
+Content Idea Generator
+Video Script Writer
+Content Creation Workflow
+AI Thumbnail Maker
+AI Video Maker
+Virasat: A Father's Legacy
+ProductVision 360
+Bhed Prabhed
+GST Quotation
+Proforma Invoice
+Purchase Order
+Delivery Challan
+Credit Note
+Billing Schedule
+Expense Report
+Advance Recovery Letter
+Commission Slip
+Payment Terms
+Salary Slip
+Offer Letter
+Experience Letter
+Employee Appraisal Form
+Resignation Acceptance
+Promotion Letter
+Attendance Improvement Notice
+Training Schedule
+Full-Time Employment Contract
+Contractor Agreement
+Rent Agreement
+Eviction Notice
+Non-Disclosure Agreement
+Affidavit
+Legal Notice
+Partnership Deed
+LLP Agreement
+Company Bylaws
+Property Deed
+Loan Agreement
+Guarantor Letter
+Termination Letter
+Power of Attorney
+Joint Project NDA
+Indemnity Bond
+Service Agreement
+Work Order
+Quotation Comparison
+Warranty Certificate
+Delivery Receipt
+Return Authorization
+Customer Contract
+Statement of Work
+Non-Compete & Non-Solicitation
+IP Assignment
+Settlement Agreement
+Bill of Sale
+Lien Notice
+Certificate of Completion
+Authorization Letter
+Attendance Register
+Time Sheet
+Leave Letter
+Joining Letter
+Exit Interview Form
+Job Description
+Purchase Requisition
+Receipt Template
+Memo Template
+Checklist Template
+Performance Improvement Plan
+Benefit Statement
+Grievance Form
+Company Policy
+EMI Calculator
+Loan Prepayment Calculator
+SIP Calculator
+FD Calculator
+RD Calculator
+CAGR Calculator
+Break-Even Calculator
+Percentage Calculator
+Age Calculator
+JPG to PDF
+PDF to JPG
+Merge PDF
+Split PDF
+Rotate PDF
+PDF to Text
+HEIC to JPG
+WebP to JPG
+PNG to JPG
+Image to WebP
+Mind Map Maker
+NEET, JEE & CUET Photo and Signature
+SBI Clerk Photo, Signature & Thumb
+GATE 2027 Photo and Signature
+US Visa Photo
+OCI Card Photo and Signature
+India e-Visa Photo
+Furniture Sheets
+Mail Brain

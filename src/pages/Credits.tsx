@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
-import SEOFooter from "@/components/SEOFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,6 +17,9 @@ import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { seoFor } from "@/lib/seo/pages";
 import AppleCreditPacks from "@/components/wallet/AppleCreditPacks";
 import { canBuyInThisApp } from "@/lib/nativeApp";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, FOCUS_RING } from "@/components/modern/styles";
+import { cn } from "@/lib/utils";
 
 const Credits = () => {
   const { user } = useAuth();
@@ -156,21 +157,20 @@ const Credits = () => {
   };
 
   return (
-    <>
+    <ModernPage section="prices">
       <SEOHead
         {...seoFor("/credits", "")}
       />
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
+      <main className={cn(CONTAINER, "py-8 md:py-12")}>
         <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="rounded-3xl border-2 border-ink bg-sky p-6 shadow-block-lg md:p-10"
+          className="rounded-3xl bg-zinc-950 p-6 text-white shadow-soft-xl dark:bg-zinc-900 md:p-10"
         >
-          <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">No monthly plan</span>
-          <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">Pay only for what you use</h1>
-          <p className="mt-3 max-w-2xl text-lg text-ink/85">
+          <span className="inline-flex rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-zinc-950">No monthly plan</span>
+          <h1 className="mt-3 font-display text-3xl font-extrabold md:text-5xl">Pay only for what you use</h1>
+          <p className="mt-3 max-w-2xl text-lg text-zinc-300">
             {canBuyInThisApp()
               ? "Apps are paid with credits. Buy a pack from ₹10, and an app uses its credits only when it gives you a result. Websites and cards are paid once, on their own page."
               : "Apps are paid with credits, and an app uses its credits only when it gives you a result."}
@@ -181,11 +181,11 @@ const Credits = () => {
               { t: "Credits only when it works", s: "If an app fails, you are not charged." },
               { t: "Free to start", s: "50 free credits when you sign up, 50 more after your first run." },
             ].map((x, i) => (
-              <li key={x.t} className="flex gap-3 rounded-2xl border-2 border-ink bg-card p-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun font-display font-extrabold">{i + 1}</span>
+              <li key={x.t} className="flex gap-3 rounded-2xl border border-zinc-800 bg-white/5 p-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 font-display font-extrabold text-zinc-950">{i + 1}</span>
                 <span>
                   <span className="block font-bold">{x.t}</span>
-                  <span className="block text-sm text-muted-foreground">{x.s}</span>
+                  <span className="block text-sm text-zinc-400">{x.s}</span>
                 </span>
               </li>
             ))}
@@ -194,24 +194,24 @@ const Credits = () => {
 
         {/* Wallet snapshot */}
         {user ? (
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-ink bg-lime p-5 shadow-block">
+          <div className={cn("mt-8 flex flex-wrap items-center justify-between gap-4 p-5 shadow-soft", CARD)}>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide">Your credits</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Your credits</p>
               <p className="flex items-center gap-2 font-display text-4xl font-extrabold tabular-nums">
-                <Zap className="h-6 w-6" />
+                <Zap className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden />
                 {walletLoading ? "—" : total}
               </p>
-              <p className="mt-1 text-sm">
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                 <span className="tabular-nums">{free}</span> free · <span className="tabular-nums">{paid}</span> paid
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline">
-                <Link to="/credits/history">Payments and usage</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/ai-apps">Use an app</Link>
-              </Button>
+              <Link to="/credits/history" className={BTN_OUTLINE}>
+                Payments and usage
+              </Link>
+              <Link to="/ai-apps" className={BTN_OUTLINE}>
+                Use an app
+              </Link>
             </div>
           </div>
         ) : null}
@@ -219,8 +219,8 @@ const Credits = () => {
         {/* iPhone app: credits are paid with Apple in-app purchase (docs/ios-app.md) */}
         {!canBuyInThisApp() && (
           <section className="mt-12">
-            <h2 className="mb-5 text-2xl font-bold md:text-3xl">Credit packs</h2>
-            <div className="max-w-xl rounded-2xl border-2 border-ink bg-card p-5 shadow-block">
+            <h2 className="mb-5 font-display text-2xl font-bold md:text-3xl">Credit packs</h2>
+            <div className={cn("max-w-xl p-5 shadow-soft", CARD)}>
               <AppleCreditPacks
                 onNeedLogin={() => setLoginOpen(true)}
                 onBought={(credits) => navigate(`/credits/success?credits=${credits}`)}
@@ -231,29 +231,45 @@ const Credits = () => {
 
         {/* Packs (not in the iOS app: Apple rules, see docs/ios-app.md) */}
         {canBuyInThisApp() && (<>
-        <h2 className="mb-5 mt-12 text-2xl font-bold md:text-3xl">Credit packs</h2>
+        <h2 className="mb-5 mt-12 font-display text-2xl font-bold md:text-3xl">Credit packs</h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CREDIT_PACKS.map((pack) => {
             const base = Math.round(pack.inr * BASELINE_CREDITS_PER_RUPEE);
             const extra = pack.credits - base;
             const perCredit = pack.inr / pack.credits;
             return (
-              <motion.div key={pack.id} whileHover={{ y: -2 }} className={`relative rounded-2xl border-2 border-ink p-5 shadow-block ${pack.badge ? "bg-sun" : "bg-card"}`}>
+              <motion.div
+                key={pack.id}
+                whileHover={{ y: -2 }}
+                className={cn(
+                  "relative flex h-full flex-col rounded-2xl p-5 shadow-soft",
+                  pack.badge ? "border-2 border-orange-500 bg-zinc-950 text-white dark:bg-zinc-900" : CARD,
+                )}
+              >
                 {pack.badge && (
-                  <span className="absolute -top-3 right-4 rounded-full border-2 border-ink bg-pink px-2.5 py-0.5 text-xs font-bold">{pack.badge}</span>
+                  <span className="absolute -top-3 right-4 rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-bold text-white">{pack.badge}</span>
                 )}
                 <p className="font-display text-4xl font-extrabold">₹{pack.inr}</p>
                 <p className="mt-2 flex items-center gap-1.5 text-lg">
-                  <Zap className="h-5 w-5" />
+                  <Zap className={cn("h-5 w-5", pack.badge ? "text-amber-300" : "text-orange-600 dark:text-orange-400")} aria-hidden />
                   <span className="font-bold tabular-nums">{pack.credits}</span> credits
                 </p>
-                <p className="mt-1 text-sm text-ink/75">
+                <p className={cn("mt-1 text-sm", pack.badge ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400")}>
                   About ₹{perCredit.toFixed(2)} a credit
                   {extra > 0 ? ` · ${extra} more credits than buying ₹10 packs` : ""}
                 </p>
-                <Button className="mt-4 w-full" onClick={() => buyPack(pack.id)} disabled={busyPack === pack.id}>
+                <button
+                  type="button"
+                  onClick={() => buyPack(pack.id)}
+                  disabled={busyPack === pack.id}
+                  className={cn(
+                    pack.badge ? "bg-amber-400 text-zinc-950 hover:bg-amber-300" : BTN_PRIMARY,
+                    "mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:opacity-60",
+                    FOCUS_RING,
+                  )}
+                >
                   {busyPack === pack.id ? <Loader2 className="h-4 w-4 animate-spin" /> : `Buy ₹${pack.inr} pack`}
-                </Button>
+                </button>
               </motion.div>
             );
           })}
@@ -270,9 +286,14 @@ const Credits = () => {
           <CollapsibleContent>
             <div className="mt-2 flex max-w-sm gap-2">
               <Input placeholder="Enter coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={couponBusy} />
-              <Button onClick={handleCoupon} disabled={couponBusy || !couponCode.trim()}>
+              <button
+                type="button"
+                onClick={handleCoupon}
+                disabled={couponBusy || !couponCode.trim()}
+                className={cn(BTN_PRIMARY, "h-11 disabled:opacity-60")}
+              >
                 {couponBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-              </Button>
+              </button>
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -280,26 +301,25 @@ const Credits = () => {
 
         {/* Websites and cards */}
         <section className="mt-12 grid gap-5 md:grid-cols-2">
-          <Link to="/websites" className="block-card block-lift bg-teal p-6">
+          <Link to="/websites" className={cn("block p-6 transition hover:-translate-y-0.5", CARD)}>
             <p className="font-display text-xl font-bold">Websites</p>
-            <p className="mt-1 text-ink/85">Paid once per design, online for a year. The price is on each design.</p>
+            <p className="mt-1 text-zinc-600 dark:text-zinc-400">Paid once per design, online for a year. The price is on each design.</p>
           </Link>
-          <Link to="/cards" className="block-card block-lift bg-sun p-6">
+          <Link to="/cards" className={cn("block p-6 transition hover:-translate-y-0.5", CARD)}>
             <p className="font-display text-xl font-bold">Cards and invites</p>
-            <p className="mt-1 text-ink/85">Paid once per card. The price is on each design.</p>
+            <p className="mt-1 text-zinc-600 dark:text-zinc-400">Paid once per card. The price is on each design.</p>
           </Link>
         </section>
 
         {/* Trust */}
-        <div className="mt-10 grid gap-4 text-[15px] sm:grid-cols-3">
-          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> No recurring charges, ever.</div>
-          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Credits are used only when an app works.</div>
-          {canBuyInThisApp() && <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal" /> Secure payments with UPI, cards or netbanking.</div>}
+        <div className="mt-10 grid gap-4 text-[15px] text-zinc-700 dark:text-zinc-300 sm:grid-cols-3">
+          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" /> No recurring charges, ever.</div>
+          <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" /> Credits are used only when an app works.</div>
+          {canBuyInThisApp() && <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" /> Secure payments with UPI, cards or netbanking.</div>}
         </div>
       </main>
       <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={pendingPack ? `/credits?pack=${pendingPack}` : "/credits"} />
-      <SEOFooter />
-    </>
+    </ModernPage>
   );
 };
 

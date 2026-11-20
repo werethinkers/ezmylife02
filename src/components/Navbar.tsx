@@ -11,11 +11,11 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, BadgeCheck, Keyboard } from "lucide-react";
+import { Menu, X, User, LogOut, Compass, ChevronDown } from "lucide-react";
 import { isIosApp } from "@/lib/nativeApp";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { Logo } from "@/components/brand/Logo";
-import { EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
+import { ACCOUNT_LINKS, EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
 import { cn } from "@/lib/utils";
 
 /**
@@ -110,26 +110,11 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                   <p className="text-xs text-muted-foreground">Your account</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer"><User className="mr-2 h-4 w-4" /> Profile and saved work</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/my-pages" className="cursor-pointer"><LayoutTemplate className="mr-2 h-4 w-4" /> My websites and cards</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/credits" className="cursor-pointer"><Wallet className="mr-2 h-4 w-4" /> Credits and payments</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/subscription" className="cursor-pointer"><BadgeCheck className="mr-2 h-4 w-4" /> Subscription</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/keyboard" className="cursor-pointer"><Keyboard className="mr-2 h-4 w-4" /> {isIosApp() ? "Keyboard and voice" : "iPhone keyboard and voice"}</Link>
-                </DropdownMenuItem>
-                {!isIosApp() && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>
+                {ACCOUNT_LINKS.filter((l) => !(l.webOnly && isIosApp())).map((l) => (
+                  <DropdownMenuItem key={l.to} asChild>
+                    <Link to={l.to} className="cursor-pointer"><l.Icon className="mr-2 h-4 w-4" /> {isIosApp() && l.iosLabel ? l.iosLabel : l.label}</Link>
                   </DropdownMenuItem>
-                )}
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" /> Sign out

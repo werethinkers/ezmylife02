@@ -2,41 +2,12 @@ import { Link } from "react-router-dom";
 import { useAppCountLabel } from "@/lib/appCount";
 import { GOALS } from "@/data/goals";
 import { Logo } from "@/components/brand/Logo";
-
-const MAKE_LINKS = [
-  { to: "/websites?cat=business", label: "Business websites" },
-  { to: "/websites?cat=menus", label: "Menus and catalogues" },
-  { to: "/websites?cat=profiles", label: "Visiting cards and resumes" },
-  { to: "/cards?cat=events", label: "Invitations" },
-  { to: "/cards?cat=festivals", label: "Festival wishes" },
-  { to: "/cards?cat=celebrations", label: "Birthdays and celebrations" },
-];
-
-const SPECIAL_LINKS = [
-  { to: "/startup-analyser", label: "Startup Analyser" },
-  { to: "/meet-nudge", label: "Meet Nudge — save people you meet" },
-  { to: "/notebook", label: "Speedy Notebook" },
-  { to: "/promptmaster", label: "Prompt Master" },
-  { to: "/google-business", label: "Google Business kit" },
-];
-
-const EARN_FOOTER_LINKS = [
-  { to: "/creators", label: "Earn as a creator" },
-  { to: "/list-your-app", label: "List your app" },
-  { to: "/influencer", label: "Creator sign in" },
-];
-
-const COMPANY_LINKS = [
-  { to: "/about", label: "About us" },
-  { to: "/about#contact", label: "Talk to us" },
-  { to: "/credits", label: "Prices and credits" },
-  { to: "/refund-policy", label: "Refund policy" },
-  { to: "/terms", label: "Terms and conditions" },
-  { to: "/privacy", label: "Privacy policy" },
-  { to: "/get-extension", label: "Browser add-on" },
-  { to: "/mobile-shortcuts", label: "Add to your phone" },
-  { to: "/explore", label: "Find apps by business" },
-];
+import {
+  FOOTER_COMPANY_LINKS as COMPANY_LINKS,
+  FOOTER_EARN_LINKS as EARN_FOOTER_LINKS,
+  FOOTER_MAKE_LINKS as MAKE_LINKS,
+  FOOTER_SPECIAL_LINKS as SPECIAL_LINKS,
+} from "@/components/brand/nav";
 
 /** Site footer: every section in plain words, on an ink background. */
 const SEOFooter = () => {
