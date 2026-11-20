@@ -492,65 +492,65 @@ html {
     box-shadow: 8px 8px 0 0 hsl(var(--ink));
   }
 
-  /* Tilt + pointer sheen (TiltCard / useTilt, from 21st.dev). */
-  .fx-tilt {
-    position: relative;
-    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  }
-  .block-lift.fx-tilt:hover {
-    transform: perspective(900px) translate(-3px, -3px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  }
-  .block-lift.fx-tilt:active {
-    transform: perspective(900px) translate(2px, 2px);
-  }
-  /* White light under the pointer: brightens the card's own colour, adds none. */
-  .fx-tilt::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    pointer-events: none;
-    border-radius: inherit;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    background: radial-gradient(220px circle at var(--px, 50%) var(--py, 50%), hsl(0 0% 100% / 0.55), transparent 70%);
-    mix-blend-mode: soft-light;
-  }
-  /* A thin scan line that crosses the card once when the pointer arrives. */
-  .fx-tilt::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 21;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(105deg, transparent 42%, hsl(0 0% 100% / 0.7) 49%, hsl(0 0% 100% / 0.7) 51%, transparent 58%);
-    background-size: 250% 100%;
-    background-position: 130% 0;
-    opacity: 0;
-  }
-  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  /* Tilt + pointer sheen (TiltCard / useTilt, from 21st.dev) and the button light sweep.
+     Mouse computers only. On phones every tile and button used to carry a 3D transform plus a
+     blended overlay, hundreds per page, which ate the browser's memory and made pages glitch and
+     reload. Phones now get plain cards. */
+  .fx-tilt { position: relative; }
+  .fx-sheen { position: relative; }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .fx-tilt {
+      transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    }
+    .block-lift.fx-tilt:hover {
+      transform: perspective(900px) translate(-3px, -3px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    }
+    .block-lift.fx-tilt:active {
+      transform: perspective(900px) translate(2px, 2px);
+    }
+    /* White light under the pointer: brightens the card's own colour, adds none. */
+    .fx-tilt::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      background: radial-gradient(220px circle at var(--px, 50%) var(--py, 50%), hsl(0 0% 100% / 0.55), transparent 70%);
+      mix-blend-mode: soft-light;
+    }
     .fx-tilt:hover::after { opacity: 1; }
+    /* A thin scan line that crosses the card once when the pointer arrives. */
+    .fx-tilt::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 21;
+      pointer-events: none;
+      border-radius: inherit;
+      background: linear-gradient(105deg, transparent 42%, hsl(0 0% 100% / 0.7) 49%, hsl(0 0% 100% / 0.7) 51%, transparent 58%);
+      background-size: 250% 100%;
+      background-position: 130% 0;
+      opacity: 0;
+    }
     .fx-tilt:hover::before { animation: fx-scan 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 1; }
-  }
 
-  /* The same light sweep for main buttons. */
-  .fx-sheen {
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-  }
-  .fx-sheen::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: linear-gradient(105deg, transparent 35%, hsl(0 0% 100% / 0.65) 50%, transparent 65%);
-    background-size: 250% 100%;
-    background-position: 130% 0;
-  }
-  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .fx-sheen {
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .fx-sheen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 35%, hsl(0 0% 100% / 0.65) 50%, transparent 65%);
+      background-size: 250% 100%;
+      background-position: 130% 0;
+    }
     .fx-sheen:hover::after { animation: fx-scan 0.7s ease-out 1; }
   }
 
@@ -561,19 +561,6 @@ html {
   }
   @media (prefers-reduced-motion: no-preference) {
     .marker { animation: fx-marker 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.15s backwards; }
-  }
-
-  /* Cards rise into place as they scroll into view. Uses the separate translate/scale/opacity
-     properties with fill "backwards" only, so hover transforms and opacity classes are untouched
-     once a card is in place. Browsers without scroll timelines simply show the card. */
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .block-card:not([role="dialog"] *) {
-        animation: fx-rise linear backwards;
-        animation-timeline: view();
-        animation-range: entry 0% entry 70%;
-      }
-    }
   }
 
   /* Focus outlines that are easy to see on every goal colour. */
@@ -614,4 +601,3 @@ html {
   100% { opacity: 1; background-position: -30% 0; }
 }
 @keyframes fx-marker { from { background-size: 0% 100%; } }
-@keyframes fx-rise { from { opacity: 0; translate: 0 28px; scale: 0.97; } }
