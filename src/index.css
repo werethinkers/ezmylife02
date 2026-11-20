@@ -476,16 +476,11 @@ html {
  * progressive (no support = shown as before).
  * ─────────────────────────────────────────────────────────────────────────── */
 @layer base {
-  /* Graph-paper dots that drift slowly behind every page. Faint, so text stays crisp. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -48px;
-    z-index: -1;
-    pointer-events: none;
+  /* Graph-paper dots behind every page. Faint, so text stays crisp. Static on purpose: a full-screen
+     fixed layer that animates forever made phones repaint constantly, glitch and reload the page. */
+  body {
     background-image: radial-gradient(hsl(var(--ink) / 0.09) 1.2px, transparent 1.6px);
     background-size: 24px 24px;
-    animation: fx-drift 60s linear infinite;
   }
 
   /* Cards lift with a springier ease and the ink shadow grows under them. */
@@ -586,7 +581,7 @@ html {
     outline-offset: 3px;
   }
 
-  /* Animated grid backdrop (AnimatedGrid, from 21st.dev). */
+  /* Grid backdrop (AnimatedGrid, from 21st.dev). Still, not drifting: see the note on body above. */
   .fx-grid {
     -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
     mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
@@ -595,8 +590,7 @@ html {
   .fx-grid::after {
     content: "";
     position: absolute;
-    inset: -96px;
-    animation: fx-grid-drift 30s linear infinite;
+    inset: 0;
   }
   .fx-grid::before {
     background-image:
@@ -611,16 +605,10 @@ html {
     background-size: 96px 96px;
   }
   @media (forced-colors: active) {
-    .fx-grid, body::before { display: none; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    body::before, .fx-grid::before, .fx-grid::after { animation: none; }
+    .fx-grid { display: none; }
   }
 }
 
-@keyframes fx-drift { to { transform: translate(24px, 24px); } }
-@keyframes fx-grid-drift { to { transform: translate(96px, 96px); } }
 @keyframes fx-scan {
   0% { opacity: 1; background-position: 130% 0; }
   100% { opacity: 1; background-position: -30% 0; }
