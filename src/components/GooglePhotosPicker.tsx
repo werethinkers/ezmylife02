@@ -17,6 +17,18 @@ import {
 
 type Phase = "connecting" | "ready" | "importing" | "error";
 
+/** Opens the Google Photos picker in a centred popup so the user stays on-site.
+ *  Correctly inserts /autoclose into the path before any query string. */
+function openPickerPopup(pickerUri: string) {
+  const url = new URL(pickerUri);
+  url.pathname = url.pathname.replace(/\/$/, "") + "/autoclose";
+  const w = Math.min(1080, window.screen.width - 80);
+  const h = Math.min(820, window.screen.height - 80);
+  const left = Math.round((window.screen.width - w) / 2);
+  const top = Math.round((window.screen.height - h) / 2);
+  window.open(url.toString(), "googlephotos", `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+}
+
 type Props = {
   /** How many photos may be chosen (1 for a single-photo slot). */
   max?: number;
@@ -99,7 +111,7 @@ export function GooglePhotosButton({ max = 1, onFiles, label = "From Google Phot
             {phase === "connecting" && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Google…</p>}
             {phase === "ready" && session && (
               <>
-                <Button type="button" className="h-11" onClick={() => window.open(`${session.pickerUri}/autoclose`, "_blank", "noopener")}>
+                <Button type="button" className="h-11" onClick={() => openPickerPopup(session.pickerUri)}>
                   <ExternalLink className="h-4 w-4 mr-2" /> Open Google Photos
                 </Button>
                 <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Waiting for you to choose {max > 1 ? `up to ${max} photos` : "a photo"}. Come back here when you tap Done.</p>
