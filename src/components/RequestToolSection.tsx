@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Wrench, Send, CheckCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { BTN_OUTLINE, BTN_PRIMARY, CONTAINER } from "@/components/modern/styles";
 
+const field =
+  "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-base placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 sm:text-sm dark:border-zinc-800 dark:bg-zinc-950";
+
+/** "Can't find the app you need?" request form. Drawn in the modern look: it sits on the home and business-apps pages. */
 const RequestToolSection = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,44 +39,29 @@ const RequestToolSection = () => {
   };
 
   return (
-    <section className="py-12 md:py-16">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-3xl border-2 border-ink bg-card shadow-block-lg"
-          >
-            {/* Background accent */}
-
-            <div className="relative flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:grid md:grid-cols-2 md:gap-0 [&::-webkit-scrollbar]:hidden">
+    <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800/80">
+      <div className={CONTAINER}>
+        <div className="mx-auto max-w-4xl">
+          <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-soft-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="relative grid md:grid-cols-2">
               {/* Left side - Message */}
-              <div className="flex w-[88%] shrink-0 snap-start flex-col justify-center space-y-6 border-r-2 border-ink bg-sky/40 p-6 md:w-auto md:p-12">
-                <motion.div
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-ink bg-sun"
-                  whileHover={{ rotate: 10, scale: 1.1 }}
-                >
-                  <Wrench className="h-7 w-7 text-ink" />
-                </motion.div>
-                <h2 className="font-display text-2xl md:text-3xl font-bold leading-tight">
-                  Can't find the app you need?
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
+              <div className="flex flex-col justify-center space-y-5 border-b border-zinc-200 bg-orange-50/70 p-6 md:border-b-0 md:border-r md:p-10 dark:border-zinc-800 dark:bg-orange-950/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-600 to-amber-500 text-white shadow-soft-sm">
+                  <Wrench className="h-6 w-6" aria-hidden />
+                </div>
+                <h2 className="font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">Can't find the app you need?</h2>
+                <p className="leading-relaxed text-zinc-600 dark:text-zinc-400">
                   Tell us what you're looking for and we'll build it for you within{" "}
-                  <span className="font-semibold text-foreground">24–48 hours</span>. Custom-built, just for you.
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">24–48 hours</span>. Custom-built, just for you.
                 </p>
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 text-ink" />
-                    <span>24–48 hour turnaround</span>
-                  </div>
+                <div className="flex items-center gap-2 pt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" aria-hidden />
+                  <span>24–48 hour turnaround</span>
                 </div>
               </div>
 
               {/* Right side - Form */}
-              <div className="w-[88%] shrink-0 snap-start p-6 md:w-auto md:p-12">
+              <div className="p-6 md:p-10">
                 <AnimatePresence mode="wait">
                   {submitted ? (
                     <motion.div
@@ -87,15 +75,15 @@ const RequestToolSection = () => {
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                       >
-                        <CheckCircle className="h-16 w-16 text-primary" />
+                        <CheckCircle className="h-16 w-16 text-emerald-600 dark:text-emerald-400" aria-hidden />
                       </motion.div>
-                      <h3 className="text-xl font-bold">Request received</h3>
-                      <p className="text-muted-foreground text-sm">
+                      <h3 className="font-display text-xl font-bold">Request received</h3>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
                         We'll review your request and get back to you within 24–48 hours.
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
+                        type="button"
+                        className={BTN_OUTLINE}
                         onClick={() => {
                           setSubmitted(false);
                           setName("");
@@ -103,8 +91,8 @@ const RequestToolSection = () => {
                           setToolDescription("");
                         }}
                       >
-                        Submit Another
-                      </Button>
+                        Submit another
+                      </button>
                     </motion.div>
                   ) : (
                     <motion.form
@@ -115,54 +103,60 @@ const RequestToolSection = () => {
                       onSubmit={handleSubmit}
                       className="space-y-4"
                     >
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Your name</label>
-                        <Input
+                      <div className="space-y-1.5">
+                        <label htmlFor="request-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Your name</label>
+                        <input
+                          id="request-name"
                           placeholder="Asha Verma"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           required
                           maxLength={100}
+                          className={field}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Email</label>
-                        <Input
+                      <div className="space-y-1.5">
+                        <label htmlFor="request-email" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email</label>
+                        <input
+                          id="request-email"
                           type="email"
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           maxLength={255}
+                          className={field}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Describe the app you need</label>
-                        <Textarea
+                      <div className="space-y-1.5">
+                        <label htmlFor="request-description" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Describe the app you need</label>
+                        <textarea
+                          id="request-description"
                           placeholder="I need an app that can…"
                           value={toolDescription}
                           onChange={(e) => setToolDescription(e.target.value)}
                           required
                           maxLength={1000}
                           rows={4}
+                          className={field}
                         />
                       </div>
-                      <Button type="submit" className="w-full h-12" disabled={submitting}>
+                      <button type="submit" className={cn(BTN_PRIMARY, "h-12 w-full disabled:opacity-60")} disabled={submitting}>
                         {submitting ? (
                           "Submitting..."
                         ) : (
                           <>
                             Request this app
-                            <Send className="ml-2 h-4 w-4" />
+                            <Send className="h-4 w-4" aria-hidden />
                           </>
                         )}
-                      </Button>
+                      </button>
                     </motion.form>
                   )}
                 </AnimatePresence>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

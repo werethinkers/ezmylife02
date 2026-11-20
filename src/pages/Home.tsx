@@ -1,88 +1,140 @@
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { ArrowRight, Gift, Globe, LayoutGrid, Mail, Search, Sparkles, X } from "lucide-react";
+import { ArrowRight, Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
-import SEOFooter from "@/components/SEOFooter";
-import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import RequestToolSection from "@/components/RequestToolSection";
+import { useQuickLook } from "@/components/store/QuickLook";
+import { EARN_LINKS } from "@/components/brand/nav";
+import { FLOW_STEPS, type Flow } from "@/components/brand/FlowSteps";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { usePricingMap } from "@/hooks/usePricingMap";
 import { useAppCountLabel } from "@/lib/appCount";
-import { STUDIO_IDS } from "@/data/studios";
-import { byCategoryOrder, categoriesOf, categoryInfo, inCategory } from "@/data/goals";
-import { Shelf } from "@/components/store/Shelf";
-import { AppTile, AppRow } from "@/components/store/AppTile";
-import { HeroPicker } from "@/components/home/HeroPicker";
-import { FeatureCarousel, SqueezeCarousel, Fold } from "@/components/home/Showcases";
-import { useAppSlides } from "@/components/store/useAppSlides";
-import { APP_PREVIEW_IDS, picturesFirst } from "@/data/previewManifest";
-import { StudiosShelf } from "@/components/home/StudiosShelf";
-import { TodaySection } from "@/components/home/TodaySection";
-import { CreditValue } from "@/components/home/CreditValue";
-import { EarnBand } from "@/components/earn/EarnBits";
-import { placedIn } from "@/data/placements";
-import RequestToolSection from "@/components/RequestToolSection";
-import BuyCreditsDialog from "@/components/wallet/BuyCreditsDialog";
-import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
-import { cn } from "@/lib/utils";
-import { ShiningText } from "@/components/ui/shining-text";
 import { seoFor } from "@/lib/seo/pages";
+import { cn } from "@/lib/utils";
+import { STUDIO_IDS, studioTabOf } from "@/data/studios";
+import { POPULAR_STUDIO_IDS } from "@/data/studioPicks";
+import { categoriesOf } from "@/data/goals";
+import { placedIn } from "@/data/placements";
+import { APP_PREVIEW_IDS } from "@/data/previewManifest";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { ToolCard, ToolMedia } from "@/components/modern/ToolCard";
+import { DesignCard, DesignMedia } from "@/components/modern/DesignCard";
+import { HeroSpotlight, type SpotItem, type SpotTab } from "@/components/modern/home/HeroSpotlight";
+import type { DesignSummary } from "@/components/modern/home/DesignFeed";
+import type { DesignLite } from "@/components/modern/designLite";
+import { CardSkeleton, CtaBand, EmptyState, SectionHead } from "@/components/modern/ui";
+import { BTN_INK, BTN_OUTLINE, BTN_PRIMARY, CONTAINER, EYEBROW, FOCUS_RING, creditsLabel, pillClass, roundedLabel } from "@/components/modern/styles";
 
-// Website and card shelves need the design catalogue; load it after the first screen is up.
-const HomeMakeShelves = lazy(() => import("@/components/home/HomeMakeShelves"));
-// The full store list also needs the design catalogue; it sits below the fold.
-const AppDirectory = lazy(() => import("@/components/home/AppDirectory"));
+// The website and card designs are a large catalogue: load them after the first screen is up.
+const DesignFeed = lazy(() => import("@/components/modern/home/DesignFeed"));
 
-const SKIP_CATEGORY_SHELVES = new Set(["Popular", "Lab"]);
 const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
 
-/** A door: a page link, or an on-page jump (to="#studios") for a section further down. */
-function DoorLink({ to, className, children }: { to: string; className?: string; children: React.ReactNode }) {
-  return to.startsWith("#") ? (
-    <a href={to} className={className}>
-      {children}
-    </a>
-  ) : (
-    <Link to={to} className={className}>
-      {children}
-    </Link>
-  );
+type TopKind = "website" | "card" | "studio" | "app";
+interface TopItem {
+  kind: TopKind;
+  key: string;
+  rank: number;
+  tool?: CatalogTool;
+  design?: DesignLite;
+  /** A design slot while the designs load. */
+  pending?: boolean;
+}
+// The mix of the top ten: a website and a card first, then studios spread among quick apps.
+const TOP_PATTERN: TopKind[] = ["website", "card", "studio", "app", "app", "studio", "app", "app", "app", "studio"];
+const TOP_FILTERS: { id: TopKind | "all"; label: string }[] = [
+  { id: "all", label: "All 10" },
+  { id: "website", label: "Websites" },
+  { id: "card", label: "Cards & invites" },
+  { id: "studio", label: "Studios" },
+  { id: "app", label: "Business apps" },
+];
+const KIND_CHIP: Record<TopKind, string> = { website: "Website", card: "Card & invite", studio: "Studio", app: "Business app" };
+
+/** Ten picks in TOP_PATTERN order. A kind that runs out is filled with the next app; designs still loading keep their slot. */
+function buildTopTen(designs: DesignSummary | null, studios: CatalogTool[], apps: CatalogTool[]): TopItem[] {
+  const sites = designs ? [...designs.topWebsites] : null;
+  const cards = designs ? [...designs.topCards] : null;
+  const studioQ = [...studios];
+  const appQ = [...apps];
+  const out: TopItem[] = [];
+  for (const kind of TOP_PATTERN) {
+    const rank = out.length + 1;
+    if (kind === "website" || kind === "card") {
+      const q = kind === "website" ? sites : cards;
+      if (q === null) {
+        out.push({ kind, key: `pending-${kind}`, rank, pending: true });
+        continue;
+      }
+      const d = q.shift();
+      if (d) {
+        out.push({ kind, key: `design-${d.id}`, rank, design: d });
+        continue;
+      }
+    } else {
+      const t = (kind === "studio" ? studioQ : appQ).shift();
+      if (t) {
+        out.push({ kind, key: t.id, rank, tool: t });
+        continue;
+      }
+    }
+    const fill = appQ.shift();
+    if (fill) out.push({ kind: "app", key: fill.id, rank, tool: fill });
+  }
+  return out;
 }
 
-function Section({ id, title, line, children, action }: { id?: string; title: string; line?: string; children: React.ReactNode; action?: React.ReactNode }) {
+/** Ids in order, once each. */
+const uniqueTools = (lists: CatalogTool[][]) => {
+  const seen = new Set<string>();
+  return lists.flat().filter((t) => !seen.has(t.id) && !!seen.add(t.id));
+};
+
+/** Two items for a spotlight tab, with a picture first. */
+const twoWithPicture = <T,>(xs: T[], hasPicture: (x: T) => boolean) => [...xs.filter(hasPicture), ...xs.filter((x) => !hasPicture(x))].slice(0, 2);
+
+const PILLAR_TONES = {
+  orange: { box: "bg-gradient-to-br from-orange-600 to-amber-600 text-white", chip: "bg-white/20", line: "text-orange-50", steps: "text-white/75", go: "text-white" },
+  ink: { box: "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white", chip: "bg-white/20", line: "text-zinc-300", steps: "text-zinc-400", go: "text-white" },
+  night: { box: "border border-zinc-800 bg-zinc-900 text-white", chip: "bg-amber-400 text-zinc-950", line: "text-zinc-300", steps: "text-zinc-400", go: "text-amber-300" },
+  paper: {
+    box: "border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+    chip: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
+    line: "text-zinc-600 dark:text-zinc-400",
+    steps: "text-zinc-500 dark:text-zinc-500",
+    go: "text-orange-700 dark:text-orange-400",
+  },
+} as const;
+
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <section id={id} className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 md:py-14">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-2xl font-bold md:text-[2rem]">{title}</h2>
-          {line && <p className="mt-1.5 max-w-2xl text-[16px] text-muted-foreground">{line}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
+    <div className="flex items-center gap-2">
+      <span className="font-display text-base font-bold text-zinc-900 dark:text-white">{value}</span>
+      <span>{label}</span>
+    </div>
   );
 }
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: catalog = [] } = useToolsCatalog();
+  const { openQuickLook } = useQuickLook();
+  const { data: catalog = [], isLoading: catalogLoading } = useToolsCatalog();
   const { costOf } = usePricingMap();
   const countLabel = useAppCountLabel();
   const [search, setSearch] = useState("");
-  const [buyPackId, setBuyPackId] = useState<string | null>(null);
-  // Which door has its steps open. Opening one closes the other.
-  const [door, setDoor] = useState<string | null>(null);
+  const [designs, setDesigns] = useState<DesignSummary | null>(null);
+  const [topKind, setTopKind] = useState<TopKind | "all">("all");
+  const [more, setMore] = useState<"new" | "cheap">("new");
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
   const byId = useMemo(() => new Map(live.map((t) => [t.id, t])), [live]);
+  // First visit only: later visits start from the catalogue cached in this browser.
+  const loadingApps = catalogLoading && live.length === 0;
   const studioCount = useMemo(() => live.filter((t) => STUDIO_IDS.has(t.id)).length, [live]);
   const hasStudios = studioCount > 0;
-  const studioLabel = `${Math.floor(studioCount / 10) * 10}+`;
+  const studioLabel = roundedLabel(studioCount);
 
   const query = search.trim().toLowerCase();
   // Exact name first, then names that start with the search, then Studios, then everything else.
@@ -105,311 +157,415 @@ const Home = () => {
 
   // Apps placed on the home page (src/data/placements.ts). A new app that lists a place shows there by itself.
   const editorsPicks = useMemo(() => placedIn(live, "home-start"), [live]);
-  // Big carousel under the hero: apps that have an original preview, our picks first.
-  const spotlight = useMemo(
-    () => [...editorsPicks, ...live].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6),
-    [live, editorsPicks],
+  // Studios: the team's picks, the favourites, then any studio with an original preview.
+  const studioPicks = useMemo(
+    () =>
+      uniqueTools([
+        editorsPicks.filter((t) => STUDIO_IDS.has(t.id)),
+        POPULAR_STUDIO_IDS.map((id) => byId.get(id)).filter((t): t is CatalogTool => !!t),
+        live.filter((t) => STUDIO_IDS.has(t.id) && APP_PREVIEW_IDS.has(t.id)),
+      ]),
+    [editorsPicks, byId, live],
   );
-  const spotlightSlides = useAppSlides(spotlight);
-  // Studios with a preview, for the squeeze carousel above the studio tabs.
-  const studioPicks = useMemo(() => live.filter((t) => STUDIO_IDS.has(t.id) && APP_PREVIEW_IDS.has(t.id)).slice(0, 7), [live]);
-  const studioSlides = useAppSlides(studioPicks, (t) => `Studio · ${t.category}`);
-  const oneCredit = useMemo(() => live.filter((t) => costOf(t.id) === 1 && !editorsPicks.includes(t)).slice(0, 14), [live, costOf, editorsPicks]);
+  // Quick apps: the team's picks, then apps with an original preview.
+  const appPicks = useMemo(
+    () => uniqueTools([editorsPicks.filter((t) => !STUDIO_IDS.has(t.id)), live.filter((t) => !STUDIO_IDS.has(t.id) && APP_PREVIEW_IDS.has(t.id))]),
+    [editorsPicks, live],
+  );
+
+  const topTen = useMemo(() => buildTopTen(designs, studioPicks, appPicks), [designs, studioPicks, appPicks]);
+  const topShown = topTen.filter((x) => topKind === "all" || x.kind === topKind);
+  const inTop = useMemo(() => new Set(topTen.map((x) => x.key)), [topTen]);
+
   // Pinned new apps first, then the latest additions.
   const newest = useMemo(() => {
     const pinned = placedIn(live, "home-new");
-    const rest = [...live].filter((t) => !pinned.includes(t)).sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return [...pinned, ...rest].slice(0, 12);
-  }, [live]);
+    const rest = live.filter((t) => !pinned.includes(t)).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return [...pinned, ...rest].filter((t) => !inTop.has(t.id)).slice(0, 8);
+  }, [live, inTop]);
+  const cheapest = live.filter((t) => !STUDIO_IDS.has(t.id) && !inTop.has(t.id) && costOf(t.id) === 1).slice(0, 8);
+  const moreTabs = [
+    { id: "new" as const, label: "New in the store", line: "The latest apps we added.", items: newest },
+    { id: "cheap" as const, label: "Cheapest to run", line: "1 credit each time — less than ₹1.", items: cheapest },
+  ].filter((t) => t.items.length > 0);
+  const moreTab = moreTabs.find((t) => t.id === more) ?? moreTabs[0];
 
-  const categories = useMemo(() => {
-    const m = new Map<string, number>();
-    // An app counts once under every category it is listed in (main one plus "also in").
-    live.forEach((t) => categoriesOf(t).forEach((c) => m.set(c, (m.get(c) ?? 0) + 1)));
-    return [...m.entries()].sort(byCategoryOrder);
-  }, [live]);
+  const lowestCost = (tools: CatalogTool[]) => (tools.length ? Math.min(...tools.map((t) => costOf(t.id))) : null);
+  const appCost = lowestCost(live.filter((t) => !STUDIO_IDS.has(t.id)));
 
-  // The moving strip: apps placed there, then the team's picks, then the newest, so it never shows only the oldest apps.
-  const marquee = useMemo(() => {
-    const seen = new Set<string>();
-    return [...placedIn(live, "home-strip"), ...editorsPicks, ...newest, ...live]
-      .filter((t) => !seen.has(t.id) && seen.add(t.id))
-      .slice(0, 36)
-      .map((t) => t.name);
-  }, [live, editorsPicks, newest]);
+  const toolItem = (t: CatalogTool): SpotItem => ({
+    key: t.id,
+    name: t.name,
+    sub: t.description || studioTabOf(t.id)?.tab.label || t.category,
+    media: <ToolMedia tool={t} />,
+    onOpen: () => openQuickLook(t.id),
+  });
+  const designItem = (d: DesignLite): SpotItem => ({ key: d.id, name: d.name, sub: d.tagline || d.categoryName, media: <DesignMedia d={d} />, to: `/make/${d.id}` });
+  const designCost = (n: number | null | undefined) => (n ? `From ${creditsLabel(n)}` : "Pay once");
 
+  const spotTabs: SpotTab[] = [
+    {
+      id: "website",
+      tab: "Website",
+      badge: "Websites · our picks",
+      title: designs ? `${roundedLabel(designs.websiteCount)} website designs` : "Website designs",
+      line: "A website, QR menu or visiting card with one link to share.",
+      cost: designCost(designs?.minWebsiteCredits),
+      items: designs ? twoWithPicture(designs.topWebsites, (d) => !!d.image).map(designItem) : null,
+      to: "/websites",
+      cta: "See all website designs",
+    },
+    {
+      id: "card",
+      tab: "Card",
+      badge: "Cards & invites · our picks",
+      title: designs ? `${roundedLabel(designs.cardCount)} card designs` : "Card designs",
+      line: "Wedding invites, festival wishes and birthday surprises, sent with one link.",
+      cost: designCost(designs?.minCardCredits),
+      items: designs ? twoWithPicture(designs.topCards, (d) => !!d.image).map(designItem) : null,
+      to: "/cards",
+      cta: "See all card designs",
+    },
+    ...(loadingApps || hasStudios
+      ? [
+          {
+            id: "studio",
+            tab: "Studio",
+            badge: "Studios · our picks",
+            title: hasStudios ? `${studioLabel} studios` : "Studios",
+            line: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.",
+            cost: "Pay per result",
+            items: loadingApps ? null : twoWithPicture(studioPicks, (t) => APP_PREVIEW_IDS.has(t.id)).map(toolItem),
+            to: "/studios",
+            cta: "See all studios",
+          },
+        ]
+      : []),
+    {
+      id: "app",
+      tab: "App",
+      badge: "Business apps · our picks",
+      title: `${countLabel} business apps`,
+      line: "Make a bill, write to customers, fix a photo, track staff and stock.",
+      cost: appCost ? `From ${creditsLabel(appCost)}` : "Pay per result",
+      items: loadingApps ? null : twoWithPicture(appPicks, (t) => APP_PREVIEW_IDS.has(t.id)).map(toolItem),
+      to: "/ai-apps",
+      cta: "Browse all apps",
+    },
+  ];
 
-  const onSearch = (e: React.FormEvent) => {
+  const pillars: { to: string; chip: string; title: string; line: string; flow: Flow; go: string; tone: keyof typeof PILLAR_TONES }[] = [
+    { to: "/websites", chip: "Stays online", title: "Make a website", line: "A website, QR menu or visiting card with one link to share.", flow: "website", go: "See website designs", tone: "orange" },
+    { to: "/cards", chip: "Sent once", title: "Send a card or invite", line: "Wedding invites, festival wishes and birthday surprises.", flow: "card", go: "See card designs", tone: "ink" },
+    ...(hasStudios
+      ? [{ to: "/studios", chip: `${studioLabel} studios`, title: "Get a big job done", line: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", flow: "app" as Flow, go: "See studios", tone: "night" as const }]
+      : []),
+    { to: "/ai-apps", chip: `${countLabel} apps`, title: "Use a business app", line: "Make a bill, write to customers, fix a photo, track staff and stock.", flow: "app", go: "Browse apps", tone: "paper" },
+  ];
+
+  const onSearch = (e: FormEvent) => {
     e.preventDefault();
     if (query) navigate(`/ai-apps?q=${encodeURIComponent(search.trim())}`);
   };
 
+  const topGrid = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-background">
-        <SEOHead
-          {...seoFor("/", countLabel)}
-          keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, business website maker, gst invoice app"
-        />
-        <Navbar />
+    <ModernPage section="home">
+      <SEOHead
+        {...seoFor("/", countLabel)}
+        keywords="ezyourlife, ai apps, ai app store, pay as you go ai, ai tools india, business website maker, gst invoice app"
+      />
+      <Suspense fallback={null}>
+        <DesignFeed onChange={setDesigns} />
+      </Suspense>
 
-
-        {/* ───────── Moving strip of app names ───────── */}
-        {marquee.length > 0 && (
-          <div aria-hidden className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-cream">
-            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-display text-lg font-bold motion-reduce:animate-none">
-              {[...marquee, ...marquee].map((n, i) => (
-                <span key={i} className={i % 3 === 0 ? "text-sun" : i % 3 === 1 ? "text-pink" : "text-cream"}>
-                  {n} ✦
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
+      <main>
         {/* ───────── Hero ───────── */}
-        <section className="mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:pt-14 lg:grid-cols-12 lg:gap-12">
-          <div className="min-w-0 lg:col-span-7">
-            <span className="inline-flex items-center rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] font-bold">For small businesses in India</span>
-            <h1 className="mt-5 text-[2.1rem] font-extrabold leading-[1.06] sm:text-5xl xl:text-[4.1rem]">
-              <ShiningText>Run your</ShiningText> <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">whole business</span> from{" "}
-              <span className="marker">one place</span>
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              {countLabel} ready apps for bills, customers, staff and photos, plus websites and cards you make in minutes.
-              {studioCount >= 10 && ` Plus ${studioLabel} studios that finish big jobs for you: a business plan, catalogue photos, a resume, a family book.`} Pay only when an app
-              gives you a result. Start with 100 free credits.
-            </p>
+        <section id="hero" className="relative overflow-hidden pb-14 pt-10 sm:pb-20 sm:pt-14">
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-[360px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-orange-500/20 via-amber-400/15 to-emerald-400/15 blur-3xl" />
+          <div className={cn(CONTAINER, "relative")}>
+            <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
+              <div className="min-w-0 space-y-6 lg:col-span-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold shadow-soft-sm dark:border-zinc-800 dark:bg-zinc-900">
+                  <span className="rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white">India</span>
+                  <span className="text-zinc-600 dark:text-zinc-300">For small businesses · Pay only for results</span>
+                </div>
 
-            {/* The Merlin bar: one pill to say what you need. */}
-            <form onSubmit={onSearch} className="mt-7 flex max-w-2xl items-center gap-2.5 rounded-full border-2 border-ink bg-card py-1.5 pl-2.5 pr-1.5 shadow-block focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2" role="search">
-              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun">
-                <Sparkles className="h-[18px] w-[18px]" />
-              </span>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="What do you need? GST bill, passport photo…"
-                aria-label="Search apps"
-                className="h-11 min-w-0 flex-1 border-0 bg-transparent px-1 text-[17px] font-medium shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-              {search && (
-                <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand hover:bg-sun">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              <Button type="submit" className="h-11 shrink-0 rounded-full px-5 text-base shadow-none">
-                Find
-              </Button>
-            </form>
+                <h1 className="font-display text-4xl font-bold leading-[1.06] tracking-tight sm:text-5xl lg:text-[54px]">
+                  Run your whole business{" "}
+                  <span className="bg-gradient-to-r from-orange-600 via-amber-500 to-rose-500 bg-clip-text text-transparent">from one place.</span>
+                </h1>
 
-            <div className="no-scrollbar mt-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
-              <span className="shrink-0 text-sm font-semibold text-muted-foreground">People search:</span>
-              {POPULAR_SEARCHES.map((q) => (
-                <Link
-                  key={q}
-                  to={`/ai-apps?q=${encodeURIComponent(q)}`}
-                  className="shrink-0 rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold transition-colors hover:bg-sun"
-                >
-                  {q}
-                </Link>
-              ))}
+                <p className="max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-zinc-400">
+                  {countLabel} ready apps for <strong className="text-zinc-900 dark:text-zinc-100">bills, customers, staff and photos</strong>, plus{" "}
+                  <strong className="text-zinc-900 dark:text-zinc-100">websites and cards</strong> you make in minutes.
+                  {studioCount >= 10 && (
+                    <>
+                      {" "}
+                      Plus {studioLabel} <strong className="text-zinc-900 dark:text-zinc-100">studios</strong> that finish big jobs for you.
+                    </>
+                  )}{" "}
+                  Pay only when an app gives you a result. Start with 100 free credits.
+                </p>
+
+                <form onSubmit={onSearch} role="search" className="max-w-xl">
+                  <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-soft-lg shadow-zinc-950/5 transition focus-within:ring-2 focus-within:ring-orange-500 dark:border-zinc-800 dark:bg-zinc-900">
+                    <Search className="ml-3 h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="What do you need? GST bill, passport photo…"
+                      aria-label="Search apps"
+                      className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-base placeholder:text-zinc-400 focus:outline-none sm:text-sm"
+                    />
+                    {search && (
+                      <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className={cn("shrink-0 rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800", FOCUS_RING)}>
+                        <X className="h-4 w-4" aria-hidden />
+                      </button>
+                    )}
+                    <button type="submit" className={cn("shrink-0 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-700", FOCUS_RING)}>
+                      Find
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">People search:</span>
+                    {POPULAR_SEARCHES.map((q) => (
+                      <Link
+                        key={q}
+                        to={`/ai-apps?q=${encodeURIComponent(q)}`}
+                        className={cn(
+                          "rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium transition hover:bg-orange-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-orange-950/60",
+                          FOCUS_RING,
+                        )}
+                      >
+                        {q}
+                      </Link>
+                    ))}
+                  </div>
+                </form>
+
+                <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <Stat value={countLabel} label="Business apps" />
+                  {hasStudios && (
+                    <>
+                      <span className="hidden h-4 w-px bg-zinc-300 sm:block dark:bg-zinc-800" aria-hidden />
+                      <Stat value={studioLabel} label="Studios" />
+                    </>
+                  )}
+                  <span className="hidden h-4 w-px bg-zinc-300 sm:block dark:bg-zinc-800" aria-hidden />
+                  <Stat value={designs ? roundedLabel(designs.total) : "…"} label="Website & card designs" />
+                </div>
+              </div>
+
+              <div className="min-w-0 lg:col-span-6">
+                <HeroSpotlight tabs={spotTabs} />
+              </div>
             </div>
-
-            <ul className="no-scrollbar mt-7 flex gap-2.5 overflow-x-auto pb-1 text-sm">
-              {[
-                { t: "100 free credits", s: "No card needed" },
-                { t: "Pay per result", s: "Packs from ₹10, UPI or card" },
-                { t: "Failed runs are free", s: "Credits only when it works" },
-              ].map(({ t, s }) => (
-                <li key={t} className="min-w-[170px] flex-1 rounded-xl border-2 border-ink bg-card px-3 py-2.5">
-                  <span className="block font-bold">{t}</span>
-                  <span className="block text-[13px] text-muted-foreground">{s}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="hidden min-w-0 md:block lg:col-span-5">
-            <HeroPicker catalog={catalog} />
           </div>
         </section>
 
-        {spotlightSlides.length >= 3 && (
-          <div className="mx-auto max-w-7xl px-4 pt-6">
-            <FeatureCarousel slides={spotlightSlides} label="Apps to start with" line="Picked by our team" />
+        {/* ───────── Top 10 (or search results) ───────── */}
+        <section
+          id="top-10"
+          aria-live={query ? "polite" : undefined}
+          className="scroll-mt-20 border-t border-zinc-200/80 bg-[#F2F0EA]/70 py-14 dark:border-zinc-800/80 dark:bg-[#14171D]/70"
+        >
+          <div className={CONTAINER}>
+            {query ? (
+              <>
+                <SectionHead
+                  eyebrow="Search"
+                  title={
+                    <>
+                      Results for “{search.trim()}” <span className="text-base font-normal text-zinc-500 dark:text-zinc-400">({results.length})</span>
+                    </>
+                  }
+                  action={
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setSearch("")} className={BTN_OUTLINE}>
+                        Clear search
+                      </button>
+                      <Link to={`/ai-apps?q=${encodeURIComponent(search.trim())}`} className={BTN_INK}>
+                        Search websites and cards too
+                      </Link>
+                    </div>
+                  }
+                />
+                {results.length ? (
+                  <div className={topGrid}>
+                    {results.map((t) => (
+                      <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="No apps match that search." action="Clear search" onAction={() => setSearch("")} />
+                )}
+              </>
+            ) : (
+              <>
+                <SectionHead
+                  eyebrow="Picked by our team"
+                  title="Top 10 to start with"
+                  line="Websites, cards and invites, studios and quick business apps: the ones we would open first."
+                  action={
+                    <div role="group" aria-label="Show in the top 10" className="flex flex-wrap gap-2">
+                      {TOP_FILTERS.map((f) => (
+                        <button key={f.id} type="button" aria-pressed={topKind === f.id} onClick={() => setTopKind(f.id)} className={pillClass(topKind === f.id)}>
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  }
+                />
+                {loadingApps ? (
+                  <div className={topGrid}>
+                    {TOP_PATTERN.map((k, i) => (
+                      <CardSkeleton key={`${k}-${i}`} />
+                    ))}
+                  </div>
+                ) : topShown.length ? (
+                  <div className={topGrid}>
+                    {topShown.map((x) =>
+                      x.pending ? (
+                        <CardSkeleton key={x.key} />
+                      ) : x.design ? (
+                        <DesignCard key={x.key} d={x.design} rank={x.rank} chip={KIND_CHIP[x.kind]} size="md" />
+                      ) : x.tool ? (
+                        <ToolCard key={x.key} tool={x.tool} rank={x.rank} chip={KIND_CHIP[x.kind]} />
+                      ) : null,
+                    )}
+                  </div>
+                ) : (
+                  <EmptyState message="Nothing of this kind in the top 10 right now." action="Show all 10" onAction={() => setTopKind("all")} />
+                )}
+              </>
+            )}
           </div>
-        )}
+        </section>
 
-        {query ? (
-          <section className="mx-auto max-w-7xl px-4 py-10" aria-live="polite">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl font-bold">
-                Results for “{search.trim()}” <span className="text-sm font-normal text-muted-foreground">({results.length})</span>
-              </h2>
-              <Button variant="outline" size="sm" onClick={() => setSearch("")}>
-                Clear search
-              </Button>
+        {/* ───────── Four ways in ───────── */}
+        <section id="pillars" className="py-14">
+          <div className={CONTAINER}>
+            <div className="mb-8">
+              <span className={cn(EYEBROW, "text-amber-700 dark:text-amber-400")}>Everything in one place</span>
+              <h2 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">What do you want to do today?</h2>
             </div>
-            {results.length ? (
-              <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-                {results.map((t) => (
-                  <AppRow key={t.id} tool={t} />
+            <div className={cn("grid gap-4 md:grid-cols-2", pillars.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+              {pillars.map((p) => {
+                const tone = PILLAR_TONES[p.tone];
+                return (
+                  <Link key={p.to} to={p.to} className={cn("ez-lift flex min-h-[210px] flex-col justify-between rounded-3xl p-6", tone.box, FOCUS_RING)}>
+                    <div>
+                      <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold", tone.chip)}>{p.chip}</span>
+                      <h3 className="mt-4 font-display text-xl font-bold">{p.title}</h3>
+                      <p className={cn("mt-1.5 text-xs leading-relaxed", tone.line)}>{p.line}</p>
+                      <p className={cn("mt-3 text-[11px] font-medium", tone.steps)}>{FLOW_STEPS[p.flow].join(" → ")}</p>
+                    </div>
+                    <span className={cn("mt-4 inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4", tone.go)}>
+                      {p.go} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── New and cheapest ───────── */}
+        {moreTab && (
+          <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800/80">
+            <div className={CONTAINER}>
+              <SectionHead
+                eyebrow="Keep exploring"
+                title={moreTab.label}
+                line={moreTab.line}
+                action={
+                  moreTabs.length > 1 && (
+                    <div role="group" aria-label="Show" className="flex flex-wrap gap-2">
+                      {moreTabs.map((t) => (
+                        <button key={t.id} type="button" aria-pressed={moreTab.id === t.id} onClick={() => setMore(t.id)} className={pillClass(moreTab.id === t.id)}>
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                }
+              />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {moreTab.items.map((t) => (
+                  <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} />
                 ))}
               </div>
-            ) : (
-              <ToolsEmptyState onClearFilters={() => setSearch("")} hasActiveFilters />
-            )}
+              <Link to="/ai-apps" className={cn(BTN_OUTLINE, "mt-6")}>
+                See all {countLabel} apps <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
           </section>
-        ) : (
-          <>
-            {/* ───────── Three doors ───────── */}
-            <Section title="What do you want to do today?" line={hasStudios ? "Four things you can do here. Pick one." : "Three things you can do here. Pick one."}>
-              <Shelf>
-                {[
-                  { to: "/ai-apps", c: "bg-pink", Icon: LayoutGrid, tag: `${countLabel} apps`, h: "Use a business app", d: "Make a bill, write to customers, fix a photo, track staff and stock.", go: "Browse apps" },
-                  ...(hasStudios
-                    ? [{ to: "/studios", c: "bg-ink text-cream !shadow-[5px_5px_0_0_hsl(var(--sun))]", Icon: Sparkles, tag: `${studioLabel} studios`, h: "Get a big job done", d: "A business plan, catalogue photos, a resume or a family book, finished for you step by step.", go: "See studios" }]
-                    : []),
-                  { to: "/websites", c: "bg-teal", Icon: Globe, tag: "Stays online", h: "Make a website", d: "A website, QR menu or visiting card with one link to share.", go: "See website designs" },
-                  { to: "/cards", c: "bg-sun", Icon: Mail, tag: "Sent once", h: "Send a card or invite", d: "Wedding invites, festival wishes and birthday surprises.", go: "See card designs" },
-                ].map((d) => {
-                  const dark = d.c.includes("bg-ink");
-                  const steps = d.to === "/websites" ? ["Pick a design", "Add your details", "Pay once", "Go live"] : d.to === "/cards" ? ["Pick a design", "Add your details", "Pay once", "Send it"] : ["See what it does", "Use it", "Get your result", "Save or share"];
-                  return (
-                    <div key={d.to} className={cn("block-card flex w-[78%] shrink-0 snap-start flex-col self-start sm:w-[46%] lg:w-[31%]", hasStudios ? "xl:w-[23.5%]" : "xl:w-[31%]", d.c)}>
-                      <DoorLink to={d.to} className="flex min-h-[230px] flex-1 flex-col gap-3 rounded-t-[14px] p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <div className="flex items-center justify-between">
-                          <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl border-2 border-ink bg-card", dark && "bg-sun text-ink")}>
-                            <d.Icon className="h-5 w-5" aria-hidden />
-                          </span>
-                          <span className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs font-bold", dark ? "bg-sun text-ink" : "bg-card")}>{d.tag}</span>
-                        </div>
-                        <h3 className="text-[22px] font-extrabold leading-tight">{d.h}</h3>
-                        <p className={cn("text-[16px]", dark ? "text-cream/85" : "text-ink/85")}>{d.d}</p>
-                        <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-2 font-bold", dark && "text-sun")}>
-                          {d.go} <ArrowRight className="h-4 w-4" />
-                        </span>
-                      </DoorLink>
-                      <Fold open={door === d.to} onToggle={() => setDoor(door === d.to ? null : d.to)} title="The 4 steps" dark={dark}>
-                        <ol className="list-decimal space-y-0.5 pb-4 pl-11 pr-6 text-[15px] font-semibold">
-                          {steps.map((x) => <li key={x}>{x}</li>)}
-                        </ol>
-                      </Fold>
-                    </div>
-                  );
-                })}
-              </Shelf>
-            </Section>
-
-            {/* ───────── Websites and cards ───────── */}
-            <Suspense fallback={<div className="mx-auto h-96 max-w-7xl px-4" aria-hidden />}>
-              <HomeMakeShelves />
-            </Suspense>
-
-            {/* ───────── Shelves ───────── */}
-            <div className="mx-auto max-w-7xl space-y-12 px-4 py-10">
-              {editorsPicks.length > 0 && (
-                <Shelf title="Most useful to start" subtitle="Picked by our team" seeAllTo="/ai-apps">
-                  {editorsPicks.map((t) => (
-                    <AppTile key={t.id} tool={t} />
-                  ))}
-                </Shelf>
-              )}
-              {oneCredit.length > 0 && (
-                <Shelf title="Cheapest to run" subtitle="1 credit each time — less than ₹1" seeAllTo="/ai-apps">
-                  {oneCredit.map((t) => (
-                    <AppTile key={t.id} tool={t} />
-                  ))}
-                </Shelf>
-              )}
-              {newest.length > 0 && (
-                <Shelf title="New in the store" subtitle="The latest apps we added">
-                  {newest.map((t) => (
-                    <AppTile key={t.id} tool={t} />
-                  ))}
-                </Shelf>
-              )}
-            </div>
-
-            {/* ───────── Studios ───────── */}
-            {hasStudios && (
-              <Section
-                id="studios"
-                title="Studios"
-                line="Bigger jobs, done start to finish. Answer a few questions and get a full plan, report or set of pictures."
-                action={
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/studios">See all studios</Link>
-                  </Button>
-                }
-              >
-                {studioSlides.length >= 3 && (
-                  <div className="mb-10">
-                    <SqueezeCarousel slides={studioSlides} label="Studios" />
-                  </div>
-                )}
-                <StudiosShelf apps={live} />
-              </Section>
-            )}
-
-            {/* ───────── Every app, website and card ───────── */}
-            <Section
-              id="all-apps"
-              title="Everything in the store"
-              line="Every app, website and card, sorted by what you need. Tap a category to see all of it."
-              action={
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/ai-apps">Open the full app page</Link>
-                </Button>
-              }
-            >
-              <Suspense fallback={<div className="min-h-[60vh]" />}>
-                <AppDirectory apps={live} />
-              </Suspense>
-            </Section>
-
-            {/* ───────── App bundles ───────── */}
-            <Section title="App bundles" line="A few apps that work well together, for one job.">
-              <TodaySection catalog={catalog} editorsPicks={editorsPicks} personaId={null} />
-            </Section>
-
-            {/* ───────── Earn with us ───────── */}
-            <Section id="earn" title="Earn with Ezyourlife" line="Two ways to earn from what you already have: your followers, or an app you built.">
-              <EarnBand />
-            </Section>
-
-            {/* ───────── Credits ───────── */}
-            <Section id="credits" title="What does ₹10 get you?" line="One wallet for every app. Credits never tie you to a plan, and failed runs are free.">
-              <CreditValue catalog={catalog} onBuy={setBuyPackId} />
-            </Section>
-
-            <div id="request-tool" className="scroll-mt-24">
-              <RequestToolSection />
-            </div>
-
-            {!user && (
-              <section className="mx-auto max-w-7xl px-4 pb-16">
-                <div className="rounded-3xl border-2 border-ink bg-ink p-8 text-center text-cream shadow-block-lg md:p-12">
-                  <h2 className="text-2xl font-extrabold md:text-4xl">
-                    Your first <span className="text-sun">100 credits</span> are on us
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-lg text-cream/85">50 when you sign up and 50 more after your first run. No card needed.</p>
-                  <Button asChild size="lg" className="mt-6 h-12 px-8 text-base">
-                    <Link to="/auth?mode=signup">
-                      <Gift className="h-4 w-4" /> Claim free credits
-                    </Link>
-                  </Button>
-                </div>
-              </section>
-            )}
-          </>
         )}
 
-        <SEOFooter />
-        <BuyCreditsDialog open={!!buyPackId} onOpenChange={(v) => !v && setBuyPackId(null)} defaultPackId={buyPackId ?? undefined} autoStart />
-      </div>
-    </MotionConfig>
+        {/* ───────── Earn ───────── */}
+        <section id="earn" className="scroll-mt-24 border-t border-zinc-200/80 py-14 dark:border-zinc-800/80">
+          <div className={CONTAINER}>
+            <SectionHead eyebrow="Earn with us" title="Earn with Ezyourlife" line="Two ways to earn from what you already have: your followers, or an app you built." />
+            <div className="grid gap-4 md:grid-cols-2">
+              {EARN_LINKS.map((l, i) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={cn(
+                    "ez-lift flex flex-col justify-between gap-6 rounded-3xl p-6",
+                    i === 0 ? "border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" : "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white",
+                    FOCUS_RING,
+                  )}
+                >
+                  <div>
+                    <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl", i === 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" : "bg-white/15")}>
+                      <l.Icon className="h-5 w-5" aria-hidden />
+                    </span>
+                    <h3 className="mt-4 font-display text-xl font-bold">{l.label}</h3>
+                    <p className={cn("mt-1.5 text-sm", i === 0 ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-300")}>{l.line}</p>
+                  </div>
+                  <span className={cn("inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4", i === 0 ? "text-orange-700 dark:text-orange-400" : "text-amber-300")}>
+                    {i === 0 ? "Join free" : "List your app"} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ───────── Credits ───────── */}
+        <section id="credits" className="scroll-mt-24 border-t border-zinc-200/80 py-12 dark:border-zinc-800/80">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            {user ? (
+              <CtaBand chip="Pay per result" title="One wallet for every app." line="Credits never tie you to a plan, and failed runs are free.">
+                <Link to="/credits" className={BTN_PRIMARY}>
+                  Buy credits
+                </Link>
+              </CtaBand>
+            ) : (
+              <CtaBand
+                chip="No card needed"
+                title="Your first 100 credits are on us."
+                line="50 when you sign up and 50 more after your first run. Pay only when an app gives you a result; failed runs are free."
+              >
+                <Link to="/auth?mode=signup" className={BTN_PRIMARY}>
+                  Claim free credits
+                </Link>
+                <Link to="/credits" className={cn("inline-flex items-center rounded-xl border border-white/25 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10", FOCUS_RING)}>
+                  See prices
+                </Link>
+              </CtaBand>
+            )}
+          </div>
+        </section>
+
+        <div id="request-tool" className="scroll-mt-24">
+          <RequestToolSection />
+        </div>
+      </main>
+    </ModernPage>
   );
 };
 

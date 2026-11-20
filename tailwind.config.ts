@@ -13,10 +13,12 @@ export default {
       },
     },
     extend: {
+      // Read from CSS variables so a page can switch its type: :root sets Unbounded + Hind, and the
+      // modern look (.ez-modern in index.css) sets Space Grotesk + Inter.
       fontFamily: {
-        display: ['Unbounded', 'Hind', 'system-ui', 'sans-serif'],
-        body: ['Hind', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        sans: ['Hind', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        display: ["var(--font-display)"],
+        body: ["var(--font-body)"],
+        sans: ["var(--font-body)"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -88,6 +90,13 @@ export default {
         "block-sm": "var(--shadow-block-sm)",
         block: "var(--shadow-block)",
         "block-lg": "var(--shadow-block-lg)",
+        // Soft shadows for the modern look (Tailwind's own defaults, since the names above are taken).
+        "soft-sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        soft: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "soft-md": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "soft-lg": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "soft-xl": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "soft-2xl": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -115,6 +124,10 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -122,6 +135,7 @@ export default {
         shimmer: "shimmer 3s ease-in-out infinite",
         marquee: "marquee 70s linear infinite",
         "ep-bob": "ep-bob 3.4s ease-in-out infinite",
+        "float-slow": "float-slow 4.5s ease-in-out infinite",
       },
     },
   },

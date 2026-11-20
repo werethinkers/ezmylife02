@@ -1,36 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion, MotionConfig } from "framer-motion";
-import { Link } from "react-router-dom";
-import { ArrowRight, ListChecks, MessageSquareText, FileCheck2 } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
-import SEOFooter from "@/components/SEOFooter";
+import { useEffect, useMemo } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { ArrowRight, FileCheck2, HardHat, ListChecks, MessageSquareText, Package, ScanEye } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
-import { Button } from "@/components/ui/button";
-import { AppTile } from "@/components/store/AppTile";
-import { Shelf } from "@/components/store/Shelf";
-import { HeroCarousel } from "@/components/store/HeroCarousel";
-import { useAppSlides } from "@/components/store/useAppSlides";
-import { APP_PREVIEW_IDS } from "@/data/previewManifest";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useAppCountLabel } from "@/lib/appCount";
 import { seoFor } from "@/lib/seo/pages";
-import { STUDIO_TABS, studioTabOf } from "@/data/studios";
-import { SitesCta } from "@/components/sites/SitesCta";
-import { SiteTile } from "@/components/sites/SiteTile";
-import "./sitewatch/sitewatch.css";
+import { STUDIO_TABS } from "@/data/studios";
+import { POPULAR_STUDIO_IDS } from "@/data/studioPicks";
 import { cn } from "@/lib/utils";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { ToolCard } from "@/components/modern/ToolCard";
+import { ShowcaseCard } from "@/components/modern/ShowcaseCard";
+import { SitesContact } from "@/components/modern/SitesContact";
+import { CtaBand, EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
+import { BTN_OUTLINE, BTN_PRIMARY, CONTAINER, FOCUS_RING, pillClass, roundedLabel } from "@/components/modern/styles";
 
-const TAB_COLOURS = ["bg-pink", "bg-sun", "bg-teal", "bg-lime", "bg-sky", "bg-coral"];
-const POPULAR = ["business-plan-studio", "resume-studio", "catalogue-photo-studio", "ai-headshot-studio", "income-tax-regime-planner", "home-interior-designer", "maa-ki-virasat"];
-
-/** Fades and lifts its children in once, as they scroll into view. */
-function Reveal({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <motion.div className={className} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5, ease: "easeOut" }}>
-      {children}
-    </motion.div>
-  );
-}
+/** Studios per group before "See all" when every group is shown. */
+const PER_GROUP = 6;
+const GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3";
 
 const STEPS = [
   { Icon: MessageSquareText, h: "Answer a few questions", d: "Plain questions about your business or your job. Speak or type." },
@@ -38,49 +25,78 @@ const STEPS = [
   { Icon: FileCheck2, h: "Take the finished result", d: "A full plan, report, set of pictures or document, ready to use or share." },
 ];
 
-/** The Sites category: apps for roads, solar plants and construction. Not in the catalogue yet, so it is listed here, styled like the other groups. */
-function SitesGroup({ index }: { index: number }) {
-  const colour = TAB_COLOURS[index % TAB_COLOURS.length];
+/** The Sites group: apps for roads, solar plants and construction. Not in the catalogue yet, so it is listed here. */
+const SITES = [
+  { name: "Site Watch", get: "Problems spotted, tasks sent and proof of work", to: "/studios/site-watch", Icon: ScanEye, gradient: "from-emerald-500 to-green-600" },
+  { name: "Site Attendance", get: "Who was on site, when, with proof", Icon: HardHat, gradient: "from-blue-500 to-indigo-600" },
+  { name: "Material Tracker", get: "Stock counts from photos", Icon: Package, gradient: "from-amber-500 to-orange-600" },
+];
+
+function SiteMedia({ Icon, get, gradient }: { Icon: typeof ScanEye; get: string; gradient: string }) {
   return (
-    <>
-      <section id="sites" className="scroll-mt-28 py-8 md:py-12">
-        <Reveal>
-          <div className={cn("mb-7 flex flex-wrap items-center justify-between gap-3 rounded-3xl border-2 border-ink p-5 shadow-block md:p-6", colour)}>
-            <div className="min-w-0">
-              <h2 className="text-2xl font-extrabold md:text-3xl">Sites</h2>
-              <p className="mt-1 text-[16px] text-ink/85">Roads, solar plants and construction sites, watched and followed up.</p>
-            </div>
-            <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">1 studio, 2 coming soon</span>
-          </div>
-        </Reveal>
-        <Shelf>
-          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Site Watch" get="problems spotted, tasks sent and proof of work" to="/studios/site-watch" colour="bg-sky" accent="bg-sun" icon="sites" /></div>
-          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Site Attendance" get="who was on site, when, with proof" colour="bg-lime" accent="bg-pink" icon="build" soon /></div>
-          <div className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"><SiteTile name="Material Tracker" get="stock counts from photos" colour="bg-coral" accent="bg-sun" icon="roads" soon /></div>
-        </Shelf>
-      </section>
-      <SitesCta />
-    </>
+    <div className={cn("flex h-full w-full flex-col bg-gradient-to-br p-4 pt-12 text-white", gradient)}>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+        <Icon className="h-5 w-5" aria-hidden />
+      </span>
+      <p className="mt-3 max-w-[16rem] text-sm font-semibold leading-snug text-white/90">You get: {get.toLowerCase()}</p>
+    </div>
   );
 }
 
-function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index: number; tools: CatalogTool[] }) {
+function SitesSection() {
   return (
-    <section id={tab.id} className="scroll-mt-28 py-8 md:py-12">
-      <Reveal>
-      <div className={cn("mb-7 flex flex-wrap items-center justify-between gap-3 rounded-3xl border-2 border-ink p-5 shadow-block md:p-6", TAB_COLOURS[index % TAB_COLOURS.length])}>
-        <div className="min-w-0">
-          <h2 className="text-2xl font-extrabold md:text-3xl">{tab.label}</h2>
-          <p className="mt-1 text-[16px] text-ink/85">{tab.line}</p>
-        </div>
-        <span className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-bold">{tools.length} studios</span>
-      </div>
-      </Reveal>
-      <Shelf>
-        {tools.map((t) => (
-          <AppTile key={t.id} tool={t} />
+    <section id="sites" aria-labelledby="sites-h" className="scroll-mt-28 space-y-6">
+      <SectionHead
+        id="sites-h"
+        className="mb-0"
+        eyebrow="New"
+        title="Sites"
+        line="Roads, solar plants and construction sites, watched and followed up."
+        action={<span className="shrink-0 text-xs font-semibold text-zinc-500 dark:text-zinc-400">1 studio, 2 coming soon</span>}
+      />
+      <div className={GRID}>
+        {SITES.map((s) => (
+          <ShowcaseCard
+            key={s.name}
+            media={<SiteMedia Icon={s.Icon} get={s.get} gradient={s.gradient} />}
+            title={s.name}
+            chip={s.to ? "Live" : "Coming soon"}
+            action={s.to ? "Open" : "Soon"}
+            to={s.to}
+            label={s.to ? `${s.name}: open the studio` : `${s.name}, coming soon`}
+            size="lg"
+          />
         ))}
-      </Shelf>
+      </div>
+      <SitesContact />
+    </section>
+  );
+}
+
+function GroupSection({ id, label, line, tools, capped, onSeeAll }: { id: string; label: string; line: string; tools: CatalogTool[]; capped: boolean; onSeeAll: () => void }) {
+  const list = capped ? tools.slice(0, PER_GROUP) : tools;
+  return (
+    <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-28">
+      <SectionHead
+        id={`${id}-h`}
+        className="mb-5"
+        title={label}
+        line={line}
+        action={
+          capped && tools.length > PER_GROUP ? (
+            <button type="button" onClick={onSeeAll} className={cn("inline-flex shrink-0 items-center gap-1 rounded text-xs font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING)}>
+              See all {tools.length} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          ) : (
+            <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{tools.length} studios</span>
+          )
+        }
+      />
+      <div className={GRID}>
+        {list.map((t) => (
+          <ToolCard key={t.id} tool={t} chip="" size="lg" />
+        ))}
+      </div>
     </section>
   );
 }
@@ -88,158 +104,134 @@ function Group({ tab, index, tools }: { tab: (typeof STUDIO_TABS)[number]; index
 const Studios = () => {
   const countLabel = useAppCountLabel();
   const { data: catalog = [] } = useToolsCatalog();
+  const [params, setParams] = useSearchParams();
+  const { hash } = useLocation();
   const byId = useMemo(() => new Map(catalog.filter((t) => t.is_live).map((t) => [t.id, t])), [catalog]);
   const groups = useMemo(
-    () => STUDIO_TABS.map((t, i) => ({ tab: t, index: i, tools: t.ids.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[] })).filter((g) => g.tools.length > 0),
+    () => STUDIO_TABS.map((t) => ({ tab: t, tools: t.ids.map((id) => byId.get(id)).filter((x): x is CatalogTool => !!x) })).filter((g) => g.tools.length > 0),
     [byId],
   );
-  const popular = useMemo(() => POPULAR.map((id) => byId.get(id)).filter(Boolean) as CatalogTool[], [byId]);
-  const [active, setActive] = useState<string | null>(null);
-  useEffect(() => {
-    const els = [...groups.map((g) => g.tab.id), "sites"].map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-    if (!els.length || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hit = entries.find((e) => e.isIntersecting);
-        if (hit) setActive(hit.target.id);
-      },
-      { rootMargin: "-30% 0px -60% 0px" },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [groups]);
-  const spotlightSlides = useAppSlides(
-    useMemo(() => [...popular, ...groups.flatMap((g) => g.tools)].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6), [popular, groups]),
-    (t) => studioTabOf(t.id)?.tab.label ?? "Studio",
-  );
+  const popular = useMemo(() => POPULAR_STUDIO_IDS.map((id) => byId.get(id)).filter((x): x is CatalogTool => !!x), [byId]);
   const total = groups.reduce((n, g) => n + g.tools.length, 0);
-  const label = total >= 10 ? `${Math.floor(total / 10) * 10}+` : String(total);
+  const label = roundedLabel(total);
+
+  // ?tab=<group id> or ?tab=sites shows one group; no tab shows everything.
+  const tabParam = params.get("tab");
+  const tab = tabParam === "sites" || groups.some((g) => g.tab.id === tabParam) ? tabParam : null;
+  const pick = (id: string | null) =>
+    setParams(
+      (p) => {
+        const n = new URLSearchParams(p);
+        if (id) n.set("tab", id);
+        else n.delete("tab");
+        return n;
+      },
+      { replace: true },
+    );
+
+  // Links such as /studios#sites land on that group once it is on the page.
+  useEffect(() => {
+    const id = hash.slice(1);
+    if (!id) return;
+    const frame = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [hash, groups.length]);
+
+  const shownGroups = tab ? groups.filter((g) => g.tab.id === tab) : groups;
 
   return (
-    <MotionConfig reducedMotion="user">
-    <div className="min-h-screen bg-background">
+    <ModernPage section="studios">
       <PageSeo
         {...seoFor("/studios", countLabel)}
         keywords="business plan maker, ai resume builder, catalogue photos, pitch deck maker, ezyourlife studios"
         jsonLd={{ "@context": "https://schema.org", "@type": "CollectionPage", name: "Studios", url: "https://ezyourlife.com/studios" }}
       />
-      <Navbar />
 
-      <main>
-        <header className="mx-auto max-w-7xl px-4 pt-8 md:pt-12">
-          <div className="relative grid gap-8 overflow-hidden rounded-[2rem] border-2 border-ink bg-pink p-6 shadow-block-lg md:grid-cols-[1.3fr_1fr] md:p-12">
-            <motion.span aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-ink bg-sun" animate={{ y: [0, 10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
-            <motion.span aria-hidden className="pointer-events-none absolute -bottom-12 left-1/3 h-32 w-32 rotate-12 rounded-3xl border-2 border-ink bg-lime" animate={{ y: [0, -10, 0], rotate: [12, 6, 12] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
-            <motion.div className="relative" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: "easeOut" }}>
-              <span className="inline-flex rounded-full border-2 border-ink bg-sun px-3 py-1 text-[13px] font-bold">
-                {total > 0 ? `${label} studios` : "Studios"}
-              </span>
-              <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] md:text-6xl">
-                Big jobs, <span className="inline-block -rotate-1 rounded-xl border-2 border-ink bg-sun px-2 shadow-block">finished</span> for you.
-              </h1>
-              <p className="mt-4 max-w-xl text-lg text-ink/85 md:text-xl">
-                A business plan, catalogue photos, a resume, a tax plan, a family book, and now your sites. Answer a few questions and a studio does the whole job, step by step.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <a href={groups[0] ? `#${groups[0].tab.id}` : "#all"}>
-                    Pick a studio <ArrowRight className="h-4 w-4" />
-                  </a>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="bg-card">
-                  <Link to="/credits">See prices</Link>
-                </Button>
-              </div>
-              <p className="mt-4 text-sm font-semibold text-ink/80">100 free credits to start. Pay only when you get a result.</p>
-            </motion.div>
-            <ol className="relative flex flex-col gap-3 self-center">
-              {STEPS.map(({ Icon, h, d }, i) => (
-                <motion.li key={h} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: "easeOut" }} className="flex gap-3 rounded-2xl border-2 border-ink bg-card p-4 shadow-block-sm">
-                  <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink", ["bg-sun", "bg-teal", "bg-lime"][i])}>
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  <div>
-                    <p className="font-bold">{h}</p>
-                    <p className="text-[14px] text-muted-foreground">{d}</p>
-                  </div>
-                </motion.li>
-              ))}
-            </ol>
-          </div>
-        </header>
-
-        {spotlightSlides.length >= 3 && (
-          <div className="mx-auto max-w-7xl overflow-hidden px-4 pt-8">
-            <HeroCarousel slides={spotlightSlides} label="Studios to start with" />
-          </div>
-        )}
-
-        <nav aria-label="Studio groups" className="sticky top-0 z-30 mt-6 border-y-2 border-ink bg-cream/95 backdrop-blur">
-          <div className="mx-auto flex max-w-7xl gap-2.5 overflow-x-auto px-4 py-3 no-scrollbar">
-            {groups.map((g) => (
-              <a
-                key={g.tab.id}
-                href={`#${g.tab.id}`}
-                className={cn(
-                  "shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-all duration-200 hover:-translate-y-0.5",
-                  active === g.tab.id ? "bg-ink text-cream" : TAB_COLOURS[g.index % TAB_COLOURS.length],
-                )}
-              >
-                {g.tab.label}
+      <main className="min-h-[75vh] py-12">
+        <div className={cn(CONTAINER, "space-y-8")}>
+          <PageHeader
+            eyebrow={total > 0 ? `${label} guided studios` : "Guided studios"}
+            title="Studios"
+            line="Big jobs, finished for you. A business plan, catalogue photos, a resume, a tax plan, a family book, and now your sites. Answer a few questions and a studio does the whole job, step by step."
+          >
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <a href="#all" className={BTN_PRIMARY}>
+                Pick a studio <ArrowRight className="h-4 w-4" aria-hidden />
               </a>
-            ))}
-            <a
-              href="#sites"
-              className={cn(
-                "relative shrink-0 rounded-full border-2 border-ink px-4 py-1.5 text-[15px] font-semibold shadow-[2px_2px_0_0_hsl(var(--ink))] transition-all duration-200 hover:-translate-y-0.5",
-                active === "sites" ? "bg-ink text-cream" : TAB_COLOURS[groups.length % TAB_COLOURS.length],
-              )}
-            >
-              Sites
-              <span className="absolute -right-1.5 -top-2.5 rounded-full bg-ink px-1.5 text-[10px] font-extrabold tracking-wider text-lime">NEW</span>
-            </a>
-          </div>
-        </nav>
+              <Link to="/credits" className={BTN_OUTLINE}>
+                See prices
+              </Link>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">100 free credits to start. Pay only when you get a result.</span>
+            </div>
+          </PageHeader>
 
-        <div id="all" className="mx-auto max-w-7xl px-4 pb-6">
-          {groups.length === 0 && <p className="py-16 text-center text-muted-foreground">Studios are being added. Check back soon.</p>}
-          {popular.length >= 3 && (
-            <section className="pt-10 md:pt-12" aria-label="Most used studios">
-              <Reveal>
-                <h2 className="text-2xl font-extrabold md:text-3xl">Start with a favourite</h2>
-                <p className="mt-1 text-[16px] text-muted-foreground">The studios people open first.</p>
-              </Reveal>
-              <Shelf className="mt-4">
-                {popular.map((t) => (
-                  <AppTile key={t.id} tool={t} />
-                ))}
-              </Shelf>
-            </section>
-          )}
-          {groups.map((g) => (
-            <Group key={g.tab.id} tab={g.tab} index={g.index} tools={g.tools} />
-          ))}
-          <SitesGroup index={groups.length} />
+          <ol className="grid gap-3 md:grid-cols-3" aria-label="How a studio works">
+            {STEPS.map(({ Icon, h, d }, i) => (
+              <li key={h} className="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">
+                    {i + 1}. {h}
+                  </p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">{d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div id="all" className="scroll-mt-24 space-y-12">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Studio groups">
+              <button type="button" aria-pressed={!tab} onClick={() => pick(null)} className={pillClass(!tab)}>
+                All <span className="tabular-nums opacity-70">({total} live)</span>
+              </button>
+              {groups.map((g) => (
+                <button key={g.tab.id} type="button" aria-pressed={tab === g.tab.id} onClick={() => pick(g.tab.id)} className={pillClass(tab === g.tab.id)}>
+                  {g.tab.label} <span className="tabular-nums opacity-70">({g.tools.length})</span>
+                </button>
+              ))}
+              <button type="button" aria-pressed={tab === "sites"} onClick={() => pick("sites")} className={pillClass(tab === "sites")}>
+                Sites <span className="opacity-70">(1 + 2 soon)</span>
+              </button>
+            </div>
+
+            {groups.length === 0 && <EmptyState message="Studios are being added. Check back soon." />}
+
+            {!tab && popular.length >= 3 && (
+              <section aria-labelledby="popular-h">
+                <SectionHead id="popular-h" className="mb-5" eyebrow="The studios people open first" title="Start with a favourite" />
+                <div className={GRID}>
+                  {popular.map((t) => (
+                    <ToolCard key={t.id} tool={t} chip={STUDIO_TABS.find((x) => x.ids.includes(t.id))?.label ?? "Studio"} size="lg" />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {tab !== "sites" &&
+              shownGroups.map((g) => (
+                <GroupSection key={g.tab.id} id={g.tab.id} label={g.tab.label} line={g.tab.line} tools={g.tools} capped={!tab} onSeeAll={() => pick(g.tab.id)} />
+              ))}
+
+            {(!tab || tab === "sites") && <SitesSection />}
+          </div>
         </div>
 
-        <section className="mx-auto max-w-7xl px-4 pb-16">
-          <div className="rounded-3xl border-2 border-ink bg-sun p-8 text-center shadow-block-lg md:p-12">
-            <h2 className="text-3xl font-extrabold md:text-4xl">Not sure which one you need?</h2>
-            <p className="mx-auto mt-2 max-w-xl text-lg text-ink/85">Tell us your type of business and we show the apps and studios people like you use most.</p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg">
-                <Link to="/explore">Find by business type</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="bg-card">
-                <Link to="/ai-apps">Browse all apps</Link>
-              </Button>
-            </div>
+        <section className="mt-16">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <CtaBand chip="Not sure?" title="Not sure which one you need?" line="Tell us your type of business and we show the apps and studios people like you use most.">
+              <Link to="/explore" className={BTN_PRIMARY}>
+                Find by business type
+              </Link>
+              <Link to="/ai-apps" className={cn("inline-flex items-center rounded-xl border border-white/25 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10", FOCUS_RING)}>
+                Browse all apps
+              </Link>
+            </CtaBand>
           </div>
         </section>
       </main>
-      <SEOFooter />
-    </div>
-    </MotionConfig>
+    </ModernPage>
   );
 };
 
