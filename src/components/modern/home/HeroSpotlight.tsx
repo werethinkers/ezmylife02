@@ -36,7 +36,7 @@ const itemClass = cn(
 function ItemBody({ item }: { item: SpotItem }) {
   return (
     <>
-      <span className="relative block h-40 w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">{item.media}</span>
+      <span className="relative block h-36 w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 md:h-40">{item.media}</span>
       <span className="block">
         <span className="flex items-center justify-between gap-1">
           <span className="font-display text-xs font-bold leading-snug text-zinc-900 dark:text-white">{item.name}</span>
@@ -67,8 +67,8 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
   };
 
   return (
-    <div className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-5 shadow-soft-2xl shadow-orange-950/10 motion-safe:animate-float-slow sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between gap-3">
+    <div className="w-full max-w-full space-y-3 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-soft-2xl shadow-orange-950/10 motion-safe:animate-float-slow sm:p-6 md:space-y-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex w-full max-w-full items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" aria-hidden />
@@ -78,7 +78,12 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
         <span className="truncate rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-semibold text-orange-800 dark:bg-orange-950 dark:text-orange-300">{t.badge}</span>
       </div>
 
-      <div role="tablist" aria-label="What to make" onKeyDown={onKey} className="grid grid-cols-4 gap-1.5 rounded-xl bg-zinc-100 p-1 text-xs font-semibold dark:bg-zinc-950">
+      <div
+        role="tablist"
+        aria-label="What to make"
+        onKeyDown={onKey}
+        className="grid w-full max-w-full grid-cols-4 gap-1.5 rounded-xl bg-zinc-100 p-1 text-xs font-semibold dark:bg-zinc-950"
+      >
         {tabs.map((x, i) => (
           <button
             key={x.id}
@@ -103,8 +108,13 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
         ))}
       </div>
 
-      <div id="spot-panel" role="tabpanel" aria-labelledby={`spot-tab-${t.id}`} className="space-y-3 rounded-2xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-2">
+      <div
+        id="spot-panel"
+        role="tabpanel"
+        aria-labelledby={`spot-tab-${t.id}`}
+        className="w-full max-w-full space-y-3 overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950"
+      >
+        <div className="flex w-full max-w-full items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="font-display text-lg font-bold">{t.title}</h3>
             <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{t.line}</p>
@@ -112,20 +122,34 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
           <span className="shrink-0 rounded-lg bg-amber-400 px-2 py-1 text-xs font-bold text-zinc-950">{t.cost}</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
-          {t.items === null
-            ? [0, 1].map((i) => <div key={i} aria-hidden className="h-[13.5rem] animate-pulse rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900" />)
-            : t.items.map((item) =>
-                item.to ? (
-                  <Link key={item.key} to={item.to} className={itemClass}>
-                    <ItemBody item={item} />
-                  </Link>
-                ) : (
-                  <button key={item.key} type="button" onClick={item.onOpen} className={itemClass}>
-                    <ItemBody item={item} />
-                  </button>
-                ),
-              )}
+        {/* w-full overflow-hidden here so the scrollable track below can never push the page itself wider. */}
+        <div className="w-full overflow-hidden">
+          <div className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 text-xs no-scrollbar md:grid md:grid-cols-2 md:overflow-visible md:pb-0 md:snap-none">
+            {t.items === null
+              ? [0, 1].map((i) => (
+                  <div
+                    key={i}
+                    aria-hidden
+                    className="h-[13.5rem] w-full shrink-0 animate-pulse snap-center rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 md:shrink md:snap-none"
+                  />
+                ))
+              : t.items.map((item) =>
+                  item.to ? (
+                    <Link key={item.key} to={item.to} className={cn(itemClass, "w-full min-w-full shrink-0 snap-center md:min-w-0 md:shrink md:snap-none")}>
+                      <ItemBody item={item} />
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={item.onOpen}
+                      className={cn(itemClass, "w-full min-w-full shrink-0 snap-center md:min-w-0 md:shrink md:snap-none")}
+                    >
+                      <ItemBody item={item} />
+                    </button>
+                  ),
+                )}
+          </div>
         </div>
 
         <Link

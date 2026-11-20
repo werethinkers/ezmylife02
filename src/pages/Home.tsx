@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState, type FormEvent } from "react";
+import { Suspense, lazy, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
@@ -127,6 +127,11 @@ const Home = () => {
   const [designs, setDesigns] = useState<DesignSummary | null>(null);
   const [topKind, setTopKind] = useState<TopKind | "all">("all");
   const [more, setMore] = useState<"new" | "cheap">("new");
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const chooseTopKind = (id: TopKind | "all") => {
+    setTopKind(id);
+    topScrollRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+  };
 
   const live = useMemo(() => catalog.filter((t) => t.is_live), [catalog]);
   const byId = useMemo(() => new Map(live.map((t) => [t.id, t])), [live]);
@@ -269,6 +274,12 @@ const Home = () => {
   };
 
   const topGrid = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+  // Below md: a single-row snap-scroll strip so #1-#10 peek in from the right; at md+ this is the same grid as topGrid.
+  const topCarousel = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 -mx-4 px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+  const topCardClass = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
+  // Same mobile snap-scroll treatment as the Top 10 strip above, for the "New in the store" / "Cheapest to run" shelf.
+  const moreCarousel = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 scroll-px-4 -mx-4 px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+  const moreCardClass = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
 
   return (
     <ModernPage section="home">
@@ -409,9 +420,19 @@ const Home = () => {
                   title="Top 10 to start with"
                   line="Websites, cards and invites, studios and quick business apps: the ones we would open first."
                   action={
-                    <div role="group" aria-label="Show in the top 10" className="flex flex-wrap gap-2">
+                    <div
+                      role="group"
+                      aria-label="Show in the top 10"
+                      className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap"
+                    >
                       {TOP_FILTERS.map((f) => (
-                        <button key={f.id} type="button" aria-pressed={topKind === f.id} onClick={() => setTopKind(f.id)} className={pillClass(topKind === f.id)}>
+                        <button
+                          key={f.id}
+                          type="button"
+                          aria-pressed={topKind === f.id}
+                          onClick={() => chooseTopKind(f.id)}
+                          className={cn(pillClass(topKind === f.id), "whitespace-nowrap")}
+                        >
                           {f.label}
                         </button>
                       ))}
@@ -419,25 +440,25 @@ const Home = () => {
                   }
                 />
                 {loadingApps ? (
-                  <div className={topGrid}>
+                  <div ref={topScrollRef} className={topCarousel}>
                     {TOP_PATTERN.map((k, i) => (
-                      <CardSkeleton key={`${k}-${i}`} />
+                      <CardSkeleton key={`${k}-${i}`} className={topCardClass} />
                     ))}
                   </div>
                 ) : topShown.length ? (
-                  <div className={topGrid}>
+                  <div ref={topScrollRef} className={topCarousel}>
                     {topShown.map((x) =>
                       x.pending ? (
-                        <CardSkeleton key={x.key} />
+                        <CardSkeleton key={x.key} className={topCardClass} />
                       ) : x.design ? (
-                        <DesignCard key={x.key} d={x.design} rank={x.rank} chip={KIND_CHIP[x.kind]} size="md" />
+                        <DesignCard key={x.key} d={x.design} rank={x.rank} chip={KIND_CHIP[x.kind]} size="md" className={topCardClass} />
                       ) : x.tool ? (
-                        <ToolCard key={x.key} tool={x.tool} rank={x.rank} chip={KIND_CHIP[x.kind]} />
+                        <ToolCard key={x.key} tool={x.tool} rank={x.rank} chip={KIND_CHIP[x.kind]} className={topCardClass} />
                       ) : null,
                     )}
                   </div>
                 ) : (
-                  <EmptyState message="Nothing of this kind in the top 10 right now." action="Show all 10" onAction={() => setTopKind("all")} />
+                  <EmptyState message="Nothing of this kind in the top 10 right now." action="Show all 10" onAction={() => chooseTopKind("all")} />
                 )}
               </>
             )}
@@ -482,9 +503,9 @@ const Home = () => {
                 line={moreTab.line}
                 action={
                   moreTabs.length > 1 && (
-                    <div role="group" aria-label="Show" className="flex flex-wrap gap-2">
+                    <div role="group" aria-label="Show" className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
                       {moreTabs.map((t) => (
-                        <button key={t.id} type="button" aria-pressed={moreTab.id === t.id} onClick={() => setMore(t.id)} className={pillClass(moreTab.id === t.id)}>
+                        <button key={t.id} type="button" aria-pressed={moreTab.id === t.id} onClick={() => setMore(t.id)} className={cn(pillClass(moreTab.id === t.id), "whitespace-nowrap")}>
                           {t.label}
                         </button>
                       ))}
@@ -492,9 +513,9 @@ const Home = () => {
                   )
                 }
               />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className={moreCarousel}>
                 {moreTab.items.map((t) => (
-                  <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} />
+                  <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} className={moreCardClass} />
                 ))}
               </div>
               <Link to="/ai-apps" className={cn(BTN_OUTLINE, "mt-6")}>

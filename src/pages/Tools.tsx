@@ -28,7 +28,11 @@ const TAGS_SHOWN = 8;
 /** A type needs at least this many apps to be worth a chip. */
 const TAG_MIN_APPS = 3;
 
-const GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+const CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 scroll-px-4 -mx-4 px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+const CAROUSEL_CARD = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
+// Single-line horizontal scroll strip for filter/category chips on mobile; wraps normally at md+.
+const FILTER_STRIP = "flex flex-nowrap overflow-x-auto no-scrollbar gap-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap";
 /** GOALS already ends with "More apps" and GOALS_WITH_MORE adds it again; keep the first so it shows once. */
 const GOAL_LIST = GOALS_WITH_MORE.filter((g, i, all) => all.findIndex((x) => x.id === g.id) === i);
 const linkish = cn("rounded font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING);
@@ -158,7 +162,7 @@ const Tools = () => {
         keywords="ai apps for business, gst invoice app, passport photo maker, ai tools india, ezyourlife ai apps"
       />
 
-      <main className="min-h-[75vh] py-12">
+      <main className="min-h-[75vh] overflow-x-hidden py-12">
         <div className={cn(CONTAINER, "space-y-8")}>
           <div>
             <nav aria-label="Breadcrumb" className="mb-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -220,7 +224,7 @@ const Tools = () => {
 
           {/* Goal and category filters */}
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Show apps for">
+            <div className={FILTER_STRIP} role="group" aria-label="Show apps for">
               <button type="button" className={pillClass(!activeGoal)} aria-pressed={!activeGoal} onClick={() => set({ goal: null, category: null })}>
                 All apps <span className="tabular-nums opacity-70">({shown.length})</span>
               </button>
@@ -238,7 +242,7 @@ const Tools = () => {
               ))}
             </div>
             {activeGoal && (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Type of app">
+              <div className={FILTER_STRIP} role="group" aria-label="Type of app">
                 {(goals.find((g) => g.goal.id === activeGoal.id)?.cats ?? []).map(([c, tools]) => (
                   <button
                     key={c}
@@ -253,20 +257,20 @@ const Tools = () => {
               </div>
             )}
             {tagOptions.length > 1 && (
-              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by type">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Type:</span>
+              <div className={cn(FILTER_STRIP, "items-center")} role="group" aria-label="Filter by type">
+                <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-zinc-500 dark:text-zinc-400">Type:</span>
                 {tagsVisible.map((tg) => (
                   <button key={tg.key} type="button" aria-pressed={typeKey === tg.key} onClick={() => set({ type: typeKey === tg.key ? null : tg.key })} className={subPillClass(typeKey === tg.key)}>
                     {tg.label} <span className="tabular-nums opacity-70">{tg.count}</span>
                   </button>
                 ))}
                 {tagOptions.length > TAGS_SHOWN && (
-                  <button type="button" onClick={() => setAllTags((v) => !v)} className={cn("px-1 text-xs", linkish)}>
+                  <button type="button" onClick={() => setAllTags((v) => !v)} className={cn("shrink-0 whitespace-nowrap px-1 text-xs", linkish)}>
                     {allTags ? "Show fewer" : `Show ${tagOptions.length - TAGS_SHOWN} more`}
                   </button>
                 )}
                 {typeKey && (
-                  <button type="button" onClick={() => set({ type: null })} className={cn("px-1 text-xs", linkish)}>
+                  <button type="button" onClick={() => set({ type: null })} className={cn("shrink-0 whitespace-nowrap px-1 text-xs", linkish)}>
                     Clear type
                   </button>
                 )}
@@ -290,9 +294,9 @@ const Tools = () => {
                 }
               />
               {results.length > 0 && (
-                <div className={GRID}>
+                <div className={CAROUSEL}>
                   {results.map((t) => (
-                    <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
+                    <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
                   ))}
                 </div>
               )}
@@ -301,9 +305,9 @@ const Tools = () => {
                   <h3 className="mb-4 font-display text-lg font-bold">
                     Websites, cards & invites <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">({designResults.length})</span>
                   </h3>
-                  <div className={GRID}>
+                  <div className={CAROUSEL}>
                     {designResults.map((d) => (
-                      <DesignCard key={d.id} d={d} chip={d.site ? "Website" : "Card / invite"} size="md" />
+                      <DesignCard key={d.id} d={d} chip={d.site ? "Website" : "Card / invite"} size="md" className={CAROUSEL_CARD} />
                     ))}
                   </div>
                 </div>
@@ -318,9 +322,9 @@ const Tools = () => {
                 {catTools.length} app{catTools.length === 1 ? "" : "s"}
               </h2>
               {catTools.length ? (
-                <div className={GRID}>
+                <div className={CAROUSEL} key={typeKey ?? "all"}>
                   {catTools.map((t) => (
-                    <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} />
+                    <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} className={CAROUSEL_CARD} />
                   ))}
                 </div>
               ) : (
@@ -336,9 +340,9 @@ const Tools = () => {
               {!activeGoal && user && recent.length > 0 && (
                 <section>
                   <SectionHead eyebrow="Pick up where you left off" title="Your recent apps" className="mb-5" />
-                  <div className={GRID}>
+                  <div className={CAROUSEL}>
                     {recent.slice(0, PER_CATEGORY).map((t) => (
-                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
+                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
                     ))}
                   </div>
                 </section>
@@ -346,9 +350,9 @@ const Tools = () => {
               {!activeGoal && hot.length > 0 && (
                 <section>
                   <SectionHead eyebrow="Picked by our team" title="Most useful to start" className="mb-5" />
-                  <div className={GRID}>
+                  <div className={CAROUSEL}>
                     {hot.slice(0, 12).map((t) => (
-                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
+                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
                     ))}
                   </div>
                 </section>
@@ -386,9 +390,9 @@ const Tools = () => {
                             </button>
                           )}
                         </div>
-                        <div className={GRID}>
+                        <div className={CAROUSEL} key={typeKey ?? "all"}>
                           {tools.slice(0, PER_CATEGORY).map((t) => (
-                            <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} />
+                            <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} className={CAROUSEL_CARD} />
                           ))}
                         </div>
                       </div>

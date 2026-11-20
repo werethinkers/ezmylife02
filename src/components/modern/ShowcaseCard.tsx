@@ -72,7 +72,7 @@ export function ShowcaseCard({
         )}
         {chip && <span className="truncate rounded-full bg-zinc-950/75 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">{chip}</span>}
       </div>
-      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-zinc-950/95 via-zinc-950/80 to-transparent p-3.5 pt-12 text-white">
+      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-zinc-950 via-zinc-950/90 via-40% to-transparent p-3.5 pt-14 text-white">
         <div className="min-w-0">
           {price && <span className="block text-[10px] font-bold text-amber-300">{price}</span>}
           <h3 className={cn("line-clamp-2 font-display font-bold leading-snug", size === "lg" ? "text-base" : "text-sm")}>{title}</h3>

@@ -31,7 +31,7 @@ export const BTN_OUTLINE = cn(
 /** Rounded filter pill: ink when on, soft zinc when off. */
 export const pillClass = (on: boolean) =>
   cn(
-    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+    "inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
     FOCUS_RING,
     on
       ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
@@ -41,7 +41,7 @@ export const pillClass = (on: boolean) =>
 /** Smaller outlined pill for a second row of filters (categories, types, groups). */
 export const subPillClass = (on: boolean) =>
   cn(
-    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
+    "inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
     FOCUS_RING,
     on
       ? "border-orange-500 bg-orange-50 text-orange-800 dark:border-orange-700 dark:bg-orange-950/50 dark:text-orange-300"

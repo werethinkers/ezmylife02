@@ -68,6 +68,13 @@ const STEPS = [
   },
 ];
 
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+// Cards get an actual width (w-[85vw] max-w-[340px]), not just a min-width: a flex item with only a
+// min-width and no width/basis sizes itself to its content's unwrapped (max-content) width, which is
+// wider than the screen for the long "Our vision" copy — that's what was clipping its text before.
+const PILLARS_CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory items-stretch gap-4 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:gap-5 md:pb-0 md:mx-0 md:px-0 md:grid-cols-3";
+const PILLAR_CARD = "w-[85vw] max-w-[340px] shrink-0 snap-start whitespace-normal break-words md:w-auto md:max-w-none md:min-w-0 h-auto self-stretch";
+
 const FOUNDERS = [
   {
     name: "Abhijay Jain",
@@ -116,7 +123,7 @@ const About = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <ModernPage section="about">
+      <ModernPage section="about" className="overflow-x-hidden">
         <SEOHead
           {...seoFor("/about", countLabel)}
           keywords="what is ezyourlife, about ezyourlife, ezyourlife ai platform, ai app store mission, ezyourlife story, ezyourlife founders"
@@ -323,11 +330,11 @@ const About = () => {
               <h2 className="mt-4 font-display text-3xl font-bold md:text-5xl">Built different, on purpose.</h2>
             </motion.div>
 
-            <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+            <div className={cn("mx-auto max-w-6xl", PILLARS_CAROUSEL)}>
               {/* Vision */}
               <motion.div
                 {...fadeUp}
-                className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-8 text-white shadow-soft-xl md:col-span-2 md:p-10"
+                className={cn("relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-8 text-white shadow-soft-xl md:col-span-2 md:p-10", PILLAR_CARD)}
               >
                 <div aria-hidden className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
                 <div className="relative">
@@ -350,7 +357,7 @@ const About = () => {
               <motion.div
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: 0.08 }}
-                className={cn("flex flex-col p-8", CARD)}
+                className={cn("flex flex-col p-8", CARD, PILLAR_CARD)}
               >
                 <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden />
                 <p className="mt-6 font-display text-5xl font-bold tracking-tight md:mt-auto md:pt-6">
@@ -364,7 +371,7 @@ const About = () => {
               </motion.div>
 
               {/* Purpose-built */}
-              <motion.div {...fadeUp} className={cn("p-8", CARD)}>
+              <motion.div {...fadeUp} className={cn("p-8", CARD, PILLAR_CARD)}>
                 <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
                   <Target className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden />
                 </div>
@@ -378,7 +385,7 @@ const About = () => {
               <motion.div
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: 0.08 }}
-                className={cn("p-8", CARD)}
+                className={cn("p-8", CARD, PILLAR_CARD)}
               >
                 <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
                   <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden />
@@ -391,7 +398,7 @@ const About = () => {
               </motion.div>
 
               {/* CTA */}
-              <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }}>
+              <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className={PILLAR_CARD}>
                 <Link
                   to="/ai-apps"
                   className={cn("group flex h-full flex-col justify-between rounded-3xl border border-orange-200 p-8 shadow-soft-sm transition-all hover:border-orange-400 hover:shadow-soft-lg dark:border-orange-900 dark:hover:border-orange-700", FOCUS_RING)}

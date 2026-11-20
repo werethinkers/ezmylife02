@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getRefCode } from "@/lib/refTracking";
 import { useWallet, useRefreshWallet } from "@/hooks/useWallet";
-import { BASELINE_CREDITS_PER_RUPEE, CREDIT_PACKS } from "@/data/creditPacks";
+import { BASELINE_CREDITS_PER_RUPEE, CREDIT_PACKS, type CreditPack } from "@/data/creditPacks";
 import { ensureRazorpay } from "@/hooks/useRazorpayScript";
 import { Zap, Loader2, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
@@ -18,8 +18,60 @@ import { seoFor } from "@/lib/seo/pages";
 import AppleCreditPacks from "@/components/wallet/AppleCreditPacks";
 import { canBuyInThisApp } from "@/lib/nativeApp";
 import { ModernPage } from "@/components/modern/ModernPage";
-import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, FOCUS_RING } from "@/components/modern/styles";
+import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, EYEBROW, FOCUS_RING } from "@/components/modern/styles";
 import { cn } from "@/lib/utils";
+
+// Two rows (featured value packs, then standard packs), each its own single-row snap-scroll strip below
+// md and its own 3-column grid at md+. pt-4 on the featured row (and matching md:pt-0) keeps its floating
+// badge pills, positioned -top-3 on their card, from being clipped by the scroll area.
+const FEATURED_PACK_ROW =
+  "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pt-4 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:grid-cols-3 md:gap-6 md:pt-0 md:pb-0 md:mx-0 md:px-0";
+const STANDARD_PACK_ROW =
+  "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:grid-cols-3 md:gap-6 md:pb-0 md:mx-0 md:px-0";
+// A width (not just a min-width) so the pack copy wraps instead of stretching the card to fit it unwrapped.
+const PACK_CARD = "w-[80vw] max-w-[310px] shrink-0 snap-start whitespace-normal break-words md:w-auto md:max-w-none md:min-w-0";
+
+/** One credit pack card: the dark/gold styling for a featured (badged) pack, white/orange otherwise. */
+function PackCard({ pack, busy, onBuy }: { pack: CreditPack; busy: boolean; onBuy: () => void }) {
+  const base = Math.round(pack.inr * BASELINE_CREDITS_PER_RUPEE);
+  const extra = pack.credits - base;
+  const perCredit = pack.inr / pack.credits;
+  return (
+    <motion.div
+      whileHover={{ y: -2 }}
+      className={cn(
+        "relative flex h-full flex-col rounded-2xl p-5 shadow-soft",
+        pack.badge ? "border-2 border-orange-500 bg-zinc-950 text-white dark:bg-zinc-900" : CARD,
+        PACK_CARD,
+      )}
+    >
+      {pack.badge && (
+        <span className="absolute -top-3 right-4 rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-bold text-white">{pack.badge}</span>
+      )}
+      <p className="font-display text-4xl font-extrabold">₹{pack.inr}</p>
+      <p className="mt-2 flex items-center gap-1.5 text-lg">
+        <Zap className={cn("h-5 w-5", pack.badge ? "text-amber-300" : "text-orange-600 dark:text-orange-400")} aria-hidden />
+        <span className="font-bold tabular-nums">{pack.credits}</span> credits
+      </p>
+      <p className={cn("mt-1 text-sm", pack.badge ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400")}>
+        About ₹{perCredit.toFixed(2)} a credit
+        {extra > 0 ? ` · ${extra} more credits than buying ₹10 packs` : ""}
+      </p>
+      <button
+        type="button"
+        onClick={onBuy}
+        disabled={busy}
+        className={cn(
+          pack.badge ? "bg-amber-400 text-zinc-950 hover:bg-amber-300" : BTN_PRIMARY,
+          "mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:opacity-60",
+          FOCUS_RING,
+        )}
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : `Buy ₹${pack.inr} pack`}
+      </button>
+    </motion.div>
+  );
+}
 
 const Credits = () => {
   const { user } = useAuth();
@@ -161,7 +213,7 @@ const Credits = () => {
       <SEOHead
         {...seoFor("/credits", "")}
       />
-      <main className={cn(CONTAINER, "py-8 md:py-12")}>
+      <main className={cn(CONTAINER, "overflow-x-hidden py-8 md:py-12")}>
         <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -232,47 +284,19 @@ const Credits = () => {
         {/* Packs (not in the iOS app: Apple rules, see docs/ios-app.md) */}
         {canBuyInThisApp() && (<>
         <h2 className="mb-5 mt-12 font-display text-2xl font-bold md:text-3xl">Credit packs</h2>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {CREDIT_PACKS.map((pack) => {
-            const base = Math.round(pack.inr * BASELINE_CREDITS_PER_RUPEE);
-            const extra = pack.credits - base;
-            const perCredit = pack.inr / pack.credits;
-            return (
-              <motion.div
-                key={pack.id}
-                whileHover={{ y: -2 }}
-                className={cn(
-                  "relative flex h-full flex-col rounded-2xl p-5 shadow-soft",
-                  pack.badge ? "border-2 border-orange-500 bg-zinc-950 text-white dark:bg-zinc-900" : CARD,
-                )}
-              >
-                {pack.badge && (
-                  <span className="absolute -top-3 right-4 rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-bold text-white">{pack.badge}</span>
-                )}
-                <p className="font-display text-4xl font-extrabold">₹{pack.inr}</p>
-                <p className="mt-2 flex items-center gap-1.5 text-lg">
-                  <Zap className={cn("h-5 w-5", pack.badge ? "text-amber-300" : "text-orange-600 dark:text-orange-400")} aria-hidden />
-                  <span className="font-bold tabular-nums">{pack.credits}</span> credits
-                </p>
-                <p className={cn("mt-1 text-sm", pack.badge ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400")}>
-                  About ₹{perCredit.toFixed(2)} a credit
-                  {extra > 0 ? ` · ${extra} more credits than buying ₹10 packs` : ""}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => buyPack(pack.id)}
-                  disabled={busyPack === pack.id}
-                  className={cn(
-                    pack.badge ? "bg-amber-400 text-zinc-950 hover:bg-amber-300" : BTN_PRIMARY,
-                    "mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:opacity-60",
-                    FOCUS_RING,
-                  )}
-                >
-                  {busyPack === pack.id ? <Loader2 className="h-4 w-4 animate-spin" /> : `Buy ₹${pack.inr} pack`}
-                </button>
-              </motion.div>
-            );
-          })}
+
+        <p className={cn(EYEBROW, "mb-3")}>Most popular &amp; best value packs</p>
+        <div className={FEATURED_PACK_ROW}>
+          {CREDIT_PACKS.filter((pack) => pack.badge).map((pack) => (
+            <PackCard key={pack.id} pack={pack} busy={busyPack === pack.id} onBuy={() => buyPack(pack.id)} />
+          ))}
+        </div>
+
+        <p className="mb-3 mt-8 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Starter &amp; standard packs</p>
+        <div className={STANDARD_PACK_ROW}>
+          {CREDIT_PACKS.filter((pack) => !pack.badge).map((pack) => (
+            <PackCard key={pack.id} pack={pack} busy={busyPack === pack.id} onBuy={() => buyPack(pack.id)} />
+          ))}
         </div>
 
         {/* Coupon */}

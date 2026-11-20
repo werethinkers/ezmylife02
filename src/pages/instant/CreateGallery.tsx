@@ -33,7 +33,11 @@ const SORTS: { id: Sort; name: string }[] = [
 ];
 /** Designs per category before "See all" when every category is shown. */
 const PER_CATEGORY = 8;
-const GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-4";
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+const CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 scroll-px-4 -mx-4 px-4 no-scrollbar md:grid md:gap-5 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+const CAROUSEL_CARD = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
+// Single-line horizontal scroll strip for filter/category chips on mobile; wraps normally at md+.
+const FILTER_STRIP = "flex flex-nowrap overflow-x-auto no-scrollbar gap-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap";
 
 const COPY = {
   websites: {
@@ -141,7 +145,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
     <ModernPage section={kind ?? null}>
       <PageSeo {...seoFor(copy.path, "")} />
 
-      <main className="min-h-[75vh] py-12">
+      <main className="min-h-[75vh] overflow-x-hidden py-12">
         <div className={cn(CONTAINER, "space-y-8")}>
           <PageHeader
             eyebrow={`${list.length} ready-made designs${from ? ` · from ${fmtCredits(from)}, paid once` : ""}`}
@@ -149,14 +153,14 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
             line={copy.line}
             asideClassName="md:w-auto"
             aside={
-              <nav aria-label="Designs" className="inline-flex max-w-full rounded-xl border border-zinc-200 bg-zinc-100 p-1 text-xs font-semibold dark:border-zinc-800 dark:bg-zinc-900">
+              <nav aria-label="Designs" className="flex max-w-full overflow-x-auto no-scrollbar rounded-xl border border-zinc-200 bg-zinc-100 p-1 text-xs font-semibold dark:border-zinc-800 dark:bg-zinc-900">
                 {tabs.map((t) => (
                   <Link
                     key={t.to}
                     to={t.to}
                     aria-current={t.on ? "page" : undefined}
                     className={cn(
-                      "whitespace-nowrap rounded-lg px-3 py-2 transition sm:px-4",
+                      "shrink-0 whitespace-nowrap rounded-lg px-3 py-2 transition sm:px-4",
                       FOCUS_RING,
                       t.on ? "bg-white text-zinc-950 shadow-soft-sm dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white",
                     )}
@@ -183,7 +187,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
           </div>
 
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Kind of design">
+            <div className={FILTER_STRIP} role="group" aria-label="Kind of design">
               <button type="button" aria-pressed={cat === "all"} onClick={() => set({ cat: null, type: null })} className={pillClass(cat === "all")}>
                 All designs <span className="tabular-nums opacity-70">({list.length})</span>
               </button>
@@ -194,7 +198,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
               ))}
             </div>
             {groupsOfCat.length > 1 && (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Type">
+              <div className={FILTER_STRIP} role="group" aria-label="Type">
                 <button type="button" aria-pressed={group === "all"} onClick={() => set({ type: null })} className={subPillClass(group === "all")}>
                   All
                 </button>
@@ -210,9 +214,9 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
           {!filtered && featured.length > 0 && (
             <section aria-labelledby="pop-h">
               <SectionHead id="pop-h" eyebrow="Our picks" title="Most loved" className="mb-5" />
-              <div className={GRID}>
+              <div className={CAROUSEL}>
                 {featured.map((l) => (
-                  <DesignCard key={l.product.id} d={liteOf(l.product.id)} />
+                  <DesignCard key={l.product.id} d={liteOf(l.product.id)} className={CAROUSEL_CARD} />
                 ))}
               </div>
             </section>
@@ -242,9 +246,9 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
                     <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{sh.items.length}</span>
                   )}
                 </div>
-                <div className={GRID}>
+                <div className={CAROUSEL} key={`${price}-${popular ? 1 : 0}-${q}`}>
                   {(capped ? sh.items.slice(0, PER_CATEGORY) : sh.items).map((l) => (
-                    <DesignCard key={l.product.id} d={liteOf(l.product.id)} />
+                    <DesignCard key={l.product.id} d={liteOf(l.product.id)} className={CAROUSEL_CARD} />
                   ))}
                 </div>
               </section>

@@ -32,6 +32,11 @@ const FITS = [
   "A clear listing: what it does, what people give and what they get",
 ];
 
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+const STEPS_CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory items-stretch gap-3.5 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 sm:grid-cols-2 lg:grid-cols-5";
+// A width (not just a min-width) so the card's text wraps instead of stretching the card to fit it unwrapped.
+const STEP_CARD = "w-[82vw] max-w-[320px] shrink-0 snap-start whitespace-normal break-words md:w-auto md:max-w-none md:min-w-0 h-auto self-stretch";
+
 const FAQ = [
   { q: "What do I earn?", a: "A share of the credits people spend on your app. We agree the share with you when we approve it." },
   { q: "Who sets the price?", a: "Our team sets the credits per use when it approves your app. Nothing goes live without that approval." },
@@ -56,7 +61,7 @@ export default function ListYourApp() {
   };
 
   return (
-    <ModernPage section="earn">
+    <ModernPage section="earn" className="overflow-x-hidden">
       <PageSeo {...seoFor("/list-your-app", countLabel)} />
 
       {/* Hero */}
@@ -101,14 +106,14 @@ export default function ListYourApp() {
       <section id="how" className="border-y border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-950/40 md:py-16">
         <div className={CONTAINER}>
           <SectionHead title="How it works" />
-          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <ol className={STEPS_CAROUSEL}>
             {STEPS.map((s, i) => (
-              <li key={s.h} className={cn("flex flex-col gap-2 p-5", CARD)}>
+              <li key={s.h} className={cn("flex flex-col gap-2 p-5", CARD, STEP_CARD)}>
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 font-display text-base font-extrabold text-orange-700 dark:bg-orange-950 dark:text-orange-300" aria-hidden>
                   {i + 1}
                 </span>
-                <h3 className="text-lg font-bold leading-snug">{s.h}</h3>
-                <p className="text-[15px] text-zinc-600 dark:text-zinc-400">{s.d}</p>
+                <h3 className="whitespace-normal break-words text-lg font-bold leading-snug">{s.h}</h3>
+                <p className="whitespace-normal break-words text-[15px] text-zinc-600 dark:text-zinc-400">{s.d}</p>
               </li>
             ))}
           </ol>

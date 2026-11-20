@@ -39,6 +39,14 @@ const FAQ = [
 
 const DASH = ["Clicks", "Buyers", "Refund requests", "Your commission"];
 
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+const APPS_CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:gap-5 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+const APPS_CARD = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
+// Shared by "How it works" and "What you get": both are icon + title + paragraph cards in a 4-up grid.
+const TEXT_CARD_CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory items-stretch gap-3.5 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+// A width (not just a min-width) so the card's text wraps instead of stretching the card to fit it unwrapped.
+const TEXT_CARD = "w-[82vw] max-w-[320px] shrink-0 snap-start whitespace-normal break-words md:w-auto md:max-w-none md:min-w-0 h-auto self-stretch";
+
 // Earnings calculator: a rough guide, not a promise. Commission is fixed at 10% and the kit is the
 // one offer on /kit; the creator moves how many followers they have and what share of them buy.
 const COMMISSION_PCT = 10;
@@ -129,7 +137,7 @@ export default function Creators() {
   const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("I want to join as a creator")}&body=${encodeURIComponent("CREATOR\n\nMy name:\nMy Instagram or website:\nAbout me:\n")}`;
 
   return (
-    <ModernPage section="earn">
+    <ModernPage section="earn" className="overflow-x-hidden">
       <PageSeo {...seoFor("/creators", countLabel)} />
 
       {/* Hero */}
@@ -183,14 +191,14 @@ export default function Creators() {
 
       <section className={cn(CONTAINER, "py-12 md:py-16")}>
         <SectionHead eyebrow="What you get" title="Everything you need to earn" />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className={TEXT_CARD_CAROUSEL}>
           {GETS.map((g) => (
-            <li key={g.h} className={cn("flex flex-col gap-2 p-5", CARD)}>
+            <li key={g.h} className={cn("flex flex-col gap-2 p-5", CARD, TEXT_CARD)}>
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
                 <g.Icon className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden />
               </span>
-              <h3 className="text-lg font-bold">{g.h}</h3>
-              <p className="text-[15px] text-zinc-600 dark:text-zinc-400">{g.d}</p>
+              <h3 className="whitespace-normal break-words text-lg font-bold">{g.h}</h3>
+              <p className="whitespace-normal break-words text-[15px] text-zinc-600 dark:text-zinc-400">{g.d}</p>
             </li>
           ))}
         </ul>
@@ -230,9 +238,9 @@ export default function Creators() {
           {kitApps.length > 0 && (
             <div className="mt-10">
               <SectionHead title="Apps they use most" line="Included with their credits" />
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className={APPS_CAROUSEL}>
                 {kitApps.map((t) => (
-                  <ToolCard key={t.id} tool={t} size="md" />
+                  <ToolCard key={t.id} tool={t} size="md" className={APPS_CARD} />
                 ))}
               </div>
             </div>
@@ -242,14 +250,14 @@ export default function Creators() {
 
       <section id="how" className={cn(CONTAINER, "scroll-mt-24 py-12 md:py-16")}>
         <SectionHead title="How it works" />
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className={TEXT_CARD_CAROUSEL}>
           {STEPS.map((s, i) => (
-            <li key={s.h} className={cn("flex flex-col gap-2 p-5", CARD)}>
+            <li key={s.h} className={cn("flex flex-col gap-2 p-5", CARD, TEXT_CARD)}>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 font-display text-base font-extrabold text-orange-700 dark:bg-orange-950 dark:text-orange-300" aria-hidden>
                 {i + 1}
               </span>
-              <h3 className="text-lg font-bold leading-snug">{s.h}</h3>
-              <p className="text-[15px] text-zinc-600 dark:text-zinc-400">{s.d}</p>
+              <h3 className="whitespace-normal break-words text-lg font-bold leading-snug">{s.h}</h3>
+              <p className="whitespace-normal break-words text-[15px] text-zinc-600 dark:text-zinc-400">{s.d}</p>
             </li>
           ))}
         </ol>
