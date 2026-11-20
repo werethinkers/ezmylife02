@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { goalOf } from "@/data/goals";
@@ -35,16 +36,22 @@ export function AppIcon({
 }) {
   const media = useToolMedia(toolId, category);
   const goal = goalOf(category);
+  // A stale media row (e.g. after a storage migration) can point at a URL that 404s — fall back
+  // to the initials badge instead of a browser's broken-image icon.
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [media.iconUrl]);
+  const showImage = !!media.iconUrl && !broken;
   return (
     <div
       className={cn("relative shrink-0 overflow-hidden rounded-xl border-2 border-ink", SIZES[size], className)}
-      style={{ background: media.iconUrl ? "hsl(var(--card))" : goal.color }}
+      style={{ background: showImage ? "hsl(var(--card))" : goal.color }}
     >
-      {media.iconUrl ? (
+      {showImage ? (
         <img
-          src={media.iconUrl}
+          src={media.iconUrl!}
           alt=""
           loading="lazy"
+          onError={() => setBroken(true)}
           className={cn("h-full w-full", media.iconFit === "contain" ? "object-contain p-1.5" : "object-cover")}
         />
       ) : (

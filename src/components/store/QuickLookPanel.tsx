@@ -1,48 +1,70 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Heart, Zap } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
-import { usePricingMap, RUPEES_PER_CREDIT_MAX, formatRupees } from "@/hooks/usePricingMap";
+import { usePricingMap } from "@/hooks/usePricingMap";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
 import { PERSONAS } from "@/data/personas";
+import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
+import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
+import { STUDIO_IDS } from "@/data/studios";
+import { OUTPUT_FORMAT } from "@/data/outputFormat";
 import { AppIcon } from "./AppIcon";
-import { PricePill } from "./PricePill";
+import { ShareButton } from "@/components/modern/ShareButton";
+import { MetricsStrip } from "@/components/modern/MetricsStrip";
+import { AboutCard } from "@/components/modern/AboutCard";
+import { ToolCard } from "@/components/modern/ToolCard";
+import { BTN_PRIMARY, BTN_OUTLINE, CARD, GOAL_GRADIENT } from "@/components/modern/styles";
 import { cn } from "@/lib/utils";
-import { GiveGet } from "@/components/brand/GiveGet";
-import { categoryInfo, goalOf, KIND_TEXT } from "@/data/goals";
-import { appGiveGetOf, appIntroOf, appKindOf } from "@/data/appKind";
 
 /*
- * Quick Look: tap any app to see its screenshots, price and an Open button in a sheet
- * (bottom drawer you can swipe down on phones, side panel on desktop). Esc closes it.
+ * Quick Look: tap any app or studio to see it — a condensed version of its /promo/:slug landing
+ * page in a sheet (bottom drawer you can swipe down on phones, side panel on desktop). Esc closes
+ * it. Website and card designs have no Quick Look; their cards link straight to /make/:id.
  */
 
+interface Slide {
+  url: string;
+  caption?: string;
+}
 
-/** The Quick Look sheet itself — loaded only the first time someone opens Quick Look. */
+/** Gallery image or step/related tile that falls back to a gradient card instead of a broken <img>. */
+function SafeImage({ src, alt, gradient, label, className, onClick }: { src: string; alt: string; gradient: string; label?: string; className?: string; onClick?: () => void }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) {
+    return (
+      <div className={cn("flex items-center justify-center bg-gradient-to-br p-4 text-center text-sm font-bold text-white", gradient, className)}>
+        {label ?? alt}
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} loading="lazy" onClick={onClick} onError={() => setBroken(true)} className={className} />;
+}
+
+const slugOf = (name: string) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
 export default function QuickLookPanel({ toolId, onClose }: { toolId: string | null; onClose: () => void }) {
   const isMobile = useIsMobile();
   const open = !!toolId;
   const onOpenChange = (v: boolean) => !v && onClose();
   return isMobile ? (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-      <DrawerContent className="max-h-[92dvh]">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} mobile />}</DrawerContent>
+      <DrawerContent className="max-h-[92dvh] bg-[#F7F6F2]">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} mobile />}</DrawerContent>
     </Drawer>
   ) : (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-lg">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} />}</SheetContent>
+      <SheetContent side="right" className="w-full overflow-y-auto bg-[#F7F6F2] p-0 sm:max-w-lg">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} />}</SheetContent>
     </Sheet>
   );
 }
-
-const slugOf = (name: string) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: () => void; mobile?: boolean }) {
   const navigate = useNavigate();
@@ -50,10 +72,16 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
   const tool = catalog.find((t) => t.id === toolId);
   const media = useToolMedia(toolId, tool?.category);
   const { costOf } = usePricingMap();
-  const cost = costOf(toolId);
+  const cost = Math.max(1, costOf(toolId)); // every app costs at least 1 credit; avoids a "0" flash while prices load
   const { favorites } = useFavorites();
   const { toggle, loginOpen, setLoginOpen } = useToggleFavorite();
   const isFav = favorites.has(toolId);
+  const isStudio = STUDIO_IDS.has(toolId);
+  const [idx, setIdx] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
+  const galleryRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => setIdx(0), [toolId]);
 
   const { data: shots = [] } = useQuery({
     queryKey: ["tool-media", toolId],
@@ -68,9 +96,9 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
     staleTime: 10 * 60 * 1000,
   });
 
-  const gallery = useMemo(() => {
+  const slides: Slide[] = useMemo(() => {
     const urls = [media.previewImageUrl, ...shots.map((s) => s.url)].filter(Boolean) as string[];
-    return Array.from(new Set(urls)).slice(0, 6);
+    return Array.from(new Set(urls)).slice(0, 6).map((url) => ({ url }));
   }, [media.previewImageUrl, shots]);
 
   const personas = PERSONAS.filter((p) => p.toolIds.includes(toolId));
@@ -84,104 +112,173 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
   };
 
   if (!tool) {
-    return <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>;
+    return <div className="p-8 text-center text-sm text-zinc-500">Loading…</div>;
   }
+
+  const category = tool.category;
+  const goal = goalOf(category);
+  const info = categoryInfo(category);
+  const kind = KIND_TEXT[appKindOf(toolId, category)];
+  const intro = appIntroOf(toolId) ?? tool.description ?? "";
+  const engineSteps = appStepsOf(toolId);
+  const howSteps =
+    engineSteps && engineSteps.length >= 3
+      ? engineSteps.slice(0, 3).map((t, i) => ({ title: t, body: [`Give ${info.give}.`, "The app does the work in seconds.", `Get ${info.get}.`][i] }))
+      : [
+          { title: "Open the app", body: `${tool.name} opens in your browser. Nothing to install.` },
+          { title: `Give ${info.give}`, body: "Type it in or upload a file. Examples are filled in for you." },
+          { title: `Get ${info.get}`, body: "Check it, then copy, download or send it on WhatsApp." },
+        ];
+  const related = catalog.filter((t) => t.is_live && inCategory(t, category) && t.id !== toolId).slice(0, 6);
+  const pageSlug = slugOf(tool.name);
+  const current = slides[idx];
 
   return (
     <div className={cn("flex flex-col", mobile && "overflow-y-auto")}>
       <Header className="space-y-0 p-5 pb-4 text-left sm:p-6 sm:pb-4">
-        <div className="flex items-start gap-4">
-          <AppIcon toolId={toolId} category={tool.category} name={tool.name} size="lg" />
-          <div className="min-w-0 flex-1 pr-6">
-            <Title className="font-display text-xl font-bold leading-tight">{tool.name}</Title>
-            <Desc className="mt-1 text-sm text-muted-foreground">{goalOf(tool.category).name} · {tool.category}</Desc>
-            <div className="mt-3">
-              <PricePill toolId={toolId} size="md" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <AppIcon toolId={toolId} category={category} name={tool.name} size="lg" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                  {isStudio ? "Studio" : "Business app"}
+                </span>
+                <span className="text-xs font-semibold text-zinc-400">By EZYOURLIFE</span>
+              </div>
+              <Title className="mt-1 font-display text-xl font-bold leading-tight text-zinc-900">{tool.name}</Title>
+              <Desc className="text-sm text-zinc-500">{goal.name} · {category}</Desc>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2 md:gap-3 md:pr-8">
+            <button
+              type="button"
+              onClick={() => toggle(toolId, isFav)}
+              aria-pressed={isFav}
+              aria-label={isFav ? "Remove from saved" : "Save for later"}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50"
+            >
+              <Heart className={cn("h-4 w-4", isFav && "fill-rose-500 text-rose-500")} aria-hidden />
+            </button>
+            <ShareButton path={`/promo/${pageSlug}`} />
+          </div>
+        </div>
+
+        {intro && <p className="mt-3 text-[15px] leading-relaxed text-zinc-600">{intro}</p>}
+
+        <MetricsStrip
+          className="mt-4"
+          cells={[
+            { value: `${cost} credit${cost === 1 ? "" : "s"}`, label: "Pay per result" },
+            { value: OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
+            { value: "100 Free", label: "Starter credits", accent: true },
+          ]}
+        />
+
+        <div className="mt-4 flex flex-col gap-2.5 sm:flex-row md:gap-5">
+          <button type="button" onClick={openApp} className={cn(BTN_PRIMARY, "h-12 flex-1")}>
+            {isStudio ? "Launch" : "Open"} {tool.name} <ArrowRight className="h-4 w-4" aria-hidden />
+          </button>
+          {slides.length > 0 && (
+            <button
+              type="button"
+              onClick={() => galleryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className={cn(BTN_OUTLINE, "h-12 px-5")}
+            >
+              Preview sample
+            </button>
+          )}
         </div>
       </Header>
 
-      {gallery.length > 0 && (
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {gallery.map((url, i) => (
-            <img
-              key={url}
-              src={url}
-              alt={`${tool.name} screenshot ${i + 1}`}
-              loading="lazy"
-              className={cn(
-                "aspect-[4/3] shrink-0 snap-start rounded-2xl border-2 border-ink bg-sand object-cover",
-                gallery.length === 1 ? "w-full" : "w-[82%]",
+      <div className="space-y-6 p-5 pt-2 sm:p-6 sm:pt-2">
+        {slides.length > 0 && (
+          <section ref={galleryRef} aria-label="Preview and sample outputs" className="scroll-mt-4">
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100">
+                <SafeImage
+                  src={current.url}
+                  alt={`${tool.name} — sample ${idx + 1}`}
+                  gradient={GOAL_GRADIENT[goal.id]}
+                  label={tool.name}
+                  onClick={() => setZoomed(true)}
+                  className="absolute inset-0 h-full w-full cursor-zoom-in object-cover"
+                />
+                {slides.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Previous"
+                      onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}
+                      className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-700 shadow"
+                    >
+                      <ChevronLeft className="h-4 w-4" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next"
+                      onClick={() => setIdx((i) => (i + 1) % slides.length)}
+                      className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-700 shadow"
+                    >
+                      <ChevronRight className="h-4 w-4" aria-hidden />
+                    </button>
+                  </>
+                )}
+              </div>
+              {slides.length > 1 && (
+                <div className="mt-2 flex items-center justify-center gap-1">
+                  {slides.map((s, i) => (
+                    <span key={s.url + i} className={cn("block h-1.5 rounded-full transition-all", i === idx ? "w-5 bg-orange-600" : "w-1.5 bg-zinc-300")} />
+                  ))}
+                </div>
               )}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="space-y-5 p-5 sm:p-6">
-        <section>
-          <h3 className="text-sm font-bold">What it does</h3>
-          <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{appIntroOf(toolId) ?? tool.description}</p>
-        </section>
-
-        <GiveGet {...appGiveGetOf(toolId, tool.category)} time={null} />
-
-        <section className="border-l-[6px] border-ink pl-3">
-          <p className="text-[15px] font-bold">{KIND_TEXT[appKindOf(toolId, tool.category)].title}</p>
-          <p className="text-sm text-muted-foreground">{KIND_TEXT[appKindOf(toolId, tool.category)].line}</p>
-        </section>
-
-        {personas.length > 0 && (
-          <section>
-            <h3 className="text-sm font-bold">Good for</h3>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {personas.map((p) => (
-                <li key={p.id} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-semibold">
-                  {p.emoji} {p.label}
-                </li>
-              ))}
-            </ul>
+            </div>
+            <Dialog open={zoomed} onOpenChange={setZoomed}>
+              <DialogContent className="max-w-2xl border-zinc-200 bg-white p-2">
+                <SafeImage src={current.url} alt={`${tool.name} — sample ${idx + 1}`} gradient={GOAL_GRADIENT[goal.id]} label={tool.name} className="max-h-[75vh] w-full rounded-2xl object-contain" />
+              </DialogContent>
+            </Dialog>
           </section>
         )}
 
-        <section className="rounded-2xl border-2 border-ink bg-sand p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-sun">
-              <Zap className="h-5 w-5 text-ink" />
-            </div>
-            <div className="text-sm">
-              <p className="font-semibold">
-                {`${Math.max(1, cost)} credit${Math.max(1, cost) === 1 ? "" : "s"} each time you get a result`}
-              </p>
-              <p className="text-muted-foreground">
-                {`About ${formatRupees(cost * RUPEES_PER_CREDIT_MAX)} with the ₹10 pack, less with bigger packs. If it fails, you are not charged.`}
-              </p>
-            </div>
+        <AboutCard
+          title={`About this ${isStudio ? "studio" : "app"}`}
+          giveItems={[info.give]}
+          getItems={[info.get, kind.line, `${cost} credit${cost === 1 ? "" : "s"} each time it gives you a result · nothing charged if it fails`]}
+          tags={[category, goal.name, isStudio ? "Guided studio" : "No install needed", ...personas.map((p) => p.label)].filter(Boolean).slice(0, 6)}
+        />
+
+        <section>
+          <h3 className="font-display text-base font-bold text-zinc-900">How it works</h3>
+          <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {howSteps.map((s, i) => (
+              <div key={s.title + i} className={cn("w-[78%] max-w-[260px] shrink-0 p-4", CARD)}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-display text-sm font-extrabold text-orange-700">{i + 1}</span>
+                <h4 className="mt-2 text-sm font-bold leading-snug text-zinc-900">{s.title}</h4>
+                <p className="mt-1 text-[13px] leading-relaxed text-zinc-600">{s.body}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="lg" className="h-12 flex-1" onClick={openApp}>
-            Open the app <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="h-12"
-            onClick={() => toggle(toolId, isFav)}
-            aria-pressed={isFav}
-          >
-            <Heart className={cn("mr-2 h-4 w-4", isFav && "fill-rose-500 text-rose-500")} />
-            {isFav ? "Saved" : "Save"}
-          </Button>
-        </div>
-        <Link
-          to={`/promo/${slugOf(tool.name)}`}
-          onClick={onClose}
-          className="block text-center text-sm font-bold text-primary underline decoration-2 underline-offset-4"
-        >
-          See how it works
+        {related.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-base font-bold text-zinc-900">More like this</h3>
+              <Link to={isStudio ? "/studios" : `/ai-apps?category=${encodeURIComponent(category)}`} onClick={onClose} className="text-xs font-bold text-orange-600">
+                See all →
+              </Link>
+            </div>
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {related.map((t: CatalogTool) => (
+                <ToolCard key={t.id} tool={t} size="md" className="w-[62vw] max-w-[220px] shrink-0" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <Link to={`/promo/${pageSlug}`} onClick={onClose} className="block pb-1 text-center text-sm font-bold text-orange-600 underline decoration-2 underline-offset-4">
+          See the full page
         </Link>
       </div>
 
