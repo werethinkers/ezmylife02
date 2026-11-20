@@ -1,4 +1,4 @@
-import { aiFetch, getAiKey } from "../_shared/ai.ts";
+import { aiFetch } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -152,11 +152,6 @@ serve(async (req) => {
     const messages = (Array.isArray(rawMessages) ? rawMessages : [])
       .slice(-10)
       .map((m: { role?: string; content?: unknown }) => ({ role: m?.role === "assistant" ? "assistant" : "user", content: String(m?.content ?? "").slice(0, 2000) }));
-    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
 
     const response = await aiFetch({
         model: "google/gemini-2.5-flash",

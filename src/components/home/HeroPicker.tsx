@@ -101,7 +101,7 @@ export function HeroPicker({ catalog }: { catalog: CatalogTool[] }) {
               transition={{ duration: 0.25 }}
               onClick={() => openQuickLook(tool.id)}
               className="mt-3 w-full overflow-hidden rounded-2xl border-2 border-ink bg-background text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={`${tool.name}, quick look`}
+              aria-label={`${tool.name}, see details`}
             >
               {media.previewImageUrl && (
                 <div className="aspect-[16/8] w-full overflow-hidden border-b-2 border-ink bg-sand">

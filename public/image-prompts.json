@@ -7,8 +7,8 @@
     "previewPrompt": "UI preview screenshot mockup for \"Add Logo to Image\" web app. Shows a clean Indian-themed professional tool interface: input form on left with Indian-context labels (₹ currency, Indian names, GST numbers), output/result panel on right showing a table or document. White background, purple accent (#7C3AED), modern card layout, 1280x720 pixels, desktop browser frame.",
     "iconFile": "public/app-icons/add-logo-image.png",
     "previewFile": "public/app-previews/add-logo-image.jpg",
-    "iconGenerated": false,
-    "previewGenerated": false
+    "iconGenerated": true,
+    "previewGenerated": true
   },
   {
     "id": "add-name-dob-photo",

@@ -15,6 +15,7 @@ import { placedIn } from "@/data/placements";
 import { KIT, TRADES } from "@/data/kit";
 import { INSTAGRAM_HANDLE, SUPPORT_EMAIL, instagramDm } from "@/data/social";
 import { cn } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const GETS = [
   { Icon: Globe, h: "A free website", d: "Live in your name, with your services and your Instagram." },
@@ -183,7 +184,7 @@ export default function Creators() {
 
       <section className={cn(CONTAINER, "py-12 md:py-16")}>
         <SectionHead eyebrow="What you get" title="Everything you need to earn" />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ScrollRow as="ul" size="step">
           {GETS.map((g) => (
             <li key={g.h} className={cn("flex flex-col gap-2 p-5", CARD)}>
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
@@ -193,7 +194,7 @@ export default function Creators() {
               <p className="text-[15px] text-zinc-600 dark:text-zinc-400">{g.d}</p>
             </li>
           ))}
-        </ul>
+        </ScrollRow>
       </section>
 
       <section className="border-y border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-950/40 md:py-16">
@@ -230,11 +231,11 @@ export default function Creators() {
           {kitApps.length > 0 && (
             <div className="mt-10">
               <SectionHead title="Apps they use most" line="Included with their credits" />
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <ScrollRow size="card">
                 {kitApps.map((t) => (
                   <ToolCard key={t.id} tool={t} size="md" />
                 ))}
-              </div>
+              </ScrollRow>
             </div>
           )}
         </div>
@@ -242,7 +243,7 @@ export default function Creators() {
 
       <section id="how" className={cn(CONTAINER, "scroll-mt-24 py-12 md:py-16")}>
         <SectionHead title="How it works" />
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ScrollRow as="ol" size="step">
           {STEPS.map((s, i) => (
             <li key={s.h} className={cn("flex flex-col gap-2 p-5", CARD)}>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 font-display text-base font-extrabold text-orange-700 dark:bg-orange-950 dark:text-orange-300" aria-hidden>
@@ -252,7 +253,7 @@ export default function Creators() {
               <p className="text-[15px] text-zinc-600 dark:text-zinc-400">{s.d}</p>
             </li>
           ))}
-        </ol>
+        </ScrollRow>
         <div className="mx-auto mt-10 max-w-2xl">
           <EarningsEstimate />
         </div>

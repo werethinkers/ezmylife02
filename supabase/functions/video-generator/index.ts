@@ -1,4 +1,4 @@
-import { aiFetch, getAiKey } from "../_shared/ai.ts";
+import { aiFetch } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -31,14 +31,6 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
-    
-    if (!LOVABLE_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // Enhanced prompt for video frame generation
     const enhancedPrompt = `Create a professional, cinematic video keyframe/still image. ${prompt}. 

@@ -14,10 +14,10 @@ import { ShowcaseCard } from "@/components/modern/ShowcaseCard";
 import { SitesContact } from "@/components/modern/SitesContact";
 import { CtaBand, EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
 import { BTN_OUTLINE, BTN_PRIMARY, CONTAINER, FOCUS_RING, pillClass, roundedLabel } from "@/components/modern/styles";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** Studios per group before "See all" when every group is shown. */
 const PER_GROUP = 6;
-const GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3";
 
 const STEPS = [
   { Icon: MessageSquareText, h: "Answer a few questions", d: "Plain questions about your business or your job. Speak or type." },
@@ -54,7 +54,7 @@ function SitesSection() {
         line="Roads, solar plants and construction sites, watched and followed up."
         action={<span className="shrink-0 text-xs font-semibold text-zinc-500 dark:text-zinc-400">1 studio, 2 coming soon</span>}
       />
-      <div className={GRID}>
+      <ScrollRow size="card">
         {SITES.map((s) => (
           <ShowcaseCard
             key={s.name}
@@ -67,7 +67,7 @@ function SitesSection() {
             size="lg"
           />
         ))}
-      </div>
+      </ScrollRow>
       <SitesContact />
     </section>
   );
@@ -92,11 +92,11 @@ function GroupSection({ id, label, line, tools, capped, onSeeAll }: { id: string
           )
         }
       />
-      <div className={GRID}>
+      <ScrollRow size="card">
         {list.map((t) => (
           <ToolCard key={t.id} tool={t} chip="" size="lg" />
         ))}
-      </div>
+      </ScrollRow>
     </section>
   );
 }
@@ -165,7 +165,7 @@ const Studios = () => {
             </div>
           </PageHeader>
 
-          <ol className="grid gap-3 md:grid-cols-3" aria-label="How a studio works">
+          <ScrollRow as="ol" size="step" label="How a studio works">
             {STEPS.map(({ Icon, h, d }, i) => (
               <li key={h} className="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
@@ -179,10 +179,10 @@ const Studios = () => {
                 </div>
               </li>
             ))}
-          </ol>
+          </ScrollRow>
 
           <div id="all" className="scroll-mt-24 space-y-12">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Studio groups">
+            <div className="ez-chips" role="group" aria-label="Studio groups">
               <button type="button" aria-pressed={!tab} onClick={() => pick(null)} className={pillClass(!tab)}>
                 All <span className="tabular-nums opacity-70">({total} live)</span>
               </button>
@@ -201,11 +201,11 @@ const Studios = () => {
             {!tab && popular.length >= 3 && (
               <section aria-labelledby="popular-h">
                 <SectionHead id="popular-h" className="mb-5" eyebrow="The studios people open first" title="Start with a favourite" />
-                <div className={GRID}>
+                <ScrollRow size="card">
                   {popular.map((t) => (
                     <ToolCard key={t.id} tool={t} chip={STUDIO_TABS.find((x) => x.ids.includes(t.id))?.label ?? "Studio"} size="lg" />
                   ))}
-                </div>
+                </ScrollRow>
               </section>
             )}
 

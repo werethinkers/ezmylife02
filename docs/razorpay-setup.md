@@ -57,7 +57,7 @@ This means the edge function is returning an error. Check:
 4. **Re-deploy the function:**
    - Make any small change to the .ts file
    - Commit and push to main
-   - Publish from Lovable to deploy the changes
+   - Push to `main`; Vercel deploys the website
 
 ### Payment works but shows "Edge Function returned a non-2xx status code"
 

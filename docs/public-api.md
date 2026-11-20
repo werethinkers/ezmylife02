@@ -45,6 +45,6 @@ apps with their own server function, browser text tools (through `ai-app`), and 
 
 ## Going live
 
-1. Apply `supabase/migrations/20261107150000_public_api_keys.sql` through the Lovable database connection.
+1. Apply `supabase/migrations/20261107150000_public_api_keys.sql` through the Supabase SQL editor.
 2. Merge and Publish as in `docs/launch-plan.md`, then confirm the `api` function answers
    `GET …/functions/v1/api/v1/apps?q=invoice`.

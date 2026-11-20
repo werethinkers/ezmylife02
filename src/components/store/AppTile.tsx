@@ -46,7 +46,7 @@ export function AppTile({
           openQuickLook(tool.id);
         }
       }}
-      aria-label={`${tool.name}, quick look`}
+      aria-label={`${tool.name}, see details`}
       style={{ background: `color-mix(in srgb, ${goal.color} 38%, hsl(var(--card)))` }}
       className={cn(
         "block-card block-lift fx-tilt group flex cursor-pointer flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -103,7 +103,7 @@ export function AppRow({ tool, rank, className }: { tool: CatalogTool; rank?: nu
           openQuickLook(tool.id);
         }
       }}
-      aria-label={`${tool.name}, quick look`}
+      aria-label={`${tool.name}, see details`}
       className={cn(
         "flex cursor-pointer items-center gap-3 rounded-xl border-2 border-transparent p-2 transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-ink hover:bg-card hover:shadow-block-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,

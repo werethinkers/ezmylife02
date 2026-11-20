@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/store/AppIcon";
 import { giveGetFor } from "@/data/goals";
 import SEOFooter from "@/components/SEOFooter";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 export interface LandingTool {
   id: string;
@@ -66,7 +67,7 @@ export function LandingBody({
               </div>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <ScrollRow size="card">
               {tools.map((t) => (
                 <Link key={t.id} to={`/tool/${t.id}`} className="block-card block-lift group flex flex-col gap-3 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <div className="flex items-center gap-3">
@@ -83,7 +84,7 @@ export function LandingBody({
                   </span>
                 </Link>
               ))}
-            </div>
+            </ScrollRow>
           )}
         </section>
 

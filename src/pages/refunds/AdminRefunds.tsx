@@ -15,7 +15,7 @@ const rpc = (name: string, args: Record<string, unknown> = {}) =>
 const explain = (e: unknown) => {
   const m = e instanceof Error ? e.message : String(e);
   if (/failed to send a request|failed to fetch|load failed|networkerror/i.test(m)) {
-    return "This button needs a server function that is not deployed yet. Publish the site from Lovable, then try again.";
+    return "This button needs a server function that is not deployed yet. Deploy it with the Supabase CLI, then try again.";
   }
   return m;
 };

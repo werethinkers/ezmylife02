@@ -16,6 +16,7 @@ import { seoFor } from "@/lib/seo/pages";
 import AppStoreBuyNotice from "@/components/wallet/AppStoreBuyNotice";
 import { canBuyInThisApp } from "@/lib/nativeApp";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /*
  * The one paid offer, at /kit. Every paid channel (influencer links, ads) lands here.
@@ -434,7 +435,7 @@ export default function Kit() {
       <section className="border-y-2 border-[#121212]" style={{ background: "#F4EBDC" }}>
         <div className={`${wrap} flex flex-col gap-[18px] pb-10 pt-9`}>
           <h2 className="m-0 text-[clamp(24px,3vw,32px)] font-extrabold leading-[1.18] tracking-[-0.015em]" style={display}>What {inr(KIT.inr)} gets done</h2>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3.5">
+          <ScrollRow size="app">
             {[
               { n: num(KIT.credits), t: "invoices, at 1 credit each", c: "#FFC800" },
               { n: num(KIT.credits / 2), t: "GST quotations, at 2 credits each", c: "#FF8FE9" },
@@ -446,7 +447,7 @@ export default function Kit() {
                 <span className="text-[15.5px] font-semibold leading-[1.3]">{x.t}</span>
               </div>
             ))}
-          </div>
+          </ScrollRow>
           {Pay({ text: `Get it all for ${inr(KIT.inr)}`, extra: "self-stretch" })}
           <Trust />
         </div>
@@ -493,7 +494,7 @@ export default function Kit() {
       {/* ---------- questions ---------- */}
       <section>
         <div className={`${wrap} pb-10`}>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
+          <ScrollRow size="card">
             {[
               ["Is this a subscription?", `No. You pay ${inr(KIT.inr)} once. Nothing renews on its own.`],
               ["What is a credit?", "One credit pays for one result, like one invoice. Most apps cost 1 to 3 credits, and you are charged only when an app gives you a result."],
@@ -504,7 +505,7 @@ export default function Kit() {
                 <p className="m-0 mt-1 text-[15px]" style={{ color: GREY }}>{a}</p>
               </div>
             ))}
-          </div>
+          </ScrollRow>
         </div>
       </section>
 

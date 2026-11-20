@@ -1,4 +1,4 @@
-import { aiFetch, getAiKey } from "../_shared/ai.ts";
+import { aiFetch } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -21,8 +21,6 @@ serve(async (req) => {
 
   try {
     const { images } = await req.json();
-    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const imageContents = images.map((img: string) => ({
       type: "image_url" as const,

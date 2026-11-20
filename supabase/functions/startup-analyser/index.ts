@@ -1,4 +1,4 @@
-import { aiFetch, getAiKey } from "../_shared/ai.ts";
+import { aiFetch } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -51,7 +51,7 @@ async function fetchDbGeminiKeys(): Promise<string[]> {
   } catch { return []; }
 }
 
-// Try Lovable AI first, then fallback to direct Gemini API with key rotation
+// Shared AI helper first, then direct Gemini API with key rotation
 class AIProviderError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -71,19 +71,16 @@ async function callAIWithFallback(
   let saw429 = false;
   let saw400 = false;
 
-  // 1. Try Lovable AI gateway
-  const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
-  if (LOVABLE_API_KEY) {
-    try {
-      const response = await aiFetch({ model, messages, stream });
-      if (response.ok) return response;
-      if (response.status === 402) saw402 = true;
-      if (response.status === 429) saw429 = true;
-      if (response.status === 400) saw400 = true;
-      console.warn(`Lovable AI returned ${response.status}, trying Gemini fallback keys...`);
-    } catch (e) {
-      console.warn("Lovable AI gateway error:", e);
-    }
+  // 1. Try the shared AI helper
+  try {
+    const response = await aiFetch({ model, messages, stream });
+    if (response.ok) return response;
+    if (response.status === 402) saw402 = true;
+    if (response.status === 429) saw429 = true;
+    if (response.status === 400) saw400 = true;
+    console.warn(`Shared AI helper returned ${response.status}, trying Gemini fallback keys...`);
+  } catch (e) {
+    console.warn("Shared AI helper error:", e);
   }
 
   // 3. Fallback to direct Gemini API keys (DB first, then env)

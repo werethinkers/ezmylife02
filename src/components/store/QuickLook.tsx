@@ -1,12 +1,9 @@
-import { Suspense, createContext, lazy, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { appPagePath } from "@/lib/appLink";
 
-/*
- * Quick Look: tap any app to see its screenshots, price and an Open button in a sheet
- * (bottom drawer you can swipe down on phones, side panel on desktop). Esc closes it.
- * The sheet's code loads on first use so it doesn't slow down the first page view.
- */
-
-const QuickLookPanel = lazy(() => import("./QuickLookPanel"));
+/* Tapping any app opens its full store page (src/pages/PromoPage.tsx). */
 
 interface QuickLookCtx {
   openQuickLook: (toolId: string) => void;
@@ -17,21 +14,12 @@ const Ctx = createContext<QuickLookCtx>({ openQuickLook: () => {} });
 export const useQuickLook = () => useContext(Ctx);
 
 export function QuickLookProvider({ children }: { children: ReactNode }) {
-  const [toolId, setToolId] = useState<string | null>(null);
-  const [used, setUsed] = useState(false);
-  const openQuickLook = useCallback((id: string) => {
-    setUsed(true);
-    setToolId(id);
-  }, []);
-  const value = useMemo(() => ({ openQuickLook }), [openQuickLook]);
-  return (
-    <Ctx.Provider value={value}>
-      {children}
-      {used && (
-        <Suspense fallback={null}>
-          <QuickLookPanel toolId={toolId} onClose={() => setToolId(null)} />
-        </Suspense>
-      )}
-    </Ctx.Provider>
+  const navigate = useNavigate();
+  const { data: catalog = [] } = useToolsCatalog();
+  const openQuickLook = useCallback(
+    (id: string) => navigate(appPagePath(catalog.find((t) => t.id === id) ?? { id })),
+    [navigate, catalog],
   );
+  const value = useMemo(() => ({ openQuickLook }), [openQuickLook]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

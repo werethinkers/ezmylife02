@@ -1,9 +1,8 @@
-import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { isIosApp } from "./nativeApp";
 
 /*
- * Google sign-in. In a browser it is the normal Lovable flow. Inside the iPhone app Google refuses to sign
+ * Google sign-in. In a browser it is the normal Supabase redirect flow. Inside the iPhone app Google refuses to sign
  * in from an app's own web view, so the app opens the sign-in in Safari's secure window instead and Safari
  * sends the result back to the app through the ezyourlife:// link (registered in ios/App/App/Info.plist).
  * See docs/ios-app.md.
@@ -87,6 +86,6 @@ export async function googleSignIn(redirect_uri: string): Promise<Result> {
     if (!r.error && !r.cancelled) window.location.assign("/auth/callback");
     return r;
   }
-  const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri });
+  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirect_uri } });
   return { error: error ?? null };
 }

@@ -55,7 +55,7 @@ The current price tiers (1, 2 and 3 credits) were set by how complex each app is
 
 ## Notes
 
-- The hidden "thinking" fix in PR #2 is already counted here. Without it, Flash apps on the Lovable gateway cost up to about twice the figures above.
+- The hidden "thinking" fix in PR #2 is already counted here. Without it, Flash apps cost up to about twice the figures above.
 - ProductVision on Gemini 3.1 Flash-Lite Image is about 14% cheaper per image than today's model, and Google names it as the replacement. It should be tested on a few real product photos before switching.
 - Not repriced yet (model or size not checked): calculators and other apps charged per use, Google Business kit, contract drafter, Startup Analyser, Virasat, and the browser image tools.
-- Fixed overheads (Lovable plan, domain, Supabase) are not covered by price alone at today's volume of about 10 runs a month. More paid runs are what covers them.
+- Fixed overheads (hosting, domain, Supabase) are not covered by price alone at today's volume of about 10 runs a month. More paid runs are what covers them.

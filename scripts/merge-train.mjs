@@ -126,6 +126,6 @@ function ensureReleasePr() {
   if (open.status !== 0 || open.stdout.trim() !== "0") return;
   const r = spawnSync("gh", ["pr", "create", "--draft", "--base", "main", "--head", "staging",
     "--title", "Release: staging into main",
-    "--body", "Everything merged into staging since the last release. Merge with a merge commit (not squash) only when Abhijay says go, then Publish in Lovable. See docs/branching.md."], { encoding: "utf8" });
+    "--body", "Everything merged into staging since the last release. Merge with a merge commit (not squash) only when Abhijay says go; Vercel deploys main. See docs/branching.md."], { encoding: "utf8" });
   log(r.status === 0 ? `Opened release PR: ${r.stdout.trim()}` : `Could not open the release PR: ${r.stderr.trim()}`);
 }

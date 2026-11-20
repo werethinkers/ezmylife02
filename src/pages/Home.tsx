@@ -14,7 +14,7 @@ import { seoFor } from "@/lib/seo/pages";
 import { cn } from "@/lib/utils";
 import { STUDIO_IDS, studioTabOf } from "@/data/studios";
 import { POPULAR_STUDIO_IDS } from "@/data/studioPicks";
-import { categoriesOf } from "@/data/goals";
+import { GOALS, categoriesOf, categoryInfo } from "@/data/goals";
 import { placedIn } from "@/data/placements";
 import { APP_PREVIEW_IDS } from "@/data/previewManifest";
 import { ModernPage } from "@/components/modern/ModernPage";
@@ -25,6 +25,9 @@ import type { DesignSummary } from "@/components/modern/home/DesignFeed";
 import type { DesignLite } from "@/components/modern/designLite";
 import { CardSkeleton, CtaBand, EmptyState, SectionHead } from "@/components/modern/ui";
 import { BTN_INK, BTN_OUTLINE, BTN_PRIMARY, CONTAINER, EYEBROW, FOCUS_RING, creditsLabel, pillClass, roundedLabel } from "@/components/modern/styles";
+import { ScrollRow } from "@/components/ui/scroll-row";
+import { Marquee } from "@/components/ui/marquee";
+import { NumberTicker } from "@/components/ui/number-ticker";
 
 // The website and card designs are a large catalogue: load them after the first screen is up.
 const DesignFeed = lazy(() => import("@/components/modern/home/DesignFeed"));
@@ -95,22 +98,32 @@ const uniqueTools = (lists: CatalogTool[][]) => {
 const twoWithPicture = <T,>(xs: T[], hasPicture: (x: T) => boolean) => [...xs.filter(hasPicture), ...xs.filter((x) => !hasPicture(x))].slice(0, 2);
 
 const PILLAR_TONES = {
-  orange: { box: "bg-gradient-to-br from-orange-600 to-amber-600 text-white", chip: "bg-white/20", line: "text-orange-50", steps: "text-white/75", go: "text-white" },
-  ink: { box: "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white", chip: "bg-white/20", line: "text-zinc-300", steps: "text-zinc-400", go: "text-white" },
-  night: { box: "border border-zinc-800 bg-zinc-900 text-white", chip: "bg-amber-400 text-zinc-950", line: "text-zinc-300", steps: "text-zinc-400", go: "text-amber-300" },
+  orange: { box: "border-2 border-ink bg-sun text-ink shadow-block", chip: "bg-ink/15 text-ink", line: "text-ink/80", steps: "text-ink/60", go: "text-ink" },
+  ink: { box: "border-2 border-ink bg-ink text-cream shadow-block", chip: "bg-cream/20 text-cream", line: "text-cream/80", steps: "text-cream/60", go: "text-cream" },
+  night: { box: "border-2 border-ink bg-ink text-cream shadow-block", chip: "bg-sun text-ink", line: "text-cream/80", steps: "text-cream/60", go: "text-sun" },
   paper: {
-    box: "border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
-    chip: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
-    line: "text-zinc-600 dark:text-zinc-400",
-    steps: "text-zinc-500 dark:text-zinc-500",
-    go: "text-orange-700 dark:text-orange-400",
+    box: "border-2 border-ink bg-card shadow-block",
+    chip: "bg-sand text-ink",
+    line: "text-muted-foreground",
+    steps: "text-muted-foreground",
+    go: "text-primary",
   },
 } as const;
 
 function Stat({ value, label }: { value: string; label: string }) {
+  const m = value.match(/^(\d+)(\+?)$/);
   return (
     <div className="flex items-center gap-2">
-      <span className="font-display text-base font-bold text-zinc-900 dark:text-white">{value}</span>
+      <span className="font-display text-base font-bold text-ink">
+        {m ? (
+          <>
+            <NumberTicker value={Number(m[1])} />
+            {m[2]}
+          </>
+        ) : (
+          value
+        )}
+      </span>
       <span>{label}</span>
     </div>
   );
@@ -190,6 +203,24 @@ const Home = () => {
   ].filter((t) => t.items.length > 0);
   const moreTab = moreTabs.find((t) => t.id === more) ?? moreTabs[0];
 
+  // The moving strip: apps placed there, then the team's picks, then the newest.
+  const strip = useMemo(
+    () => uniqueTools([placedIn(live, "home-strip"), editorsPicks, newest, live]).slice(0, 30).map((t) => t.name),
+    [live, editorsPicks, newest],
+  );
+  // Apps per goal for "Browse by what you need".
+  const goalCounts = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    live.forEach((t) =>
+      categoriesOf(t).forEach((c) => {
+        const g = categoryInfo(c).goal;
+        if (!m.has(g)) m.set(g, new Set());
+        m.get(g)!.add(t.id);
+      }),
+    );
+    return m;
+  }, [live]);
+
   const lowestCost = (tools: CatalogTool[]) => (tools.length ? Math.min(...tools.map((t) => costOf(t.id))) : null);
   const appCost = lowestCost(live.filter((t) => !STUDIO_IDS.has(t.id)));
 
@@ -268,7 +299,6 @@ const Home = () => {
     if (query) navigate(`/ai-apps?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const topGrid = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
 
   return (
     <ModernPage section="home">
@@ -283,59 +313,59 @@ const Home = () => {
       <main>
         {/* ───────── Hero ───────── */}
         <section id="hero" className="relative overflow-hidden pb-14 pt-10 sm:pb-20 sm:pt-14">
-          <div className="pointer-events-none absolute -top-24 left-1/2 h-[360px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-orange-500/20 via-amber-400/15 to-emerald-400/15 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-[360px] w-[720px] -translate-x-1/2 rounded-full bg-sun/10 blur-3xl" />
           <div className={cn(CONTAINER, "relative")}>
             <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
               <div className="min-w-0 space-y-6 lg:col-span-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold shadow-soft-sm dark:border-zinc-800 dark:bg-zinc-900">
-                  <span className="rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white">India</span>
-                  <span className="text-zinc-600 dark:text-zinc-300">For small businesses · Pay only for results</span>
+                <div className="inline-flex items-center gap-2 rounded-full border-2 border-ink bg-card px-3 py-1 text-xs font-semibold shadow-block-sm">
+                  <span className="rounded-full bg-pink px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-ink">India</span>
+                  <span className="text-muted-foreground">For small businesses · Pay only for results</span>
                 </div>
 
                 <h1 className="font-display text-4xl font-bold leading-[1.06] tracking-tight sm:text-5xl lg:text-[54px]">
                   Run your whole business{" "}
-                  <span className="bg-gradient-to-r from-orange-600 via-amber-500 to-rose-500 bg-clip-text text-transparent">from one place.</span>
+                  <span className="text-gradient-amber">from one place.</span>
                 </h1>
 
-                <p className="max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-zinc-400">
-                  {countLabel} ready apps for <strong className="text-zinc-900 dark:text-zinc-100">bills, customers, staff and photos</strong>, plus{" "}
-                  <strong className="text-zinc-900 dark:text-zinc-100">websites and cards</strong> you make in minutes.
+                <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                  {countLabel} ready apps for <strong className="text-ink">bills, customers, staff and photos</strong>, plus{" "}
+                  <strong className="text-ink">websites and cards</strong> you make in minutes.
                   {studioCount >= 10 && (
                     <>
                       {" "}
-                      Plus {studioLabel} <strong className="text-zinc-900 dark:text-zinc-100">studios</strong> that finish big jobs for you.
+                      Plus {studioLabel} <strong className="text-ink">studios</strong> that finish big jobs for you.
                     </>
                   )}{" "}
                   Pay only when an app gives you a result. Start with 100 free credits.
                 </p>
 
                 <form onSubmit={onSearch} role="search" className="max-w-xl">
-                  <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-soft-lg shadow-zinc-950/5 transition focus-within:ring-2 focus-within:ring-orange-500 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Search className="ml-3 h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+                  <div className="flex items-center gap-2 rounded-2xl border-2 border-ink bg-card p-1.5 shadow-block transition focus-within:ring-2 focus-within:ring-ring">
+                    <Search className="ml-3 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
                     <input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="What do you need? GST bill, passport photo…"
                       aria-label="Search apps"
-                      className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-base placeholder:text-zinc-400 focus:outline-none sm:text-sm"
+                      className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-base placeholder:text-muted-foreground focus:outline-none sm:text-sm"
                     />
                     {search && (
-                      <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className={cn("shrink-0 rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800", FOCUS_RING)}>
+                      <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className={cn("shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-sand", FOCUS_RING)}>
                         <X className="h-4 w-4" aria-hidden />
                       </button>
                     )}
-                    <button type="submit" className={cn("shrink-0 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-700", FOCUS_RING)}>
+                    <button type="submit" className={cn("shrink-0 rounded-xl border-2 border-ink bg-ink px-4 py-2.5 text-sm font-semibold text-cream shadow-block-sm transition hover:opacity-90", FOCUS_RING)}>
                       Find
                     </button>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">People search:</span>
+                  <div className="ez-chips mt-3">
+                    <span className="text-xs font-medium text-muted-foreground">People search:</span>
                     {POPULAR_SEARCHES.map((q) => (
                       <Link
                         key={q}
                         to={`/ai-apps?q=${encodeURIComponent(q)}`}
                         className={cn(
-                          "rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium transition hover:bg-orange-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-orange-950/60",
+                          "rounded-full border-2 border-ink/30 bg-sand px-3 py-1 text-xs font-medium transition hover:border-ink hover:bg-sun",
                           FOCUS_RING,
                         )}
                       >
@@ -345,15 +375,15 @@ const Home = () => {
                   </div>
                 </form>
 
-                <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="ez-chips gap-6 pt-2 text-xs text-muted-foreground">
                   <Stat value={countLabel} label="Business apps" />
                   {hasStudios && (
                     <>
-                      <span className="hidden h-4 w-px bg-zinc-300 sm:block dark:bg-zinc-800" aria-hidden />
+                      <span className="hidden h-4 w-px bg-ink/20 sm:block" aria-hidden />
                       <Stat value={studioLabel} label="Studios" />
                     </>
                   )}
-                  <span className="hidden h-4 w-px bg-zinc-300 sm:block dark:bg-zinc-800" aria-hidden />
+                  <span className="hidden h-4 w-px bg-ink/20 sm:block" aria-hidden />
                   <Stat value={designs ? roundedLabel(designs.total) : "…"} label="Website & card designs" />
                 </div>
               </div>
@@ -365,11 +395,13 @@ const Home = () => {
           </div>
         </section>
 
+        {strip.length > 0 && <Marquee items={strip} itemClassName="font-display text-sm font-bold sm:text-base" />}
+
         {/* ───────── Top 10 (or search results) ───────── */}
         <section
           id="top-10"
           aria-live={query ? "polite" : undefined}
-          className="scroll-mt-20 border-t border-zinc-200/80 bg-[#F2F0EA]/70 py-14 dark:border-zinc-800/80 dark:bg-[#14171D]/70"
+          className="scroll-mt-20 border-t-2 border-ink/15 bg-sand/40 py-14"
         >
           <div className={CONTAINER}>
             {query ? (
@@ -378,7 +410,7 @@ const Home = () => {
                   eyebrow="Search"
                   title={
                     <>
-                      Results for “{search.trim()}” <span className="text-base font-normal text-zinc-500 dark:text-zinc-400">({results.length})</span>
+                      {search.trim()} <span className="text-base font-normal text-muted-foreground">({results.length})</span>
                     </>
                   }
                   action={
@@ -393,11 +425,11 @@ const Home = () => {
                   }
                 />
                 {results.length ? (
-                  <div className={topGrid}>
+                  <ScrollRow size="card">
                     {results.map((t) => (
                       <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} />
                     ))}
-                  </div>
+                  </ScrollRow>
                 ) : (
                   <EmptyState message="No apps match that search." action="Clear search" onAction={() => setSearch("")} />
                 )}
@@ -409,7 +441,7 @@ const Home = () => {
                   title="Top 10 to start with"
                   line="Websites, cards and invites, studios and quick business apps: the ones we would open first."
                   action={
-                    <div role="group" aria-label="Show in the top 10" className="flex flex-wrap gap-2">
+                    <div role="group" aria-label="Show in the top 10" className="ez-chips">
                       {TOP_FILTERS.map((f) => (
                         <button key={f.id} type="button" aria-pressed={topKind === f.id} onClick={() => setTopKind(f.id)} className={pillClass(topKind === f.id)}>
                           {f.label}
@@ -419,13 +451,13 @@ const Home = () => {
                   }
                 />
                 {loadingApps ? (
-                  <div className={topGrid}>
+                  <ScrollRow size="card">
                     {TOP_PATTERN.map((k, i) => (
                       <CardSkeleton key={`${k}-${i}`} />
                     ))}
-                  </div>
+                  </ScrollRow>
                 ) : topShown.length ? (
-                  <div className={topGrid}>
+                  <ScrollRow size="card">
                     {topShown.map((x) =>
                       x.pending ? (
                         <CardSkeleton key={x.key} />
@@ -435,7 +467,7 @@ const Home = () => {
                         <ToolCard key={x.key} tool={x.tool} rank={x.rank} chip={KIND_CHIP[x.kind]} />
                       ) : null,
                     )}
-                  </div>
+                  </ScrollRow>
                 ) : (
                   <EmptyState message="Nothing of this kind in the top 10 right now." action="Show all 10" onAction={() => setTopKind("all")} />
                 )}
@@ -448,14 +480,14 @@ const Home = () => {
         <section id="pillars" className="py-14">
           <div className={CONTAINER}>
             <div className="mb-8">
-              <span className={cn(EYEBROW, "text-amber-700 dark:text-amber-400")}>Everything in one place</span>
+              <span className={EYEBROW}>Everything in one place</span>
               <h2 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">What do you want to do today?</h2>
             </div>
-            <div className={cn("grid gap-4 md:grid-cols-2", pillars.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+            <ScrollRow size="wide" label="Ways to start">
               {pillars.map((p) => {
                 const tone = PILLAR_TONES[p.tone];
                 return (
-                  <Link key={p.to} to={p.to} className={cn("ez-lift flex min-h-[210px] flex-col justify-between rounded-3xl p-6", tone.box, FOCUS_RING)}>
+                  <Link key={p.to} to={p.to} className={cn("block-lift flex min-h-[210px] flex-col justify-between rounded-2xl p-6", tone.box, FOCUS_RING)}>
                     <div>
                       <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold", tone.chip)}>{p.chip}</span>
                       <h3 className="mt-4 font-display text-xl font-bold">{p.title}</h3>
@@ -468,13 +500,39 @@ const Home = () => {
                   </Link>
                 );
               })}
-            </div>
+            </ScrollRow>
           </div>
         </section>
 
+        {/* ───────── Browse by what you need ───────── */}
+        {goalCounts.size > 0 && (
+          <section className="border-t-2 border-ink/15 py-14">
+            <div className={CONTAINER}>
+              <SectionHead eyebrow="Browse" title="Browse by what you need" line="Every app sorted by what it does for your business." />
+              <ScrollRow size="step" label="Browse by what you need">
+                {GOALS.filter((g) => g.id !== "more" && (goalCounts.get(g.id)?.size ?? 0) > 0).map((g) => (
+                  <Link
+                    key={g.id}
+                    to={`/ai-apps?goal=${g.id}`}
+                    className={cn("block-lift flex min-h-[170px] flex-col gap-2 rounded-2xl border-2 border-ink p-5 shadow-block-sm", FOCUS_RING)}
+                    style={{ background: g.color }}
+                  >
+                    <span className="w-fit rounded-full border-2 border-ink bg-card/80 px-2.5 py-0.5 text-xs font-bold">{goalCounts.get(g.id)?.size} apps</span>
+                    <span className="mt-auto font-display text-lg font-extrabold leading-tight">{g.name}</span>
+                    <span className="text-sm leading-snug text-ink/80">{g.line}</span>
+                    <span className="inline-flex items-center gap-1 text-sm font-bold">
+                      Browse <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                    </span>
+                  </Link>
+                ))}
+              </ScrollRow>
+            </div>
+          </section>
+        )}
+
         {/* ───────── New and cheapest ───────── */}
         {moreTab && (
-          <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800/80">
+          <section className="border-t-2 border-ink/15 py-14">
             <div className={CONTAINER}>
               <SectionHead
                 eyebrow="Keep exploring"
@@ -482,7 +540,7 @@ const Home = () => {
                 line={moreTab.line}
                 action={
                   moreTabs.length > 1 && (
-                    <div role="group" aria-label="Show" className="flex flex-wrap gap-2">
+                    <div role="group" aria-label="Show" className="ez-chips">
                       {moreTabs.map((t) => (
                         <button key={t.id} type="button" aria-pressed={moreTab.id === t.id} onClick={() => setMore(t.id)} className={pillClass(moreTab.id === t.id)}>
                           {t.label}
@@ -492,11 +550,11 @@ const Home = () => {
                   )
                 }
               />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <ScrollRow size="card">
                 {moreTab.items.map((t) => (
                   <ToolCard key={t.id} tool={t} chip={STUDIO_IDS.has(t.id) ? "Studio" : t.category} />
                 ))}
-              </div>
+              </ScrollRow>
               <Link to="/ai-apps" className={cn(BTN_OUTLINE, "mt-6")}>
                 See all {countLabel} apps <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
@@ -505,38 +563,38 @@ const Home = () => {
         )}
 
         {/* ───────── Earn ───────── */}
-        <section id="earn" className="scroll-mt-24 border-t border-zinc-200/80 py-14 dark:border-zinc-800/80">
+        <section id="earn" className="scroll-mt-24 border-t-2 border-ink/15 py-14">
           <div className={CONTAINER}>
             <SectionHead eyebrow="Earn with us" title="Earn with Ezyourlife" line="Two ways to earn from what you already have: your followers, or an app you built." />
-            <div className="grid gap-4 md:grid-cols-2">
+            <ScrollRow size="wide" label="Ways to earn">
               {EARN_LINKS.map((l, i) => (
                 <Link
                   key={l.to}
                   to={l.to}
                   className={cn(
-                    "ez-lift flex flex-col justify-between gap-6 rounded-3xl p-6",
-                    i === 0 ? "border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" : "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white",
+                    "block-lift flex flex-col justify-between gap-6 rounded-2xl p-6",
+                    i === 0 ? "border-2 border-ink bg-card shadow-block" : "border-2 border-ink bg-ink text-cream shadow-block",
                     FOCUS_RING,
                   )}
                 >
                   <div>
-                    <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl", i === 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" : "bg-white/15")}>
+                    <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl border-2", i === 0 ? "border-ink bg-sun text-ink" : "border-cream/30 bg-cream/15 text-cream")}>
                       <l.Icon className="h-5 w-5" aria-hidden />
                     </span>
                     <h3 className="mt-4 font-display text-xl font-bold">{l.label}</h3>
-                    <p className={cn("mt-1.5 text-sm", i === 0 ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-300")}>{l.line}</p>
+                    <p className={cn("mt-1.5 text-sm", i === 0 ? "text-muted-foreground" : "text-cream/70")}>{l.line}</p>
                   </div>
-                  <span className={cn("inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4", i === 0 ? "text-orange-700 dark:text-orange-400" : "text-amber-300")}>
+                  <span className={cn("inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4", i === 0 ? "text-primary" : "text-sun")}>
                     {i === 0 ? "Join free" : "List your app"} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                   </span>
                 </Link>
               ))}
-            </div>
+            </ScrollRow>
           </div>
         </section>
 
         {/* ───────── Credits ───────── */}
-        <section id="credits" className="scroll-mt-24 border-t border-zinc-200/80 py-12 dark:border-zinc-800/80">
+        <section id="credits" className="scroll-mt-24 border-t-2 border-ink/15 py-12">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
             {user ? (
               <CtaBand chip="Pay per result" title="One wallet for every app." line="Credits never tie you to a plan, and failed runs are free.">
@@ -553,7 +611,7 @@ const Home = () => {
                 <Link to="/auth?mode=signup" className={BTN_PRIMARY}>
                   Claim free credits
                 </Link>
-                <Link to="/credits" className={cn("inline-flex items-center rounded-xl border border-white/25 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10", FOCUS_RING)}>
+                <Link to="/credits" className={cn("inline-flex items-center rounded-xl border border-cream/30 px-5 py-2.5 text-sm font-bold text-cream transition hover:bg-cream/10", FOCUS_RING)}>
                   See prices
                 </Link>
               </CtaBand>

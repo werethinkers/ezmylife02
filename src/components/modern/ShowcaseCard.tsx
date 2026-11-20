@@ -8,7 +8,7 @@ import { FOCUS_RING } from "./styles";
  * fade at the bottom carries the price, the name and one white button.
  *
  * It works one of three ways:
- * - `onOpen`: the whole card is one button (apps open Quick Look);
+ * - `onOpen`: the whole card is one button (apps open their store page);
  * - `to`: the whole card is one link;
  * - `to` and `actionTo`: the card links to `to`, and the white button is its own link to `actionTo`
  *   (designs: the card shows the design, the button starts making it);
@@ -48,11 +48,11 @@ export function ShowcaseCard({
   const split = !!to && !!actionTo;
   const still = !onOpen && !to;
   const actionClass = still
-    ? "shrink-0 rounded-xl bg-white/15 px-3 py-1.5 text-xs font-bold text-white"
-    : "shrink-0 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-zinc-950 transition";
+    ? "shrink-0 rounded-lg border border-ink/30 bg-cream/20 px-3 py-1.5 text-xs font-bold text-cream"
+    : "shrink-0 rounded-lg border-2 border-ink bg-cream px-3 py-1.5 text-xs font-bold text-ink transition";
   const box = cn(
-    !still && "ez-lift",
-    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 text-left shadow-soft-sm dark:border-zinc-800 dark:bg-zinc-900",
+    !still && "block-lift",
+    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block-sm",
     size === "lg" ? "min-h-[260px]" : "min-h-[240px]",
     className,
   );
@@ -64,25 +64,25 @@ export function ShowcaseCard({
       <div className="pointer-events-none absolute inset-0">{media}</div>
       <div className="relative flex items-center justify-between gap-2 p-3">
         {rank != null ? (
-          <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br font-display text-xs font-bold text-white shadow-soft", gradient)}>
+          <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg border-2 border-ink font-display text-xs font-bold text-ink shadow-block-sm", gradient ?? "bg-sun")}>
             #{rank}
           </span>
         ) : (
           <span />
         )}
-        {chip && <span className="truncate rounded-full bg-zinc-950/75 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">{chip}</span>}
+        {chip && <span className="truncate rounded-full border border-ink/40 bg-ink/80 px-2 py-0.5 text-[11px] font-semibold text-cream">{chip}</span>}
       </div>
-      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-zinc-950/95 via-zinc-950/80 to-transparent p-3.5 pt-12 text-white">
+      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-ink/95 via-ink/80 to-transparent p-3.5 pt-12 text-cream">
         <div className="min-w-0">
-          {price && <span className="block text-[10px] font-bold text-amber-300">{price}</span>}
+          {price && <span className="block text-[10px] font-bold text-sun">{price}</span>}
           <h3 className={cn("line-clamp-2 font-display font-bold leading-snug", size === "lg" ? "text-base" : "text-sm")}>{title}</h3>
         </div>
         {split ? (
-          <Link to={actionTo!} className={cn(actionClass, "relative z-30 hover:bg-orange-500 hover:text-white", FOCUS_RING)}>
+          <Link to={actionTo!} className={cn(actionClass, "relative z-30 hover:bg-sun hover:text-ink", FOCUS_RING)}>
             {action}
           </Link>
         ) : (
-          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-orange-500 group-hover:text-white")}>
+          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-sun group-hover:text-ink")}>
             {action}
           </span>
         )}

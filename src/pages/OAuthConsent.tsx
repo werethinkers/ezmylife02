@@ -11,7 +11,7 @@ type OAuthResult = {
 };
 
 // The consent calls go straight to the auth server. The supabase.auth.oauth helper only exists in
-// newer supabase-js versions, and the Lovable build (bun.lock) uses an older one, where
+// newer supabase-js versions, and the production build (bun.lock) uses an older one, where
 // `supabase.auth.oauth` is undefined and this page stayed on its loading spinner forever.
 const AUTH_URL = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1`;
 

@@ -9,6 +9,7 @@ import { fmtCredits } from "@/lib/creditRate";
 import type { Product } from "@/instant/types";
 import { cn } from "@/lib/utils";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** Products whose /make page uses the editorial layout below instead of the shared promo layout. */
 export const EDITORIAL_PROMOS = new Set<string>(["get-well-soon"]);
@@ -164,7 +165,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
       <section aria-labelledby="how-h" className="bg-ink text-cream">
         <div className="mx-auto max-w-7xl px-4 py-16 md:py-24">
           <h2 id="how-h" className="font-display text-3xl font-extrabold md:text-5xl">How it <span className="text-sun">works</span></h2>
-          <ol className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+          <ScrollRow as="ol" size="step" className="mt-10">
             {promo.steps.map(([t, d], i) => (
               <li key={t} className="border-t-2 border-cream pt-5">
                 <span className="font-display text-6xl font-extrabold leading-none text-sun md:text-7xl">{String(i + 1).padStart(2, "0")}</span>
@@ -172,7 +173,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
                 <p className="mt-2 text-lg text-cream/85">{d}</p>
               </li>
             ))}
-          </ol>
+          </ScrollRow>
         </div>
       </section>
 
@@ -180,7 +181,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
         {/* WHAT YOU GET */}
         <section aria-labelledby="feat-h" className="pt-16 md:pt-24">
           <h2 id="feat-h" className="font-display text-3xl font-extrabold md:text-5xl">What you <span className="marker">get</span></h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-12">
+          <ScrollRow size="card" className="mt-10">
             {promo.features.map((f, i) => {
               const t = TILES[i % TILES.length];
               return (
@@ -193,7 +194,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
                 </div>
               );
             })}
-          </div>
+          </ScrollRow>
         </section>
 
         {/* PRICE */}
@@ -234,7 +235,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
         {related.length > 0 && (
           <section aria-labelledby="rel-h" className="pt-16 md:pt-24">
             <h2 id="rel-h" className="font-display text-3xl font-extrabold md:text-5xl">Other <span className="marker">designs</span></h2>
-            <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <ScrollRow size="app" className="mt-10">
               {related.map(({ product: r, credits: rp }) => (
                 <Link key={r.id} to={`/make/${r.id}`} className="block-card block-lift p-4">
                   <span className="text-4xl" aria-hidden="true">{r.glyph}</span>
@@ -242,7 +243,7 @@ export function EditorialPromo({ product, promo, priceText, hasPrice, hosting, c
                   <p className="mt-1 text-sm text-muted-foreground">{rp ? `${fmtCredits(rp)} once` : "Free"}</p>
                 </Link>
               ))}
-            </div>
+            </ScrollRow>
           </section>
         )}
 

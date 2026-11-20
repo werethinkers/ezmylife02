@@ -32,7 +32,7 @@ Added up this equals `ceil(mails x 0.08)` for every count (tested, 1 to 5000). `
 1. Run the migration.
 2. Add Supabase secrets: `MAIL_DESK_GOOGLE_CLIENT_ID`, `MAIL_DESK_GOOGLE_CLIENT_SECRET`, `MAIL_DESK_TOKEN_KEY` (64 hex characters: `openssl rand -hex 32`; it encrypts Gmail tokens, so do not lose it), and optionally `SITE_URL`.
 3. In Google Cloud: an OAuth client of type Web, with the redirect URI `https://<project>.supabase.co/functions/v1/mail-desk`, the `gmail.readonly` scope, and the consent screen set up. `gmail.readonly` is a restricted scope, so Google's app verification (and a security assessment) is needed before anyone outside the test users can connect.
-4. Deploy the function, then Publish in Lovable for the website.
+4. Deploy the function, then push to `main` (Vercel deploys the website).
 
 ## Not verified yet
 

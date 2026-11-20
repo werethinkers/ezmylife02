@@ -92,9 +92,8 @@ ${withStorage ? "- /storage/<bucket>/...  All files from public/private storage 
 NOTE on source code:
 The app's source code (React/TypeScript files) is NOT included here because the
 deployed browser app cannot read its own source. To download the full source code:
-  1. Open your Lovable project
-  2. Click the GitHub icon in the top bar (or push to GitHub from Lovable)
-  3. On GitHub, click "Code" → "Download ZIP"
+  1. Open the ezmylife02 repository on GitHub
+  2. Click "Code" → "Download ZIP"
 
 Keep this archive secure — it contains personal user data and credentials.
 `);
@@ -162,9 +161,8 @@ Keep this archive secure — it contains personal user data and credentials.
           codebase:
         </p>
         <ol className="list-decimal list-inside space-y-1">
-          <li>Open your project in Lovable</li>
-          <li>Click the <strong>GitHub</strong> icon in the top bar and push to GitHub (one-time)</li>
-          <li>On GitHub: <strong>Code → Download ZIP</strong></li>
+          <li>Open the <strong>ezmylife02</strong> repository on GitHub</li>
+          <li>Click <strong>Code → Download ZIP</strong></li>
         </ol>
         <Button variant="outline" size="sm" asChild className="mt-2">
           <a href={GITHUB_HINT_URL} target="_blank" rel="noreferrer">

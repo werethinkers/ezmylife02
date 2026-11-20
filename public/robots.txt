@@ -12,6 +12,5 @@ Disallow: /bulk/
 Disallow: /credits/history
 Disallow: /credits/success
 Disallow: /create/done/
-Disallow: /.lovable/
 
 Sitemap: https://ezyourlife.com/sitemap.xml

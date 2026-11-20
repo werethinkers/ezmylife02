@@ -31,7 +31,7 @@ interface Item {
   price: string;
   /** Lower-case text the search box matches against. */
   text: string;
-  /** App id, to open the quick look instead of leaving the page. */
+  /** App id, to open its store page. */
   appId?: string;
   /** One line under the name. */
   sub: string;
@@ -172,7 +172,7 @@ export default function AppDirectory({ apps }: { apps: CatalogTool[] }) {
   const designCount = blocks.find((b) => b.id === DESIGNS) ? count(blocks.find((b) => b.id === DESIGNS)!) : 0;
 
   const onItem = (e: React.MouseEvent, i: Item) => {
-    // Plain click on an app opens the quick look; new tab and crawlers follow the link.
+    // Plain click on an app opens its store page; new tab and crawlers follow the link.
     if (!i.appId || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
     openQuickLook(i.appId);

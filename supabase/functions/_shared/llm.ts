@@ -1,11 +1,9 @@
-// Shared model calls. Order (as chosen by the owner): Lovable AI gateway first, then the
-// project's own Gemini keys (DB table gemini_api_keys, then GEMINI_API_KEY_1..10 env vars).
+// Shared model calls on the project's own Gemini keys (DB table gemini_api_keys, then
+// GEMINI_API_KEY_1..10 env vars), moving to the next key when one fails.
 // No remote imports, so it type-checks offline.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
 
 export class ModelError extends Error {
@@ -59,7 +57,7 @@ function toGeminiContents(messages: ChatMessage[]) {
 const canSkipThinking = (model: string) => /flash/.test(model) && !/image/.test(model);
 
 export interface ChatOptions {
-  model?: string; // gateway id, e.g. "google/gemini-2.5-flash"
+  model?: string; // e.g. "google/gemini-2.5-flash"
   maxTokens?: number;
   json?: boolean;
   temperature?: number;
@@ -70,40 +68,6 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
   const model = opts.model ?? "google/gemini-2.5-flash";
   let lastStatus = 0;
   let lastText = "";
-
-  if (LOVABLE_API_KEY) {
-    try {
-      const send = (noThinking: boolean) =>
-        fetch(GATEWAY, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model,
-            messages,
-            max_tokens: opts.maxTokens,
-            temperature: opts.temperature,
-            ...(opts.json ? { response_format: { type: "json_object" } } : {}),
-            ...(noThinking ? { reasoning_effort: "none" } : {}),
-          }),
-        });
-      // 2.5 Flash "thinks" by default and the hidden reasoning tokens are billed as output, often
-      // more than the answer itself. Turn it off as on our own keys below; if the gateway rejects
-      // the setting, send the request again without it rather than failing.
-      const noThinking = canSkipThinking(model);
-      let r = await send(noThinking);
-      if (noThinking && r.status === 400) r = await send(false);
-      if (r.ok) {
-        const data = await r.json();
-        const text = data?.choices?.[0]?.message?.content;
-        if (typeof text === "string" && text.trim()) return text;
-      } else {
-        lastStatus = r.status;
-        lastText = (await r.text()).slice(0, 200);
-      }
-    } catch (e) {
-      lastText = String(e);
-    }
-  }
 
   const { system, contents } = toGeminiContents(messages);
   const geminiModel = model.replace(/^google\//, "");
@@ -162,23 +126,6 @@ export function parseJson<T = unknown>(text: string): T {
 export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image"): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
-
-  if (LOVABLE_API_KEY) {
-    try {
-      const r = await fetch(GATEWAY, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, modalities: ["image", "text"], messages: [{ role: "user", content }] }),
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const url = data?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        if (typeof url === "string" && url.startsWith("data:")) return url;
-      } else lastStatus = r.status;
-    } catch {
-      /* fall through */
-    }
-  }
 
   const { contents } = toGeminiContents([{ role: "user", content }]);
   const geminiModel = model.replace(/^google\//, "");

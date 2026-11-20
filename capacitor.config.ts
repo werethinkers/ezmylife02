@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /*
- * The iOS app is a shell around the live site: it opens https://ezyourlife.com, so every Publish
- * in Lovable reaches the app at once, with no App Store update. Only changes to this file, to
+ * The iOS app is a shell around the live site: it opens https://ezyourlife.com, so every deploy
+ * of the website reaches the app at once, with no App Store update. Only changes to this file, to
  * ios/ or to the native plugins in package.json need a new App Store build. See docs/ios-app.md.
  */
 const config: CapacitorConfig = {
@@ -18,7 +18,6 @@ const config: CapacitorConfig = {
     allowNavigation: [
       'ezyourlife.com',
       'www.ezyourlife.com',
-      'oauth.lovable.app',
       'appleid.apple.com',
       '*.supabase.co',
     ],

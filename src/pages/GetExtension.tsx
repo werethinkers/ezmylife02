@@ -8,6 +8,7 @@ import { downloadExtension } from '@/components/extension/ExtensionDownloader';
 import InstallationGuide from '@/components/extension/InstallationGuide';
 import { SEOHead } from '@/components/SEOHead';
 import SEOFooter from '@/components/SEOFooter';
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 type BrowserInfo = {
   name: string;
@@ -200,7 +201,7 @@ const GetExtension: React.FC = () => {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <ScrollRow size="card">
           {[
             { icon: <Zap className="w-5 h-5 text-yellow-400" />, title: 'Instant Expansion', desc: 'Type a shortcut key, it expands automatically' },
             { icon: <Globe className="w-5 h-5 text-blue-400" />, title: 'Works Everywhere', desc: 'ChatGPT, Gemini, Grok, Gmail, and more' },
@@ -212,7 +213,7 @@ const GetExtension: React.FC = () => {
               <p className="text-xs text-muted-foreground">{f.desc}</p>
             </div>
           ))}
-        </div>
+        </ScrollRow>
 
         {/* Detected Browser - Primary */}
         <div className={`p-6 rounded-2xl bg-sun border-2 border-ink relative overflow-hidden`}>
@@ -275,7 +276,7 @@ const GetExtension: React.FC = () => {
         {/* How It Works */}
         <div className="p-6 rounded-2xl bg-card border-2 border-ink space-y-4">
           <h3 className="text-lg font-semibold">How It Works</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <ScrollRow size="step">
             {[
               { step: '1', title: 'Install', desc: 'Load the extension in your browser' },
               { step: '2', title: 'Login', desc: 'Enter your EzMyLife credentials' },
@@ -290,7 +291,7 @@ const GetExtension: React.FC = () => {
                 <p className="text-xs text-muted-foreground">{s.desc}</p>
               </div>
             ))}
-          </div>
+          </ScrollRow>
         </div>
 
         {/* Video tutorial placeholder */}

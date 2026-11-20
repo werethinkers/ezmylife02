@@ -146,7 +146,7 @@ if (orphanSpecs.length) notes.push(`Server instructions without a catalogue row:
 const sharedScreens = d.catalogue.filter((t) => launchIds.has(t.id) === false && !(t.id in d.APPS) && d.nativeIds.has(t.id)).length;
 
 // AI access goes through supabase/functions/_shared/ai.ts (aiFetch) or _shared/llm.ts (chat/image),
-// so every app gets the Lovable key plus the backup Gemini keys. No function may call the gateway itself.
+// so every app rotates through the project's Gemini keys. No function may call Google's model endpoint itself.
 {
   const fs = await import("node:fs");
   const path = await import("node:path");
@@ -155,8 +155,8 @@ const sharedScreens = d.catalogue.filter((t) => launchIds.has(t.id) === false &&
   for (const name of fs.readdirSync(fnDir)) {
     const file = path.join(fnDir, name, "index.ts");
     if (name.startsWith("_") || !fs.existsSync(file)) continue;
-    if (fs.readFileSync(file, "utf8").includes("ai.gateway.lovable.dev"))
-      err(`supabase/functions/${name} calls the AI gateway directly — use aiFetch from _shared/ai.ts instead`);
+    if (fs.readFileSync(file, "utf8").includes("generativelanguage.googleapis.com/v1beta/openai"))
+      err(`supabase/functions/${name} calls the AI endpoint directly — use aiFetch from _shared/ai.ts instead`);
   }
 }
 

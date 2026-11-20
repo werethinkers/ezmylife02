@@ -16,6 +16,7 @@ import { DesignCard } from "@/components/modern/DesignCard";
 import { toDesignLite, type DesignLite } from "@/components/modern/designLite";
 import { EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
 import { CONTAINER, FOCUS_RING, pillClass, subPillClass } from "@/components/modern/styles";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 type Sort = "recommended" | "price-asc" | "price-desc" | "name";
 const PRICES = [
@@ -33,7 +34,6 @@ const SORTS: { id: Sort; name: string }[] = [
 ];
 /** Designs per category before "See all" when every category is shown. */
 const PER_CATEGORY = 8;
-const GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-4";
 
 const COPY = {
   websites: {
@@ -183,7 +183,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
           </div>
 
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Kind of design">
+            <div className="ez-chips" role="group" aria-label="Kind of design">
               <button type="button" aria-pressed={cat === "all"} onClick={() => set({ cat: null, type: null })} className={pillClass(cat === "all")}>
                 All designs <span className="tabular-nums opacity-70">({list.length})</span>
               </button>
@@ -194,7 +194,7 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
               ))}
             </div>
             {groupsOfCat.length > 1 && (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Type">
+              <div className="ez-chips" role="group" aria-label="Type">
                 <button type="button" aria-pressed={group === "all"} onClick={() => set({ type: null })} className={subPillClass(group === "all")}>
                   All
                 </button>
@@ -210,11 +210,11 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
           {!filtered && featured.length > 0 && (
             <section aria-labelledby="pop-h">
               <SectionHead id="pop-h" eyebrow="Our picks" title="Most loved" className="mb-5" />
-              <div className={GRID}>
+              <ScrollRow size="card">
                 {featured.map((l) => (
                   <DesignCard key={l.product.id} d={liteOf(l.product.id)} />
                 ))}
-              </div>
+              </ScrollRow>
             </section>
           )}
 
@@ -242,11 +242,11 @@ export default function CreateGallery({ kind }: { kind?: "websites" | "cards" })
                     <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{sh.items.length}</span>
                   )}
                 </div>
-                <div className={GRID}>
+                <ScrollRow size="card">
                   {(capped ? sh.items.slice(0, PER_CATEGORY) : sh.items).map((l) => (
                     <DesignCard key={l.product.id} d={liteOf(l.product.id)} />
                   ))}
-                </div>
+                </ScrollRow>
               </section>
             );
           })}

@@ -1,7 +1,7 @@
 # The iOS app
 
 The EZYOURLIFE iPhone app is a native shell (Capacitor 8) that opens https://ezyourlife.com.
-Every Publish in Lovable reaches the app straight away. People never update from the App Store
+Every website deploy reaches the app straight away. People never update from the App Store
 for website changes. Apple allows this as long as the app keeps doing what it was reviewed for.
 
 A new App Store build is needed only when the shell itself changes: `capacitor.config.ts`, the
@@ -32,8 +32,8 @@ A new App Store build is needed only when the shell itself changes: `capacitor.c
   app's own web view, so in the app the Google button opens Safari's secure window and Safari hands the
   result back through the `ezyourlife://oauth-callback` link (`src/lib/googleSignIn.ts`, URL scheme in
   `Info.plist`). **Not tested against the live sign-in service yet**: test it first on TestFlight. If Safari
-  shows an error about the return address, change `APP_OAUTH_REDIRECT` to `lovable://oauth-callback` (and the
-  scheme in `Info.plist` to `lovable`), which is the address Lovable's own app wrapper uses.
+  shows an error about the return address, add `ezyourlife://oauth-callback` to the redirect URLs in Supabase
+  Authentication settings.
 - **Buying:** Apple allows digital goods to be sold in an iOS app only through Apple's in-app purchase,
   and doesn't allow pointing people elsewhere to pay. So in the app the credit packs (₹100, ₹250, ₹500,
   ₹1,000 sizes: 180, 500, 1,100 and 2,200 credits, the same credits as the website) are paid with
@@ -46,7 +46,7 @@ A new App Store build is needed only when the shell itself changes: `capacitor.c
   the same pack costs more in the app than on the website.
 - **Downloads:** every download (PDFs, images, files made by apps) opens the share sheet with
   "Save to Files" and "Save Image".
-- **Links to other sites** open in Safari. Sign-in pages (`oauth.lovable.app`, `appleid.apple.com`,
+- **Links to other sites** open in Safari. Sign-in pages (`appleid.apple.com`,
   `*.supabase.co`) stay inside the app.
 - **No signal:** the app shows `offline.html` and reloads when the connection is back.
 - The app adds `EzyourlifeApp/1 (iOS)` to its user agent, so analytics can tell app visits apart.
@@ -85,8 +85,8 @@ at `/privacy`, which is the privacy address for the App Store listing.
 ## Going live, in order
 
 1. Release the website part as usual: merge the release PR into `main`, apply
-   `supabase/migrations/20261107200000_account_deletion_requests.sql` to the live database, Publish
-   in Lovable. Do this before sending the app to Apple, because the reviewer sees the live site.
+   `supabase/migrations/20261107200000_account_deletion_requests.sql` to the live database, push to
+   `main` (Vercel deploys). Do this before sending the app to Apple, because the reviewer sees the live site.
 2. Apple's side (Abhi, once):
    1. developer.apple.com → Certificates, Identifiers & Profiles → Identifiers → **+** → App IDs → App →
       Bundle ID **explicit** `com.ezyourlife.app`, description "EZYOURLIFE". No extra capabilities.
@@ -133,7 +133,7 @@ at `/privacy`, which is the privacy address for the App Store listing.
 
 ## Updating
 
-- Website change: Publish in Lovable. The app has it at once.
+- Website change: push to `main` (Vercel deploys). The app has it at once.
 - Shell change: run the workflow again with a higher version (`1.1`), then submit that version.
 
 ## Not done yet

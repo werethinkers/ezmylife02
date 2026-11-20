@@ -27,7 +27,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "Who we share it with",
-    body: "Only the services that help us run EZYOURLIFE: our hosting and database provider (Supabase, through Lovable Cloud), our AI provider (Google), Razorpay for payments on the website (we never see your full card details), Google Analytics to understand how the site is used, and email and WhatsApp services for messages you asked for. We may also share data when the law requires it.",
+    body: "Only the services that help us run EZYOURLIFE: our hosting and database provider (Supabase), our AI provider (Google), Razorpay for payments on the website (we never see your full card details), Google Analytics to understand how the site is used, and email and WhatsApp services for messages you asked for. We may also share data when the law requires it.",
   },
   {
     title: "Google accounts",

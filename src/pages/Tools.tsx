@@ -21,6 +21,7 @@ import { DesignCard } from "@/components/modern/DesignCard";
 import { toDesignLite } from "@/components/modern/designLite";
 import { EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
 import { BTN_OUTLINE, FOCUS_RING, CONTAINER, GOAL_GRADIENT, pillClass, subPillClass } from "@/components/modern/styles";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
@@ -28,7 +29,6 @@ const TAGS_SHOWN = 8;
 /** A type needs at least this many apps to be worth a chip. */
 const TAG_MIN_APPS = 3;
 
-const GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
 /** GOALS already ends with "More apps" and GOALS_WITH_MORE adds it again; keep the first so it shows once. */
 const GOAL_LIST = GOALS_WITH_MORE.filter((g, i, all) => all.findIndex((x) => x.id === g.id) === i);
 const linkish = cn("rounded font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING);
@@ -220,7 +220,7 @@ const Tools = () => {
 
           {/* Goal and category filters */}
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Show apps for">
+            <div className="ez-chips" role="group" aria-label="Show apps for">
               <button type="button" className={pillClass(!activeGoal)} aria-pressed={!activeGoal} onClick={() => set({ goal: null, category: null })}>
                 All apps <span className="tabular-nums opacity-70">({shown.length})</span>
               </button>
@@ -238,7 +238,7 @@ const Tools = () => {
               ))}
             </div>
             {activeGoal && (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Type of app">
+              <div className="ez-chips" role="group" aria-label="Type of app">
                 {(goals.find((g) => g.goal.id === activeGoal.id)?.cats ?? []).map(([c, tools]) => (
                   <button
                     key={c}
@@ -253,7 +253,7 @@ const Tools = () => {
               </div>
             )}
             {tagOptions.length > 1 && (
-              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by type">
+              <div className="ez-chips" role="group" aria-label="Filter by type">
                 <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Type:</span>
                 {tagsVisible.map((tg) => (
                   <button key={tg.key} type="button" aria-pressed={typeKey === tg.key} onClick={() => set({ type: typeKey === tg.key ? null : tg.key })} className={subPillClass(typeKey === tg.key)}>
@@ -290,22 +290,22 @@ const Tools = () => {
                 }
               />
               {results.length > 0 && (
-                <div className={GRID}>
+                <ScrollRow size="card">
                   {results.map((t) => (
                     <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
                   ))}
-                </div>
+                </ScrollRow>
               )}
               {designResults.length > 0 && (
                 <div>
                   <h3 className="mb-4 font-display text-lg font-bold">
                     Websites, cards & invites <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">({designResults.length})</span>
                   </h3>
-                  <div className={GRID}>
+                  <ScrollRow size="card">
                     {designResults.map((d) => (
                       <DesignCard key={d.id} d={d} chip={d.site ? "Website" : "Card / invite"} size="md" />
                     ))}
-                  </div>
+                  </ScrollRow>
                 </div>
               )}
               {results.length === 0 && designResults.length === 0 && (
@@ -318,11 +318,11 @@ const Tools = () => {
                 {catTools.length} app{catTools.length === 1 ? "" : "s"}
               </h2>
               {catTools.length ? (
-                <div className={GRID}>
+                <ScrollRow size="card">
                   {catTools.map((t) => (
                     <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} />
                   ))}
-                </div>
+                </ScrollRow>
               ) : (
                 <EmptyState
                   message={typeKey ? "No apps of this type here." : "No apps here yet."}
@@ -336,21 +336,21 @@ const Tools = () => {
               {!activeGoal && user && recent.length > 0 && (
                 <section>
                   <SectionHead eyebrow="Pick up where you left off" title="Your recent apps" className="mb-5" />
-                  <div className={GRID}>
+                  <ScrollRow size="card">
                     {recent.slice(0, PER_CATEGORY).map((t) => (
                       <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
                     ))}
-                  </div>
+                  </ScrollRow>
                 </section>
               )}
               {!activeGoal && hot.length > 0 && (
                 <section>
                   <SectionHead eyebrow="Picked by our team" title="Most useful to start" className="mb-5" />
-                  <div className={GRID}>
+                  <ScrollRow size="card">
                     {hot.slice(0, 12).map((t) => (
                       <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
                     ))}
-                  </div>
+                  </ScrollRow>
                 </section>
               )}
 
@@ -386,11 +386,11 @@ const Tools = () => {
                             </button>
                           )}
                         </div>
-                        <div className={GRID}>
+                        <ScrollRow size="card">
                           {tools.slice(0, PER_CATEGORY).map((t) => (
                             <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} />
                           ))}
-                        </div>
+                        </ScrollRow>
                       </div>
                     ))}
                   </div>

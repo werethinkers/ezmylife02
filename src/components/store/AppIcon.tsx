@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useToolMedia } from "@/hooks/useToolMedia";
 import { goalOf } from "@/data/goals";
@@ -35,22 +36,32 @@ export function AppIcon({
 }) {
   const media = useToolMedia(toolId, category);
   const goal = goalOf(category);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<string | null>(null);
+  const iconUrl = media.iconUrl && media.iconUrl !== failed ? media.iconUrl : null;
+  const showing = !!iconUrl && loaded === iconUrl;
+  // Initials show at once; the picture fades in over them only after it has really loaded.
   return (
     <div
       className={cn("relative shrink-0 overflow-hidden rounded-xl border-2 border-ink", SIZES[size], className)}
-      style={{ background: media.iconUrl ? "hsl(var(--card))" : goal.color }}
+      style={{ background: showing ? "hsl(var(--card))" : goal.color }}
     >
-      {media.iconUrl ? (
+      <div className="flex h-full w-full items-center justify-center font-display font-extrabold text-ink" aria-hidden>
+        {initials(name)}
+      </div>
+      {iconUrl && (
         <img
-          src={media.iconUrl}
+          src={iconUrl}
           alt=""
           loading="lazy"
-          className={cn("h-full w-full", media.iconFit === "contain" ? "object-contain p-1.5" : "object-cover")}
+          onLoad={() => setLoaded(iconUrl)}
+          onError={() => setFailed(iconUrl)}
+          className={cn(
+            "absolute inset-0 h-full w-full bg-card transition-opacity duration-200",
+            media.iconFit === "contain" ? "object-contain p-1.5" : "object-cover",
+            showing ? "opacity-100" : "opacity-0",
+          )}
         />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center font-display font-extrabold text-ink" aria-hidden>
-          {initials(name)}
-        </div>
       )}
       <span className="sr-only">{name}</span>
     </div>

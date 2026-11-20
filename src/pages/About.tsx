@@ -27,6 +27,7 @@ import { seoFor } from "@/lib/seo/pages";
 import { ModernPage } from "@/components/modern/ModernPage";
 import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, EYEBROW, FOCUS_RING } from "@/components/modern/styles";
 import { cn } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const SUPPORT_EMAIL = "support@ezyourlife.com";
 
@@ -237,7 +238,7 @@ const About = () => {
                   </p>
                 </motion.div>
 
-                <ol className="grid gap-4 sm:grid-cols-3">
+                <ScrollRow as="ol" size="step">
                   {STEPS.map((step, i) => (
                     <motion.li
                       key={step.title}
@@ -255,7 +256,7 @@ const About = () => {
                       <p className="mt-1.5 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{step.text}</p>
                     </motion.li>
                   ))}
-                </ol>
+                </ScrollRow>
               </div>
             </div>
           </div>
@@ -272,7 +273,7 @@ const About = () => {
               </p>
             </motion.div>
 
-            <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+            <div className="mx-auto max-w-5xl"><ScrollRow size="wide">
               {FOUNDERS.map((f, i) => (
                 <motion.article
                   key={f.name}
@@ -311,7 +312,7 @@ const About = () => {
                   </div>
                 </motion.article>
               ))}
-            </div>
+            </ScrollRow></div>
           </div>
         </section>
 
@@ -323,7 +324,7 @@ const About = () => {
               <h2 className="mt-4 font-display text-3xl font-bold md:text-5xl">Built different, on purpose.</h2>
             </motion.div>
 
-            <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+            <div className="mx-auto max-w-6xl"><ScrollRow size="card">
               {/* Vision */}
               <motion.div
                 {...fadeUp}
@@ -406,7 +407,7 @@ const About = () => {
                   </div>
                 </Link>
               </motion.div>
-            </div>
+            </ScrollRow></div>
           </div>
         </section>
 

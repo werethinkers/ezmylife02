@@ -1,4 +1,4 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineTool } from "../sdk";
 import { userClient } from "../env";
 import { z } from "zod";
 

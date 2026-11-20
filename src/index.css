@@ -197,6 +197,77 @@ html {
   }
 }
 
+@layer components {
+  /* One row of cards that scrolls sideways (src/components/ui/scroll-row.tsx). The row bleeds into
+     the page gutter so the next card peeks at the edge, which tells people there is more. */
+  .ez-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+    margin-inline: -1rem;
+    padding: 0.25rem 1rem 0.875rem;
+    scrollbar-width: none;
+  }
+  .ez-row::-webkit-scrollbar {
+    display: none;
+  }
+  .ez-row > * {
+    flex: 0 0 auto;
+    width: var(--row-w);
+    scroll-snap-align: start;
+  }
+  /* Filter and search chips: one sideways line on phones, wrapping from tablet width up. */
+  .ez-chips {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    margin-inline: -1rem;
+    padding: 0.125rem 1rem 0.25rem;
+    scrollbar-width: none;
+  }
+  .ez-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .ez-chips > * {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  @media (min-width: 640px) {
+    .ez-chips {
+      flex-wrap: wrap;
+      overflow: visible;
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+  .ez-row-card { --row-w: 70%; }
+  .ez-row-app { --row-w: 42%; }
+  .ez-row-wide { --row-w: 86%; }
+  .ez-row-step { --row-w: 72%; }
+  @media (min-width: 640px) {
+    .ez-row-card { --row-w: 42%; }
+    .ez-row-app { --row-w: 28%; }
+    .ez-row-wide { --row-w: 60%; }
+    .ez-row-step { --row-w: 40%; }
+  }
+  @media (min-width: 1024px) {
+    .ez-row-card { --row-w: 29%; }
+    .ez-row-app { --row-w: 19%; }
+    .ez-row-wide { --row-w: 42%; }
+    .ez-row-step { --row-w: 27%; }
+  }
+  @media (min-width: 1280px) {
+    .ez-row-card { --row-w: 22.5%; }
+    .ez-row-app { --row-w: 15.5%; }
+    .ez-row-wide { --row-w: 32%; }
+    .ez-row-step { --row-w: 22%; }
+  }
+}
+
 @layer utilities {
   /* Highlighter mark behind a word (replaces the old gradient text). */
   .text-gradient {

@@ -9,7 +9,7 @@ export interface SpotItem {
   sub: string;
   /** Fills the picture area. */
   media: ReactNode;
-  /** A link (designs) or an action (apps open Quick Look). */
+  /** A link (designs) or an action (apps open their store page). */
   to?: string;
   onOpen?: () => void;
 }
@@ -29,22 +29,22 @@ export interface SpotTab {
 }
 
 const itemClass = cn(
-  "group flex flex-col justify-between gap-2 rounded-xl border border-zinc-200 bg-white p-2.5 text-left transition hover:border-orange-500 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-orange-500",
+  "group flex flex-col justify-between gap-2 rounded-xl border-2 border-ink bg-card p-2.5 text-left shadow-block-sm transition hover:bg-sand",
   FOCUS_RING,
 );
 
 function ItemBody({ item }: { item: SpotItem }) {
   return (
     <>
-      <span className="relative block h-40 w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">{item.media}</span>
+      <span className="relative block h-40 w-full overflow-hidden rounded-xl border border-ink/20 bg-sand">{item.media}</span>
       <span className="block">
         <span className="flex items-center justify-between gap-1">
-          <span className="font-display text-xs font-bold leading-snug text-zinc-900 dark:text-white">{item.name}</span>
-          <span aria-hidden className="text-xs font-bold text-orange-600 transition group-hover:translate-x-0.5 dark:text-orange-400">
+          <span className="font-display text-xs font-bold leading-snug text-ink">{item.name}</span>
+          <span aria-hidden className="text-xs font-bold text-primary transition group-hover:translate-x-0.5">
             &rarr;
           </span>
         </span>
-        <span className="mt-0.5 line-clamp-2 block text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">{item.sub}</span>
+        <span className="mt-0.5 line-clamp-2 block text-[11px] leading-tight text-muted-foreground">{item.sub}</span>
       </span>
     </>
   );
@@ -67,18 +67,18 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
   };
 
   return (
-    <div className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-5 shadow-soft-2xl shadow-orange-950/10 motion-safe:animate-float-slow sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="block-card space-y-4 bg-card p-5 motion-safe:animate-float-slow sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden />
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-400" aria-hidden />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden />
-          <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Start here</span>
+          <span className="h-2.5 w-2.5 rounded-full bg-pink" aria-hidden />
+          <span className="h-2.5 w-2.5 rounded-full bg-sun" aria-hidden />
+          <span className="h-2.5 w-2.5 rounded-full bg-teal" aria-hidden />
+          <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-ink/50">Start here</span>
         </div>
-        <span className="truncate rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-semibold text-orange-800 dark:bg-orange-950 dark:text-orange-300">{t.badge}</span>
+        <span className="truncate rounded-full border border-ink/30 bg-sun px-2.5 py-0.5 text-[11px] font-semibold text-ink">{t.badge}</span>
       </div>
 
-      <div role="tablist" aria-label="What to make" onKeyDown={onKey} className="grid grid-cols-4 gap-1.5 rounded-xl bg-zinc-100 p-1 text-xs font-semibold dark:bg-zinc-950">
+      <div role="tablist" aria-label="What to make" onKeyDown={onKey} className="grid grid-cols-4 gap-1.5 rounded-xl border-2 border-ink bg-sand p-1 text-xs font-semibold">
         {tabs.map((x, i) => (
           <button
             key={x.id}
@@ -95,7 +95,7 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
             className={cn(
               "truncate rounded-lg px-1 py-1.5 transition",
               FOCUS_RING,
-              i === active ? "bg-white text-zinc-900 shadow-soft-sm dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white",
+              i === active ? "border border-ink bg-card font-bold text-ink shadow-block-sm" : "text-ink/60 hover:text-ink",
             )}
           >
             {x.tab}
@@ -103,18 +103,18 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
         ))}
       </div>
 
-      <div id="spot-panel" role="tabpanel" aria-labelledby={`spot-tab-${t.id}`} className="space-y-3 rounded-2xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <div id="spot-panel" role="tabpanel" aria-labelledby={`spot-tab-${t.id}`} className="space-y-3 rounded-2xl border-2 border-ink/20 bg-background p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="font-display text-lg font-bold">{t.title}</h3>
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{t.line}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t.line}</p>
           </div>
-          <span className="shrink-0 rounded-lg bg-amber-400 px-2 py-1 text-xs font-bold text-zinc-950">{t.cost}</span>
+          <span className="shrink-0 rounded-lg border-2 border-ink bg-sun px-2 py-1 text-xs font-bold text-ink shadow-block-sm">{t.cost}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
           {t.items === null
-            ? [0, 1].map((i) => <div key={i} aria-hidden className="h-[13.5rem] animate-pulse rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900" />)
+            ? [0, 1].map((i) => <div key={i} aria-hidden className="h-[13.5rem] animate-pulse rounded-xl border-2 border-ink/20 bg-sand" />)
             : t.items.map((item) =>
                 item.to ? (
                   <Link key={item.key} to={item.to} className={itemClass}>
@@ -131,7 +131,7 @@ export function HeroSpotlight({ tabs }: { tabs: SpotTab[] }) {
         <Link
           to={t.to}
           className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 py-2.5 text-xs font-bold text-white transition hover:opacity-90 dark:bg-white dark:text-zinc-950",
+            "flex w-full items-center justify-center gap-2 rounded-xl border-2 border-ink bg-ink py-2.5 text-xs font-bold text-cream shadow-block-sm transition hover:opacity-90",
             FOCUS_RING,
           )}
         >

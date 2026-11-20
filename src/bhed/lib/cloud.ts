@@ -8,8 +8,8 @@ import type { Chart } from "./types";
  * keeps every row private to its owner, so nothing here passes a user id: the database sets it.
  *
  * The functions keep the { data } call shape the sync layer was written against.
- * The tables are newer than the generated types in src/integrations/supabase/types.ts (Lovable
- * regenerates that file), so they are reached through a loosely typed handle.
+ * The tables are newer than the generated types in src/integrations/supabase/types.ts (that file
+ * is regenerated from the database), so they are reached through a loosely typed handle.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

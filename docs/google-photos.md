@@ -9,8 +9,8 @@
 **Switch it on (one-time, by the owner of the Google account):**
 1. Google Cloud Console: create or pick a project, enable **Google Photos Picker API**.
 2. OAuth consent screen: add the scope `.../auth/photospicker.mediaitems.readonly`; add test users until verification is approved.
-3. Credentials, OAuth client ID, type **Web application**. Authorized JavaScript origins: `https://ezyourlife.com`, `https://ezmylife02.lovable.app`, `http://localhost:8080` (or the dev port).
-4. Set `VITE_GOOGLE_PHOTOS_CLIENT_ID` to that client id (it is public, not a secret) in the Lovable project environment, then Publish. Until it is set, the buttons are hidden.
+3. Credentials, OAuth client ID, type **Web application**. Authorized JavaScript origins: `https://ezyourlife.com`, `http://localhost:8080` (or the dev port).
+4. Set `VITE_GOOGLE_PHOTOS_CLIENT_ID` to that client id (it is public, not a secret) in the Vercel project environment, then redeploy. Until it is set, the buttons are hidden.
 5. Deploy the `google-photos-fetch` function (fallback used only if the browser blocks the direct Google download).
 
 **Not tested against live Google yet** (needs the client id). First check after enabling: pick one photo in a card and one in a gallery on a phone and a laptop. If the direct download is blocked by CORS the fallback function takes over; if neither works the dialog shows an error.

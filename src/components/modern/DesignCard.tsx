@@ -36,7 +36,7 @@ export function DesignMedia({ d, className }: { d: DesignLite; className?: strin
           </div>
         </div>
       ) : (
-        <div className={cn("h-full w-full bg-gradient-to-br", d.site ? KIND_GRADIENT.website : KIND_GRADIENT.card)} />
+        <div className={cn("h-full w-full", d.site ? KIND_GRADIENT.website : KIND_GRADIENT.card)} />
       )}
       {d.image && !failed && (
         <img src={d.image} alt={`${d.name}: what the design looks like`} loading="lazy" onError={() => setFailed(true)} className="absolute inset-0 h-full w-full object-cover object-top" />

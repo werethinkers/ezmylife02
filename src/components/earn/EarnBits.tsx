@@ -7,6 +7,7 @@ import { EARN_LINKS } from "@/components/brand/nav";
 import { INSTAGRAM_HANDLE, SUPPORT_EMAIL, instagramDm } from "@/data/social";
 import { cn } from "@/lib/utils";
 import { Shelf } from "@/components/store/Shelf";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** Section wrapper used on both earn pages. `tone` "card" gives a white band with ink rules. */
 export function EarnSection({ id, title, line, tone, children }: { id?: string; title: string; line?: string; tone?: "card"; children: ReactNode }) {
@@ -24,7 +25,7 @@ export function EarnSection({ id, title, line, tone, children }: { id?: string; 
 /** Numbered steps: one column on a phone, a row from tablets up. */
 export function EarnSteps({ steps, colour }: { steps: { h: string; d: string }[]; colour: string }) {
   return (
-    <ol className={cn("grid gap-4 sm:grid-cols-2", steps.length > 4 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+    <ScrollRow as="ol" size="step">
       {steps.map((s, i) => (
         <li key={s.h} className={cn("block-card flex flex-col gap-2 p-5", colour)}>
           <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ink bg-sun font-display text-base font-extrabold" aria-hidden>
@@ -34,7 +35,7 @@ export function EarnSteps({ steps, colour }: { steps: { h: string; d: string }[]
           <p className="text-[15px] text-ink/85">{s.d}</p>
         </li>
       ))}
-    </ol>
+    </ScrollRow>
   );
 }
 

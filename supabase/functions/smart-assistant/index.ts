@@ -1,4 +1,4 @@
-import { aiFetch, getAiKey } from "../_shared/ai.ts";
+import { aiFetch } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -184,19 +184,16 @@ LIVE APPS CLOSEST TO THIS CONVERSATION (${shortlist.length} of ${tools?.length ?
 ${catalogList}
 `;
 
-    // 1. Try Lovable AI Gateway first
-    const LOVABLE_API_KEY = (getAiKey() || "own-gemini-keys");
-    if (LOVABLE_API_KEY) {
-      const resp = await aiFetch({
-          model: "google/gemini-3-flash-preview",
-          messages: [{ role: "system", content: system }, ...messages],
-          stream: true,
-        });
-      if (resp.ok) {
-        return new Response(resp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
-      }
-      console.warn(`Lovable AI returned ${resp.status}, falling back to Gemini keys…`);
+    // 1. Try the shared AI helper first
+    const resp = await aiFetch({
+        model: "google/gemini-3-flash-preview",
+        messages: [{ role: "system", content: system }, ...messages],
+        stream: true,
+      });
+    if (resp.ok) {
+      return new Response(resp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
     }
+    console.warn(`Shared AI helper returned ${resp.status}, falling back to Gemini keys…`);
 
     // 2. Try DB-backed Gemini keys
     const dbKeys = await fetchDbKeys(supabase);

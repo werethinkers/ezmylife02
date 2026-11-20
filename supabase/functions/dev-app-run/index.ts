@@ -17,7 +17,7 @@
 //           → a test run of one version before approval. Free to the developer, never charges anyone, only the
 //             developer who owns the version or an admin may run it, 25 a day each (400 a day in total), and every
 //             successful run is kept (inputs and output) for the admin to read when reviewing.
-// The model is always EzYourLife's own (Lovable gateway, then our Gemini keys) through _shared/llm.ts.
+// The model is always EzYourLife's own (our Gemini keys) through _shared/llm.ts.
 import { billed, isAdmin } from "../_shared/billing.ts";
 import { corsHeaders, json } from "../_shared/http.ts";
 import { chat, ModelError, type ChatMessage, type Part } from "../_shared/llm.ts";

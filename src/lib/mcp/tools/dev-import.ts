@@ -1,4 +1,4 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineTool } from "../sdk";
 import { z } from "zod";
 import { MAX_APP_BYTES, PART_UNITS, looksLikeHtml, splitParts, utf8Bytes } from "../../devUploadParts";
 import { bundleProject, type BundleResult } from "../../devBundle";

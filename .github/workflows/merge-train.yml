@@ -1,5 +1,5 @@
 # Merges main and every open, non-draft PR into staging (scripts/merge-train.mjs), then pushes staging.
-# Runs by hand from the Actions tab, and by itself after every push to main so staging keeps up with Lovable.
+# Runs by hand from the Actions tab, and by itself after every push to main so staging keeps up with main.
 name: Merge train
 on:
   workflow_dispatch:

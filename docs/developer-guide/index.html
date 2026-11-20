@@ -122,7 +122,7 @@ ol.plain { padding-left: 22px; margin: 12px 0 0; display: grid; gap: 6px; }
   <h3 id="setup-h">Setup status on 20 Oct 2026</h3>
   <ul>
     <li><span class="tag done">Done</span><span>Database: both developer-app files are applied to the live database.</span></li>
-    <li><span class="tag todo">To do</span><span>Press <b>Publish</b> in Lovable so the new pages (<code>/developer</code>, <code>/admin/developer-apps</code>) appear on ezyourlife.com.</span></li>
+    <li><span class="tag todo">To do</span><span>Push to <b>main</b> (Vercel deploys) so the new pages (<code>/developer</code>, <code>/admin/developer-apps</code>) appear on ezyourlife.com.</span></li>
     <li><span class="tag todo">To do</span><span>The Claude connector's new tools come with the same deploy. Confirm after publishing (see "If something fails").</span></li>
   </ul>
 </section>
@@ -149,7 +149,7 @@ ol.plain { padding-left: 22px; margin: 12px 0 0; display: grid; gap: 6px; }
 <div class="step"><div class="n">1</div><div class="body">
 <h3>Add the connector to Claude</h3>
 <p>In Claude's connector settings, add a custom connector named <b>EzYourLife</b> with this address, then sign in with your EzYourLife account. It works on any Claude plan, including Free.</p>
-<div class="copyrow"><code id="mcpurl">https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/mcp</code><button type="button" id="copy1">Copy address</button></div>
+<div class="copyrow"><code id="mcpurl">https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/mcp</code><button type="button" id="copy1">Copy address</button></div>
 <p>On a paid plan you can also add the <b>ezyourlife-developer</b> plugin. It carries the step-by-step skill, so Claude follows the same routine every time. On Team plans an owner adds it once for everyone.</p>
 </div></div>
 
@@ -289,7 +289,7 @@ ol.plain { padding-left: 22px; margin: 12px 0 0; display: grid; gap: 6px; }
 <div class="tablewrap"><table>
 <thead><tr><th>What you see</th><th>What to do</th></tr></thead>
 <tbody>
-<tr><td>Pages show "not set up"</td><td>The database files are applied. Press Publish in Lovable so the site has the new pages, then reload.</td></tr>
+<tr><td>Pages show "not set up"</td><td>The database files are applied. Push to main (Vercel deploys) so the site has the new pages, then reload.</td></tr>
 <tr><td>Claude does not list the <code>dev_*</code> tools</td><td>The <code>mcp</code> function needs the new deploy. Open <code>…/functions/v1/sitemap</code>: if it still shows <code>phase0-b</code> the function is old; it should show <code>devapps-2</code>. Redeploy, then reconnect the connector.</td></tr>
 <tr><td>Import from a private repo says not found</td><td>Add the <code>EZYL_GITHUB_TOKEN</code> secret (read-only, Contents: read), or make the repo public, or use the upload link.</td></tr>
 <tr><td>"This version is waiting for review"</td><td>Withdraw it from the editor to change it.</td></tr>

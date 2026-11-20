@@ -6,7 +6,32 @@ const corsHeaders = {
 };
 
 const SITE_URL = "https://ezyourlife.com/";
-const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console/v1/urlInspection/index:inspect";
+const INSPECT_URL = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect";
+
+// GSC_SERVICE_ACCOUNT_JSON is a Google service-account key; add its client_email as a user on the
+// Search Console property for ezyourlife.com.
+async function googleAccessToken(serviceAccountJson: string): Promise<string> {
+  const sa = JSON.parse(serviceAccountJson) as { client_email: string; private_key: string; token_uri?: string };
+  const tokenUri = sa.token_uri ?? "https://oauth2.googleapis.com/token";
+  const b64url = (data: Uint8Array | string) =>
+    btoa(typeof data === "string" ? data : String.fromCharCode(...data)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = `${b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${b64url(
+    JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/webmasters.readonly", aud: tokenUri, iat: now, exp: now + 3600 }),
+  )}`;
+  const pem = sa.private_key.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned)));
+  const r = await fetch(tokenUri, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${unsigned}.${b64url(sig)}` }),
+  });
+  const data = await r.json();
+  if (!r.ok || !data.access_token) throw new Error(`Google token request failed: ${data.error_description ?? data.error ?? r.status}`);
+  return data.access_token as string;
+}
 
 interface InspectionResp {
   inspectionResult?: {
@@ -32,11 +57,8 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const GSC_API_KEY = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
-
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
-    if (!GSC_API_KEY) throw new Error("GOOGLE_SEARCH_CONSOLE_API_KEY missing — connect Google Search Console");
+    const GSC_SERVICE_ACCOUNT_JSON = Deno.env.get("GSC_SERVICE_ACCOUNT_JSON");
+    if (!GSC_SERVICE_ACCOUNT_JSON) throw new Error("GSC_SERVICE_ACCOUNT_JSON missing — add a Google service-account key as a function secret");
 
     // Auth: caller must be admin
     const authHeader = req.headers.get("Authorization") || "";
@@ -52,17 +74,14 @@ Deno.serve(async (req) => {
     const urls: string[] = Array.isArray(body?.urls) ? body.urls.slice(0, 50) : [];
     if (!urls.length) return new Response(JSON.stringify({ error: "urls required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    const accessToken = await googleAccessToken(GSC_SERVICE_ACCOUNT_JSON);
     const results: Array<{ url: string; ok: boolean; verdict?: string; error?: string }> = [];
 
     for (const url of urls) {
       try {
-        const r = await fetch(GATEWAY, {
+        const r = await fetch(INSPECT_URL, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "X-Connection-Api-Key": GSC_API_KEY,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({ inspectionUrl: url, siteUrl: SITE_URL }),
         });
         const data = (await r.json()) as InspectionResp & { error?: { message?: string } };

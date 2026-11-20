@@ -18,7 +18,7 @@ import { BTN_INK, CONTAINER, FOCUS_RING, roundedLabel } from "./styles";
 export function ModernLogo({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
-      <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-600 to-amber-500 font-display text-lg font-bold text-white shadow-soft-sm">
+      <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-ink bg-sun font-display text-lg font-bold text-ink shadow-block-sm">
         EZ
       </span>
       <span className="font-display text-lg font-bold tracking-tight">EZYOURLIFE</span>

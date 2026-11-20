@@ -20,6 +20,7 @@ import { canBuyInThisApp } from "@/lib/nativeApp";
 import { ModernPage } from "@/components/modern/ModernPage";
 import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, FOCUS_RING } from "@/components/modern/styles";
 import { cn } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const Credits = () => {
   const { user } = useAuth();
@@ -175,7 +176,7 @@ const Credits = () => {
               ? "Apps are paid with credits. Buy a pack from ₹10, and an app uses its credits only when it gives you a result. Websites and cards are paid once, on their own page."
               : "Apps are paid with credits, and an app uses its credits only when it gives you a result."}
           </p>
-          <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+          <ScrollRow as="ol" size="step" className="mt-6">
             {[
               { t: "Every app shows its price", s: "Browser apps use 1 credit, AI apps start at 2. Bigger jobs show more." },
               { t: "Credits only when it works", s: "If an app fails, you are not charged." },
@@ -189,7 +190,7 @@ const Credits = () => {
                 </span>
               </li>
             ))}
-          </ol>
+          </ScrollRow>
         </motion.section>
 
         {/* Wallet snapshot */}
@@ -232,7 +233,7 @@ const Credits = () => {
         {/* Packs (not in the iOS app: Apple rules, see docs/ios-app.md) */}
         {canBuyInThisApp() && (<>
         <h2 className="mb-5 mt-12 font-display text-2xl font-bold md:text-3xl">Credit packs</h2>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ScrollRow size="card">
           {CREDIT_PACKS.map((pack) => {
             const base = Math.round(pack.inr * BASELINE_CREDITS_PER_RUPEE);
             const extra = pack.credits - base;
@@ -273,7 +274,7 @@ const Credits = () => {
               </motion.div>
             );
           })}
-        </div>
+        </ScrollRow>
 
         {/* Coupon */}
         <Collapsible open={couponOpen} onOpenChange={setCouponOpen} className="mt-6">
