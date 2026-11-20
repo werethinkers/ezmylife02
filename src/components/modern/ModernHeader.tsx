@@ -121,7 +121,10 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
               type="button"
               onClick={toggle}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-              className={cn("rounded-xl border border-zinc-200 p-2 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900", FOCUS_RING)}
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900",
+                FOCUS_RING,
+              )}
             >
               {dark ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
             </button>
@@ -189,7 +192,7 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
               aria-controls="modern-site-menu"
-              className={cn("rounded-xl border border-zinc-200 p-2 lg:hidden dark:border-zinc-800", FOCUS_RING)}
+              className={cn("flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 lg:hidden dark:border-zinc-800", FOCUS_RING)}
             >
               {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
             </button>

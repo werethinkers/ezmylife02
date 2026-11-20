@@ -33,7 +33,7 @@ export default function QuickLookPanel({ toolId, onClose }: { toolId: string | n
   const onOpenChange = (v: boolean) => !v && onClose();
   return isMobile ? (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-      <DrawerContent className="max-h-[92vh]">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} mobile />}</DrawerContent>
+      <DrawerContent className="max-h-[92dvh]">{toolId && <QuickLookBody toolId={toolId} onClose={onClose} mobile />}</DrawerContent>
     </Drawer>
   ) : (
     <Sheet open={open} onOpenChange={onOpenChange}>
