@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { creditsForInr, fmtCredits } from "@/lib/creditRate";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowRight, Check } from "lucide-react";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { getProduct } from "@/instant/catalog";
+import { BuilderInner } from "./Builder";
 import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { DesignRail, DeviceFrame, DeviceToggle, Swatch, styleLabel } from "@/instant/DesignPreview";
 import { useProducts } from "@/instant/useProducts";
@@ -41,10 +42,22 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
   const { list, rows } = useProducts();
   const [designId, setDesignId] = useState<string | null>(null);
   const [device, setDevice] = useState<"phone" | "laptop">("phone");
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Reached at /make/:id with ?page= (continuing a draft or editing a published page), ?design=
+  // (a deep link that already picked a design — the kit, Diwali hero, a shop QR, …) or ?publish=1
+  // (bounced back from sign-in mid-publish): skip the design picker and open straight on step 2.
+  const computeStep = () => (!productIdOverride && (searchParams.has("page") || searchParams.has("design") || searchParams.get("publish") === "1") ? 2 : 1);
+  const [step, setStep] = useState<1 | 2>(computeStep);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-decide the step when the product itself changes, not on every search-param tweak the wizard makes to itself
+  useEffect(() => setStep(computeStep()), [productId]);
   if (!product) return <Navigate to="/websites" replace />;
 
   const row = rows.get(product.id);
   if (row && !row.is_active) return <Navigate to="/create" replace />;
+  // Step 2 — the 7-step form editor + live preview (formerly its own page at /create/:id). Reused
+  // as-is: same form state, credit pricing and publish/Supabase calls, just nested in this wizard.
+  if (step === 2) return <BuilderInner product={product} onBack={() => setStep(1)} />;
   const price = row?.price_credits ?? creditsForInr(row?.price_inr ?? product.price); // credits
   const days = row?.hosting_days ?? 365;
   const promo = promoFor(product);
@@ -53,10 +66,20 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
   const related = list.filter((l) => l.product.id !== product.id && l.product.category === product.category)
     .sort((a, b) => seasonGap(a.product.id) - seasonGap(b.product.id) || Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
   const groupName = GROUPS[product.category].find((x) => x.id === g)?.name;
-  const create = `/create/${product.id}?design=${theme.id}`;
+  const create = `/make/${product.id}?design=${theme.id}`;
   const priceText = price ? fmtCredits(price) : "Free";
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const home = isSite ? "/websites" : "/cards";
+  // The normal case: stay on /make/:id and switch to step 2 in place, carrying the chosen design.
+  // Reached via /promo/:slug (productIdOverride) instead: that address is a separate SEO landing
+  // page for this design, so its CTA really does navigate, to the canonical /make/:id.
+  const goToBuild = () => {
+    if (productIdOverride) { navigate(create); return; }
+    const next = new URLSearchParams(searchParams);
+    next.set("design", theme.id);
+    setSearchParams(next, { replace: true });
+    setStep(2);
+  };
   const hosting = days >= 365 ? `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}` : `${days} days`;
   const canonicalPath = `/make/${product.id}`;
   const seoPath = pathOverride ?? canonicalPath;
@@ -78,11 +101,20 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
         keywords={`${product.name.toLowerCase()}, online ${product.name.toLowerCase()}, ${product.category}, whatsapp, ezyourlife`} />
 
       <div className={cn(CONTAINER, "pt-6")}>
-        <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb">
-          <Link to={home} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{isSite ? "Websites" : "Cards & invites"}</Link>
-          <span aria-hidden="true">›</span>
-          <Link to={`${home}?cat=${product.category}${groupName ? `&type=${g}` : ""}`} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{groupName ?? product.category}</Link>
-        </nav>
+        <div className="mb-4 flex items-center gap-3">
+          <Link
+            to={home}
+            aria-label={`Back to ${isSite ? "Websites" : "Cards & invites"}`}
+            className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300", FOCUS_RING)}
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+          </Link>
+          <nav className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb">
+            <Link to={home} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{isSite ? "Websites" : "Cards & invites"}</Link>
+            <span aria-hidden="true">›</span>
+            <Link to={`${home}?cat=${product.category}${groupName ? `&type=${g}` : ""}`} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{groupName ?? product.category}</Link>
+          </nav>
+        </div>
         <ModernSteps flow={isSite ? "website" : "card"} step={1} className="max-w-3xl" />
       </div>
 
@@ -136,9 +168,9 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
               <p className="font-display text-3xl font-extrabold">{priceText}</p>
               <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">{price ? "paid once" : "no payment"} · live for {hosting}</p>
             </div>
-            <Link to={create} className={cn(BTN_PRIMARY, "h-12 px-6")}>
+            <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "h-12 px-6")}>
               {isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" aria-hidden />
-            </Link>
+            </button>
           </div>
         </div>
         <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">You see the full result before you pay. Sign in is asked only when you publish.</p>
@@ -228,9 +260,9 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
             <h2 id="price-h" className="font-display text-2xl font-bold md:text-3xl">{priceText}, <span className="text-amber-400">paid once</span></h2>
             <p className="mt-2 text-zinc-300">Your {plainName(product.name)} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away. New accounts get 100 free credits to start.</p>
           </div>
-          <Link to={create} className={cn(BTN_PRIMARY, "h-14 px-8 text-base")}>
+          <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "h-14 px-8 text-base")}>
             {isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" aria-hidden />
-          </Link>
+          </button>
         </section>
 
         <section aria-labelledby="faq-h">
@@ -275,9 +307,9 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
           <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{product.name}</p>
           <p className="font-bold">{priceText} <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">once</span></p>
         </div>
-        <Link to={create} className={cn(BTN_PRIMARY, "ml-auto h-12 px-6")}>
+        <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "ml-auto h-12 px-6")}>
           {isSite ? "Build it" : "Make it"}
-        </Link>
+        </button>
       </div>
     </ModernPage>
   );

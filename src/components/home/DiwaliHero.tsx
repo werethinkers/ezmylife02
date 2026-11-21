@@ -9,7 +9,7 @@ const DiwaliHeroCard = lazy(() => import("./DiwaliHeroCard"));
 export const DIWALI_HERO_UNTIL = Date.parse("2026-11-13T00:00:00+05:30");
 export const showDiwaliHero = (now = Date.now()) => now < DIWALI_HERO_UNTIL;
 
-const MAKE = "/create/diwali?design=rajwada&src=home-hero";
+const MAKE = "/make/diwali?design=rajwada&src=home-hero";
 
 /** Diwali 2026: one job on the first screen, sending Diwali wishes, with the Rajwada card playing live beside it. */
 export function DiwaliHero() {

@@ -12,11 +12,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  Heart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
+import { useFavorites, useToggleFavorite } from "@/hooks/useFavorites";
 import { resolveToolMedia } from "@/lib/toolMedia";
 import { CREDIT_PACKS } from "@/data/creditPacks";
 import LoginPromptDialog from "@/components/auth/LoginPromptDialog";
@@ -149,6 +152,9 @@ export default function PromoPage() {
   const isStudio = !!toolId && STUDIO_IDS.has(toolId);
   const { creditCost } = useToolPricing(toolId);
   const creditLabel = `${creditCost} credit${creditCost === 1 ? "" : "s"}`;
+  const { favorites } = useFavorites();
+  const { toggle: toggleFavorite, loginOpen: favLoginOpen, setLoginOpen: setFavLoginOpen } = useToggleFavorite();
+  const isFav = !!toolId && favorites.has(toolId);
 
   // Auto-launch after login if ?launch=1 is present.
   useEffect(() => {
@@ -296,25 +302,22 @@ export default function PromoPage() {
           </nav>
           <ModernSteps flow="app" step={1} className="mb-8 max-w-3xl" />
 
-          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="min-w-0 space-y-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="border-zinc-200 shadow-soft-sm dark:border-zinc-800" />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
-                        {typeLabel}
-                      </span>
-                      <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">By EZYOURLIFE</span>
-                    </div>
-                    {customEyebrow && <p className="mt-1 text-sm font-semibold text-zinc-500 dark:text-zinc-400">{customEyebrow}</p>}
+          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between md:gap-10">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="min-w-0 flex-1 space-y-5 md:max-w-2xl">
+              <div className="flex items-center gap-4">
+                <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="border-zinc-200 shadow-soft-sm dark:border-zinc-800 md:h-24 md:w-24" />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                      {typeLabel}
+                    </span>
+                    <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">By EZYOURLIFE</span>
                   </div>
+                  {customEyebrow && <p className="mt-1 text-sm font-semibold text-zinc-500 dark:text-zinc-400">{customEyebrow}</p>}
                 </div>
-                <ShareButton path={`/promo/${pageSlug}`} className="mt-1" />
               </div>
 
-              <h1 className="font-display text-[2rem] font-extrabold leading-[1.08] sm:text-5xl xl:text-[3.4rem]">
+              <h1 className="font-display text-[2rem] font-extrabold leading-[1.08] sm:text-5xl md:text-4xl md:leading-tight xl:text-[3.4rem]">
                 {title}
                 {titleAccent && (
                   <>
@@ -327,14 +330,17 @@ export default function PromoPage() {
               {intro && <p className="max-w-xl whitespace-pre-line text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">{intro}</p>}
 
               <MetricsStrip
+                className="max-w-lg"
                 cells={[
                   { value: creditCost > 0 ? creditLabel : "Free", label: creditCost > 0 ? "Pay per result" : "No cost" },
                   { value: OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
                   { value: "100 Free", label: "Starter credits", accent: true },
                 ]}
               />
+            </motion.div>
 
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center md:gap-5">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="flex shrink-0 flex-col items-stretch gap-3 md:items-end">
+              <div className="flex flex-col gap-2.5 sm:flex-row md:gap-4">
                 {tryButton("w-full sm:w-auto")}
                 <button
                   type="button"
@@ -344,21 +350,40 @@ export default function PromoPage() {
                   Preview sample
                 </button>
               </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-3 md:self-end">
+                <button
+                  type="button"
+                  onClick={() => toolId && toggleFavorite(toolId, isFav)}
+                  aria-pressed={isFav}
+                  aria-label={isFav ? "Remove from saved" : "Save for later"}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+                >
+                  <Heart className={cn("h-4 w-4", isFav && "fill-rose-500 text-rose-500")} aria-hidden />
+                </button>
+                <ShareButton path={`/promo/${pageSlug}`} />
+              </div>
+              <p className="max-w-[280px] text-sm text-zinc-500 dark:text-zinc-400 md:text-right">
                 {user
                   ? `Opening ${isStudio ? "a studio" : "an app"} is free. Credits are used only when it gives you a result.`
                   : "Try with 100 free credits — no card needed."}
               </p>
             </motion.div>
-
-            <motion.div id="preview-carousel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.05 }} className="min-w-0 scroll-mt-20">
-              {slides.length > 0 ? (
-                <HeroCarousel slides={slides} altBase={name} />
-              ) : (
-                <IconHero name={name} toolId={toolId ?? ""} category={category} get={info.get} />
-              )}
-            </motion.div>
           </div>
+
+          <motion.div
+            id="preview-carousel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            className="mt-10 min-w-0 scroll-mt-20"
+          >
+            <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Preview &amp; sample outputs</h2>
+            {slides.length > 0 ? (
+              <PreviewGallery slides={slides} altBase={name} />
+            ) : (
+              <IconHero name={name} toolId={toolId ?? ""} category={category} get={info.get} />
+            )}
+          </motion.div>
         </section>
 
         {/* ───────── About this app/studio ───────── */}
@@ -377,13 +402,7 @@ export default function PromoPage() {
           <section className={cn(CONTAINER, "pt-4")}>
             <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">Used by</p>
             <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-              {trustLogos.map((l) =>
-                l.url ? (
-                  <img key={l.name} src={l.url} alt={l.name} className="h-7 object-contain" loading="lazy" />
-                ) : (
-                  <span key={l.name} className="font-semibold text-zinc-500 dark:text-zinc-400">{l.name}</span>
-                ),
-              )}
+              {trustLogos.map((l) => <TrustLogo key={l.name} name={l.name} url={l.url} />)}
             </div>
           </section>
         )}
@@ -392,7 +411,7 @@ export default function PromoPage() {
         {features.length > 0 && (
           <section className={cn(CONTAINER, "py-12 md:py-16")}>
             <h2 className="mb-6 font-display text-2xl font-bold md:text-[2rem]">What you get</h2>
-            <div className={ROW_CLASS}>
+            <div className={cn(ROW_CLASS, "md:grid-cols-3 md:gap-5")}>
               {features.slice(0, 8).map((f) => (
                 <div key={f.title} className={cn("flex flex-col gap-2 p-5", CARD, CARD_ITEM)}>
                   <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-950">
@@ -411,7 +430,7 @@ export default function PromoPage() {
           <div className={cn(CONTAINER, "grid gap-6 lg:grid-cols-3")}>
             <div className={cn("min-w-0 p-6 md:p-8 lg:col-span-2", CARD)}>
               <h2 className="font-display text-2xl font-bold md:text-3xl">How it works</h2>
-              <div className={cn(ROW_CLASS, "mt-5")}>
+              <div className={cn(ROW_CLASS, "mt-5 md:grid-cols-3 md:gap-5")}>
                 {howSteps.map((s, i) => (
                   <div key={s.title + i} className={cn("flex flex-col gap-2.5 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800", CARD_ITEM)}>
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 font-display text-lg font-extrabold text-orange-700 dark:bg-orange-950 dark:text-orange-300">{i + 1}</span>
@@ -479,7 +498,7 @@ export default function PromoPage() {
               {tryButton("w-full bg-zinc-950 hover:bg-zinc-900 md:w-auto")}
             </div>
 
-            <div className={cn(ROW_CLASS, "mt-10")}>
+            <div className={cn(ROW_CLASS, "mt-10 md:grid-cols-4 md:gap-5")}>
               {GUARANTEES.map(({ Icon, title: t, body }) => (
                 <div key={t} className={cn("flex items-start gap-3 p-4", CARD, CARD_ITEM)}>
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950">
@@ -504,9 +523,19 @@ export default function PromoPage() {
         </div>
 
         <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/promo/${pageSlug}?launch=1`} />
+        <LoginPromptDialog open={favLoginOpen} onOpenChange={setFavLoginOpen} returnTo={`/promo/${pageSlug}`} />
       </ModernPage>
     </MotionConfig>
   );
+}
+
+// A trust-logo image that falls back to the company's name if its URL 404s.
+function TrustLogo({ name, url }: { name: string; url?: string }) {
+  const [broken, setBroken] = useState(false);
+  if (!url || broken) {
+    return <span className="font-semibold text-zinc-500 dark:text-zinc-400">{name}</span>;
+  }
+  return <img src={url} alt={name} className="h-7 object-contain" loading="lazy" onError={() => setBroken(true)} />;
 }
 
 // Shown when an app has no screenshots yet: its icon on the colour of its goal.
@@ -522,11 +551,77 @@ function IconHero({ name, toolId, category, get }: { name: string; toolId: strin
   );
 }
 
+// A sample/preview image that falls back to a gradient card instead of a broken <img> if its URL 404s.
+function SafePreviewImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) {
+    return (
+      <div className={cn("flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 p-4 text-center text-sm font-bold text-orange-700 dark:from-orange-950 dark:to-amber-950 dark:text-orange-300", className)}>
+        {alt}
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} loading="lazy" onError={() => setBroken(true)} className={className} />;
+}
+
+// Phones keep the single-image swipe carousel; desktop shows every sample at once in a grid —
+// the full Play Store "Preview & sample outputs" section, not one image at a time.
+function PreviewGallery({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
+  const isMobile = useIsMobile();
+  return isMobile ? <HeroCarousel slides={slides} altBase={altBase} /> : <PreviewGrid slides={slides} altBase={altBase} />;
+}
+
+function PreviewGrid({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
+  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
+  const zoomed = zoomIdx !== null ? slides[zoomIdx] : null;
+  return (
+    <>
+      <div className="grid gap-5 md:grid-cols-3">
+        {slides.map((s, i) => (
+          <button
+            key={s.url + i}
+            type="button"
+            onClick={() => setZoomIdx(i)}
+            className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 text-left shadow-soft-sm transition hover:shadow-soft-lg dark:border-zinc-800 dark:bg-zinc-900 md:min-h-[240px]"
+          >
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
+              <SafePreviewImage
+                src={s.url}
+                alt={s.caption ? `${altBase} — ${s.caption}` : `${altBase} — sample ${i + 1}`}
+                className="absolute inset-0 h-full w-full cursor-zoom-in object-cover transition group-hover:scale-[1.03]"
+              />
+            </div>
+            {s.caption && (
+              <span className={cn("absolute bottom-3 left-3 z-10 rounded-full px-3 py-1 text-xs font-bold", CARD)}>{s.caption}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <Dialog open={!!zoomed} onOpenChange={(v) => !v && setZoomIdx(null)}>
+        <DialogContent className="max-w-2xl border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+          {zoomed && (
+            <>
+              <SafePreviewImage
+                src={zoomed.url}
+                alt={zoomed.caption ? `${altBase} — ${zoomed.caption}` : `${altBase} — sample ${(zoomIdx ?? 0) + 1}`}
+                className="max-h-[75vh] w-full rounded-2xl object-contain"
+              />
+              {zoomed.caption && <p className="px-1 pb-1 text-sm font-semibold text-zinc-600 dark:text-zinc-400">{zoomed.caption}</p>}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // App Store-style carousel: auto-advances, arrows, dots and swipe.
 function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: string }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [brokenUrls, setBrokenUrls] = useState<Set<string>>(new Set());
   const touchX = useRef<number | null>(null);
   const count = slides.length;
 
@@ -538,6 +633,8 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
 
   const go = (next: number) => setIdx(((next % count) + count) % count);
   const current = slides[idx];
+  const markBroken = (url: string) => setBrokenUrls((prev) => new Set(prev).add(url));
+  const currentAlt = current.caption ? `${altBase} — ${current.caption}` : `${altBase} — image ${idx + 1}`;
 
   return (
     <div
@@ -558,17 +655,31 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
       <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white p-2.5 shadow-soft-lg dark:border-zinc-800 dark:bg-zinc-900">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800">
           <AnimatePresence mode="wait" initial={false}>
-            <motion.img
-              key={current.url + idx}
-              src={current.url}
-              alt={current.caption ? `${altBase} — ${current.caption}` : `${altBase} — image ${idx + 1}`}
-              onClick={() => setZoomed(true)}
-              className="absolute inset-0 h-full w-full cursor-zoom-in object-cover"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-            />
+            {brokenUrls.has(current.url) ? (
+              <motion.div
+                key={current.url + idx}
+                className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 p-4 text-center text-sm font-bold text-orange-700 dark:from-orange-950 dark:to-amber-950 dark:text-orange-300"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {currentAlt}
+              </motion.div>
+            ) : (
+              <motion.img
+                key={current.url + idx}
+                src={current.url}
+                alt={currentAlt}
+                onClick={() => setZoomed(true)}
+                onError={() => markBroken(current.url)}
+                className="absolute inset-0 h-full w-full cursor-zoom-in object-cover"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+              />
+            )}
           </AnimatePresence>
 
           {current.caption && (
@@ -579,11 +690,7 @@ function HeroCarousel({ slides, altBase }: { slides: GalleryImage[]; altBase: st
 
           <Dialog open={zoomed} onOpenChange={setZoomed}>
             <DialogContent className="max-w-2xl border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-              <img
-                src={current.url}
-                alt={current.caption ? `${altBase} — ${current.caption}` : `${altBase} — image ${idx + 1}`}
-                className="max-h-[75vh] w-full rounded-2xl object-contain"
-              />
+              <SafePreviewImage src={current.url} alt={currentAlt} className="max-h-[75vh] w-full rounded-2xl object-contain" />
               {current.caption && <p className="px-1 pb-1 text-sm font-semibold text-zinc-600 dark:text-zinc-400">{current.caption}</p>}
             </DialogContent>
           </Dialog>

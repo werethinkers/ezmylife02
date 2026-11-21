@@ -68,7 +68,7 @@ export function ProductCard({ l, className }: { l: Listed; className?: string })
       </Link>
       <div className="flex items-center gap-2.5 px-4 pb-4 pt-3">
         <Link
-          to={`/create/${p.id}`}
+          to={`/make/${p.id}`}
           className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-card/60 px-4 text-sm font-bold transition-colors hover:bg-pink"
         >
           {isSite ? "Build it" : "Make it"} →

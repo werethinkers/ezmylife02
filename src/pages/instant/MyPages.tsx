@@ -43,12 +43,12 @@ function KitPanel({ justBought }: { justBought: boolean }) {
   const whereFor = (scope: "business" | "card", fallback: string) => {
     const r = rows.find((x) => x.scope === scope && !x.used && x.pick_product && getProduct(x.pick_product));
     if (!r?.pick_product) return fallback;
-    return `/create/${r.pick_product}${r.pick_theme ? `?design=${encodeURIComponent(r.pick_theme)}` : ""}`;
+    return `/make/${r.pick_product}${r.pick_theme ? `?design=${encodeURIComponent(r.pick_theme)}` : ""}`;
   };
   const items = [
     { scope: "business" as const, title: "A website for your business", where: whereFor("business", "/websites"),
       body: "Pick any business design, add your name, photos and prices, then publish. Publishing is already paid for." },
-    { scope: "card" as const, title: "A digital visiting card", where: whereFor("card", "/create/digital-visiting-card"),
+    { scope: "card" as const, title: "A digital visiting card", where: whereFor("card", "/make/digital-visiting-card"),
       body: "Your name, number and WhatsApp on one link you can send to anyone. Publishing is already paid for." },
   ];
 
@@ -145,7 +145,7 @@ export default function MyPages() {
                     <Button size="sm" variant="outline" asChild><a href={`/p/${p.slug}`} target="_blank" rel="noopener noreferrer"><Eye className="h-4 w-4 mr-1.5" /> View</a></Button>
                     <Button size="sm" variant="outline" onClick={() => setSharing(p)}><Share2 className="h-4 w-4 mr-1.5" /> Share & QR</Button>
                   </>}
-                  {prod && <Button size="sm" variant="outline" asChild><Link to={`/create/${prod.id}?page=${p.id}`}><Pencil className="h-4 w-4 mr-1.5" /> {p.status === "draft" || p.status === "pending_payment" ? "Continue" : "Edit"}</Link></Button>}
+                  {prod && <Button size="sm" variant="outline" asChild><Link to={`/make/${prod.id}?page=${p.id}`}><Pencil className="h-4 w-4 mr-1.5" /> {p.status === "draft" || p.status === "pending_payment" ? "Continue" : "Edit"}</Link></Button>}
                   {p.slug && <Button size="sm" variant="outline" asChild><Link to={`/my-pages/${p.id}`}><Inbox className="h-4 w-4 mr-1.5" /> {prod?.family === "event" ? "RSVPs" : "Leads"}{n ? ` (${n} new)` : ""}</Link></Button>}
                   {p.status === "published" && <Button size="sm" variant="ghost" onClick={() => act(() => unpublish(p.id), "Page taken offline")}><EyeOff className="h-4 w-4 mr-1.5" /> Take offline</Button>}
                   {p.status === "unpublished" && <Button size="sm" variant="ghost" onClick={() => act(() => republish(p.id), "Page is live again")}><Globe className="h-4 w-4 mr-1.5" /> Put back online</Button>}
