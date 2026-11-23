@@ -58,6 +58,9 @@ const MODERN_PATHS = [
   /^\/auth\/?$/,
   /^\/creators\/?$/,
   /^\/list-your-app\/?$/,
+  /^\/explore\/?$/,
+  /^\/promo\/.+$/,
+  /^\/make\/.+$/,
 ];
 
 export const isModernPath = (pathname: string) => MODERN_PATHS.some((r) => r.test(pathname));

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, Compass, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
 import { useWallet } from "@/hooks/useWallet";
@@ -38,6 +39,7 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [earnOpen, setEarnOpen] = useState(false);
   const current = section ?? sectionOf(pathname);
   const countLabel = useAppCountLabel();
   const { data: catalog = [] } = useToolsCatalog();
@@ -202,30 +204,90 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
         {open && (
           <nav id="modern-site-menu" aria-label="Main" className="border-t border-zinc-200 bg-[#F7F6F2] px-4 py-3 lg:hidden dark:border-zinc-800 dark:bg-[#0F1115]">
             <ul className="mx-auto grid max-w-7xl gap-1 sm:grid-cols-2">
-              {NAV_SECTIONS.flatMap((s) =>
-                s.id === "earn"
-                  ? EARN_LINKS.map((l) => ({ to: l.to, text: l.label, Icon: l.Icon, on: pathname === l.to }))
-                  : [{ to: s.to, text: s.label, Icon: s.Icon, on: current === s.id }],
-              )
-                .concat([{ to: "/explore", text: "Find by business", Icon: Compass, on: pathname === "/explore" }])
-                .concat(user ? [] : [{ to: "/auth", text: "Sign in", Icon: User, on: false }])
-                .map((l) => (
-                  <li key={l.to}>
+              {NAV_SECTIONS.map((s) => {
+                if (s.id === "earn") {
+                  return (
+                    <li key={s.id} className="sm:col-span-2">
+                      <Collapsible open={earnOpen} onOpenChange={setEarnOpen}>
+                        <CollapsibleTrigger
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium transition",
+                            FOCUS_RING,
+                            "hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                          )}
+                        >
+                          <s.Icon className="h-4 w-4 shrink-0" aria-hidden />
+                          <span className="flex-1">{s.label}</span>
+                          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", earnOpen && "rotate-180")} aria-hidden />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-1 overflow-hidden border-l border-zinc-200 pb-1 pl-8 pt-1 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down dark:border-zinc-800">
+                          {EARN_LINKS.map((l) => (
+                            <Link
+                              key={l.to}
+                              to={l.to}
+                              onClick={() => setOpen(false)}
+                              aria-current={pathname === l.to ? "page" : undefined}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded-xl bg-zinc-100/60 px-3 py-2 text-sm font-medium transition dark:bg-zinc-900/60",
+                                FOCUS_RING,
+                                pathname === l.to ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                              )}
+                            >
+                              <l.Icon className="h-4 w-4 shrink-0" aria-hidden />
+                              {l.label}
+                            </Link>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </li>
+                  );
+                }
+                const on = current === s.id;
+                return (
+                  <li key={s.id}>
                     <Link
-                      to={l.to}
+                      to={s.to}
                       onClick={() => setOpen(false)}
-                      aria-current={l.on ? "page" : undefined}
+                      aria-current={on ? "page" : undefined}
                       className={cn(
                         "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition",
                         FOCUS_RING,
-                        l.on ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                        on ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900",
                       )}
                     >
-                      <l.Icon className="h-4 w-4 shrink-0" aria-hidden />
-                      {l.text}
+                      <s.Icon className="h-4 w-4 shrink-0" aria-hidden />
+                      {s.label}
                     </Link>
                   </li>
-                ))}
+                );
+              })}
+              <li>
+                <Link
+                  to="/explore"
+                  onClick={() => setOpen(false)}
+                  aria-current={pathname === "/explore" ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition",
+                    FOCUS_RING,
+                    pathname === "/explore" ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                  )}
+                >
+                  <Compass className="h-4 w-4 shrink-0" aria-hidden />
+                  Find by business
+                </Link>
+              </li>
+              {!user && (
+                <li>
+                  <Link
+                    to="/auth"
+                    onClick={() => setOpen(false)}
+                    className={cn("flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-900", FOCUS_RING)}
+                  >
+                    <User className="h-4 w-4 shrink-0" aria-hidden />
+                    Sign in
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         )}

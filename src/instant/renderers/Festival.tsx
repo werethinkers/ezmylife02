@@ -144,7 +144,7 @@ export default function Festival({ product, theme, content: c, mode, slug }: Ren
   const live = mode === "live";
   const shop = useShop(c.shop);
   // The person reading the card makes their own, with their name already filled in as the sender.
-  const makeOwn = `/create/${product.id}?` + new URLSearchParams({ ...(toName ? { sender: toName } : {}), ...(typeof c.shop === "string" && c.shop ? { shop: c.shop } : {}), ref: "card" }).toString();
+  const makeOwn = `/make/${product.id}?` + new URLSearchParams({ ...(toName ? { sender: toName } : {}), ...(typeof c.shop === "string" && c.shop ? { shop: c.shop } : {}), ref: "card" }).toString();
   const cta = isDiya ? L.cta : "Make one for your people";
   const tapWords = palace ? (langs ? L.tapRw : langById("en").tapRw) : isDiya ? (langs ? L.tap : o.tap) : o.tap;
   const doneWords = isDiya && langs ? L.done : o.tapDone;

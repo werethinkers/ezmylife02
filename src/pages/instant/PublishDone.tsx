@@ -69,7 +69,7 @@ export default function PublishDone() {
             <div className="rounded-3xl border-2 border-ink bg-card p-6 shadow-block md:p-8">
               <ShareKit product={product} theme={theme} content={content} url={pageUrlFor(page.slug)} slug={page.slug!} link={link} preparing={preparing} prefs={prefs} onSavePrefs={apply} pageId={page.id} />
             </div>
-            <p className="text-center text-sm text-muted-foreground">Need a change? <Link className="underline" to={`/create/${product.id}?page=${page.id}`}>Edit it</Link> any time. Updates are free.</p>
+            <p className="text-center text-sm text-muted-foreground">Need a change? <Link className="underline" to={`/make/${product.id}?page=${page.id}`}>Edit it</Link> any time. Updates are free.</p>
             <Button asChild variant="ghost"><Link to="/create">Make something else</Link></Button>
           </>
         )}

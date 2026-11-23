@@ -206,7 +206,7 @@ export const SmartAssistantChatbot = () => {
         whileTap={{ scale: 0.94 }}
         onClick={() => (open ? setOpen(false) : setMenu((v) => !v))}
         aria-expanded={open || menu}
-        className="fixed bottom-[84px] right-3 md:bottom-6 md:right-6 z-[60] h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[60] h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]"
         aria-label={open || menu ? "Close help" : "Get help: WhatsApp or the assistant"}
       >
         {!open && !menu && <span className="help-ring" aria-hidden />}

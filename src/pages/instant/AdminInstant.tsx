@@ -95,7 +95,7 @@ export default function AdminInstant({ embedded = false }: { embedded?: boolean 
                   return (
                     <div key={p.id} className="flex flex-wrap items-center gap-3 p-3">
                       <span className="text-2xl w-8" aria-hidden="true">{p.glyph}</span>
-                      <Link to={`/create/${p.id}`} className="font-medium flex-1 min-w-[160px] hover:underline">{p.name}</Link>
+                      <Link to={`/make/${p.id}`} className="font-medium flex-1 min-w-[160px] hover:underline">{p.name}</Link>
                       {!r ? <span className="text-sm text-amber-700">Not in database yet</span> : <>
                         <label className="flex items-center gap-1 text-sm"><Input className="w-24 h-9" inputMode="numeric" value={prices[p.id] ?? String(r.price_credits ?? creditsForInr(r.price_inr))} onChange={(e) => setPrices({ ...prices, [p.id]: e.target.value.replace(/\D/g, "") })} aria-label={`${p.name} price in credits`} /> credits</label>
                         <Button size="sm" variant="outline" disabled={prices[p.id] == null || Number(prices[p.id]) === (r.price_credits ?? creditsForInr(r.price_inr))} onClick={() => save(p.id, { price_credits: Number(prices[p.id] || 0) })}>Save price</Button>

@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
 import { Menu, X, User, LogOut, Compass, ChevronDown } from "lucide-react";
@@ -28,6 +29,7 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [earnOpen, setEarnOpen] = useState(false);
   const current = section ?? sectionOf(pathname);
 
   const handleSignOut = async () => {
@@ -154,9 +156,15 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
               if (s.id === "earn") {
                 return (
                   <li key={s.id} className="col-span-2 sm:col-span-3">
-                    <div className="rounded-xl border-2 border-ink bg-sun p-2 shadow-[3px_3px_0_0_hsl(var(--ink))]">
-                      <p className="px-1.5 pb-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider">{s.label}</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
+                    <Collapsible open={earnOpen} onOpenChange={setEarnOpen} className="rounded-xl border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]">
+                      <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-ink" style={{ background: s.color }}>
+                          <s.Icon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <span className="flex-1">{s.label}</span>
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", earnOpen && "rotate-180")} aria-hidden />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-2 overflow-hidden border-t-2 border-ink px-2 pb-2 pt-2 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                         {EARN_LINKS.map((l) => (
                           <Link
                             key={l.to}
@@ -164,7 +172,7 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                             onClick={() => setOpen(false)}
                             aria-current={pathname === l.to ? "page" : undefined}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-lg border-2 border-ink px-3 py-2.5 text-[15px] font-semibold",
+                              "ml-8 flex items-center gap-2.5 rounded-lg border-2 border-ink px-3 py-2.5 text-[15px] font-semibold",
                               pathname === l.to ? "bg-ink text-cream" : "bg-card",
                             )}
                           >
@@ -174,8 +182,8 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                             {l.label}
                           </Link>
                         ))}
-                      </div>
-                    </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </li>
                 );
               }
