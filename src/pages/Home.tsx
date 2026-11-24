@@ -311,6 +311,8 @@ const Home = () => {
       </Suspense>
 
       <main>
+        {strip.length > 0 && <Marquee items={strip} itemClassName="font-display text-sm font-bold sm:text-base" />}
+
         {/* ───────── Hero ───────── */}
         <section id="hero" className="relative overflow-hidden pb-14 pt-10 sm:pb-20 sm:pt-14">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-[360px] w-[720px] -translate-x-1/2 rounded-full bg-sun/10 blur-3xl" />
@@ -394,8 +396,6 @@ const Home = () => {
             </div>
           </div>
         </section>
-
-        {strip.length > 0 && <Marquee items={strip} itemClassName="font-display text-sm font-bold sm:text-base" />}
 
         {/* ───────── Top 10 (or search results) ───────── */}
         <section
