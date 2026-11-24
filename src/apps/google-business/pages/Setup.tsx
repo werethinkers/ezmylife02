@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
-  CheckCircle2,
   Copy,
   Info,
   MessageSquareText,
@@ -14,6 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { Markdown } from "@/components/common/Markdown";
 import { ModernPage } from "@/components/modern/ModernPage";
 import { SectionHead } from "@/components/modern/ui";
 import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, EYEBROW, FOCUS_RING } from "@/components/modern/styles";
@@ -25,9 +25,14 @@ import { gb, getBusiness, saveBusiness, cleanProducts, emptyLocation } from "../
 import { matchPreset } from "../lib/industries";
 import { copyTextToClipboard } from "../lib/clipboard";
 
-// This server-side spec is independent of "google-business-kit" (which bulk mode also uses) —
-// see supabase/functions/_shared/appSpecs/extras.ts.
-const AUDIT_TOOL_ID = "google-business-audit";
+// "google-business-audit" (supabase/functions/_shared/appSpecs/extras.ts) is the richer, JSON-shaped
+// spec meant for this page — but Supabase edge functions don't go live on a push (see
+// docs/launch-plan.md, "How changes go live"); they need `supabase functions deploy ai-app`. Until
+// that's run, the deployed backend only knows "google-business-kit" (the same spec bulk mode already
+// uses, live for a long time), so that's the id this page sends. Once "google-business-audit" is
+// deployed, switch AUDIT_TOOL_ID back to it to get structured risk-score/category/WhatsApp fields
+// instead of one Markdown blob.
+const AUDIT_TOOL_ID = "google-business-kit";
 
 type Mode = "import" | "manual";
 type LocationModel = "storefront" | "sab" | "hybrid";
@@ -37,15 +42,6 @@ type OutputLanguage = "en" | "bilingual";
 interface ServiceRow {
   name: string;
   detail: string;
-}
-interface AuditResult {
-  riskScore: number;
-  riskFlags: string[];
-  description: string;
-  primaryCategory: string;
-  secondaryCategories: string[];
-  services: { name: string; description: string }[];
-  whatsappMessage: string;
 }
 
 const LOCATION_MODELS: { id: LocationModel; label: string; sub: string }[] = [
@@ -98,7 +94,7 @@ export default function Setup() {
   const [openingStatus, setOpeningStatus] = useState<OpeningStatus>("open");
   const [outputLanguage, setOutputLanguage] = useState<OutputLanguage>("en");
 
-  const [result, setResult] = useState<AuditResult | null>(null);
+  const [kit, setKit] = useState<string | null>(null);
   const [businessId, setBusinessId] = useState<string | undefined>(id);
 
   // Editing an existing business: prefill what overlaps the old (and still live) data model.
@@ -154,19 +150,10 @@ export default function Setup() {
       "Output language": outputLanguage === "bilingual" ? "Bilingual — English plus Hindi/Hinglish for the WhatsApp message" : "English only",
     };
 
-    const out = await run<Partial<AuditResult>>({ inputs, action: "generate" });
-    if (!out) return; // insufficient credits / not signed in / error — already handled with a dialog or toast
+    const out = await run<string>({ inputs, action: "generate" });
+    if (!out || typeof out !== "string") return; // insufficient credits / not signed in / error — already handled with a dialog or toast
 
-    // Defensive: the model's JSON can occasionally miss a key or get its type wrong — never let that blank the page.
-    setResult({
-      riskScore: typeof out.riskScore === "number" ? out.riskScore : 0,
-      riskFlags: Array.isArray(out.riskFlags) ? out.riskFlags : [],
-      description: typeof out.description === "string" ? out.description : "",
-      primaryCategory: typeof out.primaryCategory === "string" && out.primaryCategory ? out.primaryCategory : primaryCategory.trim(),
-      secondaryCategories: Array.isArray(out.secondaryCategories) ? out.secondaryCategories : [],
-      services: Array.isArray(out.services) ? out.services : [],
-      whatsappMessage: typeof out.whatsappMessage === "string" ? out.whatsappMessage : "",
-    });
+    setKit(out);
 
     // The audit call already charged credits; saving the business record is a plain, free write —
     // the same local data layer every other Google Business Kit screen reads from.
@@ -187,7 +174,8 @@ export default function Setup() {
   }
 
   const waNumber = (primaryAction === "whatsapp" ? actionDestination : phone).replace(/[^\d+]/g, "");
-  const waLink = result && waNumber ? `https://wa.me/${waNumber.replace(/^\+/, "")}?text=${encodeURIComponent(result.whatsappMessage)}` : null;
+  const waMessage = `Hi, I found ${businessName.trim() || "your business"} on Google Maps and want to know more about ${primaryCategory.trim() || "what you offer"}.`;
+  const waLink = kit && waNumber ? `https://wa.me/${waNumber.replace(/^\+/, "")}?text=${encodeURIComponent(waMessage)}` : null;
 
   return (
     <ModernPage section="apps">
@@ -507,14 +495,12 @@ export default function Setup() {
             </div>
           </section>
 
-          {result && (
+          {kit && (
             <section id="audit-results" className={cn(CONTAINER, "scroll-mt-20 pb-16")}>
               <SectionHead eyebrow="Results" title="Your profile & audit" line="Copy-ready — paste each section straight into Google Business Profile." />
               <div className="grid gap-5 lg:grid-cols-2">
-                <RiskScoreCard score={result.riskScore} flags={result.riskFlags} />
-                <DescriptionCard text={result.description} />
-                <CategoriesCard primary={result.primaryCategory} secondary={result.secondaryCategories} services={result.services} />
-                <WhatsAppCard message={result.whatsappMessage} waLink={waLink} />
+                <KitResultCard text={kit} />
+                <WhatsAppCard message={waMessage} waLink={waLink} />
               </div>
 
               {businessId && (
@@ -641,76 +627,14 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
   );
 }
 
-function RiskScoreCard({ score, flags }: { score: number; flags: string[] }) {
-  const tone = score >= 80 ? "emerald" : score >= 50 ? "amber" : "rose";
-  const toneClasses: Record<string, string> = {
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    amber: "text-amber-600 dark:text-amber-400",
-    rose: "text-rose-600 dark:text-rose-400",
-  };
+function KitResultCard({ text }: { text: string }) {
   return (
     <div className={cn("flex flex-col gap-3 p-5 shadow-soft-sm md:p-6", CARD)}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-display text-lg font-bold">Profile health & suspension risk</h3>
-        <span className={cn("font-display text-3xl font-extrabold", toneClasses[tone])}>{score}<span className="text-base font-bold text-zinc-400">/100</span></span>
+        <h3 className="font-display text-lg font-bold">Your Google Business Profile kit</h3>
+        <CopyButton text={text} label="Copy all" />
       </div>
-      {flags.length === 0 ? (
-        <p className="flex items-center gap-2 text-[15px] text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden /> No issues found in what you gave us.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {flags.map((f, i) => (
-            <li key={i} className="flex gap-2 text-[14px] text-zinc-700 dark:text-zinc-300">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function DescriptionCard({ text }: { text: string }) {
-  return (
-    <div className={cn("flex flex-col gap-3 p-5 shadow-soft-sm md:p-6", CARD)}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-display text-lg font-bold">SEO business description</h3>
-        <CopyButton text={text} />
-      </div>
-      <p className="text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300">{text}</p>
-      <p className={cn("text-xs font-semibold", text.length > 750 ? "text-rose-600 dark:text-rose-400" : "text-zinc-500 dark:text-zinc-400")}>
-        {text.length} / 750 characters
-      </p>
-    </div>
-  );
-}
-
-function CategoriesCard({ primary, secondary, services }: { primary: string; secondary: string[]; services: { name: string; description: string }[] }) {
-  const all = [`Primary: ${primary}`, ...secondary.map((s) => `Secondary: ${s}`), ...services.map((s) => `${s.name} — ${s.description}`)].join("\n");
-  return (
-    <div className={cn("flex flex-col gap-3 p-5 shadow-soft-sm md:p-6", CARD)}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-display text-lg font-bold">Categories & services</h3>
-        <CopyButton text={all} />
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-zinc-950 px-2.5 py-1 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">{primary}</span>
-        {secondary.map((s) => (
-          <span key={s} className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            {s}
-          </span>
-        ))}
-      </div>
-      <ul className="space-y-2.5">
-        {services.map((s, i) => (
-          <li key={i}>
-            <p className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100">{s.name}</p>
-            <p className="text-[14px] text-zinc-600 dark:text-zinc-400">{s.description}</p>
-          </li>
-        ))}
-      </ul>
+      <Markdown className="text-zinc-700 dark:text-zinc-300">{text}</Markdown>
     </div>
   );
 }
