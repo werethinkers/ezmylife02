@@ -1,5 +1,19 @@
 project_id = "cmwnjexfpcfpoeyemxhb"
 
+[auth]
+site_url = "https://ezyourlife.com"
+additional_redirect_urls = [
+  "https://www.ezyourlife.com/**",
+  "https://development.ezyourlife.com/**",
+  "https://abhijay2.ezyourlife.com/**",
+  "ezyourlife://oauth-callback",
+  "https://ezyourlife.com/**",
+]
+
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+
 [functions.tools-chat]
 verify_jwt = false
 
