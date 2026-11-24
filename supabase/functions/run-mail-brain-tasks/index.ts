@@ -1,6 +1,6 @@
 // The "Auto-reply to all emails" automation (/mail-brain, Automation tab).
 //
-// Safety: this NEVER sends. It only drafts a reply and queues it in mail_brain_task_logs with
+// Safety: this NEVER sends. It only drafts a reply and queues it in mail_desk_task_logs with
 // status 'pending' — a person has to tap "Send" (send-mail-brain-reply) on each one, or "Send all",
 // for anything to actually leave the account. That was a deliberate call, not an oversight: an
 // unattended bot replying to a real inbox with no review is exactly the kind of thing that creates
@@ -56,7 +56,7 @@ async function aiReply(instruction: string, mail: { from: string; subject: strin
 
 /** Runs every active task belonging to `onlyUserId`, or every active task for every user when null (cron). */
 async function runTasks(onlyUserId: string | null) {
-  let q = db.from("mail_brain_tasks").select("*").eq("is_active", true);
+  let q = db.from("mail_desk_auto_tasks").select("*").eq("is_active", true);
   if (onlyUserId) q = q.eq("user_id", onlyUserId);
   const { data: tasks } = await q;
   const summary = { tasks_run: 0, drafted: 0, skipped: 0, errors: [] as string[] };
@@ -65,7 +65,7 @@ async function runTasks(onlyUserId: string | null) {
     const runStartedAt = new Date().toISOString();
     try {
       const { data: accounts } = await db.from("mail_desk_accounts").select("*").eq("user_id", task.user_id).eq("connected", true);
-      const { data: already } = await db.from("mail_brain_task_logs").select("gmail_thread_id").eq("task_id", task.id);
+      const { data: already } = await db.from("mail_desk_task_logs").select("gmail_thread_id").eq("task_id", task.id);
       const seenThreads = new Set((already ?? []).map((r: Row) => r.gmail_thread_id));
       let draftedThisTask = 0;
 
@@ -109,7 +109,7 @@ async function runTasks(onlyUserId: string | null) {
           }
           if (!draft) continue;
 
-          const { error: insErr } = await db.from("mail_brain_task_logs").insert({
+          const { error: insErr } = await db.from("mail_desk_task_logs").insert({
             task_id: task.id, user_id: task.user_id, account_id: acct.id,
             gmail_thread_id: threadId, gmail_message_id: m.id,
             sender_name: from.name, sender_email: from.email, subject, draft_reply: draft,
@@ -117,7 +117,7 @@ async function runTasks(onlyUserId: string | null) {
           if (!insErr) { seenThreads.add(threadId); draftedThisTask++; summary.drafted++; }
         }
       }
-      await db.from("mail_brain_tasks").update({ last_run_at: runStartedAt }).eq("id", task.id);
+      await db.from("mail_desk_auto_tasks").update({ last_run_at: runStartedAt }).eq("id", task.id);
       summary.tasks_run++;
       if (draftedThisTask === 0 && !(accounts ?? []).length) summary.errors.push(`${task.name}: no connected Gmail`);
     } catch (e) {

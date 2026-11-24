@@ -5,7 +5,7 @@
 // Two ways in:
 //   { mail_id, body }              — Feature 1: reply to one mail from the Mails list, right now.
 //   { task_log_id }                — Feature 2: send a reply the auto-reply automation already
-//                                     drafted and queued in mail_brain_task_logs (status 'pending').
+//                                     drafted and queued in mail_desk_task_logs (status 'pending').
 //                                     Nothing here ever sends automatically; this only runs when a
 //                                     person taps "Send" on a queued draft.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -45,7 +45,7 @@ async function sendForMail(uid: string, mailId: string, replyBody: string) {
 }
 
 async function sendForTaskLog(uid: string, taskLogId: string) {
-  const { data: row } = await db.from("mail_brain_task_logs").select("*").eq("id", taskLogId).eq("user_id", uid).maybeSingle();
+  const { data: row } = await db.from("mail_desk_task_logs").select("*").eq("id", taskLogId).eq("user_id", uid).maybeSingle();
   if (!row) return fail(404, "not_found", { message: "That queued reply could not be found." });
   if (row.status !== "pending") return fail(409, "already_handled", { message: "That reply was already sent or discarded." });
   const { data: acct } = await db.from("mail_desk_accounts").select("*").eq("id", row.account_id).maybeSingle();
@@ -59,7 +59,7 @@ async function sendForTaskLog(uid: string, taskLogId: string) {
 
   try {
     const sent = await sendGmailReply(token, { to: row.sender_email, subject: row.subject || "", body, threadId: row.gmail_thread_id, thread });
-    await db.from("mail_brain_task_logs").update({ status: "sent", replied_at: new Date().toISOString() }).eq("id", row.id);
+    await db.from("mail_desk_task_logs").update({ status: "sent", replied_at: new Date().toISOString() }).eq("id", row.id);
     return json({ ok: true, id: sent.id });
   } catch (e) {
     console.error("send-mail-brain-reply (task log)", e);

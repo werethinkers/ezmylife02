@@ -120,7 +120,7 @@ const MailDesk = () => {
     queryKey: ["mail-desk", "auto-tasks", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await table("mail_brain_tasks").select("*").order("created_at", { ascending: false });
+      const { data, error } = await table("mail_desk_auto_tasks").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data as AutoTask[];
     },
@@ -129,7 +129,7 @@ const MailDesk = () => {
     queryKey: ["mail-desk", "auto-queue", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await table("mail_brain_task_logs").select("id,task_id,sender_name,sender_email,subject,draft_reply,status,created_at")
+      const { data, error } = await table("mail_desk_task_logs").select("id,task_id,sender_name,sender_email,subject,draft_reply,status,created_at")
         .eq("status", "pending").order("created_at", { ascending: false }).limit(200);
       if (error) throw error;
       return data as AutoLog[];
@@ -601,13 +601,13 @@ function Automation({ tasks, queue, onChange }: { tasks: AutoTask[]; queue: Auto
   };
 
   const toggleActive = async (t: AutoTask) => {
-    const { error } = await table("mail_brain_tasks").update({ is_active: !t.is_active }).eq("id", t.id);
+    const { error } = await table("mail_desk_auto_tasks").update({ is_active: !t.is_active }).eq("id", t.id);
     if (error) toast.error("Could not save that.");
     onChange();
   };
   const remove = async (t: AutoTask) => {
     if (!window.confirm(`Delete "${t.name}"? Anything still waiting for your review from it will be removed too.`)) return;
-    const { error } = await table("mail_brain_tasks").delete().eq("id", t.id);
+    const { error } = await table("mail_desk_auto_tasks").delete().eq("id", t.id);
     if (error) toast.error("Could not delete that.");
     onChange();
   };
@@ -626,7 +626,7 @@ function Automation({ tasks, queue, onChange }: { tasks: AutoTask[]; queue: Auto
   };
   const discardQueued = async (log: AutoLog) => {
     setActingOn(log.id);
-    const { error } = await table("mail_brain_task_logs").update({ status: "skipped" }).eq("id", log.id);
+    const { error } = await table("mail_desk_task_logs").update({ status: "skipped" }).eq("id", log.id);
     if (error) toast.error("Could not discard that.");
     setActingOn(null);
     onChange();
@@ -719,8 +719,8 @@ function TaskDialog({ task, onClose, onSaved }: { task: AutoTask | null; onClose
     try {
       const patch = { name: name.trim(), reply_mode: replyMode, reply_template_or_prompt: text.trim(), skip_automated: skipAutomated, is_active: isActive };
       const { error } = task
-        ? await table("mail_brain_tasks").update(patch).eq("id", task.id)
-        : await table("mail_brain_tasks").insert({ user_id: user!.id, task_type: "auto_reply_all", ...patch });
+        ? await table("mail_desk_auto_tasks").update(patch).eq("id", task.id)
+        : await table("mail_desk_auto_tasks").insert({ user_id: user!.id, task_type: "auto_reply_all", ...patch });
       if (error) throw error;
       toast.success(task ? "Saved" : "Task added");
       onSaved();
