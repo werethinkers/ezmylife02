@@ -46,7 +46,7 @@ const ResourceCard: React.FC<{ item: ResourceItem, keywords: string[], highlight
     const embedUrl = item.type === 'youtube' ? getYoutubeEmbedUrl(item.url) : null;
     
     return (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 transition-shadow hover:shadow-md page-break-avoid">
+        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4 transition-shadow hover:shadow-md page-break-avoid">
             {embedUrl ? (
                 <div className="aspect-video mb-4">
                     <iframe 
@@ -59,12 +59,12 @@ const ResourceCard: React.FC<{ item: ResourceItem, keywords: string[], highlight
                     ></iframe>
                 </div>
             ) : null}
-            <h3 className="font-bold text-gray-800 mb-2">
+            <h3 className="font-bold text-zinc-800 mb-2">
                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 hover:underline">
                     {item.title}
                 </a>
             </h3>
-            <p className="text-sm text-gray-600">{highlightText(item.summary, keywords, highlightEnabled)}</p>
+            <p className="text-sm text-zinc-600">{highlightText(item.summary, keywords, highlightEnabled)}</p>
         </div>
     )
 };
@@ -86,12 +86,12 @@ export const Resources: React.FC<{
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors text-sm ${
                 activeTab === tab
                     ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-100'
+                    : 'text-zinc-500 hover:bg-zinc-100'
             }`}
         >
             {icon}
             <span>{text}</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>{count}</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-700'}`}>{count}</span>
         </button>
     );
 
@@ -103,19 +103,19 @@ export const Resources: React.FC<{
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {news.map((item, i) => <ResourceCard key={`news-${i}`} item={item} {...cardProps} />)}
                     </div>
-                ) : <p className="text-center text-gray-500 py-8">No news articles found.</p>;
+                ) : <p className="text-center text-zinc-500 py-8">No news articles found.</p>;
             case 'videos':
                 return videos.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {videos.map((item, i) => <ResourceCard key={`video-${i}`} item={item} {...cardProps} />)}
                     </div>
-                ) : <p className="text-center text-gray-500 py-8">No YouTube videos found.</p>;
+                ) : <p className="text-center text-zinc-500 py-8">No YouTube videos found.</p>;
             case 'papers':
                 return papers.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {papers.map((item, i) => <ResourceCard key={`paper-${i}`} item={item} {...cardProps} />)}
                     </div>
-                ) : <p className="text-center text-gray-500 py-8">No research papers found.</p>;
+                ) : <p className="text-center text-zinc-500 py-8">No research papers found.</p>;
             case 'references':
                  return sources.length > 0 ? (
                     <ul className="list-disc pl-5 space-y-2">
@@ -127,7 +127,7 @@ export const Resources: React.FC<{
                             </li>
                         ))}
                     </ul>
-                ) : <p className="text-center text-gray-500 py-8">No web references were used in this analysis.</p>;
+                ) : <p className="text-center text-zinc-500 py-8">No web references were used in this analysis.</p>;
             default:
                 return null;
         }
@@ -135,7 +135,7 @@ export const Resources: React.FC<{
 
     return (
         <div>
-            <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Resources</h2>
+            <h2 className="text-3xl font-bold text-center mb-6 text-zinc-800">Resources</h2>
             <div className="flex flex-wrap justify-center items-center gap-2 border-b pb-4 mb-6">
                 {renderTabButton('news', <NewspaperIcon className="w-5 h-5" />, 'News & PR', news.length)}
                 {renderTabButton('videos', <VideoCameraIcon className="w-5 h-5" />, 'Videos', videos.length)}

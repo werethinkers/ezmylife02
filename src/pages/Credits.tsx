@@ -46,7 +46,7 @@ function PackCard({ pack, busy, onBuy }: { pack: CreditPack; busy: boolean; onBu
       )}
     >
       {pack.badge && (
-        <span className="absolute -top-3 right-4 rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-bold text-white">{pack.badge}</span>
+        <span className="absolute -top-3 right-4 rounded-full border-[1.5px] border-foreground bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{pack.badge}</span>
       )}
       <p className="font-display text-4xl font-extrabold">₹{pack.inr}</p>
       <p className="mt-2 flex items-center gap-1.5 text-lg">

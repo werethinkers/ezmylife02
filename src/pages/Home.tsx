@@ -95,7 +95,7 @@ const uniqueTools = (lists: CatalogTool[][]) => {
 const twoWithPicture = <T,>(xs: T[], hasPicture: (x: T) => boolean) => [...xs.filter(hasPicture), ...xs.filter((x) => !hasPicture(x))].slice(0, 2);
 
 const PILLAR_TONES = {
-  orange: { box: "bg-gradient-to-br from-orange-600 to-amber-600 text-white", chip: "bg-white/20", line: "text-orange-50", steps: "text-white/75", go: "text-white" },
+  orange: { box: "border-[1.5px] border-foreground bg-primary text-primary-foreground", chip: "bg-foreground/10", line: "text-foreground/70", steps: "text-foreground/75", go: "text-primary-foreground" },
   ink: { box: "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white", chip: "bg-white/20", line: "text-zinc-300", steps: "text-zinc-400", go: "text-white" },
   night: { box: "border border-zinc-800 bg-zinc-900 text-white", chip: "bg-amber-400 text-zinc-950", line: "text-zinc-300", steps: "text-zinc-400", go: "text-amber-300" },
   paper: {
@@ -299,7 +299,7 @@ const Home = () => {
             <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
               <div className="min-w-0 space-y-6 lg:col-span-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold shadow-soft-sm dark:border-zinc-800 dark:bg-zinc-900">
-                  <span className="rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white">India</span>
+                  <span className="rounded-full border-[1.5px] border-foreground bg-primary px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-primary-foreground">India</span>
                   <span className="text-zinc-600 dark:text-zinc-300">For small businesses · Pay only for results</span>
                 </div>
 
@@ -335,7 +335,7 @@ const Home = () => {
                         <X className="h-4 w-4" aria-hidden />
                       </button>
                     )}
-                    <button type="submit" className={cn("shrink-0 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-700", FOCUS_RING)}>
+                    <button type="submit" className={cn("shrink-0 rounded-xl border-2 border-foreground bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-pink-hover", FOCUS_RING)}>
                       Find
                     </button>
                   </div>

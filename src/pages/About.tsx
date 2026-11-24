@@ -334,7 +334,7 @@ const About = () => {
               {/* Vision */}
               <motion.div
                 {...fadeUp}
-                className={cn("relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-8 text-white shadow-soft-xl md:col-span-2 md:p-10", PILLAR_CARD)}
+                className={cn("relative overflow-hidden rounded-3xl border-[1.5px] border-foreground bg-primary p-8 text-primary-foreground shadow-soft-xl md:col-span-2 md:p-10", PILLAR_CARD)}
               >
                 <div aria-hidden className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
                 <div className="relative">
@@ -424,7 +424,7 @@ const About = () => {
               {...fadeUp}
               className={cn("mx-auto grid max-w-6xl overflow-hidden shadow-soft-xl lg:grid-cols-5", CARD)}
             >
-              <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 to-amber-600 p-8 text-white md:p-10 lg:col-span-2">
+              <div className="relative overflow-hidden border-[1.5px] border-foreground bg-primary p-8 text-primary-foreground md:p-10 lg:col-span-2">
                 <div aria-hidden className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
                 <div className="relative flex h-full flex-col">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">Get in touch</p>

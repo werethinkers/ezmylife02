@@ -25,7 +25,7 @@ export function ModernSteps({ flow, step, className }: { flow: Flow; step: 1 | 2
               aria-hidden
               className={cn(
                 "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
-                now ? "bg-orange-600 text-white" : done ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+                now ? "bg-primary text-primary-foreground" : done ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
               )}
             >
               {done ? <Check className="h-3 w-3" /> : n}

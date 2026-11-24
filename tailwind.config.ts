@@ -68,15 +68,32 @@ export default {
         cream: "hsl(var(--cream))",
         sand: "hsl(var(--sand))",
         pink: "hsl(var(--pink))",
+        "pink-hover": "hsl(var(--pink-hover))",
         sun: "hsl(var(--sun))",
         teal: "hsl(var(--teal))",
         sky: "hsl(var(--sky))",
         lime: "hsl(var(--lime))",
         coral: "hsl(var(--coral))",
+        "accent-yellow": "hsl(var(--accent-yellow))",
+        "accent-lime": "hsl(var(--accent-lime))",
         gold: {
           DEFAULT: "hsl(45 100% 50%)",
           light: "hsl(45 100% 65%)",
           dark: "hsl(35 100% 45%)",
+        },
+        // Neo-brutalist rebrand: every page's literal bg-orange-*/text-orange-*/bg-amber-* class
+        // (the old #EA580C-orange "modern" primary and its gradient partner) now resolves to the
+        // brand pink (#F472D0, anchored at 600/700 — the shades this codebase's buttons use) and
+        // brand yellow (#FACC15, anchored at 500) instead, with no per-file sweep needed. zinc stays
+        // Tailwind's own neutral gray scale (still correct for text/border hierarchy); rose stays red
+        // (favourites, destructive) and emerald/green stay green (success) — explicitly kept semantic.
+        orange: {
+          50: "#f9f6f8", 100: "#f5eaf2", 200: "#f2d4ea", 300: "#f1b1df", 400: "#f391d7",
+          500: "#f580d4", 600: "#f472cf", 700: "#e85bc0", 800: "#de35ae", 900: "#bc2491", 950: "#7a1f60",
+        },
+        amber: {
+          50: "#fefbf0", 100: "#fef7dd", 200: "#fdf1bf", 300: "#fce897", 400: "#fcda55",
+          500: "#facc15", 600: "#e7bb08", 700: "#bd9a0f", 800: "#9a7f13", 900: "#756215", 950: "#493e12",
         },
       },
       boxShadow: {
@@ -90,13 +107,16 @@ export default {
         "block-sm": "var(--shadow-block-sm)",
         block: "var(--shadow-block)",
         "block-lg": "var(--shadow-block-lg)",
-        // Soft shadows for the modern look (Tailwind's own defaults, since the names above are taken).
-        "soft-sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        soft: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-        "soft-md": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        "soft-lg": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
-        "soft-xl": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-        "soft-2xl": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+        // "Soft" shadows for the modern look (named separately since "sm"/"DEFAULT"/etc. above are
+        // taken) — neo-brutalist rebrand: these are now hard offset "block" shadows too, in the
+        // theme-aware --shadow-block-* variables (black border in light mode, cream in dark mode),
+        // so every modern-look card/button that used shadow-soft-* picked this up with no file sweep.
+        "soft-sm": "var(--shadow-block-sm)",
+        soft: "var(--shadow-block-sm)",
+        "soft-md": "var(--shadow-block)",
+        "soft-lg": "var(--shadow-block)",
+        "soft-xl": "var(--shadow-block-lg)",
+        "soft-2xl": "var(--shadow-block-lg)",
       },
       borderRadius: {
         lg: "var(--radius)",

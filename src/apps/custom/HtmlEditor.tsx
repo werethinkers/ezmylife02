@@ -72,7 +72,7 @@ export default function HtmlEditor({ toolId }: { toolId: string }) {
             value={p[tab]}
             onChange={(e) => store.update({ [tab]: e.target.value } as Partial<Proj>)}
             spellCheck={false}
-            className="min-h-[50vh] flex-1 resize-none bg-[#0f172a] p-3 font-mono text-xs leading-relaxed text-slate-100 outline-none"
+            className="min-h-[50vh] flex-1 resize-none bg-[#0f172a] p-3 font-mono text-xs leading-relaxed text-zinc-100 outline-none"
             aria-label={`${tab.toUpperCase()} code`}
             onKeyDown={(e) => {
               if (e.key === "Tab") {

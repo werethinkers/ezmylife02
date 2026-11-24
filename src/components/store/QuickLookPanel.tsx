@@ -141,7 +141,7 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
             <AppIcon toolId={toolId} category={category} name={tool.name} size="lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                <span className="inline-flex items-center whitespace-nowrap rounded-full border-[1.5px] border-foreground bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
                   {isStudio ? "Studio" : "Business app"}
                 </span>
                 <span className="text-xs font-semibold text-zinc-400">By EZYOURLIFE</span>

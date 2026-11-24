@@ -40,45 +40,49 @@ html {
  */
 @layer base {
   :root {
-    --background: 39 100% 96%;          /* cream page */
-    --foreground: 0 0% 7%;              /* ink */
+    --background: 42 50% 96.1%;         /* #FAF7F0 warm cream page */
+    --foreground: 0 0% 6.7%;            /* #111111 ink */
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card-foreground: 0 0% 6.7%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 0 0% 6.7%;
 
-    --primary: 326 78% 38%;             /* deep pink: links, highlights, small accents */
-    --primary-foreground: 0 0% 100%;
+    --primary: 317 85.5% 70.2%;         /* #F472D0 primary CTA pink */
+    --primary-foreground: 0 0% 6.7%;    /* #111111 — never white text on the pink */
 
-    --secondary: 37 52% 91%;            /* sand */
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 42 35.1% 92.7%;        /* #F3EFE6 muted surface */
+    --secondary-foreground: 0 0% 6.7%;
 
-    --muted: 37 52% 91%;
-    --muted-foreground: 0 0% 29%;
+    --muted: 42 35.1% 92.7%;            /* #F3EFE6 */
+    --muted-foreground: 0 0% 29.4%;     /* #4B4B4B */
 
-    --accent: 47 100% 50%;              /* sun: hover and selected surfaces */
-    --accent-foreground: 0 0% 7%;
+    --accent: 48 95.8% 53.1%;           /* #FACC15 highlight yellow: hover and selected surfaces */
+    --accent-foreground: 0 0% 6.7%;
 
     --destructive: 4 76% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 7%;
-    --input: 0 0% 7%;
-    --ring: 221 100% 55%;
+    --border: 0 0% 6.7%;                /* #111111 */
+    --input: 0 0% 6.7%;
+    --ring: 317 85.5% 70.2%;            /* #F472D0 focus ring */
 
     --radius: 0.875rem;
 
     /* Brand palette */
-    --ink: 0 0% 7%;
-    --cream: 39 100% 96%;
-    --sand: 37 52% 91%;
-    --pink: 312 100% 78%;
-    --sun: 47 100% 50%;
+    --ink: 0 0% 6.7%;                   /* #111111 */
+    --cream: 42 50% 96.1%;              /* #FAF7F0 */
+    --sand: 42 35.1% 92.7%;             /* #F3EFE6 */
+    --pink: 317 85.5% 70.2%;            /* #F472D0 */
+    --pink-hover: 317 75.4% 63.3%;      /* #E85BC1 */
+    --sun: 48 95.8% 53.1%;              /* #FACC15 */
     --teal: 169 70% 45%;
     --sky: 220 100% 78%;
-    --lime: 77 90% 58%;
+    --lime: 75 74.7% 65.9%;             /* #C8E967 */
     --coral: 15 100% 67%;
+    /* Aliases matching the task's own token names, same values as --sun / --lime above. */
+    --accent-yellow: 48 95.8% 53.1%;
+    --accent-lime: 75 74.7% 65.9%;
 
     --font-display: 'Unbounded', 'Hind', system-ui, sans-serif;
     --font-body: 'Hind', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -112,35 +116,35 @@ html {
 
   /*
    * The modern look: Home, Business apps, Websites & cards and Studios (src/components/modern/).
-   * Soft paper page (#F7F6F2) or night page (#0F1115), zinc neutrals, orange (#EA580C) accents,
-   * Space Grotesk headings and Inter body text. ModernPage puts these classes on its wrapper, so
-   * only those pages change; the rest of the site keeps the look above.
+   * Same neo-brutalist brand palette as the base theme above — warm cream page, white cards, thick
+   * ink borders and hard offset shadows, pink CTAs, yellow highlights — just with Space Grotesk /
+   * Inter type instead of Unbounded / Hind. ModernPage puts these classes on its wrapper.
    */
   .ez-modern {
-    --background: 48 24% 96%;           /* #F7F6F2 */
-    --foreground: 240 6% 10%;           /* zinc-900 */
-    --card: 0 0% 100%;
-    --card-foreground: 240 6% 10%;
+    --background: 42 50% 96.1%;         /* #FAF7F0 */
+    --foreground: 0 0% 6.7%;            /* #111111 */
+    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card-foreground: 0 0% 6.7%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
-    --primary: 21 90% 48%;              /* orange-600 #EA580C */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;            /* zinc-100 */
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 5% 34%;     /* zinc-600 */
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
-    --border: 240 6% 90%;               /* zinc-200 */
-    --input: 240 6% 90%;
-    --ring: 25 95% 53%;                 /* orange-500 */
+    --popover-foreground: 0 0% 6.7%;
+    --primary: 317 85.5% 70.2%;         /* #F472D0 */
+    --primary-foreground: 0 0% 6.7%;
+    --secondary: 42 35.1% 92.7%;        /* #F3EFE6 */
+    --secondary-foreground: 0 0% 6.7%;
+    --muted: 42 35.1% 92.7%;            /* #F3EFE6 */
+    --muted-foreground: 0 0% 29.4%;     /* #4B4B4B */
+    --accent: 48 95.8% 53.1%;           /* #FACC15 */
+    --accent-foreground: 0 0% 6.7%;
+    --border: 0 0% 6.7%;                /* #111111 */
+    --input: 0 0% 6.7%;
+    --ring: 317 85.5% 70.2%;            /* #F472D0 */
 
     --font-display: 'Space Grotesk', 'Inter', 'Hind', system-ui, sans-serif;
     --font-body: 'Inter', 'Hind', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-    --shadow-block-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-block: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-block-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-block-sm: 2px 2px 0 0 #111111;
+    --shadow-block: 3px 3px 0 0 #111111;
+    --shadow-block-lg: 5px 5px 0 0 #111111;
 
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -149,26 +153,30 @@ html {
   }
 
   .ez-modern.dark {
-    --background: 220 17% 7%;           /* #0F1115 */
-    --foreground: 240 5% 96%;           /* zinc-100 */
-    --card: 240 6% 10%;                 /* zinc-900 */
-    --card-foreground: 240 5% 96%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 240 5% 96%;
-    --secondary: 240 4% 16%;            /* zinc-800 */
-    --secondary-foreground: 240 5% 96%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;     /* zinc-400 */
-    --accent: 240 4% 16%;
-    --accent-foreground: 240 5% 96%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
+    --background: 30 21.1% 7.5%;        /* #17130F dark warm near-black page */
+    --foreground: 44 42.9% 93.1%;       /* #F5F1E6 cream text */
+    --card: 30 21.4% 11%;               /* #221C16 */
+    --card-foreground: 44 42.9% 93.1%;
+    --popover: 30 21.4% 11%;
+    --popover-foreground: 44 42.9% 93.1%;
+    --secondary: 30 20% 13.7%;          /* #2A231C */
+    --secondary-foreground: 44 42.9% 93.1%;
+    --muted: 30 20% 13.7%;
+    --muted-foreground: 38 14.5% 67.5%; /* #B8AFA0 */
+    --accent: 48 95.8% 53.1%;           /* same yellow as light mode */
+    --accent-foreground: 0 0% 6.7%;
+    --border: 44 42.9% 93.1%;           /* white-ish border, swapped for black on dark */
+    --input: 44 42.9% 93.1%;
+    /* A black offset shadow would vanish against a dark page, so dark mode gets a light one instead. */
+    --shadow-block-sm: 2px 2px 0 0 #f5f1e6;
+    --shadow-block: 3px 3px 0 0 #f5f1e6;
+    --shadow-block-lg: 5px 5px 0 0 #f5f1e6;
     color-scheme: dark;
   }
 
   .ez-modern ::selection {
-    background: #ea580c;
-    color: #fff;
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
   }
 }
 

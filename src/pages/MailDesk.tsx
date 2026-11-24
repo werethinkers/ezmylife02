@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Inbox, Loader2, Mail, Plus, RefreshCw, Trash2, Wallet } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
-import SEOFooter from "@/components/SEOFooter";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { CONTAINER } from "@/components/modern/styles";
 import { SEOHead } from "@/components/SEOHead";
 import { seoFor } from "@/lib/seo/pages";
 import { Button } from "@/components/ui/button";
@@ -157,10 +157,9 @@ const MailDesk = () => {
   const needReply = (mails.data ?? []).filter((m) => m.reply_label === "needs_reply");
 
   return (
-    <div className="min-h-screen bg-background">
+    <ModernPage section="apps">
       <SEOHead {...seoFor("/mail-brain", "")} />
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className={cn(CONTAINER, "py-8")}>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mail Brain</p>
@@ -186,7 +185,7 @@ const MailDesk = () => {
               aria-current={tab === t ? "page" : undefined}
               className={cn(
                 "rounded-full border-2 px-3.5 py-1.5 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                tab === t ? "border-ink bg-ink text-cream" : "border-transparent hover:border-ink hover:bg-card",
+                tab === t ? "border-ink bg-ink text-cream" : "border-ink bg-card hover:bg-sand",
               )}
             >
               {t}
@@ -208,8 +207,7 @@ const MailDesk = () => {
       </main>
 
       <FetchDialog open={fetchOpen} onOpenChange={setFetchOpen} onDone={refreshAll} />
-      <SEOFooter />
-    </div>
+    </ModernPage>
   );
 };
 
@@ -266,7 +264,7 @@ function Mails({ mails, byId, multi }: { mails: MailRow[]; byId: Map<string, Acc
       <div className="mb-4 flex flex-wrap gap-1">
         {([["all", "All"], ["reply", "Needs a reply"], ["people", "From people"]] as const).map(([k, l]) => (
           <button key={k} type="button" onClick={() => setFilter(k)} aria-pressed={filter === k}
-            className={cn("rounded-full border-2 px-3 py-1 text-sm font-semibold", filter === k ? "border-ink bg-ink text-cream" : "border-transparent hover:border-ink")}>{l}</button>
+            className={cn("rounded-full border-2 px-3 py-1 text-sm font-semibold", filter === k ? "border-ink bg-ink text-cream" : "border-ink bg-card hover:bg-sand")}>{l}</button>
         ))}
       </div>
       {shown.length === 0 ? (

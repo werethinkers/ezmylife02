@@ -200,9 +200,9 @@ const departmentData: Record<string, { icon: LucideIcon; gradient: string; glow:
   },
   "IT & Technology": { 
     icon: Code, 
-    gradient: "from-gray-500 to-slate-600",
+    gradient: "from-zinc-500 to-zinc-600",
     glow: "group-hover:shadow-gray-500/25",
-    color: "text-gray-500",
+    color: "text-zinc-500",
     subcategories: ["Development", "Security", "Cloud Services", "DevOps", "API Management", "Data Analytics", "System Admin", "Network Management", "IT Support"]
   },
   "Design & Creative": { 
@@ -250,12 +250,12 @@ const toolTypeVisualConfig: Record<string, { icon: LucideIcon; gradient: string;
   "Audio Tools": { icon: Mic, gradient: "from-green-500 to-emerald-600", glow: "group-hover:shadow-green-500/25", color: "text-green-500", description: "Process and edit audio files" },
   "AI & Automation": { icon: Bot, gradient: "from-indigo-500 to-violet-600", glow: "group-hover:shadow-indigo-500/25", color: "text-indigo-500", description: "AI-powered tools for automation" },
   "Analytics Tools": { icon: BarChart3, gradient: "from-teal-500 to-cyan-600", glow: "group-hover:shadow-teal-500/25", color: "text-teal-500", description: "Track, analyze, and visualize data" },
-  "Developer Tools": { icon: Code, gradient: "from-gray-600 to-zinc-700", glow: "group-hover:shadow-gray-500/25", color: "text-gray-400", description: "Tools for developers and tech teams" },
+  "Developer Tools": { icon: Code, gradient: "from-zinc-600 to-zinc-700", glow: "group-hover:shadow-gray-500/25", color: "text-zinc-400", description: "Tools for developers and tech teams" },
   "Communication": { icon: Mail, gradient: "from-sky-500 to-blue-600", glow: "group-hover:shadow-sky-500/25", color: "text-sky-500", description: "Email, messaging, and outreach tools" },
   "Security Tools": { icon: Shield, gradient: "from-amber-500 to-yellow-600", glow: "group-hover:", color: "text-amber-500", description: "Protect and secure your digital assets" },
   "Productivity": { icon: Zap, gradient: "from-yellow-500 to-orange-600", glow: "group-hover:shadow-yellow-500/25", color: "text-yellow-500", description: "Boost efficiency and save time" },
   "Text Tools": { icon: Type, gradient: "from-rose-500 to-pink-600", glow: "group-hover:shadow-rose-500/25", color: "text-rose-500", description: "Format, convert, and analyze text" },
-  "QR & Barcode": { icon: QrCode, gradient: "from-slate-500 to-gray-600", glow: "group-hover:shadow-slate-500/25", color: "text-slate-500", description: "Generate and scan QR codes & barcodes" },
+  "QR & Barcode": { icon: QrCode, gradient: "from-zinc-500 to-zinc-600", glow: "group-hover:shadow-slate-500/25", color: "text-zinc-500", description: "Generate and scan QR codes & barcodes" },
   "Calculators": { icon: Calculator, gradient: "from-emerald-500 to-green-600", glow: "group-hover:", color: "text-emerald-500", description: "Calculate anything you need" },
   "Converters": { icon: RefreshCw, gradient: "from-cyan-500 to-teal-600", glow: "group-hover:shadow-cyan-500/25", color: "text-cyan-500", description: "Convert between formats and units" },
   "Social Media": { icon: Share2, gradient: "from-pink-500 to-fuchsia-600", glow: "group-hover:", color: "text-pink-500", description: "Tools for social media management" },
@@ -295,9 +295,9 @@ const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: s
   },
   "Industrial & Production": {
     icon: Factory,
-    gradient: "from-slate-500 to-zinc-600",
+    gradient: "from-zinc-500 to-zinc-600",
     glow: "group-hover:shadow-slate-500/25",
-    color: "text-slate-500",
+    color: "text-zinc-500",
     sectors: ["Manufacturing", "Agriculture & Farming", "Construction & Real Estate", "Energy & Utilities", "Mining", "Chemicals", "Textiles", "Machinery"]
   },
   "Logistics & Transport": {
@@ -358,9 +358,9 @@ const industryData: Record<string, { icon: LucideIcon; gradient: string; glow: s
   },
   "Government & Public": {
     icon: Landmark,
-    gradient: "from-gray-600 to-slate-700",
+    gradient: "from-zinc-600 to-zinc-700",
     glow: "group-hover:shadow-gray-600/25",
-    color: "text-gray-600",
+    color: "text-zinc-600",
     sectors: ["Government", "Public Administration", "Defense", "Law Enforcement", "Public Health", "Social Services", "Civic Organizations"]
   },
 };

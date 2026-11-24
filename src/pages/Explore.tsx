@@ -157,7 +157,7 @@ const Explore = () => {
                       <span
                         className={cn(
                           "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                          isPicked ? "bg-orange-600 text-white" : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+                          isPicked ? "bg-primary text-primary-foreground" : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
                         )}
                       >
                         <b.Icon className="h-5 w-5" aria-hidden />

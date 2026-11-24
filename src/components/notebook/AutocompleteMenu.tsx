@@ -33,7 +33,7 @@ export const AutocompleteMenu: React.FC<AutocompleteMenuProps> = ({
   return (
     <ul
       ref={menuRef}
-      className="absolute z-20 w-80 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-lg"
+      className="absolute z-20 w-80 max-h-60 overflow-y-auto bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-lg"
       style={{ top: position.top, left: position.left }}
       role="listbox"
     >
@@ -43,7 +43,7 @@ export const AutocompleteMenu: React.FC<AutocompleteMenuProps> = ({
           className={`px-3 py-2 cursor-pointer ${
             index === selectedIndex
               ? 'bg-sky-100 dark:bg-sky-900'
-              : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+              : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'
           }`}
           onMouseDown={(e) => {
             e.preventDefault(); // Prevent editor from losing focus before selection
@@ -55,7 +55,7 @@ export const AutocompleteMenu: React.FC<AutocompleteMenuProps> = ({
           <div className="flex justify-between items-center">
             <span className="font-bold text-sky-600 dark:text-sky-400">{suggestion.key}</span>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400 truncate" title={suggestion.value}>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 truncate" title={suggestion.value}>
             {suggestion.value.replace(/\n/g, ' ')}
           </p>
         </li>

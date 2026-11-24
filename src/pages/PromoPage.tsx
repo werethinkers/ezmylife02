@@ -308,7 +308,7 @@ export default function PromoPage() {
                 <AppIcon toolId={toolId ?? ""} category={category} name={name} size="lg" className="border-zinc-200 shadow-soft-sm dark:border-zinc-800 md:h-24 md:w-24" />
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                    <span className="inline-flex items-center whitespace-nowrap rounded-full border-[1.5px] border-foreground bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
                       {typeLabel}
                     </span>
                     <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">By EZYOURLIFE</span>
@@ -488,14 +488,14 @@ export default function PromoPage() {
         {/* ───────── Final CTA + guarantees ───────── */}
         <section className="py-12 md:py-16">
           <div className={CONTAINER}>
-            <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-6 text-white shadow-soft-lg md:flex-row md:items-center md:p-10">
+            <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border-[1.5px] border-foreground bg-primary p-6 text-primary-foreground shadow-soft-lg md:flex-row md:items-center md:p-10">
               <div className="min-w-0">
                 <h2 className="font-display text-2xl font-extrabold md:text-3xl">{row?.final_cta_title ?? `Ready to try ${name}?`}</h2>
-                <p className="mt-2 text-white/90">
+                <p className="mt-2 text-foreground/80">
                   {row?.final_cta_subtitle ?? (creditCost > 0 ? `Pay only for results: ${creditLabel} each. Failed runs are never charged.` : "Free to use.")}
                 </p>
               </div>
-              {tryButton("w-full bg-zinc-950 hover:bg-zinc-900 md:w-auto")}
+              {tryButton("w-full border-foreground bg-foreground text-background hover:opacity-90 md:w-auto")}
             </div>
 
             <div className={cn(ROW_CLASS, "mt-10 md:grid-cols-4 md:gap-5")}>

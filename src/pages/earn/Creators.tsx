@@ -207,13 +207,13 @@ export default function Creators() {
       <section className="border-y border-zinc-200 bg-zinc-50 py-12 dark:border-zinc-800 dark:bg-zinc-950/40 md:py-16">
         <div className={CONTAINER}>
           <SectionHead title="What your followers get" line={`One payment of ₹${KIT.inr}, made for each kind of business.`} />
-          <div className="flex flex-col gap-6 rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-5 text-white md:flex-row md:items-center md:justify-between md:p-8">
+          <div className="flex flex-col gap-6 rounded-3xl border-[1.5px] border-foreground bg-primary p-5 text-primary-foreground md:flex-row md:items-center md:justify-between md:p-8">
             <ul className="space-y-2 text-[16px]">
               {KIT.items.map((i) => (
                 <li key={i.name} className="flex gap-2">
                   <span aria-hidden>✓</span>
                   <span>
-                    {i.name} <span className="text-white/75">(worth {i.worth})</span>
+                    {i.name} <span className="text-foreground/75">(worth {i.worth})</span>
                   </span>
                 </li>
               ))}
@@ -225,12 +225,12 @@ export default function Creators() {
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap gap-2">
                 {TRADES.map((t) => (
-                  <span key={t.key} className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
+                  <span key={t.key} className="rounded-full border border-foreground/30 bg-foreground/10 px-3 py-1 text-sm font-semibold backdrop-blur">
                     {t.label}
                   </span>
                 ))}
               </div>
-              <Link to="/kit" className={cn(BTN_OUTLINE, "self-start border-white/40 bg-white/10 text-white hover:bg-white/20")}>
+              <Link to="/kit" className={cn(BTN_OUTLINE, "self-start border-foreground/40 bg-foreground/10 text-foreground hover:bg-foreground/20")}>
                 See the kit <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

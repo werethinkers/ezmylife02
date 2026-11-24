@@ -44,7 +44,7 @@ const EditableContentDisplay = ({ value, onUpdate, keywords, highlightEnabled, a
         const InputComponent = as;
         return (
             <div className="mb-3">
-                <label className="text-xs font-bold text-gray-500 uppercase">{label}</label>
+                <label className="text-xs font-bold text-zinc-500 uppercase">{label}</label>
                 <InputComponent
                     ref={inputRef as any}
                     value={currentValue}
@@ -59,7 +59,7 @@ const EditableContentDisplay = ({ value, onUpdate, keywords, highlightEnabled, a
 
     return (
         <div className="mb-3" onClick={() => setIsEditing(true)}>
-            <label className="text-xs font-bold text-gray-500 uppercase">{label}</label>
+            <label className="text-xs font-bold text-zinc-500 uppercase">{label}</label>
             <div className="w-full p-2 border-b-2 border-transparent hover:bg-yellow-50 cursor-pointer rounded-md transition-colors min-h-[44px] whitespace-pre-wrap">
                 {highlightText(value, keywords, highlightEnabled)}
             </div>
@@ -75,7 +75,7 @@ const OtherPositionCard: React.FC<{ position: OtherPosition, founderPath: (strin
     const createPath = (field: string) => [...founderPath, 'other_positions', positionIndex, field, 0, 'value'];
 
     return (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="bg-zinc-50 p-4 rounded-lg border border-zinc-200">
             <EditableContentDisplay label="Company Name" value={companyName} onUpdate={(val) => onUpdate(createPath('company_name'), val)} keywords={keywords} highlightEnabled={highlightEnabled} />
             <EditableContentDisplay label="Position Held" value={positionHeld} onUpdate={(val) => onUpdate(createPath('position_held'), val)} keywords={keywords} highlightEnabled={highlightEnabled} />
             <EditableContentDisplay label="Company Details" as="textarea" value={companyDetails} onUpdate={(val) => onUpdate(createPath('company_details'), val)} keywords={keywords} highlightEnabled={highlightEnabled} />
@@ -93,15 +93,15 @@ const FounderCard: React.FC<{ founder: FounderDetail, path: (string|number)[], o
     const commonProps = { keywords, highlightEnabled };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col h-full page-break-avoid">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200 flex flex-col h-full page-break-avoid">
             <div className="flex-grow">
                 <EditableContentDisplay label="Name" value={name} onUpdate={(val) => onUpdate([...path, 'name', 0, 'value'], val)} {...commonProps} />
                 <EditableContentDisplay label="Title" value={title} onUpdate={(val) => onUpdate([...path, 'title', 0, 'value'], val)} {...commonProps} />
                 <EditableContentDisplay label="Background" as="textarea" value={background} onUpdate={(val) => onUpdate([...path, 'background', 0, 'value'], val)} {...commonProps} />
 
                 {founder.other_positions && founder.other_positions.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h4 className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-3">Other Directorships</h4>
+                    <div className="mt-4 pt-4 border-t border-zinc-200">
+                        <h4 className="text-sm font-bold text-zinc-600 uppercase tracking-wider mb-3">Other Directorships</h4>
                         <div className="space-y-4">
                             {founder.other_positions.map((pos, index) => (
                                 <OtherPositionCard 
@@ -123,7 +123,7 @@ const FounderCard: React.FC<{ founder: FounderDetail, path: (string|number)[], o
                   href={linkedinUrl} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="mt-4 pt-4 border-t border-gray-200 inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold transition-colors group"
+                  className="mt-4 pt-4 border-t border-zinc-200 inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold transition-colors group"
                 >
                     <LinkedinIcon className="w-5 h-5 text-blue-700" />
                     <span className="group-hover:underline">View LinkedIn Profile</span>
@@ -136,7 +136,7 @@ const FounderCard: React.FC<{ founder: FounderDetail, path: (string|number)[], o
 
 export const TeamDisplay: React.FC<{ founders: FounderDetail[] | undefined, onUpdate: (path: (string|number)[], value: any) => void, keywords: string[], highlightEnabled: boolean }> = ({ founders, onUpdate, keywords, highlightEnabled }) => {
     if (!founders || founders.length === 0) {
-        return <p className="text-center text-gray-500 py-8">Team information not available.</p>;
+        return <p className="text-center text-zinc-500 py-8">Team information not available.</p>;
     }
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

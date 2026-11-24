@@ -78,11 +78,11 @@ export function ShowcaseCard({
           <h3 className={cn("line-clamp-2 font-display font-bold leading-snug", size === "lg" ? "text-base" : "text-sm")}>{title}</h3>
         </div>
         {split ? (
-          <Link to={actionTo!} className={cn(actionClass, "relative z-30 hover:bg-orange-500 hover:text-white", FOCUS_RING)}>
+          <Link to={actionTo!} className={cn(actionClass, "relative z-30 hover:bg-primary hover:text-primary-foreground", FOCUS_RING)}>
             {action}
           </Link>
         ) : (
-          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-orange-500 group-hover:text-white")}>
+          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-primary group-hover:text-primary-foreground")}>
             {action}
           </span>
         )}

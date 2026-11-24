@@ -5,17 +5,17 @@ import { SourcedDataPointDisplay } from './SourcedDataPointDisplay';
 import { MermaidDiagram } from './MermaidDiagram';
 
 const SectionHeader = ({ title }: { title: string }) => (
-    <tr className="bg-orange-500 text-white page-break-avoid">
+    <tr className="bg-primary text-primary-foreground page-break-avoid">
         <th colSpan={2} className="p-3 text-left font-bold text-lg sticky top-0 z-[1]">{title}</th>
     </tr>
 );
 
 const DetailRow = ({ label, points, path, onUpdate, keywords, highlightEnabled }: { label:string, points: SourcedDataPoint[] | undefined, path: (string|number)[], onUpdate: (path: (string|number)[], value: any) => void, keywords: string[], highlightEnabled: boolean }) => (
-    <tr className="border-b border-gray-200 bg-white hover:bg-gray-50 page-break-avoid">
-        <td className="p-3 font-semibold text-gray-700 w-1/3 align-top">{label}</td>
+    <tr className="border-b border-zinc-200 bg-white hover:bg-zinc-50 page-break-avoid">
+        <td className="p-3 font-semibold text-zinc-700 w-1/3 align-top">{label}</td>
         <td className="p-3 w-2/3">
             {points && points.length > 0 ? (
-                <div className="flex flex-col gap-2 divide-y divide-gray-100">
+                <div className="flex flex-col gap-2 divide-y divide-zinc-100">
                     {points.map((point, index) => (
                         <SourcedDataPointDisplay 
                             key={index} 
@@ -27,7 +27,7 @@ const DetailRow = ({ label, points, path, onUpdate, keywords, highlightEnabled }
                     ))}
                 </div>
             ) : (
-                <p className="text-gray-500 italic">No data available.</p>
+                <p className="text-zinc-500 italic">No data available.</p>
             )}
         </td>
     </tr>
@@ -35,18 +35,18 @@ const DetailRow = ({ label, points, path, onUpdate, keywords, highlightEnabled }
 
 const IPOExamplesDisplay = ({ examples, path, onUpdate, keywords, highlightEnabled }: { examples: IPOExample[], path: (string|number)[], onUpdate: (path: (string|number)[], value: any) => void, keywords: string[], highlightEnabled: boolean }) => {
     if (!examples || examples.length === 0) {
-        return <p className="text-gray-500 italic">No data available.</p>;
+        return <p className="text-zinc-500 italic">No data available.</p>;
     }
     return (
         <div className="flex flex-col gap-4">
             {examples.map((example, index) => (
-                <div key={index} className="p-3 border rounded-lg bg-gray-50/50 space-y-2">
+                <div key={index} className="p-3 border rounded-lg bg-zinc-50/50 space-y-2">
                     <div className="grid grid-cols-[auto,1fr] items-start gap-x-3">
-                        <strong className="text-gray-600 text-sm pt-2">Company:</strong>
+                        <strong className="text-zinc-600 text-sm pt-2">Company:</strong>
                         <SourcedDataPointDisplay point={example.company_name?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'company_name', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                     </div>
                     <div className="grid grid-cols-[auto,1fr] items-start gap-x-3">
-                        <strong className="text-gray-600 text-sm pt-2">Year:</strong>
+                        <strong className="text-zinc-600 text-sm pt-2">Year:</strong>
                         <SourcedDataPointDisplay point={example.year?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'year', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                     </div>
                 </div>
@@ -57,22 +57,22 @@ const IPOExamplesDisplay = ({ examples, path, onUpdate, keywords, highlightEnabl
 
 const AcquisitionExamplesDisplay = ({ examples, path, onUpdate, keywords, highlightEnabled }: { examples: AcquisitionExample[], path: (string|number)[], onUpdate: (path: (string|number)[], value: any) => void, keywords: string[], highlightEnabled: boolean }) => {
     if (!examples || examples.length === 0) {
-        return <p className="text-gray-500 italic">No data available.</p>;
+        return <p className="text-zinc-500 italic">No data available.</p>;
     }
     return (
         <div className="flex flex-col gap-4">
             {examples.map((example, index) => (
-                <div key={index} className="p-3 border rounded-lg bg-gray-50/50 space-y-2">
+                <div key={index} className="p-3 border rounded-lg bg-zinc-50/50 space-y-2">
                      <div className="grid grid-cols-[auto,1fr] items-start gap-x-3">
-                        <strong className="text-gray-600 text-sm pt-2">Company:</strong>
+                        <strong className="text-zinc-600 text-sm pt-2">Company:</strong>
                         <SourcedDataPointDisplay point={example.company_name?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'company_name', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                     </div>
                     <div className="grid grid-cols-[auto,1fr] items-start gap-x-3">
-                        <strong className="text-gray-600 text-sm pt-2">Acquirer:</strong>
+                        <strong className="text-zinc-600 text-sm pt-2">Acquirer:</strong>
                         <SourcedDataPointDisplay point={example.acquirer?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'acquirer', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                     </div>
                     <div className="grid grid-cols-[auto,1fr] items-start gap-x-3">
-                        <strong className="text-gray-600 text-sm pt-2">Year:</strong>
+                        <strong className="text-zinc-600 text-sm pt-2">Year:</strong>
                         <SourcedDataPointDisplay point={example.year?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'year', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                     </div>
                 </div>
@@ -83,12 +83,12 @@ const AcquisitionExamplesDisplay = ({ examples, path, onUpdate, keywords, highli
 
 const SecondarySaleExamplesDisplay = ({ examples, path, onUpdate, keywords, highlightEnabled }: { examples: SecondarySaleExample[], path: (string|number)[], onUpdate: (path: (string|number)[], value: any) => void, keywords: string[], highlightEnabled: boolean }) => {
     if (!examples || examples.length === 0) {
-        return <p className="text-gray-500 italic">No data available.</p>;
+        return <p className="text-zinc-500 italic">No data available.</p>;
     }
     return (
         <div className="flex flex-col gap-4">
             {examples.map((example, index) => (
-                <div key={index} className="p-3 border rounded-lg bg-gray-50/50 space-y-2">
+                <div key={index} className="p-3 border rounded-lg bg-zinc-50/50 space-y-2">
                     <SourcedDataPointDisplay point={example.details?.[0]} onUpdate={(newValue) => onUpdate([...path, index, 'details', 0, 'value'], newValue)} keywords={keywords} highlightEnabled={highlightEnabled} />
                 </div>
             ))}
@@ -111,10 +111,10 @@ export const ExecutiveSummary: React.FC<{ data: ExecutiveSummaryData, companyNam
 
     return (
         <div>
-            <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Executive Summary - {companyName}</h2>
-            <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-300">
+            <h2 className="text-3xl font-bold text-center mb-6 text-zinc-800">Executive Summary - {companyName}</h2>
+            <div className="overflow-x-auto rounded-lg shadow-sm border border-zinc-300">
                 <table className="min-w-full">
-                    <thead className="bg-orange-600 text-white no-print">
+                    <thead className="bg-primary text-primary-foreground no-print">
                         <tr>
                             <th className="p-3 text-left font-bold w-1/3">Section</th>
                             <th className="p-3 text-left font-bold w-2/3">Details</th>
@@ -153,8 +153,8 @@ export const ExecutiveSummary: React.FC<{ data: ExecutiveSummaryData, companyNam
                         <SectionHeader title="Team" />
                         {team.founders?.map((founder, index) => (
                             <React.Fragment key={index}>
-                                <tr className="bg-gray-100 page-break-avoid">
-                                    <td colSpan={2} className="p-2 font-bold text-gray-800 text-base">
+                                <tr className="bg-zinc-100 page-break-avoid">
+                                    <td colSpan={2} className="p-2 font-bold text-zinc-800 text-base">
                                         Founder #{index + 1}
                                     </td>
                                 </tr>
@@ -173,20 +173,20 @@ export const ExecutiveSummary: React.FC<{ data: ExecutiveSummaryData, companyNam
                         <DetailRow label="Strengths" points={deal_evaluation.strengths} path={createPath('deal_evaluation', 'strengths')} {...commonProps} />
                         <DetailRow label="Risks & Concerns" points={deal_evaluation.risks_concerns} path={createPath('deal_evaluation', 'risks_concerns')} {...commonProps} />
                         <DetailRow label="Potential Failure Points" points={deal_evaluation.potential_failure_points} path={createPath('deal_evaluation', 'potential_failure_points')} {...commonProps} />
-                         <tr className="border-b border-gray-200 bg-white hover:bg-gray-50 page-break-avoid">
-                            <td className="p-3 font-semibold text-gray-700 w-1/3 align-top">Exit Examples (IPO)</td>
+                         <tr className="border-b border-zinc-200 bg-white hover:bg-zinc-50 page-break-avoid">
+                            <td className="p-3 font-semibold text-zinc-700 w-1/3 align-top">Exit Examples (IPO)</td>
                             <td className="p-3 w-2/3">
                                 <IPOExamplesDisplay examples={deal_evaluation.exit_options_ipo} path={createPath('deal_evaluation', 'exit_options_ipo')} {...commonProps} />
                             </td>
                         </tr>
-                        <tr className="border-b border-gray-200 bg-white hover:bg-gray-50 page-break-avoid">
-                            <td className="p-3 font-semibold text-gray-700 w-1/3 align-top">Exit Examples (Acquisition)</td>
+                        <tr className="border-b border-zinc-200 bg-white hover:bg-zinc-50 page-break-avoid">
+                            <td className="p-3 font-semibold text-zinc-700 w-1/3 align-top">Exit Examples (Acquisition)</td>
                             <td className="p-3 w-2/3">
                                 <AcquisitionExamplesDisplay examples={deal_evaluation.exit_options_acquisition} path={createPath('deal_evaluation', 'exit_options_acquisition')} {...commonProps} />
                             </td>
                         </tr>
-                        <tr className="border-b border-gray-200 bg-white hover:bg-gray-50 page-break-avoid">
-                            <td className="p-3 font-semibold text-gray-700 w-1/3 align-top">Exit Examples (Secondary Sale)</td>
+                        <tr className="border-b border-zinc-200 bg-white hover:bg-zinc-50 page-break-avoid">
+                            <td className="p-3 font-semibold text-zinc-700 w-1/3 align-top">Exit Examples (Secondary Sale)</td>
                             <td className="p-3 w-2/3">
                                 <SecondarySaleExamplesDisplay examples={deal_evaluation.exit_options_secondary_sale} path={createPath('deal_evaluation', 'exit_options_secondary_sale')} {...commonProps} />
                             </td>

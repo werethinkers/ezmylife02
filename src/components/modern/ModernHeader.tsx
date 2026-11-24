@@ -19,7 +19,7 @@ import { BTN_INK, CONTAINER, FOCUS_RING, roundedLabel } from "./styles";
 export function ModernLogo({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
-      <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-600 to-amber-500 font-display text-lg font-bold text-white shadow-soft-sm">
+      <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-foreground bg-primary font-display text-lg font-bold text-primary-foreground shadow-soft-sm">
         EZ
       </span>
       <span className="font-display text-lg font-bold tracking-tight">EZYOURLIFE</span>
@@ -54,9 +54,9 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
 
   const navLink = (on: boolean) =>
     cn(
-      "inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-1 py-1 transition",
+      "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1 py-1 transition",
       FOCUS_RING,
-      on ? "font-semibold text-zinc-950 dark:text-white" : "hover:text-zinc-950 dark:hover:text-white",
+      on ? "bg-foreground px-3 font-semibold text-background" : "hover:text-foreground",
     );
   const label = (s: (typeof NAV_SECTIONS)[number]) => (
     <>
@@ -67,7 +67,7 @@ export function ModernHeader({ section }: { section?: SectionId | null }) {
 
   return (
     <>
-      <div className="bg-zinc-950 px-4 py-2 text-center text-xs font-medium text-white dark:bg-orange-600">
+      <div className="bg-foreground px-4 py-2 text-center text-xs font-medium text-background dark:bg-primary dark:text-primary-foreground">
         <span>
           {countLabel} business apps{studios > 0 ? ` · ${roundedLabel(studios)} studios` : ""} · websites and cards in minutes —{" "}
         </span>

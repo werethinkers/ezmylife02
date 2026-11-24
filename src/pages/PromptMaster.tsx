@@ -72,7 +72,7 @@ interface SessionData {
 
 // ---- Constants ----
 const FORMATS = [
-  { id: 'text', label: 'Text', icon: 'Type', color: 'bg-slate-700' },
+  { id: 'text', label: 'Text', icon: 'Type', color: 'bg-zinc-700' },
   { id: 'image', label: 'Image', icon: 'Image', color: 'bg-blue-600' },
   { id: 'video', label: 'Video', icon: 'Video', color: 'bg-purple-600' },
   { id: 'hindi_film', label: 'Hindi Film', icon: 'Clapperboard', color: 'bg-orange-600' },
@@ -98,7 +98,7 @@ const CATEGORIES = [
   { id: 'camera', label: 'Camera', icon: 'Camera', color: 'bg-emerald-500', textColor: 'text-emerald-500', formats: ['image', 'video', 'hindi_film'] },
   { id: 'lighting', label: 'Light', icon: 'Zap', color: 'bg-orange-400', textColor: 'text-orange-400', formats: ['image', 'video', 'hindi_film'] },
   { id: 'reference', label: 'Ref', icon: 'Link', color: 'bg-cyan-500', textColor: 'text-cyan-500', formats: ['image', 'video'] },
-  { id: 'custom', label: 'Extra', icon: 'PlusCircle', color: 'bg-slate-700', textColor: 'text-slate-700', formats: ['image', 'video', 'hindi_film', 'story', 'text'] },
+  { id: 'custom', label: 'Extra', icon: 'PlusCircle', color: 'bg-zinc-700', textColor: 'text-zinc-700', formats: ['image', 'video', 'hindi_film', 'story', 'text'] },
 ];
 
 const OPTIONS: PromptOption[] = [
@@ -292,29 +292,29 @@ const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouriteProm
 
   if (isEditing) {
     return (
-      <div className="bg-slate-50 border-2 border-sky-400 rounded-2xl p-3" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-zinc-50 border-2 border-sky-400 rounded-2xl p-3" onClick={(e) => e.stopPropagation()}>
         <div className="space-y-2">
           <div>
-            <label className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Shortcut</label>
+            <label className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">Shortcut</label>
             <input
               type="text"
               value={editShortcut}
               onChange={(e) => setEditShortcut(e.target.value)}
-              className="w-full mt-1 px-2 py-1 text-[10px] border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full mt-1 px-2 py-1 text-[10px] border border-zinc-300 rounded-lg bg-white text-zinc-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
               autoFocus
             />
           </div>
           <div>
-            <label className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Prompt</label>
+            <label className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">Prompt</label>
             <textarea
               value={editPrompt}
               onChange={(e) => setEditPrompt(e.target.value)}
               rows={4}
-              className="w-full mt-1 px-2 py-1 text-[10px] border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+              className="w-full mt-1 px-2 py-1 text-[10px] border border-zinc-300 rounded-lg bg-white text-zinc-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={handleCancelEdit} className="px-2 py-1 text-[8px] font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">Cancel</button>
+            <button onClick={handleCancelEdit} className="px-2 py-1 text-[8px] font-bold rounded-lg bg-zinc-200 text-zinc-700 hover:bg-zinc-300 transition-colors">Cancel</button>
             <button onClick={handleSaveEdit} className="px-2 py-1 text-[8px] font-bold rounded-lg bg-sky-600 text-white hover:bg-sky-700 transition-colors">Save</button>
           </div>
         </div>
@@ -324,7 +324,7 @@ const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouriteProm
 
   return (
     <div
-      className="bg-slate-50 border border-slate-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
+      className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 hover:border-amber-300 transition-all group cursor-pointer"
       onClick={() => onUse(fav)}
     >
       <div className="flex items-center justify-between mb-2">
@@ -367,8 +367,8 @@ const FavouriteItem: React.FC<{ fav: FavouritePrompt; onUse: (fav: FavouriteProm
           </button>
         </div>
       </div>
-      <p className="text-[9px] font-bold text-slate-700 leading-relaxed line-clamp-3">{fav.prompt}</p>
-      <p className="text-[7px] text-slate-400 mt-2 font-bold uppercase tracking-widest">
+      <p className="text-[9px] font-bold text-zinc-700 leading-relaxed line-clamp-3">{fav.prompt}</p>
+      <p className="text-[7px] text-zinc-400 mt-2 font-bold uppercase tracking-widest">
         {new Date(fav.createdAt).toLocaleDateString()}
       </p>
     </div>
@@ -705,13 +705,13 @@ const PromptMaster: React.FC = () => {
   if (!isLoaded && user) {
     return (
       <div className="fixed inset-0 bg-[#F2F4F7] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-[#F2F4F7] text-slate-900 flex flex-col font-sans select-none overflow-hidden h-screen">
+    <div className="fixed inset-0 bg-[#F2F4F7] text-zinc-900 flex flex-col font-sans select-none overflow-hidden h-screen">
       <SEOHead
         title="Prompt Master - AI Prompt Builder & Optimizer"
         description="Prompt Master by EZYOURLIFE — build perfect AI prompts for images, videos, stories and text. Select subjects, styles, lighting, motion and more. Save favourites as shortcuts."
@@ -740,23 +740,23 @@ const PromptMaster: React.FC = () => {
         ]}
       />
       {/* HEADER */}
-      <div className="h-14 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 z-50 shadow-sm shrink-0">
+      <div className="h-14 px-4 md:px-6 flex items-center justify-between bg-white border-b border-zinc-200 z-50 shadow-sm shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-xl transition-all">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-zinc-100 rounded-xl transition-all">
             <ArrowLeft size={16} />
           </button>
-          <div className="w-8 h-8 bg-slate-950 rounded-[12px] flex items-center justify-center text-white font-black italic shadow-xl">P</div>
+          <div className="w-8 h-8 bg-zinc-950 rounded-[12px] flex items-center justify-center text-white font-black italic shadow-xl">P</div>
           <div className="hidden sm:block">
-            <h1 className="font-extrabold text-[12px] uppercase tracking-tighter text-slate-900 leading-none">PromptMaster Elite</h1>
-            <p className="text-[7px] font-black text-slate-400 tracking-[0.4em] mt-1">V16.5 TEXT ENGINE</p>
+            <h1 className="font-extrabold text-[12px] uppercase tracking-tighter text-zinc-900 leading-none">PromptMaster Elite</h1>
+            <p className="text-[7px] font-black text-zinc-400 tracking-[0.4em] mt-1">V16.5 TEXT ENGINE</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 overflow-x-auto max-w-[40%] sm:max-w-none" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-2xl border border-zinc-200 overflow-x-auto max-w-[40%] sm:max-w-none" style={{ scrollbarWidth: 'none' }}>
           {FORMATS.map(f => (
             <button
               key={f.id}
               onClick={() => handleFormatChange(f.id)}
-              className={`flex items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-xl text-[9px] md:text-[10px] font-black transition-all shrink-0 ${activeFormat === f.id ? `${f.color} text-white shadow-md` : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-xl text-[9px] md:text-[10px] font-black transition-all shrink-0 ${activeFormat === f.id ? `${f.color} text-white shadow-md` : 'text-zinc-500 hover:text-zinc-700'}`}
             >
               <Icon name={f.icon} size={11} />
               <span className="hidden sm:inline uppercase">{f.label}</span>
@@ -764,10 +764,10 @@ const PromptMaster: React.FC = () => {
           ))}
         </div>
         <div className="flex items-center gap-1 md:gap-2">
-          <button onClick={() => setShowFavourites(!showFavourites)} className={`p-2 rounded-xl transition-all relative ${showFavourites ? 'bg-amber-100 text-amber-600' : 'hover:bg-amber-50 text-slate-500'}`} title="Favourite Prompts">
+          <button onClick={() => setShowFavourites(!showFavourites)} className={`p-2 rounded-xl transition-all relative ${showFavourites ? 'bg-amber-100 text-amber-600' : 'hover:bg-amber-50 text-zinc-500'}`} title="Favourite Prompts">
             <Star size={16} strokeWidth={2.5} />
             {favourites.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center">{favourites.length}</span>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent-yellow text-foreground text-[7px] font-black rounded-full flex items-center justify-center">{favourites.length}</span>
             )}
           </button>
           <button onClick={handleBrainstorm} disabled={isSuggesting} className="p-2 hover:bg-amber-100 rounded-xl text-black transition-all" title="Brainstorm Variations">
@@ -776,7 +776,7 @@ const PromptMaster: React.FC = () => {
           <button onClick={handleSave} disabled={isSaving} className="p-2 hover:bg-emerald-100 rounded-xl text-emerald-600 transition-all" title="Save Session">
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} strokeWidth={2.5} />}
           </button>
-          <button onClick={handleCopy} className="px-3 py-2 md:px-5 md:py-2.5 bg-slate-950 text-white rounded-xl shadow-lg active:scale-95 transition-all flex items-center gap-2">
+          <button onClick={handleCopy} className="px-3 py-2 md:px-5 md:py-2.5 bg-zinc-950 text-white rounded-xl shadow-lg active:scale-95 transition-all flex items-center gap-2">
             <Zap size={14} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Build & Copy</span>
           </button>
@@ -786,14 +786,14 @@ const PromptMaster: React.FC = () => {
       {/* MAIN VIEWPORT */}
       <div className="flex-1 flex overflow-hidden">
         {/* SIDE RAIL */}
-        <div className="w-14 md:w-20 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-6 md:gap-8 z-40 overflow-y-auto shadow-[2px_0_10px_rgba(0,0,0,0.02)] shrink-0" style={{ scrollbarWidth: 'none' }}>
+        <div className="w-14 md:w-20 bg-white border-r border-zinc-200 flex flex-col items-center py-6 gap-6 md:gap-8 z-40 overflow-y-auto shadow-[2px_0_10px_rgba(0,0,0,0.02)] shrink-0" style={{ scrollbarWidth: 'none' }}>
           {visibleCategories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`flex flex-col items-center gap-1.5 group transition-all shrink-0 ${activeCategory === cat.id ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
             >
-              <div className={`w-9 h-9 md:w-11 md:h-11 rounded-[14px] md:rounded-[16px] flex items-center justify-center transition-all ${activeCategory === cat.id ? `${cat.color} text-white shadow-xl` : 'bg-slate-100 text-black hover:bg-slate-200'}`}>
+              <div className={`w-9 h-9 md:w-11 md:h-11 rounded-[14px] md:rounded-[16px] flex items-center justify-center transition-all ${activeCategory === cat.id ? `${cat.color} text-white shadow-xl` : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}>
                 <Icon name={cat.icon} size={18} strokeWidth={2.5} />
               </div>
               <span className={`text-[6px] md:text-[8px] font-black uppercase tracking-widest text-center max-w-full truncate ${activeCategory === cat.id ? cat.textColor : 'text-black'}`}>
@@ -806,17 +806,17 @@ const PromptMaster: React.FC = () => {
         {/* WORKSPACE */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#F8F9FB] relative overflow-hidden">
           {/* LIBRARY */}
-          <div className="bg-white border-b border-slate-200 shrink-0 z-40 shadow-sm overflow-hidden transition-all duration-300">
-            <div className="flex items-center justify-between px-4 py-2 bg-slate-50/50">
+          <div className="bg-white border-b border-zinc-200 shrink-0 z-40 shadow-sm overflow-hidden transition-all duration-300">
+            <div className="flex items-center justify-between px-4 py-2 bg-zinc-50/50">
               <div className="flex items-center gap-2">
-                <button onClick={() => setIsLibraryVisible(!isLibraryVisible)} className="p-1 hover:bg-slate-200 rounded-lg transition-colors text-black">
+                <button onClick={() => setIsLibraryVisible(!isLibraryVisible)} className="p-1 hover:bg-zinc-200 rounded-lg transition-colors text-black">
                   {isLibraryVisible ? <ChevronUp size={14} strokeWidth={3} /> : <ChevronDown size={14} strokeWidth={3} />}
                 </button>
                 <span className="text-[8px] font-black text-black uppercase tracking-[0.3em]">{activeCategory} Library</span>
               </div>
               {activeCategory === 'custom' && isLibraryVisible && (
                 <div className="flex items-center gap-2">
-                  <input type="text" className="bg-white border border-slate-200 py-1 px-3 text-[8px] font-black rounded-lg w-32 focus:outline-none uppercase text-black" placeholder="Add custom..." value={newCustomTag} onChange={(e) => setNewCustomTag(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCustomTag()} />
+                  <input type="text" className="bg-white border border-zinc-200 py-1 px-3 text-[8px] font-black rounded-lg w-32 focus:outline-none uppercase text-black" placeholder="Add custom..." value={newCustomTag} onChange={(e) => setNewCustomTag(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCustomTag()} />
                 </div>
               )}
             </div>
@@ -826,9 +826,9 @@ const PromptMaster: React.FC = () => {
                   const isSelected = selections[activeCategory]?.includes(opt.id);
                   return (
                     <button key={opt.id} onClick={() => toggleSelection(activeCategory, opt.id)} className={`flex flex-col items-center gap-1 group transition-all shrink-0 pb-1 snap-center ${isSelected ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}>
-                      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-[12px] md:rounded-[14px] flex items-center justify-center transition-all relative ${isSelected ? `${currentCategoryObj?.color} text-white shadow-xl scale-110` : 'bg-slate-100 text-black hover:bg-slate-200'}`}>
+                      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-[12px] md:rounded-[14px] flex items-center justify-center transition-all relative ${isSelected ? `${currentCategoryObj?.color} text-white shadow-xl scale-110` : 'bg-zinc-100 text-black hover:bg-zinc-200'}`}>
                         <Icon name={'iconName' in opt ? (opt as PromptOption).iconName : 'Box'} size={16} strokeWidth={2.5} />
-                        {isSelected && <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-slate-900"><Check className="text-slate-950" size={6} strokeWidth={5} /></div>}
+                        {isSelected && <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-zinc-900"><Check className="text-zinc-950" size={6} strokeWidth={5} /></div>}
                       </div>
                       <span className="text-[7px] font-black uppercase tracking-widest text-center max-w-[56px] truncate text-black">{opt.label}</span>
                     </button>
@@ -839,9 +839,9 @@ const PromptMaster: React.FC = () => {
           </div>
 
           {/* ASSEMBLY BAR */}
-          <div className="p-3 md:p-6 border-b border-slate-200 bg-white/50 backdrop-blur-xl shrink-0">
+          <div className="p-3 md:p-6 border-b border-zinc-200 bg-white/50 backdrop-blur-xl shrink-0">
             <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
-              <div className="bg-white border border-slate-200 rounded-[22px] md:rounded-[28px] p-2 pr-4 shadow-sm flex items-center gap-2 md:gap-3 relative overflow-hidden">
+              <div className="bg-white border border-zinc-200 rounded-[22px] md:rounded-[28px] p-2 pr-4 shadow-sm flex items-center gap-2 md:gap-3 relative overflow-hidden">
                 <div className="flex flex-wrap items-center gap-1.5 md:gap-2 flex-1 pl-1 md:pl-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {promptParts.length > 0 ? (
                     promptParts.map((p, i) => (
@@ -855,7 +855,7 @@ const PromptMaster: React.FC = () => {
                       </span>
                     ))
                   ) : (
-                    <span className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] px-2 italic">Assemble modular components...</span>
+                    <span className="text-zinc-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] px-2 italic">Assemble modular components...</span>
                   )}
                 </div>
               </div>
@@ -864,41 +864,41 @@ const PromptMaster: React.FC = () => {
                 <div className="relative group flex flex-col">
                   <Search size={12} className="absolute left-4 top-5 text-black group-focus-within:text-indigo-600 z-10" />
                   <textarea
-                    className="w-full bg-white border border-slate-200 py-3.5 px-10 text-[10px] md:text-xs font-bold text-black placeholder-slate-400 focus:outline-none focus:border-indigo-400 rounded-xl md:rounded-2xl shadow-sm uppercase resize-none leading-relaxed"
+                    className="w-full bg-white border border-zinc-200 py-3.5 px-10 text-[10px] md:text-xs font-bold text-black placeholder-zinc-400 focus:outline-none focus:border-indigo-400 rounded-xl md:rounded-2xl shadow-sm uppercase resize-none leading-relaxed"
                     placeholder={activeFormat === 'text' ? "Type your message or draft here..." : "Context / Keywords (e.g. Cyber City)..."}
                     rows={8}
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                   />
                   <div className="absolute right-4 bottom-3 flex items-center gap-2 z-20">
-                    <button onClick={clearContext} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-slate-50 text-slate-400 border-slate-200 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-100 active:scale-90" title="Clear All Context">
+                    <button onClick={clearContext} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-white text-zinc-400 border-foreground hover:bg-rose-50 hover:text-rose-500 hover:border-rose-100 active:scale-90" title="Clear All Context">
                       <Trash2 size={14} strokeWidth={2.5} />
                     </button>
                     <button
                       onClick={handleAddFavourite}
-                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border active:scale-90 ${isFavourited ? 'bg-amber-500 text-white border-amber-400' : 'bg-slate-50 text-amber-500 border-slate-200 hover:bg-amber-50'}`}
+                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border active:scale-90 ${isFavourited ? 'bg-accent-yellow text-foreground border-foreground' : 'bg-white text-amber-600 border-foreground hover:bg-amber-50'}`}
                       title={isFavourited ? 'Already favourited' : 'Add to Favourites'}
                     >
                       {isFavourited ? <Star size={14} strokeWidth={2.5} /> : <StarOff size={14} strokeWidth={2.5} />}
                     </button>
-                    <button onClick={() => setShowPromptPreview(true)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-slate-50 text-black border-slate-200 hover:bg-slate-100 active:scale-90" title="View Final Engineered Text">
+                    <button onClick={() => setShowPromptPreview(true)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border bg-white text-black border-foreground hover:bg-zinc-100 active:scale-90" title="View Final Engineered Text">
                       <Eye size={14} strokeWidth={2.5} />
                     </button>
                     <div className="relative" ref={skillsRef}>
-                      <button onClick={() => setIsSkillsMenuOpen(!isSkillsMenuOpen)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border ${writingSkill !== 'none' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-50 text-black border-slate-200 hover:bg-slate-100'} active:scale-90`} title={`Writing Style: ${WRITING_SKILLS.find(s => s.id === writingSkill)?.label}`}>
+                      <button onClick={() => setIsSkillsMenuOpen(!isSkillsMenuOpen)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shadow-md border ${writingSkill !== 'none' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-zinc-50 text-black border-zinc-200 hover:bg-zinc-100'} active:scale-90`} title={`Writing Style: ${WRITING_SKILLS.find(s => s.id === writingSkill)?.label}`}>
                         <PenTool size={14} strokeWidth={2.5} />
                       </button>
                       {isSkillsMenuOpen && (
-                        <div className="absolute right-0 bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 z-[100] w-48">
+                        <div className="absolute right-0 bottom-full mb-2 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-[100] w-48">
                           {WRITING_SKILLS.map(skill => (
-                            <button key={skill.id} onClick={() => { setWritingSkill(skill.id); setIsSkillsMenuOpen(false); }} className={`w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${writingSkill === skill.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}>
+                            <button key={skill.id} onClick={() => { setWritingSkill(skill.id); setIsSkillsMenuOpen(false); }} className={`w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${writingSkill === skill.id ? 'bg-indigo-50 text-indigo-600' : 'text-zinc-600 hover:bg-zinc-50'}`}>
                               {skill.label}
                             </button>
                           ))}
                         </div>
                       )}
                     </div>
-                    <button onClick={handleMagicWrite} disabled={isMagicWriting || !context.trim()} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-slate-950 text-white rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg disabled:opacity-30" title="Magic AI Refinement">
+                    <button onClick={handleMagicWrite} disabled={isMagicWriting || !context.trim()} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-zinc-950 text-white rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg disabled:opacity-30" title="Magic AI Refinement">
                       <Wand2 size={14} strokeWidth={2.5} className={isMagicWriting ? 'animate-pulse' : ''} />
                     </button>
                   </div>
@@ -909,7 +909,7 @@ const PromptMaster: React.FC = () => {
                     <ShieldAlert size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-black group-focus-within:text-rose-600" />
                     <input
                       type="text"
-                      className="w-full bg-white border border-slate-200 py-2.5 px-10 text-[9px] md:text-[10px] font-bold text-rose-600 placeholder-rose-200 focus:outline-none focus:border-rose-400 rounded-xl md:rounded-2xl shadow-sm uppercase"
+                      className="w-full bg-white border border-zinc-200 py-2.5 px-10 text-[9px] md:text-[10px] font-bold text-rose-600 placeholder-rose-200 focus:outline-none focus:border-rose-400 rounded-xl md:rounded-2xl shadow-sm uppercase"
                       placeholder="Negative (e.g. Blurry, Distorted)..."
                       value={negativeInput}
                       onChange={(e) => setNegativeInput(e.target.value)}
@@ -932,11 +932,11 @@ const PromptMaster: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     {suggestions.map((s, idx) => (
-                      <div key={idx} className="bg-white border border-slate-200 rounded-[22px] p-5 shadow-sm hover:border-black transition-all group cursor-pointer" onClick={() => { setContext(s.prompt); setShowPromptPreview(true); }}>
+                      <div key={idx} className="bg-white border border-zinc-200 rounded-[22px] p-5 shadow-sm hover:border-black transition-all group cursor-pointer" onClick={() => { setContext(s.prompt); setShowPromptPreview(true); }}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[9px] font-black text-black uppercase tracking-widest">{s.title}</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-700 leading-relaxed line-clamp-3">"{s.prompt}"</p>
+                        <p className="text-[10px] font-bold text-zinc-700 leading-relaxed line-clamp-3">"{s.prompt}"</p>
                       </div>
                     ))}
                   </div>
@@ -948,23 +948,23 @@ const PromptMaster: React.FC = () => {
 
         {/* FAVOURITES PANEL */}
         {showFavourites && (
-          <div className="w-72 md:w-80 bg-white border-l border-slate-200 flex flex-col z-40 shadow-[-4px_0_20px_rgba(0,0,0,0.05)] shrink-0">
-            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="w-72 md:w-80 bg-white border-l border-zinc-200 flex flex-col z-40 shadow-[-4px_0_20px_rgba(0,0,0,0.05)] shrink-0">
+            <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
               <div className="flex items-center gap-2">
                 <Star size={14} className="text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Favourites</span>
-                <span className="text-[8px] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded-full">{favourites.length}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Favourites</span>
+                <span className="text-[8px] font-bold text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded-full">{favourites.length}</span>
               </div>
-              <button onClick={() => setShowFavourites(false)} className="p-1.5 hover:bg-slate-200 rounded-lg transition-all">
+              <button onClick={() => setShowFavourites(false)} className="p-1.5 hover:bg-zinc-200 rounded-lg transition-all">
                 <X size={14} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ scrollbarWidth: 'thin' }}>
               {favourites.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <StarOff size={32} className="text-slate-300 mb-3" />
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No favourites yet</p>
-                  <p className="text-[8px] text-slate-400 mt-1">Build a prompt and tap the ★ button</p>
+                  <StarOff size={32} className="text-zinc-300 mb-3" />
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">No favourites yet</p>
+                  <p className="text-[8px] text-zinc-400 mt-1">Build a prompt and tap the ★ button</p>
                 </div>
               ) : (
                 favourites.map(fav => (
@@ -979,39 +979,39 @@ const PromptMaster: React.FC = () => {
       {/* PROMPT PREVIEW MODAL */}
       {showPromptPreview && (
         <div
-          className="fixed inset-0 z-[120] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-6"
+          className="fixed inset-0 z-[120] bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setShowPromptPreview(false); }}
         >
           <div ref={modalRef} className="bg-white w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4 md:px-8 md:py-6 flex items-center justify-between border-b border-slate-100">
+            <div className="px-6 py-4 md:px-8 md:py-6 flex items-center justify-between border-b border-zinc-100">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-900 rounded-xl md:rounded-2xl flex items-center justify-center text-white"><Terminal size={18} /></div>
-                <h3 className="text-sm md:text-base font-black text-slate-900 uppercase">Engineered Terminal</h3>
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 rounded-xl md:rounded-2xl flex items-center justify-center text-white"><Terminal size={18} /></div>
+                <h3 className="text-sm md:text-base font-black text-zinc-900 uppercase">Engineered Terminal</h3>
               </div>
-              <button onClick={() => setShowPromptPreview(false)} className="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 active:scale-90 transition-all"><X size={18} /></button>
+              <button onClick={() => setShowPromptPreview(false)} className="p-2 bg-zinc-50 rounded-xl hover:bg-zinc-100 active:scale-90 transition-all"><X size={18} /></button>
             </div>
             <div className="p-6 md:p-8">
-              <div className="bg-slate-50 rounded-[20px] p-6 border border-slate-200 shadow-inner relative">
+              <div className="bg-zinc-50 rounded-[20px] p-6 border border-zinc-200 shadow-inner relative">
                 <textarea
-                  className="w-full h-48 md:h-64 bg-transparent text-xs md:text-sm font-medium text-slate-700 leading-relaxed font-mono focus:outline-none resize-none"
+                  className="w-full h-48 md:h-64 bg-transparent text-xs md:text-sm font-medium text-zinc-700 leading-relaxed font-mono focus:outline-none resize-none"
                   value={editableFinalPrompt}
                   onChange={(e) => setEditableFinalPrompt(e.target.value)}
                 />
-                <div className="absolute top-2 right-2 text-[8px] font-black text-slate-300 uppercase tracking-widest pointer-events-none">Editable String</div>
+                <div className="absolute top-2 right-2 text-[8px] font-black text-zinc-300 uppercase tracking-widest pointer-events-none">Editable String</div>
               </div>
             </div>
-            <div className="px-6 py-4 md:px-8 md:py-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-3">
-              <button onClick={() => setShowPromptPreview(false)} className="px-6 py-3 md:px-8 md:py-4 bg-slate-200 text-slate-700 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 hover:bg-slate-300 active:scale-95 transition-all">
+            <div className="px-6 py-4 md:px-8 md:py-6 bg-zinc-50 border-t border-zinc-100 flex justify-between gap-3">
+              <button onClick={() => setShowPromptPreview(false)} className="px-6 py-3 md:px-8 md:py-4 bg-zinc-200 text-zinc-700 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 hover:bg-zinc-300 active:scale-95 transition-all">
                 Done
               </button>
               <div className="flex gap-2">
                 <button
                   onClick={handleAddFavourite}
-                  className={`px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 active:scale-95 transition-all ${isFavourited ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'}`}
+                  className={`px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 active:scale-95 transition-all ${isFavourited ? 'bg-accent-yellow text-foreground' : 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'}`}
                 >
                   <Star size={14} /> {isFavourited ? 'Favourited' : 'Favourite'}
                 </button>
-                <button onClick={handleCopy} className="px-6 py-3 md:px-8 md:py-4 bg-slate-950 text-white rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                <button onClick={handleCopy} className="px-6 py-3 md:px-8 md:py-4 bg-zinc-950 text-white rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
                   <Zap size={14} /> Copy Final String
                 </button>
               </div>
@@ -1022,7 +1022,7 @@ const PromptMaster: React.FC = () => {
 
       {/* COPY TOAST */}
       {showCopyToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] bg-slate-950 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] bg-zinc-950 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
           <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center"><Check className="text-white" size={12} /></div>
           <span className="text-[10px] font-black uppercase tracking-widest">Prompt Copied</span>
         </div>

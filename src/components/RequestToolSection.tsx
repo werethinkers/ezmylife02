@@ -46,7 +46,7 @@ const RequestToolSection = () => {
             <div className="relative grid md:grid-cols-2">
               {/* Left side - Message */}
               <div className="flex flex-col justify-center space-y-5 border-b border-zinc-200 bg-orange-50/70 p-6 md:border-b-0 md:border-r md:p-10 dark:border-zinc-800 dark:bg-orange-950/20">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-600 to-amber-500 text-white shadow-soft-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-foreground bg-primary text-primary-foreground shadow-soft-sm">
                   <Wrench className="h-6 w-6" aria-hidden />
                 </div>
                 <h2 className="font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">Can't find the app you need?</h2>

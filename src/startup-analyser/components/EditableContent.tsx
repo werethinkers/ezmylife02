@@ -74,12 +74,12 @@ export const EditableContent = ({ value, onUpdate, keywords, highlightEnabled, a
     return (
         <div
             onClick={() => setIsEditing(true)}
-            className="prose prose-sm max-w-none text-gray-800 p-2 rounded-md hover:bg-yellow-50 cursor-pointer transition-colors min-h-[42px] w-full break-words"
+            className="prose prose-sm max-w-none text-zinc-800 p-2 rounded-md hover:bg-yellow-50 cursor-pointer transition-colors min-h-[42px] w-full break-words"
             role="button"
             tabIndex={0}
             data-is-editable="true"
         >
-            {value ? highlightText(value, keywords, highlightEnabled) : <span className="text-gray-600 italic">{placeholder}</span>}
+            {value ? highlightText(value, keywords, highlightEnabled) : <span className="text-zinc-600 italic">{placeholder}</span>}
         </div>
     );
 };
