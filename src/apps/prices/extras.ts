@@ -2,6 +2,7 @@
 // Price ids with no app screen of their own: bulk mode, re-priced apps and paid steps inside other apps.
 export const extras: Record<string, number> = {
   "google-business-kit": 2,
+  "google-business-audit": 2,
   "tool-6": 2,
   "tool-28": 2,
   "quiz-maker": 2,
