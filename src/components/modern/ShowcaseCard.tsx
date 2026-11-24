@@ -52,8 +52,8 @@ export function ShowcaseCard({
     : "shrink-0 rounded-lg border-2 border-ink bg-cream px-3 py-1.5 text-xs font-bold text-ink transition";
   const box = cn(
     !still && "block-lift",
-    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block-sm",
-    size === "lg" ? "min-h-[260px]" : "min-h-[240px]",
+    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block",
+    size === "lg" ? "min-h-[320px]" : "min-h-[280px]",
     className,
   );
 
@@ -64,13 +64,13 @@ export function ShowcaseCard({
       <div className="pointer-events-none absolute inset-0">{media}</div>
       <div className="relative flex items-center justify-between gap-2 p-3">
         {rank != null ? (
-          <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg border-2 border-ink font-display text-xs font-bold text-ink shadow-block-sm", gradient ?? "bg-sun")}>
+          <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-ink font-display text-sm font-bold text-ink shadow-block-sm", gradient ?? "bg-sun")}>
             #{rank}
           </span>
         ) : (
           <span />
         )}
-        {chip && <span className="truncate rounded-full border border-ink/40 bg-ink/80 px-2 py-0.5 text-[11px] font-semibold text-cream">{chip}</span>}
+        {chip && <span className="truncate rounded-full border border-ink/50 bg-ink/85 px-2.5 py-1 text-[11px] font-bold text-cream">{chip}</span>}
       </div>
       <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-ink/95 via-ink/80 to-transparent p-3.5 pt-12 text-cream">
         <div className="min-w-0">

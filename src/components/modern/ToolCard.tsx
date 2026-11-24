@@ -30,14 +30,14 @@ export function ToolMedia({ tool, className }: { tool: CatalogTool; className?: 
   return (
     <div className={cn("relative h-full w-full", className)}>
       <div className={cn("flex h-full w-full flex-col p-3 pt-12 text-ink border-b-2 border-ink/20", toolGradient(tool))}>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-ink/30 bg-white/30 font-display text-sm font-bold">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-ink/30 bg-white/30 font-display text-base font-bold">
           {media.iconUrl && !iconFailed ? (
             <img src={media.iconUrl} alt="" loading="lazy" onError={() => setIconFailed(true)} className="h-full w-full bg-white object-cover" />
           ) : (
             initials(tool.name)
           )}
         </span>
-        <p className="mt-2.5 line-clamp-3 text-[11px] font-semibold leading-snug text-ink/80">
+        <p className="mt-3 line-clamp-3 text-xs font-semibold leading-snug text-ink/80">
           {tool.description?.trim() || `You give ${info.give} → you get ${info.get}`}
         </p>
       </div>
