@@ -3,6 +3,9 @@
 import { type AppSpec, BIZ, LEGAL_NOTE, LITE } from "./base.ts";
 
 export const extras: Record<string, AppSpec> = {
+  // The "Draft with AI" button in the Mail Brain reply composer (/mail-brain) — one on-demand reply
+  // for one mail, separate from the free bulk drafts the paid "Fetch" already makes for needs_reply mails.
+  "mail-brain-draft-reply": { kind: "doc", credits: 2, model: LITE, system: BIZ, task: "Write a short, ready-to-send reply to the email given (sender, subject, body). Answer only what the mail actually asks; never invent facts, prices or commitments not given. Plain text, no subject line, no greeting header beyond a short salutation, end with the sign-off given. If the inputs include the user's own instruction for tone or content, follow it." },
   "tool-6": { kind: "doc", credits: 2, system: BIZ, task: `Draft the agreement described in the inputs (type, parties, dates, scope, payment). Use numbered clauses: parties, definitions, scope, term, payment, confidentiality, IP, termination, dispute resolution (Indian law, the city given), signatures. ${LEGAL_NOTE}` },
   "tool-28": { kind: "doc", credits: 2, model: LITE, system: BIZ, task: "Write a job post for the role: title, about the business, responsibilities, requirements, salary/benefits if given, location, how to apply. Then a 2-line WhatsApp version." },
   "quiz-maker": { kind: "doc", credits: 2, model: LITE, system: "You are a teacher who writes clear, accurate quiz questions.", task: "Write the quiz requested (topic, number of questions, level). Multiple-choice with 4 options each; mark the answer and give a one-line explanation. End with an answer key." },

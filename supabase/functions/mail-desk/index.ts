@@ -10,17 +10,19 @@ import { corsHeaders, json } from "../_shared/http.ts";
 import { ensurePrice, finishRun, identify, startRun, walletBalance } from "../_shared/billing.ts";
 import { chat, parseJson } from "../_shared/llm.ts";
 import {
-  AI_MODEL, chunkPrice, cleanBody, CHUNK, creditsForMails, estimateCostInr, parseAi, senderParts, sortMail, systemPrompt,
+  AI_MODEL, chunkPrice, cleanBody, CHUNK, creditsForMails, decode64url, estimateCostInr, googleAccessToken, parseAi, pickBody, seal, senderParts, sortMail, systemPrompt,
 } from "../_shared/mailDesk.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const CLIENT_ID = Deno.env.get("MAIL_DESK_GOOGLE_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("MAIL_DESK_GOOGLE_CLIENT_SECRET") ?? "";
-const TOKEN_KEY = Deno.env.get("MAIL_DESK_TOKEN_KEY") ?? ""; // 64 hex characters
+const TOKEN_KEY = Deno.env.get("MAIL_DESK_TOKEN_KEY") ?? ""; // 64 hex characters, used only for the state signature below
 const SITE = Deno.env.get("SITE_URL") ?? "https://ezyourlife.com";
 const REDIRECT = `${SUPABASE_URL}/functions/v1/mail-desk`;
-const SCOPES = "openid email https://www.googleapis.com/auth/gmail.readonly";
+// gmail.send added for the reply composer and the auto-reply automation — anyone already connected
+// needs to reconnect (Accounts tab) once, since a read-only grant can't retroactively send mail.
+const SCOPES = "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
 const MAX_STORED_PER_ACCOUNT = 5000;
 const DAY = 864e5;
 
@@ -33,59 +35,15 @@ const fail = (status: number, error: string, extra: Row = {}) => json({ error, m
 
 function hex(b: ArrayBuffer | Uint8Array): string { return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
 function fromHex(h: string): Uint8Array<ArrayBuffer> { return new Uint8Array(h.match(/../g)!.map((x) => parseInt(x, 16))); }
-const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
-const unb64 = (s: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-
-async function aesKey() {
-  if (!/^[0-9a-f]{64}$/i.test(TOKEN_KEY)) throw new Error("MAIL_DESK_TOKEN_KEY is not set (64 hex characters)");
-  return await crypto.subtle.importKey("raw", fromHex(TOKEN_KEY), "AES-GCM", false, ["encrypt", "decrypt"]);
-}
-async function seal(text: string): Promise<string> {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const enc = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(), new TextEncoder().encode(text)));
-  return `${b64(iv)}.${b64(enc)}`;
-}
-async function unseal(blob: string): Promise<string> {
-  const [iv, enc] = blob.split(".");
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await aesKey(), unb64(enc)));
-}
 async function sign(payload: string): Promise<string> {
   const k = await crypto.subtle.importKey("raw", fromHex(TOKEN_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return hex(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(payload)));
 }
 
 // ---------- Google ----------
-async function googleToken(accountId: string): Promise<string> {
-  const { data: t } = await db.from("mail_desk_tokens").select("*").eq("account_id", accountId).maybeSingle();
-  if (!t?.refresh_token) throw new Error("This Gmail needs to be connected again");
-  if (t.access_token && t.expiry && Number(t.expiry) > Date.now() + 60_000) return await unseal(t.access_token);
-  const r = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, refresh_token: await unseal(t.refresh_token), grant_type: "refresh_token" }),
-  });
-  if (!r.ok) {
-    await db.from("mail_desk_accounts").update({ connected: false }).eq("id", accountId);
-    throw new Error("This Gmail needs to be connected again");
-  }
-  const j = await r.json();
-  await db.from("mail_desk_tokens").update({ access_token: await seal(j.access_token), expiry: Date.now() + j.expires_in * 1000 }).eq("account_id", accountId);
-  return j.access_token;
-}
+const googleToken = (accountId: string) => googleAccessToken(db, accountId);
 
 const hdr = (h: Row[], n: string) => h.find((x) => String(x.name).toLowerCase() === n)?.value ?? "";
-function decode64url(s: string): string {
-  const b = atob((s || "").replace(/-/g, "+").replace(/_/g, "/"));
-  return new TextDecoder().decode(Uint8Array.from(b, (c) => c.charCodeAt(0)));
-}
-function pickBody(part: Row | undefined): string {
-  if (!part) return "";
-  if (part.mimeType === "text/plain" && part.body?.data) return decode64url(part.body.data);
-  const kids = (part.parts ?? []).map(pickBody).filter(Boolean);
-  if (kids.length) return kids.join("\n");
-  if (part.mimeType === "text/html" && part.body?.data) return decode64url(part.body.data);
-  return "";
-}
 
 // ---------- actions ----------
 async function userEmail(uid: string): Promise<string> {

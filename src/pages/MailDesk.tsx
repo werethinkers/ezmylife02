@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Inbox, Loader2, Mail, Plus, RefreshCw, Trash2, Wallet } from "lucide-react";
+import {
+  Bot, Check, Copy, Inbox, Loader2, Mail, Pencil, Play, Plus, Reply, RefreshCw, Send, Sparkles, Trash2, Wallet, X,
+} from "lucide-react";
 import { ModernPage } from "@/components/modern/ModernPage";
 import { CONTAINER } from "@/components/modern/styles";
 import { SEOHead } from "@/components/SEOHead";
@@ -9,12 +11,14 @@ import { seoFor } from "@/lib/seo/pages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRun } from "@/apps/lib/api";
 import { callFunction } from "@/lib/credits";
 import { emitCreditPrompt, handleCreditError } from "@/lib/creditPrompt";
 import { toast } from "sonner";
@@ -41,8 +45,16 @@ interface Quote {
   accounts: { account_id: string; email: string; mails: number; needs_scope: boolean; connected: boolean }[];
   first_scopes: { scope: string; mails: number; credits: number }[];
 }
+interface AutoTask {
+  id: string; task_type: "auto_reply_all"; name: string; is_active: boolean; reply_mode: "fixed" | "ai";
+  reply_template_or_prompt: string; skip_automated: boolean; last_run_at: string | null; created_at: string;
+}
+interface AutoLog {
+  id: string; task_id: string; sender_name: string | null; sender_email: string; subject: string | null;
+  draft_reply: string; status: "pending" | "sent" | "skipped"; created_at: string;
+}
 
-const TABS = ["Today", "Mails", "Tasks", "Replies", "Accounts"] as const;
+const TABS = ["Today", "Mails", "Tasks", "Replies", "Automation", "Accounts"] as const;
 type Tab = (typeof TABS)[number];
 const SCOPE_NAMES: Record<string, string> = { "30d": "Last 30 days", "6m": "Last 6 months", all: "Everything" };
 const KIND_NAMES: Record<string, string> = { person: "From a person", update: "Update", promo: "Promotion", social: "Social", forum: "Forum", notice: "Notice", sent: "Sent" };
@@ -102,6 +114,25 @@ const MailDesk = () => {
       const { data, error } = await table("mail_desk_drafts").select("id,mail_id,body").order("created_at", { ascending: false }).limit(200);
       if (error) throw error;
       return data as DraftRow[];
+    },
+  });
+  const autoTasks = useQuery({
+    queryKey: ["mail-desk", "auto-tasks", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await table("mail_brain_tasks").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as AutoTask[];
+    },
+  });
+  const autoQueue = useQuery({
+    queryKey: ["mail-desk", "auto-queue", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await table("mail_brain_task_logs").select("id,task_id,sender_name,sender_email,subject,draft_reply,status,created_at")
+        .eq("status", "pending").order("created_at", { ascending: false }).limit(200);
+      if (error) throw error;
+      return data as AutoLog[];
     },
   });
 
@@ -196,6 +227,7 @@ const MailDesk = () => {
               {t}
               {t === "Tasks" && openTasks.length > 0 && <span className="ml-1.5 rounded-full bg-sun px-1.5 text-xs text-ink">{openTasks.length}</span>}
               {t === "Replies" && needReply.length > 0 && <span className="ml-1.5 rounded-full bg-pink px-1.5 text-xs text-ink">{needReply.length}</span>}
+              {t === "Automation" && (autoQueue.data ?? []).length > 0 && <span className="ml-1.5 rounded-full bg-sun px-1.5 text-xs text-ink">{(autoQueue.data ?? []).length}</span>}
             </button>
           ))}
         </nav>
@@ -207,6 +239,7 @@ const MailDesk = () => {
           {accounts.data && tab === "Mails" && <Mails mails={mails.data ?? []} byId={byId} multi={accts.length > 1} />}
           {accounts.data && tab === "Tasks" && <Tasks tasks={tasks.data ?? []} byId={byId} multi={accts.length > 1} onChange={refreshAll} />}
           {accounts.data && tab === "Replies" && <Replies drafts={drafts.data ?? []} mails={mails.data ?? []} />}
+          {accounts.data && tab === "Automation" && <Automation tasks={autoTasks.data ?? []} queue={autoQueue.data ?? []} onChange={refreshAll} />}
           {accounts.data && tab === "Accounts" && <Accounts accts={accts} busy={busy} onConnect={connect} onChange={refreshAll} />}
         </div>
       </main>
@@ -319,6 +352,45 @@ function MailDetailDrawer({ mail, onClose }: { mail: MailRow | null; onClose: ()
       return ((data as { body: string | null }).body ?? "").trim();
     },
   });
+  const [replying, setReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+  const { busy: drafting, run: runDraft } = useRun("mail-brain-draft-reply");
+
+  useEffect(() => {
+    setReplying(false);
+    setReplyText("");
+  }, [mail?.id]);
+
+  const draftWithAi = async () => {
+    if (!mail) return;
+    const out = await runDraft<string>({
+      inputs: {
+        "From the sender": mail.from_name ? `${mail.from_name} <${mail.from_email}>` : mail.from_email ?? "",
+        Subject: mail.subject || "",
+        Body: body.data || mail.summary || "",
+      },
+      action: "generate",
+    });
+    if (out) setReplyText(out);
+  };
+
+  const sendReply = async () => {
+    if (!mail || !replyText.trim()) return;
+    setSending(true);
+    try {
+      await callFunction("send-mail-brain-reply", { mail_id: mail.id, body: replyText.trim() });
+      toast.success("Reply sent");
+      setReplying(false);
+      setReplyText("");
+    } catch (e) {
+      if (!(await handleCreditError(e))) toast.error(e instanceof Error ? e.message : "Could not send that reply.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const replySubject = mail && (/^re:/i.test(mail.subject || "") ? mail.subject : `Re: ${mail.subject || ""}`);
 
   return (
     <Sheet open={!!mail} onOpenChange={(o) => !o && onClose()}>
@@ -346,6 +418,37 @@ function MailDetailDrawer({ mail, onClose }: { mail: MailRow | null; onClose: ()
                 )
               ) : (
                 <p className="text-muted-foreground">{mail.summary || "No content was stored for this mail."}</p>
+              )}
+            </div>
+
+            <div className="mt-5 border-t-2 border-ink pt-5">
+              {!replying ? (
+                <Button variant="outline" onClick={() => setReplying(true)} disabled={!mail.from_email} title={mail.from_email ? undefined : "This mail has no reply address"}>
+                  <Reply className="mr-2 h-4 w-4" /> Reply
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-sm text-muted-foreground">
+                    <p><span className="font-semibold text-foreground">To</span> {mail.from_name ? `${mail.from_name} <${mail.from_email}>` : mail.from_email}</p>
+                    <p><span className="font-semibold text-foreground">Subject</span> {replySubject}</p>
+                  </div>
+                  <Textarea
+                    rows={6}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Write your reply…"
+                    className="border-2 border-ink focus-visible:ring-ring"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => void draftWithAi()} disabled={drafting}>
+                      {drafting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />} Draft with AI
+                    </Button>
+                    <Button type="button" size="sm" onClick={() => void sendReply()} disabled={sending || !replyText.trim()}>
+                      {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />} Send Reply
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => { setReplying(false); setReplyText(""); }}>Cancel</Button>
+                  </div>
+                </div>
               )}
             </div>
           </>
@@ -437,7 +540,13 @@ function Accounts({ accts, busy, onConnect, onChange }: { accts: Account[]; busy
               </div>
               {!a.is_default && <Button size="icon" variant="ghost" aria-label={`Remove ${a.email}`} onClick={() => void remove(a)}><Trash2 className="h-4 w-4" /></Button>}
             </div>
-            {!a.connected && <Button className="mt-3" size="sm" onClick={onConnect} disabled={busy === "connect"}>Connect this Gmail</Button>}
+            {!a.connected ? (
+              <Button className="mt-3" size="sm" onClick={onConnect} disabled={busy === "connect"}>Connect this Gmail</Button>
+            ) : (
+              <Button className="mt-3" size="sm" variant="outline" onClick={onConnect} disabled={busy === "connect"}>
+                Allow sending replies
+              </Button>
+            )}
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between gap-3"><Label htmlFor={`inc-${a.id}`}>Include when I press Fetch</Label><Switch id={`inc-${a.id}`} checked={a.include_in_fetch} onCheckedChange={(v) => void save(a.id, { include_in_fetch: v })} /></div>
               <div className="flex items-center justify-between gap-3"><Label htmlFor={`upd-${a.id}`}>Also read "Updates" mails (bills, alerts)</Label><Switch id={`upd-${a.id}`} checked={a.read_updates} onCheckedChange={(v) => void save(a.id, { read_updates: v })} /></div>
@@ -467,6 +576,217 @@ function Accounts({ accts, busy, onConnect, onChange }: { accts: Account[]; busy
         </div>
       </div>
     </div>
+  );
+}
+
+/* ---------- Automation: tasks that draft replies, and the queue waiting for your review ---------- */
+function Automation({ tasks, queue, onChange }: { tasks: AutoTask[]; queue: AutoLog[]; onChange: () => void }) {
+  const [editing, setEditing] = useState<AutoTask | "new" | null>(null);
+  const [running, setRunning] = useState(false);
+  const [actingOn, setActingOn] = useState<string | null>(null);
+
+  const runNow = async () => {
+    setRunning(true);
+    try {
+      const r = await callFunction<{ drafted: number; skipped: number; errors: string[] }>("run-mail-brain-tasks", {});
+      if (r.drafted) toast.success(`${plural(r.drafted, "reply")} drafted — review them below.`);
+      else toast.success("No new mail to reply to right now.");
+      if (r.errors?.length) toast.error(r.errors[0]);
+    } catch (e) {
+      if (!(await handleCreditError(e))) toast.error(e instanceof Error ? e.message : "Could not run the automation.");
+    } finally {
+      setRunning(false);
+      onChange();
+    }
+  };
+
+  const toggleActive = async (t: AutoTask) => {
+    const { error } = await table("mail_brain_tasks").update({ is_active: !t.is_active }).eq("id", t.id);
+    if (error) toast.error("Could not save that.");
+    onChange();
+  };
+  const remove = async (t: AutoTask) => {
+    if (!window.confirm(`Delete "${t.name}"? Anything still waiting for your review from it will be removed too.`)) return;
+    const { error } = await table("mail_brain_tasks").delete().eq("id", t.id);
+    if (error) toast.error("Could not delete that.");
+    onChange();
+  };
+
+  const sendQueued = async (log: AutoLog) => {
+    setActingOn(log.id);
+    try {
+      await callFunction("send-mail-brain-reply", { task_log_id: log.id });
+      toast.success("Sent");
+    } catch (e) {
+      if (!(await handleCreditError(e))) toast.error(e instanceof Error ? e.message : "Could not send that reply.");
+    } finally {
+      setActingOn(null);
+      onChange();
+    }
+  };
+  const discardQueued = async (log: AutoLog) => {
+    setActingOn(log.id);
+    const { error } = await table("mail_brain_task_logs").update({ status: "skipped" }).eq("id", log.id);
+    if (error) toast.error("Could not discard that.");
+    setActingOn(null);
+    onChange();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold">Automation</h2>
+          <p className="max-w-xl text-sm text-muted-foreground">Tasks draft replies for you around the clock. Nothing is ever sent on its own — every draft waits below until you tap Send.</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void runNow()} disabled={running || !tasks.some((t) => t.is_active)}>
+            {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />} Run now
+          </Button>
+          <Button onClick={() => setEditing("new")}><Plus className="mr-2 h-4 w-4" /> Add Task</Button>
+        </div>
+      </div>
+
+      {queue.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bold">Waiting for your review ({queue.length})</h3>
+          <ul className="space-y-2">
+            {queue.map((log) => (
+              <li key={log.id} className="rounded-xl border-2 border-ink bg-card p-4">
+                <p className="font-bold">To {log.sender_name || log.sender_email}</p>
+                <p className="text-sm text-muted-foreground">Re: {log.subject || "(no subject)"}</p>
+                <p className="mt-2 whitespace-pre-wrap rounded-lg bg-sand p-3 text-[15px]">{log.draft_reply}</p>
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" disabled={actingOn === log.id} onClick={() => void sendQueued(log)}>
+                    {actingOn === log.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />} Send
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={actingOn === log.id} onClick={() => void discardQueued(log)}>
+                    <X className="mr-1.5 h-4 w-4" /> Discard
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <h3 className="font-bold">Tasks</h3>
+        {tasks.length === 0 ? (
+          <p className="rounded-2xl border-2 border-dashed border-ink p-6 text-muted-foreground">No tasks yet. Add one to start drafting replies automatically.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {tasks.map((t) => (
+              <div key={t.id} className="rounded-2xl border-2 border-ink bg-card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold">{t.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t.reply_mode === "ai" ? "AI smart reply" : "Fixed message"} · {t.last_run_at ? `last ran ${dayTime(t.last_run_at)}` : "never run yet"}
+                    </p>
+                  </div>
+                  <span className={cn("shrink-0 rounded-full border-2 border-ink px-2 py-0.5 text-xs font-bold", t.is_active ? "bg-lime" : "bg-card")}>{t.is_active ? "Active" : "Paused"}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(t)}><Pencil className="mr-1.5 h-4 w-4" /> Edit</Button>
+                  <Button size="sm" variant="outline" onClick={() => void toggleActive(t)}>{t.is_active ? "Pause" : "Resume"}</Button>
+                  <Button size="sm" variant="ghost" aria-label={`Delete ${t.name}`} onClick={() => void remove(t)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {editing && <TaskDialog task={editing === "new" ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChange(); }} />}
+    </div>
+  );
+}
+
+function TaskDialog({ task, onClose, onSaved }: { task: AutoTask | null; onClose: () => void; onSaved: () => void }) {
+  const { user } = useAuth();
+  const [name, setName] = useState(task?.name ?? "Auto-reply to all emails");
+  const [replyMode, setReplyMode] = useState<"fixed" | "ai">(task?.reply_mode ?? "fixed");
+  const [text, setText] = useState(task?.reply_template_or_prompt ?? "");
+  const [skipAutomated, setSkipAutomated] = useState(task?.skip_automated ?? true);
+  const [isActive, setIsActive] = useState(task?.is_active ?? true);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!text.trim()) { toast.error(replyMode === "fixed" ? "Write the reply to send." : "Write an instruction for the AI."); return; }
+    if (!name.trim()) { toast.error("Give the task a name."); return; }
+    setSaving(true);
+    try {
+      const patch = { name: name.trim(), reply_mode: replyMode, reply_template_or_prompt: text.trim(), skip_automated: skipAutomated, is_active: isActive };
+      const { error } = task
+        ? await table("mail_brain_tasks").update(patch).eq("id", task.id)
+        : await table("mail_brain_tasks").insert({ user_id: user!.id, task_type: "auto_reply_all", ...patch });
+      if (error) throw error;
+      toast.success(task ? "Saved" : "Task added");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save that.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg border-2 border-ink">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Bot className="h-5 w-5" /> {task ? "Edit task" : "Add a task"}</DialogTitle>
+          <DialogDescription>Replies are drafted for your review — nothing sends until you approve it.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="task-type">Task type</Label>
+            <select id="task-type" value="auto_reply_all" disabled className="mt-1 h-10 w-full rounded-md border-2 border-ink bg-background px-3 text-sm opacity-70">
+              <option value="auto_reply_all">Auto-Reply to All Emails</option>
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">The first task type — more are coming later.</p>
+          </div>
+          <div>
+            <Label htmlFor="task-name">Name</Label>
+            <Input id="task-name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Reply mode</Label>
+            <div className="mt-1 flex gap-2">
+              <button type="button" onClick={() => setReplyMode("fixed")} className={cn("flex-1 rounded-xl border-2 border-ink px-3 py-2 text-sm font-semibold", replyMode === "fixed" ? "bg-ink text-cream" : "bg-card")}>
+                Fixed message
+              </button>
+              <button type="button" onClick={() => setReplyMode("ai")} className={cn("flex-1 rounded-xl border-2 border-ink px-3 py-2 text-sm font-semibold", replyMode === "ai" ? "bg-ink text-cream" : "bg-card")}>
+                AI smart reply
+              </button>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="task-text">{replyMode === "fixed" ? "Reply message" : "Instruction for the AI (tone, what to say)"}</Label>
+            <Textarea
+              id="task-text"
+              rows={4}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="border-2 border-ink"
+              placeholder={replyMode === "fixed" ? "Thanks for your email — I'll get back to you soon." : "Polite, tell them I'll respond within 24 hours."}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="task-skip">Skip no-reply, newsletters and promotions, and reply once per thread</Label>
+            <Switch id="task-skip" checked={skipAutomated} onCheckedChange={setSkipAutomated} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="task-active">Active</Label>
+            <Switch id="task-active" checked={isActive} onCheckedChange={setIsActive} />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => void save()} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

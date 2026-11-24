@@ -125,6 +125,13 @@ verify_jwt = false
 [functions.mail-desk]
 verify_jwt = false
 
+[functions.send-mail-brain-reply]
+verify_jwt = false
+
+# Also called by Supabase Cron with the service-role key (see the migration), which isn't a Supabase user JWT.
+[functions.run-mail-brain-tasks]
+verify_jwt = false
+
 [functions.claim-card-promo]
 verify_jwt = false
 
