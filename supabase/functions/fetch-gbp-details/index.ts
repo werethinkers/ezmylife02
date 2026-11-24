@@ -28,12 +28,16 @@ const FIELDS = [
 const DETAILS_FIELD_MASK = FIELDS.join(",");
 const SEARCH_FIELD_MASK = FIELDS.map((f) => `places.${f}`).join(",");
 
+// maps.app.goo.gl and goo.gl are the older short-link hosts; share.google and g.co/kgs are Google's
+// newer "Share" short links (also used for Maps places) — all of them just redirect, same as a goo.gl one.
+const SHORT_LINK_HOSTS = new Set(["goo.gl", "maps.app.goo.gl", "share.google", "g.co"]);
+
 function isGoogleMapsUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
     if (u.protocol !== "https:") return false;
     const host = u.hostname.toLowerCase();
-    return host === "google.com" || host.endsWith(".google.com") || host === "goo.gl" || host === "maps.app.goo.gl";
+    return host === "google.com" || host.endsWith(".google.com") || SHORT_LINK_HOSTS.has(host);
   } catch {
     return false;
   }
