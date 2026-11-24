@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { callFunction } from "@/lib/credits";
@@ -47,6 +48,10 @@ const SCOPE_NAMES: Record<string, string> = { "30d": "Last 30 days", "6m": "Last
 const KIND_NAMES: Record<string, string> = { person: "From a person", update: "Update", promo: "Promotion", social: "Social", forum: "Forum", notice: "Notice", sent: "Sent" };
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+const dayTime = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+/** Gmail stores either a text/plain or a text/html body in the same column; this is how the server
+ * (supabase/functions/_shared/mailDesk.ts, cleanBody) already tells the two apart. */
+const looksLikeHtml = (s: string) => /<\w+[^>]*>/.test(s);
 
 const MailDesk = () => {
   const { user } = useAuth();
@@ -258,7 +263,9 @@ function Today({ accts, mails, tasks, needReply, onTab, onFetch, onConnect }: {
 /* ---------- Mails ---------- */
 function Mails({ mails, byId, multi }: { mails: MailRow[]; byId: Map<string, Account>; multi: boolean }) {
   const [filter, setFilter] = useState<"all" | "reply" | "people">("all");
+  const [openId, setOpenId] = useState<string | null>(null);
   const shown = mails.filter((m) => (filter === "reply" ? m.reply_label === "needs_reply" : filter === "people" ? m.kind === "person" : true));
+  const openMail = openId ? mails.find((m) => m.id === openId) ?? null : null;
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-1">
@@ -272,22 +279,79 @@ function Mails({ mails, byId, multi }: { mails: MailRow[]; byId: Map<string, Acc
       ) : (
         <ul className="space-y-2">
           {shown.map((m) => (
-            <li key={m.id} className="rounded-xl border-2 border-ink bg-card p-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-bold">{m.from_name || m.from_email}</p>
-                <p className="text-sm text-muted-foreground">{day(m.received_at)}{multi && byId.get(m.account_id) ? ` · ${byId.get(m.account_id)!.email}` : ""}</p>
-              </div>
-              <p className="text-[15px]">{m.subject || "(no subject)"}</p>
-              {m.summary && <p className="mt-1 text-sm text-muted-foreground">{m.summary}</p>}
-              <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
-                <span className="rounded-full border-2 border-ink px-2 py-0.5">{KIND_NAMES[m.kind ?? ""] ?? "Mail"}</span>
-                {m.reply_label === "needs_reply" && <span className="rounded-full border-2 border-ink bg-pink px-2 py-0.5">Needs a reply</span>}
-              </div>
+            <li key={m.id}>
+              <button
+                type="button"
+                onClick={() => setOpenId(m.id)}
+                className="w-full rounded-xl border-2 border-ink bg-card p-4 text-left transition hover:bg-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-bold">{m.from_name || m.from_email}</p>
+                  <p className="text-sm text-muted-foreground">{day(m.received_at)}{multi && byId.get(m.account_id) ? ` · ${byId.get(m.account_id)!.email}` : ""}</p>
+                </div>
+                <p className="text-[15px]">{m.subject || "(no subject)"}</p>
+                {m.summary && <p className="mt-1 text-sm text-muted-foreground">{m.summary}</p>}
+                <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
+                  <span className="rounded-full border-2 border-ink px-2 py-0.5">{KIND_NAMES[m.kind ?? ""] ?? "Mail"}</span>
+                  {m.reply_label === "needs_reply" && <span className="rounded-full border-2 border-ink bg-pink px-2 py-0.5">Needs a reply</span>}
+                </div>
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <MailDetailDrawer mail={openMail} onClose={() => setOpenId(null)} />
     </div>
+  );
+}
+
+/** Slide-in panel from the right with the full mail. The body isn't in the list query (it can run
+ * to 20,000 characters per mail), so it's fetched by id only once a mail is opened. Sheet (Radix
+ * Dialog underneath) already closes on Escape or an outside click, and draws its own × button. */
+function MailDetailDrawer({ mail, onClose }: { mail: MailRow | null; onClose: () => void }) {
+  const body = useQuery({
+    queryKey: ["mail-desk", "mail-body", mail?.id],
+    enabled: !!mail,
+    queryFn: async () => {
+      const { data, error } = await table("mail_desk_mails").select("body").eq("id", mail!.id).single();
+      if (error) throw error;
+      return ((data as { body: string | null }).body ?? "").trim();
+    },
+  });
+
+  return (
+    <Sheet open={!!mail} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="flex w-full flex-col overflow-y-auto border-l-2 border-ink sm:max-w-2xl">
+        {mail && (
+          <>
+            <SheetHeader className="space-y-1.5 text-left">
+              <SheetTitle className="font-display text-xl">{mail.subject || "(no subject)"}</SheetTitle>
+              <SheetDescription asChild>
+                <div className="space-y-0.5 text-sm">
+                  <p className="font-semibold text-foreground">{mail.from_name ? `${mail.from_name} <${mail.from_email}>` : mail.from_email || "Unknown sender"}</p>
+                  <p>{dayTime(mail.received_at)}</p>
+                </div>
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-5 flex-1 border-t-2 border-ink pt-5">
+              {body.isLoading ? (
+                <p className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading the full mail…</p>
+              ) : body.data ? (
+                looksLikeHtml(body.data) ? (
+                  <iframe title="Mail content" sandbox="" srcDoc={body.data} className="h-[65vh] w-full rounded-xl border-2 border-ink bg-white" />
+                ) : (
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{body.data}</p>
+                )
+              ) : (
+                <p className="text-muted-foreground">{mail.summary || "No content was stored for this mail."}</p>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
 
