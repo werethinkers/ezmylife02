@@ -146,6 +146,11 @@ export const APP_PREVIEW_IDS: ReadonlySet<string> = new Set([
   "tax-estimator",
   "thumbnail-maker",
   "village-roots-book",
+  // Added Nov 2026 — new preview images
+  "startup-analyser",
+  "google-business-kit",
+  "business-plan-studio",
+  "resume-studio",
 ]);
 
 // Phone pictures of websites and cards, kept in public/design-previews/<product id>.jpg (about 420 x 709).
