@@ -9,13 +9,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/lib/supabase";
-import { Menu, X, User, LogOut, Wallet, LayoutTemplate, Puzzle, Compass, ChevronDown, BadgeCheck, Keyboard } from "lucide-react";
+import { Menu, X, User, LogOut, Compass, ChevronDown } from "lucide-react";
 import { isIosApp } from "@/lib/nativeApp";
 import WalletBadge from "@/components/wallet/WalletBadge";
 import { Logo } from "@/components/brand/Logo";
-import { EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
+import { ACCOUNT_LINKS, EARN_LINKS, NAV_SECTIONS, sectionOf, type SectionId } from "@/components/brand/nav";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,6 +29,7 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [earnOpen, setEarnOpen] = useState(false);
   const current = section ?? sectionOf(pathname);
 
   const handleSignOut = async () => {
@@ -110,26 +112,11 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                   <p className="text-xs text-muted-foreground">Your account</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer"><User className="mr-2 h-4 w-4" /> Profile and saved work</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/my-pages" className="cursor-pointer"><LayoutTemplate className="mr-2 h-4 w-4" /> My websites and cards</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/credits" className="cursor-pointer"><Wallet className="mr-2 h-4 w-4" /> Credits and payments</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/subscription" className="cursor-pointer"><BadgeCheck className="mr-2 h-4 w-4" /> Subscription</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/keyboard" className="cursor-pointer"><Keyboard className="mr-2 h-4 w-4" /> {isIosApp() ? "Keyboard and voice" : "iPhone keyboard and voice"}</Link>
-                </DropdownMenuItem>
-                {!isIosApp() && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/get-extension" className="cursor-pointer"><Puzzle className="mr-2 h-4 w-4" /> Browser add-on</Link>
+                {ACCOUNT_LINKS.filter((l) => !(l.webOnly && isIosApp())).map((l) => (
+                  <DropdownMenuItem key={l.to} asChild>
+                    <Link to={l.to} className="cursor-pointer"><l.Icon className="mr-2 h-4 w-4" /> {isIosApp() && l.iosLabel ? l.iosLabel : l.label}</Link>
                   </DropdownMenuItem>
-                )}
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
@@ -169,9 +156,15 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
               if (s.id === "earn") {
                 return (
                   <li key={s.id} className="col-span-2 sm:col-span-3">
-                    <div className="rounded-xl border-2 border-ink bg-sun p-2 shadow-[3px_3px_0_0_hsl(var(--ink))]">
-                      <p className="px-1.5 pb-1.5 pt-0.5 text-xs font-bold uppercase tracking-wider">{s.label}</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
+                    <Collapsible open={earnOpen} onOpenChange={setEarnOpen} className="rounded-xl border-2 border-ink bg-sun shadow-[3px_3px_0_0_hsl(var(--ink))]">
+                      <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-ink" style={{ background: s.color }}>
+                          <s.Icon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <span className="flex-1">{s.label}</span>
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", earnOpen && "rotate-180")} aria-hidden />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-2 overflow-hidden border-t-2 border-ink px-2 pb-2 pt-2 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                         {EARN_LINKS.map((l) => (
                           <Link
                             key={l.to}
@@ -179,7 +172,7 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                             onClick={() => setOpen(false)}
                             aria-current={pathname === l.to ? "page" : undefined}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-lg border-2 border-ink px-3 py-2.5 text-[15px] font-semibold",
+                              "ml-8 flex items-center gap-2.5 rounded-lg border-2 border-ink px-3 py-2.5 text-[15px] font-semibold",
                               pathname === l.to ? "bg-ink text-cream" : "bg-card",
                             )}
                           >
@@ -189,8 +182,8 @@ export const Navbar = ({ section }: { section?: SectionId | null }) => {
                             {l.label}
                           </Link>
                         ))}
-                      </div>
-                    </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </li>
                 );
               }

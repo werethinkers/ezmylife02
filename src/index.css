@@ -109,6 +109,67 @@ html {
 
     color-scheme: light;
   }
+
+  /*
+   * The modern look: Home, Business apps, Websites & cards and Studios (src/components/modern/).
+   * Soft paper page (#F7F6F2) or night page (#0F1115), zinc neutrals, orange (#EA580C) accents,
+   * Space Grotesk headings and Inter body text. ModernPage puts these classes on its wrapper, so
+   * only those pages change; the rest of the site keeps the look above.
+   */
+  .ez-modern {
+    --background: 48 24% 96%;           /* #F7F6F2 */
+    --foreground: 240 6% 10%;           /* zinc-900 */
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 21 90% 48%;              /* orange-600 #EA580C */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;            /* zinc-100 */
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 5% 34%;     /* zinc-600 */
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
+    --border: 240 6% 90%;               /* zinc-200 */
+    --input: 240 6% 90%;
+    --ring: 25 95% 53%;                 /* orange-500 */
+
+    --font-display: 'Space Grotesk', 'Inter', 'Hind', system-ui, sans-serif;
+    --font-body: 'Inter', 'Hind', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    --shadow-block-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-block: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-block-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    color-scheme: light;
+  }
+
+  .ez-modern.dark {
+    --background: 220 17% 7%;           /* #0F1115 */
+    --foreground: 240 5% 96%;           /* zinc-100 */
+    --card: 240 6% 10%;                 /* zinc-900 */
+    --card-foreground: 240 5% 96%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 240 5% 96%;
+    --secondary: 240 4% 16%;            /* zinc-800 */
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;     /* zinc-400 */
+    --accent: 240 4% 16%;
+    --accent-foreground: 240 5% 96%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    color-scheme: dark;
+  }
+
+  .ez-modern ::selection {
+    background: #ea580c;
+    color: #fff;
+  }
 }
 
 @layer base {
@@ -214,6 +275,15 @@ html {
   [aria-hidden].blur-2xl,
   [aria-hidden].blur-xl {
     display: none;
+  }
+
+  /* Modern look: a card that rises a little on hover (the prototype's "bento" lift). */
+  .ez-lift {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .ez-lift:hover {
+    transform: translateY(-3px);
   }
 
   .no-scrollbar {

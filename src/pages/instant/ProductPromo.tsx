@@ -1,35 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { creditsForInr, fmtCredits } from "@/lib/creditRate";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowRight, Check } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { PageSeo } from "@/components/seo/PageSeo";
-import { Shelf } from "@/components/store/Shelf";
-import { ProductCard } from "@/components/instant/ProductCard";
-import { Button } from "@/components/ui/button";
 import { getProduct } from "@/instant/catalog";
+import { BuilderInner } from "./Builder";
 import { GROUPS, groupOf } from "@/instant/catalog/groups";
 import { DesignRail, DeviceFrame, DeviceToggle, Swatch, styleLabel } from "@/instant/DesignPreview";
 import { useProducts } from "@/instant/useProducts";
 import { promoFor, promoSeo } from "@/instant/promo";
+import { toDesignLite } from "@/components/modern/designLite";
 import { plainName } from "@/instant/util";
 import { seasonGap } from "@/instant/season";
-import { FlowSteps } from "@/components/brand/FlowSteps";
+import { ModernSteps } from "@/components/modern/ModernSteps";
 import { GiveGet } from "@/components/brand/GiveGet";
 import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { DesignCard } from "@/components/modern/DesignCard";
+import { ShareButton } from "@/components/modern/ShareButton";
+import { MetricsStrip } from "@/components/modern/MetricsStrip";
+import { AboutCard } from "@/components/modern/AboutCard";
+import { BTN_PRIMARY, CARD, CONTAINER, FOCUS_RING } from "@/components/modern/styles";
+import { cn } from "@/lib/utils";
 import { EDITORIAL_PROMOS, EditorialPromo } from "./EditorialPromo";
 
-/** A promotional landing page for one product: what it is, a live sample, price, FAQ, and a way in. */
-export default function ProductPromo() {
-  const { productId = "" } = useParams();
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is a plain grid.
+const ROW_CLASS = "flex overflow-x-auto snap-x snap-mandatory items-stretch gap-3.5 pb-3 -mx-4 px-4 scroll-px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 md:grid-cols-3";
+// A width (not just a min-width) so the card's own text wraps instead of stretching the card to fit it unwrapped.
+const CARD_ITEM = "w-[82vw] max-w-[320px] shrink-0 snap-start whitespace-normal break-words md:w-auto md:max-w-none md:min-w-0 self-stretch";
+
+/**
+ * A promotional landing page for one product: what it is, a live sample, price, FAQ, and a way in.
+ * Normally reached at `/make/:productId`. `/promo/:slug` (src/pages/PromoPage.tsx) renders this same
+ * page for a website or card slug, passing `productIdOverride`/`pathOverride` so the address bar and
+ * SEO tags read `/promo/...` while the canonical tag still points here, its one real address.
+ */
+export default function ProductPromo({ productIdOverride, pathOverride }: { productIdOverride?: string; pathOverride?: string } = {}) {
+  const { productId: paramId = "" } = useParams();
+  const productId = productIdOverride ?? paramId;
   const product = getProduct(productId);
   const { list, rows } = useProducts();
   const [designId, setDesignId] = useState<string | null>(null);
   const [device, setDevice] = useState<"phone" | "laptop">("phone");
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Reached at /make/:id with ?page= (continuing a draft or editing a published page), ?design=
+  // (a deep link that already picked a design — the kit, Diwali hero, a shop QR, …) or ?publish=1
+  // (bounced back from sign-in mid-publish): skip the design picker and open straight on step 2.
+  const computeStep = () => (!productIdOverride && (searchParams.has("page") || searchParams.has("design") || searchParams.get("publish") === "1") ? 2 : 1);
+  const [step, setStep] = useState<1 | 2>(computeStep);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-decide the step when the product itself changes, not on every search-param tweak the wizard makes to itself
+  useEffect(() => setStep(computeStep()), [productId]);
   if (!product) return <Navigate to="/websites" replace />;
 
   const row = rows.get(product.id);
   if (row && !row.is_active) return <Navigate to="/create" replace />;
+  // Step 2 — the 7-step form editor + live preview (formerly its own page at /create/:id). Reused
+  // as-is: same form state, credit pricing and publish/Supabase calls, just nested in this wizard.
+  if (step === 2) return <BuilderInner product={product} onBack={() => setStep(1)} />;
   const price = row?.price_credits ?? creditsForInr(row?.price_inr ?? product.price); // credits
   const days = row?.hosting_days ?? 365;
   const promo = promoFor(product);
@@ -38,51 +66,83 @@ export default function ProductPromo() {
   const related = list.filter((l) => l.product.id !== product.id && l.product.category === product.category)
     .sort((a, b) => seasonGap(a.product.id) - seasonGap(b.product.id) || Number(groupOf(b.product.id) === g) - Number(groupOf(a.product.id) === g)).slice(0, 4);
   const groupName = GROUPS[product.category].find((x) => x.id === g)?.name;
-  const create = `/create/${product.id}?design=${theme.id}`;
+  const create = `/make/${product.id}?design=${theme.id}`;
   const priceText = price ? fmtCredits(price) : "Free";
   const isSite = (WEBSITE_CATEGORIES as readonly string[]).includes(product.category);
   const home = isSite ? "/websites" : "/cards";
+  // The normal case: stay on /make/:id and switch to step 2 in place, carrying the chosen design.
+  // Reached via /promo/:slug (productIdOverride) instead: that address is a separate SEO landing
+  // page for this design, so its CTA really does navigate, to the canonical /make/:id.
+  const goToBuild = () => {
+    if (productIdOverride) { navigate(create); return; }
+    const next = new URLSearchParams(searchParams);
+    next.set("design", theme.id);
+    setSearchParams(next, { replace: true });
+    setStep(2);
+  };
   const hosting = days >= 365 ? `${Math.round(days / 365)} year${days >= 730 ? "s" : ""}` : `${days} days`;
+  const canonicalPath = `/make/${product.id}`;
+  const seoPath = pathOverride ?? canonicalPath;
+  const giveText = isSite ? "your business name, phone and services" : "names, a photo and your message";
+  const getText = isSite ? `your own website link, live for ${hosting}` : `a card link to send on WhatsApp, live for ${hosting}`;
+  const heroChecklist = [`${product.themes.length} design${product.themes.length === 1 ? "" : "s"} to pick from`, "Opens on any phone, tablet or laptop", "Ready in about 5 minutes", "Free edits, same link"];
 
   const jsonLd = [
     {
       "@context": "https://schema.org", "@type": "Product", name: `${product.name} | EZYOURLIFE`, description: promo.pitch,
-      brand: { "@type": "Brand", name: "EZYOURLIFE" }, url: `https://ezyourlife.com/make/${product.id}`,
+      brand: { "@type": "Brand", name: "EZYOURLIFE" }, url: `https://ezyourlife.com${canonicalPath}`,
     },
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: promo.faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageSeo {...promoSeo(product)} path={`/make/${product.id}`} jsonLd={jsonLd}
+    <ModernPage section={isSite ? "websites" : "cards"}>
+      <PageSeo {...promoSeo(product)} path={seoPath} canonicalPath={pathOverride ? canonicalPath : undefined} jsonLd={jsonLd}
         keywords={`${product.name.toLowerCase()}, online ${product.name.toLowerCase()}, ${product.category}, whatsapp, ezyourlife`} />
-      <Navbar section={isSite ? "websites" : "cards"} />
 
-      <div className="mx-auto max-w-7xl px-4 pt-6">
-        <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted-foreground" aria-label="Breadcrumb">
-          <Link to={home} className="underline underline-offset-4 hover:text-ink">{isSite ? "Websites" : "Cards & invites"}</Link>
-          <span aria-hidden="true">›</span>
-          <Link to={`${home}?cat=${product.category}${groupName ? `&type=${g}` : ""}`} className="underline underline-offset-4 hover:text-ink">{groupName ?? product.category}</Link>
-        </nav>
-        <FlowSteps flow={isSite ? "website" : "card"} step={1} className="max-w-3xl" />
+      <div className={cn(CONTAINER, "pt-6")}>
+        <div className="mb-4 flex items-center gap-3">
+          <Link
+            to={home}
+            aria-label={`Back to ${isSite ? "Websites" : "Cards & invites"}`}
+            className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300", FOCUS_RING)}
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+          </Link>
+          <nav className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb">
+            <Link to={home} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{isSite ? "Websites" : "Cards & invites"}</Link>
+            <span aria-hidden="true">›</span>
+            <Link to={`${home}?cat=${product.category}${groupName ? `&type=${g}` : ""}`} className={cn("underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{groupName ?? product.category}</Link>
+          </nav>
+        </div>
+        <ModernSteps flow={isSite ? "website" : "card"} step={1} className="max-w-3xl" />
       </div>
 
       {EDITORIAL_PROMOS.has(product.id) ? (
         <EditorialPromo product={product} promo={promo} priceText={priceText} hasPrice={!!price} hosting={hosting} create={create} related={related} />
       ) : (
         <>
-      <section className="mx-auto max-w-7xl px-4 py-8">
-        <div className="overflow-hidden rounded-3xl border-2 border-ink shadow-block-lg transition-colors duration-300" style={{ background: theme.c.bg, color: theme.c.tx }}>
+      <section className={cn(CONTAINER, "py-8")}>
+        <div className="overflow-hidden rounded-3xl border border-zinc-200 shadow-soft-lg transition-colors duration-300 dark:border-zinc-800" style={{ background: theme.c.bg, color: theme.c.tx }}>
           <div className={device === "laptop" ? "grid gap-8 p-6 md:p-10" : "grid items-center gap-10 p-6 md:grid-cols-[1.1fr_1fr] md:p-10"}>
             <div className="min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: theme.c.ac }}>{promo.eyebrow}{product.seasonal ? ` · ${product.seasonal}` : ""}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                  {isSite ? "Website" : "Card & invite"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold opacity-60">By EZYOURLIFE</span>
+                  <ShareButton path={seoPath} className="border-black/10 bg-white/15 text-current hover:bg-white/25" />
+                </div>
+              </div>
+              <p className="mt-2 text-sm font-semibold uppercase tracking-widest" style={{ color: theme.c.ac }}>{promo.eyebrow}{product.seasonal ? ` · ${product.seasonal}` : ""}</p>
               <h1 className="mt-3 text-4xl font-bold leading-[1.05] text-balance md:text-6xl" style={{ fontFamily: theme.f.d }}>
                 <span aria-hidden="true">{product.glyph} </span>{promo.headline}
               </h1>
               <p className="mt-4 max-w-xl text-lg opacity-90 md:text-xl">{product.tagline}</p>
               {device === "phone" && <p className="mt-3 max-w-xl opacity-80">{promo.pitch}</p>}
               <ul className={device === "laptop" ? "mt-5 flex flex-wrap gap-x-6 gap-y-1.5 text-sm opacity-90" : "mt-6 grid gap-1.5 text-sm opacity-90"}>
-                {[`${product.themes.length} designs to pick from`, "Opens on any phone, tablet or laptop", "Ready in about 5 minutes", "Free edits, same link"].map((x) => (
+                {heroChecklist.map((x) => (
                   <li key={x} className="flex items-center gap-2"><Check className="h-4 w-4" style={{ color: theme.c.ac }} /> {x}</li>
                 ))}
               </ul>
@@ -102,106 +162,155 @@ export default function ProductPromo() {
         </div>
 
         <div className="mt-6 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <GiveGet
-            give={isSite ? "your business name, phone and services" : "names, a photo and your message"}
-            get={isSite ? `your own website link, live for ${hosting}` : `a card link to send on WhatsApp, live for ${hosting}`}
-            time="about 5 minutes"
-          />
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-ink bg-sun p-4 shadow-block-sm">
+          <GiveGet give={giveText} get={getText} time="about 5 minutes" />
+          <div className={cn("flex flex-wrap items-center justify-between gap-4 p-4 shadow-soft-sm", CARD)}>
             <div>
               <p className="font-display text-3xl font-extrabold">{priceText}</p>
-              <p className="text-sm font-semibold">{price ? "paid once" : "no payment"} · live for {hosting}</p>
+              <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">{price ? "paid once" : "no payment"} · live for {hosting}</p>
             </div>
-            <Button asChild size="lg" className="h-12 px-6">
-              <Link to={create}>{isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" /></Link>
-            </Button>
+            <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "h-12 px-6")}>
+              {isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" aria-hidden />
+            </button>
           </div>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">You see the full result before you pay. Sign in is asked only when you publish.</p>
+        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">You see the full result before you pay. Sign in is asked only when you publish.</p>
+
+        <MetricsStrip
+          className="mt-5"
+          cells={[
+            { value: priceText, label: price ? "Paid once" : "Free" },
+            { value: isSite ? "1 Website" : "1 Card link", label: `Live for ${hosting}` },
+            { value: "100 Free", label: "Starter credits", accent: true },
+          ]}
+        />
       </section>
 
-      <main className="mx-auto grid max-w-5xl gap-14 px-4 py-10 pb-28 [&>section]:min-w-0">
+      <main className={cn(CONTAINER, "grid max-w-5xl gap-14 py-10 pb-28 [&>section]:min-w-0")}>
+        <section aria-labelledby="about-h">
+          <AboutCard
+            title={`About this ${isSite ? "website" : "card & invite"}`}
+            description={promo.pitch}
+            giveItems={[giveText]}
+            getItems={heroChecklist}
+            tags={[groupName ?? product.category, isSite ? "Website" : "Card & invite", price ? "One-time payment" : "Free", "WhatsApp ready"].filter(Boolean)}
+          />
+        </section>
+
         <section aria-labelledby="feat-h">
-          <h2 id="feat-h" className="text-2xl font-bold md:text-3xl">What you get</h2>
-          <Shelf className="mt-5">
+          <h2 id="feat-h" className="font-display text-2xl font-bold md:text-3xl">What you get</h2>
+          <div className={cn(ROW_CLASS, "mt-5")}>
             {promo.features.map((f) => (
-              <div key={f.title} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
+              <div key={f.title} className={cn("flex flex-col gap-2 p-5", CARD, CARD_ITEM)}>
                 <span className="text-4xl" aria-hidden="true">{f.icon}</span>
-                <h3 className="font-body text-[18px] font-bold leading-snug">{f.title}</h3><p className="text-[15px] leading-relaxed text-muted-foreground">{f.text}</p>
+                <h3 className="text-[18px] font-bold leading-snug">{f.title}</h3>
+                <p className="text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">{f.text}</p>
               </div>
             ))}
-          </Shelf>
+          </div>
         </section>
 
         {product.themes.length > 1 && (
           <section aria-labelledby="style-h">
-            <h2 id="style-h" className="text-2xl font-bold md:text-3xl">{product.themes.length} designs to choose from</h2>
-            <p className="mt-2 text-muted-foreground">Each one changes the colours, fonts and layout. Tap one to see it live above.</p>
-            <Shelf className="mt-5">
+            <h2 id="style-h" className="font-display text-2xl font-bold md:text-3xl">{product.themes.length} designs to choose from</h2>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">Each one changes the colours, fonts and layout. Tap one to see it live above.</p>
+            <div className={cn(ROW_CLASS, "mt-5 md:grid-cols-4")}>
               {product.themes.map((t) => (
-                <button key={t.id} type="button" onClick={() => { setDesignId(t.id); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-pressed={t.id === theme.id}
-                  className={"w-[60%] shrink-0 snap-start overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block-sm transition-transform hover:-translate-y-0.5 sm:w-[30%] md:w-[23%]" + (t.id === theme.id ? " ring-4 ring-sun" : "")}>
-                  <div className="relative flex h-24 items-end justify-between border-b-2 border-ink p-3" style={{ background: t.c.bg, color: t.c.tx }}>
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => { setDesignId(t.id); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  aria-pressed={t.id === theme.id}
+                  className={cn(
+                    "w-[42vw] max-w-[180px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white text-left shadow-soft-sm transition-transform hover:-translate-y-0.5 dark:bg-zinc-900 md:w-auto md:max-w-none",
+                    t.id === theme.id ? "border-orange-500 ring-2 ring-orange-500" : "border-zinc-200 dark:border-zinc-800",
+                  )}
+                >
+                  <div className="relative flex h-24 items-end justify-between border-b border-zinc-200 p-3 dark:border-zinc-800" style={{ background: t.c.bg, color: t.c.tx }}>
                     <span className="text-2xl font-bold leading-none" style={{ fontFamily: t.f.d }}>Aa</span>
-                    <span className="flex gap-1">{[t.c.ac, t.c.ac2, t.c.ac3].map((c) => <i key={c} className="h-4 w-4 rounded-full border-2 border-ink" style={{ background: c }} />)}</span>
+                    <span className="flex gap-1">{[t.c.ac, t.c.ac2, t.c.ac3].map((c) => <i key={c} className="h-4 w-4 rounded-full border border-black/10" style={{ background: c }} />)}</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-2"><Swatch t={t} className="h-5 w-5" /><span className="min-w-0"><span className="block truncate text-sm font-semibold">{t.name}</span><span className="block text-xs text-muted-foreground">{styleLabel(t)}</span></span></div>
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <Swatch t={t} className="h-5 w-5" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{t.name}</span>
+                      <span className="block text-xs text-zinc-500 dark:text-zinc-400">{styleLabel(t)}</span>
+                    </span>
+                  </div>
                 </button>
               ))}
-            </Shelf>
+            </div>
           </section>
         )}
 
         <section aria-labelledby="how-h">
-          <h2 id="how-h" className="text-2xl font-bold md:text-3xl">How it works</h2>
-          <Shelf className="mt-5">
+          <h2 id="how-h" className="font-display text-2xl font-bold md:text-3xl">How it works</h2>
+          <div className={cn(ROW_CLASS, "mt-5")}>
             {promo.steps.map(([t, d], i) => (
-              <div key={t} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
-                <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-sun font-display font-extrabold">{i + 1}</span>
-                <h3 className="font-body text-[18px] font-bold leading-snug">{t}</h3><p className="text-[15px] leading-relaxed text-muted-foreground">{d}</p>
+              <div key={t} className={cn("flex flex-col gap-2 p-5", CARD, CARD_ITEM)}>
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-orange-100 font-display font-extrabold text-orange-700 dark:bg-orange-950 dark:text-orange-300">{i + 1}</span>
+                <h3 className="text-[18px] font-bold leading-snug">{t}</h3>
+                <p className="text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">{d}</p>
               </div>
             ))}
-          </Shelf>
+          </div>
         </section>
 
-        <section aria-labelledby="price-h" className="grid items-center gap-6 rounded-3xl border-2 border-ink bg-ink p-6 text-cream shadow-block-lg md:grid-cols-[1fr_auto] md:p-10">
+        <section aria-labelledby="price-h" className="grid items-center gap-6 rounded-3xl bg-zinc-950 p-6 text-white shadow-soft-lg dark:bg-zinc-900 md:grid-cols-[1fr_auto] md:p-10">
           <div>
-            <h2 id="price-h" className="text-2xl font-bold md:text-3xl">{priceText}, <span className="text-sun">paid once</span></h2>
-            <p className="mt-2 text-cream/85">Your {plainName(product.name)} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away.</p>
+            <h2 id="price-h" className="font-display text-2xl font-bold md:text-3xl">{priceText}, <span className="text-amber-400">paid once</span></h2>
+            <p className="mt-2 text-zinc-300">Your {plainName(product.name)} {promo.audience}, live on its own link for {hosting}. Pay securely with UPI, cards or netbanking, and get your invoice by email right away. New accounts get 100 free credits to start.</p>
           </div>
-          <Button asChild size="lg" className="h-14 px-8 text-base"><Link to={create}>{isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" /></Link></Button>
+          <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "h-14 px-8 text-base")}>
+            {isSite ? "Build my website" : "Start making"} <ArrowRight className="h-5 w-5" aria-hidden />
+          </button>
         </section>
 
         <section aria-labelledby="faq-h">
-          <h2 id="faq-h" className="text-2xl font-bold md:text-3xl">Questions</h2>
-          <Shelf className="mt-5">
+          <h2 id="faq-h" className="font-display text-2xl font-bold md:text-3xl">Questions</h2>
+          <div className={cn(ROW_CLASS, "mt-5")}>
             {promo.faqs.map(([q, a]) => (
-              <div key={q} className="block-card flex w-[78%] shrink-0 snap-start flex-col gap-2 p-5 sm:w-[46%] md:w-[31%]">
-                <h3 className="font-body text-[17px] font-bold leading-snug">{q}</h3>
-                <p className="text-[15px] leading-relaxed text-muted-foreground">{a}</p>
+              <div key={q} className={cn("flex flex-col gap-2 p-5", CARD, CARD_ITEM)}>
+                <h3 className="text-[17px] font-bold leading-snug">{q}</h3>
+                <p className="text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">{a}</p>
               </div>
             ))}
-          </Shelf>
+          </div>
         </section>
 
         {related.length > 0 && (
           <section aria-labelledby="rel-h">
-            <h2 id="rel-h" className="text-2xl font-bold md:text-3xl">Other designs</h2>
-            <Shelf className="mt-5">
+            <h2 id="rel-h" className="font-display text-2xl font-bold md:text-3xl">Other designs</h2>
+            <div className={cn(ROW_CLASS, "mt-5 md:grid-cols-4")}>
               {related.map((r) => (
-                <ProductCard key={r.product.id} l={r} />
+                <DesignCard key={r.product.id} d={toDesignLite(r)} size="md" className={CARD_ITEM} />
               ))}
-            </Shelf>
+            </div>
           </section>
         )}
       </main>
         </>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t-2 border-ink bg-card px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 md:hidden">
-        <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{product.name}</p><p className="font-bold">{priceText} <span className="text-xs font-semibold text-muted-foreground">once</span></p></div>
-        <Button asChild className="ml-auto h-12 px-6"><Link to={create}>{isSite ? "Build it" : "Make it"}</Link></Button>
+      {/* Reached at /make/:id, there's no bottom tab bar, so this sits flush at the screen edge.
+          Reached at /promo/:slug, the modern tab bar is already there (DOCK_PATHS in MobileDock.tsx
+          includes /promo/), so this sits as a pill above it instead, the same way PromoPage.tsx's
+          app/studio sticky bar does. */}
+      <div
+        className={cn(
+          "z-40 flex items-center gap-3 border-zinc-200 bg-[#F7F6F2]/95 backdrop-blur-[14px] dark:border-zinc-800 dark:bg-[#0F1115]/95 md:hidden",
+          pathOverride
+            ? "sticky bottom-[76px] mx-4 mb-4 rounded-2xl border p-2.5 pl-4 shadow-soft"
+            : "fixed inset-x-0 bottom-0 border-t px-4 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3",
+        )}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{product.name}</p>
+          <p className="font-bold">{priceText} <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">once</span></p>
+        </div>
+        <button type="button" onClick={goToBuild} className={cn(BTN_PRIMARY, "ml-auto h-12 px-6")}>
+          {isSite ? "Build it" : "Make it"}
+        </button>
       </div>
-    </div>
+    </ModernPage>
   );
 }

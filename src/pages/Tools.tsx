@@ -1,38 +1,41 @@
 import { useEffect, useMemo, useState } from "react";
-import { fmtCredits } from "@/lib/creditRate";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, X } from "lucide-react";
+import { ArrowRight, Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
-import SEOFooter from "@/components/SEOFooter";
-import { Navbar } from "@/components/Navbar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import RequestToolSection from "@/components/RequestToolSection";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppCountLabel } from "@/lib/appCount";
 import { GOALS_WITH_MORE, KIND_TEXT, byCategoryOrder, categoriesOf, categoryInfo, goalById, type GoalId } from "@/data/goals";
+import { STUDIO_IDS } from "@/data/studios";
 import { hasTag, tagCounts } from "@/lib/catalogTags";
-import { GiveGet } from "@/components/brand/GiveGet";
-import { Shelf } from "@/components/store/Shelf";
-import { HeroCarousel } from "@/components/store/HeroCarousel";
-import { useAppSlides } from "@/components/store/useAppSlides";
-import { APP_PREVIEW_IDS } from "@/data/previewManifest";
-import { AppTile } from "@/components/store/AppTile";
-import { ToolsEmptyState } from "@/components/tools/ToolsEmptyState";
-import RequestToolSection from "@/components/RequestToolSection";
 import { cn } from "@/lib/utils";
 import { seoFor } from "@/lib/seo/pages";
 import { placedIn } from "@/data/placements";
 import { useProducts } from "@/instant/useProducts";
 import { CATEGORIES as DESIGN_CATEGORIES } from "@/instant/catalog";
-import { WEBSITE_CATEGORIES } from "@/components/brand/nav";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { ToolCard } from "@/components/modern/ToolCard";
+import { DesignCard } from "@/components/modern/DesignCard";
+import { toDesignLite } from "@/components/modern/designLite";
+import { EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
+import { BTN_OUTLINE, FOCUS_RING, CONTAINER, GOAL_GRADIENT, pillClass, subPillClass } from "@/components/modern/styles";
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
 const TAGS_SHOWN = 8;
 /** A type needs at least this many apps to be worth a chip. */
 const TAG_MIN_APPS = 3;
+
+// Below md: a single-row snap-scroll strip so cards peek in from the right; at md+ this is the same grid the page used before.
+const CAROUSEL = "flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-3 scroll-px-4 -mx-4 px-4 no-scrollbar md:grid md:gap-4 md:pb-0 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-4";
+const CAROUSEL_CARD = "min-w-[82%] shrink-0 snap-start sm:min-w-[65%] md:min-w-0 h-[230px] min-h-0 md:h-[260px]";
+// Single-line horizontal scroll strip for filter/category chips on mobile; wraps normally at md+.
+const FILTER_STRIP = "flex flex-nowrap overflow-x-auto no-scrollbar gap-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap";
+/** GOALS already ends with "More apps" and GOALS_WITH_MORE adds it again; keep the first so it shows once. */
+const GOAL_LIST = GOALS_WITH_MORE.filter((g, i, all) => all.findIndex((x) => x.id === g.id) === i);
+const linkish = cn("rounded font-semibold text-orange-700 underline-offset-4 hover:underline dark:text-orange-400", FOCUS_RING);
 
 /**
  * All business apps, organised by what people want to get done. Filters live in the URL so every
@@ -75,15 +78,15 @@ const Tools = () => {
     return m;
   }, [shown]);
 
-  // Goals in display order, each with its categories (admin order first, then largest).
+  // Goals in display order, each with its categories (admin order first, then largest) and its number of apps.
   const goals = useMemo(
     () =>
-      GOALS_WITH_MORE.map((g) => ({
-        goal: g,
-        cats: [...byCategory.entries()]
+      GOAL_LIST.map((g) => {
+        const cats = [...byCategory.entries()]
           .filter(([c]) => categoryInfo(c).goal === g.id)
-          .sort((a, b) => byCategoryOrder([a[0], a[1].length], [b[0], b[1].length])),
-      })).filter((x) => x.cats.length > 0),
+          .sort((a, b) => byCategoryOrder([a[0], a[1].length], [b[0], b[1].length]));
+        return { goal: g, cats, count: new Set(cats.flatMap(([, tools]) => tools.map((t) => t.id))).size };
+      }).filter((x) => x.cats.length > 0),
     [byCategory],
   );
 
@@ -99,15 +102,14 @@ const Tools = () => {
   const designResults = useMemo(
     () =>
       query && !typeKey
-        ? designs.filter((l) => `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase().includes(query))
+        ? designs
+            .filter((l) => `${l.product.name} ${l.product.tagline ?? ""} ${l.product.category} ${DESIGN_CATEGORIES.find((c) => c.id === l.product.category)?.name ?? ""}`.toLowerCase().includes(query))
+            .map(toDesignLite)
         : [],
     [designs, query, typeKey],
   );
-  // Same picks as the home page's "Most useful to start" (src/data/placements.ts).
+  // Same picks as the home page's top ten (src/data/placements.ts).
   const hot = useMemo(() => placedIn(live, "home-start"), [live]);
-  const spotlightSlides = useAppSlides(
-    useMemo(() => [...hot, ...live].filter((t, i, a) => APP_PREVIEW_IDS.has(t.id) && a.indexOf(t) === i).slice(0, 6), [hot, live]),
-  );
 
   const activeGoal = category ? goalById(categoryInfo(category).goal) : goalById(goalId);
   const visibleGoals = activeGoal ? goals.filter((g) => g.goal.id === activeGoal.id) : goals;
@@ -122,295 +124,291 @@ const Tools = () => {
       if (activeGoal) return cats.some((c) => categoryInfo(c).goal === activeGoal.id);
       return true;
     });
-    const counted = tagCounts(inScope).filter((x) => x.count >= TAG_MIN_APPS || x.key === typeKey);
-    return counted;
+    return tagCounts(inScope).filter((x) => x.count >= TAG_MIN_APPS || x.key === typeKey);
   }, [live, category, activeGoal, typeKey]);
   const tagsVisible = allTags ? tagOptions : tagOptions.slice(0, TAGS_SHOWN);
 
-  const chip = (on: boolean) =>
-    cn(
-      "shrink-0 rounded-full border-2 border-ink px-3.5 py-1.5 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-      on ? "bg-ink text-cream" : "bg-card hover:bg-sun",
-    );
+  const chipFor = (t: CatalogTool) => (STUDIO_IDS.has(t.id) ? "Studio" : t.category);
+  // Under a category heading the category chip would repeat on every card; only studios keep a chip there.
+  const chipInCategory = (t: CatalogTool) => (STUDIO_IDS.has(t.id) ? "Studio" : "");
+
+  const searchBox = (
+    <form className="relative" role="search" onSubmit={(e) => e.preventDefault()}>
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden />
+      <input
+        value={q}
+        onChange={(e) => set({ q: e.target.value || null })}
+        placeholder="Search apps: invoice, passport photo, salary…"
+        aria-label="Search apps"
+        className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-10 text-base placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 sm:text-sm dark:border-zinc-800 dark:bg-zinc-900"
+      />
+      {q && (
+        <button
+          type="button"
+          onClick={() => set({ q: null })}
+          aria-label="Clear search"
+          className={cn("absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800", FOCUS_RING)}
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+    </form>
+  );
 
   return (
-    <div className="min-h-screen bg-background">
+    <ModernPage section="apps">
       <SEOHead
         {...seoFor("/ai-apps", countLabel)}
         keywords="ai apps for business, gst invoice app, passport photo maker, ai tools india, ezyourlife ai apps"
       />
-      <Navbar />
 
-      {/* ───────── Header ───────── */}
-      <header className="mx-auto max-w-7xl px-4 pt-6 md:pt-10">
-        <nav aria-label="Breadcrumb" className="mb-3 text-sm font-medium text-muted-foreground">
-          <Link to="/" className="underline underline-offset-4 hover:text-ink">Home</Link>
-          <span aria-hidden> › </span>
-          {category || activeGoal ? (
-            <Link to="/ai-apps" className="underline underline-offset-4 hover:text-ink">Business apps</Link>
-          ) : (
-            <span>Business apps</span>
-          )}
-          {activeGoal && (
-            <>
+      <main className="min-h-[75vh] overflow-x-hidden py-12">
+        <div className={cn(CONTAINER, "space-y-8")}>
+          <div>
+            <nav aria-label="Breadcrumb" className="mb-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              <Link to="/" className={cn("rounded hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>Home</Link>
               <span aria-hidden> › </span>
-              {category ? (
-                <Link to={`/ai-apps?goal=${activeGoal.id}`} className="underline underline-offset-4 hover:text-ink">{activeGoal.name}</Link>
+              {category || activeGoal ? (
+                <Link to="/ai-apps" className={cn("rounded hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>Business apps</Link>
               ) : (
-                <span>{activeGoal.name}</span>
+                <span>Business apps</span>
               )}
-            </>
-          )}
-          {category && (
-            <>
-              <span aria-hidden> › </span>
-              <span>{category}</span>
-            </>
-          )}
-        </nav>
-
-        <div className="rounded-3xl border-2 border-ink p-5 shadow-block-lg md:p-8" style={{ background: activeGoal?.color ?? "hsl(var(--pink))" }}>
-          {category && catInfo ? (
-            <>
-              <span className="inline-flex rounded-full border-2 border-ink bg-card px-2.5 py-0.5 text-xs font-bold">{activeGoal?.name}</span>
-              <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">{category}</h1>
-              {catInfo.line && <p className="mt-2 max-w-2xl text-lg text-ink/85">{catInfo.line}</p>}
-              <GiveGet className="mt-5 max-w-3xl" give={catInfo.give} get={catInfo.get} />
-              <p className="mt-3 text-[15px] font-semibold">
-                {KIND_TEXT[catInfo.kind].title}. <span className="font-normal">{KIND_TEXT[catInfo.kind].line}</span>
-              </p>
-            </>
-          ) : activeGoal ? (
-            <>
-              <h1 className="text-3xl font-extrabold md:text-5xl">{activeGoal.name}</h1>
-              <p className="mt-2 max-w-2xl text-lg text-ink/85">{activeGoal.line}</p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-3xl font-extrabold md:text-5xl">Business apps</h1>
-              <p className="mt-2 max-w-2xl text-lg text-ink/85">
-                {countLabel} apps, grouped by what you want to get done. Tap any app to see what it does and what it costs.
-              </p>
-            </>
-          )}
-
-          <form className="relative mt-6 max-w-2xl" role="search" onSubmit={(e) => e.preventDefault()}>
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
-              value={q}
-              onChange={(e) => set({ q: e.target.value || null })}
-              placeholder="Search apps: invoice, passport photo, salary…"
-              aria-label="Search apps"
-              className="h-[52px] rounded-2xl pl-12 pr-11 text-base"
-            />
-            {q && (
-              <button
-                type="button"
-                onClick={() => set({ q: null })}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full hover:bg-sand"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </form>
-        </div>
-
-        {/* Goal and category filters */}
-        <div className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar" role="group" aria-label="Show apps for">
-          <button type="button" className={chip(!activeGoal)} aria-pressed={!activeGoal} onClick={() => set({ goal: null, category: null })}>
-            All apps
-          </button>
-          {goals.map(({ goal }) => (
-            <button
-              key={goal.id}
-              type="button"
-              aria-pressed={activeGoal?.id === goal.id}
-              onClick={() => set({ goal: goal.id, category: null })}
-              className={chip(activeGoal?.id === goal.id)}
-            >
-              <span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-ink align-[-1px]" style={{ background: goal.color }} aria-hidden />
-              {goal.name}
-            </button>
-          ))}
-        </div>
-        {activeGoal && (
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar" role="group" aria-label="Type of app">
-            {(goals.find((g) => g.goal.id === activeGoal.id)?.cats ?? []).map(([c, tools]) => (
-              <button
-                key={c}
-                type="button"
-                aria-pressed={category === c}
-                onClick={() => set({ goal: activeGoal.id, category: category === c ? null : c })}
-                className={cn(
-                  "shrink-0 rounded-full border-2 px-3 py-1 text-sm font-semibold",
-                  category === c ? "border-ink bg-sun" : "border-ink/30 bg-card hover:border-ink",
-                )}
-              >
-                {c} <span className="tabular-nums text-muted-foreground">{tools.length}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        {tagOptions.length > 1 && (
-          <div className="-mx-4 flex flex-wrap items-center gap-2 px-4 pb-2 pt-1" role="group" aria-label="Filter by type">
-            <span className="text-sm font-semibold text-muted-foreground">Type:</span>
-            {tagsVisible.map((tg) => (
-              <button
-                key={tg.key}
-                type="button"
-                aria-pressed={typeKey === tg.key}
-                onClick={() => set({ type: typeKey === tg.key ? null : tg.key })}
-                className={cn(
-                  "rounded-full border-2 px-3 py-0.5 text-sm font-semibold",
-                  typeKey === tg.key ? "border-ink bg-ink text-cream" : "border-ink/30 bg-card hover:border-ink",
-                )}
-              >
-                {tg.label} <span className={cn("tabular-nums", typeKey === tg.key ? "text-cream/80" : "text-muted-foreground")}>{tg.count}</span>
-              </button>
-            ))}
-            {tagOptions.length > TAGS_SHOWN && (
-              <button type="button" onClick={() => setAllTags((v) => !v)} className="rounded-full px-2 py-0.5 text-sm font-semibold underline underline-offset-4 hover:text-ink">
-                {allTags ? "Show fewer" : `Show ${tagOptions.length - TAGS_SHOWN} more`}
-              </button>
-            )}
-            {typeKey && (
-              <button type="button" onClick={() => set({ type: null })} className="rounded-full px-2 py-0.5 text-sm font-semibold underline underline-offset-4 hover:text-ink">
-                Clear type
-              </button>
-            )}
-          </div>
-        )}
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        {query ? (
-          <section aria-live="polite">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl font-bold">
-                Results for “{q.trim()}” <span className="text-sm font-normal text-muted-foreground">({results.length + designResults.length})</span>
-              </h2>
-              <Button variant="outline" size="sm" onClick={() => set({ q: null })}>
-                Clear search
-              </Button>
-            </div>
-            {results.length > 0 && (
-              <Shelf>
-                {results.map((t) => (
-                  <AppTile key={t.id} tool={t} />
-                ))}
-              </Shelf>
-            )}
-            {designResults.length > 0 && (
-              <div className={results.length ? "mt-10" : ""}>
-                <h3 className="mb-3 font-body text-lg font-bold">
-                  Websites, cards & invites <span className="text-sm font-normal text-muted-foreground">({designResults.length})</span>
-                </h3>
-                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {designResults.map((l) => {
-                    const site = (WEBSITE_CATEGORIES as readonly string[]).includes(l.product.category);
-                    return (
-                      <li key={l.product.id}>
-                        <Link to={`/make/${l.product.id}`} className="flex h-full flex-col gap-1 rounded-xl border-2 border-ink bg-card p-4 transition-transform hover:-translate-y-0.5">
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="font-bold">{l.product.name}</span>
-                            <span className={cn("shrink-0 rounded-full border-2 border-ink px-2 text-[11px] font-bold", site ? "bg-teal" : "bg-sun")}>{site ? "Website" : "Card / invite"}</span>
-                          </span>
-                          {l.product.tagline && <span className="text-sm text-muted-foreground">{l.product.tagline}</span>}
-                          <span className="mt-auto pt-1 text-sm font-semibold">{l.credits ? `${fmtCredits(l.credits)}, paid once` : "Free"}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-            {results.length === 0 && designResults.length === 0 && <ToolsEmptyState onClearFilters={() => set({ q: null })} hasActiveFilters />}
-          </section>
-        ) : category ? (
-          <section>
-            <h2 className="mb-5 text-xl font-bold">
-              {catTools.length} app{catTools.length === 1 ? "" : "s"}
-            </h2>
-            <Shelf>
-              {catTools.map((t) => (
-                <AppTile key={t.id} tool={t} />
-              ))}
-            </Shelf>
-          </section>
-        ) : (
-          <div className="space-y-12">
-            {!activeGoal && user && recent.length > 0 && (
-              <Shelf title="Your recent apps" subtitle="Pick up where you left off">
-                {recent.map((t) => (
-                  <AppTile key={t.id} tool={t} />
-                ))}
-              </Shelf>
-            )}
-            {!activeGoal && spotlightSlides.length >= 3 && (
-              <div className="overflow-hidden">
-                <HeroCarousel slides={spotlightSlides} label="Apps to start with" />
-              </div>
-            )}
-            {!activeGoal && hot.length > 0 && (
-              <Shelf title="Most useful to start" subtitle="Picked by our team">
-                {hot.map((t) => (
-                  <AppTile key={t.id} tool={t} />
-                ))}
-              </Shelf>
-            )}
-
-            {visibleGoals.map(({ goal, cats }) => (
-              <section key={goal.id} aria-labelledby={`goal-${goal.id}`} className="scroll-mt-24">
-                <div className="mb-5 flex items-center gap-3 border-b-2 border-ink pb-3">
-                  <span className="h-6 w-6 shrink-0 rounded-full border-2 border-ink" style={{ background: goal.color }} aria-hidden />
-                  <h2 id={`goal-${goal.id}`} className="text-2xl font-extrabold md:text-3xl">
-                    {goal.name}
-                  </h2>
-                  {!activeGoal && (
-                    <Button variant="outline" size="sm" className="ml-auto" onClick={() => set({ goal: goal.id, category: null })}>
-                      See only these
-                    </Button>
+              {activeGoal && (
+                <>
+                  <span aria-hidden> › </span>
+                  {category ? (
+                    <Link to={`/ai-apps?goal=${activeGoal.id}`} className={cn("rounded hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>{activeGoal.name}</Link>
+                  ) : (
+                    <span>{activeGoal.name}</span>
                   )}
-                </div>
-                <div className="space-y-9">
-                  {cats.map(([c, tools]) => (
-                    <div key={c}>
-                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                        <h3 className="font-body text-lg font-bold">
-                          <button type="button" className="hover:underline" onClick={() => set({ goal: goal.id, category: c })}>
-                            {c}
-                          </button>
-                          <span className="ml-2 text-sm font-normal text-muted-foreground">
-                            {tools.length} app{tools.length === 1 ? "" : "s"}
-                            {categoryInfo(c).line ? ` · ${categoryInfo(c).line}` : ""}
-                          </span>
-                        </h3>
-                        {tools.length > PER_CATEGORY && (
-                          <Button variant="outline" size="sm" onClick={() => set({ goal: goal.id, category: c })}>
-                            See all {tools.length}
-                          </Button>
-                        )}
-                      </div>
-                      <Shelf>
-                        {tools.slice(0, PER_CATEGORY).map((t) => (
-                          <AppTile key={t.id} tool={t} />
-                        ))}
-                      </Shelf>
-                    </div>
+                </>
+              )}
+              {category && (
+                <>
+                  <span aria-hidden> › </span>
+                  <span>{category}</span>
+                </>
+              )}
+            </nav>
+
+            <PageHeader
+              eyebrow={category && activeGoal ? activeGoal.name : `${countLabel} business apps`}
+              title={category ?? activeGoal?.name ?? "Business apps"}
+              line={
+                category
+                  ? catInfo?.line
+                  : activeGoal
+                    ? activeGoal.line
+                    : `${countLabel} apps, grouped by what you want to get done. Tap any app to see what it does and what it costs.`
+              }
+              aside={searchBox}
+            >
+              {category && catInfo && (
+                <>
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 dark:border-zinc-800 dark:bg-zinc-900">
+                      <span className="font-semibold">You give:</span> {catInfo.give}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
+                    <span className="rounded-full border border-emerald-300/60 bg-emerald-50 px-3 py-1 text-emerald-900 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-200">
+                      <span className="font-semibold">You get:</span> {catInfo.get}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{KIND_TEXT[catInfo.kind].title}.</span> {KIND_TEXT[catInfo.kind].line}
+                  </p>
+                </>
+              )}
+            </PageHeader>
+          </div>
+
+          {/* Goal and category filters */}
+          <div className="space-y-3">
+            <div className={FILTER_STRIP} role="group" aria-label="Show apps for">
+              <button type="button" className={pillClass(!activeGoal)} aria-pressed={!activeGoal} onClick={() => set({ goal: null, category: null })}>
+                All apps <span className="tabular-nums opacity-70">({shown.length})</span>
+              </button>
+              {goals.map(({ goal, count }) => (
+                <button
+                  key={goal.id}
+                  type="button"
+                  aria-pressed={activeGoal?.id === goal.id}
+                  onClick={() => set({ goal: goal.id, category: null })}
+                  className={pillClass(activeGoal?.id === goal.id)}
+                >
+                  <span className={cn("h-2 w-2 rounded-full bg-gradient-to-br", GOAL_GRADIENT[goal.id])} aria-hidden />
+                  {goal.name} <span className="tabular-nums opacity-70">({count})</span>
+                </button>
+              ))}
+            </div>
+            {activeGoal && (
+              <div className={FILTER_STRIP} role="group" aria-label="Type of app">
+                {(goals.find((g) => g.goal.id === activeGoal.id)?.cats ?? []).map(([c, tools]) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={category === c}
+                    onClick={() => set({ goal: activeGoal.id, category: category === c ? null : c })}
+                    className={subPillClass(category === c)}
+                  >
+                    {c} <span className="tabular-nums opacity-70">{tools.length}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {tagOptions.length > 1 && (
+              <div className={cn(FILTER_STRIP, "items-center")} role="group" aria-label="Filter by type">
+                <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-zinc-500 dark:text-zinc-400">Type:</span>
+                {tagsVisible.map((tg) => (
+                  <button key={tg.key} type="button" aria-pressed={typeKey === tg.key} onClick={() => set({ type: typeKey === tg.key ? null : tg.key })} className={subPillClass(typeKey === tg.key)}>
+                    {tg.label} <span className="tabular-nums opacity-70">{tg.count}</span>
+                  </button>
+                ))}
+                {tagOptions.length > TAGS_SHOWN && (
+                  <button type="button" onClick={() => setAllTags((v) => !v)} className={cn("shrink-0 whitespace-nowrap px-1 text-xs", linkish)}>
+                    {allTags ? "Show fewer" : `Show ${tagOptions.length - TAGS_SHOWN} more`}
+                  </button>
+                )}
+                {typeKey && (
+                  <button type="button" onClick={() => set({ type: null })} className={cn("shrink-0 whitespace-nowrap px-1 text-xs", linkish)}>
+                    Clear type
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {query ? (
+            <section aria-live="polite" className="space-y-10">
+              <SectionHead
+                className="mb-0"
+                title={
+                  <>
+                    Results for “{q.trim()}” <span className="text-base font-normal text-zinc-500 dark:text-zinc-400">({results.length + designResults.length})</span>
+                  </>
+                }
+                action={
+                  <button type="button" onClick={() => set({ q: null })} className={BTN_OUTLINE}>
+                    Clear search
+                  </button>
+                }
+              />
+              {results.length > 0 && (
+                <div className={CAROUSEL}>
+                  {results.map((t) => (
+                    <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
                   ))}
                 </div>
-              </section>
-            ))}
-          </div>
-        )}
+              )}
+              {designResults.length > 0 && (
+                <div>
+                  <h3 className="mb-4 font-display text-lg font-bold">
+                    Websites, cards & invites <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">({designResults.length})</span>
+                  </h3>
+                  <div className={CAROUSEL}>
+                    {designResults.map((d) => (
+                      <DesignCard key={d.id} d={d} chip={d.site ? "Website" : "Card / invite"} size="md" className={CAROUSEL_CARD} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {results.length === 0 && designResults.length === 0 && (
+                <EmptyState message="No apps, websites or cards match that search." action="Clear search" onAction={() => set({ q: null })} />
+              )}
+            </section>
+          ) : category ? (
+            <section>
+              <h2 className="mb-5 font-display text-xl font-bold">
+                {catTools.length} app{catTools.length === 1 ? "" : "s"}
+              </h2>
+              {catTools.length ? (
+                <div className={CAROUSEL} key={typeKey ?? "all"}>
+                  {catTools.map((t) => (
+                    <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} className={CAROUSEL_CARD} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  message={typeKey ? "No apps of this type here." : "No apps here yet."}
+                  action={typeKey ? "Clear type" : undefined}
+                  onAction={() => set({ type: null })}
+                />
+              )}
+            </section>
+          ) : (
+            <div className="space-y-14">
+              {!activeGoal && user && recent.length > 0 && (
+                <section>
+                  <SectionHead eyebrow="Pick up where you left off" title="Your recent apps" className="mb-5" />
+                  <div className={CAROUSEL}>
+                    {recent.slice(0, PER_CATEGORY).map((t) => (
+                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {!activeGoal && hot.length > 0 && (
+                <section>
+                  <SectionHead eyebrow="Picked by our team" title="Most useful to start" className="mb-5" />
+                  <div className={CAROUSEL}>
+                    {hot.slice(0, 12).map((t) => (
+                      <ToolCard key={t.id} tool={t} chip={chipFor(t)} className={CAROUSEL_CARD} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {visibleGoals.map(({ goal, cats }) => (
+                <section key={goal.id} aria-labelledby={`goal-${goal.id}`} className="scroll-mt-24">
+                  <div className="mb-6 flex items-center gap-3 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+                    <span className={cn("h-5 w-5 shrink-0 rounded-full bg-gradient-to-br", GOAL_GRADIENT[goal.id])} aria-hidden />
+                    <h2 id={`goal-${goal.id}`} className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+                      {goal.name}
+                    </h2>
+                    {!activeGoal && (
+                      <button type="button" className={cn(BTN_OUTLINE, "ml-auto px-3 py-1.5 text-xs")} onClick={() => set({ goal: goal.id, category: null })}>
+                        See only these
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-10">
+                    {cats.map(([c, tools]) => (
+                      <div key={c}>
+                        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                          <h3 className="font-display text-lg font-bold">
+                            <button type="button" className={cn("rounded hover:underline", FOCUS_RING)} onClick={() => set({ goal: goal.id, category: c })}>
+                              {c}
+                            </button>
+                            <span className="ml-2 font-sans text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                              {tools.length} app{tools.length === 1 ? "" : "s"}
+                              {categoryInfo(c).line ? ` · ${categoryInfo(c).line}` : ""}
+                            </span>
+                          </h3>
+                          {tools.length > PER_CATEGORY && (
+                            <button type="button" className={cn("inline-flex items-center gap-1 text-xs", linkish)} onClick={() => set({ goal: goal.id, category: c })}>
+                              See all {tools.length} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          )}
+                        </div>
+                        <div className={CAROUSEL} key={typeKey ?? "all"}>
+                          {tools.slice(0, PER_CATEGORY).map((t) => (
+                            <ToolCard key={t.id} tool={t} chip={chipInCategory(t)} className={CAROUSEL_CARD} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       <div id="request-app" className="scroll-mt-20">
         <RequestToolSection />
       </div>
-      <SEOFooter />
-    </div>
+    </ModernPage>
   );
 };
 

@@ -1,6 +1,10 @@
 # EZYOURLIFE design guide
 
-One bright look for the whole site. Keep new pages in this style.
+The site has two looks while it moves over. The **modern look** (below, under "Modern look") is the
+approved design for Home (`/`), Business apps (`/ai-apps`), Websites and cards (`/websites`, `/cards`,
+`/create`), Studios (`/studios`), Prices (`/credits`), About (`/about`), Sign in/up (`/auth`), For creators
+(`/creators`) and List your app (`/list-your-app`). Every other page keeps the bright **block look** described
+next. New pages in those areas use the modern look; elsewhere, keep the block look until that page is moved over.
 
 ## Look
 
@@ -18,6 +22,35 @@ One bright look for the whole site. Keep new pages in this style.
 - **Emphasis:** the highlighter mark (`.marker`) or a tilted sun box, not gradient text.
 - **Ready-made pieces:** `.block-card` (outlined card) and `.block-lift` (lifts on hover).
 
+## Modern look
+
+Calm paper page, hairline borders, soft shadows, one orange accent, and a dark mode.
+
+- **Where it lives:** `src/components/modern/`. Wrap a page in `<ModernPage section="…">` (header, footer, light/dark),
+  and add its path to `MODERN_PATHS` in `src/components/modern/theme.ts` so the phone tab bar matches.
+  `<ModernPage chrome={false}>` drops the header and footer for a focused page that draws its own (sign in/up).
+- **Don't use shadcn's `<Button>`:** its default and outline variants hardcode the block look's colours
+  (`bg-pink`, `border-foreground`, `hover:bg-sun`), not the `.ez-modern` tokens, so they stay pink with a thick
+  border on a modern page. Use a plain `<button>`/`<a>`/`<Link>` with `BTN_PRIMARY`, `BTN_INK` or `BTN_OUTLINE`
+  from `styles.ts` instead. `Input`, `Textarea`, `Label`, `Tabs` and `Accordion` are token-based and fine as-is.
+- **Colours:** page `#F7F6F2` (light) / `#0F1115` (dark); cards white / `zinc-900`; borders `zinc-200` / `zinc-800`;
+  text `zinc-900` / `zinc-100`, quieter text `zinc-600` / `zinc-400`; accent orange `#EA580C` (`orange-600`) for buttons
+  and fills, `orange-700` / `orange-400` for small orange text so it stays readable. Each goal has a gradient
+  (`GOAL_GRADIENT` in `styles.ts`) used for badges and for app cards without a picture.
+- **Fonts:** Space Grotesk for headings (`font-display`), Inter for body text, both self-hosted in `public/fonts`
+  with Hind behind them for Hindi. The `.ez-modern` class in `src/index.css` switches the fonts and the colour tokens,
+  so the rest of the site is untouched.
+- **Shadows:** use `shadow-soft-*`. The plain `shadow-sm/lg/…` names are the block look's hard ink shadows.
+- **Pieces:** `ShowcaseCard` (picture fills the card, price and name on a dark fade, one white button), `ToolCard`
+  (apps and studios, opens Quick Look), `DesignCard` (websites and cards: card shows the design, button starts it),
+  `SectionHead`, `PageHeader`, `CtaBand`, `EmptyState`, `ModernSteps` (the 4-step flow), and the class names in
+  `styles.ts` (`BTN_PRIMARY`, `BTN_INK`, `BTN_OUTLINE`, `pillClass`, `subPillClass`, `CARD`).
+- **Dark mode:** every colour needs its `dark:` partner. The visitor's choice is remembered in the browser
+  (`ez.theme.v1`). Menus that open outside the page (dropdowns, popovers) take `ez-modern` (and `dark`) on their content
+  so they match.
+- **Emphasis:** gradient text (orange → amber → rose) is allowed in this look, for one phrase in a hero heading.
+- **Same words rules:** everything under "Words" below still applies: sentence case, real numbers only, true prices.
+
 ## Words
 
 Plain words a shop owner understands at first look.
@@ -30,7 +63,8 @@ Plain words a shop owner understands at first look.
 
 ## The 4-step flow
 
-Every app, website and card shows the same steps with `<FlowSteps flow="app|website|card" step={n} />`:
+Every app, website and card shows the same steps with `<FlowSteps flow="app|website|card" step={n} />`
+(`<ModernSteps>` on modern pages, same words):
 
 | | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
@@ -45,7 +79,8 @@ Pair it with `<GiveGet give="…" get="…" />` so the purpose is clear at a gla
 - **Goals, categories, "you give / you get", how an app opens:** `src/data/goals.ts`. Add new catalogue categories here.
 - **How an app opens (from its engine):** `src/data/appKind.ts`.
 - **Menu sections and the website/card split:** `src/components/brand/nav.ts`.
-- **Header, phone tab bar and footer:** `src/components/Navbar.tsx`, `src/components/MobileDock.tsx`, `src/components/SEOFooter.tsx`.
+- **Header, phone tab bar and footer:** `src/components/Navbar.tsx`, `src/components/MobileDock.tsx`, `src/components/SEOFooter.tsx`
+  (modern pages: `ModernHeader`, `ModernFooter`; the tab bar switches by itself). Their links all come from `src/components/brand/nav.ts`.
 - **Shared app frame:** `src/apps/shell/` (`AppShell`, `OutputPanel`, `StepLabel`).
 
 ## Design ideas (private)

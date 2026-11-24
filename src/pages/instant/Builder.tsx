@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Eye, Loader2, PencilLine, RotateCcw, Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -43,14 +43,16 @@ function validate(p: Product, c: Content): { step: number; errors: Record<string
   return step < 0 ? null : { step, errors };
 }
 
+// /create/:productId is kept only so old bookmarks and shared links still work: the 7-step form
+// editor now lives at /make/:productId (step 2 of its wizard — see ProductPromo.tsx), so this just
+// forwards there with the query string (design, page, publish, …) intact.
 export default function Builder() {
   const { productId = "" } = useParams();
-  const product = getProduct(productId);
-  if (!product) return <NotFoundProduct />;
-  return <BuilderInner key={product.id} product={product} />;
+  const location = useLocation();
+  return <Navigate to={`/make/${productId}${location.search}`} replace />;
 }
 
-function BuilderInner({ product }: { product: Product }) {
+export function BuilderInner({ product, onBack }: { product: Product; onBack: () => void }) {
   const [params, setParams] = useSearchParams();
   const editId = params.get("page");
   const navigate = useNavigate();
@@ -150,7 +152,7 @@ function BuilderInner({ product }: { product: Product }) {
     if (bad) { setErrors(bad.errors); openStep(bad.step); setTab("edit"); toast({ title: "A few details are missing", description: "Fill the highlighted fields to publish." }); return; }
     if (!user) {
       await writeDraft(product.id, { variantId, content, pageId });
-      try { localStorage.setItem("auth_redirect_to", `/create/${product.id}?publish=1`); } catch { /* ignore */ }
+      try { localStorage.setItem("auth_redirect_to", `/make/${product.id}?publish=1`); } catch { /* ignore */ }
       setLoginOpen(true); return;
     }
     try {
@@ -188,7 +190,7 @@ function BuilderInner({ product }: { product: Product }) {
           // Not enough credits: the page and draft are saved, so after buying it opens here and publishes.
           setBusy(null);
           toast({ title: `This needs ${fmtCredits(needCredits)}`, description: `You have ${fmtCredits(balance)}. Buy credits and you'll come straight back to publish.` });
-          navigate(`/credits?next=${encodeURIComponent(`/create/${product.id}?publish=1`)}`); return; // the saved draft carries the page id
+          navigate(`/credits?next=${encodeURIComponent(`/make/${product.id}?publish=1`)}`); return; // the saved draft carries the page id
         }
         setBusy("Paying with credits…");
         try {
@@ -230,10 +232,10 @@ function BuilderInner({ product }: { product: Product }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageSeo title={`Create a ${product.name} | EZYOURLIFE`} description={product.description} path={`/create/${product.id}`} />
+      <PageSeo title={`Create a ${product.name} | EZYOURLIFE`} description={product.description} path={`/make/${product.id}`} />
       <header className="sticky top-0 z-40 border-b-2 border-ink bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center gap-3">
-          <Link to={`/make/${product.id}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun" aria-label="Back to the design"><ArrowLeft className="h-5 w-5" /></Link>
+          <button type="button" onClick={onBack} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-card shadow-[2px_2px_0_0_hsl(var(--ink))] hover:bg-sun" aria-label="Back to the design"><ArrowLeft className="h-5 w-5" /></button>
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold">{product.glyph} {product.name}</p>
             <p className="truncate text-xs text-muted-foreground">{published ? `Live at ${pageUrlFor(published.slug).replace("https://", "")}` : `${needCredits ? `${fmtCredits(needCredits)}, paid once${user ? ` · you have ${fmtCredits(balance)}` : ""}` : "Free"} · online for a year`}</p>
@@ -364,7 +366,7 @@ function BuilderInner({ product }: { product: Product }) {
         <Button className="h-12 min-w-0 flex-1 px-3" disabled={!!busy} onClick={() => publish()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}<span className="truncate">{busy ? "Working…" : ctaShort}</span></Button>
       </nav>
 
-      <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/create/${product.id}?publish=1`} />
+      <LoginPromptDialog open={loginOpen} onOpenChange={setLoginOpen} returnTo={`/make/${product.id}?publish=1`} />
     </div>
   );
 }
@@ -373,16 +375,4 @@ function blank(p: Product): Content {
   const c: Content = {};
   p.steps.forEach((s) => s.fields.forEach((f) => { if (f.type === "toggle") c[f.id] = p.sample[f.id] ?? true; if (f.type === "days") c[f.id] = p.sample[f.id]; if (f.type === "time") c[f.id] = p.sample[f.id]; }));
   return c;
-}
-
-function NotFoundProduct() {
-  return (
-    <div className="min-h-screen grid place-items-center px-4 text-center">
-      <div className="grid gap-4">
-        <h1 className="text-2xl font-bold">That product isn't available</h1>
-        <p className="text-muted-foreground">It may have been renamed or retired.</p>
-        <Button asChild><Link to="/create">See all products</Link></Button>
-      </div>
-    </div>
-  );
 }
