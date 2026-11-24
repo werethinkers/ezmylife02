@@ -20,6 +20,7 @@ import { BTN_OUTLINE, BTN_PRIMARY, CARD, CONTAINER, EYEBROW, FOCUS_RING } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRun } from "@/apps/lib/api";
+import { callFunction } from "@/lib/credits";
 import { cn } from "@/lib/utils";
 import { gb, getBusiness, saveBusiness, cleanProducts, emptyLocation } from "../lib/business";
 import { matchPreset } from "../lib/industries";
@@ -42,6 +43,29 @@ type OutputLanguage = "en" | "bilingual";
 interface ServiceRow {
   name: string;
   detail: string;
+}
+// What supabase/functions/fetch-gbp-details returns for a resolved Maps link.
+interface ImportedPlace {
+  name: string;
+  address: string;
+  city: string;
+  area: string;
+  phone: string;
+  website: string;
+  primaryCategory: string;
+  secondaryCategories: string[];
+  rating: number | null;
+  userRatingCount: number | null;
+  reviews: { rating: number | null; text: string; author: string }[];
+  editorialSummary: string;
+  hasOpeningHours: boolean;
+}
+// The part of an import that doesn't have a form field of its own — carried through to the AI prompt only.
+interface ImportedSignals {
+  rating: number | null;
+  userRatingCount: number | null;
+  reviews: { rating: number | null; text: string; author: string }[];
+  editorialSummary: string;
 }
 
 const LOCATION_MODELS: { id: LocationModel; label: string; sub: string }[] = [
@@ -68,6 +92,13 @@ export default function Setup() {
   const { busy, run } = useRun(AUDIT_TOOL_ID);
 
   const [mode, setMode] = useState<Mode>("manual");
+
+  // Tab A — Google Maps link import
+  const [mapsUrl, setMapsUrl] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  // Review/rating facts the import found — fed into the AI audit payload, not shown as form fields.
+  const [importedSignals, setImportedSignals] = useState<ImportedSignals | null>(null);
 
   // Section 1 — Core identity & Google compliance
   const [businessName, setBusinessName] = useState("");
@@ -126,6 +157,31 @@ export default function Setup() {
     set(Array.from(new Set([...list, ...parts])).slice(0, max));
   };
 
+  async function handleFetchProfile() {
+    const url = mapsUrl.trim();
+    if (!url) return;
+    setImportBusy(true);
+    setImportError(null);
+    try {
+      const { place } = await callFunction<{ place: ImportedPlace }>("fetch-gbp-details", { url });
+      setBusinessName(place.name || businessName);
+      if (place.city) setCity(place.city);
+      if (place.area) setServiceAreas((prev) => Array.from(new Set([...prev, place.area])));
+      if (place.phone) setPhone(place.phone);
+      if (place.website) setWebsite(place.website);
+      if (place.primaryCategory) setPrimaryCategory(place.primaryCategory);
+      if (place.secondaryCategories.length) setSecondaryCategories((prev) => Array.from(new Set([...prev, ...place.secondaryCategories])));
+      if (place.hasOpeningHours) setOpeningStatus("open");
+      setImportedSignals({ rating: place.rating, userRatingCount: place.userRatingCount, reviews: place.reviews, editorialSummary: place.editorialSummary });
+      setMode("manual");
+      toast.success(`Imported ${place.name || "the listing"} — check the details below before generating.`);
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "Couldn't fetch that listing.");
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
   async function generate() {
     if (!canGenerate) {
       toast.error("Add a business name, a primary category and at least one service first.");
@@ -149,6 +205,14 @@ export default function Setup() {
       "Opening status": openingStatus === "open" ? "Already open" : "Opening soon",
       "Output language": outputLanguage === "bilingual" ? "Bilingual — English plus Hindi/Hinglish for the WhatsApp message" : "English only",
     };
+    // From the Google Maps import, if any — real existing signals the audit can use, not invented ones.
+    if (importedSignals) {
+      if (importedSignals.rating != null) inputs["Existing Google rating"] = `${importedSignals.rating} out of 5 (${importedSignals.userRatingCount ?? 0} reviews)`;
+      if (importedSignals.editorialSummary) inputs["Google's own summary of this business"] = importedSignals.editorialSummary;
+      if (importedSignals.reviews.length) {
+        inputs["Sample of existing reviews"] = importedSignals.reviews.map((r) => `"${r.text}"${r.rating != null ? ` (${r.rating}★)` : ""}`).join(" | ");
+      }
+    }
 
     const out = await run<string>({ inputs, action: "generate" });
     if (!out || typeof out !== "string") return; // insufficient credits / not signed in / error — already handled with a dialog or toast
@@ -225,22 +289,35 @@ export default function Setup() {
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Input disabled placeholder="https://maps.app.goo.gl/…" className="sm:flex-1" />
-              <button type="button" disabled className={cn(BTN_PRIMARY, "h-10 shrink-0 px-5 opacity-60")}>
-                Fetch profile
+              <Input
+                value={mapsUrl}
+                onChange={(e) => setMapsUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleFetchProfile();
+                  }
+                }}
+                placeholder="https://maps.app.goo.gl/…"
+                className="sm:flex-1"
+                disabled={importBusy}
+              />
+              <button type="button" onClick={() => void handleFetchProfile()} disabled={importBusy || !mapsUrl.trim()} className={cn(BTN_PRIMARY, "h-10 shrink-0 px-5 disabled:opacity-60")}>
+                {importBusy ? "Fetching…" : "Fetch profile"}
               </button>
             </div>
-            <div className="flex gap-2.5 rounded-xl border border-orange-200 bg-orange-50 p-4 text-[14px] dark:border-orange-900 dark:bg-orange-950/40">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden />
-              <p className="text-zinc-800 dark:text-zinc-200">
-                <span className="font-bold">Coming soon.</span> Importing straight from a Maps link needs a Google
-                Places API connection that isn't set up yet — nothing is charged for trying. Use{" "}
-                <button type="button" onClick={() => setMode("manual")} className="font-bold underline underline-offset-2">
-                  manual entry
-                </button>{" "}
-                for now; it fills in the exact same form below.
-              </p>
-            </div>
+            {importError && (
+              <div className="flex gap-2.5 rounded-xl border border-orange-200 bg-orange-50 p-4 text-[14px] dark:border-orange-900 dark:bg-orange-950/40">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden />
+                <p className="text-zinc-800 dark:text-zinc-200">
+                  {importError} Nothing was charged.{" "}
+                  <button type="button" onClick={() => setMode("manual")} className="font-bold underline underline-offset-2">
+                    Switch to manual entry
+                  </button>
+                  .
+                </p>
+              </div>
+            )}
           </div>
         )}
       </section>

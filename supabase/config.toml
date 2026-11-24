@@ -90,6 +90,11 @@ verify_jwt = false
 [functions.dev-app-run]
 verify_jwt = false
 
+# Resolves a Google Maps link for /google-business/setup's import tab. Signs the caller in itself
+# (billed() with a free tool, so it's sign-in-gated but never charges credits).
+[functions.fetch-gbp-details]
+verify_jwt = false
+
 [functions.ip-checkout]
 verify_jwt = false
 
