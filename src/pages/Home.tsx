@@ -27,7 +27,6 @@ import { CardSkeleton, CtaBand, EmptyState, SectionHead } from "@/components/mod
 import { BTN_INK, BTN_OUTLINE, BTN_PRIMARY, CONTAINER, EYEBROW, FOCUS_RING, creditsLabel, pillClass, roundedLabel } from "@/components/modern/styles";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { NumberTicker } from "@/components/ui/number-ticker";
-import { NotchedAppCard } from "@/components/modern/NotchedAppCard";
 
 // The website and card designs are a large catalogue: load them after the first screen is up.
 const DesignFeed = lazy(() => import("@/components/modern/home/DesignFeed"));
@@ -407,28 +406,6 @@ const Home = () => {
             </div>
           </div>
         </section>
-
-        {/* ───────── Featured apps – notched card row ───────── */}
-        {editorsPicks.length > 0 && !query && (
-          <section className="border-t-2 border-ink/10 py-10">
-            <div className={CONTAINER}>
-              <SectionHead
-                eyebrow="Hand-picked"
-                title="Featured apps"
-                action={
-                  <Link to="/ai-apps" className={BTN_OUTLINE}>
-                    Browse all <ArrowRight className="h-4 w-4" />
-                  </Link>
-                }
-              />
-              <ScrollRow size="app" label="Featured apps" className="mt-4">
-                {editorsPicks.slice(0, 12).map((t) => (
-                  <NotchedAppCard key={t.id} tool={t} className="w-full shrink-0" />
-                ))}
-              </ScrollRow>
-            </div>
-          </section>
-        )}
 
         {/* ───────── Top 10 (or search results) ───────── */}
         <section

@@ -244,27 +244,27 @@ html {
       padding-inline: 0;
     }
   }
-  .ez-row-card { --row-w: 78%; }
-  .ez-row-app { --row-w: 72%; }
-  .ez-row-wide { --row-w: 90%; }
-  .ez-row-step { --row-w: 78%; }
+  .ez-row-card { --row-w: 72%; }
+  .ez-row-app { --row-w: 60%; }
+  .ez-row-wide { --row-w: 88%; }
+  .ez-row-step { --row-w: 72%; }
   @media (min-width: 640px) {
-    .ez-row-card { --row-w: 46%; }
-    .ez-row-app { --row-w: 44%; }
-    .ez-row-wide { --row-w: 62%; }
-    .ez-row-step { --row-w: 44%; }
+    .ez-row-card { --row-w: 44%; }
+    .ez-row-app { --row-w: 38%; }
+    .ez-row-wide { --row-w: 60%; }
+    .ez-row-step { --row-w: 42%; }
   }
   @media (min-width: 1024px) {
-    .ez-row-card { --row-w: 32%; }
-    .ez-row-app { --row-w: 28%; }
-    .ez-row-wide { --row-w: 44%; }
-    .ez-row-step { --row-w: 30%; }
+    .ez-row-card { --row-w: 28%; }
+    .ez-row-app { --row-w: 20%; }
+    .ez-row-wide { --row-w: 42%; }
+    .ez-row-step { --row-w: 26%; }
   }
   @media (min-width: 1280px) {
-    .ez-row-card { --row-w: 26%; }
-    .ez-row-app { --row-w: 22%; }
-    .ez-row-wide { --row-w: 34%; }
-    .ez-row-step { --row-w: 24%; }
+    .ez-row-card { --row-w: 22%; }
+    .ez-row-app { --row-w: 16%; }
+    .ez-row-wide { --row-w: 32%; }
+    .ez-row-step { --row-w: 21%; }
   }
 }
 

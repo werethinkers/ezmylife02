@@ -48,12 +48,12 @@ export function ShowcaseCard({
   const split = !!to && !!actionTo;
   const still = !onOpen && !to;
   const actionClass = still
-    ? "shrink-0 rounded-lg border border-ink/30 bg-cream/20 px-3 py-1.5 text-xs font-bold text-cream"
-    : "shrink-0 rounded-lg border-2 border-ink bg-cream px-3 py-1.5 text-xs font-bold text-ink transition";
+    ? "shrink-0 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-xs font-bold text-cream/80"
+    : "shrink-0 rounded-full border border-white/20 bg-white/90 px-3 py-1.5 text-xs font-bold text-ink shadow-sm transition";
   const box = cn(
     !still && "block-lift",
     "group relative flex flex-col justify-between overflow-hidden rounded-2xl border-2 border-ink bg-card text-left shadow-block",
-    size === "lg" ? "min-h-[320px]" : "min-h-[280px]",
+    size === "lg" ? "min-h-[280px]" : "min-h-[240px]",
     className,
   );
 
@@ -70,11 +70,11 @@ export function ShowcaseCard({
         ) : (
           <span />
         )}
-        {chip && <span className="truncate rounded-full border border-ink/50 bg-ink/85 px-2.5 py-1 text-[11px] font-bold text-cream">{chip}</span>}
+        {chip && <span className="truncate rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[11px] font-bold text-cream backdrop-blur-sm">{chip}</span>}
       </div>
-      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-ink/95 via-ink/80 to-transparent p-3.5 pt-12 text-cream">
+      <div className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent p-3.5 pt-14 text-cream">
         <div className="min-w-0">
-          {price && <span className="block text-[10px] font-bold text-sun">{price}</span>}
+          {price && <span className="block text-[10px] font-semibold text-sun/90">{price}</span>}
           <h3 className={cn("line-clamp-2 font-display font-bold leading-snug", size === "lg" ? "text-base" : "text-sm")}>{title}</h3>
         </div>
         {split ? (
@@ -82,7 +82,7 @@ export function ShowcaseCard({
             {action}
           </Link>
         ) : (
-          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-sun group-hover:text-ink")}>
+          <span aria-hidden={!still} className={cn(actionClass, !still && "group-hover:bg-sun group-hover:border-transparent group-hover:text-ink")}>
             {action}
           </span>
         )}
