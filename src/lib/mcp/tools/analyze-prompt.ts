@@ -1,4 +1,4 @@
-import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
+import { defineTool, type ToolContext } from "../sdk";
 import { supabaseKey, supabaseUrl } from "../env";
 import { z } from "zod";
 

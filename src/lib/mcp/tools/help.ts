@@ -1,4 +1,4 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineTool } from "../sdk";
 
 const GUIDE = `# EZYOURLIFE MCP — Available Tools
 

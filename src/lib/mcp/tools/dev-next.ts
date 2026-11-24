@@ -1,4 +1,4 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineTool } from "../sdk";
 import { z } from "zod";
 import { SITE, dbMessage, devClient, fail, latestVersion, notSignedIn, text } from "./dev-shared";
 
