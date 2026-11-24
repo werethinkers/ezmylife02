@@ -1,4 +1,4 @@
-import type { ToolContext } from "@lovable.dev/mcp-js";
+import type { ToolContext } from "../sdk";
 import { userClient } from "../env";
 
 /*

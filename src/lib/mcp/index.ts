@@ -1,4 +1,4 @@
-import { auth, defineMcp } from "@lovable.dev/mcp-js";
+import { auth, defineMcp } from "./sdk";
 import help from "./tools/help";
 import getCreditBalance from "./tools/get-credit-balance";
 import listTools from "./tools/list-tools";

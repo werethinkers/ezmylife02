@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { ToolContext } from "@lovable.dev/mcp-js";
+import type { ToolContext } from "./sdk";
 
 /*
  * Server settings for the connector, read the same way on every runtime it can run on.
