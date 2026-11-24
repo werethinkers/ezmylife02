@@ -27,6 +27,7 @@ import { categoriesOf, categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/dat
 import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import SEOFooter from "@/components/SEOFooter";
 import { cn } from "@/lib/utils";
+import { AppReviews } from "@/components/reviews/AppReviews";
 
 /*
  * An app's store page, at /promo/:slug, laid out like a Google Play listing in the brand's look.
@@ -558,6 +559,13 @@ export default function PromoPage() {
             <AppList title={`More in ${goal.name}`} to={`/ai-apps?goal=${goal.id}`} apps={sameGoal} />
           </aside>
         </div>
+
+        {/* ───────── Ratings & Reviews ───────── */}
+        {toolId && (
+          <div className="mx-auto max-w-7xl border-t-2 border-ink/10 px-4 py-10">
+            <AppReviews toolId={toolId} />
+          </div>
+        )}
       </main>
 
       {/* Phone: keep the main action in reach */}
