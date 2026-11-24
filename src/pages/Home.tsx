@@ -26,7 +26,6 @@ import type { DesignLite } from "@/components/modern/designLite";
 import { CardSkeleton, CtaBand, EmptyState, SectionHead } from "@/components/modern/ui";
 import { BTN_INK, BTN_OUTLINE, BTN_PRIMARY, CONTAINER, EYEBROW, FOCUS_RING, creditsLabel, pillClass, roundedLabel } from "@/components/modern/styles";
 import { ScrollRow } from "@/components/ui/scroll-row";
-import { Marquee } from "@/components/ui/marquee";
 import { NumberTicker } from "@/components/ui/number-ticker";
 
 // The website and card designs are a large catalogue: load them after the first screen is up.
@@ -311,7 +310,18 @@ const Home = () => {
       </Suspense>
 
       <main>
-        {strip.length > 0 && <Marquee items={strip} itemClassName="font-display text-sm font-bold sm:text-base" />}
+        {/* ───────── Moving strip of app names ───────── */}
+        {strip.length > 0 && (
+          <div aria-hidden className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-cream">
+            <div className="flex w-max animate-marquee gap-8 whitespace-nowrap font-display text-lg font-bold motion-reduce:animate-none">
+              {[...strip, ...strip].map((n, i) => (
+                <span key={i} className={i % 3 === 0 ? "text-sun" : i % 3 === 1 ? "text-pink" : "text-cream"}>
+                  {n} ✦
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ───────── Hero ───────── */}
         <section id="hero" className="relative overflow-hidden pb-14 pt-10 sm:pb-20 sm:pt-14">
