@@ -8,7 +8,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
     try {
       const res = await fetch(
-        "https://cmwnjexfpcfpoeyemxhb.supabase.co/functions/v1/sync-shortcuts",
+        "https://vrsadzjyugbusfazdgyi.supabase.co/functions/v1/sync-shortcuts",
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
