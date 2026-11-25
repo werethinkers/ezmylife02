@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TiE Match — Ezyourlife × TiE Global Summit 2026</title>
+<meta name="description" content="Interactive prototype: how Ezyourlife's AI books your meetings before TiE Global Summit even begins — via WhatsApp, 5 days in advance.">
+<meta property="og:title" content="TiE Match — Meetings booked before you arrive">
+<meta property="og:description" content="See how Ezyourlife's AI matches & books TiE Summit meetings via WhatsApp — 5 days before the event.">
+<meta property="og:url" content="https://ezyourlife.com/tie-match">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#FF4D7D">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Hind:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FFF8F0;
+    --ink: #0D0D0D;
+    --pink: #FF4D7D;
+    --yellow: #FFB800;
+    --teal: #00BFA5;
+    --white: #FFFFFF;
+    --gray: #F5F5F0;
+    --gray2: #E8E4DC;
+    --gray3: #9E9A92;
+    --wa-green: #075E54;
+    --wa-bubble: #DCF8C6;
+    --wa-bg: #E5DDD5;
+    --shadow: 3px 3px 0 var(--ink);
+    --shadow-sm: 2px 2px 0 var(--ink);
+    --shadow-pink: 3px 3px 0 var(--pink);
+    --r: 14px;
+    --r-sm: 10px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--ink); color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 2px solid var(--pink);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .ez-logo {
+    width: 32px; height: 32px;
+    background: var(--yellow);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900; font-size: 10px; color: var(--ink);
+    flex-shrink: 0;
+  }
+  .topbar-title { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 12px; }
+  .topbar-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .topbar-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--pink);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700; font-size: 10px; color: white;
+    text-decoration: none; white-space: nowrap;
+  }
+
+  body {
+    background: var(--cream);
+    font-family: 'Hind', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 16px 48px;
+    gap: 20px;
+  }
+
+  .headline {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: 15px;
+    color: var(--ink);
+    text-align: center;
+    letter-spacing: -0.3px;
+  }
+  .subline {
+    font-size: 13px; color: var(--gray3); text-align: center;
+  }
+
+  /* ── PHONE FRAME ── */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--ink);
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: 8px 8px 0 var(--pink), 0 0 0 1px var(--ink);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--cream);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .notch {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 32px;
+    background: var(--ink);
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .notch-cam { width: 10px; height: 10px; border-radius: 50%; background: #333; border: 1px solid #444; }
+  .notch-pill { width: 60px; height: 5px; border-radius: 3px; background: #222; }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding-top: 44px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .screen.active { display: flex; }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex; align-items: center;
+    padding: 0 20px;
+    justify-content: space-between;
+    z-index: 5;
+    font-family: 'Hind', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink);
+  }
+  .status-bar.light { color: var(--white); }
+  .status-bar .time { font-size: 13px; font-weight: 700; }
+  .status-bar .icons { display: flex; gap: 4px; align-items: center; }
+
+  .ez-badge {
+    width: 36px; height: 36px;
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900; font-size: 11px;
+    color: var(--ink); flex-shrink: 0;
+  }
+  .ez-badge-sm { width: 28px; height: 28px; border-radius: 8px; font-size: 9px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 14px 20px;
+    border: 2px solid var(--ink);
+    border-radius: var(--r-sm);
+    box-shadow: var(--shadow);
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700; font-size: 12px;
+    cursor: pointer; text-decoration: none;
+    transition: transform .08s, box-shadow .08s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-pink { background: var(--pink); color: var(--white); }
+  .btn-yellow { background: var(--yellow); color: var(--ink); }
+  .btn-dark { background: var(--ink); color: var(--white); }
+  .btn-white { background: var(--white); color: var(--ink); }
+  .btn-teal { background: var(--teal); color: var(--white); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 10px 14px; font-size: 10px; }
+
+  .card {
+    background: var(--white);
+    border: 2px solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .card-pink { border-color: var(--pink); box-shadow: 3px 3px 0 var(--pink); }
+  .card-yellow { background: #FFFBEC; border-color: var(--yellow); box-shadow: 3px 3px 0 var(--yellow); }
+  .card-teal { border-color: var(--teal); box-shadow: 3px 3px 0 var(--teal); }
+
+  .chip {
+    display: inline-flex; align-items: center;
+    padding: 5px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 100px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .chip-pink { background: var(--pink); color: var(--white); border-color: var(--pink); }
+  .chip-yellow { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+  .chip-teal { background: var(--teal); color: var(--white); border-color: var(--teal); }
+  .chip-gray { background: var(--gray); color: var(--ink); }
+
+  .score-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 8px;
+    background: var(--yellow);
+    border: 1.5px solid var(--ink);
+    border-radius: 100px;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700; font-size: 10px;
+    color: var(--ink);
+  }
+  .score-badge.high { background: var(--pink); color: var(--white); }
+
+  .skip-link {
+    text-align: center; padding: 10px;
+    font-size: 12px; color: var(--gray3);
+    cursor: pointer; text-decoration: underline;
+  }
+
+  .wa-header {
+    background: var(--wa-green);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .wa-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--yellow);
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900; font-size: 10px; color: var(--ink);
+    flex-shrink: 0;
+  }
+  .wa-name { color: white; font-weight: 700; font-size: 14px; }
+  .wa-status { color: rgba(255,255,255,0.7); font-size: 11px; }
+  .wa-chat-bg { background: var(--wa-bg); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .wa-bubble {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 16px 16px 4px 16px;
+    background: var(--wa-bubble);
+    border: 1.5px solid var(--ink);
+    box-shadow: var(--shadow-sm);
+    font-size: 13px; line-height: 1.4;
+    align-self: flex-start;
+  }
+  .wa-bubble.sent {
+    align-self: flex-end;
+    border-radius: 16px 16px 16px 4px;
+    background: var(--white);
+  }
+  .wa-time { font-size: 10px; color: var(--gray3); text-align: right; margin-top: 3px; }
+
+  #s1 { background: var(--wa-bg); padding-top: 0; }
+  #s1 .status-bar { background: var(--wa-green); }
+
+  #s2 .feed-header {
+    padding: 16px 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #s2 .match-card { margin: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; }
+  #s2 .match-top { display: flex; align-items: center; gap: 10px; }
+  #s2 .match-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 14px;
+    flex-shrink: 0;
+  }
+  #s2 .match-name { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 13px; }
+  #s2 .match-role { font-size: 11px; color: var(--gray3); }
+  #s2 .match-btns { display: flex; gap: 8px; }
+
+  #s3 .profile-hero { padding: 16px; display: flex; align-items: center; gap: 12px; }
+  #s3 .profile-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 18px;
+    background: #FFE0EA; flex-shrink: 0;
+  }
+  #s3 .check-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+  #s3 .check-icon { width: 18px; height: 18px; border-radius: 50%; background: var(--teal); border: 1.5px solid var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 10px; font-weight: 700; margin-top: 1px; }
+
+  /* Match basis bars */
+  .match-factor { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .match-factor-label { font-size: 11px; color: var(--ink); flex: 1; }
+  .match-factor-bar { width: 80px; height: 7px; background: var(--gray2); border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+  .match-factor-fill { height: 100%; border-radius: 4px; background: var(--pink); }
+  .match-factor-pct { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 10px; color: var(--ink); width: 28px; text-align: right; flex-shrink: 0; }
+
+  /* How-it-works panel */
+  .how-panel { margin: 0 16px 12px; }
+  .how-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--gray); border: 1.5px solid var(--ink); border-radius: 10px;
+    font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 11px;
+    cursor: pointer; transition: background .1s;
+  }
+  .how-toggle:hover { background: var(--gray2); }
+  .how-toggle .arrow { font-size: 10px; transition: transform .2s; }
+  .how-toggle.open .arrow { transform: rotate(180deg); }
+  .how-body {
+    display: none; padding: 12px 14px;
+    border: 1.5px solid var(--ink); border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: var(--white);
+  }
+  .how-body.open { display: block; }
+
+  #s4 .more-row { display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+  #s4 .more-row::-webkit-scrollbar { display: none; }
+  #s4 .more-mini { flex-shrink: 0; width: 150px; }
+  #s4 .mini-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 15px; margin-bottom: 8px; }
+
+  #s5 .slot-day { margin: 0 16px 12px; }
+  #s5 .slot-day-label { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 11px; color: var(--gray3); margin-bottom: 8px; letter-spacing: 0.5px; }
+  #s5 .slot-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  #s5 .slot-row::-webkit-scrollbar { display: none; }
+  .slot-chip {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; background: var(--white);
+    box-shadow: var(--shadow-sm);
+    transition: all .1s;
+  }
+  .slot-chip.taken { background: var(--gray2); color: var(--gray3); border-style: dashed; box-shadow: none; cursor: not-allowed; text-decoration: line-through; }
+  .slot-chip.selected { background: var(--pink); color: var(--white); border-color: var(--pink); box-shadow: 2px 2px 0 var(--ink); }
+
+  #s6 .success-banner {
+    background: var(--teal); padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  #s6 .success-icon { width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+
+  #s7 .sched-header { padding: 16px 16px 8px; }
+  #s7 .sched-slot { margin: 0 16px 10px; display: flex; gap: 10px; align-items: flex-start; }
+  #s7 .sched-time { width: 56px; text-align: right; font-size: 11px; font-weight: 600; color: var(--gray3); padding-top: 14px; flex-shrink: 0; }
+  #s7 .sched-card { flex: 1; }
+  .status-confirmed { background: var(--teal); color: white; }
+  .status-pending { background: var(--yellow); color: var(--ink); }
+
+  .nav-dots { display: flex; gap: 8px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; cursor: pointer; transition: background .15s; }
+  .dot.active { background: var(--ink); width: 24px; border-radius: 4px; }
+  .hint { font-size: 11px; color: var(--gray3); text-align: center; max-width: 320px; }
+
+  .scroll-inner { overflow-y: auto; scrollbar-width: none; flex: 1; }
+  .scroll-inner::-webkit-scrollbar { display: none; }
+
+  /* bottom CTA bar */
+  .bottom-cta {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 8px 16px 4px;
+  }
+  .bottom-cta a {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ink); color: white;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700; font-size: 11px;
+    text-decoration: none;
+  }
+  .bottom-cta-sub { font-size: 11px; color: var(--gray3); }
+
+  @media (max-width: 430px) {
+    .phone { width: 100%; max-width: 390px; }
+    body { padding-top: 72px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="ez-logo">EZ</div>
+    <div>
+      <div class="topbar-title">TiE Match</div>
+      <div class="topbar-sub">by Ezyourlife · TiE Global Summit 2026</div>
+    </div>
+  </div>
+  <a href="https://ezyourlife.com" class="topbar-cta">← ezyourlife.com</a>
+</div>
+
+<div class="headline">AI-booked meetings before you even arrive</div>
+<div class="subline">TiE Global Summit · Dec 13–15, Indore · Click through the 7-screen flow ↓</div>
+
+<!-- Matching basis row -->
+<div style="width:100%; max-width:430px; display:flex; flex-direction:column; gap:8px;">
+  <div style="font-family:'Unbounded', sans-serif; font-weight:700; font-size:11px; color:#9E9A92; letter-spacing:.5px; text-align:center;">HOW WE MATCH · 5 SIGNALS</div>
+  <div style="display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px;">
+    <div style="flex-shrink:0; background:#fff; border:2px solid #0D0D0D; border-radius:12px; box-shadow:3px 3px 0 #0D0D0D; padding:12px 14px; min-width:150px;">
+      <div style="font-size:18px; margin-bottom:4px;">🕸️</div>
+      <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:4px;">Charter Member<br>Network</div>
+      <div style="font-size:11px; color:#9E9A92; line-height:1.4;">Shared TiE CMs → warm intro path. Highest weight: 30 pts</div>
+    </div>
+    <div style="flex-shrink:0; background:#fff; border:2px solid #0D0D0D; border-radius:12px; box-shadow:3px 3px 0 #FF4D7D; padding:12px 14px; min-width:150px;">
+      <div style="font-size:18px; margin-bottom:4px;">🎯</div>
+      <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:4px;">Summit Goals<br>Alignment</div>
+      <div style="font-size:11px; color:#9E9A92; line-height:1.4;">Fundraising, BD, mentorship, partnerships — do you need each other? 20 pts</div>
+    </div>
+    <div style="flex-shrink:0; background:#fff; border:2px solid #0D0D0D; border-radius:12px; box-shadow:3px 3px 0 #00BFA5; padding:12px 14px; min-width:150px;">
+      <div style="font-size:18px; margin-bottom:4px;">🏭</div>
+      <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:4px;">Industry &<br>Sector</div>
+      <div style="font-size:11px; color:#9E9A92; line-height:1.4;">Same vertical or complementary — not direct competitors. 20 pts</div>
+    </div>
+    <div style="flex-shrink:0; background:#fff; border:2px solid #0D0D0D; border-radius:12px; box-shadow:3px 3px 0 #FFB800; padding:12px 14px; min-width:150px;">
+      <div style="font-size:18px; margin-bottom:4px;">📈</div>
+      <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:4px;">Company Stage<br>Fit</div>
+      <div style="font-size:11px; color:#9E9A92; line-height:1.4;">Investor × right-stage founder; CM × early founder. 15 pts</div>
+    </div>
+    <div style="flex-shrink:0; background:#fff; border:2px solid #0D0D0D; border-radius:12px; box-shadow:3px 3px 0 #0D0D0D; padding:12px 14px; min-width:150px;">
+      <div style="font-size:18px; margin-bottom:4px;">🗺️</div>
+      <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:4px;">Geographic<br>Market</div>
+      <div style="font-size:11px; color:#9E9A92; line-height:1.4;">Same geography or expansion overlap — Tier-1, Tier-2 India, SEA. 15 pts</div>
+    </div>
+  </div>
+  <div style="text-align:center; font-size:11px; color:#9E9A92;">Tap a profile inside the demo to see the full score breakdown ↓</div>
+</div>
+
+<div class="phone">
+  <div class="phone-screen">
+    <div class="notch"><div class="notch-cam"></div><div class="notch-pill"></div></div>
+
+    <!-- S1: PRE-EVENT WHATSAPP -->
+    <div class="screen active" id="s1">
+      <div class="status-bar light">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <svg width="15" height="11" fill="white" viewBox="0 0 15 11"><rect x="0" y="3" width="3" height="8" rx="1"/><rect x="4" y="2" width="3" height="9" rx="1"/><rect x="8" y="0" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="12" height="11" fill="white" viewBox="0 0 12 11"><path d="M6 0C3.5 0 1.3 1 0 2.6l1.5 1.5C2.5 2.8 4.1 2 6 2s3.5.8 4.5 2.1L12 2.6C10.7 1 8.5 0 6 0z"/><path d="M6 4c-1.3 0-2.5.5-3.4 1.4L4 6.8C4.6 6.3 5.3 6 6 6s1.4.3 2 .8l1.4-1.4C8.5 4.5 7.3 4 6 4z"/><circle cx="6" cy="9" r="2"/></svg>
+          <svg width="20" height="11" fill="white" viewBox="0 0 20 11"><rect x="0" y="1" width="17" height="9" rx="2" stroke="white" stroke-width="1.5" fill="none"/><rect x="1.5" y="2.5" width="12" height="6" rx="1" fill="white"/><rect x="17.5" y="3.5" width="2" height="4" rx="1" fill="white"/></svg>
+        </div>
+      </div>
+      <div class="wa-header">
+        <div class="wa-avatar">EZ</div>
+        <div>
+          <div class="wa-name">TiE Match</div>
+          <div class="wa-status">🟢 Automated · Powered by Ezyourlife</div>
+        </div>
+      </div>
+      <div class="wa-chat-bg scroll-inner" style="flex:1; padding-bottom:16px;">
+        <div style="text-align:center; margin:8px 0;">
+          <span style="background:rgba(255,255,255,0.7); padding:3px 10px; border-radius:100px; font-size:11px; color:#555;">Mon, Dec 8 · 5 days before TiE Global Summit</span>
+        </div>
+        <div class="wa-bubble">
+          Hey Abhijay 👋<br><br>
+          <strong>TiE Global Summit 2026 is in 5 days.</strong><br><br>
+          We've matched you with <strong>3 people</strong> you should meet — based on your goals, sector, and CM connections.<br><br>
+          Reply <strong>1</strong> to see your matches 🗓️
+          <div class="wa-time">5:12 PM ✓✓</div>
+        </div>
+        <div class="wa-bubble">
+          <strong>Your top match:</strong><br>
+          🤝 Rahul Mehta — Series A Founder, B2B SaaS<br>
+          <span style="color:#128C7E; font-weight:600;">94% compatibility</span><br><br>
+          Reply <strong>1</strong> to see all 3 matches<br>
+          Reply <strong>SKIP</strong> to get new matches
+          <div class="wa-time">5:12 PM ✓✓</div>
+        </div>
+        <div class="wa-bubble sent">
+          1
+          <div class="wa-time">5:13 PM ✓</div>
+        </div>
+        <div class="wa-bubble">
+          Great! 🎯 Opening your match board →
+          <div class="wa-time">5:13 PM ✓✓</div>
+        </div>
+        <div style="padding:4px 0 8px;">
+          <button class="btn btn-pink btn-full" onclick="go('s2')" style="border-radius:10px;">See My 3 Matches →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- S2: MATCH FEED -->
+    <div class="screen" id="s2">
+      <div class="status-bar"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div class="feed-header">
+        <div>
+          <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:14px;">Your Matches</div>
+          <div style="font-size:11px; color:var(--gray3);">TiE Global Summit · Dec 13–15</div>
+        </div>
+        <div class="ez-badge ez-badge-sm">EZ</div>
+      </div>
+      <div class="scroll-inner" style="padding-bottom:16px;">
+        <div class="match-card">
+          <div class="card card-pink">
+            <div class="match-top" style="margin-bottom:10px;">
+              <div class="match-avatar" style="background:#FFE0EA; color:var(--ink);">R</div>
+              <div style="flex:1;">
+                <div class="match-name">Rahul Mehta</div>
+                <div class="match-role">Series A · B2B SaaS · Delhi</div>
+              </div>
+              <div class="score-badge high">94%</div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+              <span class="chip chip-gray">Fundraising</span>
+              <span class="chip chip-gray">SaaS metrics</span>
+            </div>
+            <div class="match-btns">
+              <button class="btn btn-pink" style="flex:1;" onclick="go('s3')">View & Book</button>
+              <button class="btn btn-white btn-sm" onclick="go('s4')">Skip ↓</button>
+            </div>
+          </div>
+        </div>
+        <div class="match-card">
+          <div class="card">
+            <div class="match-top" style="margin-bottom:10px;">
+              <div class="match-avatar" style="background:#E0F5FF; color:var(--ink);">P</div>
+              <div style="flex:1;">
+                <div class="match-name">Priya Nair</div>
+                <div class="match-role">Charter Member · Angel Investor</div>
+              </div>
+              <div class="score-badge">89%</div>
+            </div>
+            <div class="match-btns">
+              <button class="btn btn-dark" style="flex:1;" onclick="go('s3')">View & Book</button>
+              <button class="btn btn-white btn-sm" onclick="go('s4')">Skip ↓</button>
+            </div>
+          </div>
+        </div>
+        <div class="match-card">
+          <div class="card card-teal">
+            <div class="match-top" style="margin-bottom:10px;">
+              <div class="match-avatar" style="background:#E0FFF9; color:var(--ink);">A</div>
+              <div style="flex:1;">
+                <div class="match-name">Ankit Sharma</div>
+                <div class="match-role">Charter Member · Manufacturing</div>
+              </div>
+              <div class="score-badge">85%</div>
+            </div>
+            <div class="match-btns">
+              <button class="btn btn-teal" style="flex:1;" onclick="go('s3')">View & Book</button>
+              <button class="btn btn-white btn-sm" onclick="go('s4')">Skip ↓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S3: PROFILE -->
+    <div class="screen" id="s3">
+      <div class="status-bar"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div class="scroll-inner" style="padding-bottom:80px;">
+        <div class="profile-hero" style="padding-top:52px; background:linear-gradient(180deg,#FFE0EA 0%,var(--cream) 100%);">
+          <div class="profile-avatar">R</div>
+          <div>
+            <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:16px;">Rahul Mehta</div>
+            <div style="font-size:12px; color:var(--gray3); margin-top:2px;">Series A Founder · B2B SaaS · Delhi</div>
+            <div style="margin-top:6px;"><span class="score-badge high">94% Match</span></div>
+          </div>
+        </div>
+        <div style="padding:0 16px; display:flex; flex-direction:column; gap:12px;">
+          <div class="card">
+            <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:10px; letter-spacing:.3px;">WHY YOU MATCH</div>
+            <div class="check-row"><div class="check-icon">✓</div><div style="font-size:12px;">Both targeting enterprise SaaS in Tier-2 India markets</div></div>
+            <div class="check-row"><div class="check-icon">✓</div><div style="font-size:12px;">Rahul closed ₹4Cr seed — has fundraising playbook you need</div></div>
+            <div class="check-row"><div class="check-icon">✓</div><div style="font-size:12px;">Shares your CM Priya Nair — warm intro possible</div></div>
+            <div class="check-row"><div class="check-icon">✓</div><div style="font-size:12px;">Looking for AI tool partnerships — your stack fits</div></div>
+          </div>
+          <!-- Match score breakdown -->
+          <div class="card card-yellow">
+            <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:11px; margin-bottom:10px; letter-spacing:.3px;">MATCH SCORE BREAKDOWN · 94%</div>
+            <div class="match-factor">
+              <div class="match-factor-label">🤝 TiE Charter Member Network</div>
+              <div class="match-factor-bar"><div class="match-factor-fill" style="width:98%; background:var(--pink);"></div></div>
+              <div class="match-factor-pct">28/30</div>
+            </div>
+            <div class="match-factor">
+              <div class="match-factor-label">🎯 Summit Goals Alignment</div>
+              <div class="match-factor-bar"><div class="match-factor-fill" style="width:95%; background:var(--teal);"></div></div>
+              <div class="match-factor-pct">19/20</div>
+            </div>
+            <div class="match-factor">
+              <div class="match-factor-label">🏭 Industry & Sector Fit</div>
+              <div class="match-factor-bar"><div class="match-factor-fill" style="width:95%; background:var(--teal);"></div></div>
+              <div class="match-factor-pct">19/20</div>
+            </div>
+            <div class="match-factor">
+              <div class="match-factor-label">📈 Company Stage Compatibility</div>
+              <div class="match-factor-bar"><div class="match-factor-fill" style="width:93%; background:var(--yellow);"></div></div>
+              <div class="match-factor-pct">14/15</div>
+            </div>
+            <div class="match-factor">
+              <div class="match-factor-label">🗺️ Geographic Market Overlap</div>
+              <div class="match-factor-bar"><div class="match-factor-fill" style="width:93%;"></div></div>
+              <div class="match-factor-pct">14/15</div>
+            </div>
+            <div style="border-top:1px dashed var(--gray2); margin-top:8px; padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-size:11px; color:var(--gray3);">Overall compatibility</div>
+              <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:14px; color:var(--pink);">94%</div>
+            </div>
+          </div>
+
+          <!-- How matching works -->
+          <div class="how-panel" style="margin:0 0 4px;">
+            <div class="how-toggle" id="how-toggle" onclick="toggleHow()">
+              <span>🤖 How does TiE Match work?</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="how-body" id="how-body">
+              <div style="font-size:12px; line-height:1.6; color:var(--ink);">
+                <p style="margin-bottom:8px;">TiE Match runs <strong>5 days before the summit</strong>. Here's how we find your best meetings:</p>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  <div style="display:flex; gap:8px;"><span style="font-size:14px;">🗒️</span><div><strong>Registration form</strong> — We capture your goals, sector, stage, and who you want to meet when you register for TiE Summit.</div></div>
+                  <div style="display:flex; gap:8px;"><span style="font-size:14px;">🕸️</span><div><strong>Charter Member graph</strong> — We map shared TiE Charter Members to find warm-intro paths between attendees.</div></div>
+                  <div style="display:flex; gap:8px;"><span style="font-size:14px;">🤖</span><div><strong>AI ranking</strong> — Our model scores every attendee pair on 5 dimensions and surfaces your top 3.</div></div>
+                  <div style="display:flex; gap:8px;"><span style="font-size:14px;">📱</span><div><strong>WhatsApp delivery</strong> — Matches arrive in WhatsApp. You confirm, skip, or see more — all in one thread.</div></div>
+                  <div style="display:flex; gap:8px;"><span style="font-size:14px;">📅</span><div><strong>Mutual booking</strong> — We check both calendars, propose a slot, and book only when both say yes.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px;">
+            <span class="chip chip-pink">Fundraising</span>
+            <span class="chip chip-teal">SaaS</span>
+            <span class="chip chip-yellow">Market entry</span>
+            <span class="chip chip-gray">AI tools</span>
+          </div>
+          <button class="btn btn-pink btn-full" onclick="go('s5')" style="font-size:13px;">Book a Meeting with Rahul →</button>
+          <div style="text-align:center; padding:4px 0;">
+            <span class="skip-link" onclick="go('s4')">🙅 Not for me — show 3 more profiles</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S4: 3 MORE PROFILES -->
+    <div class="screen" id="s4">
+      <div class="status-bar"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div style="padding:52px 16px 12px; display:flex; flex-direction:column; gap:4px;">
+        <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:15px;">3 More for You</div>
+        <div style="font-size:12px; color:var(--gray3);">Our AI picked these based on what you skipped</div>
+      </div>
+      <div class="more-row" style="padding-bottom:4px;">
+        <div class="more-mini card">
+          <div class="mini-avatar" style="background:#FFF5E0; color:var(--ink);">S</div>
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Sahil Kapoor</div>
+          <div style="font-size:11px; color:var(--gray3); margin:4px 0 8px;">VC Partner · EdTech</div>
+          <div class="score-badge" style="margin-bottom:10px;">82%</div>
+          <button class="btn btn-yellow btn-full btn-sm" onclick="go('s5')">Book</button>
+        </div>
+        <div class="more-mini card">
+          <div class="mini-avatar" style="background:#E5F9F5; color:var(--ink);">N</div>
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Neha Gupta</div>
+          <div style="font-size:11px; color:var(--gray3); margin:4px 0 8px;">CM · FMCG Distribution</div>
+          <div class="score-badge" style="margin-bottom:10px;">79%</div>
+          <button class="btn btn-teal btn-full btn-sm" onclick="go('s5')">Book</button>
+        </div>
+        <div class="more-mini card">
+          <div class="mini-avatar" style="background:#F0E5FF; color:var(--ink);">V</div>
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Vikram Das</div>
+          <div style="font-size:11px; color:var(--gray3); margin:4px 0 8px;">Founder · FinTech</div>
+          <div class="score-badge" style="margin-bottom:10px;">77%</div>
+          <button class="btn btn-dark btn-full btn-sm" onclick="go('s5')">Book</button>
+        </div>
+      </div>
+      <div style="padding:0 16px; margin-top:8px;">
+        <div class="card card-yellow">
+          <div style="font-size:12px; margin-bottom:8px;">💡 <strong>Rahul Mehta</strong> is still your strongest match at <strong>94%</strong>.</div>
+          <button class="btn btn-yellow btn-full btn-sm" onclick="go('s3')">← Go back to Rahul</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- S5: PICK TIME SLOT -->
+    <div class="screen" id="s5">
+      <div class="status-bar"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div style="padding:52px 16px 12px;">
+        <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:15px; margin-bottom:4px;">Pick a Time Slot</div>
+        <div style="font-size:12px; color:var(--gray3);">Meeting with <strong style="color:var(--ink);">Rahul Mehta</strong> at TiE Global Summit</div>
+      </div>
+      <div class="scroll-inner" style="padding-bottom:100px;">
+        <div class="slot-day">
+          <div class="slot-day-label">SAT · DEC 13</div>
+          <div class="slot-row">
+            <div class="slot-chip taken">10:00 AM</div>
+            <div class="slot-chip avail" onclick="selectSlot(this)">11:30 AM</div>
+            <div class="slot-chip avail" onclick="selectSlot(this)">1:00 PM</div>
+            <div class="slot-chip taken">2:30 PM</div>
+            <div class="slot-chip avail" onclick="selectSlot(this)">4:00 PM</div>
+          </div>
+        </div>
+        <div class="slot-day" style="margin-top:16px;">
+          <div class="slot-day-label">SUN · DEC 14</div>
+          <div class="slot-row">
+            <div class="slot-chip avail" onclick="selectSlot(this)">9:00 AM</div>
+            <div class="slot-chip avail selected" onclick="selectSlot(this)">11:00 AM ✓</div>
+            <div class="slot-chip taken">12:30 PM</div>
+            <div class="slot-chip avail" onclick="selectSlot(this)">2:00 PM</div>
+            <div class="slot-chip avail" onclick="selectSlot(this)">5:00 PM</div>
+          </div>
+        </div>
+        <div style="margin:16px 16px 0;">
+          <div class="card card-teal" style="margin-bottom:12px;">
+            <div style="font-size:12px;">🤖 <strong>Rahul's availability:</strong> He's free on Dec 14 all morning. Best chance of a confirmed meeting.</div>
+          </div>
+          <button class="btn btn-pink btn-full" onclick="go('s6')" style="font-size:13px;">Confirm Dec 14 · 11:00 AM →</button>
+          <div style="font-size:11px; color:var(--gray3); text-align:center; margin-top:8px;">We'll WhatsApp Rahul to confirm. Both of you get reminders.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S6: BOTH NOTIFIED -->
+    <div class="screen" id="s6">
+      <div class="status-bar light" style="background:var(--teal);"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div class="success-banner">
+        <div class="success-icon">🎉</div>
+        <div>
+          <div style="color:white; font-family:'Unbounded',sans-serif; font-weight:700; font-size:13px;">Meeting Request Sent!</div>
+          <div style="color:rgba(255,255,255,0.8); font-size:11px; margin-top:2px;">WhatsApp sent to both you and Rahul</div>
+        </div>
+      </div>
+      <div class="scroll-inner" style="padding:12px 16px 24px; display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:10px; color:var(--gray3); margin-bottom:8px; letter-spacing:.5px;">📤 SENT TO RAHUL MEHTA</div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div class="wa-header" style="padding:8px 12px;">
+              <div class="wa-avatar">EZ</div>
+              <div><div class="wa-name" style="font-size:12px;">TiE Match</div></div>
+            </div>
+            <div class="wa-chat-bg" style="padding:10px;">
+              <div class="wa-bubble" style="max-width:100%;">
+                Hey Rahul 👋<br><br>
+                <strong>Abhijay Jain</strong> (Founder, Ezyourlife) wants to meet you at <strong>TiE Global Summit</strong>.<br><br>
+                📅 <strong>Sun Dec 14 · 11:00 AM</strong><br>
+                📍 Brilliant Convention Centre, Indore<br><br>
+                Reply <strong>YES</strong> to confirm.
+                <div class="wa-time">9:41 AM ✓✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-yellow">
+          <div style="font-size:12px; margin-bottom:4px;"><strong>⏳ Pending Rahul's reply</strong></div>
+          <div style="font-size:11px; color:var(--gray3);">78% of people confirm within 10 minutes.</div>
+        </div>
+        <div class="card">
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:10px; color:var(--gray3); margin-bottom:8px; letter-spacing:.5px;">WHAT HAPPENS NEXT</div>
+          <div class="check-row"><div class="check-icon" style="background:var(--yellow); color:var(--ink);">1</div><div style="font-size:12px;">Rahul replies YES → both get a calendar invite</div></div>
+          <div class="check-row"><div class="check-icon" style="background:var(--yellow); color:var(--ink);">2</div><div style="font-size:12px;">Morning of Dec 14 — reminder with his photo, bio & talking points</div></div>
+          <div class="check-row"><div class="check-icon" style="background:var(--yellow); color:var(--ink);">3</div><div style="font-size:12px;">Post-event — 48hr follow-up with LinkedIn + action items</div></div>
+        </div>
+        <button class="btn btn-dark btn-full" onclick="go('s7')">See Your Pre-Event Schedule →</button>
+      </div>
+    </div>
+
+    <!-- S7: PRE-FILLED SCHEDULE -->
+    <div class="screen" id="s7">
+      <div class="status-bar"><span class="time">9:41</span><div class="icons"><span style="font-size:9px;">●●●</span></div></div>
+      <div class="sched-header" style="padding-top:52px;">
+        <div style="font-family:'Unbounded',sans-serif; font-weight:900; font-size:14px; margin-bottom:2px;">Your Summit Schedule</div>
+        <div style="font-size:11px; color:var(--gray3); margin-bottom:10px;">Dec 13–14 · Brilliant Convention Centre · Set up 5 days before you arrive</div>
+        <div class="card card-pink" style="padding:10px 14px; margin-bottom:4px;">
+          <div style="font-size:11px;">🗓️ <strong>2 meetings confirmed</strong> before you even packed your bags.</div>
+        </div>
+      </div>
+      <div class="scroll-inner" style="padding-bottom:24px;">
+        <div style="padding:8px 16px 4px;">
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:10px; color:var(--gray3); letter-spacing:.5px;">SAT · DEC 13</div>
+        </div>
+        <div class="sched-slot">
+          <div class="sched-time">11:30<br>AM</div>
+          <div class="sched-card card card-teal">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+              <div>
+                <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Priya Nair</div>
+                <div style="font-size:11px; color:var(--gray3);">Charter Member · Angel Investor</div>
+              </div>
+              <span class="chip status-confirmed" style="font-size:10px; padding:3px 8px; border:none;">✓ Confirmed</span>
+            </div>
+            <div style="font-size:11px; color:var(--gray3);">📍 Networking Lounge B · 30 min</div>
+          </div>
+        </div>
+        <div class="sched-slot">
+          <div class="sched-time">2:00<br>PM</div>
+          <div class="sched-card card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+              <div>
+                <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Ankit Sharma</div>
+                <div style="font-size:11px; color:var(--gray3);">Charter Member · Manufacturing</div>
+              </div>
+              <span class="chip status-pending" style="font-size:10px; padding:3px 8px; border:none;">⏳ Pending</span>
+            </div>
+            <div style="font-size:11px; color:var(--gray3);">📍 Corridor 3 · 20 min</div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 4px; margin-top:4px;">
+          <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:10px; color:var(--gray3); letter-spacing:.5px;">SUN · DEC 14</div>
+        </div>
+        <div class="sched-slot">
+          <div class="sched-time">11:00<br>AM</div>
+          <div class="sched-card card card-pink">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+              <div>
+                <div style="font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px;">Rahul Mehta</div>
+                <div style="font-size:11px; color:var(--gray3);">Series A Founder · B2B SaaS</div>
+              </div>
+              <span class="chip status-pending" style="font-size:10px; padding:3px 8px; border:none;">⏳ Awaiting</span>
+            </div>
+            <div style="font-size:11px; color:var(--gray3);">📍 Café Area · 25 min</div>
+            <div style="font-size:11px; margin-top:6px; color:var(--pink);">💬 WhatsApp sent · 92% chance he confirms</div>
+          </div>
+        </div>
+        <div style="margin:16px 16px 0;">
+          <div class="card" style="background:var(--ink); border-color:var(--ink);">
+            <div style="color:white; font-family:'Unbounded',sans-serif; font-weight:700; font-size:12px; margin-bottom:4px;">Before you walk in —</div>
+            <div style="color:rgba(255,255,255,0.75); font-size:12px; line-height:1.5;">your meetings are already set. No awkward cold conversations. No missed connections.</div>
+            <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+              <div class="ez-badge" style="width:28px;height:28px;border-radius:8px;font-size:9px;">EZ</div>
+              <div style="color:rgba(255,255,255,0.5); font-size:11px;">Powered by Ezyourlife</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Nav dots -->
+<div class="nav-dots" id="dots">
+  <div class="dot active" onclick="go('s1')" title="Pre-event WhatsApp"></div>
+  <div class="dot" onclick="go('s2')" title="Match Feed"></div>
+  <div class="dot" onclick="go('s3')" title="Profile"></div>
+  <div class="dot" onclick="go('s4')" title="Show 3 More"></div>
+  <div class="dot" onclick="go('s5')" title="Pick Slot"></div>
+  <div class="dot" onclick="go('s6')" title="Confirmed"></div>
+  <div class="dot" onclick="go('s7')" title="Schedule"></div>
+</div>
+<div class="hint" id="hint-text">WhatsApp message arrives 5 days before the event →</div>
+
+<!-- Bottom CTA -->
+<div class="bottom-cta">
+  <a href="https://ezyourlife.com">← Try Ezyourlife free · 100 credits included</a>
+  <div class="bottom-cta-sub">Want TiE Match for your event? ceo@ezyourlife.com · +91 9098083486</div>
+</div>
+
+<script>
+  const screens = ['s1','s2','s3','s4','s5','s6','s7'];
+  const hints = [
+    'WhatsApp message arrives 5 days before the event →',
+    'Your AI-matched profiles — tap "Skip" to see the flow →',
+    'Full profile + "Not for me" option →',
+    'Show 3 more profiles — AI re-ranks based on your skip →',
+    'Available slots auto-sync with Rahul\'s calendar →',
+    'WhatsApp sent to BOTH parties automatically →',
+    'Your schedule is set before you arrive at TiE →',
+  ];
+
+  function go(id) {
+    screens.forEach((s, i) => {
+      const el = document.getElementById(s);
+      const dot = document.querySelectorAll('.dot')[i];
+      const isTarget = s === id;
+      el.classList.toggle('active', isTarget);
+      dot.classList.toggle('active', isTarget);
+      if (isTarget) {
+        el.scrollTop = 0;
+        document.getElementById('hint-text').textContent = hints[i];
+      }
+    });
+  }
+
+  function toggleHow() {
+    const toggle = document.getElementById('how-toggle');
+    const body = document.getElementById('how-body');
+    toggle.classList.toggle('open');
+    body.classList.toggle('open');
+  }
+
+  function selectSlot(el) {
+    document.querySelectorAll('.slot-chip.avail, .slot-chip.selected').forEach(c => {
+      c.classList.remove('selected');
+      c.textContent = c.textContent.replace(' ✓','');
+    });
+    el.classList.add('selected');
+    if (!el.textContent.includes('✓')) el.textContent += ' ✓';
+  }
+</script>
+
+</body>
+</html>
