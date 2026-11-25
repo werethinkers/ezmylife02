@@ -47,7 +47,7 @@ function BusinessApp() {
   }), [setParams]);
 
   if (!ready) return <Shell><div className="grid min-h-[50vh] place-items-center"><Loader2 className="h-8 w-8 animate-spin" /></div></Shell>;
-  if (error) return <Shell><div className="mx-auto max-w-lg p-8 text-center"><p className="font-bold">Could not open your business</p><p className="mt-1 text-sm text-muted-foreground">{error}</p><Button className="mt-4" onClick={() => void refresh()}>Try again</Button></div></Shell>;
+  if (error) return <Shell><div className="mx-auto max-w-lg p-8"><div className="rounded-xl border-2 border-ink bg-coral p-4 text-center"><p className="font-bold">Could not open your business</p><p className="mt-1 text-sm">{error}</p><Button className="mt-4" onClick={() => void refresh()}>Try again</Button></div></div></Shell>;
   if (!db) return <Navigate to="/business" replace />;
 
   const s = db.ws.settings;
