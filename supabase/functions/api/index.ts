@@ -671,7 +671,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
             'Answer JSON only: {"keywords": string[]}.',
         },
         { role: "user", content: text },
-      ], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 120, temperature: 0 });
+      ], { model: "google/gemini-3.5-flash-lite", json: true, maxTokens: 120, temperature: 0 });
       const extra = (parseJson(out) as { keywords?: unknown }).keywords;
       const more = (Array.isArray(extra) ? extra : []).flatMap((k) => String(k).toLowerCase().split(/[^a-z0-9ऀ-ॿ]+/)).filter((w) => w.length > 2).slice(0, 12);
       if (more.length) {
@@ -710,7 +710,7 @@ async function planCommand(who: Who, body: Record<string, unknown>) {
           'Answer JSON only: {"app_id": string|null, "alternatives": string[], "inputs": {fieldKey: value}, "prompt": string|null}.',
       },
       { role: "user", content: JSON.stringify({ request: text, apps: candidates }) },
-    ], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 800, temperature: 0 });
+    ], { model: "google/gemini-3.5-flash-lite", json: true, maxTokens: 800, temperature: 0 });
     pick = parseJson(out);
   } catch (e) {
     console.error("command plan", e);

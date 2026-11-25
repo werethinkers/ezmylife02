@@ -83,7 +83,7 @@ export default function Overview() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Overview</h2>
+          <h2 className="font-display text-2xl font-bold tracking-tight">Overview</h2>
           <p className="text-sm text-muted-foreground">Customer feedback and Google reviews across all {biz.locations.length} locations.</p>
         </div>
         {hasSample ? (
@@ -94,7 +94,7 @@ export default function Overview() {
       </div>
 
       {hasSample && (
-        <div className="rounded-lg border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm">You're viewing sample data. Clear it before sharing real numbers.</div>
+        <div className="rounded-xl border-2 border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm">You're viewing sample data. Clear it before sharing real numbers.</div>
       )}
 
       {subs.length === 0 ? (
@@ -130,7 +130,7 @@ export default function Overview() {
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                     <Line type="monotone" dataKey="Submissions" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="Opened Google" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="Opened Google" stroke="#FACC15" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

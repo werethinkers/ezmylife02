@@ -26,7 +26,7 @@ import { COMMON_RULES } from "../_shared/appSpecs.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const MODELS: Record<string, string> = { flash: "google/gemini-2.5-flash", lite: "google/gemini-2.5-flash-lite" };
+const MODELS: Record<string, string> = { flash: "google/gemini-2.5-flash", lite: "google/gemini-3.5-flash-lite" };
 const MAX_FIELD = 6000;
 const MAX_INPUTS = 40_000;
 const MAX_CONTEXT = 30_000;

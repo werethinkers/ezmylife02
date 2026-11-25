@@ -59,7 +59,7 @@ new one is approved; the old one becomes "superseded". Admins can take a live ap
   `VisionAppDef` the built-in apps use (`specToDef.ts`) and renders the real engine. Runs go to the edge function
   `supabase/functions/dev-app-run`, which reads the instructions with the service role, appends the platform rules
   (`PLATFORM_RULES` + `COMMON_RULES`: inputs are data, never reveal the instructions, no invention, no secrets) and calls
-  the site's own model (flash = gemini-2.5-flash, lite = gemini-2.5-flash-lite). Billing is the normal `billed()` wrapper
+  the site's own model (flash = gemini-2.5-flash, lite = gemini-3.5-flash-lite). Billing is the normal `billed()` wrapper
   with the price from `tool_pricing`; the browser only ever receives the model name (`get_ai_app` strips `ai.system/task`).
 - **Test runs before approval** (`preview_version_id`): free, only for the version's developer or an admin, 25 a day per
   developer and 400 a day for the platform (admins exempt; values in `dev_ai_preview_allow`), logged in `dev_ai_usage`,

@@ -195,7 +195,7 @@ export async function sendGmailReply(
 }
 
 // ---------- the AI step ----------
-export const AI_MODEL = "google/gemini-2.5-flash-lite";
+export const AI_MODEL = "google/gemini-3.5-flash-lite";
 
 export function systemPrompt(opts: { lang: string; signOff: string; today: string }): string {
   const lang = opts.lang === "hi" ? "Hindi" : opts.lang === "en" ? "English" : "the same language as the mail (Hindi mails get Hindi replies, written in Devanagari)";

@@ -57,6 +57,9 @@ function toGeminiContents(messages: ChatMessage[]) {
 
 /** Flash and Flash-Lite answer well without "thinking"; Pro and the image models cannot turn it off. */
 const canSkipThinking = (model: string) => /flash/.test(model) && !/image/.test(model);
+/** Gemini 3.x replaced the numeric thinkingBudget with a thinkingLevel enum ("minimal"|"low"|"medium"|"high");
+ * sending the old thinkingBudget field to a 3.x model is a 400 INVALID_ARGUMENT. 2.x and earlier keep thinkingBudget. */
+const isGemini3 = (model: string) => /^gemini-3/.test(model);
 
 export interface ChatOptions {
   model?: string; // gateway id, e.g. "google/gemini-2.5-flash"
@@ -107,9 +110,13 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
 
   const { system, contents } = toGeminiContents(messages);
   const geminiModel = model.replace(/^google\//, "");
+  // Flash / Flash-Lite answer well without "thinking"; turning it down avoids paying for hidden
+  // reasoning tokens on our own keys. (Pro models cannot turn it off.) The exact field changed
+  // between generations, so build it once per model rather than per request.
+  const thinkingOff = canSkipThinking(geminiModel) ? (isGemini3(geminiModel) ? { thinkingLevel: "low" } : { thinkingBudget: 0 }) : null;
   for (const key of await geminiKeys()) {
-    try {
-      const r = await fetch(`${GEMINI}/${geminiModel}:generateContent?key=${key}`, {
+    const send = (withThinking: boolean) =>
+      fetch(`${GEMINI}/${geminiModel}:generateContent?key=${key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,12 +126,15 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
             maxOutputTokens: opts.maxTokens,
             temperature: opts.temperature,
             ...(opts.json ? { responseMimeType: "application/json" } : {}),
-            // Flash / Flash-Lite answer well without "thinking"; turning it off avoids paying for
-            // hidden reasoning tokens on our own keys. (2.5 Pro cannot turn it off.)
-            ...(canSkipThinking(geminiModel) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+            ...(withThinking && thinkingOff ? { thinkingConfig: thinkingOff } : {}),
           },
         }),
       });
+    try {
+      let r = await send(true);
+      // This model/API version didn't accept thinkingOff's exact field — retry once without it
+      // rather than burning every key on a request that was never going to succeed.
+      if (thinkingOff && r.status === 400) r = await send(false);
       if (r.ok) {
         const data = await r.json();
         const text = (data?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
