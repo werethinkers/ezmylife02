@@ -27,11 +27,72 @@ import { CardSkeleton, CtaBand, EmptyState, SectionHead } from "@/components/mod
 import { BTN_INK, BTN_OUTLINE, BTN_PRIMARY, CONTAINER, EYEBROW, FOCUS_RING, creditsLabel, pillClass, roundedLabel } from "@/components/modern/styles";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { NumberTicker } from "@/components/ui/number-ticker";
+import { AppShowcaseRow, type ShowcaseApp } from "@/components/AppShowcaseCard";
 
 // The website and card designs are a large catalogue: load them after the first screen is up.
 const DesignFeed = lazy(() => import("@/components/modern/home/DesignFeed"));
 
 const POPULAR_SEARCHES = ["invoice", "passport photo", "salary", "remove background", "caption", "contract"];
+
+/** Featured apps shown in the showcase row. Images live in /public/app-previews/<id>.jpg */
+const FEATURED_SHOWCASE_APPS: ShowcaseApp[] = [
+  {
+    id: "ai-headshot-studio",
+    name: "AI Headshot Studio",
+    description:
+      "Turn a casual selfie into professional headshots — corporate, LinkedIn, creative, doctor or lawyer looks, all with natural lighting. No photographer needed.",
+    imageSrc: "/app-previews/ai-headshot-studio.jpg",
+    category: "AI Image",
+    href: "/tool/ai-headshot-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "ad-campaign-studio",
+    name: "Ad Campaign Studio",
+    description:
+      "Plan a full paid-ad campaign for Meta or Google: audiences, 10 ad copies, creative briefs, budget split and a testing plan — plus ready-to-use ad images.",
+    imageSrc: "/app-previews/ad-campaign-studio.jpg",
+    category: "Marketing",
+    href: "/tool/ad-campaign-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "contract-risk-reviewer",
+    name: "Contract Risk Reviewer",
+    description:
+      "Upload any contract and get a clause-by-clause risk review: red flags, missing protections and suggested negotiation wording, in seconds.",
+    imageSrc: "/app-previews/contract-risk-reviewer.jpg",
+    category: "Legal",
+    href: "/tool/contract-risk-reviewer",
+  },
+  {
+    id: "thumbnail-maker",
+    name: "AI Thumbnail Maker",
+    description:
+      "Generate click-worthy video thumbnails with AI. Pick a style, drop in your title and face — get a polished YouTube or Reels thumbnail in one click.",
+    imageSrc: "/app-previews/thumbnail-maker.jpg",
+    category: "Content Creation",
+    href: "/tool/thumbnail-maker",
+  },
+  {
+    id: "ai-photo-enhancer",
+    name: "AI Photo Enhancer",
+    description:
+      "Fix lighting, remove noise, sharpen details and upscale low-res photos automatically. Works on portraits, products and any everyday shot.",
+    imageSrc: "/app-previews/ai-photo-enhancer.jpg",
+    category: "Image Tools",
+    href: "/tool/ai-photo-enhancer",
+  },
+  {
+    id: "bill-invoice-generator",
+    name: "Invoice Generator",
+    description:
+      "Create professional GST-compliant invoices in seconds. Add your logo, line items and tax rates — download a PDF or share a link instantly.",
+    imageSrc: "/app-previews/bill-invoice-generator.jpg",
+    category: "Finance",
+    href: "/tool/bill-invoice-generator",
+  },
+];
 
 type TopKind = "website" | "card" | "studio" | "app";
 interface TopItem {
@@ -483,6 +544,17 @@ const Home = () => {
                 )}
               </>
             )}
+          </div>
+        </section>
+
+        {/* ───────── App Showcase ───────── */}
+        <section id="app-showcase" className="py-10">
+          <div className={CONTAINER}>
+            <AppShowcaseRow
+              heading="See apps in action"
+              subheading="Featured"
+              apps={FEATURED_SHOWCASE_APPS}
+            />
           </div>
         </section>
 
