@@ -50,7 +50,7 @@ export function AppShowcaseCard({
   href,
   ctaLabel = "Try App",
   className,
-  widthClass = "w-[300px]",
+  widthClass = "w-[260px]",
 }: AppShowcaseCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,7 +59,6 @@ export function AppShowcaseCard({
   const handleMouseEnter = () => {
     if (!videoSrc) return;
     setIsPlaying(true);
-    // slight delay so the state flip re-renders the <video> before play()
     setTimeout(() => videoRef.current?.play().catch(() => {}), 50);
   };
 
@@ -73,71 +72,70 @@ export function AppShowcaseCard({
 
   return (
     <article
-      className={cn(CARD, "shrink-0 flex flex-col overflow-hidden", widthClass, className)}
+      className={cn(CARD, "shrink-0 flex flex-col", widthClass, className)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* ── Media slot ──────────────────────────────────────── */}
-      <div className="relative aspect-video overflow-hidden border-b-2 border-ink bg-sand">
+      {/* ── Media slot — padded screenshot preview ───────────── */}
+      <div className="border-b-2 border-ink bg-sand p-3">
+        <div className="relative aspect-video overflow-hidden rounded-xl border border-ink/20">
 
-        {/* Still image — always rendered, hidden when video is playing */}
-        <img
-          src={imageSrc}
-          alt={name}
-          loading="lazy"
-          className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-in-out",
-            /* zoom on hover when no video; fade out when video takes over */
-            videoSrc
-              ? isPlaying
-                ? "opacity-0"
-                : "opacity-100 group-hover:scale-105"
-              : "group-hover:scale-110"
-          )}
-        />
-
-        {/* Video — rendered only once a src is provided */}
-        {videoSrc && (
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            muted
-            loop
-            playsInline
-            preload="none"
+          {/* Still image */}
+          <img
+            src={imageSrc}
+            alt={name}
+            loading="lazy"
             className={cn(
-              "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
-              isPlaying ? "opacity-100" : "opacity-0"
+              "absolute inset-0 h-full w-full object-cover transition-all duration-500",
+              videoSrc
+                ? isPlaying ? "opacity-0" : "opacity-100"
+                : "hover:scale-105"
             )}
           />
-        )}
 
-        {/* Play badge — shown on hover when video is available and not yet playing */}
-        {videoSrc && !isPlaying && (
-          <div
-            className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border border-ink bg-cream/90 px-2 py-0.5 text-[10px] font-bold text-ink backdrop-blur-sm"
-            aria-hidden
-          >
-            <Play className="h-2.5 w-2.5 fill-ink" />
-            Preview
-          </div>
-        )}
+          {/* Video */}
+          {videoSrc && (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              muted
+              loop
+              playsInline
+              preload="none"
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+                isPlaying ? "opacity-100" : "opacity-0"
+              )}
+            />
+          )}
 
-        {/* Category chip — top-left */}
-        {category && (
-          <span className="absolute left-2 top-2 inline-flex items-center rounded-full border border-ink bg-cream/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink backdrop-blur-sm">
-            {category}
-          </span>
-        )}
+          {/* Play badge */}
+          {videoSrc && !isPlaying && (
+            <div
+              className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border border-ink bg-cream/90 px-2 py-0.5 text-[10px] font-bold text-ink backdrop-blur-sm"
+              aria-hidden
+            >
+              <Play className="h-2.5 w-2.5 fill-ink" />
+              Preview
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Content ─────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <h3 className="font-unbounded text-sm font-black leading-tight text-ink line-clamp-2">
+      <div className="flex flex-1 flex-col gap-2.5 p-4">
+        {/* Category chip */}
+        {category && (
+          <span className="inline-flex w-fit items-center rounded-full border border-ink/30 bg-sand px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink/70">
+            {category}
+          </span>
+        )}
+
+        <h3 className="font-unbounded text-sm font-black leading-snug text-ink line-clamp-2">
           {name}
         </h3>
 
-        <p className="flex-1 text-xs leading-relaxed text-ink/60 line-clamp-3">
+        <p className="flex-1 text-xs leading-relaxed text-ink/55 line-clamp-3">
           {description}
         </p>
 
@@ -146,7 +144,7 @@ export function AppShowcaseCard({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(BTN_PRIMARY, "mt-auto w-full justify-center text-xs")}
+          className={cn(BTN_PRIMARY, "mt-1 w-full justify-center text-xs")}
           onClick={e => e.stopPropagation()}
         >
           {ctaLabel}
