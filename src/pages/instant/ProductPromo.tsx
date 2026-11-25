@@ -127,7 +127,7 @@ export default function ProductPromo({ productIdOverride, pathOverride }: { prod
           <div className={device === "laptop" ? "grid gap-8 p-6 md:p-10" : "grid items-center gap-10 p-6 md:grid-cols-[1.1fr_1fr] md:p-10"}>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                <span className="inline-flex items-center whitespace-nowrap rounded-full border-[1.5px] border-foreground bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
                   {isSite ? "Website" : "Card & invite"}
                 </span>
                 <div className="flex items-center gap-2">

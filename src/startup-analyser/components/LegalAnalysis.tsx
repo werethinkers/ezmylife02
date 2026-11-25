@@ -20,10 +20,10 @@ const IssueSection: React.FC<{
     highlightEnabled: boolean;
 }> = ({ title, points, path, onUpdate, keywords, highlightEnabled }) => (
     <div className="mb-8 page-break-avoid">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">{title}</h3>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-xl font-bold text-zinc-800 mb-4">{title}</h3>
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-zinc-200">
             {points && points.length > 0 && points.some(p => p.value && !p.value.includes("No publicly available information")) ? (
-                <div className="flex flex-col gap-2 divide-y divide-gray-100">
+                <div className="flex flex-col gap-2 divide-y divide-zinc-100">
                     {points.map((point, index) => (
                         <SourcedDataPointDisplay
                             key={index}
@@ -35,7 +35,7 @@ const IssueSection: React.FC<{
                     ))}
                 </div>
             ) : (
-                <p className="text-gray-500 italic p-4 text-center">No legal issues found or data is not publicly available.</p>
+                <p className="text-zinc-500 italic p-4 text-center">No legal issues found or data is not publicly available.</p>
             )}
         </div>
     </div>
@@ -46,7 +46,7 @@ export const LegalAnalysis: React.FC<LegalAnalysisProps> = ({ founderIssues, com
         <div data-editable-container>
             <div className="flex items-center justify-center gap-3 mb-6">
                 <ScaleIcon className="w-8 h-8 text-orange-500" />
-                <h2 className="text-3xl font-bold text-center text-gray-800">Legal & Compliance Analysis</h2>
+                <h2 className="text-3xl font-bold text-center text-zinc-800">Legal & Compliance Analysis</h2>
             </div>
             
             <IssueSection

@@ -154,7 +154,7 @@ serve(async (req) => {
       .map((m: { role?: string; content?: unknown }) => ({ role: m?.role === "assistant" ? "assistant" : "user", content: String(m?.content ?? "").slice(0, 2000) }));
 
     const response = await aiFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: toolsKnowledge },
           ...messages,

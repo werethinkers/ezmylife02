@@ -28,7 +28,7 @@ serve(async (req) => {
     }));
 
     const response = await aiFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           {
             role: "system",

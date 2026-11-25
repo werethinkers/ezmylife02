@@ -1,4 +1,4 @@
-import { aiFetch } from "../_shared/ai.ts";
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -107,7 +107,8 @@ serve(async (req) => {
     // One request = one credit, so keep the prompt to a sensible size.
     const prompt = String(rawPrompt ?? "").slice(0, 12000);
     
-    const model = 'google/gemini-2.5-flash';
+    const apiKey = (getAiKey() || "own-gemini-keys");
+    const model = 'google/gemini-2.5-flash-lite';
 
     const requestBody: Record<string, unknown> = {
       model,
@@ -118,19 +119,21 @@ serve(async (req) => {
       requestBody.response_format = { type: 'json_object' };
     }
 
-    // 1. Try the shared AI helper first
-    try {
-      const response = await aiFetch(requestBody);
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content || '';
-        return new Response(JSON.stringify({ text }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    // 1. Try Lovable AI first
+    if (apiKey) {
+      try {
+        const response = await aiFetch(requestBody);
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content || '';
+          return new Response(JSON.stringify({ text }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.warn(`Lovable AI returned ${response.status}, trying DB Gemini keys...`);
+      } catch (e) {
+        console.warn('Lovable AI error:', e);
       }
-      console.warn(`Shared AI helper returned ${response.status}, trying DB Gemini keys...`);
-    } catch (e) {
-      console.warn('Shared AI helper error:', e);
     }
 
     // 2. Try DB-backed Gemini keys
@@ -140,7 +143,7 @@ serve(async (req) => {
         const res = await callGeminiDirect(
           k.key_value,
           [{ role: 'user', content: prompt }],
-          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
           config?.responseMimeType === 'application/json' ? { type: 'json_object' } : undefined
         );
         if (res.ok) {
@@ -166,7 +169,7 @@ serve(async (req) => {
         const res = await callGeminiDirect(
           envKeys[i],
           [{ role: 'user', content: prompt }],
-          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
           config?.responseMimeType === 'application/json' ? { type: 'json_object' } : undefined
         );
         if (res.ok) {

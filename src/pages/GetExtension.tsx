@@ -120,7 +120,7 @@ const BROWSERS: Record<string, BrowserInfo> = {
       'Load the unpacked extension',
     ],
     extensionFolder: 'chrome',
-    color: 'from-slate-500 to-slate-700',
+    color: 'from-zinc-500 to-zinc-700',
   },
 };
 

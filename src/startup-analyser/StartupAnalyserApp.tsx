@@ -90,7 +90,7 @@ const CompetitorCard = ({ competitor, path, onUpdate, keywords, highlightEnabled
   const domain = getDomainFromUrl(competitor.website);
   const renderField = (label: string, field: keyof Competitor, as: 'input' | 'textarea' = 'input') => (
     <div className="grid grid-cols-3 gap-2 items-start">
-      <span className="font-semibold text-gray-600 col-span-1 pt-2">{label}:</span>
+      <span className="font-semibold text-zinc-600 col-span-1 pt-2">{label}:</span>
       <div className="col-span-2">
         <EditableContent
           value={competitor[field] as string}
@@ -104,27 +104,27 @@ const CompetitorCard = ({ competitor, path, onUpdate, keywords, highlightEnabled
   );
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-zinc-200 flex flex-col h-full">
       <div className="flex items-center gap-4 mb-4">
         <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt={`${competitor.name} logo`} className="w-10 h-10 rounded-full object-contain border" />
-        <div className="font-bold text-lg text-gray-800 flex-grow">
+        <div className="font-bold text-lg text-zinc-800 flex-grow">
           <EditableContent value={competitor.name} onUpdate={(val) => onUpdate([...path, 'name'], val)} keywords={keywords} highlightEnabled={highlightEnabled} placeholder="Competitor Name" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 mb-4 border-y border-gray-200 py-3">
+      <div className="grid grid-cols-2 gap-4 mb-4 border-y border-zinc-200 py-3">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-gray-500 mb-1">
+          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-zinc-500 mb-1">
             <CurrencyDollarIcon className="w-5 h-5 text-green-500" /><span>Funding</span>
           </div>
-          <div className="text-lg font-semibold text-gray-800">
+          <div className="text-lg font-semibold text-zinc-800">
             <EditableContent value={competitor.funding} onUpdate={(val) => onUpdate([...path, 'funding'], val)} keywords={keywords} highlightEnabled={highlightEnabled} placeholder="e.g., $50M" />
           </div>
         </div>
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-gray-500 mb-1">
+          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-zinc-500 mb-1">
             <ScaleIcon className="w-5 h-5 text-indigo-500" /><span>Valuation</span>
           </div>
-          <div className="text-lg font-semibold text-gray-800">
+          <div className="text-lg font-semibold text-zinc-800">
             <EditableContent value={competitor.valuation} onUpdate={(val) => onUpdate([...path, 'valuation'], val)} keywords={keywords} highlightEnabled={highlightEnabled} placeholder="e.g., $500M" />
           </div>
         </div>
@@ -143,9 +143,9 @@ const CompetitorCard = ({ competitor, path, onUpdate, keywords, highlightEnabled
 };
 
 const NewsSnippetCard = ({ article }: { article: ResourceItem }) => (
-  <div className="border-t border-gray-200 pt-3 mt-3 first:mt-0 first:border-t-0 first:pt-0">
+  <div className="border-t border-zinc-200 pt-3 mt-3 first:mt-0 first:border-t-0 first:pt-0">
     <a href={normalizeUrl(article.url)} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 hover:underline text-sm break-words">{article.title}</a>
-    <p className="text-xs text-gray-500 mt-1">{article.summary}</p>
+    <p className="text-xs text-zinc-500 mt-1">{article.summary}</p>
   </div>
 );
 
@@ -442,7 +442,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
     <button
       onClick={() => setActiveTab(tab)}
       className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold transition-colors text-sm ${
-        activeTab === tab ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-600 hover:bg-gray-100'
+        activeTab === tab ? 'bg-blue-600 text-white shadow' : 'bg-white text-zinc-600 hover:bg-zinc-100'
       }`}
     >
       {icon}
@@ -456,30 +456,30 @@ export default function StartupAnalyserApp(): React.ReactNode {
       {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30" onClick={() => setSidebarOpen(false)} />}
       <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-40 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-bold text-gray-800">Past Analyses</h2>
-          <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-gray-100">
-            <XIcon className="w-5 h-5 text-gray-500" />
+          <h2 className="text-lg font-bold text-zinc-800">Past Analyses</h2>
+          <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-zinc-100">
+            <XIcon className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
         <div className="overflow-y-auto h-[calc(100%-60px)] p-3 space-y-2">
           {loadingSessions ? (
-            <p className="text-sm text-gray-500 text-center py-4">Loading...</p>
+            <p className="text-sm text-zinc-500 text-center py-4">Loading...</p>
           ) : savedSessions.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No saved analyses yet.</p>
+            <p className="text-sm text-zinc-500 text-center py-4">No saved analyses yet.</p>
           ) : (
             savedSessions.map(s => (
               <div
                 key={s.id}
                 onClick={() => loadSession(s)}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
-                  currentSessionId === s.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                  currentSessionId === s.id ? 'border-blue-500 bg-blue-50' : 'border-zinc-200 hover:border-blue-300 hover:bg-zinc-50'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-800 truncate">{s.company_name}</p>
-                    {s.company_website && <p className="text-xs text-gray-700 truncate">{s.company_website}</p>}
-                    <p className="text-xs text-gray-600 mt-1">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="font-semibold text-zinc-800 truncate">{s.company_name}</p>
+                    {s.company_website && <p className="text-xs text-zinc-700 truncate">{s.company_website}</p>}
+                    <p className="text-xs text-zinc-600 mt-1">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <button
                     onClick={(e) => deleteSession(s.id, e)}
@@ -507,20 +507,20 @@ export default function StartupAnalyserApp(): React.ReactNode {
           <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
             <div className="flex flex-col items-center text-center mb-8">
               <BrainCircuitIcon className="w-16 h-16 text-blue-600 mb-4" />
-              <h1 className="text-4xl font-bold text-gray-800">AI Startup Analyzer</h1>
-              <p className="mt-2 text-lg text-gray-500">Generate a comprehensive VC-style investment analysis.</p>
+              <h1 className="text-4xl font-bold text-zinc-800">AI Startup Analyzer</h1>
+              <p className="mt-2 text-lg text-zinc-500">Generate a comprehensive VC-style investment analysis.</p>
             </div>
             <div className="space-y-4">
               <div>
-                <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                <input type="text" id="company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g., Stripe" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="company-name" className="block text-sm font-medium text-zinc-700 mb-1">Company Name</label>
+                <input type="text" id="company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g., Stripe" className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label htmlFor="company-website" className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
-                <input type="text" id="company-website" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} placeholder="e.g., stripe.com" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label htmlFor="company-website" className="block text-sm font-medium text-zinc-700 mb-1">Company Website</label>
+                <input type="text" id="company-website" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} placeholder="e.g., stripe.com" className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Deck (Optional)</label>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">Pitch Deck (Optional)</label>
                 <FileUploader onFileSelect={handlePdfSelect} acceptedFileTypes=".pdf" />
                 {isExtractingPdf && <p className="text-sm text-blue-600 mt-1 animate-pulse">Extracting text from PDF...</p>}
                 {pitchDeckText && !isExtractingPdf && <p className="text-sm text-green-600 mt-1">✓ PDF text extracted ({Math.round(pitchDeckText.length / 1000)}k chars)</p>}
@@ -531,12 +531,12 @@ export default function StartupAnalyserApp(): React.ReactNode {
               </div>
               <div className="flex gap-3">
                 {user && savedSessions.length > 0 && (
-                  <button onClick={() => setSidebarOpen(true)} className="px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                  <button onClick={() => setSidebarOpen(true)} className="px-4 py-3 border border-zinc-300 rounded-lg font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2">
                     <ClipboardDocumentListIcon className="w-5 h-5" />
                     <span>History ({savedSessions.length})</span>
                   </button>
                 )}
-                <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite || isExtractingPdf} className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none disabled:cursor-not-allowed">
+                <button onClick={handleStartAnalysis} disabled={!companyName || !companyWebsite || isExtractingPdf} className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2 disabled:bg-zinc-400 disabled:transform-none disabled:cursor-not-allowed">
                   <SparklesIcon className="w-5 h-5" /><span>Start Analysis</span><CreditCostBadge toolId="startup-analyser" />
                 </button>
               </div>
@@ -557,8 +557,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <XIcon className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Analysis Failed</h2>
-            <p className="text-gray-600 mb-6">{error || 'An unexpected error occurred.'}</p>
+            <h2 className="text-2xl font-bold text-zinc-800 mb-2">Analysis Failed</h2>
+            <p className="text-zinc-600 mb-6">{error || 'An unexpected error occurred.'}</p>
             <button onClick={handleStartOver} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Start Over</button>
           </div>
         </div>
@@ -575,9 +575,9 @@ export default function StartupAnalyserApp(): React.ReactNode {
         <div className="flex flex-col items-center justify-center px-4 py-16">
           <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-8 text-center">
             <BrainCircuitIcon className="w-16 h-16 text-blue-600 mb-4 mx-auto animate-pulse" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Analyzing {companyName}...</h2>
-            <p className="text-gray-500 mb-6">Please wait while the AI generates your comprehensive report.</p>
-            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <h2 className="text-2xl font-bold text-zinc-800 mb-2">Analyzing {companyName}...</h2>
+            <p className="text-zinc-500 mb-6">Please wait while the AI generates your comprehensive report.</p>
+            <div className="w-full bg-zinc-200 rounded-full h-4 overflow-hidden">
               <div className="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
             </div>
             <p className="mt-4 text-lg font-semibold text-blue-600">{progress}%</p>
@@ -594,8 +594,8 @@ export default function StartupAnalyserApp(): React.ReactNode {
         <Navbar />
         <div className="flex flex-col items-center justify-center px-4 py-16">
           <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">No analysis data available</h2>
-            <p className="text-gray-600 mb-6">Please run the analysis again.</p>
+            <h2 className="text-2xl font-bold text-zinc-800 mb-2">No analysis data available</h2>
+            <p className="text-zinc-600 mb-6">Please run the analysis again.</p>
             <button onClick={handleStartOver} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Start Over</button>
           </div>
         </div>
@@ -612,7 +612,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
         <ExecutiveSummary data={structuredData.executiveSummaryData} companyName={structuredData.name} onUpdate={handleDataChange} keywords={allKeywords} highlightEnabled={highlightEnabled} mermaidCode={structuredData.pictorial_technology_definition?.[0]?.value} />
       </section>
       <section>
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Data & Charts</h2>
+        <h2 className="text-3xl font-bold text-center mb-6 text-zinc-800">Data & Charts</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white p-4 rounded-lg shadow-sm border"><CompetitorChart data={structuredData.indian_competitor_chart_data} title="Funding Comparison (Indian)" /></div>
           <div className="bg-white p-4 rounded-lg shadow-sm border"><CompetitorChart data={structuredData.global_competitor_chart_data} title="Funding Comparison (Global)" /></div>
@@ -662,7 +662,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
       case 'data':
         return (
           <div className="space-y-12">
-            <h2 className="text-3xl font-bold text-center text-gray-800">Data & Charts</h2>
+            <h2 className="text-3xl font-bold text-center text-zinc-800">Data & Charts</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="bg-white p-4 rounded-lg shadow-sm border"><CompetitorChart data={structuredData.indian_competitor_chart_data} title="Indian Competitors Funding" /></div>
               <div className="bg-white p-4 rounded-lg shadow-sm border"><CompetitorChart data={structuredData.global_competitor_chart_data} title="Global Competitors Funding" /></div>
@@ -690,7 +690,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
             </div>
             <div data-pdf-skip>
               <h3 className="text-2xl font-bold text-center mb-6">Raw JSON Data</h3>
-              <textarea className="w-full h-96 font-mono text-xs p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={JSON.stringify(structuredData, null, 2)} onChange={(e) => handleRawJsonChange(e.target.value)} />
+              <textarea className="w-full h-96 font-mono text-xs p-4 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={JSON.stringify(structuredData, null, 2)} onChange={(e) => handleRawJsonChange(e.target.value)} />
               {rawJsonError && <p className="text-red-500 text-sm mt-2">{rawJsonError}</p>}
             </div>
           </div>
@@ -701,16 +701,16 @@ export default function StartupAnalyserApp(): React.ReactNode {
         return <LegalAnalysis founderIssues={structuredData.executiveSummaryData.legal_analysis?.founder_legal_issues} companyIssues={structuredData.executiveSummaryData.legal_analysis?.company_legal_issues} onUpdate={handleDataChange} keywords={allKeywords} highlightEnabled={highlightEnabled} />;
       case 'chat':
         return (
-          <div className="flex flex-col h-[80vh] bg-white rounded-lg shadow-lg border border-gray-200">
+          <div className="flex flex-col h-[80vh] bg-white rounded-lg shadow-lg border border-zinc-200">
             <div className="p-4 border-b">
-              <h2 className="text-xl font-bold text-gray-800">Chat with Analyst</h2>
+              <h2 className="text-xl font-bold text-zinc-800">Chat with Analyst</h2>
               <PromptSelector prompts={prompts} onSelect={setChatInputAndSend} disabled={isChatting} />
             </div>
             <div ref={chatContainerRef} className="flex-1 p-6 overflow-y-auto space-y-6">
               {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {msg.role === 'assistant' && <BrainCircuitIcon className="w-8 h-8 text-blue-500 flex-shrink-0" />}
-                  <div className={`p-4 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-sm' : 'bg-gray-200 text-gray-800 rounded-bl-sm'}`}>
+                  <div className={`p-4 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-sm' : 'bg-zinc-200 text-zinc-800 rounded-bl-sm'}`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 </div>
@@ -718,7 +718,7 @@ export default function StartupAnalyserApp(): React.ReactNode {
               {isChatting && chatHistory[chatHistory.length - 1]?.role !== 'assistant' && (
                 <div className="flex items-end gap-3 justify-start">
                   <BrainCircuitIcon className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                  <div className="p-4 rounded-lg bg-gray-200 rounded-bl-sm">
+                  <div className="p-4 rounded-lg bg-zinc-200 rounded-bl-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse [animation-delay:0.2s]" />
@@ -728,10 +728,10 @@ export default function StartupAnalyserApp(): React.ReactNode {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t bg-zinc-50">
               <div className="flex items-center gap-4">
                 <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Ask a follow-up question..." className="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-blue-500" disabled={isChatting} />
-                <button id="send-chat-button" onClick={handleSendMessage} disabled={!chatInput.trim() || isChatting} className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 transition-colors">
+                <button id="send-chat-button" onClick={handleSendMessage} disabled={!chatInput.trim() || isChatting} className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-zinc-300 transition-colors">
                   <PaperAirplaneIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -743,29 +743,29 @@ export default function StartupAnalyserApp(): React.ReactNode {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-zinc-100">
       <Navbar />
       <Sidebar />
       <header className="bg-white shadow-sm sticky top-16 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center gap-3 mb-4 sm:mb-0">
             {user && savedSessions.length > 0 && (
-              <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="View past analyses">
-                <ClipboardDocumentListIcon className="w-5 h-5 text-gray-600" />
+              <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="View past analyses">
+                <ClipboardDocumentListIcon className="w-5 h-5 text-zinc-600" />
               </button>
             )}
             <BrainCircuitIcon className="w-8 h-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-800 truncate">
+            <h1 className="text-xl font-bold text-zinc-800 truncate">
               AI Analysis: <span className="font-normal">{structuredData.name}</span>
             </h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <LightBulbIcon className="w-5 h-5 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-600">Highlighting</span>
+              <span className="text-sm font-medium text-zinc-600">Highlighting</span>
               <label className="inline-flex relative items-center cursor-pointer">
                 <input type="checkbox" checked={highlightEnabled} onChange={() => setHighlightEnabled(!highlightEnabled)} className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" />
+                <div className="w-11 h-6 bg-zinc-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" />
               </label>
             </div>
             <button onClick={handleStartOver} className="text-sm font-semibold text-blue-600 hover:text-blue-800">New Analysis</button>

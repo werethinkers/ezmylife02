@@ -54,17 +54,17 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect, accept
 
   if (file) {
     return (
-      <div className="flex items-center justify-between p-3 bg-gray-100 border border-gray-300 rounded-lg">
+      <div className="flex items-center justify-between p-3 bg-zinc-100 border border-zinc-300 rounded-lg">
         <div className="flex items-center gap-3 overflow-hidden">
-          <FileIcon className="w-6 h-6 text-gray-500 flex-shrink-0" />
-          <span className="font-medium text-gray-700 truncate">{file.name}</span>
+          <FileIcon className="w-6 h-6 text-zinc-500 flex-shrink-0" />
+          <span className="font-medium text-zinc-700 truncate">{file.name}</span>
         </div>
         <button
           onClick={() => handleFileChange(null)}
-          className="p-1 rounded-full hover:bg-gray-200 flex-shrink-0"
+          className="p-1 rounded-full hover:bg-zinc-200 flex-shrink-0"
           aria-label="Remove file"
         >
-          <XIcon className="w-5 h-5 text-gray-500" />
+          <XIcon className="w-5 h-5 text-zinc-500" />
         </button>
       </div>
     );
@@ -78,7 +78,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect, accept
       onDrop={handleDrop}
       onClick={triggerFileSelect}
       className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-        isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white hover:border-gray-400'
+        isDragging ? 'border-blue-500 bg-blue-50' : 'border-zinc-300 bg-white hover:border-zinc-400'
       }`}
     >
       <input
@@ -88,9 +88,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect, accept
         onChange={handleInputChange}
         accept={acceptedFileTypes}
       />
-      <UploadCloudIcon className="w-10 h-10 text-gray-600 mb-2" />
-      <p className="font-semibold text-gray-800">Click to upload or drag and drop</p>
-      <p className="text-sm text-gray-700">PDF, PPTX, or DOCX (optional)</p>
+      <UploadCloudIcon className="w-10 h-10 text-zinc-600 mb-2" />
+      <p className="font-semibold text-zinc-800">Click to upload or drag and drop</p>
+      <p className="text-sm text-zinc-700">PDF, PPTX, or DOCX (optional)</p>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { LegalAnalysis } from './LegalAnalysis';
 import { TeamDisplay } from './TeamDisplay';
 
 const SectionHeader = ({ title }: { title: string }) => (
-    <tr className="bg-gray-700 text-white page-break-avoid" data-is-editable="false">
+    <tr className="bg-zinc-700 text-white page-break-avoid" data-is-editable="false">
         <th colSpan={2} className="p-3 text-left font-bold text-lg sticky top-0 z-[1]">{title}</th>
     </tr>
 );
@@ -20,11 +20,11 @@ const DetailRow: React.FC<{
     keywords: string[];
     highlightEnabled: boolean;
 }> = ({ label, points, path, onUpdate, keywords, highlightEnabled }) => (
-    <tr className="border-b border-gray-200 bg-white hover:bg-gray-50 page-break-avoid">
-        <td className="p-3 font-semibold text-gray-700 w-1/3 align-top" data-is-editable="false">{label}</td>
+    <tr className="border-b border-zinc-200 bg-white hover:bg-zinc-50 page-break-avoid">
+        <td className="p-3 font-semibold text-zinc-700 w-1/3 align-top" data-is-editable="false">{label}</td>
         <td className="p-3 w-2/3" data-is-editable="true">
             {points && points.length > 0 ? (
-                <div className="flex flex-col gap-2 divide-y divide-gray-100">
+                <div className="flex flex-col gap-2 divide-y divide-zinc-100">
                     {points.map((point, index) => (
                         <SourcedDataPointDisplay
                             key={index}
@@ -36,7 +36,7 @@ const DetailRow: React.FC<{
                     ))}
                 </div>
             ) : (
-                <p className="text-gray-500 italic">No data available.</p>
+                <p className="text-zinc-500 italic">No data available.</p>
             )}
         </td>
     </tr>
@@ -59,10 +59,10 @@ export const ICNote: React.FC<ICNoteProps> = ({ data, onUpdate, keywords, highli
 
     return (
         <div className="page-break-before">
-            <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">IC Note: {data.name}</h2>
-            <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-300">
+            <h2 className="text-3xl font-bold text-center mb-6 text-zinc-800">IC Note: {data.name}</h2>
+            <div className="overflow-x-auto rounded-lg shadow-sm border border-zinc-300">
                 <table className="min-w-full">
-                    <thead className="bg-gray-800 text-white no-print">
+                    <thead className="bg-zinc-800 text-white no-print">
                         <tr>
                             <th className="p-3 text-left font-bold w-1/3">Section</th>
                             <th className="p-3 text-left font-bold w-2/3">Details</th>
@@ -71,7 +71,7 @@ export const ICNote: React.FC<ICNoteProps> = ({ data, onUpdate, keywords, highli
                     <tbody>
                         <SectionHeader title="Executive Summary" />
                         <tr>
-                            <td colSpan={2} className="p-0 sm:p-2 bg-gray-50" data-is-editable="true">
+                            <td colSpan={2} className="p-0 sm:p-2 bg-zinc-50" data-is-editable="true">
                                 <ExecutiveSummary data={data.executiveSummaryData} companyName={data.name} {...commonProps} />
                             </td>
                         </tr>
@@ -89,14 +89,14 @@ export const ICNote: React.FC<ICNoteProps> = ({ data, onUpdate, keywords, highli
                         <DetailRow label="Intellectual Property" points={data.ip_summary} path={createPath('ip_summary')} {...commonProps} />
 
                         <SectionHeader title="Pictorial Technology Definition" />
-                        <tr className="border-b border-gray-200 bg-white page-break-avoid">
+                        <tr className="border-b border-zinc-200 bg-white page-break-avoid">
                              <td colSpan={2} className="p-4" data-is-editable="true">
                                 {mermaidCode && !mermaidCode.includes("Information not") ? (
-                                     <div className="mermaid text-center p-4 border rounded-lg bg-gray-50 shadow-inner">
+                                     <div className="mermaid text-center p-4 border rounded-lg bg-zinc-50 shadow-inner">
                                         {mermaidCode}
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500 italic text-center">No diagram available.</p>
+                                    <p className="text-zinc-500 italic text-center">No diagram available.</p>
                                 )}
                              </td>
                         </tr>
@@ -108,7 +108,7 @@ export const ICNote: React.FC<ICNoteProps> = ({ data, onUpdate, keywords, highli
                         
                         <SectionHeader title="Team" />
                          <tr>
-                            <td colSpan={2} className="p-4 bg-gray-50" data-is-editable="true">
+                            <td colSpan={2} className="p-4 bg-zinc-50" data-is-editable="true">
                                 <TeamDisplay founders={data.executiveSummaryData.team?.founders} {...commonProps} />
                             </td>
                         </tr>
@@ -129,7 +129,7 @@ export const ICNote: React.FC<ICNoteProps> = ({ data, onUpdate, keywords, highli
 
                         <SectionHeader title="Legal & Compliance" />
                         <tr>
-                             <td colSpan={2} className="p-4 bg-gray-50" data-is-editable="true">
+                             <td colSpan={2} className="p-4 bg-zinc-50" data-is-editable="true">
                                 <LegalAnalysis
                                     founderIssues={data.executiveSummaryData.legal_analysis?.founder_legal_issues}
                                     companyIssues={data.executiveSummaryData.legal_analysis?.company_legal_issues}

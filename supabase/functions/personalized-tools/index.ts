@@ -137,7 +137,7 @@ Otherwise, ask a follow-up question to better understand their needs.`;
     }
 
     const response = await aiFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           ...(userProfile.messages || []),

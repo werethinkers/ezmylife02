@@ -55,7 +55,7 @@ Rules: describe only what the description says the app does. Never invent rating
 Return only the JSON object.`;
 
     const aiRes = await aiFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });

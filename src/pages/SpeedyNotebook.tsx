@@ -163,66 +163,66 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({ onCommand, onSearch, sear
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 p-2 rounded-t-lg bg-slate-100 dark:bg-slate-800 border-x-2 border-t-2 border-b border-slate-300 dark:border-slate-700">
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <button title="Bold" onMouseDown={(e) => handleCommandMouseDown(e, 'bold')} className="p-2 rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700"><BoldIcon className="w-5 h-5" /></button>
-                <button title="Italic" onMouseDown={(e) => handleCommandMouseDown(e, 'italic')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 border-x border-slate-300 dark:border-slate-600"><ItalicIcon className="w-5 h-5" /></button>
-                <button title="Underline" onMouseDown={(e) => handleCommandMouseDown(e, 'underline')} className="p-2 rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700"><UnderlineIcon className="w-5 h-5" /></button>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 p-2 rounded-t-lg bg-zinc-100 dark:bg-zinc-800 border-x-2 border-t-2 border-b border-zinc-300 dark:border-zinc-700">
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <button title="Bold" onMouseDown={(e) => handleCommandMouseDown(e, 'bold')} className="p-2 rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><BoldIcon className="w-5 h-5" /></button>
+                <button title="Italic" onMouseDown={(e) => handleCommandMouseDown(e, 'italic')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-x border-zinc-300 dark:border-zinc-600"><ItalicIcon className="w-5 h-5" /></button>
+                <button title="Underline" onMouseDown={(e) => handleCommandMouseDown(e, 'underline')} className="p-2 rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><UnderlineIcon className="w-5 h-5" /></button>
             </div>
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <button title="Undo" onMouseDown={(e) => handleCommandMouseDown(e, 'undo')} className="p-2 rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700"><UndoIcon className="w-5 h-5" /></button>
-                <button title="Redo" onMouseDown={(e) => handleCommandMouseDown(e, 'redo')} className="p-2 rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700 border-l border-slate-300 dark:border-slate-600"><RedoIcon className="w-5 h-5" /></button>
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <button title="Undo" onMouseDown={(e) => handleCommandMouseDown(e, 'undo')} className="p-2 rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><UndoIcon className="w-5 h-5" /></button>
+                <button title="Redo" onMouseDown={(e) => handleCommandMouseDown(e, 'redo')} className="p-2 rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700 border-l border-zinc-300 dark:border-zinc-600"><RedoIcon className="w-5 h-5" /></button>
             </div>
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <button title="Select All" onMouseDown={(e) => handleCommandMouseDown(e, 'selectAll')} className="p-2 rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700"><SelectAllIcon className="w-5 h-5" /></button>
-                <button title="Copy" onMouseDown={(e) => handleCommandMouseDown(e, 'copy')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 border-x border-slate-300 dark:border-slate-600"><CopyIcon className="w-5 h-5" /></button>
-                <button title="Paste" onMouseDown={(e) => handleCommandMouseDown(e, 'paste')} className="p-2 rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700"><PasteIcon className="w-5 h-5" /></button>
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <button title="Select All" onMouseDown={(e) => handleCommandMouseDown(e, 'selectAll')} className="p-2 rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><SelectAllIcon className="w-5 h-5" /></button>
+                <button title="Copy" onMouseDown={(e) => handleCommandMouseDown(e, 'copy')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-x border-zinc-300 dark:border-zinc-600"><CopyIcon className="w-5 h-5" /></button>
+                <button title="Paste" onMouseDown={(e) => handleCommandMouseDown(e, 'paste')} className="p-2 rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><PasteIcon className="w-5 h-5" /></button>
             </div>
             <div className="flex items-center gap-2">
-                <select onChange={(e) => onCommand('fontName', e.target.value)} title="Font Family" className="p-1 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm">
+                <select onChange={(e) => onCommand('fontName', e.target.value)} title="Font Family" className="p-1 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-sm">
                     {fonts.map(font => <option key={font} value={font} style={{fontFamily: font}}>{font}</option>)}
                 </select>
-                <select onChange={(e) => onCommand('fontSize', e.target.value)} defaultValue="3" title="Font Size" className="p-1 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm">
+                <select onChange={(e) => onCommand('fontSize', e.target.value)} defaultValue="3" title="Font Size" className="p-1 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-sm">
                      {fontSizes.map(size => <option key={size.value} value={size.value}>{size.name}</option>)}
                 </select>
             </div>
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <label title="Font Color" className="p-2 flex items-center rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer relative">
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <label title="Font Color" className="p-2 flex items-center rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer relative">
                     <input type="color" className="w-full h-full absolute inset-0 opacity-0 cursor-pointer" onInput={(e) => handleColorChange('foreColor', (e.target as HTMLInputElement).value)} />
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M0 20h24v4H0v-4z M11 3L5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2z M12 5.98L13.87 11h-3.74L12 5.98z"></path></svg>
                 </label>
-                <label title="Highlight Color" className="p-2 flex items-center rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-l border-slate-300 dark:border-slate-600 relative">
+                <label title="Highlight Color" className="p-2 flex items-center rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer border-l border-zinc-300 dark:border-zinc-600 relative">
                     <input type="color" defaultValue="#FFFF00" className="w-full h-full absolute inset-0 opacity-0 cursor-pointer" onInput={(e) => handleColorChange('backColor', (e.target as HTMLInputElement).value)} />
                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.56 8.94L7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-1.56 1.56-1.56 4.09 0 5.66l2.83 2.83c.78.78 1.8.78 2.58 0l10.28-10.28-2.16-2.16zM5.21 19.21c-.78-.78-.78-2.05 0-2.83l5.15-5.15 2.83 2.83-5.15 5.15c-.78.78-2.05.78-2.83 0z"></path></svg>
                 </label>
             </div>
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <button title="Align Left" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyLeft')} className="p-2 rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700"><AlignLeftIcon className="w-5 h-5" /></button>
-                <button title="Align Center" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyCenter')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 border-x border-slate-300 dark:border-slate-600"><AlignCenterIcon className="w-5 h-5" /></button>
-                <button title="Align Right" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyRight')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700"><AlignRightIcon className="w-5 h-5" /></button>
-                <button title="Justify" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyFull')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 border-l border-slate-300 dark:border-slate-600"><AlignJustifyIcon className="w-5 h-5" /></button>
-                <button title="Indent" onMouseDown={(e) => handleCommandMouseDown(e, 'indent')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 border-x border-slate-300 dark:border-slate-600"><IndentIcon className="w-5 h-5" /></button>
-                <button title="Outdent" onMouseDown={(e) => handleCommandMouseDown(e, 'outdent')} className="p-2 rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700"><OutdentIcon className="w-5 h-5" /></button>
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <button title="Align Left" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyLeft')} className="p-2 rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><AlignLeftIcon className="w-5 h-5" /></button>
+                <button title="Align Center" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyCenter')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-x border-zinc-300 dark:border-zinc-600"><AlignCenterIcon className="w-5 h-5" /></button>
+                <button title="Align Right" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyRight')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"><AlignRightIcon className="w-5 h-5" /></button>
+                <button title="Justify" onMouseDown={(e) => handleCommandMouseDown(e, 'justifyFull')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-l border-zinc-300 dark:border-zinc-600"><AlignJustifyIcon className="w-5 h-5" /></button>
+                <button title="Indent" onMouseDown={(e) => handleCommandMouseDown(e, 'indent')} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-x border-zinc-300 dark:border-zinc-600"><IndentIcon className="w-5 h-5" /></button>
+                <button title="Outdent" onMouseDown={(e) => handleCommandMouseDown(e, 'outdent')} className="p-2 rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><OutdentIcon className="w-5 h-5" /></button>
             </div>
-            <div className="flex items-center rounded-md border border-slate-300 dark:border-slate-600">
-                <button title="Insert Table" onMouseDown={(e) => handleCommandMouseDown(e, 'insertTable')} className="p-2 rounded-l-md hover:bg-slate-200 dark:hover:bg-slate-700"><TableIcon className="w-5 h-5" /></button>
-                <button title="Insert File Content" onMouseDown={(e) => handleCommandMouseDown(e, 'openFileModal')} className="p-2 rounded-r-md hover:bg-slate-200 dark:hover:bg-slate-700 border-l border-slate-300 dark:border-slate-600"><FileImportIcon className="w-5 h-5" /></button>
+            <div className="flex items-center rounded-md border border-zinc-300 dark:border-zinc-600">
+                <button title="Insert Table" onMouseDown={(e) => handleCommandMouseDown(e, 'insertTable')} className="p-2 rounded-l-md hover:bg-zinc-200 dark:hover:bg-zinc-700"><TableIcon className="w-5 h-5" /></button>
+                <button title="Insert File Content" onMouseDown={(e) => handleCommandMouseDown(e, 'openFileModal')} className="p-2 rounded-r-md hover:bg-zinc-200 dark:hover:bg-zinc-700 border-l border-zinc-300 dark:border-zinc-600"><FileImportIcon className="w-5 h-5" /></button>
             </div>
              <div className="relative flex items-center ml-auto">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                    <SearchIcon className="w-4 h-4 text-slate-400" />
+                    <SearchIcon className="w-4 h-4 text-zinc-400" />
                 </span>
                 <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => onSearch(e.target.value)}
-                    className="w-40 pl-7 pr-7 py-1 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-sm"
+                    className="w-40 pl-7 pr-7 py-1 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-sm"
                     aria-label="Search in editor"
                 />
                 {searchQuery && (
                     <button onClick={clearSearch} className="absolute inset-y-0 right-0 flex items-center pr-2" aria-label="Clear search">
-                        <CloseIcon className="w-4 h-4 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"/>
+                        <CloseIcon className="w-4 h-4 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"/>
                     </button>
                 )}
             </div>
@@ -243,21 +243,21 @@ const TableToolbar: React.FC<TableToolbarProps> = ({ position, onCommand }) => {
     };
     return (
         <div 
-            className="absolute z-10 flex items-center gap-1 p-1 rounded-md bg-slate-200 dark:bg-slate-700 shadow-lg border border-slate-300 dark:border-slate-600"
+            className="absolute z-10 flex items-center gap-1 p-1 rounded-md bg-zinc-200 dark:bg-zinc-700 shadow-lg border border-zinc-300 dark:border-zinc-600"
             style={{ top: `${position.top}px`, left: `${position.left}px` }}
             onMouseDown={(e) => e.preventDefault()}
         >
-            <button title="Insert Row Above" onMouseDown={(e) => handleMouseDown(e, 'insertRowAbove')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600"><RowInsertAboveIcon className="w-5 h-5" /></button>
-            <button title="Insert Row Below" onMouseDown={(e) => handleMouseDown(e, 'insertRowBelow')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600"><RowInsertBelowIcon className="w-5 h-5" /></button>
-            <button title="Insert Column Left" onMouseDown={(e) => handleMouseDown(e, 'insertColumnLeft')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600"><ColumnInsertLeftIcon className="w-5 h-5" /></button>
-            <button title="Insert Column Right" onMouseDown={(e) => handleMouseDown(e, 'insertColumnRight')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600"><ColumnInsertRightIcon className="w-5 h-5" /></button>
-            <div className="w-px h-5 bg-slate-300 dark:bg-slate-500 mx-1"></div>
-            <button title="Delete Row" onMouseDown={(e) => handleMouseDown(e, 'deleteRow')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600 text-red-600"><RowDeleteIcon className="w-5 h-5" /></button>
-            <button title="Delete Column" onMouseDown={(e) => handleMouseDown(e, 'deleteColumn')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600 text-red-600"><ColumnDeleteIcon className="w-5 h-5" /></button>
-            <div className="w-px h-5 bg-slate-300 dark:bg-slate-500 mx-1"></div>
-            <button title="Merge Cells" onMouseDown={(e) => handleMouseDown(e, 'mergeCells')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600"><MergeCellsIcon className="w-5 h-5" /></button>
-            <div className="w-px h-5 bg-slate-300 dark:bg-slate-500 mx-1"></div>
-            <button title="Delete Table" onMouseDown={(e) => handleMouseDown(e, 'deleteTable')} className="p-1.5 rounded hover:bg-slate-300 dark:hover:bg-slate-600 text-red-600"><DeleteTableIcon className="w-5 h-5" /></button>
+            <button title="Insert Row Above" onMouseDown={(e) => handleMouseDown(e, 'insertRowAbove')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600"><RowInsertAboveIcon className="w-5 h-5" /></button>
+            <button title="Insert Row Below" onMouseDown={(e) => handleMouseDown(e, 'insertRowBelow')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600"><RowInsertBelowIcon className="w-5 h-5" /></button>
+            <button title="Insert Column Left" onMouseDown={(e) => handleMouseDown(e, 'insertColumnLeft')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600"><ColumnInsertLeftIcon className="w-5 h-5" /></button>
+            <button title="Insert Column Right" onMouseDown={(e) => handleMouseDown(e, 'insertColumnRight')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600"><ColumnInsertRightIcon className="w-5 h-5" /></button>
+            <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-500 mx-1"></div>
+            <button title="Delete Row" onMouseDown={(e) => handleMouseDown(e, 'deleteRow')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600 text-red-600"><RowDeleteIcon className="w-5 h-5" /></button>
+            <button title="Delete Column" onMouseDown={(e) => handleMouseDown(e, 'deleteColumn')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600 text-red-600"><ColumnDeleteIcon className="w-5 h-5" /></button>
+            <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-500 mx-1"></div>
+            <button title="Merge Cells" onMouseDown={(e) => handleMouseDown(e, 'mergeCells')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600"><MergeCellsIcon className="w-5 h-5" /></button>
+            <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-500 mx-1"></div>
+            <button title="Delete Table" onMouseDown={(e) => handleMouseDown(e, 'deleteTable')} className="p-1.5 rounded hover:bg-zinc-300 dark:hover:bg-zinc-600 text-red-600"><DeleteTableIcon className="w-5 h-5" /></button>
         </div>
     );
 };
@@ -289,25 +289,25 @@ const AIToolbar: React.FC<AIToolbarProps> = ({ position, onRewrite, onSuggest, o
     return (
         <div ref={toolbarRef} className="absolute z-10" style={{ top: `${position.top}px`, left: `${position.left}px`, transform: 'translateX(-50%)' }} onMouseDown={(e) => e.preventDefault()}>
             <div className="flex flex-col items-center">
-                <div className="flex items-center gap-1 p-1 rounded-md bg-slate-800 shadow-lg border border-slate-700 text-white">
+                <div className="flex items-center gap-1 p-1 rounded-md bg-zinc-800 shadow-lg border border-zinc-700 text-white">
                     {isLoading ? (
                         <div className="flex items-center gap-2 px-3 py-1"><LoaderIcon className="w-4 h-4 animate-spin" /><span className="text-sm">Processing...</span></div>
                     ) : suggestions ? null : (
                         <>
                             {isSingleWord ? (
-                                <button onClick={onSuggest} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-slate-700"><LightbulbIcon className="w-4 h-4" /> Suggest Words</button>
+                                <button onClick={onSuggest} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-zinc-700"><LightbulbIcon className="w-4 h-4" /> Suggest Words</button>
                             ) : (
-                                <button onClick={onRewrite} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-slate-700"><SparklesIcon className="w-4 h-4" /> Rephrase</button>
+                                <button onClick={onRewrite} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-zinc-700"><SparklesIcon className="w-4 h-4" /> Rephrase</button>
                             )}
-                            <div className="w-px h-5 bg-slate-600"></div>
-                            <button onClick={onSearch} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-slate-700"><SearchIcon className="w-4 h-4" /> Search</button>
+                            <div className="w-px h-5 bg-zinc-600"></div>
+                            <button onClick={onSearch} className="flex items-center gap-1.5 px-3 py-1 text-sm rounded hover:bg-zinc-700"><SearchIcon className="w-4 h-4" /> Search</button>
                         </>
                     )}
                 </div>
                 {suggestions && !isLoading && (
-                    <div className="mt-2 w-72 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-lg overflow-hidden">
-                        <div className="px-3 py-2 bg-slate-100 dark:bg-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 border-b">Suggestions</div>
-                        <ul className="divide-y divide-slate-200 dark:divide-slate-700 max-h-60 overflow-y-auto">
+                    <div className="mt-2 w-72 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-lg overflow-hidden">
+                        <div className="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 border-b">Suggestions</div>
+                        <ul className="divide-y divide-zinc-200 dark:divide-zinc-700 max-h-60 overflow-y-auto">
                             {suggestions.map((suggestion, index) => (
                                 <li key={index}><button onClick={() => onReplace(suggestion)} className="w-full text-left px-3 py-2 text-sm hover:bg-sky-50 dark:hover:bg-sky-900/50 transition-colors">{suggestion}</button></li>
                             ))}
@@ -324,23 +324,23 @@ const AnalysisModal: React.FC<{ isOpen: boolean; onClose: () => void; results: {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
-             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                 <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
                     <h2 className="text-xl font-bold text-sky-600 dark:text-sky-400">Analysis Results</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700"><CloseIcon className="w-6 h-6" /></button>
                 </div>
                 <div className="p-4 overflow-y-auto">
                     {results && results.length > 0 ? (
                         <div className="space-y-4">
                             {results.map((item, idx) => (
-                                <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
-                                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 capitalize">{item.term}</h3>
-                                    <p className="text-slate-600 dark:text-slate-300 mt-1">{item.definition}</p>
+                                <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                                    <h3 className="font-bold text-lg text-zinc-800 dark:text-zinc-100 capitalize">{item.term}</h3>
+                                    <p className="text-zinc-600 dark:text-zinc-300 mt-1">{item.definition}</p>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                         <p className="text-slate-500 text-center">No dictionary terms found in the text.</p>
+                         <p className="text-zinc-500 text-center">No dictionary terms found in the text.</p>
                     )}
                 </div>
              </div>
@@ -480,15 +480,15 @@ const ShortcutGeneratorModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                 <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="flex justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-700">
                     <h2 className="text-xl font-bold text-sky-600 dark:text-sky-400">AI Shortcut Creator</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><CloseIcon className="w-6 h-6" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700"><CloseIcon className="w-6 h-6" /></button>
                 </div>
                 <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                    <div className={`flex flex-col p-4 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 transition-all ${generatedShortcuts.length > 0 ? 'h-1/3 md:h-full md:w-1/3' : 'h-full w-full'}`}>
-                        <p className="text-sm text-slate-500 mb-2 font-medium">1. Paste content here:</p>
-                        <textarea ref={textareaRef} className="flex-1 w-full p-3 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-900 resize-none font-mono text-sm" placeholder="Paste text, codes, emails..." value={inputText} onChange={e => setInputText(e.target.value)} />
+                    <div className={`flex flex-col p-4 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-700 transition-all ${generatedShortcuts.length > 0 ? 'h-1/3 md:h-full md:w-1/3' : 'h-full w-full'}`}>
+                        <p className="text-sm text-zinc-500 mb-2 font-medium">1. Paste content here:</p>
+                        <textarea ref={textareaRef} className="flex-1 w-full p-3 border border-zinc-300 dark:border-zinc-600 rounded-md bg-zinc-50 dark:bg-zinc-900 resize-none font-mono text-sm" placeholder="Paste text, codes, emails..." value={inputText} onChange={e => setInputText(e.target.value)} />
                         <div className="flex flex-col gap-2 mt-4">
                             <button onClick={() => handleGenerate('all')} disabled={!inputText.trim() || isGenerating} className="w-full px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 disabled:opacity-50 flex items-center justify-center gap-2">
                                 {isGenerating ? <LoaderIcon className="w-5 h-5 animate-spin"/> : <MagicWandIcon className="w-5 h-5"/>} Process All
@@ -499,14 +499,14 @@ const ShortcutGeneratorModal: React.FC<{
                         </div>
                     </div>
                     {generatedShortcuts.length > 0 && (
-                        <div className="flex-1 flex flex-col h-2/3 md:h-full md:w-2/3 bg-slate-50 dark:bg-slate-900/50">
-                            <div className="p-3 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300">Generated ({generatedShortcuts.length})</span>
+                        <div className="flex-1 flex flex-col h-2/3 md:h-full md:w-2/3 bg-zinc-50 dark:bg-zinc-900/50">
+                            <div className="p-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                                <span className="font-semibold text-zinc-700 dark:text-zinc-300">Generated ({generatedShortcuts.length})</span>
                                 <button onClick={() => { setGeneratedShortcuts([]); setSelectedIndices(new Set()); }} className="text-xs text-red-500 hover:text-red-700 px-2 py-1">Clear</button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {generatedShortcuts.map((item, idx) => (
-                                    <div key={idx} className="flex gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                                    <div key={idx} className="flex gap-3 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm">
                                         <div className="flex items-start pt-2">
                                             <input type="checkbox" checked={selectedIndices.has(idx)} onChange={(e) => {
                                                 const newSet = new Set(selectedIndices);
@@ -517,30 +517,30 @@ const ShortcutGeneratorModal: React.FC<{
                                         <div className="flex-1 space-y-2 min-w-0">
                                             <div className="flex gap-2 flex-wrap">
                                                 <div className="flex-1 min-w-[120px]">
-                                                    <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Key</label>
+                                                    <label className="block text-[10px] font-semibold text-zinc-500 uppercase mb-0.5">Key</label>
                                                     <div className="flex gap-1">
-                                                        <input type="text" value={item.key} onChange={(e) => handleUpdateShortcut(idx, 'key', e.target.value)} className="flex-1 p-1.5 border border-slate-300 dark:border-slate-600 rounded text-sm font-mono font-bold text-sky-600 bg-slate-50 dark:bg-slate-800" />
-                                                        <button onClick={() => handleSuggestKey(idx)} disabled={loadingKeyIndex === idx} className="p-1.5 text-sky-600 hover:bg-sky-50 dark:hover:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
+                                                        <input type="text" value={item.key} onChange={(e) => handleUpdateShortcut(idx, 'key', e.target.value)} className="flex-1 p-1.5 border border-zinc-300 dark:border-zinc-600 rounded text-sm font-mono font-bold text-sky-600 bg-zinc-50 dark:bg-zinc-800" />
+                                                        <button onClick={() => handleSuggestKey(idx)} disabled={loadingKeyIndex === idx} className="p-1.5 text-sky-600 hover:bg-sky-50 dark:hover:bg-zinc-700 rounded border border-zinc-200 dark:border-zinc-600">
                                                             {loadingKeyIndex === idx ? <LoaderIcon className="w-4 h-4 animate-spin"/> : <SparklesIcon className="w-4 h-4" />}
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 min-w-[120px]">
-                                                    <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Category</label>
-                                                    <input type="text" list={`cat-${idx}`} value={item.category} onChange={(e) => handleUpdateShortcut(idx, 'category', e.target.value)} className="w-full p-1.5 border border-slate-300 dark:border-slate-600 rounded text-sm bg-slate-50 dark:bg-slate-800" />
+                                                    <label className="block text-[10px] font-semibold text-zinc-500 uppercase mb-0.5">Category</label>
+                                                    <input type="text" list={`cat-${idx}`} value={item.category} onChange={(e) => handleUpdateShortcut(idx, 'category', e.target.value)} className="w-full p-1.5 border border-zinc-300 dark:border-zinc-600 rounded text-sm bg-zinc-50 dark:bg-zinc-800" />
                                                     <datalist id={`cat-${idx}`}>{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Value</label>
-                                                <textarea value={item.value} onChange={(e) => handleUpdateShortcut(idx, 'value', e.target.value)} className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded text-sm h-20 resize-y bg-slate-50 dark:bg-slate-800 font-mono" />
+                                                <label className="block text-[10px] font-semibold text-zinc-500 uppercase mb-0.5">Value</label>
+                                                <textarea value={item.value} onChange={(e) => handleUpdateShortcut(idx, 'value', e.target.value)} className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded text-sm h-20 resize-y bg-zinc-50 dark:bg-zinc-800 font-mono" />
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center">
-                                <span className="text-sm text-slate-500">{selectedIndices.size} selected</span>
+                            <div className="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex justify-between items-center">
+                                <span className="text-sm text-zinc-500">{selectedIndices.size} selected</span>
                                 <button onClick={handleAddSelected} disabled={selectedIndices.size === 0} className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-md disabled:opacity-50 font-medium">Add Selected to Session</button>
                             </div>
                         </div>
@@ -1015,17 +1015,17 @@ const SpeedyNotebook: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white dark:bg-slate-900">
+      <div className="flex items-center justify-center h-screen bg-white dark:bg-zinc-900">
         <div className="text-center">
           <LoaderIcon className="w-10 h-10 animate-spin text-sky-600 mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-300">Loading Speedy NoteBook...</p>
+          <p className="text-zinc-600 dark:text-zinc-300">Loading Speedy NoteBook...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div className="flex flex-col h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
         <SEOHead
           title="Speedy Notebook - AI-Powered Writing Tool with Shortcuts"
           description="Speedy Notebook by EZYOURLIFE — an AI writing tool with auto-expanding shortcuts, smart autocomplete, speech-to-text, and document analysis. Boost your writing speed."
@@ -1053,9 +1053,9 @@ const SpeedyNotebook: React.FC = () => {
             },
           ]}
         />
-        <header className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 z-20">
+        <header className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 z-20">
              <div className="flex items-center gap-3">
-                 <button onClick={() => navigate('/ai-apps')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Back to AI Apps">
+                 <button onClick={() => navigate('/ai-apps')} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700" title="Back to AI Apps">
                      <BackIcon className="w-5 h-5" />
                  </button>
                  <a href="https://www.ezmy.life" target="_blank" rel="noopener noreferrer" className="flex items-center transition-opacity hover:opacity-80">
@@ -1067,21 +1067,21 @@ const SpeedyNotebook: React.FC = () => {
                  </div>
              </div>
              <div className="flex items-center gap-2">
-                 <span className={`text-xs px-2 py-1 rounded ${saveStatus === 'saved' ? 'text-green-600 bg-green-50 dark:bg-green-900/30' : saveStatus === 'saving' ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30' : 'text-slate-400'}`}>
+                 <span className={`text-xs px-2 py-1 rounded ${saveStatus === 'saved' ? 'text-green-600 bg-green-50 dark:bg-green-900/30' : saveStatus === 'saving' ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30' : 'text-zinc-400'}`}>
                      {saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'saving' ? 'Saving...' : 'Unsaved'}
                  </span>
-                 <button onClick={toggleDictation} className={`p-2 rounded-full transition-colors ${isDictating ? 'bg-red-100 text-red-600 animate-pulse' : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300'}`} title="Voice Input">
+                 <button onClick={toggleDictation} className={`p-2 rounded-full transition-colors ${isDictating ? 'bg-red-100 text-red-600 animate-pulse' : 'text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:text-zinc-300'}`} title="Voice Input">
                      <MicrophoneIcon className="w-5 h-5" />
                  </button>
-                 <button onClick={handleAnalyze} className="p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-full" title="Analyze All">
+                 <button onClick={handleAnalyze} className="p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-full" title="Analyze All">
                      <AnalyzeIcon className="w-5 h-5" />
                  </button>
                  <button onClick={handleAutoCorrectAll} className="p-2 text-sm bg-sky-100 text-sky-700 rounded hover:bg-sky-200 dark:bg-sky-900 dark:text-sky-300 dark:hover:bg-sky-800 hidden sm:inline-flex items-center" title="Auto Correct All">
                      <CheckIcon className="w-4 h-4 mr-1" /> Fix All
                  </button>
-                 <button onClick={() => void handlePdf()} className="px-2 py-1 text-xs font-semibold text-slate-700 border border-slate-300 hover:bg-slate-100 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 rounded" title="Save as PDF">PDF</button>
-                 <button onClick={handleWord} className="px-2 py-1 text-xs font-semibold text-slate-700 border border-slate-300 hover:bg-slate-100 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 rounded" title="Save as Word">Word</button>
-                 <button onClick={handleDownload} className="p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-full" title="Download as text">
+                 <button onClick={() => void handlePdf()} className="px-2 py-1 text-xs font-semibold text-zinc-700 border border-zinc-300 hover:bg-zinc-100 dark:text-zinc-200 dark:border-zinc-600 dark:hover:bg-zinc-700 rounded" title="Save as PDF">PDF</button>
+                 <button onClick={handleWord} className="px-2 py-1 text-xs font-semibold text-zinc-700 border border-zinc-300 hover:bg-zinc-100 dark:text-zinc-200 dark:border-zinc-600 dark:hover:bg-zinc-700 rounded" title="Save as Word">Word</button>
+                 <button onClick={handleDownload} className="p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-full" title="Download as text">
                      <DownloadIcon className="w-5 h-5" />
                  </button>
              </div>
@@ -1097,7 +1097,7 @@ const SpeedyNotebook: React.FC = () => {
                  />
                  <div 
                     ref={editorRef}
-                    className="flex-1 border-x border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 sm:p-8 outline-none overflow-y-auto"
+                    className="flex-1 border-x border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 sm:p-8 outline-none overflow-y-auto"
                     contentEditable
                     suppressContentEditableWarning
                     onInput={handleInput}
@@ -1141,10 +1141,10 @@ const SpeedyNotebook: React.FC = () => {
                  )}
              </div>
              
-             <div className="hidden lg:flex w-80 border-l border-slate-200 dark:border-slate-800 flex-col bg-slate-50 dark:bg-slate-900">
-                  <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">My Saved Shortcuts</h2>
-                    <p className="text-xs text-slate-500 mt-1">{(shortcuts.get('AI Generated') || []).length} shortcut(s)</p>
+             <div className="hidden lg:flex w-80 border-l border-zinc-200 dark:border-zinc-800 flex-col bg-zinc-50 dark:bg-zinc-900">
+                  <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
+                    <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">My Saved Shortcuts</h2>
+                    <p className="text-xs text-zinc-500 mt-1">{(shortcuts.get('AI Generated') || []).length} shortcut(s)</p>
                   </div>
                   <ShortcutList shortcuts={shortcuts} onDeleteShortcut={handleDeleteShortcut} onEditShortcut={handleEditShortcut} />
               </div>

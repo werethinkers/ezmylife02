@@ -56,7 +56,7 @@ function ModernDock({ current, signedIn, total, dark }: { current: ReturnType<ty
           </NavLink>
         ) : (
           <NavLink to="/auth?mode=signup" className={cn(cell, "text-zinc-900 dark:text-white")}>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-600 text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg border-[1.5px] border-foreground bg-primary text-primary-foreground">
               <Gift className="h-4 w-4" aria-hidden />
             </span>
             Sign up free

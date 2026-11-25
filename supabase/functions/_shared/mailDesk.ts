@@ -76,6 +76,124 @@ export function senderParts(from = ""): { name: string; email: string } {
   return m ? { name: m[1].trim() || m[2], email: m[2].trim().toLowerCase() } : { name: from.trim(), email: from.trim().toLowerCase() };
 }
 
+/** Decodes a Gmail message part's base64url body data. */
+export function decode64url(s: string): string {
+  const b = atob((s || "").replace(/-/g, "+").replace(/_/g, "/"));
+  return new TextDecoder().decode(Uint8Array.from(b, (c) => c.charCodeAt(0)));
+}
+
+// deno-lint-ignore no-explicit-any
+type GmailPart = Record<string, any>;
+/** Walks a Gmail message's MIME tree for the text/plain body, falling back to text/html. */
+export function pickBody(part: GmailPart | undefined): string {
+  if (!part) return "";
+  if (part.mimeType === "text/plain" && part.body?.data) return decode64url(part.body.data);
+  const kids = (part.parts ?? []).map(pickBody).filter(Boolean);
+  if (kids.length) return kids.join("\n");
+  if (part.mimeType === "text/html" && part.body?.data) return decode64url(part.body.data);
+  return "";
+}
+
+// ---------- Gmail OAuth tokens & sending ----------
+// Shared by mail-desk (read), send-mail-brain-reply (manual reply) and run-mail-brain-tasks
+// (the auto-reply automation) so the AES-GCM sealing and the refresh dance exist in one place.
+const MAIL_DESK_CLIENT_ID = Deno.env.get("MAIL_DESK_GOOGLE_CLIENT_ID") ?? "";
+const MAIL_DESK_CLIENT_SECRET = Deno.env.get("MAIL_DESK_GOOGLE_CLIENT_SECRET") ?? "";
+const MAIL_DESK_TOKEN_KEY = Deno.env.get("MAIL_DESK_TOKEN_KEY") ?? ""; // 64 hex characters
+
+function hex(b: ArrayBuffer | Uint8Array): string {
+  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+function fromHex(h: string): Uint8Array<ArrayBuffer> {
+  return new Uint8Array(h.match(/../g)!.map((x) => parseInt(x, 16)));
+}
+const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+const unb64 = (s: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+async function aesKey() {
+  if (!/^[0-9a-f]{64}$/i.test(MAIL_DESK_TOKEN_KEY)) throw new Error("MAIL_DESK_TOKEN_KEY is not set (64 hex characters)");
+  return await crypto.subtle.importKey("raw", fromHex(MAIL_DESK_TOKEN_KEY), "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+export async function seal(text: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(), new TextEncoder().encode(text)));
+  return `${b64(iv)}.${b64(enc)}`;
+}
+export async function unseal(blob: string): Promise<string> {
+  const [iv, enc] = blob.split(".");
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await aesKey(), unb64(enc)));
+}
+
+/** Fresh Gmail access token for this mail_desk_accounts row; refreshes and re-saves it if expired.
+ * Throws "This Gmail needs to be connected again" if there's no refresh token or the refresh fails. */
+// deno-lint-ignore no-explicit-any
+export async function googleAccessToken(db: any, accountId: string): Promise<string> {
+  const { data: t } = await db.from("mail_desk_tokens").select("*").eq("account_id", accountId).maybeSingle();
+  if (!t?.refresh_token) throw new Error("This Gmail needs to be connected again");
+  if (t.access_token && t.expiry && Number(t.expiry) > Date.now() + 60_000) return await unseal(t.access_token);
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: MAIL_DESK_CLIENT_ID, client_secret: MAIL_DESK_CLIENT_SECRET, refresh_token: await unseal(t.refresh_token), grant_type: "refresh_token" }),
+  });
+  if (!r.ok) {
+    await db.from("mail_desk_accounts").update({ connected: false }).eq("id", accountId);
+    throw new Error("This Gmail needs to be connected again");
+  }
+  const j = await r.json();
+  await db.from("mail_desk_tokens").update({ access_token: await seal(j.access_token), expiry: Date.now() + j.expires_in * 1000 }).eq("account_id", accountId);
+  return j.access_token;
+}
+
+function b64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+const qEncode = (s: string) => (/[^\x20-\x7e]/.test(s) ? `=?UTF-8?B?${btoa(unescape(encodeURIComponent(s)))}?=` : s);
+
+export interface GmailThreadInfo { messageIdHeader: string; referencesHeader: string }
+
+/** Reads just the headers needed to thread a reply properly (Gmail's own threadId groups the
+ * conversation even without these, but a correct In-Reply-To/References keeps other mail clients'
+ * threading correct too). */
+export async function gmailThreadHeaders(accessToken: string, extMessageId: string): Promise<GmailThreadInfo> {
+  const r = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${extMessageId}?format=metadata&metadataHeaders=Message-ID&metadataHeaders=References`,
+    { headers: { authorization: `Bearer ${accessToken}` } },
+  );
+  if (!r.ok) return { messageIdHeader: "", referencesHeader: "" };
+  const m = await r.json();
+  const h = (m.payload?.headers ?? []) as { name: string; value: string }[];
+  const find = (n: string) => h.find((x) => x.name.toLowerCase() === n)?.value ?? "";
+  return { messageIdHeader: find("message-id"), referencesHeader: find("references") };
+}
+
+/** Sends a plain-text reply through Gmail, threaded onto the original message. */
+export async function sendGmailReply(
+  accessToken: string,
+  opts: { to: string; subject: string; body: string; threadId: string; thread: GmailThreadInfo },
+): Promise<{ id: string; threadId: string }> {
+  // Gmail always sends as the authenticated account's own address, so there's no From header to set.
+  const references = [opts.thread.referencesHeader, opts.thread.messageIdHeader].filter(Boolean).join(" ");
+  const subject = /^re:/i.test(opts.subject) ? opts.subject : `Re: ${opts.subject}`;
+  const headers = [
+    `To: ${opts.to}`,
+    `Subject: ${qEncode(subject)}`,
+    opts.thread.messageIdHeader ? `In-Reply-To: ${opts.thread.messageIdHeader}` : "",
+    references ? `References: ${references}` : "",
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+  ].filter(Boolean).join("\r\n");
+  const raw = `${headers}\r\n\r\n${btoa(unescape(encodeURIComponent(opts.body)))}`;
+  const r = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+    body: JSON.stringify({ raw: b64url(new TextEncoder().encode(raw)), threadId: opts.threadId }),
+  });
+  if (!r.ok) throw new Error(`Gmail said ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  return await r.json();
+}
+
 // ---------- the AI step ----------
 export const AI_MODEL = "google/gemini-2.5-flash-lite";
 

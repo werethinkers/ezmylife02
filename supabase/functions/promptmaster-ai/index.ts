@@ -1,4 +1,4 @@
-import { aiFetch } from "../_shared/ai.ts";
+import { aiFetch, getAiKey } from "../_shared/ai.ts";
 import { serve as stdServe } from "https://deno.land/std@0.168.0/http/server.ts";
 import { billed } from "../_shared/billing.ts";
 
@@ -52,7 +52,7 @@ async function recordKeyFailure(id: string, currentCount: number) {
 }
 
 async function callGemini(apiKey: string, prompt: string, jsonMode: boolean): Promise<string | null> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
   const body: { contents: unknown; generationConfig: Record<string, unknown> } = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { temperature: 0.7 },
@@ -84,6 +84,7 @@ serve(async (req) => {
     const keywords = String(body?.keywords ?? "").slice(0, 4000);
     const selections = (Array.isArray(body?.selections) ? body.selections : []).slice(0, 40).map((x: unknown) => String(x).slice(0, 100));
 
+    const apiKey = (getAiKey() || "own-gemini-keys");
 
     let prompt = '';
 
@@ -125,26 +126,28 @@ RESPOND WITH ONLY a JSON array of objects with "title" and "prompt" keys. No oth
 
     const jsonMode = true;
 
-    // 1. Try the shared AI helper first
-    try {
-      const requestBody: Record<string, unknown> = {
-        model: 'google/gemini-2.5-flash',
-        messages: [{ role: 'user', content: prompt }],
-      };
-      if (jsonMode) requestBody.response_format = { type: 'json_object' };
+    // 1. Try Lovable AI first
+    if (apiKey) {
+      try {
+        const requestBody: Record<string, unknown> = {
+          model: 'google/gemini-2.5-flash-lite',
+          messages: [{ role: 'user', content: prompt }],
+        };
+        if (jsonMode) requestBody.response_format = { type: 'json_object' };
 
-      const response = await aiFetch(requestBody);
+        const response = await aiFetch(requestBody);
 
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content || '';
-        return new Response(JSON.stringify({ text }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content || '';
+          return new Response(JSON.stringify({ text }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.warn('Lovable AI failed, trying DB keys...', response.status);
+      } catch (e) {
+        console.warn('Lovable AI error:', e);
       }
-      console.warn('Shared AI helper failed, trying DB keys...', response.status);
-    } catch (e) {
-      console.warn('Shared AI helper error:', e);
     }
 
     // 2. DB-backed Gemini keys

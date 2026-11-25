@@ -46,12 +46,12 @@ const toolTypeVisuals: Record<string, { icon: LucideIcon; gradient: string; colo
   "Audio Tools": { icon: Mic, gradient: "from-green-500 to-emerald-600", color: "text-green-500", description: "Process and edit audio files" },
   "AI & Automation": { icon: Bot, gradient: "from-indigo-500 to-violet-600", color: "text-indigo-500", description: "AI-powered tools for automation" },
   "Analytics Tools": { icon: BarChart3, gradient: "from-teal-500 to-cyan-600", color: "text-teal-500", description: "Track, analyze, and visualize data" },
-  "Developer Tools": { icon: Code, gradient: "from-gray-600 to-zinc-700", color: "text-gray-400", description: "Tools for developers and tech teams" },
+  "Developer Tools": { icon: Code, gradient: "from-zinc-600 to-zinc-700", color: "text-zinc-400", description: "Tools for developers and tech teams" },
   "Communication": { icon: Mail, gradient: "from-sky-500 to-blue-600", color: "text-sky-500", description: "Email, messaging, and outreach tools" },
   "Security Tools": { icon: Shield, gradient: "from-amber-500 to-yellow-600", color: "text-amber-500", description: "Protect and secure your digital assets" },
   "Productivity": { icon: Zap, gradient: "from-yellow-500 to-orange-600", color: "text-yellow-500", description: "Boost efficiency and save time" },
   "Text Tools": { icon: Type, gradient: "from-rose-500 to-pink-600", color: "text-rose-500", description: "Format, convert, and analyze text" },
-  "QR & Barcode": { icon: QrCode, gradient: "from-slate-500 to-gray-600", color: "text-slate-500", description: "Generate and scan QR codes & barcodes" },
+  "QR & Barcode": { icon: QrCode, gradient: "from-zinc-500 to-zinc-600", color: "text-zinc-500", description: "Generate and scan QR codes & barcodes" },
   "Calculators": { icon: Calculator, gradient: "from-emerald-500 to-green-600", color: "text-emerald-500", description: "Calculate anything you need" },
   "Converters": { icon: RefreshCw, gradient: "from-cyan-500 to-teal-600", color: "text-cyan-500", description: "Convert between formats and units" },
   "Social Media": { icon: Share2, gradient: "from-pink-500 to-fuchsia-600", color: "text-pink-500", description: "Tools for social media management" },
@@ -70,7 +70,7 @@ const toolTypeVisuals: Record<string, { icon: LucideIcon; gradient: string; colo
   "Research Tools": { icon: BookOpen, gradient: "from-indigo-500 to-purple-600", color: "text-indigo-500", description: "Research and reference tools" },
   "Content Creation": { icon: Lightbulb, gradient: "from-orange-500 to-red-600", color: "text-orange-500", description: "Create engaging content" },
   "Photo ID & Passport": { icon: Camera, gradient: "from-green-500 to-teal-600", color: "text-green-500", description: "Passport and ID photo tools" },
-  "Signature Tools": { icon: PenTool, gradient: "from-slate-500 to-gray-600", color: "text-slate-500", description: "Create and resize signatures" },
+  "Signature Tools": { icon: PenTool, gradient: "from-zinc-500 to-zinc-600", color: "text-zinc-500", description: "Create and resize signatures" },
   "Mind & Knowledge": { icon: Layers, gradient: "from-purple-500 to-pink-600", color: "text-purple-500", description: "Mind mapping and knowledge tools" },
 };
 

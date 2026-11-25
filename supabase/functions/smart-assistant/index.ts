@@ -125,7 +125,7 @@ async function streamFromGemini(apiKey: string, system: string, messages: { role
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent?alt=sse&key=${apiKey}`;
   return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

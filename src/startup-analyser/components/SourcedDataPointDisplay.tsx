@@ -120,7 +120,7 @@ export const SourcedDataPointDisplay: React.FC<{ point: SourcedDataPoint; onUpda
         <div className="pt-2 flex items-start gap-3 w-full first:pt-0 cursor-pointer group" onClick={() => setIsEditing(true)}>
             <div className="relative group flex-shrink-0 mt-1">
                 <SourceIcon sourceType={sourceType} />
-                <div className="absolute bottom-full mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 -translate-x-1/2 left-1/2">
+                <div className="absolute bottom-full mb-2 w-max max-w-xs p-2 text-xs text-white bg-zinc-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 -translate-x-1/2 left-1/2">
                     <p className="font-semibold capitalize">{sourceType.replace(/_/g, ' ')}</p>
                     {point.sourceDetail && point.sourceDetail !== "N/A" && (
                        <div className="font-normal mt-1 opacity-90">{formatSourceDetail(point.sourceDetail, sourceType)}</div>
@@ -128,7 +128,7 @@ export const SourcedDataPointDisplay: React.FC<{ point: SourcedDataPoint; onUpda
                 </div>
             </div>
             <div 
-                className="prose prose-sm max-w-none text-gray-800 flex-grow prose-ul:my-0 prose-li:my-0.5 group-hover:bg-yellow-100 rounded p-1 transition-colors"
+                className="prose prose-sm max-w-none text-zinc-800 flex-grow prose-ul:my-0 prose-li:my-0.5 group-hover:bg-yellow-100 rounded p-1 transition-colors"
                 dangerouslySetInnerHTML={convertMarkdownToHtml(point.value || '')}
             />
         </div>

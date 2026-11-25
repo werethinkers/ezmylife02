@@ -90,6 +90,11 @@ verify_jwt = false
 [functions.dev-app-run]
 verify_jwt = false
 
+# Resolves a Google Maps link for /google-business/setup's import tab. Signs the caller in itself
+# (billed() with a free tool, so it's sign-in-gated but never charges credits).
+[functions.fetch-gbp-details]
+verify_jwt = false
+
 [functions.ip-checkout]
 verify_jwt = false
 
@@ -118,6 +123,13 @@ verify_jwt = false
 
 # Mail Desk checks the signed-in user itself; Google's redirect back to it has no sign-in token.
 [functions.mail-desk]
+verify_jwt = false
+
+[functions.send-mail-brain-reply]
+verify_jwt = false
+
+# Also called by Supabase Cron with the service-role key (see the migration), which isn't a Supabase user JWT.
+[functions.run-mail-brain-tasks]
 verify_jwt = false
 
 [functions.claim-card-promo]

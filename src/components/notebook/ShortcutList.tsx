@@ -29,7 +29,7 @@ interface EnrichedShortcutItem {
 
 const getTagColor = (tagName: string): string => {
   const colors = [
-    'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300',
+    'bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-300',
     'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
     'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
     'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
@@ -40,7 +40,7 @@ const getTagColor = (tagName: string): string => {
     'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
     'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
   ];
-  if (!tagName) return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  if (!tagName) return 'bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-300';
   
   let hash = 0;
   for (let i = 0; i < tagName.length; i++) {
@@ -82,29 +82,29 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
 
     if (isEditing) {
         return (
-            <li className="p-3 bg-white dark:bg-slate-900/50 rounded-lg shadow-sm border-2 border-sky-400 dark:border-sky-600">
+            <li className="p-3 bg-white dark:bg-zinc-900/50 rounded-lg shadow-sm border-2 border-sky-400 dark:border-sky-600">
                 <div className="space-y-2">
                     <div>
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Shortcut Key</label>
+                        <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Shortcut Key</label>
                         <input
                             type="text"
                             value={editKey}
                             onChange={(e) => setEditKey(e.target.value)}
-                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                             autoFocus
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Expansion Text</label>
+                        <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Expansion Text</label>
                         <textarea
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             rows={3}
-                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
                         />
                     </div>
                     <div className="flex gap-2 justify-end">
-                        <button onClick={handleCancelEdit} className="px-3 py-1 text-xs font-medium rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                        <button onClick={handleCancelEdit} className="px-3 py-1 text-xs font-medium rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors">Cancel</button>
                         <button onClick={handleSaveEdit} className="px-3 py-1 text-xs font-medium rounded bg-sky-600 text-white hover:bg-sky-700 transition-colors">Save</button>
                     </div>
                 </div>
@@ -113,7 +113,7 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
     }
 
     return (
-        <li className="p-3 bg-white dark:bg-slate-900/50 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700/50">
+        <li className="p-3 bg-white dark:bg-zinc-900/50 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700/50">
             <div className="flex justify-between items-start gap-3">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -128,7 +128,7 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
                             Synced
                         </span>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-snug break-words whitespace-pre-wrap">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-snug break-words whitespace-pre-wrap">
                         {item.value}
                     </p>
                 </div>
@@ -159,7 +159,7 @@ const ShortcutItem: React.FC<{ item: EnrichedShortcutItem; onCopy: (item: Enrich
                     )}
                     <button
                         onClick={() => onCopy(item)}
-                        className="flex-shrink-0 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="flex-shrink-0 p-2 rounded-full text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                         aria-label={`Copy text for ${item.key}`}
                         title={isCopied ? 'Copied!' : 'Copy expansion'}
                     >
@@ -298,25 +298,25 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteS
 
   if (shortcuts.size === 0) {
     return (
-      <div className="flex items-center justify-center h-96 bg-slate-100 dark:bg-slate-800 rounded-lg">
-        <p className="text-slate-500">No shortcuts available.</p>
+      <div className="flex items-center justify-center h-96 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+        <p className="text-zinc-500">No shortcuts available.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[40rem] lg:h-auto lg:max-h-[calc(100vh-10rem)] bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+    <div className="flex flex-col h-[40rem] lg:h-auto lg:max-h-[calc(100vh-10rem)] bg-zinc-100 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+      <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <SearchIcon className="w-5 h-5 text-slate-400" />
+            <SearchIcon className="w-5 h-5 text-zinc-400" />
           </span>
           <input
             type="text"
             placeholder="Search all shortcuts or use voice..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-12 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+            className="w-full pl-10 pr-12 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
             aria-label="Search available shortcuts"
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -327,7 +327,7 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteS
                     className={`p-1.5 rounded-full transition-colors ${
                     isListening
                         ? 'bg-red-500 text-white animate-pulse'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                     aria-label={isListening ? 'Stop voice search' : 'Start voice search'}
                 >
@@ -344,7 +344,7 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteS
                     className={`px-3 py-1 text-sm font-medium rounded-full transition-colors border ${
                         selectedCategories.has(category)
                             ? 'bg-sky-600 text-white border-sky-600'
-                            : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
+                            : 'bg-white dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-600'
                     }`}
                 >
                     {category}
@@ -373,7 +373,7 @@ export const ShortcutList: React.FC<ShortcutListProps> = ({ shortcuts, onDeleteS
         </div>
       ) : (
         <div className="flex-grow flex items-center justify-center p-4">
-            <p className="text-slate-500 text-center">
+            <p className="text-zinc-500 text-center">
                 {searchQuery.trim().length > 0
                     ? "No shortcuts match your search."
                     : "No shortcuts to display."

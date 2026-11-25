@@ -104,10 +104,10 @@ export const CompetitorChart: React.FC<CompetitorChartProps> = ({ data, title })
 
     if (!data || !data.datasets || data.datasets.every(ds => !ds.data || ds.data.length === 0)) {
         return (
-            <div className="relative h-96 w-full flex items-center justify-center bg-gray-50 rounded-lg">
+            <div className="relative h-96 w-full flex items-center justify-center bg-zinc-50 rounded-lg">
                  <div className="text-center p-4">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">{title}</h3>
-                    <p className="text-sm text-gray-500">Data for this chart is not available.</p>
+                    <h3 className="text-lg font-semibold text-zinc-700 mb-2">{title}</h3>
+                    <p className="text-sm text-zinc-500">Data for this chart is not available.</p>
                 </div>
             </div>
         )

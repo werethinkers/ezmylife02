@@ -3,6 +3,9 @@
 import { type AppSpec, BIZ, LEGAL_NOTE, LITE } from "./base.ts";
 
 export const extras: Record<string, AppSpec> = {
+  // The "Draft with AI" button in the Mail Brain reply composer (/mail-brain) — one on-demand reply
+  // for one mail, separate from the free bulk drafts the paid "Fetch" already makes for needs_reply mails.
+  "mail-brain-draft-reply": { kind: "doc", credits: 2, model: LITE, system: BIZ, task: "Write a short, ready-to-send reply to the email given (sender, subject, body). Answer only what the mail actually asks; never invent facts, prices or commitments not given. Plain text, no subject line, no greeting header beyond a short salutation, end with the sign-off given. If the inputs include the user's own instruction for tone or content, follow it." },
   "tool-6": { kind: "doc", credits: 2, system: BIZ, task: `Draft the agreement described in the inputs (type, parties, dates, scope, payment). Use numbered clauses: parties, definitions, scope, term, payment, confidentiality, IP, termination, dispute resolution (Indian law, the city given), signatures. ${LEGAL_NOTE}` },
   "tool-28": { kind: "doc", credits: 2, model: LITE, system: BIZ, task: "Write a job post for the role: title, about the business, responsibilities, requirements, salary/benefits if given, location, how to apply. Then a 2-line WhatsApp version." },
   "quiz-maker": { kind: "doc", credits: 2, model: LITE, system: "You are a teacher who writes clear, accurate quiz questions.", task: "Write the quiz requested (topic, number of questions, level). Multiple-choice with 4 options each; mark the answer and give a one-line explanation. End with an answer key." },
@@ -23,6 +26,23 @@ export const extras: Record<string, AppSpec> = {
   "bibliography-generator": { kind: "doc", credits: 2, chargeId: "bibliography-generator-ai", model: LITE, system: "You format citations exactly to the style asked.", task: "Format each source given as a reference in the citation style requested (APA 7 unless told otherwise), sorted correctly, with an in-text citation example for each. Do not invent missing details; mark them [missing]." },
   "bhed-prabhed": { kind: "doc", credits: 2, chargeId: "bhed-prabhed-ai", model: LITE, system: "You are a clear, patient teacher who breaks topics down.", task: "Split the topic into its main parts, and each part into finer parts (two or three levels), as a numbered outline. Give each part a one or two line note in simple words, with an Indian example where it helps. End with a short table: part, what it is, one key fact." },
   "google-business-kit": { kind: "doc", credits: 2, chargeId: "google-business-kit-ai", model: LITE, system: BIZ, task: "For the business given, write a Google Business Profile kit: the best primary and secondary categories, a 750-character business description with local keywords for the city, 10 local search keywords, 5 product or service entries (name, 1-line description), 4 Google posts (offer, update, event, festival), and 3 polite review-request messages for WhatsApp. Use only facts given; do not invent prices or addresses." },
+  // The Setup & Audit Co-Pilot's "Generate Profile & Audit" button (/google-business/setup). Separate from
+  // "google-business-kit" above (shared with bulk mode) so this richer, JSON-shaped prompt can evolve on its own.
+  "google-business-audit": {
+    kind: "json",
+    credits: 2,
+    model: LITE,
+    system: BIZ,
+    task: `Audit and write a Google Business Profile for the business described in the inputs. Return ONLY a JSON object with exactly these keys:
+- "riskScore": a number 0-100, how healthy and low-risk the listing is (100 = no issues). Judge from: a business name with no city name, keywords or ALL CAPS stuffed into it; a chosen Storefront model having a real address; secondary categories present; a website or WhatsApp number given; opening hours implied by "Opening Status".
+- "riskFlags": an array of short strings, each one concrete problem and its fix (e.g. "Business name includes a city name — Google can suspend listings for this; use only the exact signboard/GST name"). Empty array if nothing is wrong.
+- "description": the business description, plain text, 750 characters or fewer, written for Google's "Business description" field. Must not contain a phone number, a URL/website, or ALL-CAPS spam — these get descriptions rejected or removed. Natural local keywords only.
+- "primaryCategory": the single best-fit Google Business category for this business.
+- "secondaryCategories": an array of up to 9 supporting Google Business categories.
+- "services": an array of objects {"name": string, "description": string}, one per service/product given, each description 250-300 characters, SEO-friendly, naming no price unless one was given.
+- "whatsappMessage": a short, friendly message (no links, no phone numbers inside it) a customer could send after finding the business on Google Maps — e.g. "Hi, I found your business on Google Maps and want to know more about...". Match it to the "Output language" input: write it in Hindi/Hinglish as well if asked for bilingual.
+Use only facts given in the inputs; never invent an address, price, rating, review count or certification. Where something needed is missing, write the description and services around what is given instead of guessing.`,
+  },
   "storybook-illustration": { kind: "image", credits: 31, system: "" },
   "thumbnail-maker": { kind: "image", credits: 31, system: "", chargeId: "thumbnail-maker-img" },
 };

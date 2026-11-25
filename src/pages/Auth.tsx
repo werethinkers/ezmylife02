@@ -173,7 +173,7 @@ const Auth = () => {
         </div>
 
         <div className="mx-auto grid w-full max-w-6xl flex-1 items-start gap-8 px-4 pb-16 pt-4 lg:grid-cols-2 lg:pt-10">
-          <section className="hidden rounded-3xl bg-gradient-to-br from-orange-600 to-amber-600 p-8 text-white shadow-soft-xl lg:block">
+          <section className="hidden rounded-3xl border-[1.5px] border-foreground bg-primary p-8 text-primary-foreground shadow-soft-xl lg:block">
             <h2 className="font-display text-4xl font-extrabold leading-tight">Your first 100 credits are free</h2>
             <p className="mt-3 text-lg text-orange-50">50 when you create your account and 50 more after your first run. No card needed.</p>
             <ul className="mt-6 space-y-3 text-[16px]">
