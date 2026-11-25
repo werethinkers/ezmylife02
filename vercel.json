@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/tie-match", "destination": "/tie-match/index.html" },
+    { "source": "/tie-match/(.*)", "destination": "/tie-match/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
