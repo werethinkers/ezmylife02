@@ -5,6 +5,61 @@ import { AppIcon } from "@/components/store/AppIcon";
 import { giveGetFor } from "@/data/goals";
 import SEOFooter from "@/components/SEOFooter";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { AppShowcaseRow, type ShowcaseApp } from "@/components/AppShowcaseCard";
+
+const LANDING_SHOWCASE_APPS: ShowcaseApp[] = [
+  {
+    id: "ai-headshot-studio",
+    name: "AI Headshot Studio",
+    description: "Turn a casual selfie into professional headshots — corporate, LinkedIn, creative, doctor or lawyer looks, all with natural lighting.",
+    imageSrc: "/app-previews/ai-headshot-studio.jpg",
+    category: "AI Image",
+    href: "/tool/ai-headshot-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "thumbnail-maker",
+    name: "Thumbnail Maker",
+    description: "Generate click-worthy video thumbnails with AI: bold text, face crops, background removal and multiple layout variants in one click.",
+    imageSrc: "/app-previews/thumbnail-maker.jpg",
+    category: "Content",
+    href: "/tool/thumbnail-maker",
+  },
+  {
+    id: "brand-identity-studio",
+    name: "Brand Identity Studio",
+    description: "Get a full brand kit: name ideas, story, voice, colours, fonts, logo directions and taglines, with optional logo and mood images.",
+    imageSrc: "/app-previews/brand-identity-studio.jpg",
+    category: "Branding",
+    href: "/tool/brand-identity-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "contract-risk-reviewer",
+    name: "Contract Risk Reviewer",
+    description: "Upload any contract and get a clause-by-clause risk review: red flags, missing protections and suggested negotiation wording.",
+    imageSrc: "/app-previews/contract-risk-reviewer.jpg",
+    category: "Legal",
+    href: "/tool/contract-risk-reviewer",
+  },
+  {
+    id: "bill-invoice-generator",
+    name: "Bill & Invoice Generator",
+    description: "Create professional GST-compliant invoices in seconds: add your logo, items and client details, then download a print-ready PDF.",
+    imageSrc: "/app-previews/bill-invoice-generator.jpg",
+    category: "Finance",
+    href: "/tool/bill-invoice-generator",
+  },
+  {
+    id: "ad-campaign-studio",
+    name: "Ad Campaign Studio",
+    description: "Plan a full paid-ad campaign for Meta or Google: audiences, 10 ad copies, creative briefs, budget split and a testing plan.",
+    imageSrc: "/app-previews/ad-campaign-studio.jpg",
+    category: "Marketing",
+    href: "/tool/ad-campaign-studio",
+    ctaLabel: "Try Studio",
+  },
+];
 
 export interface LandingTool {
   id: string;
@@ -99,6 +154,14 @@ export function LandingBody({
             </Button>
           </section>
         )}
+
+        <section className="mt-10 py-2">
+          <AppShowcaseRow
+            heading="Popular across all businesses"
+            subheading="Apps other users open first"
+            apps={LANDING_SHOWCASE_APPS}
+          />
+        </section>
 
         <section className="mt-12 max-w-3xl">
           <h2 className="text-2xl font-bold">Why people use EZYOURLIFE</h2>

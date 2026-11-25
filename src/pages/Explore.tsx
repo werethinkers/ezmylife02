@@ -18,7 +18,62 @@ import { DesignCard } from "@/components/modern/DesignCard";
 import { toDesignLite } from "@/components/modern/designLite";
 import { PageHeader, SectionHead, EmptyState } from "@/components/modern/ui";
 import { CONTAINER, FOCUS_RING, pillClass } from "@/components/modern/styles";
+import { AppShowcaseRow, type ShowcaseApp } from "@/components/AppShowcaseCard";
 import { cn } from "@/lib/utils";
+
+const EXPLORE_SHOWCASE_APPS: ShowcaseApp[] = [
+  {
+    id: "brand-identity-studio",
+    name: "Brand Identity Studio",
+    description: "Get a full brand kit: name ideas, story, voice, colours, fonts, logo directions and taglines, with optional logo and mood images.",
+    imageSrc: "/app-previews/brand-identity-studio.jpg",
+    category: "Branding",
+    href: "/tool/brand-identity-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "customer-persona-lab",
+    name: "Customer Persona Lab",
+    description: "Turn reviews, survey answers or chats into 3–4 detailed customer personas with needs, objections, channels and messages.",
+    imageSrc: "/app-previews/customer-persona-lab.jpg",
+    category: "Marketing",
+    href: "/tool/customer-persona-lab",
+  },
+  {
+    id: "catalogue-photo-studio",
+    name: "Catalogue Photo Studio",
+    description: "Turn one phone photo of a product into marketplace-ready shots: white background, angles, close-up, scale and infographic base.",
+    imageSrc: "/app-previews/catalogue-photo-studio.jpg",
+    category: "Commerce",
+    href: "/tool/catalogue-photo-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "email-sequence-builder",
+    name: "Email Sequence Builder",
+    description: "Write a full email sequence for welcome, sales, abandoned cart or win-back — with subject lines, timing and A/B test ideas.",
+    imageSrc: "/app-previews/email-sequence-builder.jpg",
+    category: "Marketing",
+    href: "/tool/email-sequence-builder",
+  },
+  {
+    id: "contract-risk-reviewer",
+    name: "Contract Risk Reviewer",
+    description: "Upload any contract and get a clause-by-clause risk review: red flags, missing protections and suggested negotiation wording.",
+    imageSrc: "/app-previews/contract-risk-reviewer.jpg",
+    category: "Legal",
+    href: "/tool/contract-risk-reviewer",
+  },
+  {
+    id: "resume-studio",
+    name: "Resume Studio",
+    description: "Upload your resume and a job description to get an ATS score, a rewritten resume tailored to the role, and a matching cover letter.",
+    imageSrc: "/app-previews/resume-studio.jpg",
+    category: "Careers",
+    href: "/tool/resume-studio",
+    ctaLabel: "Try Studio",
+  },
+];
 
 const TOP_USE_CASES = USE_CASE_SEEDS.slice(0, 80);
 
@@ -279,6 +334,14 @@ const Explore = () => {
         <section aria-labelledby="jobs-h">
           <SectionHead id="jobs-h" title="By job to do" line={`${TOP_USE_CASES.length} everyday tasks`} />
           <PillRow items={TOP_USE_CASES.map((slug) => ({ to: `/ai-tool-for/${slug}`, label: humanize(slug) }))} />
+        </section>
+
+        <section id="explore-showcase" className="py-2">
+          <AppShowcaseRow
+            heading="See apps in action"
+            subheading="Popular picks"
+            apps={EXPLORE_SHOWCASE_APPS}
+          />
         </section>
 
         <section aria-labelledby="types-h">

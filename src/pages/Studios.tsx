@@ -14,7 +14,65 @@ import { ShowcaseCard } from "@/components/modern/ShowcaseCard";
 import { SitesContact } from "@/components/modern/SitesContact";
 import { CtaBand, EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
 import { BTN_OUTLINE, BTN_PRIMARY, CONTAINER, FOCUS_RING, pillClass, roundedLabel } from "@/components/modern/styles";
+import { AppShowcaseRow, type ShowcaseApp } from "@/components/AppShowcaseCard";
 import { ScrollRow } from "@/components/ui/scroll-row";
+
+const STUDIOS_SHOWCASE_APPS: ShowcaseApp[] = [
+  {
+    id: "ad-campaign-studio",
+    name: "Ad Campaign Studio",
+    description: "Plan a full paid-ad campaign for Meta or Google: audiences, 10 ad copies, creative briefs, budget split and a testing plan — plus ready-to-use ad images.",
+    imageSrc: "/app-previews/ad-campaign-studio.jpg",
+    category: "Marketing",
+    href: "/tool/ad-campaign-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "ai-headshot-studio",
+    name: "AI Headshot Studio",
+    description: "Turn a casual selfie into professional headshots — corporate, LinkedIn, creative, doctor or lawyer looks, all with natural lighting. No photographer needed.",
+    imageSrc: "/app-previews/ai-headshot-studio.jpg",
+    category: "AI Image",
+    href: "/tool/ai-headshot-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "brand-identity-studio",
+    name: "Brand Identity Studio",
+    description: "Get a full brand kit: name ideas, story, voice, colours, fonts, logo directions and taglines, with optional logo and mood images.",
+    imageSrc: "/app-previews/brand-identity-studio.jpg",
+    category: "Branding",
+    href: "/tool/brand-identity-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "catalogue-photo-studio",
+    name: "Catalogue Photo Studio",
+    description: "Turn one phone photo of a product into marketplace-ready shots: white background, angles, close-up, scale and infographic base.",
+    imageSrc: "/app-previews/catalogue-photo-studio.jpg",
+    category: "Commerce",
+    href: "/tool/catalogue-photo-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "food-menu-photo-studio",
+    name: "Food Menu Photo Studio",
+    description: "Turn quick kitchen photos into appetising menu shots for Zomato, Swiggy and your menu card: top-down, plated, thali and close-ups.",
+    imageSrc: "/app-previews/food-menu-photo-studio.jpg",
+    category: "Food & Dining",
+    href: "/tool/food-menu-photo-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "course-creator-studio",
+    name: "Course Creator Studio",
+    description: "Turn your expertise into an online course: outcomes, modules, lesson scripts, worksheets, quizzes, pricing and a launch plan.",
+    imageSrc: "/app-previews/course-creator-studio.jpg",
+    category: "Education",
+    href: "/tool/course-creator-studio",
+    ctaLabel: "Try Studio",
+  },
+];
 
 /** Studios per group before "See all" when every group is shown. */
 const PER_GROUP = 6;
@@ -206,6 +264,16 @@ const Studios = () => {
                     <ToolCard key={t.id} tool={t} chip={STUDIO_TABS.find((x) => x.ids.includes(t.id))?.label ?? "Studio"} size="lg" />
                   ))}
                 </ScrollRow>
+              </section>
+            )}
+
+            {!tab && (
+              <section id="studios-showcase" className="py-2">
+                <AppShowcaseRow
+                  heading="See studios in action"
+                  subheading="Most-opened studios"
+                  apps={STUDIOS_SHOWCASE_APPS}
+                />
               </section>
             )}
 

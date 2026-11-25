@@ -21,7 +21,61 @@ import { DesignCard } from "@/components/modern/DesignCard";
 import { toDesignLite } from "@/components/modern/designLite";
 import { EmptyState, PageHeader, SectionHead } from "@/components/modern/ui";
 import { BTN_OUTLINE, FOCUS_RING, CONTAINER, GOAL_GRADIENT, pillClass, subPillClass } from "@/components/modern/styles";
+import { AppShowcaseRow, type ShowcaseApp } from "@/components/AppShowcaseCard";
 import { ScrollRow } from "@/components/ui/scroll-row";
+
+const TOOLS_SHOWCASE_APPS: ShowcaseApp[] = [
+  {
+    id: "content-idea-generator",
+    name: "Content Idea Generator",
+    description: "Get 20 content ideas with hooks, formats and headlines — matched to your brand, niche and audience — ready to drop into your content calendar.",
+    imageSrc: "/app-previews/content-idea-generator.jpg",
+    category: "Content",
+    href: "/tool/content-idea-generator",
+  },
+  {
+    id: "customer-persona-lab",
+    name: "Customer Persona Lab",
+    description: "Turn reviews, survey answers or chats into 3–4 detailed customer personas with needs, objections, channels and messages.",
+    imageSrc: "/app-previews/customer-persona-lab.jpg",
+    category: "Marketing",
+    href: "/tool/customer-persona-lab",
+  },
+  {
+    id: "product-launch-kit",
+    name: "Product Launch Kit",
+    description: "Everything to launch a product: positioning, timeline, emails, social posts, press template and a 30-day task list.",
+    imageSrc: "/app-previews/product-launch-kit.jpg",
+    category: "Marketing",
+    href: "/tool/product-launch-kit",
+  },
+  {
+    id: "remove-background",
+    name: "Remove Background",
+    description: "Auto-remove the background from any photo in seconds — sharp edges, transparent PNG, ready for Canva, your website or any design tool.",
+    imageSrc: "/app-previews/remove-background.jpg",
+    category: "Image",
+    href: "/tool/remove-background",
+  },
+  {
+    id: "resume-studio",
+    name: "Resume Studio",
+    description: "Upload your resume and a job description to get an ATS score, a rewritten resume tailored to the role, and a matching cover letter.",
+    imageSrc: "/app-previews/resume-studio.jpg",
+    category: "Careers",
+    href: "/tool/resume-studio",
+    ctaLabel: "Try Studio",
+  },
+  {
+    id: "food-menu-photo-studio",
+    name: "Food Menu Photo Studio",
+    description: "Turn quick kitchen photos into appetising menu shots for Zomato, Swiggy and your menu card: top-down, plated, thali and close-ups.",
+    imageSrc: "/app-previews/food-menu-photo-studio.jpg",
+    category: "Food & Commerce",
+    href: "/tool/food-menu-photo-studio",
+    ctaLabel: "Try Studio",
+  },
+];
 
 const PER_CATEGORY = 8;
 /** Filter-by-type chips shown before "Show more". */
@@ -351,6 +405,16 @@ const Tools = () => {
                       <ToolCard key={t.id} tool={t} chip={chipFor(t)} />
                     ))}
                   </ScrollRow>
+                </section>
+              )}
+
+              {!activeGoal && !category && (
+                <section id="tools-showcase" className="py-2">
+                  <AppShowcaseRow
+                    heading="See tools in action"
+                    subheading="Popular picks to get started"
+                    apps={TOOLS_SHOWCASE_APPS}
+                  />
                 </section>
               )}
 
