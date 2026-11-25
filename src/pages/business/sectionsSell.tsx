@@ -1,7 +1,7 @@
 /* Sections for selling: Today, orders, appointments, enquiries, customers, bills, dues and reminders. */
 
 import { useMemo, useState } from "react";
-import { CalendarPlus, Check, ChevronLeft, ChevronRight, Globe, Plus, ReceiptIndianRupee, ShoppingBag, Truck, UserPlus, Wallet, X } from "lucide-react";
+import { CalendarPlus, Check, ChevronLeft, ChevronRight, Globe, Plus, ReceiptIndianRupee, ShoppingBag, Truck, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBusiness } from "@/business/useBusiness";
@@ -69,26 +69,37 @@ export function Overview({ db }: { db: Db }) {
   const steps = setupSteps(db.recs, s);
   const left = steps.filter((x) => !x.done);
   const booked = s.modules.includes("appointments");
+  const hideKey = `ez-business-hide-setup-${db.ws.id}`;
+  const [setupHidden, setSetupHidden] = useState(() => { try { return localStorage.getItem(hideKey) === "1"; } catch { return false; } });
+  const hideSetup = () => { setSetupHidden(true); try { localStorage.setItem(hideKey, "1"); } catch { /* storage unavailable */ } };
   const actions: [string, () => void, JSX.Element][] = [
     [booked ? `Book ${lower(s.labels.order)}` : `New ${lower(s.labels.order)}`, () => nav.form({ kind: booked ? "appointment" : "order" }), booked ? <CalendarPlus /> : <ShoppingBag />],
     ["New bill", () => nav.form({ kind: "sale" }), <ReceiptIndianRupee />],
     ["Got paid", () => nav.form({ kind: "payment" }), <Wallet />],
     ["Spent money", () => nav.form({ kind: "expense" }), <Wallet />],
-    ...(s.modules.includes("purchases") ? [["Bought stock", () => nav.form({ kind: "purchase" }), <Truck />] as [string, () => void, JSX.Element]] : []),
-    ...(s.modules.includes("leads") ? [["New enquiry", () => nav.form({ kind: "lead" }), <UserPlus />] as [string, () => void, JSX.Element]] : []),
   ];
+  const done = steps.length - left.length;
+  const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
   return (
     <div className="space-y-6">
       <SectionHead title={`Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}${s.owner_name ? `, ${s.owner_name.split(" ")[0]}` : ""}`} sub={`${day(today())}. Here is ${db.ws.name} today.`} />
 
-      {left.length > 0 && (
+      {left.length > 0 && !setupHidden && (
         <Panel>
-          <p className="font-bold">Finish setting up ({steps.length - left.length} of {steps.length} done)</p>
-          <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-bold">Finish setting up ({done} of {steps.length} done)</p>
+            <button type="button" onClick={hideSetup} className="shrink-0 text-xs font-semibold text-muted-foreground underline-offset-2 hover:underline">Hide</button>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full border-2 border-ink bg-card"><div className="h-full bg-lime transition-[width]" style={{ width: `${pct}%` }} /></div>
+          <ul className="mt-3 grid gap-1 sm:grid-cols-2">
             {steps.map((x) => (
               <li key={x.id} className={cn("flex items-center gap-2 text-sm", x.done && "text-ink/50 line-through")}>
-                <span className={cn("grid h-5 w-5 place-items-center rounded-full border-2 border-ink text-[10px]", x.done ? "bg-lime" : "bg-card")}>{x.done ? "✓" : ""}</span>
-                <button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => nav.go(x.id === "items" || x.id === "gst" ? "stock" : x.id === "first" ? "bills" : x.id === "site" ? "website" : "settings")}>{x.text}</button>
+                <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 border-ink text-[10px]", x.done ? "bg-lime" : "bg-card")}>{x.done ? "✓" : ""}</span>
+                {x.done ? <span>{x.text}</span> : (
+                  <button type="button" className="-mx-1 flex flex-1 items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-sun/40" onClick={() => nav.go(x.id === "items" || x.id === "gst" ? "stock" : x.id === "first" ? "bills" : x.id === "site" ? "website" : "settings")}>
+                    <span>{x.text}</span><span aria-hidden className="text-muted-foreground">→</span>
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -110,50 +121,91 @@ export function Overview({ db }: { db: Db }) {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={plural(o.billsToday, "bill")} onClick={() => nav.go("bills")} />
-        <Stat label="Money in today" value={inrShort(o.collectedToday)} onClick={() => nav.go("money")} />
-        <Stat label="To collect" value={inrShort(o.duesTotal)} hint={plural(o.duesPeople, "person", "people")} tone="bg-coral" onClick={() => nav.go("dues")} />
-        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} onClick={() => nav.go("reports")} />
+        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={`Billed today · ${plural(o.billsToday, "bill")}`} onClick={() => nav.go("bills")} />
+        <Stat label="Money in today" value={inrShort(o.collectedToday)} hint="Cash & UPI received" onClick={() => nav.go("money")} />
+        <Stat label="To collect" value={inrShort(o.duesTotal)} hint={plural(o.duesPeople, "person", "people")} tone={o.duesTotal > 0 ? "bg-coral" : undefined} onClick={() => nav.go("dues")} />
+        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} onClick={() => nav.go("money")} />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {actions.map(([label, fn, icon], i) => (
-          <Button key={label} type="button" onClick={fn} variant={i === 0 ? "default" : "outline"} className="h-auto justify-start gap-2 py-3 text-left text-sm [&_svg]:h-5 [&_svg]:w-5">
-            {icon}{label}
-          </Button>
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Panel>
-          <div className="flex items-center justify-between"><h3 className="font-bold">To do today</h3><button type="button" className="text-sm underline" onClick={() => nav.go("reminders")}>All reminders</button></div>
-          {o.reminders.length ? <ul className="divide-y divide-ink/10">{o.reminders.slice(0, 8).map((r) => <ReminderRow key={r.id} r={r} />)}</ul> : <p className="mt-2 text-sm text-muted-foreground">Nothing waiting. Reminders appear here by themselves when something is due.</p>}
-        </Panel>
-        <div className="space-y-6">
-          {booked ? (
-            <Panel>
-              <h3 className="font-bold">Today's {lower(s.labels.orders)}</h3>
-              {o.appts.length ? <ul className="mt-1 divide-y divide-ink/10">{o.appts.map((a) => <li key={a.id} className="flex justify-between gap-2 py-2 text-sm"><LinkTo to={{ t: "appointment", id: a.id }}>{new Date(a.data.start_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} {a.data.customer_name}</LinkTo><span>{a.data.service}</span></li>)}</ul> : <p className="mt-1 text-sm text-muted-foreground">None booked for today.</p>}
-            </Panel>
-          ) : (
-            <Panel>
-              <h3 className="font-bold">Due today or late</h3>
-              {o.dueToday.length ? <ul className="mt-1 divide-y divide-ink/10">{o.dueToday.map((x) => <li key={x.id} className="flex items-center justify-between gap-2 py-2 text-sm"><span><LinkTo to={{ t: "order", id: x.id }}>{x.data.number}</LinkTo> {x.data.customer_name} · {dayTime(x.data.due_at)}</span><Pill s={x.data.status} /></li>)}</ul> : <p className="mt-1 text-sm text-muted-foreground">Nothing due. {plural(o.openOrders, "open order")} in all.</p>}
-            </Panel>
-          )}
-          {o.low.length > 0 && (
-            <Panel tone="bg-coral/30">
-              <h3 className="font-bold">Running low</h3>
-              <ul className="mt-1 space-y-1 text-sm">{o.low.map((x) => <li key={x.id} className="flex justify-between"><LinkTo to={{ t: x.kind, id: x.id }}>{x.name}</LinkTo><span>{x.qty} {x.unit} left</span></li>)}</ul>
-            </Panel>
-          )}
-          {s.modules.includes("leads") && <Stat label="Open enquiries" value={o.leadsOpen} hint={o.leadsValue ? `worth about ${inrShort(o.leadsValue)}` : undefined} onClick={() => nav.go("leads")} />}
+      <div>
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Quick actions</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {actions.map(([label, fn, icon]) => (
+            <Button key={label} type="button" onClick={fn} variant="outline" className="h-auto justify-start gap-2 py-3 text-left text-sm [&_svg]:h-5 [&_svg]:w-5">
+              {icon}{label}
+            </Button>
+          ))}
         </div>
       </div>
 
+      <div className={cn("grid gap-4", s.modules.includes("leads") ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
+        <Panel>
+          <div className="flex items-center justify-between"><h3 className="font-bold">To do today</h3><button type="button" className="text-sm underline" onClick={() => nav.go("reminders")}>All reminders</button></div>
+          {o.reminders.length ? <ul className="divide-y divide-ink/10">{o.reminders.slice(0, 8).map((r) => <ReminderRow key={r.id} r={r} />)}</ul> : (
+            <div className="mt-2 flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">Nothing waiting. Reminders appear here by themselves when something is due.</p>
+              <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "reminder" })}><Plus /> Add reminder</Button>
+            </div>
+          )}
+        </Panel>
+        {booked ? (
+          <Panel>
+            <h3 className="font-bold">Today's {lower(s.labels.orders)}</h3>
+            {o.appts.length ? <ul className="mt-1 divide-y divide-ink/10">{o.appts.map((a) => <li key={a.id} className="flex justify-between gap-2 py-2 text-sm"><LinkTo to={{ t: "appointment", id: a.id }}>{new Date(a.data.start_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} {a.data.customer_name}</LinkTo><span>{a.data.service}</span></li>)}</ul> : (
+              <div className="mt-2 flex flex-col items-start gap-3">
+                <p className="text-sm text-muted-foreground">None booked for today.</p>
+                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "appointment" })}><Plus /> Book {lower(s.labels.order)}</Button>
+              </div>
+            )}
+          </Panel>
+        ) : (
+          <Panel>
+            <h3 className="font-bold">Due today or late</h3>
+            {o.dueToday.length ? <ul className="mt-1 divide-y divide-ink/10">{o.dueToday.map((x) => <li key={x.id} className="flex items-center justify-between gap-2 py-2 text-sm"><span><LinkTo to={{ t: "order", id: x.id }}>{x.data.number}</LinkTo> {x.data.customer_name} · {dayTime(x.data.due_at)}</span><Pill s={x.data.status} /></li>)}</ul> : (
+              <div className="mt-2 flex flex-col items-start gap-3">
+                <p className="text-sm text-muted-foreground">Nothing due. {plural(o.openOrders, "open order")} in all.</p>
+                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "order" })}><Plus /> New {lower(s.labels.order)}</Button>
+              </div>
+            )}
+          </Panel>
+        )}
+        {s.modules.includes("leads") && (
+          <Panel>
+            <h3 className="font-bold">Open enquiries</h3>
+            {o.leadsOpen ? (
+              <div className="mt-2">
+                <p className="font-display text-2xl font-bold tabular-nums">{o.leadsOpen}</p>
+                {o.leadsValue ? <p className="text-sm text-muted-foreground">worth about {inrShort(o.leadsValue)}</p> : null}
+                <button type="button" className="mt-2 text-sm underline" onClick={() => nav.go("leads")}>See all</button>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-col items-start gap-3">
+                <p className="text-sm text-muted-foreground">No open enquiries right now.</p>
+                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "lead" })}><Plus /> New enquiry</Button>
+              </div>
+            )}
+          </Panel>
+        )}
+      </div>
+
+      {o.low.length > 0 && (
+        <Panel tone="bg-coral/30">
+          <h3 className="font-bold">Running low</h3>
+          <ul className="mt-1 space-y-1 text-sm">{o.low.map((x) => <li key={x.id} className="flex justify-between"><LinkTo to={{ t: x.kind, id: x.id }}>{x.name}</LinkTo><span>{x.qty} {x.unit} left</span></li>)}</ul>
+        </Panel>
+      )}
+
       <Panel>
         <h3 className="mb-2 font-bold">Sales, last 14 days</h3>
-        {chart.some((d) => d.sales > 0) ? <DailySales data={chart} /> : <p className="text-sm text-muted-foreground">Your sales show here once you make bills.</p>}
+        {chart.some((d) => d.sales > 0) ? <DailySales data={chart} /> : (
+          <div className="flex flex-col items-start gap-3">
+            <div aria-hidden className="flex h-24 w-full items-end gap-1.5 opacity-20">
+              {[30, 55, 40, 70, 45, 60, 35, 50, 65, 40, 55, 30, 45, 60].map((h, i) => <div key={i} className="flex-1 rounded-t bg-ink" style={{ height: `${h}%` }} />)}
+            </div>
+            <p className="text-sm text-muted-foreground">Your sales show here once you make bills.</p>
+            <Button size="sm" onClick={() => nav.form({ kind: "sale" })}><Plus /> Create your first bill</Button>
+          </div>
+        )}
       </Panel>
     </div>
   );

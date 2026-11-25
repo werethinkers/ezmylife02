@@ -18,6 +18,14 @@ export const MODULE_ICONS: Record<ModuleId, typeof Home> = {
 /** Sections shown, in a fixed order; Today and Settings are always there. */
 export const ORDERED: ModuleId[] = ["overview", "orders", "appointments", "bills", "dues", "customers", "leads", "stock", "purchases", "money", "reminders", "marketing", "staff", "taxes", "website", "reports", "settings"];
 export const visibleModules = (s: Settings): ModuleId[] => ORDERED.filter((m) => m === "overview" || m === "settings" || s.modules.includes(m));
+
+/** Sidebar grouping, by daily workflow. A module appears in exactly one group. */
+export const SECTION_GROUPS: { label: string; items: ModuleId[] }[] = [
+  { label: "Daily", items: ["overview", "orders", "appointments", "bills", "dues"] },
+  { label: "Customers", items: ["customers", "leads", "reminders"] },
+  { label: "Business", items: ["stock", "purchases", "money"] },
+  { label: "Manage", items: ["marketing", "staff", "taxes", "website", "reports", "settings"] },
+];
 /** The four on the phone's bottom bar. */
 export const phoneBar = (s: Settings): ModuleId[] => {
   const v = visibleModules(s);

@@ -21,7 +21,7 @@ import { inr } from "@/business/format";
 import { NavCtx, type FormOpen, type Target } from "./ui";
 import { FormHost } from "./forms";
 import { DetailHost } from "./details";
-import { MODULE_ICONS, MODULE_NAMES, phoneBar, visibleModules } from "./modules";
+import { MODULE_ICONS, MODULE_NAMES, SECTION_GROUPS, phoneBar, visibleModules } from "./modules";
 import { Appointments, Bills, Customers, Dues, Leads, Orders, Overview, Reminders } from "./sectionsSell";
 import { Marketing, Money, Purchases, Reports, SettingsSection, Staff, Stock, Taxes, Website } from "./sectionsRun";
 
@@ -142,22 +142,34 @@ function Sections({ current, onGo }: { current: ModuleId; onGo: (s: string) => v
   }, [db]);
   if (!db) return null;
   const names = MODULE_NAMES(db.ws.settings);
+  const visible = new Set(visibleModules(db.ws.settings));
   return (
-    <ul className="space-y-0.5">
-      {visibleModules(db.ws.settings).map((m) => {
-        const Icon = MODULE_ICONS[m];
-        const n = counts[m];
+    <nav className="space-y-3">
+      {SECTION_GROUPS.map((group) => {
+        const items = group.items.filter((m) => visible.has(m));
+        if (!items.length) return null;
         return (
-          <li key={m}>
-            <button type="button" onClick={() => onGo(m)} aria-current={current === m ? "page" : undefined}
-              className={cn("flex w-full items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left text-[15px] font-semibold", current === m ? "border-ink bg-ink text-cream" : "border-transparent hover:border-ink hover:bg-card")}>
-              <Icon className="h-[18px] w-[18px] shrink-0" /><span className="flex-1">{names[m]}</span>
-              {!!n && <span className={cn("rounded-full px-1.5 text-xs", current === m ? "bg-cream text-ink" : "bg-sun text-ink")}>{n}</span>}
-            </button>
-          </li>
+          <div key={group.label}>
+            <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{group.label}</p>
+            <ul className="space-y-0.5">
+              {items.map((m) => {
+                const Icon = MODULE_ICONS[m];
+                const n = counts[m];
+                return (
+                  <li key={m}>
+                    <button type="button" onClick={() => onGo(m)} aria-current={current === m ? "page" : undefined}
+                      className={cn("flex w-full items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left text-[15px] font-semibold", current === m ? "border-ink bg-ink text-cream" : "border-transparent hover:border-ink hover:bg-card")}>
+                      <Icon className="h-[18px] w-[18px] shrink-0" /><span className="flex-1">{names[m]}</span>
+                      {!!n && <span className={cn("rounded-full px-1.5 text-xs", current === m ? "bg-cream text-ink" : "bg-sun text-ink")}>{n}</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         );
       })}
-    </ul>
+    </nav>
   );
 }
 
