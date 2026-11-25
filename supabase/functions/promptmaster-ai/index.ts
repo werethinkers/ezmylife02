@@ -52,7 +52,7 @@ async function recordKeyFailure(id: string, currentCount: number) {
 }
 
 async function callGemini(apiKey: string, prompt: string, jsonMode: boolean): Promise<string | null> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
   const body: { contents: unknown; generationConfig: Record<string, unknown> } = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { temperature: 0.7 },
@@ -130,7 +130,7 @@ RESPOND WITH ONLY a JSON array of objects with "title" and "prompt" keys. No oth
     if (apiKey) {
       try {
         const requestBody: Record<string, unknown> = {
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-flash-lite',
           messages: [{ role: 'user', content: prompt }],
         };
         if (jsonMode) requestBody.response_format = { type: 'json_object' };

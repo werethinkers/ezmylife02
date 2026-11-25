@@ -108,7 +108,7 @@ serve(async (req) => {
     const prompt = String(rawPrompt ?? "").slice(0, 12000);
     
     const apiKey = (getAiKey() || "own-gemini-keys");
-    const model = 'google/gemini-2.5-flash';
+    const model = 'google/gemini-2.5-flash-lite';
 
     const requestBody: Record<string, unknown> = {
       model,
@@ -143,7 +143,7 @@ serve(async (req) => {
         const res = await callGeminiDirect(
           k.key_value,
           [{ role: 'user', content: prompt }],
-          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
           config?.responseMimeType === 'application/json' ? { type: 'json_object' } : undefined
         );
         if (res.ok) {
@@ -169,7 +169,7 @@ serve(async (req) => {
         const res = await callGeminiDirect(
           envKeys[i],
           [{ role: 'user', content: prompt }],
-          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
           config?.responseMimeType === 'application/json' ? { type: 'json_object' } : undefined
         );
         if (res.ok) {

@@ -13,7 +13,7 @@ import { image as makeImage, chat as nativeChat, type ChatMessage } from "./llm.
 export const AI = {
   GATEWAY: "https://ai.gateway.lovable.dev/v1/chat/completions",
   GEMINI_OPENAI: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-  TEXT_MODEL: "google/gemini-2.5-flash",
+  TEXT_MODEL: "google/gemini-2.5-flash-lite",
   IMAGE_MODEL: "google/gemini-2.5-flash-image",
 } as const;
 

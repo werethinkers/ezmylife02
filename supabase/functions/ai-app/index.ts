@@ -7,7 +7,7 @@ import { chat, image, parseJson, ModelError, type ChatMessage, type Part } from 
 import { APP_SPECS, COMMON_RULES } from "../_shared/appSpecs.ts";
 import { cacheKey, cachedAnswer, saveAnswer } from "../_shared/answerCache.ts";
 
-const FLASH_DEFAULT = "google/gemini-2.5-flash";
+const FLASH_DEFAULT = "google/gemini-2.5-flash-lite";
 const MAX_FIELD = 6000;
 const MAX_INPUTS = 40_000;
 const MAX_CONTEXT = 30_000;

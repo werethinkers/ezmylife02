@@ -93,7 +93,7 @@ async function callAIWithFallback(
   const geminiModel = model.replace("google/", "");
   const modelFallbackOrder = Array.from(new Set([
     geminiModel,
-    geminiModel === "gemini-2.5-pro" ? "gemini-2.5-flash" : geminiModel,
+    geminiModel === "gemini-2.5-pro" ? "gemini-2.5-flash-lite" : geminiModel,
     "gemini-2.5-flash-lite",
   ]));
 
@@ -251,7 +251,7 @@ serve(async (req) => {
 
       const response = await callAIWithFallback(
         [{ role: "system", content: systemPrompt }, ...history],
-        "google/gemini-2.5-flash",
+        "google/gemini-2.5-flash-lite",
         true
       );
 
@@ -269,7 +269,7 @@ serve(async (req) => {
         { role: "user", content: analysisPrompt },
       ],
       // Gemini 2.5 Flash keeps a full report within the 1–10 credit range.
-      "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash-lite",
       true
     );
 

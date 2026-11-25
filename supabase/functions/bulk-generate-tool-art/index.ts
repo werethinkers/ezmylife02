@@ -12,7 +12,7 @@ const GEMINI_KEYS = [1, 2, 3, 4, 5]
   .filter((v): v is string => !!v);
 
 const MODEL = "gemini-2.5-flash-image";
-const TEXT_MODEL = "gemini-2.5-flash";
+const TEXT_MODEL = "gemini-2.5-flash-lite";
 
 function iconPrompt(name: string, description: string, category: string) {
   return `Minimalist flat app icon representing "${name}" — ${description}. Category: ${category}. Single bold centered glyph or symbol that intuitively conveys the tool's purpose. Vibrant gradient (deep indigo to violet to electric magenta) on a clean dark navy background. Soft inner glow, subtle depth, rounded square iOS-style composition. Premium, polished, modern SaaS feel. NO text, NO words, NO letters, NO numbers, NO logos. Centered, square 1:1.`;

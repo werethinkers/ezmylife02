@@ -771,7 +771,7 @@ Deno.serve(
           // malformed, repair it; failing that, ask once more before giving up.
           let spec: Record<string, unknown> | null = null;
           for (let attempt = 0; attempt < 2 && !spec; attempt++) {
-            const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash", json: true, maxTokens: 16000, temperature: 0.3 });
+            const text = await chat([{ role: "user", content }], { model: "google/gemini-2.5-flash-lite", json: true, maxTokens: 16000, temperature: 0.3 });
             spec = readSpec(text);
           }
           if (!spec) throw new ModelError(502, "The photo could not be read. You were not charged.");

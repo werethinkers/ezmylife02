@@ -171,7 +171,7 @@ TASK:
 7. Keep the question short, conversational, in simple Hindi/Hinglish.
 `;
   return await withKeyRotation<string>(async (apiKey) => {
-    const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, sys);
+    const resp = await callGeminiText(apiKey, "gemini-2.5-flash-lite", contents, sys);
     if (!resp.ok) return { ok: false, status: resp.status };
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "Papa, aap kuch aur batana chahenge?";
@@ -182,7 +182,7 @@ TASK:
 async function refineResponse(rawText: string): Promise<string> {
   const contents = [{ role: "user", parts: [{ text: `Raw spoken text: "${rawText}"\n\nTask: Refine this into a beautiful, emotional first-person narrative sentence or paragraph in Hindi/Hinglish. Preserve the original emotion and tone. Do not make it too formal.` }] }];
   return await withKeyRotation<string>(async (apiKey) => {
-    const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, "You are a ghostwriter for a father's book. Clean up raw spoken Hindi/Hinglish into heartfelt narrative prose.");
+    const resp = await callGeminiText(apiKey, "gemini-2.5-flash-lite", contents, "You are a ghostwriter for a father's book. Clean up raw spoken Hindi/Hinglish into heartfelt narrative prose.");
     if (!resp.ok) return { ok: false, status: resp.status };
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || rawText;
@@ -245,7 +245,7 @@ WRITING STYLE & FIDELITY:
   const contents = [{ role: "user", parts: [{ text: `Conversation History:\n${history.map((m) => `${m.role}: ${m.text}`).join("\n")}\n\nTask: Generate a complete personal keepsake in '${style}' style for ${childAddress}.` }] }];
   return await withKeyRotation<string>(async (apiKey) => {
     // Gemini 2.5 Flash keeps a full keepsake within the app's 1–10 credit range (2.5 Pro costs ~₹10+ per book).
-    const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, sys);
+    const resp = await callGeminiText(apiKey, "gemini-2.5-flash-lite", contents, sys);
     if (!resp.ok) return { ok: false, status: resp.status };
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "Error generating book.";
@@ -309,7 +309,7 @@ serve(async (req) => {
       }
       const contents = [{ role: "user", parts: [{ text: `Convert the following Romanized Hindi (Hinglish) text into proper Devanagari Hindi script. Output ONLY the Devanagari text, no explanations, no romanization, no quotes.\n\nText:\n${text}` }] }];
       const result = await withKeyRotation<string>(async (apiKey) => {
-        const resp = await callGeminiText(apiKey, "gemini-2.5-flash", contents, "You are an expert Hindi transliterator. Convert Romanized Hindi to Devanagari script accurately and naturally.");
+        const resp = await callGeminiText(apiKey, "gemini-2.5-flash-lite", contents, "You are an expert Hindi transliterator. Convert Romanized Hindi to Devanagari script accurately and naturally.");
         if (!resp.ok) return { ok: false, status: resp.status };
         const data = await resp.json();
         const out = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("").trim() || text;
