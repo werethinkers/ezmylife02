@@ -69,20 +69,20 @@ export function Overview({ db }: { db: Db }) {
   const steps = setupSteps(db.recs, s);
   const left = steps.filter((x) => !x.done);
   const booked = s.modules.includes("appointments");
-  const actions: [string, () => void, JSX.Element, string][] = [
-    [booked ? `Book ${lower(s.labels.order)}` : `New ${lower(s.labels.order)}`, () => nav.form({ kind: booked ? "appointment" : "order" }), booked ? <CalendarPlus /> : <ShoppingBag />, "bg-pink"],
-    ["New bill", () => nav.form({ kind: "sale" }), <ReceiptIndianRupee />, "bg-sun"],
-    ["Got paid", () => nav.form({ kind: "payment" }), <Wallet />, "bg-lime"],
-    ["Spent money", () => nav.form({ kind: "expense" }), <Wallet />, "bg-coral"],
-    ...(s.modules.includes("purchases") ? [["Bought stock", () => nav.form({ kind: "purchase" }), <Truck />, "bg-sky"] as [string, () => void, JSX.Element, string]] : []),
-    ...(s.modules.includes("leads") ? [["New enquiry", () => nav.form({ kind: "lead" }), <UserPlus />, "bg-teal"] as [string, () => void, JSX.Element, string]] : []),
+  const actions: [string, () => void, JSX.Element][] = [
+    [booked ? `Book ${lower(s.labels.order)}` : `New ${lower(s.labels.order)}`, () => nav.form({ kind: booked ? "appointment" : "order" }), booked ? <CalendarPlus /> : <ShoppingBag />],
+    ["New bill", () => nav.form({ kind: "sale" }), <ReceiptIndianRupee />],
+    ["Got paid", () => nav.form({ kind: "payment" }), <Wallet />],
+    ["Spent money", () => nav.form({ kind: "expense" }), <Wallet />],
+    ...(s.modules.includes("purchases") ? [["Bought stock", () => nav.form({ kind: "purchase" }), <Truck />] as [string, () => void, JSX.Element]] : []),
+    ...(s.modules.includes("leads") ? [["New enquiry", () => nav.form({ kind: "lead" }), <UserPlus />] as [string, () => void, JSX.Element]] : []),
   ];
   return (
     <div className="space-y-6">
       <SectionHead title={`Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}${s.owner_name ? `, ${s.owner_name.split(" ")[0]}` : ""}`} sub={`${day(today())}. Here is ${db.ws.name} today.`} />
 
       {left.length > 0 && (
-        <Panel tone="bg-sky">
+        <Panel>
           <p className="font-bold">Finish setting up ({steps.length - left.length} of {steps.length} done)</p>
           <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
             {steps.map((x) => (
@@ -110,17 +110,17 @@ export function Overview({ db }: { db: Db }) {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={plural(o.billsToday, "bill")} tone="bg-sun" onClick={() => nav.go("bills")} />
-        <Stat label="Money in today" value={inrShort(o.collectedToday)} tone="bg-lime" onClick={() => nav.go("money")} />
+        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={plural(o.billsToday, "bill")} onClick={() => nav.go("bills")} />
+        <Stat label="Money in today" value={inrShort(o.collectedToday)} onClick={() => nav.go("money")} />
         <Stat label="To collect" value={inrShort(o.duesTotal)} hint={plural(o.duesPeople, "person", "people")} tone="bg-coral" onClick={() => nav.go("dues")} />
-        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} tone="bg-card" onClick={() => nav.go("reports")} />
+        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} onClick={() => nav.go("reports")} />
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {actions.map(([label, fn, icon, tone]) => (
-          <button key={label} type="button" onClick={fn} className={cn("flex items-center gap-2 rounded-xl border-2 border-ink px-3 py-3 text-left text-sm font-bold shadow-block-sm transition-transform hover:-translate-y-0.5 [&_svg]:h-5 [&_svg]:w-5", tone)}>
+        {actions.map(([label, fn, icon], i) => (
+          <Button key={label} type="button" onClick={fn} variant={i === 0 ? "default" : "outline"} className="h-auto justify-start gap-2 py-3 text-left text-sm [&_svg]:h-5 [&_svg]:w-5">
             {icon}{label}
-          </button>
+          </Button>
         ))}
       </div>
 
