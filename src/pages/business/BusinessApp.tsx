@@ -4,7 +4,8 @@
 import { useContext, useMemo, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { CalendarPlus, Cloud, HardDrive, Loader2, Menu, Plus, ReceiptIndianRupee, Search, ShoppingBag, Truck, UserPlus, Wallet } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { CONTAINER } from "@/components/modern/styles";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ function BusinessApp() {
   return (
     <NavCtx.Provider value={nav}>
       <Shell>
-        <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-28 pt-4 lg:pb-10">
+        <div className={cn(CONTAINER, "flex gap-6 pb-28 pt-4 lg:pb-10")}>
           <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-60 shrink-0 flex-col overflow-y-auto lg:flex">
             <Switcher />
             <Sections current={current} onGo={nav.go} />
@@ -129,7 +130,7 @@ function BusinessApp() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-background"><Navbar />{children}</div>;
+  return <ModernPage section="apps">{children}</ModernPage>;
 }
 
 function Sections({ current, onGo }: { current: ModuleId; onGo: (s: string) => void }) {

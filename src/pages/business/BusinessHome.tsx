@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Check, HardDrive, Search } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
-import SEOFooter from "@/components/SEOFooter";
+import { ModernPage } from "@/components/modern/ModernPage";
+import { CONTAINER } from "@/components/modern/styles";
 import { PageSeo } from "@/components/seo/PageSeo";
 import { seoFor } from "@/lib/seo/pages";
 import { APP_COUNT_FALLBACK } from "@/lib/appCount";
@@ -26,11 +26,9 @@ export default function BusinessHomePage() {
   return (
     <BusinessProvider>
       <PageSeo {...seoFor("/business", APP_COUNT_FALLBACK)} />
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ModernPage section="apps">
         <BusinessHome />
-        <SEOFooter />
-      </div>
+      </ModernPage>
     </BusinessProvider>
   );
 }
@@ -45,7 +43,7 @@ function BusinessHome() {
   if (picked) return <Setup t={picked} onBack={() => setPicked(null)} />;
   return (
     <main>
-      <header className="mx-auto max-w-6xl px-4 pt-8 md:pt-12">
+      <header className={cn(CONTAINER, "pt-8 md:pt-12")}>
         <div className="rounded-[2rem] border-2 border-ink bg-sun p-6 shadow-block-lg md:p-10">
           <p className="text-sm font-bold uppercase tracking-wider">My Business</p>
           <h1 className="mt-2 max-w-3xl font-display text-3xl font-bold leading-tight tracking-tight md:text-5xl">Your whole business, in one tab</h1>
@@ -60,14 +58,14 @@ function BusinessHome() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className={cn(CONTAINER, "py-10")}>
         <h2 className="font-display text-2xl font-bold">Popular to start with</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {POPULAR.map((id) => BIZ_TYPES.find((t) => t.id === id)).filter(Boolean).map((t) => <TypeCard key={t!.id} t={t!} onPick={setPicked} />)}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-10">
+      <section className={cn(CONTAINER, "pb-10")}>
         <h2 className="font-display text-2xl font-bold">What one entry does</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {[
@@ -80,7 +78,7 @@ function BusinessHome() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16">
+      <section className={cn(CONTAINER, "pb-16")}>
         <h2 className="font-display text-2xl font-bold">All {BIZ_TYPES.length} businesses, by sector</h2>
         <div className="mt-4 space-y-6">
           {SECTORS.map((sec) => {
