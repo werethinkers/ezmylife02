@@ -93,8 +93,8 @@ async function callAIWithFallback(
   const geminiModel = model.replace("google/", "");
   const modelFallbackOrder = Array.from(new Set([
     geminiModel,
-    geminiModel === "gemini-2.5-pro" ? "gemini-2.5-flash-lite" : geminiModel,
-    "gemini-2.5-flash-lite",
+    geminiModel === "gemini-2.5-pro" ? "gemini-2.5-flash" : geminiModel,
+    "gemini-3.5-flash-lite",
   ]));
 
   for (let i = 0; i < geminiKeys.length; i++) {

@@ -23,10 +23,10 @@ export interface AppSpec {
   maxContext?: number;
 }
 
-// All jobs now use Flash-Lite (cheapest active Gemini model, $0.10/$0.40 per 1M tokens,
-// no "thinking" tokens, avoids the 2.5-flash quota issues that stopped apps).
-export const FLASH = "google/gemini-2.5-flash-lite";
-export const LITE = "google/gemini-2.5-flash-lite";
+// Short, 2-credit jobs use Flash-Lite (about a fifth of Flash's cost, no "thinking" tokens);
+// longer documents, chat and anything that needs careful reasoning use Flash.
+export const FLASH = "google/gemini-2.5-flash";
+export const LITE = "google/gemini-3.5-flash-lite";
 
 export const BIZ = `You write for small and medium businesses in India. Use plain, professional English (or the language the user asks for). Use Indian conventions (₹, lakh/crore, GST, Indian states, Indian holidays and festivals) where relevant. Never invent facts about the user's business, real people, laws, case numbers or statistics: if something is needed and not given, leave a clear [placeholder] in square brackets. Where a figure has already been worked out and given to you — a subtotal, a tax amount, a grand total, an instalment, an average rating, a number of days — use it exactly as given and never recalculate or round it differently. Format the answer as clean Markdown with short headings, bullet lists and tables where they help. Do not add a preamble or closing commentary — return only the deliverable.`;
 
