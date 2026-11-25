@@ -23,6 +23,7 @@ const ImageBlur = lazy(() => import("./ImageBlur").then((m) => ({ default: m.Ima
 const ImagePixelate = lazy(() => import("./ImagePixelate").then((m) => ({ default: m.ImagePixelate })));
 const ImageGrayscale = lazy(() => import("./ImageGrayscale").then((m) => ({ default: m.ImageGrayscale })));
 const ImageBeautify = lazy(() => import("./ImageBeautify").then((m) => ({ default: m.ImageBeautify })));
+const AIFaceGenerator = lazy(() => import("./AIFaceGenerator").then((m) => ({ default: m.AIFaceGenerator })));
 const ImageTextOverlay = lazy(() => import("./ImageTextOverlay").then((m) => ({ default: m.ImageTextOverlay })));
 const DpiConverter = lazy(() => import("./DpiConverter").then((m) => ({ default: m.DpiConverter })));
 const MetadataViewer = lazy(() => import("./MetadataViewer").then((m) => ({ default: m.MetadataViewer })));
@@ -68,7 +69,7 @@ const nativeTools: Record<string, React.ComponentType> = {
   "resize-image-3-5x4-5": ImageResizer,
 
   // AI image (mapped to closest native impl until dedicated UIs ship)
-  "ai-face-generator": ImageBeautify,
+  "ai-face-generator": AIFaceGenerator,
   "remove-object-photo": BackgroundRemover,
   "resize-35x45mm": ImageResizer,
   "resize-2x2-inch": ImageResizer,

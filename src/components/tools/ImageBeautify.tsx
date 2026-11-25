@@ -1,12 +1,20 @@
 import { useState, useRef, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Upload, Download, Sparkles, Sun, Contrast, Droplets } from "lucide-react";
 import { toast } from "sonner";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 
+// Shared by several catalog entries (ai-face-generator, beautify-image, retouch-image,
+// blemish-remover, ai-photo-enhancer, super-resolution, unblur-image/-face) until each gets its
+// own dedicated UI, so the heading is resolved from the catalog rather than hardcoded to one name.
 export const ImageBeautify = () => {
+  const { toolId } = useParams<{ toolId: string }>();
+  const { data: catalog = [] } = useToolsCatalog();
+  const title = catalog.find((t) => t.id === toolId)?.name ?? "Image Beautify";
   const [image, setImage] = useState<string | null>(null);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
@@ -123,7 +131,7 @@ export const ImageBeautify = () => {
     <div className="px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="space-y-1">
-          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Image Beautify</h1>
+          <h1 className="font-display text-2xl md:text-3xl">{title}</h1>
           <p className="text-muted-foreground">Enhance your images with professional adjustments</p>
         </div>
 
@@ -147,11 +155,11 @@ export const ImageBeautify = () => {
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">After</h3>
-              <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center">
-                <img 
-                  src={image} 
-                  alt="Preview" 
+              <h3 className="font-bold mb-4">Preview</h3>
+              <div className="aspect-video overflow-hidden rounded-xl border-2 border-ink/15 bg-muted flex items-center justify-center">
+                <img
+                  src={image}
+                  alt="Preview"
                   className="max-w-full max-h-full object-contain transition-all"
                   style={{ filter: getFilterString() }}
                 />
@@ -159,7 +167,7 @@ export const ImageBeautify = () => {
             </Card>
 
             <Card className="p-4 space-y-4">
-              <h3 className="font-semibold">Adjustments</h3>
+              <h3 className="font-bold">Adjustments</h3>
 
               <div>
                 <Label className="flex items-center gap-2">

@@ -6,6 +6,7 @@ export const contentAi: Record<string, number> = {
   "advance-text-extractor": 4,
   "auto-text-extractor": 4,
   "image-creator": 31,
+  "ai-face-generator": 31,
   "create-3d-images": 31,
   "sketchflow-ai": 31,
 };

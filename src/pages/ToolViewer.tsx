@@ -2,7 +2,9 @@ import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { tools, getToolUrl } from "@/data/tools";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/Navbar";
+import { ModernHeader } from "@/components/modern/ModernHeader";
+import { useModernTheme } from "@/components/modern/theme";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
@@ -25,6 +27,10 @@ import { AppAbout } from "@/components/tools/AppAbout";
 import { isDeveloperApp } from "@/lib/devApps";
 import DeveloperApp from "@/apps/hosted/DeveloperApp";
 
+// Soft, Home-style border/shadow for controls inside the tool frame (overrides the shared
+// components' default thick ink border + hard offset shadow, which read as too heavy here).
+const SOFT_BTN = "border border-zinc-200 shadow-sm hover:translate-x-0 hover:translate-y-0 hover:shadow-sm active:translate-x-0 active:translate-y-0 active:shadow-sm dark:border-zinc-800";
+
 interface CatalogTool {
   name: string;
   description: string;
@@ -46,6 +52,7 @@ const ToolViewer = () => {
   const [catalogInfo, setCatalogInfo] = useState<CatalogTool | null>(null);
   const [catalogChecked, setCatalogChecked] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const { dark } = useModernTheme();
 
   const tool = tools.find(t => t.toolId === toolId);
   const toolUrl = toolId ? getToolUrl(toolId) : null;
@@ -165,7 +172,7 @@ const ToolViewer = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <div className={cn("ez-modern", dark && "dark")}><ModernHeader /></div>
         <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
           <AlertCircle className="h-16 w-16 text-destructive" />
           <h1 className="text-2xl font-bold text-foreground">We couldn't find that app</h1>
@@ -251,11 +258,11 @@ const ToolViewer = () => {
         path={`/tool/${toolId}`}
         jsonLd={seoJsonLd}
       />
-      <Navbar />
-      <div className="z-20 shrink-0 border-b-2 border-ink bg-card">
+      <div className={cn("ez-modern", dark && "dark")}><ModernHeader /></div>
+      <div className="z-20 shrink-0 border-b border-zinc-200 bg-card dark:border-zinc-800">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
-            <Button onClick={() => navigate(toolTitle && toolTitle !== toolId ? `/promo/${toolTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` : "/ai-apps")} variant="outline" size="sm" className="h-9 shrink-0" aria-label="Back to what this app does">
+            <Button onClick={() => navigate(toolTitle && toolTitle !== toolId ? `/promo/${toolTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` : "/ai-apps")} variant="outline" size="sm" className={cn("h-9 shrink-0", SOFT_BTN)} aria-label="Back to what this app does">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
             </Button>
@@ -266,8 +273,8 @@ const ToolViewer = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {toolId && <BulkButton toolId={toolId} />}
-            <Button onClick={toggleFullscreen} variant="outline" size="sm" className="h-9">
+            {toolId && <BulkButton toolId={toolId} className={SOFT_BTN} />}
+            <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-9", SOFT_BTN)}>
               <Maximize2 className="h-3.5 w-3.5" />
               <span className="hidden text-xs sm:inline">Full screen</span>
             </Button>
@@ -281,7 +288,7 @@ const ToolViewer = () => {
       {/* Older apps don't carry the shared app frame, so show what they do in plain words here. */}
       {isNativeTool && !uploadedToolUrl && toolCategory && !hasEngineApp(toolId ?? "") && (
         <div className="mx-auto w-full max-w-4xl px-4 pt-6">
-          <GiveGet give={categoryInfo(toolCategory).give} get={categoryInfo(toolCategory).get} time={null} className="max-w-2xl" />
+          <GiveGet give={categoryInfo(toolCategory).give} get={categoryInfo(toolCategory).get} time={null} className={cn("max-w-2xl", SOFT_BTN)} />
         </div>
       )}
 

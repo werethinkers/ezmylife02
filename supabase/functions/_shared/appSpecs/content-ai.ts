@@ -9,6 +9,7 @@ export const contentAi: Record<string, AppSpec> = {
   "advance-text-extractor": { kind: "vision", credits: 4, maxImages: 6, system: "You convert document images into clean, structured Markdown.", task: "Extract the full content of the document image(s) as structured Markdown: headings, paragraphs, bullet lists and tables (as Markdown tables). Preserve numbers exactly. Keep the original language. After the content, add a short 'Key details' list (dates, amounts, names) found in it." },
   "auto-text-extractor": { kind: "vision", credits: 4, maxImages: 4, system: "You extract fields from business documents accurately. Never guess missing values; use empty strings.", task: 'Identify the document type (invoice, receipt, bill, business card, ID card, form, other) and extract its fields. Return JSON: {"document_type": "...", "fields": [{"label": "...", "value": "..."}], "line_items": [{"description": "", "quantity": "", "rate": "", "amount": ""}]}. Include totals, taxes (GST), dates and IDs when present.' },
   "image-creator": { kind: "image", credits: 31, system: "" },
+  "ai-face-generator": { kind: "image", credits: 31, system: "" },
   "create-3d-images": { kind: "image", credits: 31, system: "" },
   "sketchflow-ai": { kind: "image", credits: 31, system: "" },
 };
