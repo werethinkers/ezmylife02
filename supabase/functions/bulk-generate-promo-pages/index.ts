@@ -12,7 +12,7 @@ const GEMINI_KEYS = [1, 2, 3, 4, 5]
   .filter((v): v is string => !!v);
 
 const IMAGE_MODEL = "gemini-2.5-flash-image";
-const TEXT_MODEL = "gemini-2.5-flash";
+const TEXT_MODEL = "gemini-2.5-flash-lite";
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

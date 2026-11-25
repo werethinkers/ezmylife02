@@ -126,7 +126,7 @@ Make it engaging with a strong hook and CTA.`;
     }
 
     const response = await aiFetch({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },

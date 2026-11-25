@@ -62,7 +62,7 @@ const canSkipThinking = (model: string) => /flash/.test(model) && !/image/.test(
 const isGemini3 = (model: string) => /^gemini-3/.test(model);
 
 export interface ChatOptions {
-  model?: string; // gateway id, e.g. "google/gemini-2.5-flash"
+  model?: string; // gateway id, e.g. "google/gemini-2.5-flash-lite"
   maxTokens?: number;
   json?: boolean;
   temperature?: number;
@@ -70,7 +70,7 @@ export interface ChatOptions {
 
 /** One non-streaming completion. Returns the text. */
 export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
-  const model = opts.model ?? "google/gemini-2.5-flash";
+  const model = opts.model ?? "google/gemini-2.5-flash-lite";
   let lastStatus = 0;
   let lastText = "";
 
