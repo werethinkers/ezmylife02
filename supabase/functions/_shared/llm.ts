@@ -10,9 +10,13 @@ const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
 
 export class ModelError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Machine-readable reason a caller can switch on (e.g. to show a tool-specific message),
+   *  separate from `message`, which is already safe to show the user as-is. */
+  code?: "safety_block" | "invalid_request";
+  constructor(status: number, message: string, code?: ModelError["code"]) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -168,8 +172,11 @@ export function parseJson<T = unknown>(text: string): T {
   }
 }
 
-/** Generates (or edits, when images are given) one image. Returns a data: URL. */
-export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image"): Promise<string> {
+/** Generates (or edits, when images are given) one image. Returns a data: URL.
+ *  aspectRatio (e.g. "16:9", "9:16", "4:3", "3:4", "1:1") is sent as structured config on the
+ *  direct Gemini call (generationConfig.imageConfig.aspectRatio — the field Google's own 2.5
+ *  Flash Image docs use), not just folded into the prompt text, so the model actually honours it. */
+export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image", aspectRatio?: string): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
 
@@ -178,7 +185,9 @@ export async function image(prompt: string, inputImages: string[] = [], model = 
       const r = await fetch(GATEWAY, {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, modalities: ["image", "text"], messages: [{ role: "user", content }] }),
+        // The gateway's own passthrough for this field isn't documented/verified, so it's sent on
+        // a best-effort basis here; the direct-Gemini path below is the guaranteed-correct one.
+        body: JSON.stringify({ model, modalities: ["image", "text"], messages: [{ role: "user", content }], ...(aspectRatio ? { image_config: { aspect_ratio: aspectRatio } } : {}) }),
       });
       if (r.ok) {
         const data = await r.json();
@@ -190,25 +199,54 @@ export async function image(prompt: string, inputImages: string[] = [], model = 
     }
   }
 
+  // Gemini reports a refusal two ways: the whole prompt is blocked before any candidate is made
+  // (promptFeedback.blockReason) or one candidate is made but stops short of an image
+  // (candidates[0].finishReason). Either way it is a content decision, not a flaky key or a
+  // transient outage, so it's thrown immediately instead of being retried on every other key.
+  // IMAGE_OTHER/OTHER are left out on purpose — forum reports describe those as a flaky upstream
+  // bug on Google's side, not a safety verdict, so mislabelling them as a content block would be
+  // actively wrong.
+  const SAFETY_REASONS = new Set(["SAFETY", "PROHIBITED_CONTENT", "IMAGE_PROHIBITED_CONTENT", "IMAGE_SAFETY", "RECITATION", "IMAGE_RECITATION", "SPII", "BLOCKLIST"]);
+
   const { contents } = toGeminiContents([{ role: "user", content }]);
   const geminiModel = model.replace(/^google\//, "");
   for (const key of await geminiKeys()) {
+    let data: Record<string, unknown>;
     try {
       const r = await fetch(`${GEMINI}/${geminiModel}:generateContent?key=${key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents, generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }),
+        body: JSON.stringify({ contents, generationConfig: { responseModalities: ["IMAGE", "TEXT"], ...(aspectRatio ? { imageConfig: { aspectRatio } } : {}) } }),
       });
-      if (r.ok) {
-        const data = await r.json();
-        for (const p of data?.candidates?.[0]?.content?.parts ?? []) {
-          const inline = p.inline_data ?? p.inlineData;
-          if (inline?.data) return `data:${inline.mime_type ?? inline.mimeType ?? "image/png"};base64,${inline.data}`;
-        }
-      } else lastStatus = r.status;
-    } catch {
-      /* next key */
+      if (!r.ok) {
+        const errBody = await r.text().catch(() => "");
+        console.error(`[image] Gemini request failed (${r.status}): ${errBody.slice(0, 1000)}`);
+        lastStatus = r.status;
+        // An invalid aspect ratio, a malformed/too-large reference image, etc.: another key
+        // would get the exact same 400, so this is surfaced straight away instead of retried.
+        if (r.status === 400) throw new ModelError(400, "That request wasn't valid — check the prompt, reference image or aspect ratio and try again. You were not charged.", "invalid_request");
+        continue;
+      }
+      data = await r.json();
+    } catch (e) {
+      if (e instanceof ModelError) throw e;
+      continue; // network error etc. on this key: try the next one
     }
+    const candidate = (data.candidates as Record<string, unknown>[] | undefined)?.[0];
+    const candContent = candidate?.content as { parts?: Record<string, unknown>[] } | undefined;
+    for (const p of candContent?.parts ?? []) {
+      const inline = (p.inline_data ?? p.inlineData) as { data?: string; mime_type?: string; mimeType?: string } | undefined;
+      if (inline?.data) return `data:${inline.mime_type ?? inline.mimeType ?? "image/png"};base64,${inline.data}`;
+    }
+    const promptFeedback = data.promptFeedback as Record<string, unknown> | undefined;
+    const blockReason = promptFeedback?.blockReason as string | undefined;
+    const finishReason = candidate?.finishReason as string | undefined;
+    const reason = blockReason ?? finishReason;
+    console.error("[image] Gemini returned no image:", JSON.stringify({ blockReason, finishReason, safetyRatings: candidate?.safetyRatings ?? promptFeedback?.safetyRatings }).slice(0, 1000));
+    if (reason && SAFETY_REASONS.has(reason)) {
+      throw new ModelError(422, "That image couldn't be generated because of the AI's safety filters. Try describing it differently.", "safety_block");
+    }
+    lastStatus = 502;
   }
   throw new ModelError(lastStatus === 429 ? 429 : 502, "Image generation failed. You were not charged.");
 }

@@ -8,6 +8,13 @@ import { APP_SPECS, COMMON_RULES } from "../_shared/appSpecs.ts";
 import { cacheKey, cachedAnswer, saveAnswer } from "../_shared/answerCache.ts";
 
 const FLASH_DEFAULT = "google/gemini-2.5-flash-lite";
+const ASPECT_RATIOS = new Set(["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"]);
+// Tool-specific wording for a safety_block (see _shared/llm.ts): the shared `image()` helper only
+// knows it was refused, not what the tool was trying to make, so each image tool that wants its
+// own phrasing adds a line here instead of every caller guessing at one generic message.
+const SAFETY_MESSAGE: Record<string, string> = {
+  "ai-face-generator": "We can't generate faces of real people or celebrities. Try describing the age, features and style instead of naming someone real.",
+};
 const MAX_FIELD = 6000;
 const MAX_INPUTS = 40_000;
 const MAX_CONTEXT = 30_000;
@@ -72,8 +79,14 @@ Deno.serve(
         const prompt = String(body.prompt ?? "").trim().slice(0, 2000);
         if (!prompt) return json({ error: "Describe the image you want." }, 400);
         const style = body.style ? ` Style: ${String(body.style).slice(0, 200)}.` : "";
-        const aspect = body.aspect ? ` Aspect ratio ${String(body.aspect).slice(0, 10)}.` : "";
-        const url = await image(`${prompt}.${style}${aspect} High quality, coherent composition, no watermark, no text unless asked.`, cleanImages(body.images).slice(0, 2));
+        const aspectRatio = ASPECT_RATIOS.has(String(body.aspect ?? "")) ? String(body.aspect) : undefined;
+        const aspectHint = aspectRatio ? ` Aspect ratio ${aspectRatio}.` : "";
+        const url = await image(
+          `${prompt}.${style}${aspectHint} High quality, coherent composition, no watermark, no text unless asked.`,
+          cleanImages(body.images).slice(0, 2),
+          undefined,
+          aspectRatio,
+        );
         return json({ ok: true, image: url });
       }
 
@@ -143,7 +156,9 @@ Deno.serve(
       return json({ ok: true, output });
     } catch (e) {
       const status = e instanceof ModelError ? e.status : 500;
-      return json({ error: e instanceof Error ? e.message : String(e) }, status >= 400 ? status : 500);
+      const message = e instanceof ModelError && e.code === "safety_block" ? (SAFETY_MESSAGE[toolId] ?? e.message) : e instanceof Error ? e.message : String(e);
+      if (e instanceof ModelError && e.code) console.error(`[ai-app] ${toolId}: ${e.code} (${e.status})`);
+      return json({ error: message }, status >= 400 ? status : 500);
     }
   }),
 );
