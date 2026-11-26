@@ -37,11 +37,14 @@ const DEFAULT_CREDITS: Record<string, number> = {
 
 // Each tier tries its own model first and, only if that model is not available, the one after it.
 // gemini-2.5-flash-image  = standard image model (~$0.039/image, used across the codebase)
-// gemini-3.1-flash-lite-image = higher quality lite variant (used in productvision-angles)
+// NOTE: gemini-3.1-flash-lite-image works fine when called directly on the Gemini REST API (like
+// productvision-angles does), but this function routes through the Lovable AI gateway which does
+// NOT support that model — sending it there hangs for 60+ seconds and kills the edge function.
+// All tiers use the proven 2.5-flash-image model until the gateway adds 3.1-flash-lite support.
 const TIER_MODELS: Record<string, string[]> = {
   quick: ["google/gemini-2.5-flash-image"],
-  standard: ["google/gemini-3.1-flash-lite-image", "google/gemini-2.5-flash-image"],
-  premium: ["google/gemini-3.1-flash-lite-image"],
+  standard: ["google/gemini-2.5-flash-image"],
+  premium: ["google/gemini-2.5-flash-image"],
 };
 const tierOf = (b: { tier?: unknown } | null) => (b?.tier === "quick" || b?.tier === "premium" ? String(b.tier) : "standard");
 const IMAGE_MODEL = "google/gemini-2.5-flash-image";
