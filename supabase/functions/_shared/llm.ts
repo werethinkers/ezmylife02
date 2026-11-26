@@ -158,12 +158,14 @@ export function parseJson<T = unknown>(text: string): T {
   }
 }
 
-/** Generates (or edits, when images are given) one image. Returns a data: URL. */
-export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image"): Promise<string> {
+/** Generates (or edits, when images are given) one image. Returns a data: URL.
+ *  Pass skipGateway:true to go straight to the Gemini API (bypasses the Lovable gateway).
+ *  Use this when the model is not supported by the gateway (e.g. gemini-3.1-flash-lite-image). */
+export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image", skipGateway = false): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
 
-  if (LOVABLE_API_KEY) {
+  if (!skipGateway && LOVABLE_API_KEY) {
     try {
       const r = await fetch(GATEWAY, {
         method: "POST",
