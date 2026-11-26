@@ -172,22 +172,37 @@ export function parseJson<T = unknown>(text: string): T {
   }
 }
 
+/** Reads width/height straight out of a PNG's IHDR chunk (bytes 16-23), so a caller asking for a
+ *  specific aspect ratio can confirm what actually came back without a decode library. Returns
+ *  null for anything that isn't a PNG (nothing here currently requests a non-PNG output). */
+function pngDimensions(base64: string): { width: number; height: number } | null {
+  try {
+    const bytes = Uint8Array.from(atob(base64.slice(0, 40)), (c) => c.charCodeAt(0));
+    if (bytes.length < 24 || bytes[12] !== 0x49 || bytes[13] !== 0x48 || bytes[14] !== 0x44 || bytes[15] !== 0x52) return null; // not "IHDR"
+    const view = new DataView(bytes.buffer);
+    return { width: view.getUint32(16), height: view.getUint32(20) };
+  } catch {
+    return null;
+  }
+}
+
 /** Generates (or edits, when images are given) one image. Returns a data: URL.
- *  aspectRatio (e.g. "16:9", "9:16", "4:3", "3:4", "1:1") is sent as structured config on the
- *  direct Gemini call (generationConfig.imageConfig.aspectRatio — the field Google's own 2.5
- *  Flash Image docs use), not just folded into the prompt text, so the model actually honours it. */
+ *  aspectRatio (e.g. "16:9", "9:16", "4:3", "3:4", "1:1") is sent as generationConfig.imageConfig.
+ *  aspectRatio on the direct Gemini call — confirmed against Google's own Gemini API reference
+ *  (ai.google.dev/api/generate-content), not the Vertex AI docs, which is a related but separate
+ *  API. The Lovable gateway's own passthrough for this field is undocumented, so whenever a
+ *  specific ratio is requested the gateway is skipped entirely in favour of the verified path,
+ *  rather than risking a 1:1 fallback the caller never asked for. */
 export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image", aspectRatio?: string): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
 
-  if (LOVABLE_API_KEY) {
+  if (LOVABLE_API_KEY && !aspectRatio) {
     try {
       const r = await fetch(GATEWAY, {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        // The gateway's own passthrough for this field isn't documented/verified, so it's sent on
-        // a best-effort basis here; the direct-Gemini path below is the guaranteed-correct one.
-        body: JSON.stringify({ model, modalities: ["image", "text"], messages: [{ role: "user", content }], ...(aspectRatio ? { image_config: { aspect_ratio: aspectRatio } } : {}) }),
+        body: JSON.stringify({ model, modalities: ["image", "text"], messages: [{ role: "user", content }] }),
       });
       if (r.ok) {
         const data = await r.json();
@@ -236,7 +251,14 @@ export async function image(prompt: string, inputImages: string[] = [], model = 
     const candContent = candidate?.content as { parts?: Record<string, unknown>[] } | undefined;
     for (const p of candContent?.parts ?? []) {
       const inline = (p.inline_data ?? p.inlineData) as { data?: string; mime_type?: string; mimeType?: string } | undefined;
-      if (inline?.data) return `data:${inline.mime_type ?? inline.mimeType ?? "image/png"};base64,${inline.data}`;
+      if (inline?.data) {
+        const mime = inline.mime_type ?? inline.mimeType ?? "image/png";
+        if (aspectRatio && mime === "image/png") {
+          const dims = pngDimensions(inline.data);
+          console.log(`[image] requested aspect ${aspectRatio}; returned ${dims ? `${dims.width}x${dims.height}` : "unknown"} px`);
+        }
+        return `data:${mime};base64,${inline.data}`;
+      }
     }
     const promptFeedback = data.promptFeedback as Record<string, unknown> | undefined;
     const blockReason = promptFeedback?.blockReason as string | undefined;

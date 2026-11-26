@@ -80,6 +80,7 @@ Deno.serve(
         if (!prompt) return json({ error: "Describe the image you want." }, 400);
         const style = body.style ? ` Style: ${String(body.style).slice(0, 200)}.` : "";
         const aspectRatio = ASPECT_RATIOS.has(String(body.aspect ?? "")) ? String(body.aspect) : undefined;
+        console.log(`[ai-app] ${toolId}: body.aspect=${JSON.stringify(body.aspect)} -> using ${aspectRatio ?? "(none — not a recognised ratio)"}`);
         const aspectHint = aspectRatio ? ` Aspect ratio ${aspectRatio}.` : "";
         const url = await image(
           `${prompt}.${style}${aspectHint} High quality, coherent composition, no watermark, no text unless asked.`,
