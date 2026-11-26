@@ -190,14 +190,16 @@ function pngDimensions(base64: string): { width: number; height: number } | null
  *  aspectRatio (e.g. "16:9", "9:16", "4:3", "3:4", "1:1") is sent as generationConfig.imageConfig.
  *  aspectRatio on the direct Gemini call — confirmed against Google's own Gemini API reference
  *  (ai.google.dev/api/generate-content), not the Vertex AI docs, which is a related but separate
- *  API. The Lovable gateway's own passthrough for this field is undocumented, so whenever a
- *  specific ratio is requested the gateway is skipped entirely in favour of the verified path,
- *  rather than risking a 1:1 fallback the caller never asked for. */
+ *  API — on the chance that path is reachable. In practice this project's own Gemini keys have no
+ *  image-generation quota (free tier, limit 0), so the gateway below is the path that actually
+ *  works, and its own aspect-ratio passthrough is undocumented either way — callers that need a
+ *  guaranteed ratio should crop the result themselves (see _shared/cropImage.ts) rather than trust
+ *  either upstream to honour this. */
 export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image", aspectRatio?: string): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
 
-  if (LOVABLE_API_KEY && !aspectRatio) {
+  if (LOVABLE_API_KEY) {
     try {
       const r = await fetch(GATEWAY, {
         method: "POST",

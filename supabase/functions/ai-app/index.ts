@@ -4,6 +4,7 @@
 import { billed } from "../_shared/billing.ts";
 import { json } from "../_shared/http.ts";
 import { chat, image, parseJson, ModelError, type ChatMessage, type Part } from "../_shared/llm.ts";
+import { cropToAspect } from "../_shared/cropImage.ts";
 import { APP_SPECS, COMMON_RULES } from "../_shared/appSpecs.ts";
 import { cacheKey, cachedAnswer, saveAnswer } from "../_shared/answerCache.ts";
 
@@ -82,12 +83,15 @@ Deno.serve(
         const aspectRatio = ASPECT_RATIOS.has(String(body.aspect ?? "")) ? String(body.aspect) : undefined;
         console.log(`[ai-app] ${toolId}: body.aspect=${JSON.stringify(body.aspect)} -> using ${aspectRatio ?? "(none — not a recognised ratio)"}`);
         const aspectHint = aspectRatio ? ` Aspect ratio ${aspectRatio}.` : "";
-        const url = await image(
+        let url = await image(
           `${prompt}.${style}${aspectHint} High quality, coherent composition, no watermark, no text unless asked.`,
           cleanImages(body.images).slice(0, 2),
           undefined,
           aspectRatio,
         );
+        // Neither the gateway nor Gemini can be relied on to actually return the requested ratio
+        // (see _shared/llm.ts) — crop to it here so the response is guaranteed correct either way.
+        if (aspectRatio) url = await cropToAspect(url, aspectRatio);
         return json({ ok: true, image: url });
       }
 
