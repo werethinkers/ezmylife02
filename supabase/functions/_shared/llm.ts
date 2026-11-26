@@ -48,7 +48,7 @@ function toGeminiContents(messages: ChatMessage[]) {
       const parts = (typeof m.content === "string" ? [{ type: "text", text: m.content } as Part] : m.content).map((p) => {
         if (p.type === "text") return { text: p.text };
         const match = p.image_url.url.match(/^data:([^;]+);base64,(.*)$/);
-        return match ? { inline_data: { mime_type: match[1], data: match[2] } } : { text: p.image_url.url };
+        return match ? { inlineData: { mimeType: match[1], data: match[2] } } : { text: p.image_url.url };
       });
       return { role: m.role === "assistant" ? "model" : "user", parts };
     });
