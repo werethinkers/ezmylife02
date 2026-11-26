@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Copy, Download, FileText, FileType2, Loader2, Mail, MoreHorizontal, Send, Share2, Wand2 } from "lucide-react";
+import { Archive, Check, Copy, Download, FileText, FileType2, Loader2, Mail, MoreHorizontal, Send, Share2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Markdown } from "@/components/common/Markdown";
+import { BilingualMarkdown } from "../output/bilingual";
+import { buildBrandAssetsZip } from "../output/assetPack";
+import { markdownToBlocks } from "../output/markdown";
+import { extractPalette } from "../output/palette";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { downloadText, downloadWord } from "../lib/files";
 import { useWorkspace } from "../lib/workspace";
@@ -23,7 +26,7 @@ import { PdfView } from "../output/PdfView";
 import { SectionEditor } from "../output/sectionEditor";
 import { saveFile } from "../output/save";
 import type { PdfDoc } from "../output/types";
-import { sendHandoff } from "../lib/handoff";
+import { sendHandoff, type BrandContext } from "../lib/handoff";
 import { useWorkContext } from "../lib/context";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +64,8 @@ export function OutputPanel({
   editable,
   onEdit,
   pdfDoc,
+  brand,
+  logoUrls,
 }: {
   toolId: string;
   text: string;
@@ -75,6 +80,10 @@ export function OutputPanel({
   onEdit?: (t: string) => void;
   /** A ready-made PDF document (calculators build theirs from numbers). Default: made from `text`. */
   pdfDoc?: PdfDoc;
+  /** Carried to the destination app alongside the text, for "Use in…" (see ../lib/handoff). */
+  brand?: BrandContext;
+  /** Ready logo concept images (if any), included in the "Download Brand Assets" .zip's logos/ folder. */
+  logoUrls?: string[];
 }) {
   const [copied, setCopied] = useState(false);
   const [instruction, setInstruction] = useState("");
@@ -110,6 +119,22 @@ export function OutputPanel({
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Copy failed — select the text and copy it manually.");
+    }
+  };
+
+  // Only offered once there's a real colour palette to pack (any result with one gets it, not
+  // just the Brand Identity Kit) — everything else in the .zip is built from that same palette.
+  const hasPalette = useMemo(() => extractPalette(markdownToBlocks(text).blocks).palette.length >= 2, [text]);
+  const [packing, setPacking] = useState(false);
+  const downloadAssets = async () => {
+    setPacking(true);
+    try {
+      const blob = await buildBrandAssetsZip({ text, brandName: title, logoUrls });
+      await saveFile(blob, `${fileName}-brand-assets.zip`, title);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not build the assets pack.");
+    } finally {
+      setPacking(false);
     }
   };
 
@@ -265,7 +290,7 @@ export function OutputPanel({
                     <DropdownMenuItem
                       key={t.id}
                       onClick={() => {
-                        sendHandoff({ from: toolId, fromName, to: t.id, text });
+                        sendHandoff({ from: toolId, fromName, to: t.id, text, brand });
                         navigate(`/tool/${t.id}`);
                       }}
                     >
@@ -274,6 +299,20 @@ export function OutputPanel({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+            {hasPalette && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="min-h-[44px] min-w-[44px] gap-1.5"
+                onClick={downloadAssets}
+                disabled={packing}
+                aria-label="Download brand assets as a zip file"
+                title="Download Brand Assets (.zip)"
+              >
+                {packing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
+                <span>Assets (.zip)</span>
+              </Button>
             )}
           </div>
 
@@ -309,13 +348,21 @@ export function OutputPanel({
                     <DropdownMenuItem
                       key={t.id}
                       onClick={() => {
-                        sendHandoff({ from: toolId, fromName, to: t.id, text });
+                        sendHandoff({ from: toolId, fromName, to: t.id, text, brand });
                         navigate(`/tool/${t.id}`);
                       }}
                     >
                       {t.name}
                     </DropdownMenuItem>
                   ))}
+                </>
+              )}
+              {hasPalette && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={downloadAssets} disabled={packing}>
+                    Download Brand Assets (.zip)
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -342,13 +389,16 @@ export function OutputPanel({
           ))}
         </div>
       )}
-      <div className="max-h-[70vh] overflow-y-auto px-4 py-4 sm:px-6">
+      {/* No inner scrollbox on mobile — the result flows in the page's own scroll there; on
+          larger screens, where this sits beside the form instead of below it, it keeps its own
+          scroll so a long result doesn't stretch the page past the form. */}
+      <div className="px-4 py-4 sm:max-h-[70vh] sm:overflow-y-auto sm:px-6">
         {showPdf ? (
           <PdfView prepared={prepared} fileName={fileName} title={title} />
         ) : editing && onEdit ? (
           <SectionEditor text={text} onChange={onEdit} />
         ) : (
-          <Markdown>{text}</Markdown>
+          <BilingualMarkdown text={text} />
         )}
       </div>
 

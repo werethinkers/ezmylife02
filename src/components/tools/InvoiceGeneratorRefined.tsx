@@ -34,6 +34,7 @@ interface InvoiceItem {
 }
 
 const money = (n: number) => `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmtDate = (d: string) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
 
 const plain = (md: string) =>
   md
@@ -197,7 +198,9 @@ export const InvoiceGeneratorRefined = () => {
             <ContextBanner show={["client"]} tone="soft" />
           </div>
 
-          {/* Workspace */}
+          {/* Workspace: form + totals on the left, a live preview sticky alongside it from lg up */}
+          <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-7">
           <div className="rounded-3xl border border-black/[0.08] bg-white p-6 shadow-[0_10px_35px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-[#16161A] sm:p-8">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
@@ -348,7 +351,7 @@ export const InvoiceGeneratorRefined = () => {
           </div>
 
           {/* Dark totals & export footer */}
-          <div className="mt-6 rounded-2xl bg-gradient-to-br from-[#18181B] via-[#111111] to-[#1F1523] p-5 text-white sm:p-6">
+          <div className="rounded-2xl bg-gradient-to-br from-[#18181B] via-[#111111] to-[#1F1523] p-5 text-white sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
@@ -389,6 +392,107 @@ export const InvoiceGeneratorRefined = () => {
                 </button>
               </div>
             </div>
+          </div>
+          </div>
+
+          {/* Live Invoice Preview — desktop only, hidden below lg so mobile stays single-column */}
+          <div className="hidden lg:col-span-5 lg:block lg:sticky lg:top-24">
+            <div className="overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-[#16161A]">
+              <div className="flex items-center justify-between border-b border-black/[0.06] bg-[#FAF7F2] px-5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <span className="flex items-center gap-2 text-xs font-semibold text-black/60 dark:text-white/60">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                  Live Preview
+                </span>
+                <span className="rounded-full bg-[#C8E967] px-2.5 py-0.5 text-[11px] font-bold uppercase text-[#111111]">Tax invoice</span>
+              </div>
+              <div className="max-h-[calc(100vh-8rem)] space-y-5 overflow-y-auto p-6 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#111111] dark:text-white" style={UNBOUNDED}>
+                      {companyName || <span className="text-black/35 dark:text-white/35">Your Company Name</span>}
+                    </p>
+                    {companyAddress && <p className="mt-0.5 text-xs text-black/55 dark:text-white/55">{companyAddress}</p>}
+                    {companyGST && <p className="mt-0.5 text-xs text-black/55 dark:text-white/55">GSTIN {companyGST}</p>}
+                  </div>
+                  <div className="shrink-0 text-right text-xs text-black/55 dark:text-white/55">
+                    <p>Invoice # {invoiceNumber || "—"}</p>
+                    <p className="mt-0.5">{fmtDate(invoiceDate)}</p>
+                    {dueDate && <p className="mt-0.5">Due {fmtDate(dueDate)}</p>}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-[#FAF7F2] p-3.5 dark:bg-white/[0.03]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-black/45 dark:text-white/45">Bill to</p>
+                  <p className="mt-1 font-semibold text-[#111111] dark:text-white">
+                    {clientName || <span className="font-normal text-black/35 dark:text-white/35">Client Name</span>}
+                  </p>
+                  {clientAddress && <p className="mt-0.5 text-xs text-black/55 dark:text-white/55">{clientAddress}</p>}
+                  {clientGST && <p className="mt-0.5 text-xs text-black/55 dark:text-white/55">GSTIN {clientGST}</p>}
+                </div>
+
+                <div>
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-black/[0.08] text-left text-black/45 dark:border-white/10 dark:text-white/45">
+                        <th className="pb-1.5 font-semibold">Item</th>
+                        <th className="pb-1.5 text-right font-semibold">Qty</th>
+                        <th className="pb-1.5 text-right font-semibold">Rate</th>
+                        <th className="pb-1.5 text-right font-semibold">GST</th>
+                        <th className="pb-1.5 text-right font-semibold">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/[0.06] dark:divide-white/10">
+                      {items.some((i) => i.description) ? (
+                        items
+                          .filter((i) => i.description)
+                          .map((i) => (
+                            <tr key={i.id} className="text-[#111111] dark:text-white">
+                              <td className="py-1.5 pr-2">{i.description}</td>
+                              <td className="py-1.5 text-right tabular-nums">{i.quantity}</td>
+                              <td className="py-1.5 text-right tabular-nums">{money(i.rate)}</td>
+                              <td className="py-1.5 text-right tabular-nums">{i.gstRate}%</td>
+                              <td className="py-1.5 text-right tabular-nums">{money(i.quantity * i.rate)}</td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr className="text-black/35 dark:text-white/35">
+                          <td className="py-1.5" colSpan={5}>
+                            Add an item to see it here
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end">
+                  <div className="w-full max-w-[220px] space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-black/55 dark:text-white/55">
+                      <span>Subtotal</span>
+                      <span className="tabular-nums">{money(subtotal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-black/55 dark:text-white/55">
+                      <span>GST</span>
+                      <span className="tabular-nums">{money(totalGst)}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-black/[0.08] pt-1.5 font-bold text-[#111111] dark:border-white/10 dark:text-white">
+                      <span style={UNBOUNDED}>Grand total</span>
+                      <span className="tabular-nums" style={UNBOUNDED}>
+                        {money(total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {notes.trim() && (
+                  <div className="border-t border-black/[0.06] pt-4 dark:border-white/10">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-black/45 dark:text-white/45">Notes / terms</p>
+                    <p className="mt-1 whitespace-pre-wrap text-xs text-black/60 dark:text-white/60">{notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
           </div>
 
           {/* See an example */}

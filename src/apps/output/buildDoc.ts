@@ -2,6 +2,7 @@ import type { WorkspaceProfile } from "../lib/workspace";
 import { TEMPLATE_ACCENT, templateFor, todayText } from "./choice";
 import { markdownToBlocks, plainLine } from "./markdown";
 import { extractPalette, pickAccent } from "./palette";
+import { extractFonts } from "./typography";
 import type { Letterhead, PdfBlock, PdfDoc, TemplateId } from "./types";
 
 /** The saved business details as a letterhead, or nothing when no business name is saved. */
@@ -38,6 +39,9 @@ export function docFromText(opts: {
   // When the result includes a real colour palette (name / hex / use), show it as swatches and
   // use the brand's own colour for the PDF's accent instead of the template's generic one.
   const { blocks, palette } = extractPalette(rawBlocks);
+  // Likewise, when the result names its own two Google Fonts (a brand kit's "Typography"
+  // section), the PDF's headings and body text use those instead of the template's defaults.
+  const fonts = extractFonts(opts.text);
   return {
     template,
     title: title ? plainLine(title) : opts.appName,
@@ -46,6 +50,7 @@ export function docFromText(opts: {
     date: /[\u0900-\u097F]/.test(opts.text) ? new Date().toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" }) : todayText(),
     accent: TEMPLATE_ACCENT[template],
     accentHex: pickAccent(palette),
+    fonts: fonts.heading || fonts.body ? fonts : undefined,
     landscape: template === "register",
     letterhead: letterheadFrom(opts.profile),
     blocks,

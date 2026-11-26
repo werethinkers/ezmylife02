@@ -28,6 +28,7 @@ import { ResultView, emptyValues, inputsOf, missingFields } from "../flagship/pa
 import { AmbientGlow, CONTROL, HINT, LABEL, SyncChip, UNBOUNDED, WhatYouGet, WorksWellWith, splitLabel } from "../flagship/studioUi";
 import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
+import type { LogoState } from "../output/logoConcepts";
 
 // A required text field whose only content is one character or one character repeated (e.g. "x", "xxx")
 // is not meaningful enough to generate from — catches this before spending an AI call and a credit on it.
@@ -53,6 +54,13 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  // The 3 auto-generated logo concepts per result, keyed by result id. Kept in memory only (not
+  // saved to the device/account, unlike the draft and history above) — each is a full image, and
+  // bundling several of those into the same saved blob as the draft/history risks a storage-quota
+  // write failure taking those down with it. The worst case of not persisting is just that leaving
+  // and coming back regenerates them; the guard inside LogoConcepts still stops a re-render from
+  // doing that while this component stays mounted.
+  const [logos, setLogos] = useState<Record<string, LogoState>>({});
   // Belt-and-suspenders against double submission: checked synchronously, so even two clicks that
   // land before React re-renders the disabled button can't both start a (paid) generation.
   const busyRef = useRef(false);
@@ -151,6 +159,10 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
     setFormError(null);
     setFieldErrors({});
     setBusy(instruction ? "refine" : "final");
+    // On a small screen the loading checklist sits below the form, off-screen until you scroll —
+    // bring it into view the moment generation starts, so it reads the same as the desktop layout
+    // (where it's already visible beside the form) instead of looking like nothing happened.
+    if (!instruction) requestAnimationFrame(() => document.getElementById(`${toolId}-output`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
     try {
       const { output } = await runFlagship<string>(toolId, "final", {
         inputs: inputsOf(def.fields, values),
@@ -387,6 +399,14 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                   refining={busy === "refine"}
                   onEdit={r.setOutput}
                   refineChips={refineChips}
+                  resultId={r.activeId}
+                  logoState={r.activeId ? logos[r.activeId] : undefined}
+                  onLogoStateChange={(id, state) => setLogos((m) => ({ ...m, [id]: state }))}
+                  category={typeof values.category === "string" ? values.category : undefined}
+                  onSectionPatched={(next) => {
+                    r.setOutput(next);
+                    r.save(titleFor(), next, values);
+                  }}
                 />
               )}
             </div>

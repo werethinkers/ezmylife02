@@ -51,6 +51,10 @@ export interface PdfDoc {
   accent: Accent;
   /** Overrides `accent` with a real brand colour (e.g. from a generated palette), hex like "#4f46e5". */
   accentHex?: string;
+  /** Overrides the page's heading/body fonts with real Google Fonts (e.g. a generated brand kit's
+   *  own recommended pairing). Loaded with a safe fallback, so a name that isn't really on Google
+   *  Fonts just falls back instead of breaking anything. */
+  fonts?: { heading?: string; body?: string };
   landscape?: boolean;
   letterhead?: Letterhead;
   blocks: PdfBlock[];

@@ -24,12 +24,18 @@ export interface FlagshipSpec extends AppSpec {
      *  server-side half of the form's own maxLength, so a request that bypasses the form can't
      *  send something long enough to waste tokens or time out. */
     fieldLimits?: Record<string, number>;
+    /** The result's own ## sections, in order — so a section-regenerate request can look up the
+     *  exact shape (e.g. "Taglines (10)") for the one section it's asked to redo. */
+    sections?: string[];
   };
 }
 
 /** Price ids shared by every flagship app. */
 export const FOLLOWUP_ID = "flagship-followup";
 export const IMAGE_ID = "flagship-image";
+/** Regenerating one named section of an existing result, instead of the whole thing — 2 credits,
+ *  the same flat rate as a follow-up question, regardless of which app or how large its own price. */
+export const SECTION_ID = "flagship-section";
 
 export const FLAGSHIP_STYLE = `You are building a finished, professional deliverable for a customer of EZYOURLIFE, an Indian app store. The customer paid for this result, so it must be worth keeping, printing and sharing.
 
@@ -94,6 +100,7 @@ export function flagship(shell: Shell, i: FlagshipInput): FlagshipSpec {
       variants: i.variants,
       imageStyle: i.imageStyle,
       fieldLimits: i.fieldLimits,
+      sections: i.sections,
     },
   };
 }

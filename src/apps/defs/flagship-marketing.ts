@@ -84,14 +84,14 @@ export const flagshipMarketing: Record<string, AppDef> = {
       },
       {
         "key": "language",
-        "label": "Language of the result",
+        "label": "Language",
         "type": "select",
         "half": true,
-        "default": "English",
+        "default": "English only",
         "options": [
-          "English",
-          "Hindi",
-          "Hinglish"
+          "English only",
+          "English + Hinglish",
+          "English + Hindi"
         ]
       }
     ],
@@ -103,7 +103,7 @@ export const flagshipMarketing: Record<string, AppDef> = {
       "tone": "Warm and friendly",
       "avoid": "No neon, no glossy black",
       "likes": "Nicobar, Good Earth, Jaypore",
-      "language": "English"
+      "language": "English only"
     },
     "youGet": [
       "10 name ideas with domain-style checks to do (if you need a name)",
@@ -113,7 +113,9 @@ export const flagshipMarketing: Record<string, AppDef> = {
       "Font pairing (free Google Fonts)",
       "3 logo directions described",
       "10 taglines",
-      "Brand use rules on one page"
+      "A WhatsApp / Instagram bio intro",
+      "Brand use rules on one page",
+      "English + Hindi or Hinglish side by side, if you asked for it"
     ],
     "fileName": "brand-identity-studio",
     "refineChips": [

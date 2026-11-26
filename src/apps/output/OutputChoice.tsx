@@ -33,8 +33,8 @@ export function OutputChoice({
   const soft = tone === "soft";
   return (
     <fieldset className={cn("min-w-0", className)}>
-      <legend className={cn("mb-2 text-sm font-semibold", soft && "text-[#111111] dark:text-white")}>How do you want your result?</legend>
-      <div className={cn("grid gap-2", "grid-cols-2")} role="radiogroup" aria-label="How do you want your result?">
+      <legend className={cn("mb-2 text-sm font-semibold", soft && "text-[#111111] dark:text-white")}>Open first as</legend>
+      <div className={cn("grid gap-2", "grid-cols-2")} role="radiogroup" aria-label="Open first as">
         {formats.map((f) => {
           const Icon = ICON[f];
           const on = f === choice;
@@ -63,7 +63,7 @@ export function OutputChoice({
           );
         })}
       </div>
-      <p className="mt-1.5 text-[11px] text-muted-foreground">All of them are made together, at the same price, so you can switch after.</p>
+      <p className="mt-1.5 text-[11px] text-muted-foreground">All 4 formats are included — pick which view opens first.</p>
     </fieldset>
   );
 }

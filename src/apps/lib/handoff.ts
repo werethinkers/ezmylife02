@@ -3,12 +3,25 @@
  * (e.g. a supplier list → Supplier Order, an OCR result → AI Data Analysis).
  */
 
+/** A brand's visual identity, carried alongside the result text when it's a real brand kit — so a
+ *  destination tool (e.g. Packaging Design Studio) can pre-fill its own brand/colour fields and
+ *  logo photo slot directly, instead of only getting a blob of text to paste from. */
+export interface BrandContext {
+  name: string;
+  tagline?: string;
+  /** Hex codes, each paired with its swatch name, e.g. "#B5541A (Deep Terracotta)". */
+  colors: string[];
+  fonts?: { heading?: string; body?: string };
+  logoUrl?: string;
+}
+
 export interface Handoff {
   from: string;
   fromName: string;
   to: string;
   text: string;
   at: number;
+  brand?: BrandContext;
 }
 
 const KEY = "ez.handoff";

@@ -6,13 +6,15 @@
 //   start   – opens a coaching session: the app's price, per session.
 //   ask     – a follow-up question on a finished result: "flagship-followup" (2 credits).
 //   image   – an AI picture made from a result: "flagship-image" (30 credits).
+//   section – regenerates one named ## section of a finished result, patched back in by the
+//             client: "flagship-section" (2 credits), never the app's own (usually much higher) price.
 // Free steps, capped so they stay cheap: "next" (the next interview question, Flash-Lite, short),
 // and "turn" / "wrap" inside a paid coaching session (a signed session ticket is required).
 import { billed } from "../_shared/billing.ts";
 import { json } from "../_shared/http.ts";
 import { chat, image, ModelError, type ChatMessage, type Part } from "../_shared/llm.ts";
 import { APP_SPECS, COMMON_RULES } from "../_shared/appSpecs.ts";
-import { FOLLOWUP_ID, IMAGE_ID, LITE, type FlagshipSpec } from "../_shared/appSpecs/flagship-base.ts";
+import { FOLLOWUP_ID, IMAGE_ID, LITE, SECTION_ID, type FlagshipSpec } from "../_shared/appSpecs/flagship-base.ts";
 
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const MAX_FIELD = 6000;
@@ -24,7 +26,7 @@ const MAX_IMAGE_CHARS = 9_000_000;
 const MAX_AUDIO_CHARS = 14_000_000; // ~10 MB recording
 const SESSION_HOURS = 6;
 
-type Action = "next" | "final" | "variant" | "start" | "turn" | "wrap" | "ask" | "image";
+type Action = "next" | "final" | "variant" | "start" | "turn" | "wrap" | "ask" | "image" | "section";
 type Msg = { role: "user" | "assistant"; content: string };
 
 interface Body {
@@ -41,6 +43,8 @@ interface Body {
   ticket?: string;
   instruction?: string;
   previous?: string;
+  /** "section" only: the exact heading text of the one section to regenerate. */
+  section?: string;
 }
 
 const specOf = (id: unknown): FlagshipSpec | null => {
@@ -63,6 +67,8 @@ function chargeFor(b: Body | null): string | null {
       return FOLLOWUP_ID;
     case "image":
       return IMAGE_ID;
+    case "section":
+      return ["interview", "analyse", "plan", "pack"].includes(spec.flagship.shell) ? SECTION_ID : null;
     default:
       return null;
   }
@@ -267,6 +273,31 @@ Deno.serve(
               finalOut = clampSectionWords(finalOut, /^#{1,6}\s*brand story\b.*$/im, 100);
             }
             return json({ ok: true, output: finalOut });
+          }
+
+          // 2 credits flat (never the app's own price): redo one named section of an existing
+          // result. The client patches the returned section back into its saved copy — this
+          // only ever sees and returns that one section, never the whole kit.
+          case "section": {
+            if (!["interview", "analyse", "plan", "pack"].includes(f.shell)) return json({ error: "bad_action" }, 400);
+            const sectionName = String(body.section ?? "").trim().slice(0, 120);
+            const previous = typeof body.previous === "string" ? body.previous.slice(0, 40_000) : "";
+            if (!sectionName) return json({ error: "Pick a section to regenerate." }, 400);
+            if (!previous.trim()) return json({ error: "Make the result once first." }, 400);
+            const shape = f.sections?.find((s) => s.toLowerCase().startsWith(sectionName.toLowerCase())) ?? sectionName;
+            const instruction = typeof body.instruction === "string" ? body.instruction.trim().slice(0, 300) : "";
+            const prompt = [
+              `Here is the result already made, in full, for context:\n${previous}`,
+              `Task: rewrite ONLY the "${sectionName}" section (the "## ${sectionName}" heading and what follows it), matching this shape: ${shape}.`,
+              instruction ? `Specific change the customer asked for in this section: ${instruction}` : "",
+              "Stay exactly consistent with the rest of the result above — same name, numbers, colours and voice; do not change what any other section says.",
+              `Return ONLY that one section — start with its own "## ${sectionName}" heading line and nothing before it, and write nothing after the section ends. No preamble, no other sections.`,
+            ]
+              .filter(Boolean)
+              .join("\n\n");
+            const out = await chat([{ role: "system", content: system }, { role: "user", content: prompt }], { model: spec.model, maxTokens: 2500 });
+            if (!out || !out.trim()) return json({ error: "No result came back. Please try again. You were not charged." }, 502);
+            return json({ ok: true, output: out.trim() });
           }
 
           // Paid per picture: one photo studio option.

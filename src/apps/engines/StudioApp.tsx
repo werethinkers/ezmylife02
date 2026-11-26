@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, Check, Download, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { cn } from "@/lib/utils";
 import { NeedsCredits, errorText } from "../lib/api";
 import { dataUrlToBlob, downloadBlob, imageToDataUrl } from "../lib/files";
+import { takeHandoff } from "../lib/handoff";
 import { FieldInput } from "../shell/Fields";
-import type { FormValues } from "../types";
+import type { Field, FormValues } from "../types";
 import type { StudioDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
 import { emptyValues, inputsOf, missingFields } from "../flagship/parts";
@@ -37,6 +38,24 @@ export default function StudioApp({ toolId, def }: { toolId: string; def: Studio
   const [shots, setShots] = useState<Shot[]>([]);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Brand context sent from another app ("Use in…", e.g. Brand Identity Kit) — matched onto
+  // whichever of this tool's own fields look like a brand-name / colours field, by label, so it
+  // works for any studio tool that has them (not hardcoded to Packaging Design Studio).
+  useEffect(() => {
+    const h = takeHandoff(toolId);
+    if (!h?.brand) return;
+    const brandField = def.fields.find((f) => /\bbrand\b/i.test(f.label) && f.type !== "select");
+    const colourField = def.fields.find((f) => /colou?rs?\b/i.test(f.label));
+    setValues((v) => ({
+      ...v,
+      ...(brandField ? { [brandField.key]: h.brand!.name } : {}),
+      ...(colourField && h.brand!.colors.length ? { [colourField.key]: h.brand!.colors.join(", ") } : {}),
+    }));
+    if (h.brand.logoUrl) setPhoto(h.brand.logoUrl);
+    toast.success(`Brought in your brand from ${h.fromName}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolId]);
 
   const addPhoto = async (f?: File) => {
     if (!f) return;

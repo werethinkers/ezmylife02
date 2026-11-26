@@ -16,6 +16,7 @@ export const flagshipMarketing: Record<string, AppSpec> = {
       "Typography (two free Google Fonts and where to use each)",
       "Logo directions (3, each described so a designer can draw it)",
       "Taglines (10)",
+      "WhatsApp / Instagram bio intro (2-3 lines)",
       "Brand rules on one page"
     ],
     "rules": [
@@ -23,7 +24,8 @@ export const flagshipMarketing: Record<string, AppSpec> = {
       "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites.",
       "Never leave a placeholder in square brackets anywhere in the kit — not the business name, not a domain ending like .com or .in, not a legal or contact detail. Every section must read as finished, real copy, not a template waiting to be filled in.",
       "If the business name is 'need a name' or otherwise not given, pick your single best idea from the Name ideas table, mark it clearly as your top recommendation, and then write every other section — brand story, voice, colour palette, logo directions, taglines and brand rules — using that one chosen name throughout, exactly as if it were the customer's real, final name. Do not add a separate 'To complete' section about the name.",
-      "The Brand story section must be 100 words or fewer. Count the words before you finish writing it, and cut it down if it runs over — never go above 100."
+      "The Brand story section must be 100 words or fewer. Count the words before you finish writing it, and cut it down if it runs over — never go above 100.",
+      "If Language is 'English + Hinglish' or 'English + Hindi', write the Taglines, Brand story and WhatsApp / Instagram bio intro sections in BOTH languages: inside that same ## section, give the English version under a '### English' sub-heading, then the other language under a '### Hinglish' or '### Hindi' sub-heading (matching exactly what was asked). Every other section (Brand essence, Name ideas, Brand voice, Colour palette, Typography, Logo directions, Brand rules) stays English only, with no sub-headings. If Language is 'English only', write the whole kit in English with no sub-headings anywhere."
     ],
     "imageStyle": "Clean brand identity presentation, flat vector style, plain background, no small text.",
     "fieldLimits": {

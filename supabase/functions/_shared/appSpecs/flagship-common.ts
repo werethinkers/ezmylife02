@@ -1,8 +1,9 @@
 // Prices shared by every flagship app (see flagship-base.ts): follow-up questions on a finished
-// result, and AI pictures made from a result. Priced with the shared rule: AI cost × 3 ÷ ₹0.376.
+// result, AI pictures made from a result, and regenerating one named section of a result.
+// Priced with the shared rule: AI cost × 3 ÷ ₹0.376.
 import type { AppSpec } from "./base.ts";
 import { LITE } from "./base.ts";
-import { FOLLOWUP_ID, IMAGE_ID } from "./flagship-base.ts";
+import { FOLLOWUP_ID, IMAGE_ID, SECTION_ID } from "./flagship-base.ts";
 
 export const flagshipCommon: Record<string, AppSpec> = {
   // Flash-Lite, up to ~6k tokens of result in and 1k out: about ₹0.10 a question → 1 credit by the 3× rule, raised to the AI minimum of 2 (docs/pricing.md).
@@ -16,4 +17,12 @@ export const flagshipCommon: Record<string, AppSpec> = {
   },
   // One picture on Gemini 3.1 Flash-Lite Image: about ₹3.31 → 30 credits.
   [IMAGE_ID]: { kind: "image", credits: 30, system: "" },
+  // Same shape as a follow-up question (it is one, in effect): redo one section, leave the rest.
+  [SECTION_ID]: {
+    kind: "chat",
+    credits: 2,
+    model: LITE,
+    maxTokens: 2500,
+    system: "",
+  },
 };

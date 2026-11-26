@@ -1,4 +1,5 @@
 import { contrastText } from "./palette";
+import { googleFontsHref, loadGoogleFontLink } from "./typography";
 import type { PdfBlock, PdfDoc } from "./types";
 
 /*
@@ -23,14 +24,14 @@ const DEVANAGARI = /[ऀ-ॿ]/;
 
 /** Scoped styles: every rule starts with .ezpdf, so nothing leaks into the site. */
 export const PDF_CSS = `
-.ezpdf-page{position:relative;width:${PAGE.w}px;height:${PAGE.h}px;background:#fff;color:#121212;overflow:hidden;box-sizing:border-box;font-family:Hind,system-ui,sans-serif;font-size:14px;line-height:1.55;text-align:left}
+.ezpdf-page{position:relative;width:${PAGE.w}px;height:${PAGE.h}px;background:#fff;color:#121212;overflow:hidden;box-sizing:border-box;font-family:var(--body-font, Hind, system-ui, sans-serif);font-size:14px;line-height:1.55;text-align:left}
 .ezpdf-page.land{width:${PAGE.h}px;height:${PAGE.w}px}
 .ezpdf-page *{box-sizing:border-box}
 .ezpdf-body{position:absolute;left:${PAD.x}px;right:${PAD.x}px;top:${PAD.top}px;bottom:${PAD.bottom}px;overflow:hidden}
 .ezpdf-page.land .ezpdf-body{left:46px;right:46px;top:44px;bottom:56px}
 .ezpdf-foot{position:absolute;left:${PAD.x}px;right:${PAD.x}px;bottom:26px;display:flex;justify-content:space-between;gap:16px;font-size:10px;color:#77716a;border-top:1px solid #e6e0d6;padding-top:6px}
 .ezpdf-page.land .ezpdf-foot{left:46px;right:46px;bottom:20px}
-.ezpdf-page h1,.ezpdf-page h2,.ezpdf-page h3,.ezpdf-d{font-family:Unbounded,Hind,system-ui,sans-serif;line-height:1.22;margin:0;color:#121212}
+.ezpdf-page h1,.ezpdf-page h2,.ezpdf-page h3,.ezpdf-d{font-family:var(--heading-font, Unbounded, Hind, sans-serif);line-height:1.22;margin:0;color:#121212}
 .ezpdf-page h1{font-size:25px;font-weight:800;margin:0 0 6px}
 .ezpdf-page h2{font-size:16px;font-weight:700;margin:24px 0 10px;padding-bottom:6px;border-bottom:1.6px solid #121212}
 .ezpdf-page h3{font-size:14px;font-weight:700;margin:16px 0 6px}
@@ -298,12 +299,20 @@ export async function layoutPages(doc: PdfDoc, host: HTMLElement): Promise<HTMLE
   host.style.setProperty("--acc", accentColor);
   host.style.setProperty("--acc-fg", contrastText(accentColor));
   if (hindi) host.setAttribute("lang", "hi");
+  // A brand kit's own two fonts, with the usual fallback baked into the value itself — so when
+  // they're not set (every other PDF), the CSS's own "Hind"/"Unbounded" default takes over unchanged.
+  if (doc.fonts?.heading) host.style.setProperty("--heading-font", `"${doc.fonts.heading}", Unbounded, Hind, sans-serif`);
+  if (doc.fonts?.body) host.style.setProperty("--body-font", `"${doc.fonts.body}", Hind, system-ui, sans-serif`);
   try {
+    const href = doc.fonts && googleFontsHref(doc.fonts);
+    if (href) await loadGoogleFontLink(href);
     await Promise.all([
       document.fonts.load('400 14px "Hind"', "aअ"),
       document.fonts.load('600 14px "Hind"', "aअ"),
       document.fonts.load('700 14px "Unbounded"', "a"),
       document.fonts.load('800 14px "Unbounded"', "a"),
+      ...(doc.fonts?.heading ? [document.fonts.load(`700 14px "${doc.fonts.heading}"`, "a")] : []),
+      ...(doc.fonts?.body ? [document.fonts.load(`400 14px "${doc.fonts.body}"`, "a")] : []),
     ]);
     await document.fonts.ready;
   } catch {

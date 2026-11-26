@@ -12,6 +12,29 @@ import { downloadBlob, dataUrlToBlob } from "../lib/files";
 import type { Field, FormValues } from "../types";
 import type { FlagshipDef } from "./types";
 import { runFlagship } from "./api";
+import { BrandBoard } from "../output/brandBoard";
+import { BrandMockups } from "../output/brandMockups";
+import { LogoConcepts, type LogoState } from "../output/logoConcepts";
+import { SectionRegen } from "../output/sectionRegen";
+import { markdownToBlocks } from "../output/markdown";
+import { extractPalette, roledSwatches } from "../output/palette";
+import { extractFonts, extractTagline } from "../output/typography";
+import type { BrandContext } from "../lib/handoff";
+
+/** The brand's colours, fonts, tagline and (once picked) logo, for "Use in…" — see ../lib/handoff. */
+function brandContextFrom(text: string, logos?: LogoState): BrandContext {
+  const { title, blocks } = markdownToBlocks(text);
+  const { palette } = extractPalette(blocks);
+  const fonts = extractFonts(text);
+  const selected = logos?.slots[logos.selected];
+  return {
+    name: title || "Your brand",
+    tagline: extractTagline(text),
+    colors: roledSwatches(palette).map(({ swatch }) => `${swatch.hex.toUpperCase()} (${swatch.name})`),
+    fonts: fonts.heading || fonts.body ? fonts : undefined,
+    logoUrl: selected?.status === "ready" ? selected.url : undefined,
+  };
+}
 
 export const card = "rounded-2xl border-2 border-ink bg-card p-4 shadow-block sm:p-5";
 
@@ -249,6 +272,11 @@ export function ResultView({
   refining,
   onEdit,
   refineChips,
+  resultId,
+  logoState,
+  onLogoStateChange,
+  category,
+  onSectionPatched,
 }: {
   toolId: string;
   def: FlagshipDef;
@@ -260,10 +288,35 @@ export function ResultView({
   onEdit?: (t: string) => void;
   /** Overrides def.refineChips (e.g. to drop a chip that doesn't apply to what was submitted). */
   refineChips?: string[];
+  /** This result's own id (e.g. r.activeId) — scopes the 3 auto-generated logo concepts to this
+   *  one result, so a different result (or a brand-new version) gets its own fresh set. Brand
+   *  Identity Kit only; every other flagship app can leave these out. */
+  resultId?: string | null;
+  logoState?: LogoState;
+  onLogoStateChange?: (id: string, state: LogoState) => void;
+  /** The form's own category/role value, shown on the visiting-card mock-up. */
+  category?: string;
+  /** Saves a result whose text was just patched by a 2-credit section regeneration (see
+   *  SectionRegen) back into the caller's saved copy — not just updated on screen like onEdit.
+   *  Works on any flagship result; leave it out to simply not offer the control. */
+  onSectionPatched?: (next: string) => void;
 }) {
+  const isBrandKit = toolId === "brand-identity-studio";
+  const brand = isBrandKit ? brandContextFrom(text, logoState) : undefined;
+  const selectedLogo = logoState?.slots[logoState.selected];
+  const selectedLogoUrl = selectedLogo?.status === "ready" ? selectedLogo.url : undefined;
+
   return (
     <div className="space-y-4">
       {def.note && <p className="rounded-xl border-2 border-ink/20 bg-sand px-3 py-2 text-xs text-muted-foreground">{def.note}</p>}
+      <BrandBoard text={text} fallbackName={title} />
+      {isBrandKit && resultId && onLogoStateChange && (
+        <>
+          <LogoConcepts toolId={toolId} resultId={resultId} text={text} state={logoState} onStateChange={onLogoStateChange} />
+          <BrandMockups text={text} category={category} fallbackName={title} logoUrl={selectedLogoUrl} />
+        </>
+      )}
+      {onSectionPatched && <SectionRegen toolId={toolId} text={text} onPatched={onSectionPatched} />}
       <OutputPanel
         toolId={toolId}
         text={text}
@@ -275,6 +328,8 @@ export function ResultView({
         sendTo={def.related}
         editable={!!onEdit}
         onEdit={onEdit}
+        brand={brand}
+        logoUrls={logoState?.slots.filter((s) => s.status === "ready" && s.url).map((s) => s.url as string)}
       />
       <FollowUp toolId={toolId} result={text} />
       {def.pictures && <Pictures toolId={toolId} label={def.pictures.label} ideas={def.pictures.ideas} />}

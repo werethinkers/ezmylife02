@@ -2,10 +2,10 @@ import { callFunction } from "@/lib/credits";
 import { emitCreditPrompt, handleCreditError } from "@/lib/creditPrompt";
 import { NeedsCredits } from "../lib/api";
 
-export type FlagshipAction = "next" | "final" | "variant" | "start" | "turn" | "wrap" | "ask" | "image";
+export type FlagshipAction = "next" | "final" | "variant" | "start" | "turn" | "wrap" | "ask" | "image" | "section";
 
 /** Steps that cost credits (the server decides; this only picks when to refresh the wallet). */
-const PAID = new Set<FlagshipAction>(["final", "variant", "start", "ask", "image"]);
+const PAID = new Set<FlagshipAction>(["final", "variant", "start", "ask", "image", "section"]);
 
 /**
  * Runs one step of a flagship app on the `flagship-app` function. The server checks the
