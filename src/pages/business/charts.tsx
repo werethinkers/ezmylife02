@@ -10,7 +10,7 @@ const axis = { fontSize: 12, fill: "hsl(0 0% 29%)" };
 function Tip({ active, payload, label, fmt }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string; fmt: (l: string) => string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border-2 border-ink bg-card px-3 py-2 text-sm shadow-block-sm">
+    <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm shadow-lg dark:border-white/10 dark:bg-[#16161A]">
       <p className="font-bold">{fmt(label ?? "")}</p>
       {payload.map((p) => <p key={p.name} className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.color }} />{p.name}: <b className="tabular-nums">{inr(p.value)}</b></p>)}
     </div>

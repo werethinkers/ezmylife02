@@ -178,6 +178,14 @@ html {
     background: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
   }
+
+  /* My Business (/business/app): wrapped in .ez-modern for its dark-mode toggle, but its own
+     refined neo-brutalist look keeps the brand's Unbounded display font rather than ez-modern's
+     Space Grotesk, so every existing `font-display` class in src/pages/business/ still resolves
+     to Unbounded. */
+  .ez-modern.biz-app {
+    --font-display: 'Unbounded', 'Hind', system-ui, sans-serif;
+  }
 }
 
 @layer base {

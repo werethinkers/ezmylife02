@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import { Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { useModernTheme } from "@/components/modern/theme";
+import { cn } from "@/lib/utils";
 import { useBusiness } from "@/business/useBusiness";
 import type { AnyRec, Campaign, LeadStatus, LineItem, PayMode, Product, Rec, RecordKinds, Settings } from "@/business/types";
 import {
@@ -17,15 +17,16 @@ import {
 import { computeBill, GST_RATES, STATES, validGstin } from "@/business/gst";
 import { addDays, inr, localInput, today } from "@/business/format";
 import { CAMPAIGN_TEMPLATES } from "@/business/whatsapp";
-import { blankLine, Choice, Field, LinesEditor, PAY_MODES, PartyPicker, type PartyValue, selectCls, useNav, type FormOpen } from "./ui";
+import { blankLine, Choice, Field, Input, LinesEditor, PAY_MODES, PartyPicker, type PartyValue, selectCls, Textarea, useNav, type FormOpen } from "./ui";
 
 export function FormHost({ form, onClose }: { form: FormOpen | null; onClose: () => void }) {
   const { db } = useBusiness();
+  const { dark } = useModernTheme();
   if (!form || !db) return null;
   const P = FORMS[form.kind];
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto rounded-2xl border-2 border-ink p-5 sm:p-6">
+      <DialogContent className={cn("ez-modern biz-app max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto rounded-2xl border-[1.5px] border-[#111111] bg-white p-5 shadow-[4px_4px_0_#111111] dark:bg-[#16161A] sm:p-6", dark && "dark")}>
         <P form={form} onDone={onClose} recs={db.recs} s={db.ws.settings} />
       </DialogContent>
     </Dialog>
@@ -379,7 +380,7 @@ function ProductForm({ form, onDone, recs, s }: FormProps) {
         </div>
       )}
       {d.stock_mode === "recipe" && (
-        <div className="space-y-2 rounded-xl border-2 border-ink/20 p-3">
+        <div className="space-y-2 rounded-xl border border-black/15 p-3 dark:border-white/15">
           <p className="text-sm font-semibold">What one {d.unit} uses. Each sale takes these from stock.</p>
           {!mats.length && <p className="text-sm text-muted-foreground">Add your raw materials in Stock first.</p>}
           {recipe.map((r, i) => (
@@ -493,7 +494,7 @@ function CampaignForm({ form, onDone, recs }: FormProps) {
       const ch = run((x) => saveRecord(x, "campaign", d, cur?.id));
       if (ch) { onDone(); nav.go("marketing"); }
     }}>
-      {!cur && <div className="flex flex-wrap gap-1.5">{CAMPAIGN_TEMPLATES.map((t) => <button key={t.title} type="button" onClick={() => setD({ ...d, title: t.title, message: t.message })} className="rounded-full border-2 border-ink bg-card px-3 py-1 text-sm font-semibold hover:bg-sun">{t.title}</button>)}</div>}
+      {!cur && <div className="flex flex-wrap gap-1.5">{CAMPAIGN_TEMPLATES.map((t) => <button key={t.title} type="button" onClick={() => setD({ ...d, title: t.title, message: t.message })} className="rounded-full border border-black/15 bg-card px-3 py-1 text-sm font-semibold hover:bg-sun dark:border-white/15">{t.title}</button>)}</div>}
       <Field label="Name"><Input value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} /></Field>
       <Field label="Message" hint={`{name} becomes each person's name, {shop} becomes ${db?.ws.name ?? "your shop"}.`}><Textarea rows={4} value={d.message} onChange={(e) => setD({ ...d, message: e.target.value })} /></Field>
       <div className="grid gap-3 sm:grid-cols-2">

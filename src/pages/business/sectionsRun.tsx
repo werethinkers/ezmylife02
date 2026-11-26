@@ -5,8 +5,6 @@ import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { AlertTriangle, Download, ExternalLink, Plus, Truck, Upload, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useBusiness } from "@/business/useBusiness";
 import type { Db } from "@/business/engine";
@@ -19,7 +17,7 @@ import { addDays, day, download, inr, inrShort, monthName, num, plural, toCsv, t
 import { waLink } from "@/business/whatsapp";
 import { cn } from "@/lib/utils";
 import { MonthlyInOut } from "./charts";
-import { Choice, Empty, Field, LinkTo, PAY_MODES, Panel, Pill, SectionHead, selectCls, Stat, useNav, WaButton } from "./ui";
+import { Choice, Empty, Field, Input, LinkTo, PAY_MODES, Panel, Pill, SectionHead, selectCls, softBorder, Stat, Textarea, useNav, WaButton } from "./ui";
 import { MODULE_NAMES } from "./modules";
 import { SiteView } from "./PublicSite";
 
@@ -32,7 +30,7 @@ function Period({ from, to, set }: { from: string; to: string; set: (f: string, 
   const presets: [string, string, string][] = [["This month", monthStart(), t], ["Last month", monthStart(lastM), lastM], ["Last 7 days", addDays(t, -6), t], ["This year", `${Number(t.slice(5, 7)) >= 4 ? t.slice(0, 4) : Number(t.slice(0, 4)) - 1}-04-01`, t]];
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
-      {presets.map(([l, f, e]) => <button key={l} type="button" onClick={() => set(f, e)} className={cn("rounded-full border-2 border-ink px-3 py-1.5 text-sm font-semibold", from === f && to === e ? "bg-ink text-cream" : "bg-card hover:bg-sun")}>{l}</button>)}
+      {presets.map(([l, f, e]) => <button key={l} type="button" onClick={() => set(f, e)} className={cn("rounded-full px-3 py-1.5 text-sm font-semibold transition-colors", from === f && to === e ? "bg-[#111111] text-white dark:bg-white dark:text-[#111111]" : cn("bg-white hover:border-black/30 dark:bg-[#16161A] dark:hover:border-white/30", softBorder))}>{l}</button>)}
       <Input type="date" className="h-9 w-40" value={from} onChange={(e) => set(e.target.value, to)} aria-label="From" />
       <Input type="date" className="h-9 w-40" value={to} onChange={(e) => set(from, e.target.value)} aria-label="To" />
     </div>
@@ -69,7 +67,7 @@ export function Stock({ db }: { db: Db }) {
         !products.length ? <Empty title={`No ${s.labels.products.toLowerCase()} yet`} action={<Button onClick={() => nav.form({ kind: "product" })}><Plus /> Add</Button>} /> : (
           <Panel className="overflow-x-auto p-0 sm:p-0">
             <table className="w-full text-sm">
-              <thead className="border-b-2 border-ink bg-sand text-left"><tr><th className="p-3">Name</th><th className="p-3 text-right">Price</th>{s.gst_mode === "regular" && <th className="p-3 text-right">GST</th>}<th className="p-3 text-right">Stock</th><th className="hidden p-3 sm:table-cell">On website</th></tr></thead>
+              <thead className="border-b border-black/10 bg-black/[0.02] text-left dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="p-3">Name</th><th className="p-3 text-right">Price</th>{s.gst_mode === "regular" && <th className="p-3 text-right">GST</th>}<th className="p-3 text-right">Stock</th><th className="hidden p-3 sm:table-cell">On website</th></tr></thead>
               <tbody className="divide-y divide-ink/10">
                 {products.map((p) => {
                   const l = level.get(p.id);
@@ -92,7 +90,7 @@ export function Stock({ db }: { db: Db }) {
         !mats.length ? <Empty title="No raw materials" text="Add what you make things from (flour, cloth, parts). Then set recipes on your items, and every sale takes the materials from stock." action={<Button onClick={() => nav.form({ kind: "material" })}><Plus /> Add material</Button>} /> : (
           <Panel className="overflow-x-auto p-0 sm:p-0">
             <table className="w-full text-sm">
-              <thead className="border-b-2 border-ink bg-sand text-left"><tr><th className="p-3">Name</th><th className="p-3 text-right">In stock</th><th className="p-3 text-right">Warn at</th><th className="p-3 text-right">Cost</th><th className="p-3 text-right">Value</th></tr></thead>
+              <thead className="border-b border-black/10 bg-black/[0.02] text-left dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="p-3">Name</th><th className="p-3 text-right">In stock</th><th className="p-3 text-right">Warn at</th><th className="p-3 text-right">Cost</th><th className="p-3 text-right">Value</th></tr></thead>
               <tbody className="divide-y divide-ink/10">
                 {mats.map((m) => {
                   const l = level.get(m.id)!;
@@ -130,12 +128,12 @@ export function Purchases({ db }: { db: Db }) {
       </SectionHead>
       <div>
         <h3 className="mb-2 font-bold">Suppliers</h3>
-        {sups.length ? <div className="flex flex-wrap gap-2">{sups.map((x) => <button key={x.id} type="button" onClick={() => nav.open({ t: "supplier", id: x.id })} className="rounded-xl border-2 border-ink bg-card px-3 py-2 text-left text-sm shadow-block-sm hover:bg-sun"><b>{x.data.name}</b>{x.data.items && <span className="block text-xs">{x.data.items}</span>}</button>)}</div> : <p className="text-sm text-muted-foreground">Suppliers are added when you record a purchase.</p>}
+        {sups.length ? <div className="flex flex-wrap gap-2">{sups.map((x) => <button key={x.id} type="button" onClick={() => nav.open({ t: "supplier", id: x.id })} className={cn("rounded-xl bg-white px-3 py-2 text-left text-sm hover:border-black/30 dark:bg-[#16161A] dark:hover:border-white/30", softBorder)}><b>{x.data.name}</b>{x.data.items && <span className="block text-xs">{x.data.items}</span>}</button>)}</div> : <p className="text-sm text-muted-foreground">Suppliers are added when you record a purchase.</p>}
       </div>
       {!buys.length ? <Empty title="No purchases yet" action={<Button onClick={() => nav.form({ kind: "purchase" })}><Truck /> Bought stock</Button>} /> : (
         <Panel className="overflow-x-auto p-0 sm:p-0">
           <table className="w-full text-sm">
-            <thead className="border-b-2 border-ink bg-sand text-left"><tr><th className="p-3">No.</th><th className="p-3">Date</th><th className="p-3">From</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Paid then</th></tr></thead>
+            <thead className="border-b border-black/10 bg-black/[0.02] text-left dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="p-3">No.</th><th className="p-3">Date</th><th className="p-3">From</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Paid then</th></tr></thead>
             <tbody className="divide-y divide-ink/10">
               {buys.map((p) => <tr key={p.id}><td className="p-3"><LinkTo to={{ t: "purchase", id: p.id }}>{p.data.number}</LinkTo></td><td className="p-3">{day(p.data.date)}</td><td className="p-3">{p.data.supplier_id ? <LinkTo to={{ t: "supplier", id: p.data.supplier_id }}>{p.data.supplier_name}</LinkTo> : p.data.supplier_name}</td><td className="p-3 text-right tabular-nums">{inr(p.data.total)}</td><td className="p-3 text-right tabular-nums">{inr(paidOn(p.id))}</td></tr>)}
             </tbody>
@@ -217,7 +215,7 @@ export function Taxes({ db }: { db: Db }) {
   const g = useMemo(() => gstMonth(db.recs, month), [db.recs, month]);
   const bar = (
     <div>
-      <div className="h-3 overflow-hidden rounded-full border-2 border-ink bg-card"><div className={cn("h-full", q.share > 0.8 ? "bg-coral" : "bg-teal")} style={{ width: `${Math.min(100, q.share * 100)}%` }} /></div>
+      <div className="h-3 overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-[#1F1F24]"><div className={cn("h-full", q.share > 0.8 ? "bg-coral" : "bg-teal")} style={{ width: `${Math.min(100, q.share * 100)}%` }} /></div>
       <p className="mt-1 text-sm">{inr(q.fyTurnover)} of {inr(q.limit)} this year ({q.fy})</p>
     </div>
   );
@@ -340,7 +338,7 @@ export function Marketing({ db }: { db: Db }) {
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <div className="space-y-2">
             {camps.map((x) => (
-              <button key={x.id} type="button" onClick={() => setOpenId(x.id)} className={cn("w-full rounded-xl border-2 border-ink p-3 text-left shadow-block-sm", x.id === openId ? "bg-sun" : "bg-card hover:bg-sun/40")}>
+              <button key={x.id} type="button" onClick={() => setOpenId(x.id)} className={cn("w-full rounded-xl p-3 text-left", x.id === openId ? "border border-black/10 bg-sun" : cn("bg-white hover:border-black/30 dark:bg-[#16161A] dark:hover:border-white/30", softBorder))}>
                 <b>{x.data.title}</b><span className="block text-xs">{day(x.data.send_on)} · sent to {x.data.sent_to.length}</span>
               </button>
             ))}
@@ -395,7 +393,7 @@ export function Website({ db, cloud }: { db: Db; cloud: boolean }) {
             <div className="flex items-center gap-1"><span className="text-sm text-muted-foreground">/b/</span><Input value={site.slug} onChange={(e) => setSite({ ...site, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} /></div>
           </Field>
           <Field label="About you (shown at the top)"><Textarea rows={3} value={site.about} onChange={(e) => setSite({ ...site, about: e.target.value })} /></Field>
-          <Field label="Colour"><div className="flex gap-2">{COLOURS.map((c) => <button key={c} type="button" onClick={() => setSite({ ...site, colour: c })} className={cn(`h-9 w-9 rounded-full border-2 border-ink bg-${c}`, site.colour === c && "ring-2 ring-ink ring-offset-2")} aria-label={c} />)}</div></Field>
+          <Field label="Colour"><div className="flex gap-2">{COLOURS.map((c) => <button key={c} type="button" onClick={() => setSite({ ...site, colour: c })} className={cn(`h-9 w-9 rounded-full bg-${c} border border-black/15 dark:border-white/15`, site.colour === c && "ring-2 ring-[#111111] ring-offset-2 dark:ring-white")} aria-label={c} />)}</div></Field>
           <label className="flex items-center gap-2 font-semibold"><Switch checked={site.take_orders} onCheckedChange={(v) => setSite({ ...site, take_orders: v })} /> Take orders on the website</label>
           <div className="flex flex-wrap gap-2">
             <Button disabled={!dirty} onClick={() => save()}>Save</Button>
@@ -405,12 +403,12 @@ export function Website({ db, cloud }: { db: Db; cloud: boolean }) {
           </div>
           <div>
             <p className="mb-1 text-sm font-semibold">Items shown ({items.filter((p) => p.data.on_site).length} of {items.length}). Change in each item.</p>
-            <div className="flex flex-wrap gap-1.5">{items.map((p) => <LinkTo key={p.id} to={{ t: "product", id: p.id }} className={cn("rounded-full border-2 border-ink px-2.5 py-0.5 text-xs no-underline", p.data.on_site ? "bg-lime" : "bg-card opacity-60")}>{p.data.name}</LinkTo>)}</div>
+            <div className="flex flex-wrap gap-1.5">{items.map((p) => <LinkTo key={p.id} to={{ t: "product", id: p.id }} className={cn("rounded-full border border-black/15 px-2.5 py-0.5 text-xs no-underline dark:border-white/15", p.data.on_site ? "bg-lime" : "bg-card opacity-60")}>{p.data.name}</LinkTo>)}</div>
           </div>
         </Panel>
         <Panel className="space-y-3 text-center">
           <Pill s={s.site.published ? "done" : "open"} label={s.site.published ? "Live" : "Not live yet"} />
-          <div className="mx-auto w-fit rounded-xl border-2 border-ink bg-white p-3"><QRCodeSVG value={url} size={160} /></div>
+          <div className={cn("mx-auto w-fit rounded-xl bg-white p-3", softBorder)}><QRCodeSVG value={url} size={160} /></div>
           <p className="text-sm">Print this at your counter so people can order from their phone.</p>
           {s.site.published && (
             <div className="flex flex-wrap justify-center gap-2">
@@ -422,7 +420,7 @@ export function Website({ db, cloud }: { db: Db; cloud: boolean }) {
       </div>
       <div>
         <h3 className="mb-2 font-bold">Preview</h3>
-        <div className="overflow-hidden rounded-2xl border-2 border-ink shadow-block-sm">
+        <div className={cn("overflow-hidden rounded-2xl", softBorder)}>
           <SiteView preview slug={site.slug} site={{ name: db.ws.name, type_id: db.ws.type_id, about: site.about, colour: site.colour, take_orders: site.take_orders, city: s.city, address: s.address, phone: s.phone, labels: s.labels, items: items.filter((p) => p.data.on_site).map((p) => ({ id: p.id, name: p.data.name, price: p.data.price, unit: p.data.unit, type: p.data.type })) }} />
         </div>
       </div>
@@ -546,7 +544,7 @@ export function SettingsSection({ db }: { db: Db }) {
         <div className="mt-2 flex flex-wrap gap-1.5">
           {ALL_MODULES.map((m) => {
             const on = d.modules.includes(m);
-            return <button key={m} type="button" onClick={() => set("modules", on ? d.modules.filter((x) => x !== m) : [...d.modules, m])} className={cn("rounded-full border-2 border-ink px-3 py-1 text-sm font-semibold", on ? "bg-lime" : "bg-card opacity-60")}>{MODULE_NAMES(s)[m]}</button>;
+            return <button key={m} type="button" onClick={() => set("modules", on ? d.modules.filter((x) => x !== m) : [...d.modules, m])} className={cn("rounded-full border border-black/15 px-3 py-1 text-sm font-semibold dark:border-white/15", on ? "bg-lime" : "bg-card opacity-60")}>{MODULE_NAMES(s)[m]}</button>;
           })}
         </div>
       </Panel>

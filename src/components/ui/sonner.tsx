@@ -1,12 +1,19 @@
+import { useLocation } from "react-router-dom";
 import { Toaster as Sonner, toast } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  /* My Business (/business and /business/app) has its own floating support button at
+     bottom-right, so its toasts move to the top-right there to avoid covering it. Everywhere
+     else keeps sonner's default bottom-right position. */
+  const { pathname } = useLocation();
+  const inBusinessApp = pathname.startsWith("/business");
 
   return (
     <Sonner
       theme="light"
+      position={inBusinessApp ? "top-right" : undefined}
       className="toaster group"
       toastOptions={{
         classNames: {

@@ -1,16 +1,30 @@
 /* Shared pieces for My Business screens: panels, tiles, fields, the item lines editor, people pickers,
    and the links that open any customer, bill or order from anywhere in the app. */
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, forwardRef, useContext, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { MessageCircle, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
+import { Input as ShadInput } from "@/components/ui/input";
+import { Textarea as ShadTextarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { AnyRec, LineItem, PayMode, Settings } from "@/business/types";
 import { list, stockOf } from "@/business/engine";
 import { computeBill, GST_RATES } from "@/business/gst";
 import { inr, num } from "@/business/format";
 import { waLink } from "@/business/whatsapp";
+
+/* ---------- Design tokens for the business app's refined neo-brutalist look ----------
+   Heavy ink borders + hard shadows are reserved for focal elements only (setup checklist,
+   primary CTAs, open modals). Everything else — data cards, tables, inputs — gets a soft
+   hairline border and no shadow, on a warm cream canvas. */
+
+export const UNBOUNDED = { fontFamily: "'Unbounded', 'Hind', system-ui, sans-serif" } as const;
+
+/** Soft hairline border used on data/operational cards (not the heavy focal border-ink). */
+export const softBorder = "border border-black/[0.08] dark:border-white/[0.1]";
+export const softCard = cn("bg-white dark:bg-[#16161A]", softBorder);
+export const focalCls = "border-[1.5px] border-[#111111] shadow-[4px_4px_0_#111111]";
+export const fieldFill = "bg-[#F3F4F6] dark:bg-[#1F1F24] border border-black/10 dark:border-white/10";
 
 /* ---------- Opening things from anywhere ---------- */
 
@@ -40,15 +54,24 @@ export function LinkTo({ to, children, className }: { to: Target; children: Reac
 
 /* ---------- Layout ---------- */
 
-export function Panel({ children, className, tone = "bg-card" }: { children: ReactNode; className?: string; tone?: string }) {
-  return <div className={cn("rounded-2xl border-2 border-ink p-4 shadow-block-sm sm:p-5", tone, className)}>{children}</div>;
+/**
+ * The default data/operational card: a soft hairline border, no hard shadow, white (or dark) surface.
+ * Pass `focal` for the rare card that should carry the heavy ink border + offset shadow instead
+ * (the setup checklist, nothing else on an ordinary screen), or a `tone` background for a coloured banner.
+ */
+export function Panel({ children, className, tone, focal }: { children: ReactNode; className?: string; tone?: string; focal?: boolean }) {
+  return (
+    <div className={cn("rounded-2xl p-4 sm:p-5", tone ? cn(tone, "border border-black/10") : focal ? cn("bg-white dark:bg-[#16161A]", focalCls) : softCard, className)}>
+      {children}
+    </div>
+  );
 }
 
 export function SectionHead({ title, sub, children }: { title: string; sub?: string; children?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
+        <h2 style={UNBOUNDED} className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
         {sub && <p className="mt-1 max-w-2xl text-muted-foreground">{sub}</p>}
       </div>
       {children && <div className="flex flex-wrap gap-2">{children}</div>}
@@ -56,20 +79,34 @@ export function SectionHead({ title, sub, children }: { title: string; sub?: str
   );
 }
 
-export function Stat({ label, value, tone = "bg-card", onClick, hint }: { label: string; value: ReactNode; tone?: string; onClick?: () => void; hint?: string }) {
+/**
+ * A KPI-style tile: soft border, white/dark surface, optional tinted icon badge top-right, bold
+ * Unbounded metric. `tone` still fills the whole card (used for the odd warning tile like "To collect").
+ */
+export function Stat({ label, value, tone, onClick, hint, icon, iconTone = "bg-[#F472D0]/15 text-[#F472D0]" }: { label: string; value: ReactNode; tone?: string; onClick?: () => void; hint?: string; icon?: ReactNode; iconTone?: string }) {
   const Tag = onClick ? "button" : "div";
   return (
-    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cn("rounded-2xl border-2 border-ink p-4 text-left shadow-block-sm", tone, onClick && "transition-transform hover:-translate-y-0.5 hover:shadow-block")}>
-      <p className="text-sm font-semibold">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold tabular-nums sm:text-[28px]">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink/70">{hint}</p>}
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={cn(
+        "rounded-2xl p-4 text-left transition-colors",
+        tone ? cn(tone, "border border-black/10") : cn(softCard, onClick && "hover:border-[#111111] dark:hover:border-white/40"),
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold">{label}</p>
+        {icon && <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full", iconTone)}>{icon}</span>}
+      </div>
+      <p style={UNBOUNDED} className="mt-1 text-2xl font-bold tabular-nums sm:text-[28px]">{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-ink/70 dark:text-white/60">{hint}</p>}
     </Tag>
   );
 }
 
 export function Empty({ title, text, action }: { title: string; text?: string; action?: ReactNode }) {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-ink/40 bg-card/60 p-8 text-center">
+    <div className="rounded-2xl border border-dashed border-black/20 bg-black/[0.015] p-8 text-center dark:border-white/20 dark:bg-white/[0.02]">
       <p className="font-bold">{title}</p>
       {text && <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{text}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
@@ -85,7 +122,7 @@ const PILL: Record<string, string> = {
 const PILL_TEXT: Record<string, string> = { no_show: "Did not come", part: "Part paid", due: "Unpaid", new: "New", making: "Making", ready: "Ready", delivered: "Delivered", cancelled: "Cancelled", booked: "Booked", done: "Done", talking: "Talking", quoted: "Quote sent", won: "Won", lost: "Lost", open: "To do", sent: "Sent", skipped: "Skipped", paid: "Paid" };
 
 export function Pill({ s, label }: { s: string; label?: string }) {
-  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full border-2 border-ink px-2 py-0.5 text-xs font-bold", PILL[s] ?? "bg-card")}>{label ?? PILL_TEXT[s] ?? s}</span>;
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full border border-black/15 px-2 py-0.5 text-xs font-bold dark:border-white/15", PILL[s] ?? "bg-card")}>{label ?? PILL_TEXT[s] ?? s}</span>;
 }
 
 /** A labelled field. Use group for a set of buttons (a label around buttons would click the first one). */
@@ -100,14 +137,30 @@ export function Field({ label, hint, children, className, group }: { label: stri
   );
 }
 
-export const selectCls = "h-11 w-full rounded-xl border-2 border-ink bg-card px-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-ring";
+export const selectCls = cn("h-11 w-full rounded-xl px-3 text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F472D0]", fieldFill);
 
+/** Soft-filled text input, used everywhere in the business app in place of the plain shadcn input. */
+export const Input = forwardRef<HTMLInputElement, ComponentProps<"input">>(({ className, ...props }, ref) => (
+  <ShadInput ref={ref} className={cn("rounded-xl focus-visible:ring-[#F472D0]", fieldFill, className)} {...props} />
+));
+Input.displayName = "Input";
+
+/** Soft-filled textarea, matching Input. */
+export const Textarea = forwardRef<HTMLTextAreaElement, ComponentProps<"textarea">>(({ className, ...props }, ref) => (
+  <ShadTextarea ref={ref} className={cn("rounded-xl focus-visible:ring-[#F472D0]", fieldFill, className)} {...props} />
+));
+Textarea.displayName = "Textarea";
+
+/** Rounded filter-tab pill: solid ink (white in dark mode) when active, soft outline otherwise. */
 export function Choice<T extends string>({ value, onChange, options, className }: { value: T; onChange: (v: NoInfer<T>) => void; options: [NoInfer<T>, string][]; className?: string }) {
   return (
     <div role="radiogroup" className={cn("flex flex-wrap gap-1.5", className)}>
       {options.map(([v, l]) => (
         <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
-          className={cn("rounded-full border-2 border-ink px-3 py-1.5 text-sm font-semibold transition-colors", value === v ? "bg-ink text-cream" : "bg-card hover:bg-sun")}>
+          className={cn(
+            "rounded-full px-3 py-1.5 text-sm font-semibold transition-colors",
+            value === v ? "bg-[#111111] text-white dark:bg-white dark:text-[#111111]" : cn("bg-white text-foreground hover:border-black/30", softBorder, "dark:bg-[#16161A] dark:hover:border-white/30"),
+          )}>
           {l}
         </button>
       ))}
@@ -146,10 +199,10 @@ export function PartyPicker({ recs, kind = "customer", value, onChange, label, s
             onFocus={() => setFocus(true)} onBlur={() => setTimeout(() => setFocus(false), 150)} />
         </Field>
         {focus && matches.length > 0 && (
-          <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block">
+          <ul className={cn("absolute z-20 mt-1 w-full overflow-hidden rounded-xl bg-white shadow-lg dark:bg-[#16161A]", softBorder)}>
             {matches.map((p) => (
               <li key={p.id}>
-                <button type="button" className="flex w-full justify-between gap-2 px-3 py-2 text-left hover:bg-sun" onMouseDown={(e) => e.preventDefault()}
+                <button type="button" className="flex w-full justify-between gap-2 px-3 py-2 text-left hover:bg-black/[0.04] dark:hover:bg-white/5" onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { onChange({ id: p.id, name: p.name, phone: p.phone, state: p.state, gstin: p.gstin }); setFocus(false); }}>
                   <span className="font-semibold">{p.name}</span><span className="text-sm text-muted-foreground">{p.phone}</span>
                 </button>
@@ -200,7 +253,7 @@ export function LinesEditor({ recs, s, lines, onChange, discount, onDiscount, pu
         const key = (l as LineItem & { material_id?: string }).material_id ? `m:${(l as LineItem & { material_id?: string }).material_id}` : l.product_id ? `p:${l.product_id}` : "";
         const c = choices.find((x) => x.key === key);
         return (
-          <div key={i} className="rounded-xl border-2 border-ink/20 bg-background p-3">
+          <div key={i} className={cn("rounded-xl bg-black/[0.015] p-3 dark:bg-white/[0.02]", softBorder)}>
             <div className="grid gap-2 sm:grid-cols-[1.6fr_0.6fr_0.8fr_auto] sm:items-end">
               <Field label={i === 0 ? "Item" : ""}>
                 <select className={selectCls} value={key} onChange={(e) => pick(i, e.target.value)} aria-label="Item">

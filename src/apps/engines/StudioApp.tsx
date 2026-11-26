@@ -2,15 +2,21 @@ import { useRef, useState } from "react";
 import { Camera, Check, Download, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useToolsCatalog } from "@/hooks/useToolsCatalog";
+import { useModernTheme } from "@/components/modern/theme";
+import { AppIcon } from "@/components/store/AppIcon";
+import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { cn } from "@/lib/utils";
-import { AppShell } from "../shell/AppShell";
-import { StepLabel, ResultPlaceholder } from "../shell/StepLabel";
 import { NeedsCredits, errorText } from "../lib/api";
 import { dataUrlToBlob, downloadBlob, imageToDataUrl } from "../lib/files";
+import { FieldInput } from "../shell/Fields";
 import type { FormValues } from "../types";
 import type { StudioDef } from "../flagship/types";
 import { runFlagship } from "../flagship/api";
-import { FieldGrid, card, emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { emptyValues, inputsOf, missingFields } from "../flagship/parts";
+import { AmbientGlow, CONTROL, HINT, LABEL, UNBOUNDED, WhatYouGet, WorksWellWith } from "../flagship/studioUi";
+
+const CARD = "rounded-2xl border border-black/10 bg-white p-5 dark:border-white/15 dark:bg-[#16161A]";
 
 interface Shot {
   key: string;
@@ -21,6 +27,10 @@ interface Shot {
 
 /** One photo in, several finished pictures out, charged per picture that is made. */
 export default function StudioApp({ toolId, def }: { toolId: string; def: StudioDef }) {
+  const { data: catalog = [] } = useToolsCatalog();
+  const appName = catalog.find((t) => t.id === toolId)?.name ?? "Result";
+  const appCategory = catalog.find((t) => t.id === toolId)?.category;
+  const { dark } = useModernTheme();
   const [photo, setPhoto] = useState<string | null>(null);
   const [values, setValues] = useState<FormValues>(() => emptyValues(def.fields));
   const [picked, setPicked] = useState<string[]>(def.variants.slice(0, Math.min(3, def.variants.length)).map((v) => v.key));
@@ -69,112 +79,172 @@ export default function StudioApp({ toolId, def }: { toolId: string; def: Studio
     for (const s of shots.filter((x) => x.url)) downloadBlob(await dataUrlToBlob(s.url as string), `${toolId}-${s.key}.png`);
   };
 
+  const showPreview = !shots.length;
+
   return (
-    <AppShell toolId={toolId} intro={def.intro} steps={def.steps} related={def.related} priceNote="per picture" wide>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="space-y-4">
-          <div className={card}>
-            <StepLabel n={2}>{def.photo.label}</StepLabel>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void addPhoto(e.target.files?.[0]); e.target.value = ""; }} />
-            {photo ? (
-              <div className="relative overflow-hidden rounded-xl border-2 border-ink">
-                <img src={photo} alt="Your photo" className="max-h-72 w-full bg-sand object-contain" />
-                <Button size="icon" variant="secondary" className="absolute right-2 top-2 h-8 w-8" onClick={() => setPhoto(null)} aria-label="Remove photo">
-                  <X className="h-4 w-4" />
-                </Button>
+    <div className={cn("ez-modern", dark && "dark")}>
+      <div className="relative overflow-hidden bg-[#FAF7F2] dark:bg-[#0D0D0F]">
+        <AmbientGlow />
+
+        <div className="relative mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+              <AppIcon toolId={toolId} category={appCategory} name={appName} size="sm" />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-[#111111] dark:text-white sm:text-3xl" style={UNBOUNDED}>
+                  {appName}
+                </h1>
+                <p className="mt-1.5 max-w-2xl text-[16px] text-black/60 dark:text-white/60">{def.intro}</p>
               </div>
-            ) : (
-              <button type="button" onClick={() => fileRef.current?.click()} className="flex w-full flex-col items-center gap-1 rounded-xl border-2 border-dashed border-ink/50 bg-sand/60 px-4 py-8 text-sm font-semibold hover:border-ink hover:bg-sand">
-                <Camera className="h-6 w-6" /> Add a photo
-                <span className="text-xs font-normal text-muted-foreground">{def.photo.hint}</span>
-              </button>
-            )}
-            {def.fields.length > 0 && (
-              <div className="mt-4">
-                <FieldGrid toolId={toolId} fields={def.fields} values={values} onChange={setValues} sample={def.sample} disabled={busy} />
-              </div>
-            )}
-          </div>
-          <div className={card}>
-            <StepLabel n={3}>Pick the pictures to make</StepLabel>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {def.variants.map((v) => {
-                const on = picked.includes(v.key);
-                return (
-                  <button
-                    key={v.key}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggle(v.key)}
-                    className={cn("flex items-start gap-2 rounded-xl border-2 p-2.5 text-left text-sm transition-colors", on ? "border-ink bg-sun" : "border-ink/25 hover:border-ink")}
-                  >
-                    <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 border-ink", on && "bg-ink text-white")}>{on && <Check className="h-3 w-3" />}</span>
-                    <span>
-                      <span className="block font-semibold">{v.label}</span>
-                      <span className="text-xs text-muted-foreground">{v.hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
             </div>
-            <Button className="mt-4 w-full gap-2" size="lg" onClick={make} disabled={busy || !picked.length}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Make {picked.length} picture{picked.length === 1 ? "" : "s"} · {picked.length * def.credits} credits
-            </Button>
-            <p className="mt-2 text-xs text-muted-foreground">{def.credits} credits a picture, charged only for pictures that come out. Your photo is not stored.</p>
-          </div>
-        </div>
-        <div id={`${toolId}-output`} className="min-w-0 scroll-mt-24">
-          {!shots.length ? (
-            <ResultPlaceholder title="Your pictures appear here">
-              <ul className="mt-1 space-y-0.5 text-left">
-                {def.youGet.map((s) => (
-                  <li key={s}>• {s}</li>
-                ))}
-              </ul>
-            </ResultPlaceholder>
-          ) : (
-            <div className={card}>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-[15px] font-bold">Your pictures</p>
-                <div className="flex gap-1">
-                  {shots.some((s) => s.url) && (
-                    <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={saveAll}>
-                      <Download className="h-3.5 w-3.5" /> Save all
+            <CreditCostBadge toolId={toolId} className="!border-[1.5px] !border-[#111111] !bg-[#FACC15] dark:!border-white/70" />
+          </header>
+
+          <div className={cn("mt-6 grid gap-6", showPreview ? "grid-cols-1 lg:grid-cols-12 items-stretch" : "grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]")}>
+            <div className={cn("space-y-4", showPreview && "lg:col-span-7")}>
+              <div className={CARD}>
+                <p className={cn("mb-3", LABEL)}>{def.photo.label}</p>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void addPhoto(e.target.files?.[0]); e.target.value = ""; }} />
+                {photo ? (
+                  <div className="relative overflow-hidden rounded-xl border border-black/10 dark:border-white/15">
+                    <img src={photo} alt="Your photo" className="max-h-72 w-full bg-[#F3F4F6] object-contain dark:bg-[#1F1F24]" />
+                    <Button size="icon" variant="secondary" className="absolute right-2 top-2 h-8 w-8" onClick={() => setPhoto(null)} aria-label="Remove photo">
+                      <X className="h-4 w-4" />
                     </Button>
-                  )}
-                  <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={() => setShots([])} disabled={busy}>
-                    <RotateCcw className="h-3.5 w-3.5" /> Clear
-                  </Button>
-                </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex w-full flex-col items-center gap-1 rounded-xl border border-dashed border-black/20 bg-[#F3F4F6] px-4 py-8 text-sm font-semibold text-[#111111] hover:border-[#111111] dark:border-white/20 dark:bg-[#1F1F24] dark:text-white"
+                  >
+                    <Camera className="h-6 w-6" /> Add a photo
+                    <span className={cn("font-normal", HINT)}>{def.photo.hint}</span>
+                  </button>
+                )}
+                {def.fields.length > 0 && (
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">
+                    {def.fields.map((f) => (
+                      <div key={f.key} className={cn(f.half ? "sm:col-span-1" : "sm:col-span-2")}>
+                        <FieldInput
+                          field={{ ...f, half: false }}
+                          idPrefix={toolId}
+                          value={values[f.key]}
+                          onChange={(x) => setValues({ ...values, [f.key]: x })}
+                          controlClassName={CONTROL}
+                          labelClassName={LABEL}
+                          hintClassName={HINT}
+                        />
+                      </div>
+                    ))}
+                    {def.sample && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 text-[#111111] hover:bg-black/5 dark:text-white dark:hover:bg-white/10 sm:col-span-2 sm:w-fit"
+                        disabled={busy}
+                        onClick={() => setValues({ ...values, ...def.sample })}
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Fill in an example
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {shots.map((s) => (
-                  <figure key={s.key} className="overflow-hidden rounded-xl border-2 border-ink bg-sand">
-                    <div className="flex aspect-square items-center justify-center">
-                      {s.url ? (
-                        <img src={s.url} alt={s.label} className="h-full w-full object-cover" />
-                      ) : s.status === "failed" ? (
-                        <p className="p-4 text-center text-xs text-muted-foreground">Not made. You were not charged.</p>
-                      ) : (
-                        <Loader2 className={cn("h-6 w-6", s.status === "making" ? "animate-spin" : "opacity-30")} />
-                      )}
-                    </div>
-                    <figcaption className="flex items-center justify-between gap-2 border-t-2 border-ink bg-card px-3 py-2 text-sm font-semibold">
-                      {s.label}
-                      {s.url && (
-                        <Button size="sm" variant="ghost" className="h-7 gap-1" onClick={async () => downloadBlob(await dataUrlToBlob(s.url as string), `${toolId}-${s.key}.png`)}>
-                          <Download className="h-3.5 w-3.5" /> Save
+              <div className={CARD}>
+                <p className={cn("mb-3", LABEL)}>Pick the pictures to make</p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {def.variants.map((v) => {
+                    const on = picked.includes(v.key);
+                    return (
+                      <button
+                        key={v.key}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggle(v.key)}
+                        className={cn(
+                          "flex items-start gap-2 rounded-xl border p-2.5 text-left text-sm transition-colors",
+                          on ? "border-[#111111] bg-[#FACC15]/30 dark:border-white/70 dark:bg-[#FACC15]/15" : "border-black/10 hover:border-[#111111] dark:border-white/15 dark:hover:border-white/50",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                            on ? "border-[#111111] bg-[#111111] text-white dark:border-white dark:bg-white dark:text-[#111111]" : "border-black/30 dark:border-white/30",
+                          )}
+                        >
+                          {on && <Check className="h-3 w-3" />}
+                        </span>
+                        <span>
+                          <span className="block font-semibold text-[#111111] dark:text-white">{v.label}</span>
+                          <span className={HINT}>{v.hint}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button
+                  className="mt-4 w-full gap-2 rounded-full border-[1.5px] border-[#111111] bg-[#F472D0] text-[#111111] shadow-[3px_3px_0_#111111] hover:bg-[#F472D0]/90 dark:border-white/70"
+                  size="lg"
+                  onClick={make}
+                  disabled={busy || !picked.length}
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Make {picked.length} picture{picked.length === 1 ? "" : "s"} · {picked.length * def.credits} credits
+                </Button>
+                <p className={cn("mt-2", HINT)}>{def.credits} credits a picture, charged only for pictures that come out. Your photo is not stored.</p>
+              </div>
+            </div>
+            <div id={`${toolId}-output`} className={cn("min-w-0 scroll-mt-24", showPreview && "lg:col-span-5")}>
+              {showPreview ? (
+                <WhatYouGet items={def.youGet} working={false} sample={false} />
+              ) : (
+                <div className={CARD}>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className={cn("text-[15px] font-bold", LABEL)}>Your pictures</p>
+                    <div className="flex gap-1">
+                      {shots.some((s) => s.url) && (
+                        <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={saveAll}>
+                          <Download className="h-3.5 w-3.5" /> Save all
                         </Button>
                       )}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
+                      <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={() => setShots([])} disabled={busy}>
+                        <RotateCcw className="h-3.5 w-3.5" /> Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {shots.map((s) => (
+                      <figure key={s.key} className="overflow-hidden rounded-xl border border-black/10 bg-[#F3F4F6] dark:border-white/15 dark:bg-[#1F1F24]">
+                        <div className="flex aspect-square items-center justify-center">
+                          {s.url ? (
+                            <img src={s.url} alt={s.label} className="h-full w-full object-cover" />
+                          ) : s.status === "failed" ? (
+                            <p className={cn("p-4 text-center", HINT)}>Not made. You were not charged.</p>
+                          ) : (
+                            <Loader2 className={cn("h-6 w-6", s.status === "making" ? "animate-spin" : "opacity-30")} />
+                          )}
+                        </div>
+                        <figcaption className="flex items-center justify-between gap-2 border-t border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111111] dark:border-white/15 dark:bg-[#16161A] dark:text-white">
+                          {s.label}
+                          {s.url && (
+                            <Button size="sm" variant="ghost" className="h-7 gap-1" onClick={async () => downloadBlob(await dataUrlToBlob(s.url as string), `${toolId}-${s.key}.png`)}>
+                              <Download className="h-3.5 w-3.5" /> Save
+                            </Button>
+                          )}
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {def.related && def.related.length > 0 && <WorksWellWith ids={def.related} />}
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }

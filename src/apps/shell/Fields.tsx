@@ -15,11 +15,18 @@ export function FieldInput({
   value,
   onChange,
   idPrefix,
+  controlClassName,
+  labelClassName,
+  hintClassName,
 }: {
   field: Field;
   value: string | Rows | undefined;
   onChange: (v: string | Rows) => void;
   idPrefix: string;
+  /** Opt-in style override for the input/textarea/select control (default look is unchanged when omitted). */
+  controlClassName?: string;
+  labelClassName?: string;
+  hintClassName?: string;
 }) {
   const id = `${idPrefix}-${field.key.replace(/\W+/g, "-")}`;
   const t = field.type ?? "text";
@@ -27,15 +34,15 @@ export function FieldInput({
 
   return (
     <div className={cn("space-y-1.5", field.half ? "sm:col-span-1" : "sm:col-span-2")}>
-      <Label htmlFor={id} className="text-sm font-semibold">
+      <Label htmlFor={id} className={cn("text-sm font-semibold", labelClassName)}>
         {field.label}
         {field.required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
       {t === "textarea" ? (
-        <Textarea id={id} value={str} rows={field.rows ?? 4} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+        <Textarea id={id} value={str} rows={field.rows ?? 4} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} className={controlClassName} />
       ) : t === "select" ? (
         <Select value={str || undefined} onValueChange={(v) => onChange(v)}>
-          <SelectTrigger id={id}>
+          <SelectTrigger id={id} className={controlClassName}>
             <SelectValue placeholder={field.placeholder ?? "Choose…"} />
           </SelectTrigger>
           <SelectContent>
@@ -81,9 +88,10 @@ export function FieldInput({
           value={str}
           placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}
+          className={controlClassName}
         />
       )}
-      {field.help && <p className="text-xs text-muted-foreground">{field.help}</p>}
+      {field.help && <p className={cn("text-xs text-muted-foreground", hintClassName)}>{field.help}</p>}
     </div>
   );
 }

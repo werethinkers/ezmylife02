@@ -6,7 +6,8 @@ import { Link } from "react-router-dom";
 import { Ban, CheckCircle2, Pencil, Printer, ReceiptIndianRupee, Trash2, Wallet } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useModernTheme } from "@/components/modern/theme";
+import { cn } from "@/lib/utils";
 import { useBusiness } from "@/business/useBusiness";
 import type { AnyRec, AttendanceMark, OrderStatus, PayMode, Rec, Settings, Workspace } from "@/business/types";
 import {
@@ -17,14 +18,15 @@ import { canMake, recipeCost } from "@/business/reports";
 import { day, dayTime, inr, num, today } from "@/business/format";
 import { texts } from "@/business/whatsapp";
 import { BillView } from "./BillView";
-import { Choice, LinkTo, PAY_MODES, Pill, useNav, WaButton, type Target } from "./ui";
+import { Choice, Input, LinkTo, PAY_MODES, Pill, useNav, WaButton, type Target } from "./ui";
 
 export function DetailHost({ target, onClose }: { target: Target | null; onClose: () => void }) {
   const { db } = useBusiness();
+  const { dark } = useModernTheme();
   const rec = target && db ? db.recs.find((r) => r.id === target.id) : undefined;
   return (
     <Sheet open={!!target} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-ink bg-background p-0 sm:max-w-xl">
+      <SheetContent side="right" className={cn("ez-modern biz-app w-full overflow-y-auto border-black/10 bg-[#FAF7F2] p-0 dark:border-white/10 dark:bg-[#0D0D0F] sm:max-w-xl", dark && "dark")}>
         {db && rec ? <Detail rec={rec} ws={db.ws} recs={db.recs} onClose={onClose} /> : <div className="p-6"><SheetHeader><SheetTitle>Not found</SheetTitle><SheetDescription>It may have been removed.</SheetDescription></SheetHeader></div>}
       </SheetContent>
     </Sheet>
@@ -50,7 +52,7 @@ function Detail({ rec, ws, recs, onClose }: { rec: AnyRec; ws: Workspace; recs: 
 
 function Top({ kicker, title, sub, children }: { kicker: string; title: string; sub?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="border-b-2 border-ink bg-sun p-5 pr-12">
+    <div className="border-b border-black/10 bg-sun p-5 pr-12 dark:border-white/10">
       <SheetHeader className="text-left">
         <p className="text-xs font-bold uppercase tracking-wider">{kicker}</p>
         <SheetTitle className="font-display text-2xl">{title}</SheetTitle>
@@ -63,7 +65,7 @@ function Top({ kicker, title, sub, children }: { kicker: string; title: string; 
 
 function Block({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
   return (
-    <section className="border-b-2 border-ink/10 p-5">
+    <section className="border-b border-black/10 p-5 dark:border-white/10">
       <div className="mb-2 flex items-center justify-between gap-2"><h3 className="font-bold">{title}</h3>{right}</div>
       {children}
     </section>
@@ -172,7 +174,7 @@ function BillDetail({ rec, ws, recs }: P<"bill">) {
         <Button size="sm" variant="outline" asChild><Link to={`/business/print/${rec.id}`} target="_blank"><Printer /> Print</Link></Button>
         <Button size="sm" variant="outline" asChild><Link to={`/business/print/${rec.id}?size=80`} target="_blank"><Printer /> Bill printer</Link></Button>
       </Top>
-      <div className="overflow-x-auto border-b-2 border-ink/10 bg-muted/40 p-4"><div className="rounded-xl border-2 border-ink/20"><BillView ws={ws} bill={rec} paid={paid} /></div></div>
+      <div className="overflow-x-auto border-b border-black/10 bg-muted/40 p-4 dark:border-white/10"><div className="rounded-xl border border-black/15 dark:border-white/15"><BillView ws={ws} bill={rec} paid={paid} /></div></div>
       {b.order_id && <Block title={`From ${s.labels.order.toLowerCase()}`}><LinkTo to={{ t: "order", id: b.order_id }}>{list(recs, "order").find((o) => o.id === b.order_id)?.data.number ?? "Open"}</LinkTo></Block>}
       {b.appointment_id && <Block title={`From ${s.labels.order.toLowerCase()}`}><LinkTo to={{ t: "appointment", id: b.appointment_id }}>Open</LinkTo></Block>}
       <Block title="Payments">
@@ -384,7 +386,7 @@ function StaffDetail({ rec, recs }: P<"staff">) {
           {days.map((d) => {
             const mk = marks.get(d);
             return (
-              <button key={d} type="button" onClick={() => cycle(d)} className={`h-11 rounded-lg border-2 border-ink text-xs font-bold ${mk === "absent" ? "bg-coral" : mk === "half" ? "bg-sun" : mk === "leave" ? "bg-sky" : mk === "present" ? "bg-lime" : "bg-card"}`} aria-label={`${d} ${mk ?? "not marked"}`}>
+              <button key={d} type="button" onClick={() => cycle(d)} className={`h-11 rounded-lg border border-black/15 text-xs font-bold dark:border-white/15 ${mk === "absent" ? "bg-coral" : mk === "half" ? "bg-sun" : mk === "leave" ? "bg-sky" : mk === "present" ? "bg-lime" : "bg-card"}`} aria-label={`${d} ${mk ?? "not marked"}`}>
                 <span className="block text-[10px] font-normal">{Number(d.slice(8))}</span>{MARKS.find((x) => x[0] === mk)?.[1] ?? "·"}
               </button>
             );

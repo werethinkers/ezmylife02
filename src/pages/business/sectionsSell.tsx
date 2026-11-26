@@ -1,9 +1,8 @@
 /* Sections for selling: Today, orders, appointments, enquiries, customers, bills, dues and reminders. */
 
 import { useMemo, useState } from "react";
-import { CalendarPlus, Check, ChevronLeft, ChevronRight, Globe, Plus, ReceiptIndianRupee, ShoppingBag, Truck, Wallet, X } from "lucide-react";
+import { CalendarPlus, Check, ChevronLeft, ChevronRight, Globe, HandCoins, Plus, ReceiptIndianRupee, ShoppingBag, TrendingUp, Truck, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useBusiness } from "@/business/useBusiness";
 import type { Db } from "@/business/engine";
 import type { LeadStatus, OrderStatus, Rec } from "@/business/types";
@@ -13,7 +12,7 @@ import { addDays, day, dayTime, inr, inrShort, plural, today } from "@/business/
 import { texts } from "@/business/whatsapp";
 import { cn } from "@/lib/utils";
 import { DailySales } from "./charts";
-import { Choice, Empty, LinkTo, Panel, Pill, SectionHead, Stat, useNav, WaButton } from "./ui";
+import { Choice, Empty, Input, LinkTo, Panel, Pill, SectionHead, softBorder, softCard, Stat, UNBOUNDED, useNav, WaButton } from "./ui";
 import { BillRows } from "./details";
 
 const lower = (s: string) => s.toLowerCase();
@@ -80,23 +79,34 @@ export function Overview({ db }: { db: Db }) {
   ];
   const done = steps.length - left.length;
   const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
+  const QUICK_TONES = ["bg-[#F472D0]/15 text-[#F472D0]", "bg-[#C8E967]/25 text-[#5c7a1a]", "bg-emerald-500/15 text-emerald-600", "bg-amber-500/15 text-amber-600"];
   return (
     <div className="space-y-6">
-      <SectionHead title={`Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}${s.owner_name ? `, ${s.owner_name.split(" ")[0]}` : ""}`} sub={`${day(today())}. Here is ${db.ws.name} today.`} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 style={UNBOUNDED} className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}{s.owner_name ? `, ${s.owner_name.split(" ")[0]}` : ""}
+          </h2>
+          <p className="mt-1 text-muted-foreground">{day(today())} · {db.ws.name}</p>
+        </div>
+      </div>
 
       {left.length > 0 && !setupHidden && (
-        <Panel>
+        <Panel focal>
           <div className="flex items-start justify-between gap-3">
-            <p className="font-bold">Finish setting up ({done} of {steps.length} done)</p>
+            <div className="flex items-center gap-2">
+              <p className="font-bold">Finish setting up</p>
+              <span className="inline-flex items-center rounded-full border border-black/15 bg-[#C8E967] px-2 py-0.5 text-xs font-bold text-[#111111] dark:border-white/15">{done} of {steps.length} done</span>
+            </div>
             <button type="button" onClick={hideSetup} className="shrink-0 text-xs font-semibold text-muted-foreground underline-offset-2 hover:underline">Hide</button>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full border-2 border-ink bg-card"><div className="h-full bg-lime transition-[width]" style={{ width: `${pct}%` }} /></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-[#1F1F24]"><div className="h-full rounded-full bg-[#111111] transition-[width] dark:bg-[#C8E967]" style={{ width: `${pct}%` }} /></div>
           <ul className="mt-3 grid gap-1 sm:grid-cols-2">
             {steps.map((x) => (
               <li key={x.id} className={cn("flex items-center gap-2 text-sm", x.done && "text-ink/50 line-through")}>
-                <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 border-ink text-[10px]", x.done ? "bg-lime" : "bg-card")}>{x.done ? "✓" : ""}</span>
+                <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px]", x.done ? "border-black/15 bg-[#C8E967]" : "border-black/15 bg-white dark:border-white/15 dark:bg-[#16161A]")}>{x.done ? "✓" : ""}</span>
                 {x.done ? <span>{x.text}</span> : (
-                  <button type="button" className="-mx-1 flex flex-1 items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-sun/40" onClick={() => nav.go(x.id === "items" || x.id === "gst" ? "stock" : x.id === "first" ? "bills" : x.id === "site" ? "website" : "settings")}>
+                  <button type="button" className="-mx-1 flex flex-1 items-center justify-between gap-2 rounded-xl px-1 py-1 text-left transition-colors hover:bg-[#FAF7F2] dark:hover:bg-white/5" onClick={() => nav.go(x.id === "items" || x.id === "gst" ? "stock" : x.id === "first" ? "bills" : x.id === "site" ? "website" : "settings")}>
                     <span>{x.text}</span><span aria-hidden className="text-muted-foreground">→</span>
                   </button>
                 )}
@@ -121,68 +131,77 @@ export function Overview({ db }: { db: Db }) {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={`Billed today · ${plural(o.billsToday, "bill")}`} onClick={() => nav.go("bills")} />
-        <Stat label="Money in today" value={inrShort(o.collectedToday)} hint="Cash & UPI received" onClick={() => nav.go("money")} />
-        <Stat label="To collect" value={inrShort(o.duesTotal)} hint={plural(o.duesPeople, "person", "people")} tone={o.duesTotal > 0 ? "bg-coral" : undefined} onClick={() => nav.go("dues")} />
-        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} onClick={() => nav.go("money")} />
+        <Stat label="Sales today" value={inrShort(o.salesToday)} hint={`Billed today · ${plural(o.billsToday, "bill")}`} onClick={() => nav.go("bills")} icon={<ReceiptIndianRupee className="h-4 w-4" />} iconTone="bg-[#F472D0]/15 text-[#F472D0]" />
+        <Stat label="Money in today" value={inrShort(o.collectedToday)} hint="Cash & UPI received" onClick={() => nav.go("money")} icon={<Wallet className="h-4 w-4" />} iconTone="bg-[#C8E967]/25 text-[#5c7a1a]" />
+        <Stat label="To collect" value={inrShort(o.duesTotal)} hint={plural(o.duesPeople, "person", "people")} tone={o.duesTotal > 0 ? "bg-coral" : undefined} onClick={() => nav.go("dues")} icon={<HandCoins className="h-4 w-4" />} iconTone="bg-amber-500/15 text-amber-600" />
+        <Stat label="Profit this month" value={inrShort(o.monthProfit)} hint={`on sales of ${inrShort(o.monthSales)}`} onClick={() => nav.go("money")} icon={<TrendingUp className="h-4 w-4" />} iconTone="bg-sky-500/15 text-sky-600" />
       </div>
 
       <div>
         <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Quick actions</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {actions.map(([label, fn, icon]) => (
-            <Button key={label} type="button" onClick={fn} variant="outline" className="h-auto justify-start gap-2 py-3 text-left text-sm [&_svg]:h-5 [&_svg]:w-5">
-              {icon}{label}
-            </Button>
+          {actions.map(([label, fn, icon], i) => (
+            <button
+              key={label}
+              type="button"
+              onClick={fn}
+              className={cn("flex items-center gap-2.5 rounded-full bg-white px-4 py-2.5 text-left text-sm font-semibold transition-colors hover:border-[#111111] dark:bg-[#16161A] dark:hover:border-white/40", softBorder)}
+            >
+              <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full [&_svg]:h-4 [&_svg]:w-4", QUICK_TONES[i % QUICK_TONES.length])}>{icon}</span>
+              {label}
+            </button>
           ))}
         </div>
       </div>
 
       <div className={cn("grid gap-4", s.modules.includes("leads") ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-        <Panel>
-          <div className="flex items-center justify-between"><h3 className="font-bold">To do today</h3><button type="button" className="text-sm underline" onClick={() => nav.go("reminders")}>All reminders</button></div>
-          {o.reminders.length ? <ul className="divide-y divide-ink/10">{o.reminders.slice(0, 8).map((r) => <ReminderRow key={r.id} r={r} />)}</ul> : (
-            <div className="mt-2 flex flex-col items-start gap-3">
-              <p className="text-sm text-muted-foreground">Nothing waiting. Reminders appear here by themselves when something is due.</p>
-              <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "reminder" })}><Plus /> Add reminder</Button>
-            </div>
+        <Panel className="flex h-full flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between"><h3 className="font-bold">To do today</h3><button type="button" className="text-sm underline" onClick={() => nav.go("reminders")}>All reminders</button></div>
+            {o.reminders.length ? <ul className="divide-y divide-black/10 dark:divide-white/10">{o.reminders.slice(0, 8).map((r) => <ReminderRow key={r.id} r={r} />)}</ul> : (
+              <p className="mt-2 text-sm text-muted-foreground">Nothing waiting. Reminders appear here by themselves when something is due.</p>
+            )}
+          </div>
+          {!o.reminders.length && (
+            <button type="button" onClick={() => nav.form({ kind: "reminder" })} className="mt-4 self-start rounded-full border border-black/15 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-[#111111] hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-[#111111]"><Plus className="mr-1 inline h-4 w-4" /> Add reminder</button>
           )}
         </Panel>
         {booked ? (
-          <Panel>
-            <h3 className="font-bold">Today's {lower(s.labels.orders)}</h3>
-            {o.appts.length ? <ul className="mt-1 divide-y divide-ink/10">{o.appts.map((a) => <li key={a.id} className="flex justify-between gap-2 py-2 text-sm"><LinkTo to={{ t: "appointment", id: a.id }}>{new Date(a.data.start_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} {a.data.customer_name}</LinkTo><span>{a.data.service}</span></li>)}</ul> : (
-              <div className="mt-2 flex flex-col items-start gap-3">
-                <p className="text-sm text-muted-foreground">None booked for today.</p>
-                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "appointment" })}><Plus /> Book {lower(s.labels.order)}</Button>
-              </div>
-            )}
+          <Panel className="flex h-full flex-col justify-between">
+            <div>
+              <h3 className="font-bold">Today's {lower(s.labels.orders)}</h3>
+              {o.appts.length ? <ul className="mt-1 divide-y divide-black/10 dark:divide-white/10">{o.appts.map((a) => <li key={a.id} className="flex justify-between gap-2 py-2 text-sm"><LinkTo to={{ t: "appointment", id: a.id }}>{new Date(a.data.start_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} {a.data.customer_name}</LinkTo><span>{a.data.service}</span></li>)}</ul> : (
+                <p className="mt-2 text-sm text-muted-foreground">None booked for today.</p>
+              )}
+            </div>
+            {!o.appts.length && <button type="button" onClick={() => nav.form({ kind: "appointment" })} className="mt-4 self-start rounded-full border border-black/15 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-[#111111] hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-[#111111]"><Plus className="mr-1 inline h-4 w-4" /> Book {lower(s.labels.order)}</button>}
           </Panel>
         ) : (
-          <Panel>
-            <h3 className="font-bold">Due today or late</h3>
-            {o.dueToday.length ? <ul className="mt-1 divide-y divide-ink/10">{o.dueToday.map((x) => <li key={x.id} className="flex items-center justify-between gap-2 py-2 text-sm"><span><LinkTo to={{ t: "order", id: x.id }}>{x.data.number}</LinkTo> {x.data.customer_name} · {dayTime(x.data.due_at)}</span><Pill s={x.data.status} /></li>)}</ul> : (
-              <div className="mt-2 flex flex-col items-start gap-3">
-                <p className="text-sm text-muted-foreground">Nothing due. {plural(o.openOrders, "open order")} in all.</p>
-                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "order" })}><Plus /> New {lower(s.labels.order)}</Button>
-              </div>
-            )}
+          <Panel className="flex h-full flex-col justify-between">
+            <div>
+              <h3 className="font-bold">Due today or late</h3>
+              {o.dueToday.length ? <ul className="mt-1 divide-y divide-black/10 dark:divide-white/10">{o.dueToday.map((x) => <li key={x.id} className="flex items-center justify-between gap-2 py-2 text-sm"><span><LinkTo to={{ t: "order", id: x.id }}>{x.data.number}</LinkTo> {x.data.customer_name} · {dayTime(x.data.due_at)}</span><Pill s={x.data.status} /></li>)}</ul> : (
+                <p className="mt-2 text-sm text-muted-foreground">Nothing due. {plural(o.openOrders, "open order")} in all.</p>
+              )}
+            </div>
+            {!o.dueToday.length && <button type="button" onClick={() => nav.form({ kind: "order" })} className="mt-4 self-start rounded-full border border-black/15 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-[#111111] hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-[#111111]"><Plus className="mr-1 inline h-4 w-4" /> New {lower(s.labels.order)}</button>}
           </Panel>
         )}
         {s.modules.includes("leads") && (
-          <Panel>
-            <h3 className="font-bold">Open enquiries</h3>
+          <Panel className="flex h-full flex-col justify-between">
+            <div>
+              <h3 className="font-bold">Open enquiries</h3>
+              {o.leadsOpen ? (
+                <div className="mt-2">
+                  <p style={UNBOUNDED} className="text-2xl font-bold tabular-nums">{o.leadsOpen}</p>
+                  {o.leadsValue ? <p className="text-sm text-muted-foreground">worth about {inrShort(o.leadsValue)}</p> : null}
+                </div>
+              ) : <p className="mt-2 text-sm text-muted-foreground">No open enquiries right now.</p>}
+            </div>
             {o.leadsOpen ? (
-              <div className="mt-2">
-                <p className="font-display text-2xl font-bold tabular-nums">{o.leadsOpen}</p>
-                {o.leadsValue ? <p className="text-sm text-muted-foreground">worth about {inrShort(o.leadsValue)}</p> : null}
-                <button type="button" className="mt-2 text-sm underline" onClick={() => nav.go("leads")}>See all</button>
-              </div>
+              <button type="button" onClick={() => nav.go("leads")} className="mt-4 self-start rounded-full border border-black/15 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-[#111111] hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-[#111111]">See all</button>
             ) : (
-              <div className="mt-2 flex flex-col items-start gap-3">
-                <p className="text-sm text-muted-foreground">No open enquiries right now.</p>
-                <Button size="sm" variant="outline" onClick={() => nav.form({ kind: "lead" })}><Plus /> New enquiry</Button>
-              </div>
+              <button type="button" onClick={() => nav.form({ kind: "lead" })} className="mt-4 self-start rounded-full border border-black/15 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-[#111111] hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-[#111111]"><Plus className="mr-1 inline h-4 w-4" /> New enquiry</button>
             )}
           </Panel>
         )}
@@ -199,11 +218,11 @@ export function Overview({ db }: { db: Db }) {
         <h3 className="mb-2 font-bold">Sales, last 14 days</h3>
         {chart.some((d) => d.sales > 0) ? <DailySales data={chart} /> : (
           <div className="flex flex-col items-start gap-3">
-            <div aria-hidden className="flex h-24 w-full items-end gap-1.5 opacity-20">
-              {[30, 55, 40, 70, 45, 60, 35, 50, 65, 40, 55, 30, 45, 60].map((h, i) => <div key={i} className="flex-1 rounded-t bg-ink" style={{ height: `${h}%` }} />)}
+            <div aria-hidden className="flex h-24 w-full items-end gap-1.5">
+              {[30, 55, 40, 70, 45, 60, 35, 50, 65, 40, 55, 30, 45, 60].map((h, i) => <div key={i} className="flex-1 rounded-t-md bg-black/[0.06] dark:bg-white/10" style={{ height: `${h}%` }} />)}
             </div>
             <p className="text-sm text-muted-foreground">Your sales show here once you make bills.</p>
-            <Button size="sm" onClick={() => nav.form({ kind: "sale" })}><Plus /> Create your first bill</Button>
+            <button type="button" onClick={() => nav.form({ kind: "sale" })} className="rounded-full border-[1.5px] border-[#111111] bg-[#F472D0] px-5 py-2 text-sm font-semibold text-[#111111] shadow-[3px_3px_0_#111111] transition-transform hover:-translate-y-0.5"><Plus className="mr-1 inline h-4 w-4" /> Create your first bill</button>
           </div>
         )}
       </Panel>
@@ -305,7 +324,7 @@ export function Appointments({ db }: { db: Db }) {
                 </button>
                 <div className="flex flex-1 flex-wrap gap-2">
                   {at.map((a) => (
-                    <button key={a.id} type="button" onClick={() => nav.open({ t: "appointment", id: a.id })} className={cn("rounded-xl border-2 border-ink px-3 py-1.5 text-left text-sm shadow-block-sm", a.data.status === "done" ? "bg-lime" : a.data.status === "booked" ? "bg-sky" : "bg-muted line-through")}>
+                    <button key={a.id} type="button" onClick={() => nav.open({ t: "appointment", id: a.id })} className={cn("rounded-xl border border-black/15 px-3 py-1.5 text-left text-sm dark:border-white/15", a.data.status === "done" ? "bg-lime" : a.data.status === "booked" ? "bg-sky" : "bg-muted line-through")}>
                       <b>{new Date(a.data.start_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} {a.data.customer_name}</b>
                       <span className="block text-xs">{a.data.service} · {a.data.duration_min} min{a.data.staff_id ? ` · ${staff.find((x) => x.id === a.data.staff_id)?.data.name ?? ""}` : ""}</span>
                     </button>
@@ -342,10 +361,10 @@ export function Leads({ db }: { db: Db }) {
             const col = leads.filter((l) => l.data.status === st);
             return (
               <div key={st} className="w-[78vw] max-w-[300px] shrink-0 snap-start lg:w-auto lg:max-w-none">
-                <div className={cn("mb-2 flex items-center justify-between rounded-xl border-2 border-ink px-3 py-1.5 font-bold", tone)}><span>{label}</span><span className="text-sm">{col.length}{col.some((l) => l.data.value) ? ` · ${inrShort(col.reduce((a, l) => a + (l.data.value ?? 0), 0))}` : ""}</span></div>
+                <div className={cn("mb-2 flex items-center justify-between rounded-xl border border-black/15 px-3 py-1.5 font-bold dark:border-white/15", tone)}><span>{label}</span><span className="text-sm">{col.length}{col.some((l) => l.data.value) ? ` · ${inrShort(col.reduce((a, l) => a + (l.data.value ?? 0), 0))}` : ""}</span></div>
                 <div className="space-y-2">
                   {col.map((l) => (
-                    <div key={l.id} className="rounded-xl border-2 border-ink bg-card p-3 shadow-block-sm">
+                    <div key={l.id} className={cn("rounded-xl p-3", softCard)}>
                       <LinkTo to={{ t: "lead", id: l.id }}>{l.data.name}</LinkTo>
                       <p className="text-sm text-ink/80">{l.data.want}</p>
                       <p className="text-xs text-muted-foreground">{l.data.source} · {day(l.created_at)}{l.data.value ? ` · ${inr(l.data.value)}` : ""}</p>
@@ -392,7 +411,7 @@ export function Customers({ db }: { db: Db }) {
       {!rows.length ? <Empty title={`No ${lower(s.labels.customers)} yet`} text="They are added when you make a bill or take an order with a name." /> : (
         <Panel className="overflow-x-auto p-0 sm:p-0">
           <table className="w-full text-sm">
-            <thead className="border-b-2 border-ink bg-sand text-left"><tr><th className="p-3">Name</th><th className="p-3">Phone</th><th className="p-3 text-right">Visits</th><th className="p-3 text-right">Spent</th><th className="p-3 text-right">Owes</th><th className="hidden p-3 sm:table-cell">Last</th></tr></thead>
+            <thead className="border-b border-black/10 bg-black/[0.02] text-left dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="p-3">Name</th><th className="p-3">Phone</th><th className="p-3 text-right">Visits</th><th className="p-3 text-right">Spent</th><th className="p-3 text-right">Owes</th><th className="hidden p-3 sm:table-cell">Last</th></tr></thead>
             <tbody className="divide-y divide-ink/10">
               {rows.map(({ c, st }) => (
                 <tr key={c.id} className="hover:bg-sun/30">
