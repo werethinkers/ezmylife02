@@ -63,6 +63,10 @@ function clientDef(a) {
 }
 
 function serverSpec(a) {
+  // Keyed by the field's label, same as the key the client sends each value under
+  // (src/apps/shell/Fields.tsx's serializeValues) — so the server can reject a value that is
+  // longer than the form ever let someone type, without trusting the client to have enforced it.
+  const fieldLimits = Object.fromEntries((a.fields ?? []).filter((f) => f.maxLength).map((f) => [f.label, f.maxLength]));
   const s = {
     credits: a.credits,
     role: a.role ?? "You are a professional photographer and retoucher.",
@@ -76,6 +80,7 @@ function serverSpec(a) {
     ...(a.variants ? { variants: Object.fromEntries(a.variants.map((v) => [v.key, v.prompt])) } : {}),
     ...(a.pictures ? { imageStyle: a.imageStyle ?? "Clean, professional, warm natural light." } : {}),
     ...(a.maxTokens ? { maxTokens: a.maxTokens } : {}),
+    ...(Object.keys(fieldLimits).length ? { fieldLimits } : {}),
   };
   return `flagship(${JSON.stringify(a.shell)}, ${j(s)})`;
 }

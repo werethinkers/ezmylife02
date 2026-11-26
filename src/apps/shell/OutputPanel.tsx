@@ -20,6 +20,7 @@ import { useOutputChoice } from "../output/choice";
 import { docFromText } from "../output/buildDoc";
 import { usePreparedPdf } from "../output/usePreparedPdf";
 import { PdfView } from "../output/PdfView";
+import { SectionEditor } from "../output/sectionEditor";
 import { saveFile } from "../output/save";
 import type { PdfDoc } from "../output/types";
 import { sendHandoff } from "../lib/handoff";
@@ -345,12 +346,7 @@ export function OutputPanel({
         {showPdf ? (
           <PdfView prepared={prepared} fileName={fileName} title={title} />
         ) : editing && onEdit ? (
-          <textarea
-            className="min-h-[50vh] w-full resize-y rounded-xl border-2 border-ink bg-background p-3 font-mono text-xs leading-relaxed"
-            value={text}
-            onChange={(e) => onEdit(e.target.value)}
-            aria-label="Edit result"
-          />
+          <SectionEditor text={text} onChange={onEdit} />
         ) : (
           <Markdown>{text}</Markdown>
         )}
@@ -393,7 +389,7 @@ export function OutputPanel({
               Revise
             </Button>
           </form>
-          <p className="text-xs text-muted-foreground">Each change is one more run at the app's price.</p>
+          <p className="text-xs text-muted-foreground">Each change rewrites the whole result and costs the app's price again, same as the first run.</p>
         </div>
       )}
     </div>

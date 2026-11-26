@@ -24,7 +24,8 @@ export const flagshipMarketing: Record<string, AppDef> = {
         "type": "text",
         "required": true,
         "placeholder": "e.g. Mitti Home",
-        "half": true
+        "half": true,
+        "maxLength": 80
       },
       {
         "key": "category",
@@ -32,7 +33,8 @@ export const flagshipMarketing: Record<string, AppDef> = {
         "type": "text",
         "required": true,
         "placeholder": "e.g. Handmade terracotta home décor",
-        "half": true
+        "half": true,
+        "maxLength": 100
       },
       {
         "key": "customers",
@@ -40,13 +42,15 @@ export const flagshipMarketing: Record<string, AppDef> = {
         "type": "textarea",
         "required": true,
         "placeholder": "Age, city, income, taste",
-        "rows": 2
+        "rows": 2,
+        "maxLength": 400
       },
       {
         "key": "different",
         "label": "What makes you different",
         "type": "textarea",
-        "rows": 2
+        "rows": 2,
+        "maxLength": 400
       },
       {
         "key": "tone",
@@ -67,14 +71,16 @@ export const flagshipMarketing: Record<string, AppDef> = {
         "label": "Colours or styles to avoid",
         "type": "text",
         "placeholder": "e.g. no neon, no black",
-        "half": true
+        "half": true,
+        "maxLength": 120
       },
       {
         "key": "likes",
         "label": "Brands you like the look of",
         "type": "textarea",
         "placeholder": "e.g. Nicobar, FabIndia, Good Earth",
-        "rows": 2
+        "rows": 2,
+        "maxLength": 300
       },
       {
         "key": "language",
@@ -101,7 +107,7 @@ export const flagshipMarketing: Record<string, AppDef> = {
     },
     "youGet": [
       "10 name ideas with domain-style checks to do (if you need a name)",
-      "Brand story in 100 words",
+      "Brand story in 100 words or fewer",
       "Brand voice: do's and don'ts with examples",
       "Colour palette with hex codes and where to use each",
       "Font pairing (free Google Fonts)",

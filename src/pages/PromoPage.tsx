@@ -37,6 +37,7 @@ import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
 import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import { STUDIO_IDS } from "@/data/studios";
 import { OUTPUT_FORMAT } from "@/data/outputFormat";
+import { formatSummary } from "@/apps/output/choice";
 import { CATALOG, getProduct } from "@/instant/catalog";
 import ProductPromo from "@/pages/instant/ProductPromo";
 import { cn } from "@/lib/utils";
@@ -333,7 +334,7 @@ export default function PromoPage() {
                 className="max-w-lg"
                 cells={[
                   { value: creditCost > 0 ? creditLabel : "Free", label: creditCost > 0 ? "Pay per result" : "No cost" },
-                  { value: OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
+                  { value: formatSummary(toolId) ?? OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
                   { value: "100 Free", label: "Starter credits", accent: true },
                 ]}
               />

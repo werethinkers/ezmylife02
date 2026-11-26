@@ -10,7 +10,7 @@ export const flagshipMarketing: Record<string, AppSpec> = {
     "sections": [
       "Brand essence (purpose, promise, personality in 3 words)",
       "Name ideas (only if asked; table: name, meaning, why it works, check to do)",
-      "Brand story (100 words)",
+      "Brand story (100 words or fewer)",
       "Brand voice (table: we are / we are not, with example lines)",
       "Colour palette (table: name, hex, use)",
       "Typography (two free Google Fonts and where to use each)",
@@ -22,9 +22,18 @@ export const flagshipMarketing: Record<string, AppSpec> = {
       "Colours must work together and pass basic contrast for text; give real hex codes.",
       "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites.",
       "Never leave a placeholder in square brackets anywhere in the kit — not the business name, not a domain ending like .com or .in, not a legal or contact detail. Every section must read as finished, real copy, not a template waiting to be filled in.",
-      "If the business name is 'need a name' or otherwise not given, pick your single best idea from the Name ideas table, mark it clearly as your top recommendation, and then write every other section — brand story, voice, colour palette, logo directions, taglines and brand rules — using that one chosen name throughout, exactly as if it were the customer's real, final name. Do not add a separate 'To complete' section about the name."
+      "If the business name is 'need a name' or otherwise not given, pick your single best idea from the Name ideas table, mark it clearly as your top recommendation, and then write every other section — brand story, voice, colour palette, logo directions, taglines and brand rules — using that one chosen name throughout, exactly as if it were the customer's real, final name. Do not add a separate 'To complete' section about the name.",
+      "The Brand story section must be 100 words or fewer. Count the words before you finish writing it, and cut it down if it runs over — never go above 100."
     ],
-    "imageStyle": "Clean brand identity presentation, flat vector style, plain background, no small text."
+    "imageStyle": "Clean brand identity presentation, flat vector style, plain background, no small text.",
+    "fieldLimits": {
+      "Business or product name (or 'need a name')": 80,
+      "What it is": 100,
+      "Who buys it": 400,
+      "What makes you different": 400,
+      "Colours or styles to avoid": 120,
+      "Brands you like the look of": 300
+    }
   }),
   "90-day-marketing-plan": flagship("plan", {
     "credits": 30,

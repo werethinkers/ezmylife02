@@ -46,6 +46,17 @@ import {
 // components' default thick ink border + hard offset shadow, which read as too heavy here).
 const SOFT_BTN = "border border-zinc-200 shadow-sm hover:translate-x-0 hover:translate-y-0 hover:shadow-sm active:translate-x-0 active:translate-y-0 active:shadow-sm dark:border-zinc-800";
 
+// Lightweight, borderless-looking utility pill for the refined pages' top row (Bulk mode, Full
+// screen) — zero shadow, so it reads as part of the editorial hero rather than a separate bar.
+const PILL_BTN =
+  "rounded-full border border-black/10 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-[#111111] shadow-none hover:bg-white hover:shadow-none dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10";
+
+// Bespoke tools that get the refined chrome without being a Studio or a document-generator —
+// each one special-cased because it isn't picked up by STUDIO_IDS or by `engine === "doc"`.
+// "emi-calculator" is its own "custom" engine app; "tool-1" is still a plain native tool (free,
+// no credit gate) with its own refined screen — see src/components/tools/InvoiceGeneratorRefined.tsx.
+const REFINED_CUSTOM_IDS = new Set(["emi-calculator", "tool-1"]);
+
 interface CatalogTool {
   name: string;
   description: string;
@@ -81,7 +92,7 @@ const ToolViewer = () => {
   // as Studio tools (sub-header, footer, support FAB) for their neo-brutalist redesign, without
   // joining the generated Studios list (they aren't Studios).
   const toolEngine = toolId ? APPS[toolId]?.engine : undefined;
-  const refinedChrome = isStudioTool || toolId === "emi-calculator" || toolEngine === "doc";
+  const refinedChrome = isStudioTool || REFINED_CUSTOM_IDS.has(toolId ?? "") || toolEngine === "doc";
   const { user } = useAuth();
   const [confirmLeave, setConfirmLeave] = useState(false);
 
@@ -284,14 +295,6 @@ const ToolViewer = () => {
     : undefined;
 
   const studioTab = isStudioTool ? studioTabOf(toolId ?? "") : undefined;
-  const studioBadge = toolTitle
-    .replace(/[^A-Za-z0-9 ]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
 
   return (
     <div className={cn("min-h-screen flex flex-col", refinedChrome && "ez-modern", refinedChrome && dark && "dark")}>
@@ -303,41 +306,63 @@ const ToolViewer = () => {
         jsonLd={seoJsonLd}
       />
       <div className={cn("ez-modern", dark && "dark")}><ModernHeader section={isStudioTool ? "studios" : undefined} /></div>
-      <div className={cn("z-20 shrink-0 border-b bg-card", refinedChrome ? "border-black/10 dark:border-white/10 dark:bg-[#0D0D0F]" : "border-zinc-200 dark:border-zinc-800")}>
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button onClick={onBackClick} variant="outline" size="sm" className={cn("h-9 shrink-0", SOFT_BTN, refinedChrome && "rounded-full")} aria-label="Back to what this app does">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
-            </Button>
-            {refinedChrome && (
-              <span className="hidden h-9 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-primary/15 px-2 text-xs font-bold text-foreground dark:border-white/15 sm:flex" aria-hidden>
-                {studioBadge}
-              </span>
-            )}
-            <AppIcon toolId={toolId ?? ""} category={toolCategory} name={toolTitle} size="sm" className="hidden h-10 w-10 sm:block" />
-            <div className="min-w-0">
-              <p className={cn("truncate font-bold leading-tight", refinedChrome && "dark:text-white")}>{toolTitle}</p>
-              <p className={cn("truncate text-xs text-muted-foreground", refinedChrome && "dark:text-white/50")}>
-                {studioTab ? studioTab.tab.label : toolCategory ? `${goalOf(toolCategory).name} · ${toolCategory}` : "App"}
-              </p>
+      {refinedChrome ? (
+        // The refined pages fold this into one editorial hero: a plain breadcrumb back-link and
+        // lightweight utility pills, with no icon/title or progress bar — the app's own hero below
+        // (icon, H1, eyebrow pill) already carries those, so nothing is said twice.
+        <div className="relative z-20 bg-[#FAF7F2] dark:bg-[#0D0D0F]">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-4 sm:px-6 lg:px-8">
+            <button
+              type="button"
+              onClick={onBackClick}
+              className="flex min-w-0 items-center gap-1.5 text-sm text-black/50 transition hover:text-[#111111] dark:text-white/50 dark:hover:text-white"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Business apps{toolCategory ? ` / ${toolCategory}` : ""}</span>
+            </button>
+            <div className="flex items-center gap-2">
+              {toolId && <BulkButton toolId={toolId} className={PILL_BTN} />}
+              <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-auto", PILL_BTN)}>
+                <Maximize2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Full screen</span>
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {toolId && <BulkButton toolId={toolId} className={cn(SOFT_BTN, refinedChrome && "rounded-full")} />}
-            <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-9", SOFT_BTN, refinedChrome && "rounded-full")}>
-              <Maximize2 className="h-3.5 w-3.5" />
-              <span className="hidden text-xs sm:inline">Full screen</span>
-            </Button>
+        </div>
+      ) : (
+        <div className="z-20 shrink-0 border-b border-zinc-200 bg-card dark:border-zinc-800">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <Button onClick={onBackClick} variant="outline" size="sm" className={cn("h-9 shrink-0", SOFT_BTN)} aria-label="Back to what this app does">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
+              </Button>
+              <AppIcon toolId={toolId ?? ""} category={toolCategory} name={toolTitle} size="sm" className="hidden h-10 w-10 sm:block" />
+              <div className="min-w-0">
+                <p className="truncate font-bold leading-tight">{toolTitle}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {studioTab ? studioTab.tab.label : toolCategory ? `${goalOf(toolCategory).name} · ${toolCategory}` : "App"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {toolId && <BulkButton toolId={toolId} className={SOFT_BTN} />}
+              <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-9", SOFT_BTN)}>
+                <Maximize2 className="h-3.5 w-3.5" />
+                <span className="hidden text-xs sm:inline">Full screen</span>
+              </Button>
+            </div>
+          </div>
+          <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6 lg:px-8">
+            <FlowSteps flow="app" step={2} className="max-w-3xl" />
           </div>
         </div>
-        <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6 lg:px-8">
-          <FlowSteps flow="app" step={2} className="max-w-3xl" compact={refinedChrome} />
-        </div>
-      </div>
+      )}
 
-      {/* Older apps don't carry the shared app frame, so show what they do in plain words here. */}
-      {isNativeTool && !uploadedToolUrl && toolCategory && !hasEngineApp(toolId ?? "") && (
+      {/* Older apps don't carry the shared app frame, so show what they do in plain words here.
+          Refined-chrome native tools (e.g. tool-1) build their own version of this inside their
+          own screen, so they're excluded here too even though they aren't an engine app. */}
+      {isNativeTool && !uploadedToolUrl && toolCategory && !hasEngineApp(toolId ?? "") && !refinedChrome && (
         <div className="mx-auto w-full max-w-4xl px-4 pt-6">
           <GiveGet give={categoryInfo(toolCategory).give} get={categoryInfo(toolCategory).get} time={null} className={cn("max-w-2xl", SOFT_BTN)} />
         </div>
@@ -357,10 +382,11 @@ const ToolViewer = () => {
         {renderContent()}
       </div>
 
-      {/* Engine apps list related apps inside their own frame; older apps get the suggestions strip. */}
-      {toolId && !isLoading && !hasEngineApp(toolId) && <NextApps toolId={toolId} />}
+      {/* Engine apps and refined-chrome native tools list related apps inside their own frame;
+          every other older app gets the generic suggestions strip. */}
+      {toolId && !isLoading && !hasEngineApp(toolId) && !refinedChrome && <NextApps toolId={toolId} />}
 
-      {!hasEngineApp(toolId ?? "") && <ToolDemoPreview
+      {!hasEngineApp(toolId ?? "") && !refinedChrome && <ToolDemoPreview
         demoInput={catalogInfo?.demo_input}
         demoOutput={catalogInfo?.demo_output}
         toolName={toolTitle}

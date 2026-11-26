@@ -105,6 +105,35 @@ function hasPlaceholder(s: string): boolean {
   return spans.some((m) => !/^\[\d+\]$/.test(m));
 }
 
+/**
+ * Cuts a markdown section's text down to `max` words if the model ran over, so the Brand Identity
+ * Kit's "100 words" promise holds even on the rare generation that doesn't stick to it itself.
+ * A no-op when the heading isn't found or the section is already short enough.
+ */
+function clampSectionWords(markdown: string, heading: RegExp, max: number): string {
+  const m = markdown.match(heading);
+  if (!m || m.index === undefined) return markdown;
+  const start = m.index + m[0].length;
+  const rest = markdown.slice(start);
+  const nextHeading = rest.search(/\n#{1,6}\s/);
+  const sectionEnd = nextHeading === -1 ? rest.length : nextHeading;
+  const section = rest.slice(0, sectionEnd).trim();
+  const words = section.split(/\s+/).filter(Boolean);
+  if (words.length <= max) return markdown;
+  const clamped = `${words.slice(0, max).join(" ").replace(/[,;:—-]+$/, "")}.`;
+  return `${markdown.slice(0, start)}\n\n${clamped}\n${rest.slice(sectionEnd)}`;
+}
+
+/** Field labels whose value is longer than the form's own maxLength for them — the server-side
+ *  half of that limit, so a request that bypasses the form can't send something long enough to
+ *  waste tokens or time out. */
+function overLimitFields(inputs: Record<string, unknown> | undefined, limits: Record<string, number> | undefined): string[] {
+  if (!inputs || !limits) return [];
+  return Object.entries(limits)
+    .filter(([label, max]) => typeof inputs[label] === "string" && (inputs[label] as string).length > max)
+    .map(([label]) => label);
+}
+
 // ---- Coaching session tickets: HMAC-signed { user, app, expiry }, so free turns need a paid start.
 const enc = new TextEncoder();
 const b64url = (buf: ArrayBuffer | Uint8Array) =>
@@ -141,6 +170,8 @@ Deno.serve(
       const spec = specOf(toolId);
       if (!spec) return json({ error: "unknown_app" }, 400);
       const f = spec.flagship;
+      const tooLong = overLimitFields(body.inputs, f.fieldLimits);
+      if (tooLong.length) return json({ error: `Too long: ${tooLong.join(", ")}. Please shorten and try again.` }, 400);
       const system = `${spec.system}\n\n${COMMON_RULES}`;
       const inputs = renderInputs(body.inputs);
       // The public API (keyboard, Siri) calls with the service key and names the person it already checked and charged.
@@ -229,6 +260,11 @@ Deno.serve(
               } catch {
                 // Keep the first result rather than fail the whole request over the retry.
               }
+            }
+            // The brand story is promised at 100 words or fewer; the prompt already asks for that,
+            // this just guarantees it on the rare run that goes over instead of trusting the model.
+            if (toolId === "brand-identity-studio") {
+              finalOut = clampSectionWords(finalOut, /^#{1,6}\s*brand story\b.*$/im, 100);
             }
             return json({ ok: true, output: finalOut });
           }

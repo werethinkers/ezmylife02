@@ -17,6 +17,7 @@ import { categoryInfo, goalOf, inCategory, KIND_TEXT } from "@/data/goals";
 import { appIntroOf, appKindOf, appStepsOf } from "@/data/appKind";
 import { STUDIO_IDS } from "@/data/studios";
 import { OUTPUT_FORMAT } from "@/data/outputFormat";
+import { formatSummary } from "@/apps/output/choice";
 import { AppIcon } from "./AppIcon";
 import { ShareButton } from "@/components/modern/ShareButton";
 import { MetricsStrip } from "@/components/modern/MetricsStrip";
@@ -170,7 +171,7 @@ function QuickLookBody({ toolId, onClose, mobile }: { toolId: string; onClose: (
           className="mt-4"
           cells={[
             { value: `${cost} credit${cost === 1 ? "" : "s"}`, label: "Pay per result" },
-            { value: OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
+            { value: formatSummary(toolId) ?? OUTPUT_FORMAT[appKindOf(toolId, category)], label: "Format" },
             { value: "100 Free", label: "Starter credits", accent: true },
           ]}
         />

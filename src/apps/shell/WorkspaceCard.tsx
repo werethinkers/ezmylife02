@@ -12,7 +12,17 @@ import { PROFILE_FIELDS, useWorkspace, type WorkspaceProfile } from "../lib/work
 import { cn } from "@/lib/utils";
 
 /** Compact card for the shared business profile, with an editor. */
-export function WorkspaceCard({ className, onApply, pill }: { className?: string; onApply?: (p: WorkspaceProfile) => void; pill?: boolean }) {
+export function WorkspaceCard({
+  className,
+  onApply,
+  pill,
+}: {
+  className?: string;
+  onApply?: (p: WorkspaceProfile) => void;
+  /** Rounded-full "Set up"/"Edit"/"Fill this form" buttons — opt-in, for pages using the refined
+   * neo-brutalist look (every other caller keeps today's default button shape). */
+  pill?: boolean;
+}) {
   const ws = useWorkspace();
   const [open, setOpen] = useState(false);
   const pct = Math.round((ws.filled / ws.total) * 100);

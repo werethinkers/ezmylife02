@@ -20,6 +20,7 @@ export function FieldInput({
   labelClassName,
   hintClassName,
   variant = "block",
+  error,
 }: {
   field: Field;
   value: string | Rows | undefined;
@@ -32,14 +33,23 @@ export function FieldInput({
   /** "soft" is the refined neo-brutalist look (homepage-style fills, no thick borders) — opt-in, so
    * every engine that doesn't pass it keeps today's thick-bordered look unchanged. */
   variant?: "block" | "soft";
+  /** Shown under the field in red, with the control outlined to match — set only once the person
+   * has tried to move on, so a blank required field isn't shown as "wrong" before they've touched it. */
+  error?: string;
 }) {
   const id = `${idPrefix}-${field.key.replace(/\W+/g, "-")}`;
   const t = field.type ?? "text";
   const str = typeof value === "string" ? value : "";
   const soft = variant === "soft";
-  const ctrlCls = controlClassName ?? (soft ? CONTROL : undefined);
+  const ctrlCls = cn(controlClassName ?? (soft ? CONTROL : undefined), error && "border-destructive focus-visible:ring-destructive dark:border-destructive");
   const lblCls = labelClassName ?? (soft ? LABEL : undefined);
   const hntCls = hintClassName ?? (soft ? HINT : undefined);
+  const errorId = error ? `${id}-error` : undefined;
+  const counter = field.maxLength && (t === "text" || t === "textarea") ? (
+    <span className={cn("ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground/70", str.length >= field.maxLength * 0.9 && "text-amber-600 dark:text-amber-400", str.length >= field.maxLength && "text-destructive")}>
+      {str.length}/{field.maxLength}
+    </span>
+  ) : null;
 
   return (
     <div className={cn("space-y-1.5", field.half ? "sm:col-span-1" : "sm:col-span-2")}>
@@ -48,10 +58,20 @@ export function FieldInput({
         {field.required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
       {t === "textarea" ? (
-        <Textarea id={id} value={str} rows={field.rows ?? 4} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} className={ctrlCls} />
+        <Textarea
+          id={id}
+          value={str}
+          rows={field.rows ?? 4}
+          placeholder={field.placeholder}
+          maxLength={field.maxLength}
+          onChange={(e) => onChange(e.target.value)}
+          className={ctrlCls}
+          aria-invalid={!!error}
+          aria-describedby={errorId}
+        />
       ) : t === "select" ? (
         <Select value={str || undefined} onValueChange={(v) => onChange(v)}>
-          <SelectTrigger id={id} className={ctrlCls}>
+          <SelectTrigger id={id} className={ctrlCls} aria-invalid={!!error} aria-describedby={errorId}>
             <SelectValue placeholder={field.placeholder ?? "Choose…"} />
           </SelectTrigger>
           <SelectContent>
@@ -103,11 +123,28 @@ export function FieldInput({
           inputMode={t === "number" || t === "money" ? "decimal" : undefined}
           value={str}
           placeholder={field.placeholder}
+          maxLength={field.maxLength}
           onChange={(e) => onChange(e.target.value)}
+          // A focused number input scrolls its value on the mouse wheel in Chrome (and a range
+          // input does the same in Firefox) — blurring on wheel stops that before it fires a
+          // change event, so scrolling past the field never silently edits it or looks like a click.
+          onWheel={t === "number" || t === "money" ? (e) => e.currentTarget.blur() : undefined}
           className={ctrlCls}
+          aria-invalid={!!error}
+          aria-describedby={errorId}
         />
       )}
-      {field.help && <p className={cn("text-xs text-muted-foreground", hntCls)}>{field.help}</p>}
+      {(field.help || counter) && (
+        <div className="flex items-start gap-2">
+          {field.help && <p className={cn("text-xs text-muted-foreground", hntCls)}>{field.help}</p>}
+          {counter}
+        </div>
+      )}
+      {error && (
+        <p id={errorId} role="alert" className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -165,6 +202,7 @@ export function RowsEditor({
                         value={r[c.key] ?? ""}
                         placeholder={c.placeholder}
                         onChange={(e) => set(i, c.key, e.target.value)}
+                        onWheel={c.type === "number" || c.type === "money" ? (e) => e.currentTarget.blur() : undefined}
                         aria-label={c.label}
                       />
                     )}
@@ -234,6 +272,7 @@ export function RowsEditor({
                         value={r[c.key] ?? ""}
                         placeholder={c.placeholder}
                         onChange={(e) => set(i, c.key, e.target.value)}
+                        onWheel={c.type === "number" || c.type === "money" ? (e) => e.currentTarget.blur() : undefined}
                         aria-label={c.label}
                       />
                     )}

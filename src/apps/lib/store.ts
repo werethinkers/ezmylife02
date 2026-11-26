@@ -142,3 +142,4 @@ export function hasDraft(toolId: string, userId?: string): boolean {
   const data = readLocal(localKey(userId, toolId));
   return !!data?.draft;
 }
+

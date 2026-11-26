@@ -160,7 +160,7 @@ function FollowUp({ toolId, result }: { toolId: string; result: string }) {
   return (
     <div className={card}>
       <p className="text-[15px] font-bold">Ask about your result</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">Ask what anything means, or ask for one part to be rewritten. 2 credits a question.</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Ask what anything means, or ask for one part to be rewritten — cheaper than a full revision, at 2 credits a question.</p>
       {msgs.length > 0 && (
         <div className="mt-3 space-y-2">
           {msgs.map((m, i) => (
@@ -248,6 +248,7 @@ export function ResultView({
   onRefine,
   refining,
   onEdit,
+  refineChips,
 }: {
   toolId: string;
   def: FlagshipDef;
@@ -257,6 +258,8 @@ export function ResultView({
   onRefine?: (instruction: string) => void;
   refining?: boolean;
   onEdit?: (t: string) => void;
+  /** Overrides def.refineChips (e.g. to drop a chip that doesn't apply to what was submitted). */
+  refineChips?: string[];
 }) {
   return (
     <div className="space-y-4">
@@ -268,12 +271,11 @@ export function ResultView({
         fileName={fileName}
         onRefine={onRefine}
         refining={refining}
-        refineChips={def.refineChips ?? ["Make it shorter", "Add more detail", "Translate to Hindi", "Make it more formal"]}
+        refineChips={refineChips ?? def.refineChips ?? ["Make it shorter", "Add more detail", "Translate to Hindi", "Make it more formal"]}
         sendTo={def.related}
         editable={!!onEdit}
         onEdit={onEdit}
       />
-      {onRefine && <p className="-mt-2 px-1 text-[11px] text-muted-foreground">A revision rewrites the whole result and costs the app's price again. To change one part, ask below for 2 credits.</p>}
       <FollowUp toolId={toolId} result={text} />
       {def.pictures && <Pictures toolId={toolId} label={def.pictures.label} ideas={def.pictures.ideas} />}
     </div>

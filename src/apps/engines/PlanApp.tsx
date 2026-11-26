@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Loader2, RotateCcw, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
   const [page, setPage] = useState(() => draft?.page ?? 0);
   const [busy, setBusy] = useState<"final" | "refine" | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   // Belt-and-suspenders against double submission: checked synchronously, so even two clicks that
   // land before React re-renders the disabled button can't both start a (paid) generation.
@@ -58,11 +59,18 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
   // Once the person has typed anything locally, stop overwriting it with a draft that arrives
   // from the account sync (which only matters for restoring on load, e.g. on another device).
   const touchedRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const pageFields = def.fields.filter((f) => def.pages[page]?.keys.includes(f.key));
   const last = page === def.pages.length - 1;
   const titleFor = () => (Object.values(values).find((v) => typeof v === "string" && v.trim()) as string | undefined) ?? appName;
   const showPreview = busy === "final" || !r.output;
+
+  // "Give me 10 more names" only makes sense when the customer actually asked for name ideas
+  // (left the name field as "need a name" or blank) — a tool declares that by its field's own hint.
+  const nameField = def.fields.find((f) => /need a name/i.test(f.label));
+  const needsName = !nameField || !values[nameField.key] || /need\s*a?\s*name/i.test(String(values[nameField.key]));
+  const refineChips = nameField && !needsName ? def.refineChips?.filter((c) => !/\bmore names\b/i.test(c)) : def.refineChips;
 
   // Restores a draft that finishes syncing from the account after this page has already mounted.
   useEffect(() => {
@@ -85,38 +93,63 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
     touchedRef.current = true;
     setValues({ ...values, [key]: x });
     setFormError(null);
+    if (fieldErrors[key]) {
+      setFieldErrors((e) => {
+        const next = { ...e };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  /** Puts the first invalid field on screen, focused, instead of leaving the person to find it. */
+  const scrollToField = (key: string) => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`${toolId}-${key.replace(/\W+/g, "-")}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus({ preventScroll: true });
+    });
+  };
+
+  /** Shared by next() and generate(): checks a set of fields, highlights and reports the bad ones
+   *  (missing first, then present-but-meaningless), without deciding what to do about it. */
+  const validate = (fields: Field[], allowTrivial: boolean): Field[] => {
+    const miss = missingFields(fields, values);
+    const trivial = allowTrivial ? [] : meaninglessFields(fields, values);
+    const bad = [...miss, ...trivial.filter((f) => !miss.some((m) => m.key === f.key))];
+    if (!bad.length) return bad;
+    const errs: Record<string, string> = {};
+    for (const f of miss) errs[f.key] = "This is needed.";
+    for (const f of trivial) if (!errs[f.key]) errs[f.key] = "Tell us a bit more here — a few real words.";
+    setFieldErrors((e) => ({ ...e, ...errs }));
+    const msg = miss.length ? `Please fill: ${miss.map((f) => splitLabel(f.label).label).join(", ")}` : "Tell us a bit more about your business.";
+    setFormError(msg);
+    toast.error(msg);
+    return bad;
   };
 
   const next = () => {
-    const miss = missingFields(pageFields, values);
-    if (miss.length) return toast.error(`Please fill: ${miss.map((f) => f.label).join(", ")}`);
-    const trivial = meaninglessFields(pageFields, values);
-    if (trivial.length) {
-      const msg = "Tell us a bit more about your business.";
-      setFormError(msg);
-      return toast.error(msg);
-    }
+    const bad = validate(pageFields, false);
+    if (bad.length) return scrollToField(bad[0].key);
     setPage((p) => Math.min(p + 1, def.pages.length - 1));
+    // So Step 2's fields are visible right away, not wherever the page happened to be scrolled
+    // to after filling in Step 1 (easy to miss on a long mobile page otherwise).
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
   const generate = async (instruction?: string) => {
     if (busyRef.current) return;
-    const miss = missingFields(def.fields, values);
-    if (miss.length) {
-      const msg = `Please fill: ${miss.map((f) => f.label).join(", ")}`;
-      setFormError(msg);
-      return toast.error(msg);
-    }
-    if (!instruction) {
-      const trivial = meaninglessFields(def.fields, values);
-      if (trivial.length) {
-        const msg = "Tell us a bit more about your business.";
-        setFormError(msg);
-        return toast.error(msg);
-      }
+    const bad = validate(def.fields, !!instruction);
+    if (bad.length) {
+      // The first invalid field may be on an earlier page — jump there so it's actually visible.
+      const badPage = def.pages.findIndex((p) => p.keys.includes(bad[0].key));
+      if (badPage !== -1 && badPage !== page) setPage(badPage);
+      scrollToField(bad[0].key);
+      return;
     }
     busyRef.current = true;
     setFormError(null);
+    setFieldErrors({});
     setBusy(instruction ? "refine" : "final");
     try {
       const { output } = await runFlagship<string>(toolId, "final", {
@@ -165,16 +198,42 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
 
           {def.steps && def.steps.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <ol aria-label="How to use it" className="flex snap-x gap-2 overflow-x-auto pb-1 text-[13px] font-semibold text-[#111111] no-scrollbar dark:text-white">
-                {def.steps.map((s, i) => (
-                  <li
-                    key={s}
-                    className="flex shrink-0 snap-start items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 dark:border-white/15 dark:bg-[#16161A]"
-                  >
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FACC15] text-[11px] font-bold text-[#111111]">{i + 1}</span>
-                    {s}
-                  </li>
-                ))}
+              <ol
+                aria-label="How to use it"
+                className="flex flex-wrap gap-2 text-[13px] font-semibold text-[#111111] sm:flex-nowrap sm:snap-x sm:overflow-x-auto sm:pb-1 sm:no-scrollbar dark:text-white"
+              >
+                {def.steps.map((s, i) => {
+                  // The last step is "get the result": done once there is one, current while the
+                  // form is still on an earlier page. Keeps this row, the top progress bar and the
+                  // "page X of Y" count all agreeing on where the person actually is.
+                  const stepIndex = r.output ? def.steps.length - 1 : Math.min(page, def.steps.length - 1);
+                  const done = i < stepIndex;
+                  const current = i === stepIndex;
+                  return (
+                    <li
+                      key={s}
+                      aria-current={current ? "step" : undefined}
+                      className={cn(
+                        "flex shrink-0 snap-start items-center gap-2 rounded-full border px-3 py-1.5",
+                        current
+                          ? "border-[#111111] bg-[#FACC15] dark:border-white/70 dark:bg-[#FACC15]/90 dark:text-[#111111]"
+                          : done
+                            ? "border-[#111111]/30 bg-[#C8E967]/30 dark:border-white/25 dark:bg-white/10"
+                            : "border-black/10 bg-white text-black/55 dark:border-white/15 dark:bg-[#16161A] dark:text-white/50",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                          current ? "bg-[#111111] text-white dark:bg-white dark:text-[#111111]" : done ? "bg-[#111111] text-white dark:bg-white/70 dark:text-[#111111]" : "bg-black/10 text-black/50 dark:bg-white/10 dark:text-white/50",
+                        )}
+                      >
+                        {done ? <Check className="h-3 w-3" /> : i + 1}
+                      </span>
+                      {s}
+                    </li>
+                  );
+                })}
               </ol>
               <span className="flex shrink-0 items-center gap-1.5 text-xs text-black/50 dark:text-white/50">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" /> Credits only when it works
@@ -186,6 +245,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
           <div className={cn("mt-6 grid gap-6", showPreview ? "grid-cols-1 lg:grid-cols-12 items-stretch" : "grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]")}>
             <div className={cn("space-y-4", showPreview && "lg:col-span-7")}>
               <form
+                ref={formRef}
                 className="rounded-2xl border-[1.5px] border-[#111111] bg-white p-6 shadow-[4px_4px_0_#111111] dark:border-white/20 dark:bg-[#16161A] dark:shadow-[4px_4px_0_rgba(255,255,255,0.12)]"
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -219,6 +279,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                           controlClassName={CONTROL}
                           labelClassName={LABEL}
                           hintClassName={HINT}
+                          error={fieldErrors[f.key]}
                         />
                       </div>
                     );
@@ -264,6 +325,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                         setValues(emptyValues(def.fields));
                         setPage(0);
                         setFormError(null);
+                        setFieldErrors({});
                         touchedRef.current = false;
                         r.reset();
                         r.clearDraft();
@@ -324,6 +386,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                   onRefine={(i) => void generate(i)}
                   refining={busy === "refine"}
                   onEdit={r.setOutput}
+                  refineChips={refineChips}
                 />
               )}
             </div>
@@ -338,7 +401,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
           <AlertDialogHeader>
             <AlertDialogTitle>Make a new version?</AlertDialogTitle>
             <AlertDialogDescription>
-              This makes a fresh result and costs {def.credits} credits again. Your current result stays saved in History below.
+              This makes a brand new result and costs {def.credits} credits, the same as the first run. Your current result stays saved in History below.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

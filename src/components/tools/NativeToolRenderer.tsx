@@ -30,6 +30,7 @@ const MetadataViewer = lazy(() => import("./MetadataViewer").then((m) => ({ defa
 const ImageSplitter = lazy(() => import("./ImageSplitter").then((m) => ({ default: m.ImageSplitter })));
 const AddLogoToImage = lazy(() => import("./AddLogoToImage").then((m) => ({ default: m.AddLogoToImage })));
 const InvoiceGenerator = lazy(() => import("./InvoiceGenerator").then((m) => ({ default: m.InvoiceGenerator })));
+const InvoiceGeneratorRefined = lazy(() => import("./InvoiceGeneratorRefined").then((m) => ({ default: m.InvoiceGeneratorRefined })));
 const ExpenseTracker = lazy(() => import("./ExpenseTracker").then((m) => ({ default: m.ExpenseTracker })));
 const ContractDrafter = lazy(() => import("./ContractDrafter").then((m) => ({ default: m.ContractDrafter })));
 const SalaryCalculator = lazy(() => import("./SalaryCalculator").then((m) => ({ default: m.SalaryCalculator })));
@@ -168,7 +169,8 @@ const nativeTools: Record<string, React.ComponentType> = {
   // Finance & Accounting
   "invoice-generator": InvoiceGenerator,
   "ai-invoice-generator": InvoiceGenerator,
-  "tool-1": InvoiceGenerator,
+  // "tool-1" gets the refined neo-brutalist redesign; the other two ids above keep the plain look.
+  "tool-1": InvoiceGeneratorRefined,
   "expense-tracker": ExpenseTracker,
   "tool-2": ExpenseTracker,
   "profit-calculator": ProfitCalculator,

@@ -15,6 +15,15 @@ export const FORMAT_TEXT: Record<OutputFormat, { label: string; line: string }> 
   whatsapp: { label: "WhatsApp message", line: "Short text you can forward" },
 };
 
+const FORMAT_SHORT: Record<OutputFormat, string> = { text: "Text", pdf: "PDF", word: "DOCX", whatsapp: "WhatsApp" };
+
+/** "PDF · DOCX · Text · WhatsApp" — every format this app actually hands back, or null for an app
+ *  with no engine (e.g. a native tool), so the caller can fall back to the generic AppKind label. */
+export function formatSummary(toolId: string): string | null {
+  const f = formatsFor(toolId);
+  return f.length ? f.map((x) => FORMAT_SHORT[x]).join(" · ") : null;
+}
+
 type Kind = "writing" | "studio" | "numbers" | "register" | "none";
 
 function kindOf(toolId: string): Kind {

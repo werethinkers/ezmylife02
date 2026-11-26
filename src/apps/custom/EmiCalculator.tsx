@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { useToolPricing } from "@/hooks/useToolPricing";
 import { useModernTheme } from "@/components/modern/theme";
-import { AppIcon } from "@/components/store/AppIcon";
-import { CreditCostBadge } from "@/components/tools/CreditCostBadge";
 import { resolveToolMedia } from "@/lib/toolMedia";
 import { cn } from "@/lib/utils";
 import { AmbientGlow, CONTROL, LABEL, SyncChip, UNBOUNDED, WorksWellWith, initialsOf } from "../flagship/studioUi";
@@ -87,6 +85,10 @@ function NumberWithSlider({
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          // A focused number input scrolls its value on the mouse wheel in Chrome (and a range
+          // input does the same in Firefox) — blurring on wheel stops that before it fires a
+          // change event, so scrolling past the field never silently edits it.
+          onWheel={(e) => e.currentTarget.blur()}
           className={cn("h-10 w-full px-3 text-sm font-semibold text-[#111111] outline-none dark:text-white", CONTROL)}
         />
         {suffix && <span className="text-sm font-semibold text-black/40 dark:text-white/40">{suffix}</span>}
@@ -98,6 +100,7 @@ function NumberWithSlider({
         step={step}
         value={sliderValue}
         onChange={(e) => onChange(e.target.value)}
+        onWheel={(e) => e.currentTarget.blur()}
         aria-label={label}
         className="mt-2.5 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-black/10 accent-[#111111] dark:bg-white/15 dark:accent-[#F472D0]"
       />
@@ -266,42 +269,26 @@ export default function EmiCalculator({ toolId }: { toolId: string }) {
         <AmbientGlow />
         <div className="relative mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           {/* Hero */}
-          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-              <AppIcon toolId={toolId} category={tool?.category} name={appName} size="sm" />
-              <div className="min-w-0">
-                <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-[#111111] dark:text-white sm:text-3xl" style={UNBOUNDED}>
-                  {appName}
-                </h1>
-                <p className="mt-1.5 max-w-2xl text-[16px] text-black/60 dark:text-white/60">{emi.intro}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <CreditCostBadge toolId={toolId} className="!border-[1.5px] !border-[#111111] !bg-[#C8E967] dark:!border-white/70" />
+          <header>
+            <span className="inline-flex items-center rounded-full border border-black/15 bg-[#C8E967] px-3 py-1 text-xs font-bold uppercase text-[#111111]">
+              CALCULATOR · {creditCost === 0 ? "FREE" : `${creditCost} CREDIT${creditCost === 1 ? "" : "S"}`}
+            </span>
+            <h1 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-[#111111] dark:text-white sm:text-3xl" style={UNBOUNDED}>
+              {appName}
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-[16px] text-black/60 dark:text-white/60">{emi.intro}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-black/50 dark:text-white/50">
               <SyncChip state={store.syncState} />
-            </div>
-          </header>
-
-          {emi.steps && emi.steps.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <ol aria-label="How to use it" className="flex snap-x gap-2 overflow-x-auto pb-1 text-[13px] font-semibold text-[#111111] no-scrollbar dark:text-white">
-                {emi.steps.map((s, i) => (
-                  <li key={s} className="flex shrink-0 snap-start items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 dark:border-white/15 dark:bg-[#16161A]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FACC15] text-[11px] font-bold text-[#111111]">{i + 1}</span>
-                    {s}
-                  </li>
-                ))}
-              </ol>
-              <span className="flex shrink-0 items-center gap-1.5 text-xs text-black/50 dark:text-white/50">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" /> Credits only when it works
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Credits only when it works
               </span>
             </div>
-          )}
+          </header>
 
           {/* Workspace */}
           <div className="mt-6 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
             <div className="flex flex-col gap-4 lg:col-span-5">
-              <div className="flex h-full flex-col justify-between rounded-2xl border-[1.5px] border-[#111111] bg-white p-6 shadow-[4px_4px_0_#111111] dark:border-white/20 dark:bg-[#16161A] dark:shadow-[4px_4px_0_rgba(255,255,255,0.12)]">
+              <div className="flex h-full flex-col justify-between rounded-3xl border border-black/[0.08] bg-white p-6 shadow-[0_10px_35px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-[#16161A] sm:p-7">
                 <div>
                   <p className="text-[15px] font-bold text-[#111111] dark:text-white" style={UNBOUNDED}>
                     Enter your numbers
@@ -312,7 +299,12 @@ export default function EmiCalculator({ toolId }: { toolId: string }) {
                         key={c.label}
                         type="button"
                         onClick={() => set("amount", c.value)}
-                        className="rounded-full border border-black/10 bg-[#F3F4F6] px-3 py-1.5 text-xs font-semibold text-[#111111] transition hover:border-[#111111] dark:border-white/15 dark:bg-[#1F1F24] dark:text-white dark:hover:border-white"
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                          values.amount === c.value
+                            ? "border-[#111111] bg-[#111111] text-white dark:border-white dark:bg-white dark:text-[#111111]"
+                            : "border-black/10 bg-[#F3F4F6] text-[#111111] hover:border-[#111111] dark:border-white/15 dark:bg-[#1F1F24] dark:text-white dark:hover:border-white",
+                        )}
                       >
                         {c.label}
                       </button>
@@ -463,7 +455,7 @@ export default function EmiCalculator({ toolId }: { toolId: string }) {
               <h2 className="mb-3 text-[15px] font-bold text-[#111111] dark:text-white" style={UNBOUNDED}>
                 Year-by-year breakdown
               </h2>
-              <section className="overflow-hidden rounded-2xl border border-black/12 bg-white dark:border-white/12 dark:bg-[#16161A]">
+              <section className="overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-[#16161A]">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[480px] text-sm">
                     <thead className="bg-[#FAF7F2] text-left text-xs dark:bg-white/5">

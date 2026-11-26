@@ -10,6 +10,6 @@
 export const UNBOUNDED = { fontFamily: "'Unbounded', 'Hind', system-ui, sans-serif" } as const;
 
 export const CONTROL =
-  "rounded-xl border border-black/10 bg-[#F3F4F6] focus:bg-white focus:border-[#111111] focus:ring-2 focus:ring-[#F472D0]/30 dark:border-white/15 dark:bg-[#1F1F24] dark:text-white dark:focus:bg-[#1F1F24] dark:focus:border-white";
+  "rounded-xl border border-transparent bg-[#F4F4F5] focus:bg-white focus:border-[#111111] focus:ring-2 focus:ring-[#F472D0]/25 dark:border-white/15 dark:bg-[#1F1F24] dark:text-white dark:focus:bg-[#1F1F24] dark:focus:border-white";
 export const LABEL = "text-sm font-semibold text-[#111111] dark:text-white";
 export const HINT = "text-xs text-black/45 dark:text-white/40";

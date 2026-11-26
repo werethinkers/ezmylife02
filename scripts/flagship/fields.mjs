@@ -1,5 +1,5 @@
 // Short helpers for writing form fields in scripts/flagship/data/*.mjs.
-// o: { req, ph (placeholder), half, help, rows, def (default), opts (options for select/chips) }
+// o: { req, ph (placeholder), half, help, rows, def (default), opts (options for select/chips), max (maxLength) }
 const field = (type) => (key, label, o = {}) => ({
   key,
   label,
@@ -12,6 +12,7 @@ const field = (type) => (key, label, o = {}) => ({
   ...(o.def !== undefined ? { default: o.def } : {}),
   ...(o.opts ? { options: o.opts } : {}),
   ...(o.profile ? { profile: o.profile } : {}),
+  ...(o.max !== undefined ? { maxLength: o.max } : {}),
 });
 
 export const t = field("text");

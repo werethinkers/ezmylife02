@@ -43,7 +43,7 @@ export function ModernFooter() {
             <ModernLogo className="text-zinc-900 dark:text-white" />
             <p className="max-w-md">Business apps, websites and cards for small businesses in India — pay only for what you use. &copy; 2026 EZYOURLIFE.</p>
           </div>
-          <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-5">
+          <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-5 pr-20">
             {NAV_SECTIONS.filter((s) => s.id !== "earn").map((s) => (
               <Link key={s.id} to={s.to} className={cn("rounded transition hover:text-zinc-900 dark:hover:text-white", FOCUS_RING)}>
                 {s.label}

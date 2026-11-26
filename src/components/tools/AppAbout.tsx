@@ -56,9 +56,9 @@ export function AppAbout({ toolId, name, description, category, wide }: { toolId
   return (
     <section aria-label={`About ${name}`} className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <h2 className="font-display text-2xl font-bold text-[#111111] dark:text-white">About {name}</h2>
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {detail.sections.map((s) => (
-          <div key={s.heading} className="rounded-2xl border border-black/10 bg-white p-5 dark:border-white/15 dark:bg-[#16161A]">
+          <div key={s.heading} className="rounded-3xl border border-black/[0.08] bg-white p-5 dark:border-white/10 dark:bg-[#16161A]">
             <h3 className="text-base font-bold text-[#111111] dark:text-white">{s.heading}</h3>
             {s.paragraphs?.map((p) => (
               <p key={p} className="mt-2 text-sm text-black/60 dark:text-white/60">{p}</p>
@@ -75,9 +75,9 @@ export function AppAbout({ toolId, name, description, category, wide }: { toolId
       </div>
 
       <h3 className={cn("mt-10 font-display text-xl font-bold text-[#111111] dark:text-white")}>Questions about {name}</h3>
-      <Accordion type="single" collapsible className="mt-4 rounded-2xl border border-black/10 bg-white px-5 dark:border-white/15 dark:bg-[#16161A]">
+      <Accordion type="single" collapsible className="mt-4 rounded-3xl border border-black/[0.08] bg-white px-5 dark:border-white/10 dark:bg-[#16161A]">
         {detail.faqs.map(([q, a], i) => (
-          <AccordionItem key={q} value={`faq-${i}`} className="border-black/10 dark:border-white/15">
+          <AccordionItem key={q} value={`faq-${i}`} className="border-black/[0.08] dark:border-white/10">
             <AccordionTrigger className="text-left text-sm font-semibold text-[#111111] hover:no-underline dark:text-white">{q}</AccordionTrigger>
             <AccordionContent className="text-sm text-black/60 dark:text-white/60">{a}</AccordionContent>
           </AccordionItem>

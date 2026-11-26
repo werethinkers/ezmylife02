@@ -20,6 +20,10 @@ export interface FlagshipSpec extends AppSpec {
     variants?: Record<string, string>;
     /** Look of the optional AI pictures made from a result (30 credits each). */
     imageStyle?: string;
+    /** Longest value accepted for a field, by the same label the client sends it under — the
+     *  server-side half of the form's own maxLength, so a request that bypasses the form can't
+     *  send something long enough to waste tokens or time out. */
+    fieldLimits?: Record<string, number>;
   };
 }
 
@@ -62,6 +66,7 @@ export interface FlagshipInput {
   variants?: Record<string, string>;
   imageStyle?: string;
   maxTokens?: number;
+  fieldLimits?: Record<string, number>;
 }
 
 /** Builds one flagship app's server spec from its data. */
@@ -88,6 +93,7 @@ export function flagship(shell: Shell, i: FlagshipInput): FlagshipSpec {
       maxTurns: i.maxTurns,
       variants: i.variants,
       imageStyle: i.imageStyle,
+      fieldLimits: i.fieldLimits,
     },
   };
 }

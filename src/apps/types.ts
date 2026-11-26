@@ -50,6 +50,8 @@ export interface Field {
   acceptsHandoff?: boolean;
   /** Prefill from the shared workspace context (client, last invoice…). */
   ctxKey?: CtxKey;
+  /** Longest text/textarea value accepted (enforced on typing, with a counter near the limit). */
+  maxLength?: number;
 }
 
 export type CtxKey = "clientName" | "clientGstin" | "clientAddress" | "service" | "fee" | "invoiceNumber" | "invoiceTotal";
