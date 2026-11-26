@@ -192,9 +192,8 @@ function pngDimensions(base64: string): { width: number; height: number } | null
  *  (ai.google.dev/api/generate-content), not the Vertex AI docs, which is a related but separate
  *  API — on the chance that path is reachable. In practice this project's own Gemini keys have no
  *  image-generation quota (free tier, limit 0), so the gateway below is the path that actually
- *  works, and its own aspect-ratio passthrough is undocumented either way — callers that need a
- *  guaranteed ratio should crop the result themselves (see _shared/cropImage.ts) rather than trust
- *  either upstream to honour this. */
+ *  works, and its own aspect-ratio passthrough is undocumented either way — a requested ratio is
+ *  not currently guaranteed; see the note where ai-app/index.ts calls this. */
 export async function image(prompt: string, inputImages: string[] = [], model = "google/gemini-2.5-flash-image", aspectRatio?: string): Promise<string> {
   const content: Part[] = [{ type: "text", text: prompt }, ...inputImages.map((url) => ({ type: "image_url", image_url: { url } }) as Part)];
   let lastStatus = 0;
