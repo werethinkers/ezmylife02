@@ -1,8 +1,10 @@
 // Apps with their own screen (custom components). Prices mirror supabase/functions/_shared/appSpecs/custom.ts.
 import { p, custom } from "./shared";
+import { emi } from "./calculators";
 import type { AppDef } from "../types";
 
 export const customApps: Record<string, AppDef> = {
+  "emi-calculator": { engine: "custom", credits: p("emi-calculator"), intro: emi.intro, steps: emi.steps, related: emi.related, component: custom(() => import("../custom/EmiCalculator")) },
   "tool-22": { engine: "custom", credits: p("tool-22"), intro: "Make a GST-ready purchase order, print or share it, and get the covering email to your supplier.", related: ["tool-25", "tool-26", "tool-20", "tool-1"], component: custom(() => import("../custom/PurchaseOrder")) },
   "wrong-written-words": { engine: "custom", credits: p("wrong-written-words"), intro: "Find and fix spelling and grammar mistakes in English, Hindi and Hinglish — see every change.", related: ["rich-editor", "book-editor", "dictionary-extractor-ai"], component: custom(() => import("../custom/Proofreader")) },
   "storybook-creator": { engine: "custom", credits: p("storybook-creator"), intro: "Write an illustrated story for any age — read it as a book, print it, and illustrate pages with AI.", related: ["sketchflow-ai", "image-creator", "book-editor"], component: custom(() => import("../custom/StoryBook")) },

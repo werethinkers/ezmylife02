@@ -4,7 +4,8 @@ import { addHistory, type HistoryItem } from "../shell/HistoryList";
 
 /** Saved results for a flagship app (synced to the account when signed in) and the one on screen. */
 export function useResults(toolId: string) {
-  const store = useAppStore<{ history: HistoryItem[]; savedAt?: number }>(toolId, { history: [] });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const store = useAppStore<{ history: HistoryItem[]; savedAt?: number; draft?: any }>(toolId, { history: [] });
   const [output, setOutput] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -31,5 +32,24 @@ export function useResults(toolId: string) {
     setOutput("");
     setActiveId(null);
   };
-  return { store, history: store.data.history ?? [], output, setOutput, activeId, save, open, remove, reset, newId: uid };
+  // The unfinished form, so leaving mid-way (by accident or on purpose) doesn't lose it: saved the
+  // same way as everything else here — on this device straight away, to the account once signed in.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const saveDraft = (draft: any) => store.update(() => ({ draft }));
+  const clearDraft = () => store.update(() => ({ draft: undefined }));
+  return {
+    store,
+    history: store.data.history ?? [],
+    output,
+    setOutput,
+    activeId,
+    save,
+    open,
+    remove,
+    reset,
+    newId: uid,
+    draft: store.data.draft,
+    saveDraft,
+    clearDraft,
+  };
 }

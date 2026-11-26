@@ -1,3 +1,4 @@
+import { contrastText } from "./palette";
 import type { PdfBlock, PdfDoc } from "./types";
 
 /*
@@ -40,13 +41,13 @@ export const PDF_CSS = `
 .ezpdf-page b,.ezpdf-page strong{font-weight:600}
 .ezpdf-muted{color:#5d574d}
 .ezpdf-small{font-size:11.5px}
-.ezpdf-tag{display:inline-block;border:1.5px solid #121212;border-radius:99px;padding:1px 11px;font-size:11px;font-weight:600;background:var(--acc)}
+.ezpdf-tag{display:inline-block;border:1.5px solid #121212;border-radius:99px;padding:1px 11px;font-size:11px;font-weight:600;background:var(--acc);color:var(--acc-fg)}
 .ezpdf-titlebar{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;border-bottom:3px solid #121212;padding-bottom:12px;margin-bottom:20px}
 .ezpdf-titlebar h1{margin:10px 0 0}
 .ezpdf-titlebar .ezpdf-sub{margin-top:4px;color:#5d574d}
 .ezpdf-titlebar .ezpdf-by{font-size:11.5px;color:#5d574d;text-align:right;white-space:nowrap}
 .ezpdf-lh{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;padding-bottom:14px;border-bottom:3px solid #121212;box-shadow:0 3px 0 var(--acc);margin-bottom:22px}
-.ezpdf-lh .ezpdf-mark{width:48px;height:48px;flex:none;border:2px solid #121212;border-radius:11px;background:var(--acc);display:flex;align-items:center;justify-content:center;font-family:Unbounded,Hind,sans-serif;font-weight:800;font-size:17px}
+.ezpdf-lh .ezpdf-mark{width:48px;height:48px;flex:none;border:2px solid #121212;border-radius:11px;background:var(--acc);color:var(--acc-fg);display:flex;align-items:center;justify-content:center;font-family:Unbounded,Hind,sans-serif;font-weight:800;font-size:17px}
 .ezpdf-lh .ezpdf-biz{display:flex;gap:14px;align-items:center;min-width:0}
 .ezpdf-lh .ezpdf-name{font-family:Unbounded,Hind,sans-serif;font-weight:700;font-size:18px;line-height:1.2}
 .ezpdf-lh .ezpdf-contact{font-size:11px;text-align:right;color:#5d574d;line-height:1.5;max-width:46%}
@@ -67,7 +68,7 @@ export const PDF_CSS = `
 .ezpdf-tile .k{font-size:11px;color:#5d574d;line-height:1.3}
 .ezpdf-tile .v{font-family:Unbounded,Hind,sans-serif;font-weight:700;font-size:17px;line-height:1.25;margin-top:3px;word-break:break-word}
 .ezpdf-tile.on{background:var(--acc)}
-.ezpdf-tile.on .k{color:#121212}
+.ezpdf-tile.on .k,.ezpdf-tile.on .v{color:var(--acc-fg)}
 .ezpdf-kv{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 18px;font-size:13px}
 .ezpdf-kv b{font-weight:600}
 .ezpdf-check{list-style:none;padding-left:0 !important}
@@ -86,12 +87,20 @@ export const PDF_CSS = `
 .ezpdf-cover .ezpdf-body{display:flex;flex-direction:column;justify-content:space-between}
 .ezpdf-cover .ezpdf-top{display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .ezpdf-slab{background:var(--acc);border:2.5px solid #121212;border-radius:20px;padding:46px 38px;box-shadow:11px 11px 0 #121212}
+.ezpdf-slab,.ezpdf-slab h1,.ezpdf-slab .ezpdf-label,.ezpdf-slab p{color:var(--acc-fg)}
 .ezpdf-slab h1{font-size:36px;margin:16px 0 14px}
 .ezpdf-slab .ezpdf-label{font-size:11.5px}
 .ezpdf-slab p{font-size:16px;margin:0}
 .ezpdf-hi .ezpdf-label,.ezpdf-hi h1,.ezpdf-hi h2,.ezpdf-hi h3{letter-spacing:0;text-transform:none}
 .ezpdf-land table{font-size:12px}
 .ezpdf-land th,.ezpdf-land td{padding:5px 6px}
+.ezpdf-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin:8px 0 18px}
+.ezpdf-swatch{border:1.8px solid #121212;border-radius:11px;overflow:hidden;background:#fff}
+.ezpdf-swatch .chip{height:56px}
+.ezpdf-swatch .meta{padding:8px 10px}
+.ezpdf-swatch .name{font-family:Unbounded,Hind,sans-serif;font-weight:700;font-size:12px}
+.ezpdf-swatch .hex{font-size:11px;color:#5d574d;margin-top:1px}
+.ezpdf-swatch .use{font-size:10.5px;color:#5d574d;margin-top:3px}
 `;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -164,6 +173,15 @@ export function blockHtml(b: PdfBlock): string {
       return `<img class="ezpdf-img" src="${esc(b.src)}" alt="${esc(b.alt ?? "")}" crossorigin="anonymous" style="max-height:${b.maxH ?? 520}px">`;
     case "break":
       return `<div class="ezpdf-break"></div>`;
+    case "swatches":
+      return `<div class="ezpdf-swatches">${b.items
+        .map(
+          (s) =>
+            `<div class="ezpdf-swatch"><div class="chip" style="background:${esc(s.hex)}"></div><div class="meta"><div class="name">${inline(s.name)}</div><div class="hex">${esc(s.hex.toUpperCase())}</div>${
+              s.use ? `<div class="use">${inline(s.use)}</div>` : ""
+            }</div></div>`,
+        )
+        .join("")}</div>`;
   }
 }
 
@@ -276,7 +294,9 @@ export async function layoutPages(doc: PdfDoc, host: HTMLElement): Promise<HTMLE
   host.classList.add("ezpdf");
   const hindi = DEVANAGARI.test(doc.title + doc.blocks.map((b) => JSON.stringify(b)).join(""));
   host.classList.toggle("ezpdf-hi", hindi);
-  host.style.setProperty("--acc", ACCENT[doc.accent]);
+  const accentColor = doc.accentHex ?? ACCENT[doc.accent];
+  host.style.setProperty("--acc", accentColor);
+  host.style.setProperty("--acc-fg", contrastText(accentColor));
   if (hindi) host.setAttribute("lang", "hi");
   try {
     await Promise.all([

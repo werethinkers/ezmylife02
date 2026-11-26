@@ -40,7 +40,12 @@ export const apps = [
     role: "You are a brand strategist and identity designer who has built brands for Indian D2C companies and small businesses.",
     deliverable: "a brand identity kit",
     sections: ["Brand essence (purpose, promise, personality in 3 words)", "Name ideas (only if asked; table: name, meaning, why it works, check to do)", "Brand story (100 words)", "Brand voice (table: we are / we are not, with example lines)", "Colour palette (table: name, hex, use)", "Typography (two free Google Fonts and where to use each)", "Logo directions (3, each described so a designer can draw it)", "Taglines (10)", "Brand rules on one page"],
-    rules: ["Colours must work together and pass basic contrast for text; give real hex codes.", "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites."],
+    rules: [
+      "Colours must work together and pass basic contrast for text; give real hex codes.",
+      "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites.",
+      "Never leave a placeholder in square brackets anywhere in the kit — not the business name, not a domain ending like .com or .in, not a legal or contact detail. Every section must read as finished, real copy, not a template waiting to be filled in.",
+      "If the business name is 'need a name' or otherwise not given, pick your single best idea from the Name ideas table, mark it clearly as your top recommendation, and then write every other section — brand story, voice, colour palette, logo directions, taglines and brand rules — using that one chosen name throughout, exactly as if it were the customer's real, final name. Do not add a separate 'To complete' section about the name.",
+    ],
     refine: ["More premium", "More playful", "Give me 10 more names", "Hindi taglines"],
     pictures: { label: "Make brand visuals", ideas: ["Logo concept, direction 1, on white", "Logo concept, direction 2, on white", "Brand mood board with palette and textures", "Product packaging mock-up in the brand colours"] },
     imageStyle: "Clean brand identity presentation, flat vector style, plain background, no small text.",

@@ -1,7 +1,17 @@
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToolsCatalog } from "@/hooks/useToolsCatalog";
 import { useModernTheme } from "@/components/modern/theme";
 import { AppIcon } from "@/components/store/AppIcon";
@@ -19,6 +29,16 @@ import { AmbientGlow, CONTROL, HINT, LABEL, SyncChip, UNBOUNDED, WhatYouGet, Wor
 import { OutputChoice } from "../output/OutputChoice";
 import { useResults } from "../flagship/useResults";
 
+// A required text field whose only content is one character or one character repeated (e.g. "x", "xxx")
+// is not meaningful enough to generate from — catches this before spending an AI call and a credit on it.
+const TRIVIAL_TEXT = /^(.)\1*$/;
+const meaninglessFields = (fields: Field[], v: FormValues) =>
+  fields.filter((f) => {
+    if (!f.required || (f.type !== "text" && f.type !== "textarea")) return false;
+    const s = typeof v[f.key] === "string" ? (v[f.key] as string).trim() : "";
+    return s.length > 0 && (s.length < 2 || TRIVIAL_TEXT.test(s));
+  });
+
 /** Plan builder and pack maker: a few short pages of questions, then one full result. */
 export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef }) {
   const { data: catalog = [] } = useToolsCatalog();
@@ -26,35 +46,97 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
   const appCategory = catalog.find((t) => t.id === toolId)?.category;
   const { dark } = useModernTheme();
   const r = useResults(toolId);
-  const [values, setValues] = useState<FormValues>(() => emptyValues(def.fields));
-  const [page, setPage] = useState(0);
+  const draft = r.draft as { values?: FormValues; page?: number } | undefined;
+  const [values, setValues] = useState<FormValues>(() => ({ ...emptyValues(def.fields), ...draft?.values }));
+  const [page, setPage] = useState(() => draft?.page ?? 0);
   const [busy, setBusy] = useState<"final" | "refine" | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  // Belt-and-suspenders against double submission: checked synchronously, so even two clicks that
+  // land before React re-renders the disabled button can't both start a (paid) generation.
+  const busyRef = useRef(false);
+  // Once the person has typed anything locally, stop overwriting it with a draft that arrives
+  // from the account sync (which only matters for restoring on load, e.g. on another device).
+  const touchedRef = useRef(false);
 
   const pageFields = def.fields.filter((f) => def.pages[page]?.keys.includes(f.key));
   const last = page === def.pages.length - 1;
   const titleFor = () => (Object.values(values).find((v) => typeof v === "string" && v.trim()) as string | undefined) ?? appName;
   const showPreview = busy === "final" || !r.output;
 
+  // Restores a draft that finishes syncing from the account after this page has already mounted.
+  useEffect(() => {
+    if (touchedRef.current || !draft) return;
+    if (draft.values) setValues({ ...emptyValues(def.fields), ...draft.values });
+    if (typeof draft.page === "number") setPage(draft.page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
+
+  // Autosaves Step 1 / Step 2 inputs (debounced) so leaving by accident — the header "← Back",
+  // closing the tab, a crash — and reopening this app restores them, same as a saved result.
+  useEffect(() => {
+    if (!touchedRef.current || r.output) return;
+    const t = setTimeout(() => r.saveDraft({ values, page }), 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, page]);
+
+  const setField = (key: string, x: string | FormValues[string]) => {
+    touchedRef.current = true;
+    setValues({ ...values, [key]: x });
+    setFormError(null);
+  };
+
   const next = () => {
     const miss = missingFields(pageFields, values);
     if (miss.length) return toast.error(`Please fill: ${miss.map((f) => f.label).join(", ")}`);
+    const trivial = meaninglessFields(pageFields, values);
+    if (trivial.length) {
+      const msg = "Tell us a bit more about your business.";
+      setFormError(msg);
+      return toast.error(msg);
+    }
     setPage((p) => Math.min(p + 1, def.pages.length - 1));
   };
 
   const generate = async (instruction?: string) => {
+    if (busyRef.current) return;
     const miss = missingFields(def.fields, values);
-    if (miss.length) return toast.error(`Please fill: ${miss.map((f) => f.label).join(", ")}`);
+    if (miss.length) {
+      const msg = `Please fill: ${miss.map((f) => f.label).join(", ")}`;
+      setFormError(msg);
+      return toast.error(msg);
+    }
+    if (!instruction) {
+      const trivial = meaninglessFields(def.fields, values);
+      if (trivial.length) {
+        const msg = "Tell us a bit more about your business.";
+        setFormError(msg);
+        return toast.error(msg);
+      }
+    }
+    busyRef.current = true;
+    setFormError(null);
     setBusy(instruction ? "refine" : "final");
     try {
       const { output } = await runFlagship<string>(toolId, "final", {
         inputs: inputsOf(def.fields, values),
+        // One id per submission, so a retried or duplicated request never gets charged twice server-side.
+        request_id: r.newId(),
         ...(instruction ? { previous: r.output, instruction } : {}),
       });
       r.save(titleFor(), output, values, instruction ? undefined : r.newId());
+      if (!instruction) r.clearDraft();
     } catch (e) {
-      if (!(e instanceof NeedsCredits)) toast.error(errorText(e));
+      // NeedsCredits already opened the sign-in / buy-credits dialog — nothing was charged, nothing to show here.
+      if (!(e instanceof NeedsCredits)) {
+        const msg = errorText(e);
+        setFormError(msg);
+        toast.error(msg);
+      }
     } finally {
       setBusy(null);
+      busyRef.current = false;
     }
   };
 
@@ -107,8 +189,9 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                 className="rounded-2xl border-[1.5px] border-[#111111] bg-white p-6 shadow-[4px_4px_0_#111111] dark:border-white/20 dark:bg-[#16161A] dark:shadow-[4px_4px_0_rgba(255,255,255,0.12)]"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (last) void generate();
-                  else next();
+                  if (!last) return next();
+                  if (r.output) return setConfirmRegenerate(true);
+                  void generate();
                 }}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
@@ -132,7 +215,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                           field={{ ...f, half: false, label, help: f.help ?? hint }}
                           idPrefix={toolId}
                           value={values[f.key]}
-                          onChange={(x) => setValues({ ...values, [f.key]: x })}
+                          onChange={(x) => setField(f.key, x)}
                           controlClassName={CONTROL}
                           labelClassName={LABEL}
                           hintClassName={HINT}
@@ -142,6 +225,16 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                   })}
                 </div>
 
+                {formError && (
+                  <div
+                    role="alert"
+                    className="mt-4 flex items-start gap-2 rounded-xl border-[1.5px] border-red-600/60 bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:border-red-400/50 dark:bg-red-950/40 dark:text-red-300"
+                  >
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+
                 {page === 0 && def.sample && (
                   <Button
                     type="button"
@@ -149,7 +242,10 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                     size="sm"
                     className="mt-3 gap-1.5 text-[#111111] hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                     disabled={!!busy}
-                    onClick={() => setValues({ ...values, ...def.sample })}
+                    onClick={() => {
+                      touchedRef.current = true;
+                      setValues({ ...values, ...def.sample });
+                    }}
                   >
                     <Wand2 className="h-3.5 w-3.5" /> Fill in an example
                   </Button>
@@ -167,7 +263,10 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                       onClick={() => {
                         setValues(emptyValues(def.fields));
                         setPage(0);
+                        setFormError(null);
+                        touchedRef.current = false;
                         r.reset();
+                        r.clearDraft();
                       }}
                       disabled={!!busy}
                     >
@@ -182,7 +281,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                         onClick={() => setPage((p) => p - 1)}
                         disabled={!!busy}
                       >
-                        <ArrowLeft className="h-4 w-4" /> Back
+                        <ArrowLeft className="h-4 w-4" /> Previous step
                       </Button>
                     )}
                   </div>
@@ -193,7 +292,7 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
                       disabled={!!busy}
                     >
                       {busy === "final" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                      {def.cta} · {def.credits} credits
+                      {r.output ? "Make a new version" : def.cta} · {def.credits} credits
                     </Button>
                   ) : (
                     <Button type="submit" className="gap-1.5 rounded-full border-[1.5px] border-[#111111] bg-[#111111] px-5 text-white hover:opacity-90 dark:border-white/70">
@@ -233,6 +332,28 @@ export default function PlanApp({ toolId, def }: { toolId: string; def: PlanDef 
           {def.related && def.related.length > 0 && <WorksWellWith ids={def.related} />}
         </div>
       </div>
+
+      <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Make a new version?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This makes a fresh result and costs {def.credits} credits again. Your current result stays saved in History below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmRegenerate(false);
+                void generate();
+              }}
+            >
+              Make a new version · {def.credits} credits
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

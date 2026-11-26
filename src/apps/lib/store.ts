@@ -136,3 +136,9 @@ export function useAppStore<T extends AppData>(toolId: string, initial: T) {
 }
 
 export const uid = () => (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+/** True when this app has an unsubmitted draft saved on this device (see useResults' draft/saveDraft). */
+export function hasDraft(toolId: string, userId?: string): boolean {
+  const data = readLocal(localKey(userId, toolId));
+  return !!data?.draft;
+}

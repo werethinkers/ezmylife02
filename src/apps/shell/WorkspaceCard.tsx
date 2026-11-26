@@ -12,7 +12,7 @@ import { PROFILE_FIELDS, useWorkspace, type WorkspaceProfile } from "../lib/work
 import { cn } from "@/lib/utils";
 
 /** Compact card for the shared business profile, with an editor. */
-export function WorkspaceCard({ className, onApply }: { className?: string; onApply?: (p: WorkspaceProfile) => void }) {
+export function WorkspaceCard({ className, onApply, pill }: { className?: string; onApply?: (p: WorkspaceProfile) => void; pill?: boolean }) {
   const ws = useWorkspace();
   const [open, setOpen] = useState(false);
   const pct = Math.round((ws.filled / ws.total) * 100);
@@ -32,11 +32,16 @@ export function WorkspaceCard({ className, onApply }: { className?: string; onAp
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className={cn("h-8 gap-1.5", pill && "rounded-full border-black/15 hover:bg-[#111111] hover:text-white dark:border-white/20 dark:hover:bg-white dark:hover:text-[#111111]")}
+            onClick={() => setOpen(true)}
+          >
             <Pencil className="h-3.5 w-3.5" /> {ws.filled ? "Edit" : "Set up"}
           </Button>
           {onApply && ws.filled > 0 && (
-            <Button size="sm" variant="ghost" className="h-8" onClick={() => onApply(ws.profile)}>
+            <Button size="sm" variant="ghost" className={cn("h-8", pill && "rounded-full")} onClick={() => onApply(ws.profile)}>
               Fill this form
             </Button>
           )}

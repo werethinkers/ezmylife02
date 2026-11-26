@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, AlertCircle, Maximize2, Minimize2 } from "lucide-react";
 import { NativeToolRenderer, hasNativeImplementation } from "@/components/tools/NativeToolRenderer";
 import { ToolDemoPreview } from "@/components/tools/ToolDemoPreview";
-import { hasEngineApp } from "@/apps/registry";
+import { APPS, hasEngineApp } from "@/apps/registry";
 import { BulkButton } from "@/apps/bulk/BulkButton";
 import { NextApps } from "@/apps/shell/NextApps";
 import { FieldMemory } from "@/apps/shell/FieldMemory";
@@ -29,6 +29,18 @@ import DeveloperApp from "@/apps/hosted/DeveloperApp";
 import { STUDIO_IDS, studioTabOf } from "@/data/studios";
 import { ModernFooter } from "@/components/modern/ModernFooter";
 import { SupportFab } from "@/components/brand/SupportFab";
+import { useAuth } from "@/contexts/AuthContext";
+import { hasDraft } from "@/apps/lib/store";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Soft, Home-style border/shadow for controls inside the tool frame (overrides the shared
 // components' default thick ink border + hard offset shadow, which read as too heavy here).
@@ -65,6 +77,13 @@ const ToolViewer = () => {
   // Studio-branded tools get the refined modern-look chrome (sub-header, footer, support FAB,
   // "Studios" nav highlight); every other tool page keeps today's look untouched.
   const isStudioTool = !!toolId && STUDIO_IDS.has(toolId);
+  // EMI Calculator and every document-generator ("doc" engine) tool get the same refined chrome
+  // as Studio tools (sub-header, footer, support FAB) for their neo-brutalist redesign, without
+  // joining the generated Studios list (they aren't Studios).
+  const toolEngine = toolId ? APPS[toolId]?.engine : undefined;
+  const refinedChrome = isStudioTool || toolId === "emi-calculator" || toolEngine === "doc";
+  const { user } = useAuth();
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   const hasLoggedRef = useRef(false);
 
@@ -174,6 +193,15 @@ const ToolViewer = () => {
   const toolCategory = tool?.category || catalogInfo?.category || "";
   const { iconUrl: resolvedIconUrl } = useToolMedia(toolId, toolCategory);
 
+  const backTo = toolTitle && toolTitle !== toolId ? `/promo/${toolTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` : "/ai-apps";
+  const goBack = () => navigate(backTo);
+  // Studio tools keep an unsubmitted form as a draft (see PlanApp); check before leaving so an
+  // accidental tap on the header "← Back" doesn't lose it silently.
+  const onBackClick = () => {
+    if (refinedChrome && toolId && hasDraft(toolId, user?.id)) setConfirmLeave(true);
+    else goBack();
+  };
+
   // Error state - truly not found
   if (error) {
     return (
@@ -266,7 +294,7 @@ const ToolViewer = () => {
     .toUpperCase();
 
   return (
-    <div className={cn("min-h-screen flex flex-col", isStudioTool && "ez-modern", isStudioTool && dark && "dark")}>
+    <div className={cn("min-h-screen flex flex-col", refinedChrome && "ez-modern", refinedChrome && dark && "dark")}>
       <PageSeo
         title={appSeoTitle(seoName, catalogInfo?.description || tool?.description || "")}
         description={seoDesc}
@@ -275,36 +303,36 @@ const ToolViewer = () => {
         jsonLd={seoJsonLd}
       />
       <div className={cn("ez-modern", dark && "dark")}><ModernHeader section={isStudioTool ? "studios" : undefined} /></div>
-      <div className={cn("z-20 shrink-0 border-b bg-card", isStudioTool ? "border-black/10 dark:border-white/10 dark:bg-[#0D0D0F]" : "border-zinc-200 dark:border-zinc-800")}>
+      <div className={cn("z-20 shrink-0 border-b bg-card", refinedChrome ? "border-black/10 dark:border-white/10 dark:bg-[#0D0D0F]" : "border-zinc-200 dark:border-zinc-800")}>
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <Button onClick={() => navigate(toolTitle && toolTitle !== toolId ? `/promo/${toolTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` : "/ai-apps")} variant="outline" size="sm" className={cn("h-9 shrink-0", SOFT_BTN)} aria-label="Back to what this app does">
+            <Button onClick={onBackClick} variant="outline" size="sm" className={cn("h-9 shrink-0", SOFT_BTN, refinedChrome && "rounded-full")} aria-label="Back to what this app does">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
             </Button>
-            {isStudioTool && (
+            {refinedChrome && (
               <span className="hidden h-9 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-primary/15 px-2 text-xs font-bold text-foreground dark:border-white/15 sm:flex" aria-hidden>
                 {studioBadge}
               </span>
             )}
             <AppIcon toolId={toolId ?? ""} category={toolCategory} name={toolTitle} size="sm" className="hidden h-10 w-10 sm:block" />
             <div className="min-w-0">
-              <p className={cn("truncate font-bold leading-tight", isStudioTool && "dark:text-white")}>{toolTitle}</p>
-              <p className={cn("truncate text-xs text-muted-foreground", isStudioTool && "dark:text-white/50")}>
+              <p className={cn("truncate font-bold leading-tight", refinedChrome && "dark:text-white")}>{toolTitle}</p>
+              <p className={cn("truncate text-xs text-muted-foreground", refinedChrome && "dark:text-white/50")}>
                 {studioTab ? studioTab.tab.label : toolCategory ? `${goalOf(toolCategory).name} · ${toolCategory}` : "App"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {toolId && <BulkButton toolId={toolId} className={SOFT_BTN} />}
-            <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-9", SOFT_BTN)}>
+            {toolId && <BulkButton toolId={toolId} className={cn(SOFT_BTN, refinedChrome && "rounded-full")} />}
+            <Button onClick={toggleFullscreen} variant="outline" size="sm" className={cn("h-9", SOFT_BTN, refinedChrome && "rounded-full")}>
               <Maximize2 className="h-3.5 w-3.5" />
               <span className="hidden text-xs sm:inline">Full screen</span>
             </Button>
           </div>
         </div>
         <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6 lg:px-8">
-          <FlowSteps flow="app" step={2} className="max-w-3xl" compact={isStudioTool} />
+          <FlowSteps flow="app" step={2} className="max-w-3xl" compact={refinedChrome} />
         </div>
       </div>
 
@@ -338,14 +366,29 @@ const ToolViewer = () => {
         toolName={toolTitle}
       />}
 
-      {toolId && !isHosted && seoCategory && !isLoading && <AppAbout toolId={toolId} name={seoName} description={seoIntro} category={seoCategory} wide={isStudioTool} />}
+      {toolId && !isHosted && seoCategory && !isLoading && <AppAbout toolId={toolId} name={seoName} description={seoIntro} category={seoCategory} wide={refinedChrome} />}
 
-      {isStudioTool && !isLoading && (
+      {refinedChrome && !isLoading && (
         <>
           <ModernFooter />
           <SupportFab />
         </>
       )}
+
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your answers here are saved as a draft, so you can pick up where you left off next time. Leave this page now?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={() => goBack()}>Leave</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

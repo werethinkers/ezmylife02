@@ -30,6 +30,7 @@ export interface StartResult {
   balance?: number;
   reason?: string;
   free_tool?: boolean;
+  status?: string;
 }
 
 export interface FinishResult {
@@ -70,8 +71,13 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return (await r.json()) as T;
 }
 
-export const startRun = (userId: string, toolId: string) =>
-  rpc<StartResult>("start_tool_run", { _uid: userId, _tool_id: toolId });
+/**
+ * `requestId`, when given, makes this idempotent: a second start with the same (user, requestId)
+ * — a retried request or a duplicate submission that slipped past the client-side guard — is
+ * rejected (`reason: "duplicate_request"`) instead of opening (and later charging for) a second run.
+ */
+export const startRun = (userId: string, toolId: string, requestId?: string) =>
+  rpc<StartResult>("start_tool_run", { _uid: userId, _tool_id: toolId, ...(requestId ? { _request_id: requestId } : {}) });
 
 export const finishRun = (userId: string, runId: string, success: boolean, error?: string) =>
   rpc<FinishResult>("complete_tool_run", {
@@ -211,14 +217,23 @@ export function billed(opts: BilledOptions, handler: (req: Request, ctx: BilledC
     const userId = caller.userId;
     // No app is free: an app without a price row gets its default (minimum 1 credit) first.
     await ensurePrice(toolId, opts.defaultCredits?.(toolId) ?? 1, opts.isImage?.(toolId) ?? false);
+    const requestId = typeof body?.request_id === "string" && body.request_id.trim() ? String(body.request_id).trim().slice(0, 100) : undefined;
     let start: StartResult;
     try {
-      start = await startRun(userId, toolId);
+      start = await startRun(userId, toolId, requestId);
     } catch (e) {
       console.error("billing start failed", e);
       return json({ error: "billing_unavailable", message: "Billing is temporarily unavailable. You were not charged." }, 503);
     }
     if (!start.ok) {
+      if (start.reason === "duplicate_request") {
+        // Same (user, request_id) as a run already started or finished: never run the work (and
+        // never charge) twice for one submission.
+        return json(
+          { error: "duplicate_request", message: "This was already submitted. You were not charged again." },
+          409,
+        );
+      }
       return json(
         {
           error: "insufficient_credits",

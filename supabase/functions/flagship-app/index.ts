@@ -99,6 +99,12 @@ function cleanImages(images: unknown, max = MAX_IMAGES): string[] {
 const cleanAudio = (a: unknown): string | null =>
   typeof a === "string" && /^data:audio\/[\w.+-]+;base64,/.test(a) && a.length < MAX_AUDIO_CHARS ? a : null;
 
+/** An unfinished `[Your Business Name]`-style placeholder — not a markdown link, not a `[1]` footnote. */
+function hasPlaceholder(s: string): boolean {
+  const spans = s.match(/\[[^\]\n]{2,80}\](?!\()/g) ?? [];
+  return spans.some((m) => !/^\[\d+\]$/.test(m));
+}
+
 // ---- Coaching session tickets: HMAC-signed { user, app, expiry }, so free turns need a paid start.
 const enc = new TextEncoder();
 const b64url = (buf: ArrayBuffer | Uint8Array) =>
@@ -196,7 +202,35 @@ Deno.serve(
               messages.push({ role: "user", content: `Revise the result: ${String(body.instruction).slice(0, 1000)}. Return the full revised result in the same format.` });
             }
             const out = await chat(messages, { model: spec.model, maxTokens: spec.maxTokens });
-            return json({ ok: true, output: out });
+            // An empty or blank reply is a failure, not a result: answer with an error status so the
+            // billing wrapper (billed(), which only charges a 2xx response) never charges for it.
+            if (!out || !out.trim()) {
+              return json({ error: "No result came back. Please try again. You were not charged." }, 502);
+            }
+            let finalOut = out;
+            // The Brand Identity Kit must never ship with unfinished template placeholders (the prompt
+            // already says so — this is the safety net for the rare case one slips through): ask once
+            // for a clean rewrite with a committed name and real detail everywhere, instead of returning it as is.
+            if (toolId === "brand-identity-studio" && hasPlaceholder(finalOut)) {
+              try {
+                const retry = await chat(
+                  [
+                    ...messages,
+                    { role: "assistant", content: finalOut.slice(0, 40_000) },
+                    {
+                      role: "user",
+                      content:
+                        "That still has unfinished placeholder text in square brackets (like [Your Business Name] or [.com]). Rewrite the whole kit with no placeholders anywhere: commit to one real, concrete business name (your own top recommendation, if one wasn't given) and real details throughout, and drop any 'To complete' section. Return the full kit in the same format.",
+                    },
+                  ],
+                  { model: spec.model, maxTokens: spec.maxTokens },
+                );
+                if (retry?.trim() && !hasPlaceholder(retry)) finalOut = retry;
+              } catch {
+                // Keep the first result rather than fail the whole request over the retry.
+              }
+            }
+            return json({ ok: true, output: finalOut });
           }
 
           // Paid per picture: one photo studio option.

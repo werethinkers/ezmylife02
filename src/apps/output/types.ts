@@ -34,7 +34,9 @@ export type PdfBlock =
   /** A picture (data: URL or a CORS-readable link), at most `maxH` px tall. */
   | { t: "img"; src: string; alt?: string; maxH?: number }
   /** Start a new page here. */
-  | { t: "break" };
+  | { t: "break" }
+  /** A colour palette as swatch cards (name, hex, optional use note) instead of a plain table. */
+  | { t: "swatches"; items: { name: string; hex: string; use?: string }[] };
 
 export interface PdfDoc {
   template: TemplateId;
@@ -47,6 +49,8 @@ export interface PdfDoc {
   /** "13 November 2026". */
   date: string;
   accent: Accent;
+  /** Overrides `accent` with a real brand colour (e.g. from a generated palette), hex like "#4f46e5". */
+  accentHex?: string;
   landscape?: boolean;
   letterhead?: Letterhead;
   blocks: PdfBlock[];

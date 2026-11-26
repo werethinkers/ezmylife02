@@ -42,7 +42,7 @@ function loanTable(principal: number, r: number, n: number, emi: number) {
   return { columns: ["Year", "Principal paid", "Interest paid", "Loan left"], rows };
 }
 
-const emi: CalcDef = {
+export const emi: CalcDef = {
   engine: "calc",
   credits: p("emi-calculator"),
   intro: "Your monthly EMI, the total interest and a year-by-year repayment table for any loan.",
@@ -535,8 +535,10 @@ const age: CalcDef = {
   fileName: "age",
 };
 
+// "emi-calculator" has its own bespoke screen (src/apps/custom/EmiCalculator.tsx, registered in
+// ./custom.tsx) instead of the generic CalcApp engine, so it is not listed below. The `emi` CalcDef
+// above stays the single source of truth for its maths — EmiCalculator imports and reuses it.
 export const calculators: Record<string, CalcDef> = {
-  "emi-calculator": emi,
   "loan-prepayment-calculator": prepay,
   "sip-calculator": sip,
   "fd-calculator": fd,

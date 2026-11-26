@@ -58,6 +58,8 @@ const clip = (s: string, n: number) => {
 };
 const list = (xs: string[]) => (xs.length < 3 ? xs.join(" and ") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 const dot = (s: string) => (/[.!?…]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`);
+/** Lowercases a field label for mid-sentence use, but keeps an all-caps acronym (GSTIN, PAN…) as-is. */
+const lowerLabel = (s: string) => s.replace(/\S+/g, (w) => (/^[A-Z]{2,}$/.test(w) ? w : w.toLowerCase()));
 
 function labelled(fields: NonNullable<Loose["fields"]>, sample: Record<string, string>) {
   const out: string[] = [];
@@ -93,7 +95,7 @@ export function appDetail(app: { name: string; description?: string; category: s
       paragraphs: [`${name} asks for ${fields.length} ${fields.length === 1 ? "detail" : "details"}${required.length ? `, ${required.length} of them needed` : ""}.`],
       items: [...shown, ...more],
     });
-    faqs.push([`What do I need to use ${name}?`, `${name} asks for ${list(fields.slice(0, 4).map((f) => f.label.toLowerCase()))}${fields.length > 4 ? " and a few more details" : ""}. You do not need an account to look around; sign in when you are ready to use it.`]);
+    faqs.push([`What do I need to use ${name}?`, `${name} asks for ${list(fields.slice(0, 4).map((f) => lowerLabel(f.label)))}${fields.length > 4 ? " and a few more details" : ""}. You do not need an account to look around; sign in when you are ready to use it.`]);
   }
   if (d.engine === "tracker" && d.columns?.length) {
     sections.push({

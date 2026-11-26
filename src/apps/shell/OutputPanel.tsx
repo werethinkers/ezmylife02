@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Copy, Download, FileText, FileType2, Loader2, Mail, Send, Share2, Wand2 } from "lucide-react";
+import { Check, Copy, Download, FileText, FileType2, Loader2, Mail, MoreHorizontal, Send, Share2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,101 +158,167 @@ export function OutputPanel({
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun text-xs" aria-hidden>3</span>
           <span className="truncate">Your result · {title}</span>
         </p>
-        <div className="flex flex-wrap items-center gap-1" aria-label="Save or share">
+        <div className="flex flex-wrap items-center gap-1.5" aria-label="Save or share">
           <span className="mr-1 hidden items-center gap-1.5 text-xs font-bold lg:inline-flex"><span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink bg-card text-[10px]" aria-hidden>4</span>Save or share:</span>
+
+          {/* Always visible, on every screen size: the two most-used actions. */}
           {offersPdf && (
             <Button
               size="sm"
               variant={choice === "pdf" ? "default" : "ghost"}
-              className="h-8 gap-1.5"
+              className="min-h-[44px] min-w-[44px] gap-1.5"
               onClick={savePdf}
-              aria-label="Download PDF"
+              aria-label="Download as PDF"
+              title="Download as PDF"
             >
               {prepared.state === "making" && !prepared.previous ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">PDF</span>
+              <span>PDF</span>
             </Button>
           )}
-          {choice === "word" && (
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => downloadWord(text, fileName, title)}>
-              <FileType2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Word</span>
-            </Button>
-          )}
-          <Button size="sm" variant="ghost" className="h-8 gap-1.5" onClick={copy}>
+          <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px] gap-1.5" onClick={copy} aria-label={copied ? "Copied to clipboard" : "Copy result to clipboard"} title="Copy">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+            <span>{copied ? "Copied" : "Copy"}</span>
           </Button>
-          {editable && onEdit && (
-            <Button size="sm" variant={editing ? "secondary" : "ghost"} className="h-8 gap-1.5" onClick={() => setEditing((e) => !e)}>
-              <FileText className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{editing ? "Done" : "Edit"}</span>
-            </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-8 gap-1.5">
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Save</span>
+
+          {/* sm and up: every other action, each labelled and with a 44px target. On narrow phones
+              these move into the single "More" menu below instead, so nothing is icon-only guesswork. */}
+          <div className="hidden items-center gap-1.5 sm:flex">
+            {choice === "word" && (
+              <Button size="sm" className="min-h-[44px] min-w-[44px] gap-1.5" onClick={() => downloadWord(text, fileName, title)} aria-label="Download as Word document" title="Download as Word document">
+                <FileType2 className="h-3.5 w-3.5" />
+                <span>Word</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => downloadWord(text, fileName, title)}>Word document (.doc)</DropdownMenuItem>
-              {offersPdf && (
-                <DropdownMenuItem onClick={savePdf}>
-                  <FileText className="mr-2 h-3.5 w-3.5" /> PDF document
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => downloadText(text, `${fileName}.md`, "text/markdown")}>Markdown (.md)</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => downloadText(text.replace(/[*#`]/g, ""), `${fileName}.txt`)}>Plain text (.txt)</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button size="sm" variant={choice === "whatsapp" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={whatsapp}>
-            <Share2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">WhatsApp</span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-8 gap-1.5">
-                <Mail className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Email</span>
+            )}
+            {editable && onEdit && (
+              <Button
+                size="sm"
+                variant={editing ? "secondary" : "ghost"}
+                className="min-h-[44px] min-w-[44px] gap-1.5"
+                onClick={() => setEditing((e) => !e)}
+                aria-label={editing ? "Finish editing the result" : "Edit the result as text"}
+                title={editing ? "Done editing" : "Edit"}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>{editing ? "Done" : "Edit"}</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {clientEmail && (
-                <>
-                  <DropdownMenuItem onClick={() => void email(clientEmail)}>Email to {clientEmail}</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem onClick={() => void email()}>Email in the message body</DropdownMenuItem>
-              <DropdownMenuItem onClick={emailAsAttachment}>Email as a Word attachment</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {targets.length > 0 && (
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 gap-1.5">
-                  <Send className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Use in…</span>
+                <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px] gap-1.5" aria-label="Save as a file" title="Save as a file">
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Save</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="text-xs">Open another app with this result</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {targets.map((t) => (
-                  <DropdownMenuItem
-                    key={t.id}
-                    onClick={() => {
-                      sendHandoff({ from: toolId, fromName, to: t.id, text });
-                      navigate(`/tool/${t.id}`);
-                    }}
-                  >
-                    {t.name}
+                <DropdownMenuItem onClick={() => downloadWord(text, fileName, title)}>Word document (.doc)</DropdownMenuItem>
+                {offersPdf && (
+                  <DropdownMenuItem onClick={savePdf}>
+                    <FileText className="mr-2 h-3.5 w-3.5" /> PDF document
                   </DropdownMenuItem>
-                ))}
+                )}
+                <DropdownMenuItem onClick={() => downloadText(text, `${fileName}.md`, "text/markdown")}>Markdown (.md)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => downloadText(text.replace(/[*#`]/g, ""), `${fileName}.txt`)}>Plain text (.txt)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+            <Button
+              size="sm"
+              variant={choice === "whatsapp" ? "default" : "ghost"}
+              className="min-h-[44px] min-w-[44px] gap-1.5"
+              onClick={whatsapp}
+              aria-label="Share on WhatsApp"
+              title="Share on WhatsApp"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span>WhatsApp</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px] gap-1.5" aria-label="Email this result" title="Email">
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>Email</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {clientEmail && (
+                  <>
+                    <DropdownMenuItem onClick={() => void email(clientEmail)}>Email to {clientEmail}</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => void email()}>Email in the message body</DropdownMenuItem>
+                <DropdownMenuItem onClick={emailAsAttachment}>Email as a Word attachment</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {targets.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px] gap-1.5" aria-label="Use this result in another app" title="Use in…">
+                    <Send className="h-3.5 w-3.5" />
+                    <span>Use in…</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel className="text-xs">Open another app with this result</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {targets.map((t) => (
+                    <DropdownMenuItem
+                      key={t.id}
+                      onClick={() => {
+                        sendHandoff({ from: toolId, fromName, to: t.id, text });
+                        navigate(`/tool/${t.id}`);
+                      }}
+                    >
+                      {t.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Below sm: the rest collapse into one labelled, 44px overflow menu instead of a row of bare icons. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px] gap-1.5 sm:hidden" aria-label="More save and share options" title="More">
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                <span>More</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="sm:hidden">
+              {choice === "word" && <DropdownMenuItem onClick={() => downloadWord(text, fileName, title)}>Download as Word document</DropdownMenuItem>}
+              {editable && onEdit && <DropdownMenuItem onClick={() => setEditing((e) => !e)}>{editing ? "Done editing" : "Edit the result as text"}</DropdownMenuItem>}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs">Save as a file</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => downloadWord(text, fileName, title)}>Word document (.doc)</DropdownMenuItem>
+              {offersPdf && <DropdownMenuItem onClick={savePdf}>PDF document</DropdownMenuItem>}
+              <DropdownMenuItem onClick={() => downloadText(text, `${fileName}.md`, "text/markdown")}>Markdown (.md)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadText(text.replace(/[*#`]/g, ""), `${fileName}.txt`)}>Plain text (.txt)</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={whatsapp}>Share on WhatsApp</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs">Email</DropdownMenuLabel>
+              {clientEmail && <DropdownMenuItem onClick={() => void email(clientEmail)}>Email to {clientEmail}</DropdownMenuItem>}
+              <DropdownMenuItem onClick={() => void email()}>Email in the message body</DropdownMenuItem>
+              <DropdownMenuItem onClick={emailAsAttachment}>Email as a Word attachment</DropdownMenuItem>
+              {targets.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs">Use this result in</DropdownMenuLabel>
+                  {targets.map((t) => (
+                    <DropdownMenuItem
+                      key={t.id}
+                      onClick={() => {
+                        sendHandoff({ from: toolId, fromName, to: t.id, text });
+                        navigate(`/tool/${t.id}`);
+                      }}
+                    >
+                      {t.name}
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -14,7 +14,7 @@ const ICON: Record<OutputFormat, typeof FileText> = {
  * "How do you want your result?" — shown beside an app's run button.
  * Every format is made anyway; this picks the one that opens first. Remembered per app.
  */
-export function OutputChoice({ toolId, className, compact }: { toolId: string; className?: string; compact?: boolean }) {
+export function OutputChoice({ toolId, className, compact, tone = "block" }: { toolId: string; className?: string; compact?: boolean; tone?: "block" | "soft" }) {
   const formats = formatsFor(toolId);
   const [choice, setChoice] = useOutputChoice(toolId);
   if (formats.length < 2) return null;
@@ -33,8 +33,12 @@ export function OutputChoice({ toolId, className, compact }: { toolId: string; c
               aria-checked={on}
               onClick={() => setChoice(f)}
               className={cn(
-                "flex min-w-0 items-start gap-2 rounded-xl border-2 border-ink px-2.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                on ? "bg-lime shadow-block-sm" : "bg-card hover:bg-sand",
+                "flex min-w-0 items-start gap-2 rounded-xl px-2.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                tone === "soft"
+                  ? on
+                    ? "border-[1.5px] border-[#111111] bg-[#C8E967]/30 font-semibold dark:border-white/70 dark:bg-white/10"
+                    : "border border-black/12 bg-[#FAF7F2] hover:border-black/30 dark:border-white/15 dark:bg-white/5"
+                  : cn("border-2 border-ink", on ? "bg-lime shadow-block-sm" : "bg-card hover:bg-sand"),
               )}
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />

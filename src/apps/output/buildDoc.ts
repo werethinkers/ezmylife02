@@ -1,6 +1,7 @@
 import type { WorkspaceProfile } from "../lib/workspace";
 import { TEMPLATE_ACCENT, templateFor, todayText } from "./choice";
 import { markdownToBlocks, plainLine } from "./markdown";
+import { extractPalette, pickAccent } from "./palette";
 import type { Letterhead, PdfBlock, PdfDoc, TemplateId } from "./types";
 
 /** The saved business details as a letterhead, or nothing when no business name is saved. */
@@ -33,7 +34,10 @@ export function docFromText(opts: {
   template?: TemplateId;
 }): PdfDoc {
   const template = opts.template ?? templateFor(opts.toolId);
-  const { title, blocks } = markdownToBlocks(opts.text);
+  const { title, blocks: rawBlocks } = markdownToBlocks(opts.text);
+  // When the result includes a real colour palette (name / hex / use), show it as swatches and
+  // use the brand's own colour for the PDF's accent instead of the template's generic one.
+  const { blocks, palette } = extractPalette(rawBlocks);
   return {
     template,
     title: title ? plainLine(title) : opts.appName,
@@ -41,6 +45,7 @@ export function docFromText(opts: {
     subtitle: template === "report" ? summaryOf(blocks) : undefined,
     date: /[\u0900-\u097F]/.test(opts.text) ? new Date().toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" }) : todayText(),
     accent: TEMPLATE_ACCENT[template],
+    accentHex: pickAccent(palette),
     landscape: template === "register",
     letterhead: letterheadFrom(opts.profile),
     blocks,

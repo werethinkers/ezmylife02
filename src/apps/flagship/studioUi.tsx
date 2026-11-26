@@ -4,6 +4,7 @@ import { Check, Cloud, HardDrive, Loader2, Sparkles } from "lucide-react";
 import { useToolsCatalog, type CatalogTool } from "@/hooks/useToolsCatalog";
 import { resolveToolMedia } from "@/lib/toolMedia";
 import { cn } from "@/lib/utils";
+import { CONTROL, HINT, LABEL, UNBOUNDED } from "./softInputs";
 
 /*
  * Shared visual pieces for the Studio-tool engines (PlanApp, StudioApp): the refined neo-brutalist
@@ -13,14 +14,9 @@ import { cn } from "@/lib/utils";
  * every non-Studio tool — keeps today's block look untouched.
  */
 
-// Keeps a heading in Unbounded even inside the `.ez-modern` wrapper (used here for dark-mode
-// tokens), which otherwise switches --font-display to Space Grotesk.
-export const UNBOUNDED = { fontFamily: "'Unbounded', 'Hind', system-ui, sans-serif" } as const;
-
-export const CONTROL =
-  "rounded-xl border border-black/10 bg-[#F3F4F6] focus:bg-white focus:border-[#111111] focus:ring-2 focus:ring-[#F472D0]/30 dark:border-white/15 dark:bg-[#1F1F24] dark:text-white dark:focus:bg-[#1F1F24] dark:focus:border-white";
-export const LABEL = "text-sm font-semibold text-[#111111] dark:text-white";
-export const HINT = "text-xs text-black/45 dark:text-white/40";
+// Re-exported from ./softInputs (zero-dependency leaf module) so every existing importer of these
+// four names from here keeps working unchanged.
+export { CONTROL, HINT, LABEL, UNBOUNDED };
 
 export const initialsOf = (name: string) =>
   name
@@ -154,7 +150,7 @@ function WorksWellWithCard({ tool }: { tool: CatalogTool }) {
 }
 
 /** This tool's cross-sell row, styled like the homepage's visual-first cards. */
-export function WorksWellWith({ ids }: { ids: string[] }) {
+export function WorksWellWith({ ids, cols = 4 }: { ids: string[]; cols?: 3 | 4 }) {
   const { data: catalog = [] } = useToolsCatalog();
   const apps = ids.map((id) => catalog.find((t) => t.id === id && t.is_live)).filter(Boolean) as CatalogTool[];
   if (!apps.length) return null;
@@ -163,7 +159,12 @@ export function WorksWellWith({ ids }: { ids: string[] }) {
       <h2 className="font-display text-lg font-bold text-[#111111] dark:text-white" style={UNBOUNDED}>
         Works well with
       </h2>
-      <div className="mt-4 flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
+      <div
+        className={cn(
+          "mt-4 flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0",
+          cols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4",
+        )}
+      >
         {apps.map((t) => (
           <WorksWellWithCard key={t.id} tool={t} />
         ))}

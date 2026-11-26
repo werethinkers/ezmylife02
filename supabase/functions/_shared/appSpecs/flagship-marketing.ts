@@ -20,7 +20,9 @@ export const flagshipMarketing: Record<string, AppSpec> = {
     ],
     "rules": [
       "Colours must work together and pass basic contrast for text; give real hex codes.",
-      "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites."
+      "Do not claim a name or domain is available; tell the customer to check the trademark registry and domain sites.",
+      "Never leave a placeholder in square brackets anywhere in the kit — not the business name, not a domain ending like .com or .in, not a legal or contact detail. Every section must read as finished, real copy, not a template waiting to be filled in.",
+      "If the business name is 'need a name' or otherwise not given, pick your single best idea from the Name ideas table, mark it clearly as your top recommendation, and then write every other section — brand story, voice, colour palette, logo directions, taglines and brand rules — using that one chosen name throughout, exactly as if it were the customer's real, final name. Do not add a separate 'To complete' section about the name."
     ],
     "imageStyle": "Clean brand identity presentation, flat vector style, plain background, no small text."
   }),
